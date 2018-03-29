@@ -20,8 +20,8 @@ public class ITC503 extends GPIBDevice {
     private static final int    DER_ACTION_TIME    = 10;
     private static final int    FREQ_CHAN_OFFSET   = 10;
 
-    private static final long STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 60 * 1000; // 5 mins
-    private static final int  STANDARD_CHECK_INTERVAL       = 100; // 0.1 sec
+    private static final long STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
+    private static final int  STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
 
     public enum Mode {
 
