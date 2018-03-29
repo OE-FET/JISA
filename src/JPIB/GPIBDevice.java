@@ -32,6 +32,14 @@ public class GPIBDevice {
 
     }
 
+    public int getAddress() {
+        return address;
+    }
+
+    public int getBus() {
+        return bus;
+    }
+
     public GPIBDevice(int bus, int address) throws IOException {
         this(bus, address, DEFAULT_TIMEOUT, DEFAULT_EOI, DEFAULT_EOS);
     }

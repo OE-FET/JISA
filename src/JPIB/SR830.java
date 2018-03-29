@@ -148,13 +148,14 @@ public class SR830 extends GPIBDevice {
 
     public Sensitivity getSensitivity() throws IOException {
 
-        int code = Integer.parseInt(query(C_QUERY_REF));
+        int code = Integer.parseInt(query(C_QUERY_SENSITIVITY));
         return Sensitivity.fromInt(code);
 
     }
 
     public void setSensitivity(Sensitivity mode) throws IOException {
-        write(C_SET_REF, mode.toInt());
+        write(C_SET_SENSITIVITY, mode.toInt());
     }
+
 
 }

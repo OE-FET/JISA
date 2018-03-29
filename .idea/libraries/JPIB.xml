@@ -1,8 +1,6 @@
 <component name="libraryTable">
   <library name="JPIB">
-    <CLASSES>
-      <root url="file://$PROJECT_DIR$" />
-    </CLASSES>
+    <CLASSES />
     <JAVADOC />
     <NATIVE>
       <root url="file://$PROJECT_DIR$/lib" />
