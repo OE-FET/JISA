@@ -41,9 +41,7 @@ public class GPIB {
     }
 
     public static boolean isInitialised(int bus) {
-
         return initialised.getOrDefault(bus, false);
-
     }
 
     public static void scanForDevices(int bus) throws IOException {

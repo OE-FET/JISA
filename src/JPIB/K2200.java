@@ -57,7 +57,7 @@ public class K2200 extends GPIBDevice {
                 () -> getVoltage(),
                 voltage,
                 10,
-                10000,
+                5000,
                 100,
                 action,
                 (e) -> {
