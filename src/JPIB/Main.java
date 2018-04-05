@@ -8,11 +8,13 @@ public class Main {
     private static SR830  sr830;
     private static ITC503 itc;
     private static K2200  power;
+    private static K236   smu;
 
     private static final int                 GPIB_BUS       = 0;
     private static final int                 SR830_ADDRESS  = 30;
     private static final int                 K2200_ADDRESS  = 22;
     private static final int                 ITC503_ADDRESS = 20;
+    private static final int                 K236_ADDRESS   = 15;
     private static final ArrayList<Double[]> results        = new ArrayList<>();
 
     public static void main(String[] args) {
@@ -42,10 +44,12 @@ public class Main {
         sr830 = new SR830(GPIB_BUS, SR830_ADDRESS);
         itc = new ITC503(GPIB_BUS, ITC503_ADDRESS);
         power = new K2200(GPIB_BUS, K2200_ADDRESS);
+        smu = new K236(GPIB_BUS, K236_ADDRESS);
 
         // Set the reference mode and control mode of the SR830 and ITC503 respectively
         sr830.setRefMode(SR830.RefMode.EXTERNAL);
         itc.setMode(ITC503.Mode.REMOTE_LOCKED);
+        smu.setSourceFunction(K236.Source.CURRENT, K236.Function.DC);
 
         // Set ITC temperature to 100 K and wait until the temperature is stable (within 10%)
         itc.setTemperature(100.0);
