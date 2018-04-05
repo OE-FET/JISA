@@ -30,7 +30,7 @@ public class ITC503 extends GPIBDevice {
         LOCAL_UNLOCKED(2),
         REMOTE_UNLOCKED(3);
 
-        private int c;
+        private        int                    c;
         private static HashMap<Integer, Mode> lookup = new HashMap<>();
 
         static Mode fromInt(int i) {
@@ -84,7 +84,7 @@ public class ITC503 extends GPIBDevice {
 
     public double getTemperature(int sensor) throws IOException, DeviceException {
 
-        if (sensor < 1 || sensor > 3) {
+        if (!Util.isBetween(sensor, 1, 3)) {
             throw new DeviceException("Sensor index, %d, out of range!", sensor);
         }
 

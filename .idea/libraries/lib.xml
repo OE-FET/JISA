@@ -1,12 +1,10 @@
 <component name="libraryTable">
-  <library name="JPIB">
+  <library name="lib">
     <CLASSES />
     <JAVADOC />
     <NATIVE>
       <root url="file://$PROJECT_DIR$/lib" />
     </NATIVE>
-    <SOURCES>
-      <root url="file://$PROJECT_DIR$/src" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>
