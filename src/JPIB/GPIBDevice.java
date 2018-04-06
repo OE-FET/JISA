@@ -51,7 +51,7 @@ public class GPIBDevice {
     public synchronized void write(String command, Object... args) throws IOException {
         String commandParsed = String.format(command, args).concat(terminator);
         lastCommand = commandParsed;
-        GPIB.writeCommand(device, String.format(commandParsed, args));
+        GPIB.writeCommand(device, commandParsed);
     }
 
     public synchronized String read() throws IOException {
