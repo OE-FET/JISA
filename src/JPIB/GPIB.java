@@ -4,6 +4,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * GPIB Driver class.
+ *
+ * Interfaces with native code (libJPIB.so) via JNI.
+ *
+ * JNI expects calls to be made from an object instance, so we instantiate one instance
+ * and store it statically so that we may wrap static functions around it and pretend that this is a static class.
+ */
 public class GPIB {
 
     // JNI is designed around calls from an object instance (ie not static apparently)
