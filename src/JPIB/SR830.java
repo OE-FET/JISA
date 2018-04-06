@@ -20,7 +20,17 @@ public class SR830 extends GPIBDevice {
     private static final int    OUTPUT_Y            = 2;
     private static final int    OUTPUT_R            = 3;
     private static final int    OUTPUT_T            = 4;
+    private static final String C_QUERY_ALL         = "SNAP ? 1,2,3,4,9";
 
+    /**
+     * Open an SR830 device on the given bus and address
+     *
+     * @param bus     The bus the device is on
+     * @param address The address used by the device on the bus
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException If the device does not identify itself as an SR830
+     */
     public SR830(int bus, int address) throws IOException, DeviceException {
 
         super(bus, address, DEFAULT_TIMEOUT, DEFAULT_EOI, DEFAULT_EOS);
@@ -37,60 +47,168 @@ public class SR830 extends GPIBDevice {
 
     }
 
+    /**
+     * Returns the current value of the reference signal frequency
+     *
+     * @return Reference frequency
+     *
+     * @throws IOException Upon communication error
+     */
     public double getRefFrequency() throws IOException {
         return queryDouble(C_QUERY_FREQ);
     }
 
+    /**
+     * Returns the current phase offset of the reference signal (internal)
+     *
+     * @return Reference phase in degrees
+     *
+     * @throws IOException Upon communication error
+     */
     public double getRefPhase() throws IOException {
         return queryDouble(C_QUERY_PHASE);
     }
 
+    /**
+     * Returns the voltage amplitude of the reference signal
+     *
+     * @return Reference amplitude
+     *
+     * @throws IOException Upon communication error
+     */
     public double getRefAmplitude() throws IOException {
         return queryDouble(C_QUERY_INT_AMP);
     }
 
+    /**
+     * Sets the frequency of the internal sine function generator for internal referencing
+     *
+     * @param freq Frequency
+     *
+     * @throws IOException Upon communication error
+     */
     public void setRefFrequency(double freq) throws IOException {
         write(C_SET_FREQ, freq);
     }
 
+    /**
+     * Sets the phase offset of the internal sine function generator for internal referencing
+     *
+     * @param phase Phase in degrees
+     *
+     * @throws IOException Upon communication error
+     */
     public void setRefPhase(double phase) throws IOException {
         write(C_SET_PHASE, phase);
     }
 
+    /**
+     * Sets the amplitude of the internal sine function generator for internal referencing
+     *
+     * @param amp Amplitude
+     *
+     * @throws IOException Upon communication error
+     */
     public void setRefAmplitude(double amp) throws IOException {
         write(C_SET_INT_AMP, amp);
     }
 
+    /**
+     * Returns the current reference mode of the SR830 (internal or external)
+     *
+     * @return Reference mode
+     *
+     * @throws IOException Upon communication error
+     */
     public RefMode getRefMode() throws IOException {
         return RefMode.fromInt(queryInt(C_QUERY_REF));
     }
 
+    /**
+     * Sets the reference mode of the SR830 (internal or external)
+     *
+     * @param mode Reference mode
+     *
+     * @throws IOException Upon communication error
+     */
     public void setRefMode(RefMode mode) throws IOException {
         write(C_SET_REF, mode.toInt());
     }
 
+    /**
+     * Returns the current sensitivity mode of the SR830
+     *
+     * @return Sensitivity mode
+     *
+     * @throws IOException Upon communication error
+     */
     public Sensitivity getSensitivity() throws IOException {
         return Sensitivity.fromInt(queryInt(C_QUERY_SENSITIVITY));
     }
 
+    /**
+     * Sets the sensitivity mode of the SR830
+     *
+     * @param mode Sensitivity mode
+     *
+     * @throws IOException Upon communication error
+     */
     public void setSensitivity(Sensitivity mode) throws IOException {
         write(C_SET_SENSITIVITY, mode.toInt());
     }
 
+    /**
+     * Returns the voltage reported by the X channel (in phase with reference)
+     *
+     * @return X channel voltage
+     *
+     * @throws IOException Upon communication error
+     */
     public double getX() throws IOException {
         return queryDouble(C_QUERY_OUTPUT, OUTPUT_X);
     }
 
+    /**
+     * Returns the voltage reported by the Y channel (pi out of phase with reference)
+     *
+     * @return Y channel voltage
+     *
+     * @throws IOException Upon communication error
+     */
     public double getY() throws IOException {
         return queryDouble(C_QUERY_OUTPUT, OUTPUT_Y);
     }
 
+    /**
+     * Returns the absolute value (R where R^2 = X^2 + Y^2) of the locked-in signal
+     *
+     * @return R channel voltage
+     *
+     * @throws IOException Upon communication error
+     */
     public double getR() throws IOException {
         return queryDouble(C_QUERY_OUTPUT, OUTPUT_R);
     }
 
-    public double getTheta() throws IOException {
+    /**
+     * Returns phase of the locked-in signal
+     *
+     * @return Theta channel value in degrees
+     *
+     * @throws IOException Upon communication error
+     */
+    public double getT() throws IOException {
         return queryDouble(C_QUERY_OUTPUT, OUTPUT_T);
+    }
+
+    /**
+     * Returns the current values of X, Y, T, R and frequency (F) all at once
+     *
+     * @return {X,Y,T,R,F} DataPacket
+     * @throws IOException Upon communication error
+     */
+    public DataPacket getAll() throws IOException {
+        return new DataPacket(query(C_QUERY_ALL));
     }
 
     public enum RefMode {
@@ -170,6 +288,36 @@ public class SR830 extends GPIBDevice {
         int toInt() {
             return c;
         }
+    }
+
+    public class DataPacket {
+
+        public double x;
+        public double y;
+        public double r;
+        public double t;
+        public double f;
+
+        public DataPacket(double x, double y, double r, double t, double f) {
+            this.x = x;
+            this.y = y;
+            this.r = r;
+            this.t = t;
+            this.f = f;
+        }
+
+        public DataPacket(String data) {
+
+            String[] raw = data.split(",");
+
+            x = Double.parseDouble(raw[0]);
+            y = Double.parseDouble(raw[1]);
+            r = Double.parseDouble(raw[2]);
+            t = Double.parseDouble(raw[3]);
+            f = Double.parseDouble(raw[4]);
+
+        }
+
     }
 
 
