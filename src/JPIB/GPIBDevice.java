@@ -4,9 +4,9 @@ import java.io.IOException;
 
 public class GPIBDevice {
 
-    private int bus;
-    private int address;
-    private int device;
+    private int    bus;
+    private int    address;
+    private int    device;
     private String terminator  = "";
     private String lastCommand = null;
     private String lastRead    = null;
@@ -57,6 +57,24 @@ public class GPIBDevice {
     public synchronized String read() throws IOException {
         lastRead = GPIB.readDevice(device);
         return lastRead;
+    }
+
+    public synchronized double readDouble() throws IOException {
+        return Double.parseDouble(read());
+    }
+
+    public synchronized int readInt() throws IOException {
+        return Integer.parseInt(read());
+    }
+
+    public synchronized double queryDouble(String command, Object... args) throws IOException {
+        write(command, args);
+        return readDouble();
+    }
+
+    public synchronized int queryInt(String command, Object... args) throws IOException {
+        write(command, args);
+        return readInt();
     }
 
     public synchronized String query(String command, Object... args) throws IOException {

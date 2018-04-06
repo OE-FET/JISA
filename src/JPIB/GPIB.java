@@ -9,8 +9,8 @@ import java.util.HashMap;
  *
  * Interfaces with native code (libJPIB.so) via JNI.
  *
- * JNI expects calls to be made from an object instance, so we instantiate one instance
- * and store it statically so that we may wrap static functions around it and pretend that this is a static class.
+ * JNI expects calls to be made from an object instance, so we instantiate one instance and store it statically so that
+ * we may wrap static functions around it and pretend that this is a static class.
  */
 public class GPIB {
 
@@ -20,10 +20,11 @@ public class GPIB {
     private static HashMap<Integer, Boolean>            initialised = new HashMap<>();
 
     /**
-     * Load the native library
+     * Load the native library and create our instance
      */
     static {
         System.loadLibrary("JPIB");
+        instance = new GPIB();
     }
 
     /**
@@ -104,7 +105,6 @@ public class GPIB {
      * @throws IOException
      */
     public static void initialise(int bus) throws IOException {
-        instance = new GPIB();
         instance.init(bus);
         initialised.put(bus, true);
     }

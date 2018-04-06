@@ -23,36 +23,15 @@ public class ITC503 extends GPIBDevice {
     private static final long STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
     private static final int  STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
 
-    public enum Mode {
-
-        LOCAL_LOCKED(0),
-        REMOTE_LOCKED(1),
-        LOCAL_UNLOCKED(2),
-        REMOTE_UNLOCKED(3);
-
-        private        int                    c;
-        private static HashMap<Integer, Mode> lookup = new HashMap<>();
-
-        static Mode fromInt(int i) {
-            return lookup.getOrDefault(i, null);
-        }
-
-        static {
-            for (Mode mode : Mode.values()) {
-                lookup.put(mode.toInt(), mode);
-            }
-        }
-
-        Mode(int code) {
-            c = code;
-        }
-
-        int toInt() {
-            return c;
-        }
-
-    }
-
+    /**
+     * Open the ITC503 device at the given bus and address
+     *
+     * @param bus     Which GPIB bus the ITC503 is on
+     * @param address The GPIB address on the bus that the ITC503 has
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException If the specified device does not identify as an ITC503
+     */
     public ITC503(int bus, int address) throws IOException, DeviceException {
 
         super(bus, address, DEFAULT_TIMEOUT, 0, EOS_RETURN);
@@ -78,10 +57,27 @@ public class ITC503 extends GPIBDevice {
         return Double.parseDouble(reply.substring(1));
     }
 
+    /**
+     * Returns the temperature that the ITC is currently programmed to reach.
+     *
+     * @return Target temperature
+     *
+     * @throws IOException Upon communication error
+     */
     public double getTargetTemperature() throws IOException {
         return readChannel(SET_TEMP_CHANNEL);
     }
 
+    /**
+     * Returns the temperature reported by the given sensor.
+     *
+     * @param sensor The sensor to read (1, 2 or 3)
+     *
+     * @return Temperature reported by the sensor
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon invalid sensor number
+     */
     public double getTemperature(int sensor) throws IOException, DeviceException {
 
         if (!Util.isBetween(sensor, 1, 3)) {
@@ -156,6 +152,37 @@ public class ITC503 extends GPIBDevice {
                     System.exit(1);
                 }
         );
+
+    }
+
+
+    public enum Mode {
+
+        LOCAL_LOCKED(0),
+        REMOTE_LOCKED(1),
+        LOCAL_UNLOCKED(2),
+        REMOTE_UNLOCKED(3);
+
+        private        int                    c;
+        private static HashMap<Integer, Mode> lookup = new HashMap<>();
+
+        static Mode fromInt(int i) {
+            return lookup.getOrDefault(i, null);
+        }
+
+        static {
+            for (Mode mode : Mode.values()) {
+                lookup.put(mode.toInt(), mode);
+            }
+        }
+
+        Mode(int code) {
+            c = code;
+        }
+
+        int toInt() {
+            return c;
+        }
 
     }
 
