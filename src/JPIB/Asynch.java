@@ -33,7 +33,7 @@ public class Asynch {
             }
         };
 
-        (new Timer()).scheduleAtFixedRate(task, 0, checkInterval);
+        timer.scheduleAtFixedRate(task, 0, checkInterval);
 
     }
 
@@ -77,8 +77,8 @@ public class Asynch {
 
     public static void onParamWithinError(final DoubleReturn valueToCheck, final double targetValue, final double percError, final long duration, final int interval, final SRunnable onStable, final ERunnable onException) {
 
-        final double minValue = (1 - (percError/100D)) * targetValue;
-        final double maxValue = (1 + (percError/100D)) * targetValue;
+        final double minValue = (1 - (percError / 100D)) * targetValue;
+        final double maxValue = (1 + (percError / 100D)) * targetValue;
 
         onParamWithinRange(valueToCheck, minValue, maxValue, duration, interval, onStable, onException);
 
