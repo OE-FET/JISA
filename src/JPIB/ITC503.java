@@ -52,7 +52,7 @@ public class ITC503 extends GPIBDevice {
 
     }
 
-    private double readChannel(int channel) throws IOException {
+    private synchronized double readChannel(int channel) throws IOException {
         String reply = query(C_READ, channel);
         return Double.parseDouble(reply.substring(1));
     }
@@ -78,7 +78,7 @@ public class ITC503 extends GPIBDevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon invalid sensor number
      */
-    public double getTemperature(int sensor) throws IOException, DeviceException {
+    public synchronized double getTemperature(int sensor) throws IOException, DeviceException {
 
         if (!Util.isBetween(sensor, 1, 3)) {
             throw new DeviceException("Sensor index, %d, out of range!", sensor);
@@ -127,11 +127,11 @@ public class ITC503 extends GPIBDevice {
     }
 
     public void setTemperature(double temperature) throws IOException {
-        write(C_SET_TEMP, temperature);
+        query(C_SET_TEMP, temperature);
     }
 
     public void setMode(Mode mode) throws IOException {
-        write(C_SET_MODE, mode.toInt());
+        query(C_SET_MODE, mode.toInt());
     }
 
     public void onStableTemperature(final int sensor, double temperature, double percError, SRunnable onStable) {

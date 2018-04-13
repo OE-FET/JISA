@@ -14,7 +14,7 @@ public class Main {
     private static final int                 SR830_ADDRESS  = 30;
     private static final int                 K2200_ADDRESS  = 22;
     private static final int                 ITC503_ADDRESS = 20;
-    private static final int                 K236_ADDRESS   = 15;
+    private static final int                 K236_ADDRESS   = 17;
     private static final ArrayList<Double[]> results        = new ArrayList<>();
 
     public static void main(String[] args) {
@@ -51,14 +51,17 @@ public class Main {
         itc.setMode(ITC503.Mode.REMOTE_LOCKED);
         smu.setSourceFunction(K236.Source.CURRENT, K236.Function.DC);
 
+        System.out.print("Waiting for stable temperature...");
         // Set ITC temperature to 100 K and wait until the temperature is stable (within 10%)
-        itc.setTemperature(100.0);
-        itc.onStableTemperature(1, 100.0, 10, Main::powerUp);
+        itc.onStableTemperature(1, 292.6, 5000, 100, 10, Main::powerUp);
 
 
     }
 
     private static void powerUp() throws IOException {
+
+        System.out.println(" Done!");
+        System.out.print("Waiting for stable voltage...");
 
         // Set voltage and wait for it to be stable before executing the next function
         final double voltage = 2.5;
@@ -72,6 +75,9 @@ public class Main {
 
     private static void measure() {
 
+        System.out.println(" Done!");
+        System.out.println("Taking measurements...");
+
         final int numMeasurements = 10;
         final int interval        = 500;
 
@@ -80,7 +86,8 @@ public class Main {
                 (i) -> i >= numMeasurements,
                 interval,
                 (i) -> {
-                    results.add(new Double[]{power.getVoltage(), itc.getTemperature(1), sr830.getRefFrequency()});
+                    results.add(new Double[]{power.getVoltage(), itc.getTemperature(1), sr830.getR(), sr830.getT()});
+                    System.out.printf("Measurement %d/%d\n", i+1, numMeasurements);
                 },
                 Main::outputResults,
                 (e) -> {
@@ -91,17 +98,19 @@ public class Main {
 
     }
 
-    private static void outputResults() {
+    private static void outputResults() throws IOException {
+
+        power.turnOff();
 
         // Output each measurement set on a new line
         System.out.println("Results:");
-        System.out.println("Measurement \t Voltage [V] \t Temperature [K] \t Frequency [Hz]");
+        System.out.println("Measurement \t Voltage [V] \t Temperature [K] \t R [V] \t\t T [deg]");
 
         int count = 1;
 
         for (Double[] row : results) {
 
-            System.out.printf("%03d \t %f \t %f \t %f\n", count, row[0], row[1], row[2]);
+            System.out.printf("%03d \t\t\t %f \t\t %f \t\t %f \t %f\n", count, row[0], row[1], row[2], row[3]);
             count++;
 
         }

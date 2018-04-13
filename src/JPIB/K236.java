@@ -50,7 +50,7 @@ public class K236 extends GPIBDevice {
 
         }
 
-        write(C_SET_BIAS, level, 0, 0);
+        query(C_SET_BIAS, level, 0, 0);
     }
 
     private double readValue(int channel) throws IOException {
@@ -99,7 +99,7 @@ public class K236 extends GPIBDevice {
     }
 
     public void setSourceFunction(Source s, Function f) throws IOException {
-        write(C_SET_SRC_FUNC, s.toInt(), f.toInt());
+        query(C_SET_SRC_FUNC, s.toInt(), f.toInt());
         source = s;
         function = f;
     }
