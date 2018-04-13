@@ -2,6 +2,7 @@ package JPIB;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Main {
 
@@ -17,20 +18,67 @@ public class Main {
     private static final int                 K236_ADDRESS   = 17;
     private static final ArrayList<Double[]> results        = new ArrayList<>();
 
+    enum Exc {
+
+        IO_EXCEPTION(IOException.class),
+        DEVICE_EXCEPTION(DeviceException.class),
+        INTERRUPTED_EXCEPTION(InterruptedException.class),
+        UNKNOWN_EXCEPTION(Exception.class);
+
+        private static HashMap<Class, Exc> lookup = new HashMap<>();
+
+        static {
+            for (Exc e: Exc.values()) {
+                lookup.put(e.getClazz(), e);
+            }
+        }
+
+        static Exc fromClass(Class c) {
+            return lookup.getOrDefault(c, UNKNOWN_EXCEPTION);
+        }
+
+        private Class clazz;
+
+        Exc(Class c) {
+            clazz = c;
+        }
+
+        Class getClazz() {
+            return clazz;
+        }
+
+    }
+
+    public static void exceptionHandler(Exception e) {
+
+        Exc exc = Exc.fromClass(e.getClass());
+
+        switch (exc) {
+
+            case IO_EXCEPTION:
+                System.err.printf("Communication error: \"%s\"\n", e.getMessage());
+                break;
+            case DEVICE_EXCEPTION:
+                System.err.printf("Device error: \"%s\"\n", e.getMessage());
+                break;
+            case INTERRUPTED_EXCEPTION:
+                System.err.printf("Waiting error: \"%s\"\n", e.getMessage());
+                break;
+            default:
+                System.err.printf("Unknown error: \"%s\"\n", e.getMessage());
+                break;
+        }
+
+        System.exit(1);
+
+    }
+
     public static void main(String[] args) {
 
         try {
-
             initialise();
-
-        } catch (IOException e) {
-            System.err.printf("Communication error: \"%s\"\n", e.getMessage());
-        } catch (DeviceException e) {
-            System.err.printf("Device error: \"%s\"\n", e.getMessage());
-        } catch (InterruptedException e) {
-            System.err.printf("Waiting error: \"%s\"\n", e.getMessage());
         } catch (Exception e) {
-            System.err.printf("Unknown error: \"%s\"\n", e.getMessage());
+            exceptionHandler(e);
         }
 
     }
@@ -78,8 +126,8 @@ public class Main {
         System.out.println(" Done!");
         System.out.println("Taking measurements...");
 
-        final int numMeasurements = 10;
-        final int interval        = 500;
+        final int numMeasurements = 25;
+        final int interval        = 1000;
 
         // Take 10 measurements, 500 ms apart, then move to the outputResults() function
         Asynch.onInterval(
