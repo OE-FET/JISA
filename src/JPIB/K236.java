@@ -2,27 +2,30 @@ package JPIB;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class K236 extends GPIBDevice {
 
     // TODO: Test with actual instrument in lab
 
-    private static final String   C_SET_SRC_FUNC = "F%d,%d";
-    private static final String   C_SET_BIAS     = "B%f,%d,%d";
-    private static final String   C_GET_VALUE    = "G%d,%d,%d";
-    private static final int      OUTPUT_NOTHING = 0;
-    private static final int      OUTPUT_SOURCE  = 1;
-    private static final int      OUTPUT_DELAY   = 2;
-    private static final int      OUTPUT_MEASURE = 4;
-    private static final int      OUTPUT_TIME    = 8;
-    private static final int      FORMAT_CLEAN   = 2;
-    private static final int      ONE_DC_DATA    = 0;
-    private static final double   MIN_CURRENT    = -100e-3;
-    private static final double   MAX_CURRENT    = +100e-3;
-    private static final double   MIN_VOLTAGE    = -110;
-    private static final double   MAX_VOLTAGE    = +110;
-    private              Source   source         = null;
-    private              Function function       = null;
+    private static final String   C_SET_SRC_FUNC  = "F%d,%d";
+    private static final String   C_SET_BIAS      = "B%f,%d,%d";
+    private static final String   C_GET_VALUE     = "G%d,%d,%d";
+    private static final int      OUTPUT_NOTHING  = 0;
+    private static final int      OUTPUT_SOURCE   = 1;
+    private static final int      OUTPUT_DELAY    = 2;
+    private static final int      OUTPUT_MEASURE  = 4;
+    private static final int      OUTPUT_TIME     = 8;
+    private static final int      FORMAT_CLEAN    = 2;
+    private static final int      ONE_DC_DATA     = 0;
+    private static final double   MIN_CURRENT     = -100e-3;
+    private static final double   MAX_CURRENT     = +100e-3;
+    private static final double   MIN_VOLTAGE     = -110;
+    private static final double   MAX_VOLTAGE     = +110;
+    private              Source   source          = null;
+    private              Function function        = null;
+    private static final Pattern  responsePattern = Pattern.compile("[A-Z]{4}[VI]([+-][0-9]+[.][0-9]+E[+-][0-9]+)");
 
     public K236(int bus, int address) throws IOException {
 
@@ -54,7 +57,17 @@ public class K236 extends GPIBDevice {
     }
 
     private double readValue(int channel) throws IOException {
-        return Double.parseDouble(query(C_GET_VALUE, channel, FORMAT_CLEAN, ONE_DC_DATA));
+
+        String  response = query(C_GET_VALUE, channel, FORMAT_CLEAN, ONE_DC_DATA);
+        Matcher matcher  = responsePattern.matcher(response);
+
+        if(matcher.find()) {
+            return Double.parseDouble(matcher.group(1));
+        } else {
+            throw new IOException("Error reading response from K236!");
+        }
+
+
     }
 
     public double getSourceValue() throws IOException {
@@ -67,7 +80,7 @@ public class K236 extends GPIBDevice {
 
     public double getVoltage() throws IOException {
 
-        switch(source) {
+        switch (source) {
             case VOLTAGE:
                 return getSourceValue();
             case CURRENT:
@@ -80,7 +93,7 @@ public class K236 extends GPIBDevice {
 
     public double getCurrent() throws IOException {
 
-        switch(source) {
+        switch (source) {
             case VOLTAGE:
                 return getMeasureValue();
             case CURRENT:
