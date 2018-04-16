@@ -61,7 +61,7 @@ public class K236 extends GPIBDevice {
         String  response = query(C_GET_VALUE, channel, FORMAT_CLEAN, ONE_DC_DATA);
         Matcher matcher  = responsePattern.matcher(response);
 
-        if(matcher.find()) {
+        if (matcher.find()) {
             return Double.parseDouble(matcher.group(1));
         } else {
             throw new IOException("Error reading response from K236!");
