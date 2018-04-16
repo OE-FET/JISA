@@ -56,9 +56,9 @@ public class Main {
 
     public static void exceptionHandler(Exception e) {
 
-        Exc exc = Exc.fromClass(e.getClass());
+        Exc exceptionType = Exc.fromClass(e.getClass());
 
-        switch (exc) {
+        switch (exceptionType) {
 
             case IO_EXCEPTION:
                 System.err.printf("Communication error: \"%s\"\n", e.getMessage());
