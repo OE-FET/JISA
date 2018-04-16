@@ -134,11 +134,11 @@ public class ITC503 extends GPIBDevice {
         query(C_SET_MODE, mode.toInt());
     }
 
-    public void onStableTemperature(final int sensor, double temperature, double percError, SRunnable onStable) {
-        onStableTemperature(sensor, temperature, STANDARD_TEMP_STABLE_DURATION, STANDARD_CHECK_INTERVAL, percError, onStable);
+    public void onStableTemperature(final int sensor, double temperature, double percError, SRunnable onStable, ERunnable onException) {
+        onStableTemperature(sensor, temperature, STANDARD_TEMP_STABLE_DURATION, STANDARD_CHECK_INTERVAL, percError, onStable, onException);
     }
 
-    public void onStableTemperature(final int sensor, double temperature, long minDuration, int checkInterval, double percError, SRunnable onStable) {
+    public void onStableTemperature(final int sensor, double temperature, long minDuration, int checkInterval, double percError, SRunnable onStable, ERunnable onException) {
 
         Asynch.onParamWithinError(
                 () -> getTemperature(sensor),
@@ -147,10 +147,7 @@ public class ITC503 extends GPIBDevice {
                 minDuration,
                 checkInterval,
                 onStable,
-                (e) -> {
-                    e.printStackTrace();
-                    System.exit(1);
-                }
+                onException
         );
 
     }

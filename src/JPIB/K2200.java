@@ -51,7 +51,7 @@ public class K2200 extends GPIBDevice {
         write(C_SET_OUTPUT, OUTPUT_OFF);
     }
 
-    public void onStableVoltage(double voltage, SRunnable action) {
+    public void onStableVoltage(double voltage, SRunnable action, ERunnable onException) {
 
         Asynch.onParamWithinError(
                 () -> getVoltage(),
@@ -60,10 +60,7 @@ public class K2200 extends GPIBDevice {
                 5000,
                 100,
                 action,
-                (e) -> {
-                    e.printStackTrace();
-                    System.exit(1);
-                }
+                onException
         );
 
     }

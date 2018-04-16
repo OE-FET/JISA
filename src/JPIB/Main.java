@@ -101,7 +101,7 @@ public class Main {
 
         System.out.print("Waiting for stable temperature...");
         // Set ITC temperature to 100 K and wait until the temperature is stable (within 10%)
-        itc.onStableTemperature(1, 292.6, 5000, 100, 10, Main::powerUp);
+        itc.onStableTemperature(1, 292.6, 5000, 100, 10, Main::powerUp, Main::exceptionHandler);
 
 
     }
@@ -117,7 +117,7 @@ public class Main {
         power.setVoltage(voltage);
         power.turnOn();
 
-        power.onStableVoltage(voltage, Main::measure);
+        power.onStableVoltage(voltage, Main::measure, Main::exceptionHandler);
 
     }
 
@@ -138,10 +138,7 @@ public class Main {
                     System.out.printf("Measurement %d/%d\n", i+1, numMeasurements);
                 },
                 Main::outputResults,
-                (e) -> {
-                    e.printStackTrace();
-                    System.exit(1);
-                }
+                Main::exceptionHandler
         );
 
     }
