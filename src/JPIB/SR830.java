@@ -16,6 +16,8 @@ public class SR830 extends GPIBDevice {
     private static final String C_QUERY_SENSITIVITY = "SENS?";
     private static final String C_SET_SENSITIVITY   = "SENS %d";
     private static final String C_QUERY_OUTPUT      = "OUTP ? %d";
+    private static final String C_QUERY_TIME_CONST  = "OFLT?";
+    private static final String C_SET_TIME_CONST    = "OFLT %d";
     private static final int    OUTPUT_X            = 1;
     private static final int    OUTPUT_Y            = 2;
     private static final int    OUTPUT_R            = 3;
@@ -205,10 +207,32 @@ public class SR830 extends GPIBDevice {
      * Returns the current values of X, Y, T, R and frequency (F) all at once
      *
      * @return {X,Y,T,R,F} DataPacket
+     *
      * @throws IOException Upon communication error
      */
     public DataPacket getAll() throws IOException {
         return new DataPacket(query(C_QUERY_ALL));
+    }
+
+    public void onStableLock(double error, long duration, int interval, SRunnable onStable, ERunnable onException) {
+
+        Asynch.onParamStable(
+                this::getR,
+                error,
+                duration,
+                interval,
+                onStable,
+                onException
+        );
+
+    }
+
+    public void setTimeConst(TimeConst mode) throws IOException {
+        write(C_SET_TIME_CONST, mode.toInt());
+    }
+
+    public TimeConst getTimeConst() throws IOException {
+        return TimeConst.fromInt(queryInt(C_QUERY_TIME_CONST));
     }
 
     public enum RefMode {
@@ -287,6 +311,57 @@ public class SR830 extends GPIBDevice {
 
         int toInt() {
             return c;
+        }
+    }
+
+    public enum TimeConst {
+
+        T_10us(0, 10e-6),
+        T_30us(1, 30e-6),
+        T_100us(2, 1003 - 6),
+        T_300us(3, 300e-6),
+        T_1ms(4, 1e-3),
+        T_3ms(5, 3e-3),
+        T_10ms(6, 10e-3),
+        T_30ms(7, 30e-3),
+        T_100ms(8, 100e-3),
+        S_300ms(9, 300e-3),
+        T_1s(10, 1.0),
+        T_3s(11, 3.0),
+        T_10s(12, 10.0),
+        T_30s(13, 30.0),
+        T_100s(14, 100.0),
+        T_300s(15, 300.0),
+        T_1ks(16, 1e3),
+        T_3ks(17, 3e3),
+        T_10ks(18, 10e3),
+        T_30ks(19, 30e3);
+
+        private        int                         c;
+        private        double                      value;
+        private static HashMap<Integer, TimeConst> lookup = new HashMap<>();
+
+        static TimeConst fromInt(int i) {
+            return lookup.getOrDefault(i, null);
+        }
+
+        static {
+            for (TimeConst mode : TimeConst.values()) {
+                lookup.put(mode.toInt(), mode);
+            }
+        }
+
+        TimeConst(int code, double value) {
+            c = code;
+            this.value = value;
+        }
+
+        int toInt() {
+            return c;
+        }
+
+        double getValue() {
+            return value;
         }
     }
 

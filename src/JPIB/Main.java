@@ -18,6 +18,11 @@ public class Main {
     private static final int                 K236_ADDRESS   = 17;
     private static final ArrayList<Double[]> results        = new ArrayList<>();
 
+    private static final double START_FREQUENCY = 0.5;
+    private static final double STEP_FREQUENCY  = 0.1;
+    private static final double END_FREQUENCY   = 2.5;
+    private static       double currentStep;
+
     enum Exc {
 
         IO_EXCEPTION(IOException.class),
@@ -28,7 +33,7 @@ public class Main {
         private static HashMap<Class, Exc> lookup = new HashMap<>();
 
         static {
-            for (Exc e: Exc.values()) {
+            for (Exc e : Exc.values()) {
                 lookup.put(e.getClazz(), e);
             }
         }
@@ -86,77 +91,86 @@ public class Main {
     private static void initialise() throws Exception {
 
         // Clear the bus
+        System.out.print("Intialising bus...");
         GPIB.initialise(GPIB_BUS);
+        System.out.println(" Done!");
 
         // Connect to our instruments
+        System.out.print("Connecting to instruments...");
         sr830 = new SR830(GPIB_BUS, SR830_ADDRESS);
         itc = new ITC503(GPIB_BUS, ITC503_ADDRESS);
         power = new K2200(GPIB_BUS, K2200_ADDRESS);
         smu = new K236(GPIB_BUS, K236_ADDRESS);
+        System.out.println(" Done!");
 
         // Set the reference mode and control mode of the SR830 and ITC503 respectively
-        sr830.setRefMode(SR830.RefMode.EXTERNAL);
-        itc.setMode(ITC503.Mode.REMOTE_LOCKED);
-        smu.setSourceFunction(K236.Source.CURRENT, K236.Function.DC);
 
-        System.out.print("Waiting for stable temperature...");
-        // Set ITC temperature to 100 K and wait until the temperature is stable (within 10%)
-        itc.onStableTemperature(1, 292.6, 5000, 100, 10, Main::powerUp, Main::exceptionHandler);
+        System.out.print("Setting up SR830...");
+        sr830.setRefMode(SR830.RefMode.INTERNAL);
+        sr830.setTimeConst(SR830.TimeConst.T_3s);
 
+        currentStep = START_FREQUENCY;
 
-    }
-
-    private static void powerUp() throws IOException {
-
+        sr830.setRefFrequency(currentStep);
+        sr830.setRefAmplitude(50e-3);
+        sr830.setRefPhase(0);
         System.out.println(" Done!");
-        System.out.print("Waiting for stable voltage...");
 
-        // Set voltage and wait for it to be stable before executing the next function
-        final double voltage = 2.5;
-
-        power.setVoltage(voltage);
-        power.turnOn();
-
-        power.onStableVoltage(voltage, Main::measure, Main::exceptionHandler);
-
-    }
-
-    private static void measure() {
-
-        System.out.println(" Done!");
-        System.out.println("Taking measurements...");
-
-        final int numMeasurements = 25;
-        final int interval        = 1000;
-
-        // Take 10 measurements, 500 ms apart, then move to the outputResults() function
-        Asynch.onInterval(
-                (i) -> i >= numMeasurements,
-                interval,
-                (i) -> {
-                    results.add(new Double[]{power.getVoltage(), itc.getTemperature(1), sr830.getR(), sr830.getT()});
-                    System.out.printf("Measurement %d/%d\n", i+1, numMeasurements);
-                },
-                Main::outputResults,
+        System.out.print("Waiting for stable lock...");
+        sr830.onStableLock(
+                1.0,
+                10000,
+                100,
+                Main::step,
                 Main::exceptionHandler
         );
 
     }
 
-    private static void outputResults() throws IOException {
+    private static void step() throws Exception {
 
-        power.turnOff();
+        System.out.println(" Done!");
+        System.out.printf("Taking measurement for %f Hz...", currentStep);
 
-        // Output each measurement set on a new line
-        System.out.println("Results:");
-        System.out.println("Measurement \t Voltage [V] \t Temperature [K] \t R [V] \t\t T [deg]");
+        results.add(new Double[]{
+                sr830.getRefFrequency(),
+                sr830.getRefAmplitude(),
+                sr830.getR()
+        });
 
-        int count = 1;
+        System.out.println(" Done!");
 
-        for (Double[] row : results) {
+        if (currentStep < END_FREQUENCY) {
 
-            System.out.printf("%03d \t\t\t %f \t\t %f \t\t %f \t %f\n", count, row[0], row[1], row[2], row[3]);
-            count++;
+            currentStep += STEP_FREQUENCY;
+            sr830.setRefFrequency(currentStep);
+            System.out.print("Waiting for stable lock...");
+            sr830.onStableLock(
+                    1.0,
+                    10000,
+                    100,
+                    Main::step,
+                    Main::exceptionHandler
+            );
+
+        } else {
+            outputResults();
+        }
+
+    }
+
+    private static void outputResults() {
+
+        System.out.println("Measurements Complete.");
+        System.out.println("======================");
+        System.out.println("       RESULTS:       ");
+        System.out.println("======================");
+
+        System.out.println("F [Hz] \t A [V] \t R [V] \t E [%]");
+
+        for (Double[] values : results) {
+
+            System.out.printf("%f \t %f \t %f \t %f\n", values[0], values[1], values[2], 100D * Math.abs(values[2] - values[1]) / values[1]);
 
         }
 

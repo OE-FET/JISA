@@ -3,6 +3,11 @@ package JPIB;
 import java.io.IOException;
 import java.util.HashMap;
 
+/**
+ * Class ITC503
+ * <p>
+ * GPIBDevice class for controlling mercury ITC503 temperature controllers via GPIB.
+ */
 public class ITC503 extends GPIBDevice {
 
     private static final String TERMINATOR         = "\r";
@@ -20,8 +25,9 @@ public class ITC503 extends GPIBDevice {
     private static final int    DER_ACTION_TIME    = 10;
     private static final int    FREQ_CHAN_OFFSET   = 10;
 
-    private static final long STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
-    private static final int  STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
+    private static final long   STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
+    private static final int    STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
+    private static final double STANDARD_ERROR_PERC           = 10;
 
     /**
      * Open the ITC503 device at the given bus and address
@@ -88,6 +94,13 @@ public class ITC503 extends GPIBDevice {
 
     }
 
+    /**
+     * Returns the current error value in the cryostat temperature (vs what it was set to be)
+     *
+     * @return Error
+     *
+     * @throws IOException Upon communication error
+     */
     public double getTemperatureError() throws IOException {
         return readChannel(TEMP_ERROR_CHANNEL);
     }
@@ -126,7 +139,7 @@ public class ITC503 extends GPIBDevice {
 
     }
 
-    public void setTemperature(double temperature) throws IOException {
+    public void setTargetTemperature(double temperature) throws IOException {
         query(C_SET_TEMP, temperature);
     }
 
@@ -134,8 +147,8 @@ public class ITC503 extends GPIBDevice {
         query(C_SET_MODE, mode.toInt());
     }
 
-    public void onStableTemperature(final int sensor, double temperature, double percError, SRunnable onStable, ERunnable onException) {
-        onStableTemperature(sensor, temperature, STANDARD_TEMP_STABLE_DURATION, STANDARD_CHECK_INTERVAL, percError, onStable, onException);
+    public void onStableTemperature(final int sensor, double temperature, SRunnable onStable, ERunnable onException) {
+        onStableTemperature(sensor, temperature, STANDARD_TEMP_STABLE_DURATION, STANDARD_CHECK_INTERVAL, STANDARD_ERROR_PERC, onStable, onException);
     }
 
     public void onStableTemperature(final int sensor, double temperature, long minDuration, int checkInterval, double percError, SRunnable onStable, ERunnable onException) {

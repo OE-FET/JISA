@@ -1,5 +1,6 @@
 package JPIB;
 
+import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -119,6 +120,55 @@ public class Asynch {
         };
 
         timer.scheduleAtFixedRate(task, 0, interval);
+
+    }
+
+    public static void onParamStable(final DoubleReturn valueToCheck, final double percentage, final long duration, final int interval, final SRunnable onStable, final ERunnable onException) {
+
+        final Timer timer = new Timer();
+
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+
+                ArrayList<Double> list = new ArrayList<>();
+
+                try {
+
+                    // Get current value
+                    double currentValue = valueToCheck.getValue();
+
+                    // Go back through the list of past values
+                    for (int i = list.size() - 1; i >=0; i--) {
+
+                        double pastValue = list.get(i);
+                        double min = pastValue * (1 - (percentage / 100D));
+                        double max = pastValue * (1 + (percentage / 100D));
+
+                        // When/if we find a value outside our error range, cut out all values before it
+                        if (!Util.isBetween(currentValue, min, max)) {
+                            list.subList(0, i).clear();
+                            break;
+                        }
+
+                    }
+
+                    // Add our new value to the end
+                    list.add(currentValue);
+
+                    // Check if we've been going long enough
+                    if (list.size() * interval >= duration) {
+                        timer.cancel();
+                        onStable.run();
+                    }
+
+
+                } catch (Exception e) {
+                    onException.run(e);
+                }
+
+            }
+        };
 
     }
 
