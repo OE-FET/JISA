@@ -47,11 +47,15 @@ public class K2450 extends GPIBDevice {
     }
 
     public void turnOn() throws IOException {
-        write(C_SET_OUTPUT_STATE, OUTPUT_ON);
+        setOutputState(true);
     }
 
     public void turnOff() throws IOException {
-        write(C_SET_OUTPUT_STATE, OUTPUT_OFF);
+        setOutputState(false);
+    }
+
+    public void setOutputState(boolean on) throws IOException {
+        write(C_SET_OUTPUT_STATE, on ? OUTPUT_ON : OUTPUT_OFF);
     }
 
     public void setSource(Source mode) throws IOException {
@@ -60,6 +64,10 @@ public class K2450 extends GPIBDevice {
 
     public Source getSource() throws IOException {
         return Source.fromTag(query(C_QUERY_SOURCE_FUNCTION));
+    }
+
+    public boolean isOn() throws IOException {
+        return query(C_SET_OUTPUT_STATE).equals(OUTPUT_ON);
     }
 
     public void setVoltage(double voltage) throws IOException {
