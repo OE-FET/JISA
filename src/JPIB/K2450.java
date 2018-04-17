@@ -62,6 +62,14 @@ public class K2450 extends GPIBDevice {
         return Source.fromTag(query(C_QUERY_SOURCE_FUNCTION));
     }
 
+    public void setVoltage(double voltage) throws IOException {
+        setSourceValue(Source.VOLTAGE, voltage);
+    }
+
+    public void setCurrent(double current) throws IOException {
+        setSourceValue(Source.CURRENT, current);
+    }
+
     public void setSourceValue(Source type, double value) throws IOException {
         write(C_SET_SOURCE_VALUE, type.getTag(), value);
     }
