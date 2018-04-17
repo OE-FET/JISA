@@ -58,6 +58,8 @@ public class K236 extends GPIBDevice {
 
     private double readValue(int channel) throws IOException {
 
+        // TODO: Test that this works with the actual device in actual reality in the actual lab, actually.
+
         String  response = query(C_GET_VALUE, channel, FORMAT_CLEAN, ONE_DC_DATA);
         Matcher matcher  = responsePattern.matcher(response);
 
