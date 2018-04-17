@@ -23,67 +23,12 @@ public class Main {
     private static final double END_FREQUENCY   = 2.5;
     private static       double currentStep;
 
-    enum Exc {
-
-        IO_EXCEPTION(IOException.class),
-        DEVICE_EXCEPTION(DeviceException.class),
-        INTERRUPTED_EXCEPTION(InterruptedException.class),
-        UNKNOWN_EXCEPTION(Exception.class);
-
-        private static HashMap<Class, Exc> lookup = new HashMap<>();
-
-        static {
-            for (Exc e : Exc.values()) {
-                lookup.put(e.getClazz(), e);
-            }
-        }
-
-        static Exc fromClass(Class c) {
-            return lookup.getOrDefault(c, UNKNOWN_EXCEPTION);
-        }
-
-        private Class clazz;
-
-        Exc(Class c) {
-            clazz = c;
-        }
-
-        Class getClazz() {
-            return clazz;
-        }
-
-    }
-
-    public static void exceptionHandler(Exception e) {
-
-        Exc exc = Exc.fromClass(e.getClass());
-
-        switch (exc) {
-
-            case IO_EXCEPTION:
-                System.err.printf("Communication error: \"%s\"\n", e.getMessage());
-                break;
-            case DEVICE_EXCEPTION:
-                System.err.printf("Device error: \"%s\"\n", e.getMessage());
-                break;
-            case INTERRUPTED_EXCEPTION:
-                System.err.printf("Waiting error: \"%s\"\n", e.getMessage());
-                break;
-            default:
-                System.err.printf("Unknown error: \"%s\"\n", e.getMessage());
-                break;
-        }
-
-        System.exit(1);
-
-    }
-
     public static void main(String[] args) {
 
         try {
             initialise();
         } catch (Exception e) {
-            exceptionHandler(e);
+            Util.exceptionHandler(e);
         }
 
     }
@@ -122,7 +67,7 @@ public class Main {
                 5000,
                 100,
                 Main::step,
-                Main::exceptionHandler
+                Util::exceptionHandler
         );
 
     }
@@ -150,7 +95,7 @@ public class Main {
                     5000,
                     100,
                     Main::step,
-                    Main::exceptionHandler
+                    Util::exceptionHandler
             );
 
         } else {
