@@ -118,8 +118,8 @@ public class Main {
 
         System.out.print("Waiting for stable lock...");
         sr830.onStableLock(
-                1.0,
-                10000,
+                0.1,
+                5000,
                 100,
                 Main::step,
                 Main::exceptionHandler
@@ -147,7 +147,7 @@ public class Main {
             System.out.print("Waiting for stable lock...");
             sr830.onStableLock(
                     1.0,
-                    10000,
+                    5000,
                     100,
                     Main::step,
                     Main::exceptionHandler
@@ -165,8 +165,9 @@ public class Main {
         System.out.println("======================");
         System.out.println("       RESULTS:       ");
         System.out.println("======================");
-
-        System.out.println("F [Hz] \t A [V] \t R [V] \t E [%]");
+        System.out.println("");
+        System.out.println("F [Hz] \t\t A [V] \t\t R [V] \t\t E [%]");
+        System.out.println("");
 
         for (Double[] values : results) {
 

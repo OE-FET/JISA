@@ -128,15 +128,19 @@ public class Asynch {
         final Timer timer = new Timer();
 
         TimerTask task = new TimerTask() {
+
+            private ArrayList<Double> list = new ArrayList<>();
+
             @Override
             public void run() {
-
-                ArrayList<Double> list = new ArrayList<>();
 
                 try {
 
                     // Get current value
                     double currentValue = valueToCheck.getValue();
+
+                    // Add our new value to the end
+                    list.add(currentValue);
 
                     // Go back through the list of past values
                     for (int i = list.size() - 1; i >=0; i--) {
@@ -153,9 +157,6 @@ public class Asynch {
 
                     }
 
-                    // Add our new value to the end
-                    list.add(currentValue);
-
                     // Check if we've been going long enough
                     if (list.size() * interval >= duration) {
                         timer.cancel();
@@ -169,6 +170,8 @@ public class Asynch {
 
             }
         };
+
+        timer.scheduleAtFixedRate(task, interval, interval);
 
     }
 
