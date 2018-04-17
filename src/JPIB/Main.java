@@ -18,9 +18,11 @@ public class Main {
     private static final int                 K236_ADDRESS   = 17;
     private static final ArrayList<Double[]> results        = new ArrayList<>();
 
-    private static final double START_FREQUENCY = 0.5;
-    private static final double STEP_FREQUENCY  = 0.1;
-    private static final double END_FREQUENCY   = 2.5;
+    private static final double START_FREQUENCY    = 0.5;
+    private static final double STEP_FREQUENCY     = 0.1;
+    private static final double END_FREQUENCY      = 2.5;
+    private static final double LOCKIN_ERROR_PCT   = 0.1;
+    private static final int    LOCKIN_STABLE_TIME = 5000;
     private static       double currentStep;
 
     public static void main(String[] args) {
@@ -63,8 +65,8 @@ public class Main {
 
         System.out.print("Waiting for stable lock...");
         sr830.onStableLock(
-                0.1,
-                5000,
+                LOCKIN_ERROR_PCT,
+                LOCKIN_STABLE_TIME,
                 100,
                 Main::step,
                 Util::exceptionHandler
@@ -91,8 +93,8 @@ public class Main {
             sr830.setRefFrequency(currentStep);
             System.out.print("Waiting for stable lock...");
             sr830.onStableLock(
-                    1.0,
-                    5000,
+                    LOCKIN_ERROR_PCT,
+                    LOCKIN_STABLE_TIME,
                     100,
                     Main::step,
                     Util::exceptionHandler
