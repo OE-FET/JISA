@@ -13,8 +13,8 @@ public class K2450 extends GPIBDevice {
     private static final String C_QUERY_SOURCE_FUNCTION = ":SOUR:FUNC?";
     private static final String C_QUERY_OUTPUT_STATE    = ":OUTP:STATE?";
     private static final String C_SET_SOURCE_VALUE      = ":SOUR:%s %f";
-    private static final String OUTPUT_ON               = "ON";
-    private static final String OUTPUT_OFF              = "OFF";
+    private static final String OUTPUT_ON               = "1";
+    private static final String OUTPUT_OFF              = "0";
 
     public K2450(int bus, int address) throws IOException, DeviceException {
 
@@ -67,7 +67,7 @@ public class K2450 extends GPIBDevice {
     }
 
     public boolean isOn() throws IOException {
-        return query(C_SET_OUTPUT_STATE).equals(OUTPUT_ON);
+        return query(C_QUERY_OUTPUT_STATE).equals(OUTPUT_ON);
     }
 
     public void setVoltage(double voltage) throws IOException {

@@ -10,27 +10,47 @@ public class Main {
     private static ITC503 itc;
     private static K2200  power;
     private static K236   smu;
+    private static K2450  k2450;
 
-    private static final int                 GPIB_BUS       = 0;
-    private static final int                 SR830_ADDRESS  = 30;
-    private static final int                 K2200_ADDRESS  = 22;
-    private static final int                 ITC503_ADDRESS = 20;
-    private static final int                 K236_ADDRESS   = 17;
-    private static final ArrayList<Double[]> results        = new ArrayList<>();
-
-    private static final double START_FREQUENCY    = 0.5;
-    private static final double STEP_FREQUENCY     = 0.1;
-    private static final double END_FREQUENCY      = 2.5;
-    private static final double LOCKIN_ERROR_PCT   = 0.1;
-    private static final int    LOCKIN_STABLE_TIME = 5000;
-    private static       double currentStep;
+    private static final int                 GPIB_BUS           = 0;
+    private static final int                 SR830_ADDRESS      = 30;
+    private static final int                 K2200_ADDRESS      = 22;
+    private static final int                 ITC503_ADDRESS     = 20;
+    private static final int                 K236_ADDRESS       = 17;
+    private static final int                 K2450_ADDRESS      = 2;
+    private static final ArrayList<Double[]> results            = new ArrayList<>();
+    private static final double              START_FREQUENCY    = 0.5;
+    private static final double              STEP_FREQUENCY     = 0.1;
+    private static final double              END_FREQUENCY      = 2.5;
+    private static final double              LOCKIN_ERROR_PCT   = 0.1;
+    private static final int                 LOCKIN_STABLE_TIME = 5000;
+    private static double currentStep;
 
     public static void main(String[] args) {
 
         try {
-            initialise();
+            testK2450();
         } catch (Exception e) {
             Util.exceptionHandler(e);
+        }
+
+    }
+
+    private static void testK2450() throws IOException, DeviceException, InterruptedException {
+
+        GPIB.initialise(GPIB_BUS);
+
+        k2450 = new K2450(GPIB_BUS, K2450_ADDRESS);
+        k2450.setSource(K2450.Source.VOLTAGE);
+        k2450.setVoltage(50e-3);
+        k2450.turnOn();
+
+        System.out.println("Voltage [mV] \t Current [nA]");
+
+        for (int i = 0; i < 11; i++) {
+            k2450.setVoltage(50e-3 + (1e-3 * i));
+            Thread.sleep(1000);
+            System.out.printf("%.2f \t\t\t %.2f\n", k2450.getVoltage()*1e3, k2450.getCurrent() * 1e9);
         }
 
     }

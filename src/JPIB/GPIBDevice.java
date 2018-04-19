@@ -4,17 +4,18 @@ import java.io.IOException;
 
 public class GPIBDevice {
 
-    private int    bus;
-    private int    address;
-    private int    device;
+    private int bus;
+    private int address;
+    private int device;
     private String terminator  = "";
     private String lastCommand = null;
     private String lastRead    = null;
 
-    public final static int DEFAULT_TIMEOUT = 13;
-    public final static int DEFAULT_EOI     = 1;
-    public final static int DEFAULT_EOS     = 0;
-    public final static int EOS_RETURN      = 5130;
+    public final static int    DEFAULT_TIMEOUT = 13;
+    public final static int    DEFAULT_EOI     = 1;
+    public final static int    DEFAULT_EOS     = 0;
+    public final static int    EOS_RETURN      = 5130;
+    public final static String C_IDN           = "*IDN?";
 
     public GPIBDevice(int bus, int address, int timeout, int EOI, int EOS) throws IOException {
 
@@ -80,6 +81,10 @@ public class GPIBDevice {
     public synchronized String query(String command, Object... args) throws IOException {
         write(command, args);
         return read();
+    }
+
+    public synchronized String getIDN() throws IOException {
+        return query(C_IDN);
     }
 
 }
