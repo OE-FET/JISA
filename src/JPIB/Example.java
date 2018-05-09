@@ -112,7 +112,7 @@ public class Example {
         System.out.println("Measurements Complete.");
         System.out.println("");
         results.outputTable();
-        results.outputMATLAB(System.getProperty("user.home") + "/output.m", "F", "A", "R", "E");
+        results.outputMATLAB("C:\\Users\\holdfast_admin\\Documents\\MATLAB\\Lockin Accuracy\\output.m", "F", "A", "R", "E");
 
     }
 
