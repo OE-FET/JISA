@@ -83,6 +83,7 @@ public class Example {
 
             System.out.printf("Waiting for stable %f Hz lock... ", f);
 
+            // Set frequency and wait for a stable lock (within 0.1% for 5s).
             sr830.setRefFrequency(f);
             sr830.waitForStableLock(0.1, 5000);
 
@@ -90,9 +91,11 @@ public class Example {
 
             System.out.printf("Taking measurement for %f Hz... ", f);
 
+            // Read out data
             SR830.DataPacket data = sr830.getAll();
             double           amp  = sr830.getRefAmplitude() * PREAMP_GAIN;
 
+            // Add data to results container
             results.addData(
                     data.f,
                     amp,
@@ -111,7 +114,11 @@ public class Example {
 
         System.out.println("Measurements Complete.");
         System.out.println("");
+
+        // Output human-readable table to terminal
         results.outputTable();
+
+        // Output MATLAB file containing data to file.
         results.outputMATLAB("C:\\Users\\holdfast_admin\\Documents\\MATLAB\\Lockin Accuracy\\output.m", "F", "A", "R", "E");
 
     }
