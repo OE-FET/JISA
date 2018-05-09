@@ -24,6 +24,10 @@ public class SR830 extends GPIBDevice {
     private static final int    OUTPUT_T            = 4;
     private static final String C_QUERY_ALL         = "SNAP ? 1,2,3,4,9";
 
+    private static final double STANDARD_ERROR    = 1.0;
+    private static final int    STANDARD_INTERVAL = 100;
+    private static final long   STANDARD_DURATION = 10000;
+
     /**
      * Open an SR830 device on the given bus and address
      *
@@ -229,6 +233,34 @@ public class SR830 extends GPIBDevice {
                 onException
         );
 
+    }
+
+    /**
+     * Wait for the R output of the lock-in to remain within the given percentage error for the given duration.
+     *
+     * @param errorPct The percentage error required
+     * @param duration The duration required
+     *
+     * @throws Exception
+     */
+    public void waitForStableLock(double errorPct, long duration) throws Exception {
+
+        Synch.waitForParamStable(
+                this::getR,
+                errorPct,
+                STANDARD_INTERVAL,
+                duration
+        );
+
+    }
+
+    /**
+     * Wait for the R output of the lock-in to become stable with a 1% error range for at least 10 seconds.
+     *
+     * @throws Exception
+     */
+    public void waitForStableLock() throws Exception {
+        waitForStableLock(STANDARD_ERROR, STANDARD_DURATION);
     }
 
     public void setTimeConst(TimeConst mode) throws IOException {
