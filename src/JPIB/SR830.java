@@ -214,6 +214,10 @@ public class SR830 extends GPIBDevice {
         return new DataPacket(query(C_QUERY_ALL));
     }
 
+    public void onStableLock(double error, long duration, int interval, SRunnable onStable) {
+        onStableLock(error, duration, interval, onStable, Util::exceptionHandler);
+    }
+
     public void onStableLock(double error, long duration, int interval, SRunnable onStable, ERunnable onException) {
 
         Asynch.onParamStable(
