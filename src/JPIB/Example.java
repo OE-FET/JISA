@@ -1,6 +1,9 @@
 package JPIB;
 
 import javax.xml.crypto.Data;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 public class Example {
@@ -104,11 +107,12 @@ public class Example {
 
     }
 
-    private static void outputResults() {
+    private static void outputResults() throws Exception {
 
         System.out.println("Measurements Complete.");
         System.out.println("");
-        results.outputTable(System.out);
+        results.outputTable();
+        results.outputMATLAB(System.getProperty("user.home") + "/output.m", "F", "A", "R", "E");
 
     }
 

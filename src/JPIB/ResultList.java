@@ -1,7 +1,6 @@
 package JPIB;
 
-import java.io.OutputStream;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -12,7 +11,7 @@ import java.util.stream.Stream;
 public class ResultList implements Iterable<Result> {
 
     private String[]          names;
-    private String[]          units = null;
+    private String[]          units   = null;
     private int               cols;
     private ArrayList<Result> results = new ArrayList<>();
 
@@ -56,7 +55,7 @@ public class ResultList implements Iterable<Result> {
         } else {
             String[] titles = new String[cols];
 
-            for (int i = 0; i < cols; i ++) {
+            for (int i = 0; i < cols; i++) {
 
                 titles[i] = String.format("%s [%s]", names[i], units[i]);
 
@@ -89,7 +88,7 @@ public class ResultList implements Iterable<Result> {
 
         int[] widths = new int[cols];
 
-        for (int i = 0; i < cols; i ++) {
+        for (int i = 0; i < cols; i++) {
 
             int max = getTitle(i).length();
 
@@ -105,7 +104,7 @@ public class ResultList implements Iterable<Result> {
 
         for (int w : widths) {
 
-            for (int i = 0; i < w + 2; i ++) {
+            for (int i = 0; i < w + 2; i++) {
                 stream.print("=");
             }
 
@@ -116,13 +115,13 @@ public class ResultList implements Iterable<Result> {
         stream.print("\n");
         stream.print("|");
 
-        for (int i = 0; i < cols; i ++) {
+        for (int i = 0; i < cols; i++) {
 
             stream.print(" ");
             String title = getTitle(i);
             stream.print(title);
 
-            for (int n = 0; n < widths[i] - title.length(); n ++) {
+            for (int n = 0; n < widths[i] - title.length(); n++) {
                 stream.print(" ");
             }
 
@@ -134,7 +133,7 @@ public class ResultList implements Iterable<Result> {
 
         for (int w : widths) {
 
-            for (int i = 0; i < w + 2; i ++) {
+            for (int i = 0; i < w + 2; i++) {
                 stream.print("=");
             }
 
@@ -148,13 +147,13 @@ public class ResultList implements Iterable<Result> {
 
             stream.print("|");
 
-            for (int i = 0; i < cols; i ++) {
+            for (int i = 0; i < cols; i++) {
 
                 stream.print(" ");
                 String title = String.format("%f", r.get(i));
                 stream.print(title);
 
-                for (int n = 0; n < widths[i] - title.length(); n ++) {
+                for (int n = 0; n < widths[i] - title.length(); n++) {
                     stream.print(" ");
                 }
 
@@ -166,7 +165,7 @@ public class ResultList implements Iterable<Result> {
 
             for (int w : widths) {
 
-                for (int i = 0; i < w + 2; i ++) {
+                for (int i = 0; i < w + 2; i++) {
                     stream.print("-");
                 }
 
@@ -180,13 +179,25 @@ public class ResultList implements Iterable<Result> {
 
     }
 
+    public void outputTable(String path) throws IOException {
+        FileOutputStream f = new FileOutputStream(path);
+        PrintStream      s = new PrintStream(f);
+        outputTable(s);
+        f.close();
+        s.close();
+    }
+
+    public void outputTable() {
+        outputTable(System.out);
+    }
+
     public void outputMATLAB(PrintStream stream, String... variables) {
 
         if (variables.length != cols) {
             throw new IndexOutOfBoundsException("Number of columns does not match");
         }
 
-        for (int i = 0; i < cols; i ++) {
+        for (int i = 0; i < cols; i++) {
 
             ArrayList<String> numbers = new ArrayList<>();
 
@@ -198,6 +209,14 @@ public class ResultList implements Iterable<Result> {
 
         }
 
+    }
+
+    public void outputMATLAB(String path, String... variables) throws IOException {
+        FileOutputStream f = new FileOutputStream(path);
+        PrintStream      s = new PrintStream(f);
+        outputMATLAB(s, variables);
+        f.close();
+        s.close();
     }
 
     @Override
