@@ -43,7 +43,6 @@ public class ITC503 extends GPIBDevice {
         super(bus, address, DEFAULT_TIMEOUT, 0, EOS_RETURN);
 
         setTerminator(TERMINATOR);
-
         write(C_SET_COMM_MODE);
 
         try {

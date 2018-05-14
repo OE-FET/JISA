@@ -21,7 +21,7 @@ public class Main {
     private static final ArrayList<Double[]> results            = new ArrayList<>();
     private static final double              START_FREQUENCY    = 0.5;
     private static final double              STEP_FREQUENCY     = 0.1;
-    private static final double              END_FREQUENCY      = 2.5;
+    private static final double              END_FREQUENCY      = 1.0;
     private static final double              LOCKIN_ERROR_PCT   = 0.1;
     private static final int                 LOCKIN_STABLE_TIME = 5000;
     private static double currentStep;
@@ -29,6 +29,21 @@ public class Main {
     public static void main(String[] args) {
 
         Example.run();
+
+    }
+
+    private static void scanForDevices() throws Exception {
+
+        GPIB.initialise(GPIB_BUS);
+        GPIB.scanForDevices(GPIB_BUS);
+
+        System.out.println("Scanning for devices...");
+
+        for (GPIBDevice dev : GPIB.getDevices(0)) {
+
+            System.out.printf("Found device on %d: %s%n", dev.getAddress(), dev.getIDN());
+
+        }
 
     }
 

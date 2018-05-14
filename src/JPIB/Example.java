@@ -1,11 +1,5 @@
 package JPIB;
 
-import javax.xml.crypto.Data;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.util.ArrayList;
-
 public class Example {
 
     private static SR830 sr830 = null;
@@ -14,7 +8,7 @@ public class Example {
     private static final int SR830_ADDRESS = 30;
 
     private static final double     MIN_FREQUENCY  = 0.5;   // 0.5 Hz
-    private static final double     MAX_FREQUENCY  = 10.0;   // 1.0 Hz
+    private static final double     MAX_FREQUENCY  = 1.0;   // 1.0 Hz
     private static final double     FREQUENCY_STEP = 0.1;   // 0.1 Hz
     private static final double     AMPLITUDE      = 50e-3; // 50  mV
     private static final double     PREAMP_GAIN    = 5.0;

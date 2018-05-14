@@ -6,9 +6,9 @@ import java.util.HashMap;
 
 /**
  * GPIB Driver class.
- *
+ * <p>
  * Interfaces with native code (libJPIB.so) via JNI.
- *
+ * <p>
  * JNI expects calls to be made from an object instance, so we instantiate one instance and store it statically so that
  * we may wrap static functions around it and pretend that this is a static class.
  */
@@ -200,31 +200,38 @@ public class GPIB {
         return buses.keySet().toArray(new Integer[buses.size()]);
     }
 
-    public static Integer[] getAddresses(int bus) {
+    public static Integer[] getAddresses(int bus) throws IOException {
 
-        if (!buses.containsKey(bus)) {
-            return new Integer[0];
+        ArrayList<Integer> list = new ArrayList<>();
+
+        for (int i = 1; i < 32; i++) {
+
+            try {
+                initialise(bus);
+                GPIBDevice dev = new GPIBDevice(bus, i, GPIBDevice.DEFAULT_TIMEOUT, 0, GPIBDevice.EOS_RETURN);
+                dev.write("Q2\r\n");
+                list.add(i);
+            } catch (Exception e) {
+            }
+
         }
 
-        return buses.get(bus).toArray(new Integer[buses.get(bus).size()]);
+        initialise(bus);
+
+        return list.toArray(new Integer[list.size()]);
 
     }
 
     public static GPIBDevice[] getDevices(int bus) throws IOException {
 
-        if (!buses.containsKey(bus)) {
-            return new GPIBDevice[0];
+        Integer[]    addresses = getAddresses(bus);
+        GPIBDevice[] list      = new GPIBDevice[addresses.length];
+
+        for (int i = 0; i < addresses.length; i ++) {
+            list[i] = new GPIBDevice(bus, addresses[i]);
         }
 
-        int          count   = buses.get(bus).size();
-        GPIBDevice[] devices = new GPIBDevice[count];
-
-        for (int i = 0; i < count; i++) {
-            int address = buses.get(bus).get(i);
-            devices[i] = new GPIBDevice(bus, address);
-        }
-
-        return devices;
+        return list;
 
     }
 
