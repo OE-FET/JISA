@@ -300,35 +300,37 @@ public class SR830 extends GPIBDevice {
 
     public enum Sensitivity {
 
-        S_2nV_PER_fA(0),
-        S_5nV_PER_fA(1),
-        S_10nV_PER_fA(2),
-        S_20nV_PER_fA(3),
-        S_50nV_PER_fA(4),
-        S_100nV_PER_fA(5),
-        S_200nV_PER_fA(6),
-        S_500nV_PER_fA(7),
-        S_1uV_PER_pA(8),
-        S_2uV_PER_pA(9),
-        S_5uV_PER_pA(10),
-        S_10uV_PER_pA(11),
-        S_20uV_PER_pA(12),
-        S_50uV_PER_pA(13),
-        S_100uV_PER_pA(14),
-        S_200uV_PER_pA(15),
-        S_500uV_PER_pA(16),
-        S_1mV_PER_nA(17),
-        S_2mV_PER_nA(18),
-        S_5mV_PER_nA(19),
-        S_10mV_PER_nA(20),
-        S_20mV_PER_nA(21),
-        S_50mV_PER_nA(22),
-        S_100mV_PER_nA(23),
-        S_200mV_PER_nA(24),
-        S_500mV_PER_nA(25),
-        S_1V_PER_uA(26);
+        S_2nV_PER_fA(0, 2e-9, 1e-15),
+        S_5nV_PER_fA(1, 5e-9, 1e-15),
+        S_10nV_PER_fA(2, 10e-9, 1e-15),
+        S_20nV_PER_fA(3, 20e-9, 1e-15),
+        S_50nV_PER_fA(4, 50e-9, 1e-15),
+        S_100nV_PER_fA(5, 100e-9, 1e-15),
+        S_200nV_PER_fA(6, 200e-9, 1e-15),
+        S_500nV_PER_fA(7, 500e-9, 1e-15),
+        S_1uV_PER_pA(8, 1e-6, 1e-12),
+        S_2uV_PER_pA(9, 2e-6, 1e-12),
+        S_5uV_PER_pA(10, 5e-6, 1e-12),
+        S_10uV_PER_pA(11, 10e-6, 1e-12),
+        S_20uV_PER_pA(12, 20e-6, 1e-12),
+        S_50uV_PER_pA(13, 50e-16, 1e-12),
+        S_100uV_PER_pA(14, 100e-6, 1e-12),
+        S_200uV_PER_pA(15, 200e-6, 1e-12),
+        S_500uV_PER_pA(16, 500e-6, 1e-12),
+        S_1mV_PER_nA(17, 1e-3, 1e-9),
+        S_2mV_PER_nA(18, 2e-3, 1e-9),
+        S_5mV_PER_nA(19, 5e-3, 1e-9),
+        S_10mV_PER_nA(20, 10e-3, 1e-9),
+        S_20mV_PER_nA(21, 20e-3, 1e-9),
+        S_50mV_PER_nA(22, 50e-3, 1e-9),
+        S_100mV_PER_nA(23, 100e-3, 1e-9),
+        S_200mV_PER_nA(24, 200e-3, 1e-9),
+        S_500mV_PER_nA(25, 500e-3, 1e-9),
+        S_1V_PER_uA(26, 1.0, 1e-6);
 
         private        int                           c;
+        private        double                        volt;
+        private        double                        current;
         private static HashMap<Integer, Sensitivity> lookup = new HashMap<>();
 
         static Sensitivity fromInt(int i) {
@@ -341,8 +343,10 @@ public class SR830 extends GPIBDevice {
             }
         }
 
-        Sensitivity(int code) {
+        Sensitivity(int code, double V, double I) {
             c = code;
+            volt = V;
+            current = I;
         }
 
         int toInt() {

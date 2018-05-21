@@ -76,9 +76,9 @@ public class Main {
         // Connect to our instruments
         System.out.print("Connecting to instruments...");
         sr830 = new SR830(GPIB_BUS, SR830_ADDRESS);
-//        itc = new ITC503(GPIB_BUS, ITC503_ADDRESS);
-//        power = new K2200(GPIB_BUS, K2200_ADDRESS);
-//        smu = new K236(GPIB_BUS, K236_ADDRESS);
+        itc = new ITC503(GPIB_BUS, ITC503_ADDRESS);
+        power = new K2200(GPIB_BUS, K2200_ADDRESS);
+        smu = new K236(GPIB_BUS, K236_ADDRESS);
         System.out.println(" Done!");
 
         // Set the reference mode and control mode of the SR830 and ITC503 respectively
