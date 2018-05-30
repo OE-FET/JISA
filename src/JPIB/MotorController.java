@@ -62,6 +62,7 @@ public class MotorController {
         public void reset() {
             lastTime = 0;
             integral = 0;
+            lastError = 0;
         }
 
     }
@@ -79,9 +80,8 @@ public class MotorController {
         return power.getVoltage();
     }
 
-    public void setTargetFrequency(double frequency, double errorPCT) throws IOException {
+    public void setTargetFrequency(double frequency) {
         this.targetFrequency = frequency;
-        this.errorPCT = errorPCT;
     }
 
     public void start() throws IOException {
