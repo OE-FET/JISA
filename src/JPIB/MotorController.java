@@ -24,9 +24,10 @@ public class MotorController {
         private double integral  = 0;
         private double lastError = 0;
 
-        private static final double Kp = -KNOWN_GRADIENT;
-        private static final double Ki = -KNOWN_GRADIENT;
-        private static final double Kd = -KNOWN_GRADIENT;
+        private static final double KP     = -KNOWN_GRADIENT;
+        private static final double KI     = -KNOWN_GRADIENT;
+        private static final double KD     = -KNOWN_GRADIENT;
+        private static final double OFFSET = 1.0;
 
         @Override
         public void run() {
@@ -46,7 +47,7 @@ public class MotorController {
                 double diff = (error - lastError) / tDiff;
                 integral += error * tDiff;
 
-                double voltage = Kp * error + Kd * diff + Ki * integral;
+                double voltage = (KP * error) + (KD * diff) + (KI * integral) + OFFSET;
 
                 lastError = error;
 
