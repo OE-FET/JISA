@@ -24,6 +24,7 @@ public class MotorController {
         private double integral  = 0;
         private double lastError = 0;
 
+        // TODO: These are to be tuned when we have the assembly
         private static final double KP     = -KNOWN_GRADIENT;
         private static final double KI     = -KNOWN_GRADIENT;
         private static final double KD     = -KNOWN_GRADIENT;
@@ -39,7 +40,7 @@ public class MotorController {
 
                 if (lastTime > 0) {
                     tDiff = System.currentTimeMillis() - lastTime;
-                    lastTime = System.currentTimeMillis();
+                    lastTime += tDiff;
                 } else {
                     lastError = error;
                 }
