@@ -3,7 +3,7 @@ package JPIB;
 import java.io.IOException;
 import java.util.HashMap;
 
-public class K2450 extends GPIBDevice {
+public class K2450 extends GPIBDevice implements SMU {
 
     private static final String C_MEASURE_VOLTAGE       = ":MEAS:VOLT?";
     private static final String C_MEASURE_CURRENT       = ":MEAS:CURR?";

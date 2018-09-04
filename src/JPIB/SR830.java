@@ -1,9 +1,15 @@
 package JPIB;
 
+import java.awt.*;
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
-public class SR830 extends GPIBDevice {
+public class SR830 extends GPIBDevice implements Commandable {
 
     private static final String C_QUERY_FREQ        = "FREQ?";
     private static final String C_SET_FREQ          = "FREQ %f";
@@ -28,6 +34,41 @@ public class SR830 extends GPIBDevice {
     private static final int    STANDARD_INTERVAL = 100;
     private static final long   STANDARD_DURATION = 10000;
 
+    private final DeviceCommand[] commands = {
+
+            new DeviceCommand("Get Frequency", "Returns the reference frequency") {
+                @Override
+                public double execute() throws IOException {
+                    return getRefFrequency();
+                }
+            },
+            new DeviceCommand("Get Amplitude", "Returns the amplitude of the locked-in signal") {
+                @Override
+                public double execute() throws IOException {
+                    return getRefAmplitude();
+                }
+            },
+            new DeviceCommand("Set Time Constant", "Sets the time constant to use for locking-on to a signal",
+                              new DeviceCommand.DeviceArgument<TimeConst>("Time Constant", TimeConst.class)) {
+
+                @Override
+                public double execute() throws IOException {
+                    setTimeConst((TimeConst) getArgumentValue(0));
+                    return 0;
+                }
+            },
+            new DeviceCommand("Set Ref Mode", "Sets whether the lock-in uses an internal or external reference signal",
+                              new DeviceCommand.DeviceArgument<RefMode>("Ref Mode", RefMode.class)) {
+
+                @Override
+                public double execute() throws IOException {
+                    setRefMode((RefMode) getArgumentValue(0));
+                    return 0;
+                }
+            }
+
+    };
+
     /**
      * Open an SR830 device on the given bus and address
      *
@@ -51,6 +92,22 @@ public class SR830 extends GPIBDevice {
             throw new DeviceException("Device at address %d on bus %d is not responding!", address, bus);
         }
 
+    }
+
+
+    @Override
+    public DeviceCommand[] getCommands() {
+        return commands.clone();
+    }
+
+    @Override
+    public DeviceCommand getCommand(int index) {
+        return (index >= 0 && index < commands.length) ? commands[index].clone() : null;
+    }
+
+    @Override
+    public String getName() {
+        return "SR830 Lock-In Amplifier";
     }
 
     /**
@@ -273,10 +330,11 @@ public class SR830 extends GPIBDevice {
 
     public enum RefMode {
 
-        EXTERNAL(0),
-        INTERNAL(1);
+        EXTERNAL(0, "External"),
+        INTERNAL(1, "Internal");
 
         private        int                       c;
+        private        String                    name;
         private static HashMap<Integer, RefMode> lookup = new HashMap<>();
 
         static RefMode fromInt(int i) {
@@ -289,12 +347,18 @@ public class SR830 extends GPIBDevice {
             }
         }
 
-        RefMode(int code) {
+        RefMode(int code, String name) {
             c = code;
+            this.name = name;
         }
 
         int toInt() {
             return c;
+        }
+
+        @Override
+        public String toString() {
+            return name;
         }
     }
 

@@ -16,6 +16,7 @@ public class Example {
 
     public static void run() {
 
+        // Wrap everything in try-catch
         try {
 
             initialise();
