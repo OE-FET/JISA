@@ -213,6 +213,8 @@ public class VISA {
             throw new VISAException("Error closing instrument!");
         }
 
+        instruments.remove(instrument);
+
     }
 
     public static void setAttribute(long instrument, long attribute, long value) throws VISAException {

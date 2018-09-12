@@ -119,4 +119,12 @@ public class VISADevice {
         return query(C_IDN);
     }
 
+    public synchronized void close() throws IOException {
+        try {
+            VISA.closeInstrument(device);
+        } catch (VISAException e) {
+            throw new IOException(e.getMessage());
+        }
+    }
+
 }
