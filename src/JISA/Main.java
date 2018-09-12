@@ -2,9 +2,7 @@ package JISA;
 
 import JISA.Addresses.GPIBAddress;
 import JISA.Addresses.InstrumentAddress;
-import JISA.Devices.DeviceException;
-import JISA.Devices.ITC503;
-import JISA.Devices.SR830;
+import JISA.Devices.*;
 import JISA.VISA.VISA;
 import JISA.VISA.VISAException;
 
@@ -20,9 +18,7 @@ public class Main {
                 System.out.println(addr.getVISAAddress());
             }
 
-            ITC503 itc503 = new ITC503(new GPIBAddress(0, 17));
-
-        } catch (VISAException | DeviceException | IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

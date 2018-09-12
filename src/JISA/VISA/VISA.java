@@ -26,21 +26,20 @@ public class VISA {
 
     static {
 
+        // Try to load the visa library
         if (OS_NAME.contains("win")) {
 
-            try {
-                libName = "tkVisa64";
-                lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
-            } catch (UnsatisfiedLinkError e) {
+            libName = "nivisa64";
+            lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
 
-            }
-            if (lib == null) {
-                libName = "nivisa64";
-                lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
-            }
         } else if (OS_NAME.contains("linux")) {
+
             libName = "libvisa";
             lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
+
+        } else {
+            System.err.println("This system is not yet supported!");
+            System.exit(1);
         }
 
         if (lib == null) {
@@ -48,6 +47,7 @@ public class VISA {
             System.exit(1);
         }
 
+        // Attempt to get a resource manager handle
         try {
             visaResourceManagerHandle = getResourceManager();
         } catch (VISAException e) {
@@ -80,12 +80,22 @@ public class VISA {
         }
     }
 
+    /**
+     * Returns an array of all instrument addressed detected by VISA
+     *
+     * @return Array of instrument addresses
+     *
+     * @throws VISAException Upon error with VISA interface
+     */
     public static InstrumentAddress[] getInstruments() throws VISAException {
 
+        // RegEx for "Anything"
         ByteBuffer            expr       = stringToByteBuffer("?*");
         ByteBuffer            desc       = ByteBuffer.allocate(1024);
         NativeLongByReference listHandle = new NativeLongByReference();
         NativeLongByReference listCount  = new NativeLongByReference();
+
+        // Perform the native call
         NativeLong status = lib.viFindRsrc(
                 visaResourceManagerHandle,
                 expr,
@@ -122,7 +132,16 @@ public class VISA {
 
     }
 
-    public static int openInstrument(String address) throws VISAException {
+    /**
+     * Open the instrument with the given VISA resource address
+     *
+     * @param address Resource address
+     *
+     * @return Instrument handle
+     *
+     * @throws VISAException Upon error with VISA interface
+     */
+    public static long openInstrument(String address) throws VISAException {
 
         NativeLong            visaStatus;
         NativeLong            visaInstrumentHandle;
@@ -141,9 +160,8 @@ public class VISA {
         );
 
         if (visaStatus.longValue() == VI_SUCCESS) {
-            int handle = instruments.size();
             instruments.put(pViInstrument.getValue().longValue(), pViInstrument.getValue());
-            return handle;
+            return pViInstrument.getValue().longValue();
         } else {
             throw new VISAException("Could not open device: \"%s\"!", address);
         }
@@ -151,12 +169,22 @@ public class VISA {
 
     }
 
+    /**
+     * Writes to the given instrument, specified by instrument handle returned by openInstrument()
+     *
+     * @param instrument Instrument handle from openInstrument()
+     * @param toWrite    String the write to the instrument
+     *
+     * @throws VISAException Upon error with VISA interface
+     */
     public static void write(long instrument, String toWrite) throws VISAException {
 
+        // Check that we have actually opened this device
         if (!instruments.containsKey(instrument)) {
             throw new VISAException("That instrument has not been opened!");
         }
 
+        // Convert string to bytes to send
         ByteBuffer pBuffer = stringToByteBuffer(toWrite);
         if (pBuffer == null) {
             throw new VISAException("Error converting command to ByteBuffer");
@@ -177,6 +205,15 @@ public class VISA {
 
     }
 
+    /**
+     * Read from the given instrument, specified by instrument handle returned by openInstrument()
+     *
+     * @param instrument Instrument handle from openInstrument()
+     *
+     * @return The read string from the device
+     *
+     * @throws VISAException Upon error with VISA interface
+     */
     public static String read(long instrument) throws VISAException {
 
         if (!instruments.containsKey(instrument)) {
@@ -201,6 +238,13 @@ public class VISA {
 
     }
 
+    /**
+     * Closes the connection to the given instrument, specified by instrument handle returned by openInstrument()
+     *
+     * @param instrument Instrument handle from openInstrument()
+     *
+     * @throws VISAException Upon error with VISA interface
+     */
     public static void closeInstrument(long instrument) throws VISAException {
 
         if (!instruments.containsKey(instrument)) {
@@ -217,6 +261,15 @@ public class VISA {
 
     }
 
+    /**
+     * Sets a VISA attribute for an instrument
+     *
+     * @param instrument Instrument handle from openInstrument()
+     * @param attribute  The attribute to set (defined in VISANativeInterface)
+     * @param value      The value to give it
+     *
+     * @throws VISAException Upon error with VISA interface
+     */
     public static void setAttribute(long instrument, long attribute, long value) throws VISAException {
 
         if (!instruments.containsKey(instrument)) {
@@ -235,18 +288,50 @@ public class VISA {
 
     }
 
+    /**
+     * Sets whether to send EOI at the end of talking (mostly for GPIB)
+     *
+     * @param instrument Instrument handle from openInstrument()
+     * @param set        Should it send?
+     *
+     * @throws VISAException Upon error with VISA interface
+     */
     public static void setEOI(long instrument, boolean set) throws VISAException {
         setAttribute(instrument, VISANativeInterface.VI_ATTR_SEND_END_EN, set ? VI_TRUE : VI_FALSE);
     }
 
+    /**
+     * Sets the timeout for read/write to/from instrument
+     *
+     * @param instrument  Instrument handle from openInstrument()
+     * @param timeoutMSec Timeout in milliseconds
+     *
+     * @throws VISAException Upon error with VISA interface
+     */
     public static void setTimeout(long instrument, long timeoutMSec) throws VISAException {
         setAttribute(instrument, VISANativeInterface.VI_ATTR_TMO_VALUE, timeoutMSec);
     }
 
+    /**
+     * Should VISA look for a termination character to be sent by the instrument when reading?
+     *
+     * @param instrument Instrument handle from openInstrument()
+     * @param set        Should it look?
+     *
+     * @throws VISAException Upon error with VISA interface
+     */
     public static void enableTerminationCharacter(long instrument, boolean set) throws VISAException {
         setAttribute(instrument, VISANativeInterface.VI_ATTR_TERMCHAR_EN, set ? VI_TRUE : VI_FALSE);
     }
 
+    /**
+     * Sets the termination character for VISA to look for when reading from instrument
+     *
+     * @param instrument Instrument handle from openInstrument()
+     * @param eos        Character to look for
+     *
+     * @throws VISAException Upon error with VISA interface
+     */
     public static void setTerminationCharacter(long instrument, long eos) throws VISAException {
         setAttribute(instrument, VISANativeInterface.VI_ATTR_TERMCHAR, eos);
     }

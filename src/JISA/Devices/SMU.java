@@ -10,6 +10,12 @@ public interface SMU {
     public void setCurrent(double current) throws IOException;
     public void turnOn() throws IOException;
     public void turnOff() throws IOException;
+    public void setSource(Source source) throws IOException;
+    public Source getSource() throws IOException;
 
+    public enum Source {
+        VOLTAGE,
+        CURRENT
+    }
 
 }

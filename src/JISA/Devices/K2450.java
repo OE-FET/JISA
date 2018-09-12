@@ -65,8 +65,12 @@ public class K2450 extends VISADevice implements SMU {
         write(C_SET_SOURCE_FUNCTION, mode.getTag());
     }
 
-    public Source getSource() throws IOException {
-        return Source.fromTag(query(C_QUERY_SOURCE_FUNCTION));
+    public SMU.Source getSource() throws IOException {
+        return Source.fromTag(query(C_QUERY_SOURCE_FUNCTION)).getOriginal();
+    }
+
+    public void setSource(SMU.Source source) throws IOException {
+        write(C_SET_SOURCE_FUNCTION, Source.fromOrig(source).getTag());
     }
 
     public boolean isOn() throws IOException {
@@ -87,14 +91,16 @@ public class K2450 extends VISADevice implements SMU {
 
     public enum Source {
 
-        VOLTAGE("VOLT"),
-        CURRENT("CURR");
+        VOLTAGE("VOLT", SMU.Source.VOLTAGE),
+        CURRENT("CURR", SMU.Source.CURRENT);
 
-        private static HashMap<String, Source> lookup = new HashMap<>();
+        private static HashMap<String, Source>     lookup  = new HashMap<>();
+        private static HashMap<SMU.Source, Source> convert = new HashMap<>();
 
         static {
             for (Source mode : Source.values()) {
                 lookup.put(mode.getTag(), mode);
+                convert.put(mode.getOriginal(), mode);
             }
         }
 
@@ -102,14 +108,24 @@ public class K2450 extends VISADevice implements SMU {
             return lookup.getOrDefault(tag, null);
         }
 
-        private String tag;
+        public static Source fromOrig(SMU.Source orig) {
+            return convert.getOrDefault(orig, null);
+        }
 
-        Source(String tag) {
+        private String     tag;
+        private SMU.Source orig;
+
+        Source(String tag, SMU.Source orig) {
             this.tag = tag;
+            this.orig = orig;
         }
 
         String getTag() {
             return tag;
+        }
+
+        SMU.Source getOriginal() {
+            return orig;
         }
 
     }
