@@ -22,11 +22,7 @@ public class Main {
 
             ITC503 itc503 = new ITC503(new GPIBAddress(0, 17));
 
-        } catch (VISAException e) {
-            e.printStackTrace();
-        } catch (DeviceException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
+        } catch (VISAException | DeviceException | IOException e) {
             e.printStackTrace();
         }
 
