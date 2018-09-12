@@ -1,8 +1,13 @@
-package JPIB;
+package JISA.Devices;
+
+import JISA.*;
+import JISA.Control.Asynch;
+import JISA.Control.ERunnable;
+import JISA.Control.SRunnable;
 
 import java.io.IOException;
 
-public class K2200 extends GPIBDevice {
+public class K2200 extends VISADevice {
 
     private static final String C_QUERY_VOLTAGE = "MEASURE:VOLTAGE:DC?";
     private static final String C_QUERY_CURRENT = "MEASURE:CURRENT:DC?";
@@ -12,17 +17,17 @@ public class K2200 extends GPIBDevice {
     private static final String OUTPUT_ON       = "ON";
     private static final String OUTPUT_OFF      = "OFF";
 
-    public K2200(int bus, int address) throws IOException, DeviceException {
-        super(bus, address);
+    public K2200(InstrumentAddress address) throws IOException, DeviceException {
+        super(address);
 
         try {
             String[] idn = query("*IDN?").split(",");
 
             if (!idn[1].trim().equals("2200-30-5")) {
-                throw new DeviceException("Device at address %d on bus %d is not a Keithley 2200-30-5!", address, bus);
+                throw new DeviceException("Device at address %s is not a Keithley 2200-30-5!", address.getVISAAddress());
             }
         } catch (IOException e) {
-            throw new DeviceException("Device at address %d on bus %d is not responding!", address, bus);
+            throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
         }
 
     }

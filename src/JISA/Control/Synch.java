@@ -1,6 +1,7 @@
-package JPIB;
+package JISA.Control;
 
-import java.io.IOException;
+import JISA.Util;
+
 import java.util.ArrayList;
 
 public class Synch {

@@ -1,4 +1,9 @@
-package JPIB;
+package JISA.Devices;
+
+import JISA.*;
+import JISA.Control.Asynch;
+import JISA.Control.ERunnable;
+import JISA.Control.SRunnable;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -8,7 +13,7 @@ import java.util.HashMap;
  * <p>
  * GPIBDevice class for controlling mercury ITC503 temperature controllers via GPIB.
  */
-public class ITC503 extends GPIBDevice {
+public class ITC503 extends VISADevice {
 
     private static final String TERMINATOR         = "\r";
     private static final String C_SET_COMM_MODE    = "Q2";
@@ -32,16 +37,17 @@ public class ITC503 extends GPIBDevice {
     /**
      * Open the ITC503 device at the given bus and address
      *
-     * @param bus     Which GPIB bus the ITC503 is on
      * @param address The GPIB address on the bus that the ITC503 has
      *
      * @throws IOException     Upon communication error
      * @throws DeviceException If the specified device does not identify as an ITC503
      */
-    public ITC503(int bus, int address) throws IOException, DeviceException {
+    public ITC503(InstrumentAddress address) throws IOException, DeviceException {
 
-        super(bus, address, DEFAULT_TIMEOUT, 0, EOS_RETURN);
-
+        super(address);
+        setEOI(false);
+        setReadTerminationCharacter(EOS_RETURN);
+        enabledReadTerminationCharacter(true);
         setTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);
 
@@ -49,10 +55,10 @@ public class ITC503 extends GPIBDevice {
             String[] idn = query("V").split(" ");
 
             if (!idn[0].trim().equals("ITC503")) {
-                throw new DeviceException("Device at address %d on bus %d is not an ITC503!", address, bus);
+                throw new DeviceException("Device at address %s is not an ITC503!", address.getVISAAddress());
             }
         } catch (IOException e) {
-            throw new DeviceException("Device at address %d on bus %d is not responding!", address, bus);
+            throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
         }
 
     }

@@ -1,4 +1,4 @@
-package JPIB;
+package JISA.Control;
 
 public interface Condition {
 

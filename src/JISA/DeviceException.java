@@ -1,4 +1,4 @@
-package JPIB;
+package JISA;
 
 public class DeviceException extends Exception {
 

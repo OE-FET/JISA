@@ -1,4 +1,6 @@
-package JPIB;
+package JISA.Control;
+
+import JISA.DeviceException;
 
 import java.io.IOException;
 

@@ -1,4 +1,6 @@
-package JPIB;
+package JISA.Control;
+
+import JISA.Util;
 
 import java.util.ArrayList;
 import java.util.Timer;

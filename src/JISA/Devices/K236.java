@@ -1,11 +1,16 @@
-package JPIB;
+package JISA.Devices;
+
+import JISA.DeviceException;
+import JISA.InstrumentAddress;
+import JISA.Util;
+import JISA.VISADevice;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class K236 extends GPIBDevice {
+public class K236 extends VISADevice {
 
     // TODO: Test with actual instrument in lab
 
@@ -27,9 +32,9 @@ public class K236 extends GPIBDevice {
     private              Function function        = null;
     private static final Pattern  responsePattern = Pattern.compile("[A-Z]{4}[VI]([+-][0-9]+[.][0-9]+E[+-][0-9]+)");
 
-    public K236(int bus, int address) throws IOException {
+    public K236(InstrumentAddress address) throws IOException {
 
-        super(bus, address);
+        super(address);
 
         // TODO: Add check for correct device (need to test with actual device to see query response)
 

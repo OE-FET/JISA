@@ -1,9 +1,13 @@
-package JPIB;
+package JISA.Devices;
+
+import JISA.DeviceException;
+import JISA.InstrumentAddress;
+import JISA.VISADevice;
 
 import java.io.IOException;
 import java.util.HashMap;
 
-public class K2450 extends GPIBDevice implements SMU {
+public class K2450 extends VISADevice implements SMU {
 
     private static final String C_MEASURE_VOLTAGE       = ":MEAS:VOLT?";
     private static final String C_MEASURE_CURRENT       = ":MEAS:CURR?";
@@ -16,20 +20,20 @@ public class K2450 extends GPIBDevice implements SMU {
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
 
-    public K2450(int bus, int address) throws IOException, DeviceException {
+    public K2450(InstrumentAddress address) throws IOException, DeviceException {
 
-        super(bus, address);
+        super(address);
 
         try {
 
             String[] iden = query("*IDN?").split(",");
 
             if (!iden[1].trim().equals("MODEL 2450")) {
-                throw new DeviceException("Device at address %d on bus %d is not a Keithley 2450!", address, bus);
+                throw new DeviceException("Device at address %s is not a Keithley 2450!", address.getVISAAddress());
             }
 
         } catch (IOException e) {
-            throw new DeviceException("Device at address %d on bus %d is not responding!", address, bus);
+            throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
         }
 
     }

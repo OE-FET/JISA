@@ -1,15 +1,12 @@
-package JPIB;
+package JISA.Devices;
 
-import java.awt.*;
-import java.awt.print.PageFormat;
-import java.awt.print.Printable;
-import java.awt.print.PrinterException;
+import JISA.*;
+import JISA.Control.*;
+
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
-public class SR830 extends GPIBDevice implements Commandable {
+public class SR830 extends VISADevice implements Commandable {
 
     private static final String C_QUERY_FREQ        = "FREQ?";
     private static final String C_SET_FREQ          = "FREQ %f";
@@ -72,25 +69,26 @@ public class SR830 extends GPIBDevice implements Commandable {
     /**
      * Open an SR830 device on the given bus and address
      *
-     * @param bus     The bus the device is on
-     * @param address The address used by the device on the bus
+     * @param address The address used by the device
      *
      * @throws IOException     Upon communication error
      * @throws DeviceException If the device does not identify itself as an SR830
      */
-    public SR830(int bus, int address) throws IOException, DeviceException {
+    public SR830(InstrumentAddress address) throws IOException, DeviceException {
 
-        super(bus, address, DEFAULT_TIMEOUT, DEFAULT_EOI, DEFAULT_EOS);
+        super(address);
 
         try {
-            String[] idn = query("*IDN?").split(",");
 
+            String[] idn = query("*IDN?").split(",");
             if (!idn[1].trim().equals("SR830")) {
-                throw new DeviceException("Device at address %d on bus %d is not an SR830!", address, bus);
+                throw new DeviceException("Device at address %s is not an SR830!", address.getVISAAddress());
             }
+
         } catch (IOException e) {
-            throw new DeviceException("Device at address %d on bus %d is not responding!", address, bus);
+            throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
         }
+
 
     }
 
@@ -108,6 +106,18 @@ public class SR830 extends GPIBDevice implements Commandable {
     @Override
     public String getName() {
         return "SR830 Lock-In Amplifier";
+    }
+
+    @Override
+    public HashMap<String, Class> getNameableParams() {
+
+        HashMap<String, Class> map = new HashMap<>();
+        map.put("Reference Mode", RefMode.class);
+        map.put("Sensitivity", Sensitivity.class);
+        map.put("Time Constant", TimeConst.class);
+
+        return map;
+
     }
 
     /**
@@ -328,7 +338,7 @@ public class SR830 extends GPIBDevice implements Commandable {
         return TimeConst.fromInt(queryInt(C_QUERY_TIME_CONST));
     }
 
-    public enum RefMode {
+    public enum RefMode implements Nameable {
 
         EXTERNAL(0, "External"),
         INTERNAL(1, "Internal");
@@ -360,9 +370,14 @@ public class SR830 extends GPIBDevice implements Commandable {
         public String toString() {
             return name;
         }
+
+        @Override
+        public String getName() {
+            return name;
+        }
     }
 
-    public enum Sensitivity {
+    public enum Sensitivity implements Nameable {
 
         S_2nV_PER_fA(0, 2e-9, 1e-15),
         S_5nV_PER_fA(1, 5e-9, 1e-15),
@@ -416,9 +431,14 @@ public class SR830 extends GPIBDevice implements Commandable {
         int toInt() {
             return c;
         }
+
+        @Override
+        public String getName() {
+            return String.format("V: %f, I: %f", volt, current);
+        }
     }
 
-    public enum TimeConst {
+    public enum TimeConst implements Nameable {
 
         T_10us(0, 10e-6),
         T_30us(1, 30e-6),
@@ -466,6 +486,11 @@ public class SR830 extends GPIBDevice implements Commandable {
 
         double getValue() {
             return value;
+        }
+
+        @Override
+        public String getName() {
+            return String.format("%e s", value);
         }
     }
 

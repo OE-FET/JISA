@@ -1,6 +1,6 @@
-package JPIB;
+package JISA.Control;
 
-import java.util.List;
+import java.util.HashMap;
 
 public interface Commandable {
 
@@ -9,5 +9,7 @@ public interface Commandable {
     public DeviceCommand getCommand(int index);
 
     public String getName();
+
+    public HashMap<String, Class> getNameableParams();
 
 }

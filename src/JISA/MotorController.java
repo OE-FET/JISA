@@ -1,4 +1,7 @@
-package JPIB;
+package JISA;
+
+import JISA.Devices.K2200;
+import JISA.Devices.SR830;
 
 import java.io.IOException;
 import java.util.Timer;

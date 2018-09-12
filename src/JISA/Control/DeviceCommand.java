@@ -1,4 +1,4 @@
-package JPIB;
+package JISA.Control;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
