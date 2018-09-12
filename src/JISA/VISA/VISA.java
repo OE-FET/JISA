@@ -7,6 +7,7 @@ import com.sun.jna.ptr.NativeLongByReference;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class VISA {
@@ -108,9 +109,9 @@ public class VISA {
             throw new VISAException("Error searching devices");
         }
 
-        int                 count     = listCount.getValue().intValue();
-        InstrumentAddress[] addresses = new InstrumentAddress[count];
-        NativeLong          handle    = listHandle.getValue();
+        int                          count     = listCount.getValue().intValue();
+        ArrayList<InstrumentAddress> addresses = new ArrayList<>();
+        NativeLong                   handle    = listHandle.getValue();
 
         for (int i = 0; i < count; i++) {
             final String addr;
@@ -119,7 +120,7 @@ public class VISA {
             } catch (UnsupportedEncodingException e) {
                 throw new VISAException("Unable to encode address!");
             }
-            addresses[i] = () -> addr;
+            addresses.add(() -> addr);
             status = lib.viFindNext(handle, desc);
 
             if (status.longValue() != VI_SUCCESS) {
@@ -128,7 +129,7 @@ public class VISA {
 
         }
 
-        return addresses;
+        return addresses.toArray(new InstrumentAddress[0]);
 
     }
 
