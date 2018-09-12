@@ -1,4 +1,4 @@
-package JISA;
+package JISA.Devices;
 
 import JISA.Devices.K2200;
 import JISA.Devices.SR830;

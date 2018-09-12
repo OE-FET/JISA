@@ -1,4 +1,4 @@
-package JISA;
+package JISA.Devices;
 
 public class DeviceException extends Exception {
 

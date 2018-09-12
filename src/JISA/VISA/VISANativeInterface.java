@@ -1,4 +1,4 @@
-package JISA;
+package JISA.VISA;
 
 import com.sun.jna.Library;
 import com.sun.jna.NativeLong;

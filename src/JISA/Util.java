@@ -1,5 +1,7 @@
 package JISA;
 
+import JISA.Devices.DeviceException;
+
 import java.io.IOException;
 import java.util.HashMap;
 

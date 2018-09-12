@@ -1,5 +1,6 @@
-package JISA;
+package JISA.VISA;
 
+import JISA.Addresses.InstrumentAddress;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.NativeLongByReference;

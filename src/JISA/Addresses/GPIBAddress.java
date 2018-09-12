@@ -1,7 +1,5 @@
 package JISA.Addresses;
 
-import JISA.InstrumentAddress;
-
 public class GPIBAddress implements InstrumentAddress {
 
     private int bus;

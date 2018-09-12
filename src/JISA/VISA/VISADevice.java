@@ -1,4 +1,6 @@
-package JISA;
+package JISA.VISA;
+
+import JISA.Addresses.InstrumentAddress;
 
 import java.io.IOException;
 

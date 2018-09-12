@@ -1,6 +1,6 @@
 package JISA.Control;
 
-import JISA.DeviceException;
+import JISA.Devices.DeviceException;
 
 import java.io.IOException;
 

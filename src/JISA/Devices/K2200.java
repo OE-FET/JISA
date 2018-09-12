@@ -1,9 +1,10 @@
 package JISA.Devices;
 
-import JISA.*;
+import JISA.Addresses.InstrumentAddress;
 import JISA.Control.Asynch;
 import JISA.Control.ERunnable;
 import JISA.Control.SRunnable;
+import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 

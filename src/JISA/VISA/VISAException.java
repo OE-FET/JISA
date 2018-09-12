@@ -1,4 +1,4 @@
-package JISA;
+package JISA.VISA;
 
 public class VISAException extends Exception {
 

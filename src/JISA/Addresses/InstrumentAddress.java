@@ -1,4 +1,4 @@
-package JISA;
+package JISA.Addresses;
 
 public interface InstrumentAddress {
 

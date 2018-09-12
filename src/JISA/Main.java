@@ -1,7 +1,11 @@
 package JISA;
 
 import JISA.Addresses.GPIBAddress;
+import JISA.Addresses.InstrumentAddress;
+import JISA.Devices.DeviceException;
 import JISA.Devices.SR830;
+import JISA.VISA.VISA;
+import JISA.VISA.VISAException;
 
 import java.io.IOException;
 
