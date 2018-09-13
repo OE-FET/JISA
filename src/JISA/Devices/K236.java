@@ -5,11 +5,12 @@ import JISA.Util;
 import JISA.VISA.VISADevice;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class K236 extends VISADevice implements SMU {
+public class K236 extends SMU {
 
     // TODO: Test with actual instrument in lab
 
@@ -30,17 +31,24 @@ public class K236 extends VISADevice implements SMU {
     private static final double   MAX_VOLTAGE     = +110;
     private              Source   source          = null;
     private              Function function        = null;
+    private              double   biasLevel       = 0;
+    private              boolean  on              = false;
     private static final Pattern  responsePattern = Pattern.compile("[A-Z]{4}[VI]([+-][0-9]+[.][0-9]+E[+-][0-9]+)");
 
     public K236(InstrumentAddress address) throws IOException {
 
         super(address);
 
+        biasLevel = getSourceValue();
+        on = biasLevel > 0;
+
         // TODO: Add check for correct device (need to test with actual device to see query response)
 
     }
 
     public void setBias(double level) throws IOException, DeviceException {
+
+        biasLevel = level;
 
         switch (source) {
 
@@ -58,7 +66,11 @@ public class K236 extends VISADevice implements SMU {
 
         }
 
-        query(C_SET_BIAS, level, 0, 0);
+        if (on) {
+            query(C_SET_BIAS, level, 0, 0);
+        } else {
+            query(C_SET_BIAS, 0, 0, 0);
+        }
     }
 
     private double readValue(int channel) throws IOException {
@@ -128,17 +140,25 @@ public class K236 extends VISADevice implements SMU {
 
     @Override
     public void turnOn() throws IOException {
-
+        on = true;
+        try {
+            setBias(biasLevel);
+        } catch (DeviceException e) {
+        }
     }
 
     @Override
     public void turnOff() throws IOException {
-
+        on = false;
+        try {
+            setBias(biasLevel);
+        } catch (DeviceException e) {
+        }
     }
 
     @Override
     public boolean isOn() throws DeviceException, IOException {
-        return false;
+        return on;
     }
 
     @Override
@@ -148,11 +168,6 @@ public class K236 extends VISADevice implements SMU {
 
     public SMU.Source getSource() {
         return source.getOriginal();
-    }
-
-    @Override
-    public DataPoint[] performLinearSweep(SMU.Source source, double min, double max, int numSteps, long delay) throws DeviceException, IOException {
-        return new DataPoint[0];
     }
 
     public Function getFunction() {

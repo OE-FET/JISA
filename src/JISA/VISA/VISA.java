@@ -1,6 +1,7 @@
 package JISA.VISA;
 
 import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.StrAddress;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.NativeLongByReference;
@@ -120,7 +121,7 @@ public class VISA {
             } catch (UnsupportedEncodingException e) {
                 throw new VISAException("Unable to encode address!");
             }
-            addresses.add(() -> addr);
+            addresses.add(new StrAddress(addr));
             status = lib.viFindNext(handle, desc);
 
             if (status.longValue() != VI_SUCCESS) {

@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class K2450 extends VISADevice implements SMU {
+public class K2450 extends SMU {
 
     private static final String C_MEASURE_VOLTAGE       = ":MEAS:VOLT?";
     private static final String C_MEASURE_CURRENT       = ":MEAS:CURR?";
@@ -73,35 +73,6 @@ public class K2450 extends VISADevice implements SMU {
         return Source.fromTag(query(C_QUERY_SOURCE_FUNCTION)).getSMU();
     }
 
-    @Override
-    public DataPoint[] performLinearSweep(SMU.Source source, double min, double max, int numSteps, long delay) throws DeviceException, IOException {
-
-        double step = (max - min) / (numSteps - 1D);
-
-        turnOff();
-        setSource(source);
-        ArrayList<DataPoint> points = new ArrayList<>();
-
-        int i = 0;
-        for (double b = min; b <= max; b += step) {
-            setBias(b);
-            try {
-                Thread.sleep(delay);
-            } catch (Exception e) {
-                throw new DeviceException("Couldn't sleep!");
-            }
-
-            DataPoint point = new DataPoint();
-            point.voltage = getVoltage();
-            point.current = getCurrent();
-            points.add(point);
-
-        }
-
-        return points.toArray(new DataPoint[0]);
-
-    }
-
     public void setSource(SMU.Source source) throws IOException {
         write(C_SET_SOURCE_FUNCTION, Source.fromSMU(source).getTag());
     }
@@ -129,6 +100,42 @@ public class K2450 extends VISADevice implements SMU {
             case CURRENT:
                 setCurrent(value);
                 break;
+
+        }
+
+    }
+
+    @Override
+    public double getSourceValue() throws DeviceException, IOException {
+
+        switch (getSource()) {
+
+            case VOLTAGE:
+                return getVoltage();
+
+            case CURRENT:
+                return getCurrent();
+
+            default:
+                return getVoltage();
+
+        }
+
+    }
+
+
+    @Override
+    public double getMeasureValue() throws DeviceException, IOException {
+        switch (getSource()) {
+
+            case VOLTAGE:
+                return getCurrent();
+
+            case CURRENT:
+                return getVoltage();
+
+            default:
+                return getCurrent();
 
         }
 
