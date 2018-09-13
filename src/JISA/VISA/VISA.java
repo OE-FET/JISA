@@ -4,7 +4,9 @@ import JISA.Addresses.InstrumentAddress;
 import JISA.Addresses.StrAddress;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
+import com.sun.jna.Pointer;
 import com.sun.jna.ptr.NativeLongByReference;
+import com.sun.jna.ptr.PointerByReference;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -289,6 +291,38 @@ public class VISA {
         if (status.longValue() != VI_SUCCESS) {
             throw new VISAException("Error setting EOI flag!");
         }
+
+    }
+
+    /**
+     * Returns the value of the given VISA Attribute for the given instrument
+     *
+     * @param instrument Instrument handle from openInstrument()
+     * @param attribute  The attribute to read
+     *
+     * @return Value assigned to the attribute
+     *
+     * @throws VISAException Upon error with VISA interface
+     */
+    public static long getAttribute(long instrument, long attribute) throws VISAException {
+
+        if (!instruments.containsKey(instrument)) {
+            throw new VISAException("That instrument has not been opened!");
+        }
+
+        NativeLongByReference value = new NativeLongByReference();
+
+        NativeLong status = lib.viGetAttribute(
+                instruments.get(instrument),
+                new NativeLong(attribute),
+                value.getPointer()
+        );
+
+        if (status.longValue() != VI_SUCCESS) {
+            throw new VISAException("Error reading attribute!");
+        }
+
+        return value.getValue().longValue();
 
     }
 
