@@ -9,13 +9,14 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class K236 extends VISADevice {
+public class K236 extends VISADevice implements SMU {
 
     // TODO: Test with actual instrument in lab
 
     private static final String   C_SET_SRC_FUNC  = "F%d,%d";
     private static final String   C_SET_BIAS      = "B%f,%d,%d";
     private static final String   C_GET_VALUE     = "G%d,%d,%d";
+    private static final String   C_EXECUTE       = "X";
     private static final int      OUTPUT_NOTHING  = 0;
     private static final int      OUTPUT_SOURCE   = 1;
     private static final int      OUTPUT_DELAY    = 2;
@@ -109,8 +110,39 @@ public class K236 extends VISADevice {
         return 0;
     }
 
-    public Source getSource() {
-        return source;
+    @Override
+    public void setVoltage(double voltage) throws IOException, DeviceException {
+
+        setSourceFunction(Source.VOLTAGE, getFunction());
+        setBias(voltage);
+
+    }
+
+    @Override
+    public void setCurrent(double current) throws IOException, DeviceException {
+
+        setSourceFunction(Source.CURRENT, getFunction());
+        setBias(current);
+
+    }
+
+    @Override
+    public void turnOn() throws IOException {
+
+    }
+
+    @Override
+    public void turnOff() throws IOException {
+
+    }
+
+    @Override
+    public void setSource(SMU.Source source) throws IOException {
+        setSourceFunction(Source.fromSMU(source), getFunction());
+    }
+
+    public SMU.Source getSource() {
+        return source.getOriginal();
     }
 
     public Function getFunction() {
@@ -125,28 +157,40 @@ public class K236 extends VISADevice {
 
     public enum Source {
 
-        CURRENT(1),
-        VOLTAGE(0);
+        CURRENT(1, SMU.Source.CURRENT),
+        VOLTAGE(0, SMU.Source.VOLTAGE);
 
-        private        int                      c;
-        private static HashMap<Integer, Source> lookup = new HashMap<>();
+        private        int                         c;
+        private        SMU.Source                  src;
+        private static HashMap<Integer, Source>    lookup  = new HashMap<>();
+        private static HashMap<SMU.Source, Source> convert = new HashMap<>();
 
         static Source fromInt(int i) {
             return lookup.getOrDefault(i, null);
         }
 
+        static Source fromSMU(SMU.Source s) {
+            return convert.getOrDefault(s, null);
+        }
+
         static {
             for (Source s : Source.values()) {
                 lookup.put(s.toInt(), s);
+                convert.put(s.getOriginal(), s);
             }
         }
 
-        Source(int code) {
+        Source(int code, SMU.Source s) {
             c = code;
+            src = s;
         }
 
         int toInt() {
             return c;
+        }
+
+        SMU.Source getOriginal() {
+            return src;
         }
 
     }

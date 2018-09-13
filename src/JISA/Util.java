@@ -1,6 +1,7 @@
 package JISA;
 
 import JISA.Devices.DeviceException;
+import JISA.VISA.VISAException;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -30,6 +31,9 @@ public class Util {
             case INTERRUPTED_EXCEPTION:
                 System.err.printf("Waiting error: \"%s\"\n", e.getMessage());
                 break;
+            case VISA_EXCEPTION:
+                System.err.printf("VISA error: \"%s\"\n", e.getMessage());
+                break;
             default:
                 System.err.printf("Unknown error: \"%s\"\n", e.getMessage());
                 break;
@@ -47,6 +51,7 @@ public class Util {
         IO_EXCEPTION(IOException.class),
         DEVICE_EXCEPTION(DeviceException.class),
         INTERRUPTED_EXCEPTION(InterruptedException.class),
+        VISA_EXCEPTION(VISAException.class),
         UNKNOWN_EXCEPTION(Exception.class);
 
         private static HashMap<Class, ExType> lookup = new HashMap<>();

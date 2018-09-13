@@ -12,6 +12,6 @@ public class GPIBAddress implements InstrumentAddress {
 
     @Override
     public String getVISAAddress() {
-        return String.format("GPIB[%d]::%d::INSTR", bus, address);
+        return String.format("GPIB%d::%d::INSTR", bus, address);
     }
 }

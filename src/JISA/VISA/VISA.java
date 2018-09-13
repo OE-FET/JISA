@@ -35,7 +35,7 @@ public class VISA {
 
         } else if (OS_NAME.contains("linux")) {
 
-            libName = "libvisa";
+            libName = "visa";
             lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
 
         } else {
@@ -145,7 +145,6 @@ public class VISA {
     public static long openInstrument(String address) throws VISAException {
 
         NativeLong            visaStatus;
-        NativeLong            visaInstrumentHandle;
         NativeLongByReference pViInstrument = new NativeLongByReference();
 
         ByteBuffer pViString = stringToByteBuffer(address);
@@ -224,7 +223,10 @@ public class VISA {
         ByteBuffer            response    = ByteBuffer.allocate(1024);
         NativeLongByReference returnCount = new NativeLongByReference();
         NativeLong status = lib.viRead(
-                instruments.get(instrument), response, new NativeLong(1024), returnCount
+                instruments.get(instrument),
+                response,
+                new NativeLong(1024),
+                returnCount
         );
 
         if (status.longValue() != VI_SUCCESS) {

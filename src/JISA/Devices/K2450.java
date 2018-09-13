@@ -3,7 +3,9 @@ package JISA.Devices;
 import JISA.Addresses.InstrumentAddress;
 import JISA.VISA.VISADevice;
 
+import javax.xml.crypto.Data;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class K2450 extends VISADevice implements SMU {
@@ -16,6 +18,8 @@ public class K2450 extends VISADevice implements SMU {
     private static final String C_QUERY_SOURCE_FUNCTION = ":SOUR:FUNC?";
     private static final String C_QUERY_OUTPUT_STATE    = ":OUTP:STATE?";
     private static final String C_SET_SOURCE_VALUE      = ":SOUR:%s %f";
+    private static final String C_SET_TERMINALS         = ":ROUT:TERM %s";
+    private static final String C_GET_TERMINALS         = ":ROUT:TERM?";
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
 
@@ -66,11 +70,40 @@ public class K2450 extends VISADevice implements SMU {
     }
 
     public SMU.Source getSource() throws IOException {
-        return Source.fromTag(query(C_QUERY_SOURCE_FUNCTION)).getOriginal();
+        return Source.fromTag(query(C_QUERY_SOURCE_FUNCTION)).getSMU();
+    }
+
+    @Override
+    public DataPoint[] performLinearSweep(SMU.Source source, double min, double max, int numSteps, long delay) throws DeviceException, IOException {
+
+        double step = (max - min) / (numSteps - 1D);
+
+        turnOff();
+        setSource(source);
+        ArrayList<DataPoint> points = new ArrayList<>();
+
+        int i = 0;
+        for (double b = min; b <= max; b += step) {
+            setBias(b);
+            try {
+                Thread.sleep(delay);
+            } catch (Exception e) {
+                throw new DeviceException("Couldn't sleep!");
+            }
+
+            DataPoint point = new DataPoint();
+            point.voltage = getVoltage();
+            point.current = getCurrent();
+            points.add(point);
+
+        }
+
+        return points.toArray(new DataPoint[0]);
+
     }
 
     public void setSource(SMU.Source source) throws IOException {
-        write(C_SET_SOURCE_FUNCTION, Source.fromOrig(source).getTag());
+        write(C_SET_SOURCE_FUNCTION, Source.fromSMU(source).getTag());
     }
 
     public boolean isOn() throws IOException {
@@ -85,8 +118,32 @@ public class K2450 extends VISADevice implements SMU {
         setSourceValue(Source.CURRENT, current);
     }
 
+    public void setBias(double value) throws IOException {
+
+        switch (getSource()) {
+
+            case VOLTAGE:
+                setVoltage(value);
+                break;
+
+            case CURRENT:
+                setCurrent(value);
+                break;
+
+        }
+
+    }
+
     public void setSourceValue(Source type, double value) throws IOException {
         write(C_SET_SOURCE_VALUE, type.getTag(), value);
+    }
+
+    public void setTerminals(Terminals terminals) throws IOException {
+        write(C_SET_TERMINALS, terminals.getTag());
+    }
+
+    public Terminals getTerminals() throws IOException {
+        return Terminals.fromTag(query(C_GET_TERMINALS));
     }
 
     public enum Source {
@@ -100,7 +157,7 @@ public class K2450 extends VISADevice implements SMU {
         static {
             for (Source mode : Source.values()) {
                 lookup.put(mode.getTag(), mode);
-                convert.put(mode.getOriginal(), mode);
+                convert.put(mode.getSMU(), mode);
             }
         }
 
@@ -108,7 +165,7 @@ public class K2450 extends VISADevice implements SMU {
             return lookup.getOrDefault(tag, null);
         }
 
-        public static Source fromOrig(SMU.Source orig) {
+        public static Source fromSMU(SMU.Source orig) {
             return convert.getOrDefault(orig, null);
         }
 
@@ -124,8 +181,37 @@ public class K2450 extends VISADevice implements SMU {
             return tag;
         }
 
-        SMU.Source getOriginal() {
+        SMU.Source getSMU() {
             return orig;
+        }
+
+    }
+
+    public enum Terminals {
+
+        FRONT("FRONT"),
+        REAR("REAR");
+
+        private static HashMap<String, Terminals> lookup = new HashMap<>();
+
+        static {
+            for (Terminals t : Terminals.values()) {
+                lookup.put(t.getTag(), t);
+            }
+        }
+
+        public static Terminals fromTag(String tag) {
+            return lookup.getOrDefault(tag, null);
+        }
+
+        private String tag;
+
+        Terminals(String tag) {
+            this.tag = tag;
+        }
+
+        String getTag() {
+            return tag;
         }
 
     }
