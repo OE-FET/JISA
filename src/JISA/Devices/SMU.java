@@ -1,6 +1,7 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
+import JISA.Util;
 import JISA.VISA.VISADevice;
 
 import javax.xml.crypto.Data;
@@ -17,6 +18,7 @@ public abstract class SMU extends VISADevice {
      * Returns the voltage either being applied or measured by the SMU.
      *
      * @return Voltage value
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -26,6 +28,7 @@ public abstract class SMU extends VISADevice {
      * Returns the current either being injected or measured by the SMU.
      *
      * @return Current value
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -35,6 +38,7 @@ public abstract class SMU extends VISADevice {
      * Sets the voltage value to be applied by the SMU (switching to voltage source mode if not already)
      *
      * @param voltage Value to set
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -44,6 +48,7 @@ public abstract class SMU extends VISADevice {
      * Sets the current value to be applied by the SMU (switching to current source mode if not already)
      *
      * @param current Value to set
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -69,6 +74,7 @@ public abstract class SMU extends VISADevice {
      * Checks whether the output of the SMU is currently enabled
      *
      * @return Is the output on?
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -78,6 +84,7 @@ public abstract class SMU extends VISADevice {
      * Sets the source mode of the SMU (VOLTAGE or CURRENT)
      *
      * @param source Source mode to set
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -87,6 +94,7 @@ public abstract class SMU extends VISADevice {
      * Returns the current source mode of the SMU (VOLTAGE OR CURRENT)
      *
      * @return Source mode
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -96,6 +104,7 @@ public abstract class SMU extends VISADevice {
      * Sets the value for whichever parameter is currently being sourced
      *
      * @param level The level to set
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -105,6 +114,7 @@ public abstract class SMU extends VISADevice {
      * Returns the value of whichever parameter is set as source currently
      *
      * @return Value of source
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -114,6 +124,7 @@ public abstract class SMU extends VISADevice {
      * Returns the value of whichever parameter is set as measure currently
      *
      * @return Value of measure
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -127,7 +138,9 @@ public abstract class SMU extends VISADevice {
      * @param max      Maximum source value
      * @param numSteps Number of steps in sweep
      * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
+     *
      * @return Array of DataPoint objects containing I-V data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -146,35 +159,91 @@ public abstract class SMU extends VISADevice {
      * @param numSteps Number of steps in sweep
      * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
      * @param onUpdate Method to run each time a new measurement is completed
+     *
      * @return Array of DataPoint objects containing I-V data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
     public DataPoint[] performLinearSweep(Source source, double min, double max, int numSteps, long delay, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
-        double            step   = (max - min) / (numSteps - 1D);
-        ArrayList<Double> values = new ArrayList<>();
-        for (double b = min; b <= max; b += step) {
-            values.add(b);
-        }
-
-        return performSweep(source, values.toArray(new Double[0]), delay, onUpdate);
+        return performSweep(
+                source,
+                Util.makeLinearArray(min, max, numSteps),
+                delay,
+                onUpdate
+        );
 
     }
 
+    /**
+     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects.
+     *
+     * @param source   VOLTAGE or CURRENT
+     * @param min      Minimum source value
+     * @param max      Maximum source value
+     * @param numSteps Number of steps in sweep
+     * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
+     *
+     * @return Array of DataPoint objects containing V-I data points
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public DataPoint[] performLogarithmicSweep(Source source, double min, double max, int numSteps, long delay) throws DeviceException, IOException {
+
+        return performSweep(
+                source,
+                Util.makeLogarithmicArray(min, max, numSteps),
+                delay,
+                (i, p) -> {
+                }
+        );
+
+    }
+
+    /**
+     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects
+     * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
+     *
+     * @param source   VOLTAGE or CURRENT
+     * @param min      Minimum source value
+     * @param max      Maximum source value
+     * @param numSteps Number of steps in sweep
+     * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
+     * @param onUpdate Method ot run each time a new measurement is completed
+     *
+     * @return Array of DataPoint objects containing V-I data points
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public DataPoint[] performLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
-        double            step   = Math.pow(max / min, 1D / numSteps);
-        ArrayList<Double> values = new ArrayList<>();
-        for (double b = min; b <= max; b *= step) {
-            values.add(b);
-        }
-
-        return performSweep(source, values.toArray(new Double[0]), delay, onUpdate);
+        return performSweep(
+                source,
+                Util.makeLogarithmicArray(min, max, numSteps),
+                delay,
+                onUpdate
+        );
 
     }
 
-    public DataPoint[] performSweep(Source source, Double[] values, long delay, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    /**
+     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects
+     * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
+     *
+     * @param source   VOLTAGE or CURRENT
+     * @param values   Array of values to use in the sweep
+     * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
+     * @param onUpdate Method ot run each time a new measurement is completed
+     *
+     * @return Array of DataPoint objects containing V-I data points
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public DataPoint[] performSweep(Source source, double[] values, long delay, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         turnOff();
         setSource(source);

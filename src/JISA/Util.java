@@ -46,6 +46,36 @@ public class Util {
 
     }
 
+    public static double[] makeLinearArray(double min, double max, int numSteps) {
+
+        double[] values = new double[numSteps];
+        double   step   = (max - min) / (numSteps - 1D);
+
+        values[0] = min;
+
+        for (int i = 1; i < values.length; i++) {
+            values[i] = values[i-1] + step;
+        }
+
+        return values;
+
+    }
+
+    public static double[] makeLogarithmicArray(double min, double max, int numSteps) {
+
+        double[] values = new double[numSteps];
+        double   step   = Math.pow(max/min, 1D/numSteps);
+
+        values[0] = min;
+
+        for (int i = 1; i < values.length; i++) {
+            values[i] = values[i-1] * step;
+        }
+
+        return values;
+
+    }
+
     enum ExType {
 
         IO_EXCEPTION(IOException.class),

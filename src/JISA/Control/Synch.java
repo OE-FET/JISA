@@ -1,7 +1,9 @@
 package JISA.Control;
 
+import JISA.Devices.DeviceException;
 import JISA.Util;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class Synch {
@@ -38,7 +40,7 @@ public class Synch {
 
     }
 
-    public static void waitForParamStable(DoubleReturn valueToCheck, double errorPct, int interval, long duration) throws Exception {
+    public static void waitForParamStable(DoubleReturn valueToCheck, double errorPct, int interval, long duration) throws IOException, DeviceException, InterruptedException {
 
         ArrayList<Double> list = new ArrayList<>();
 
