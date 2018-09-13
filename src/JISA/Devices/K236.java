@@ -137,12 +137,22 @@ public class K236 extends VISADevice implements SMU {
     }
 
     @Override
+    public boolean isOn() throws DeviceException, IOException {
+        return false;
+    }
+
+    @Override
     public void setSource(SMU.Source source) throws IOException {
         setSourceFunction(Source.fromSMU(source), getFunction());
     }
 
     public SMU.Source getSource() {
         return source.getOriginal();
+    }
+
+    @Override
+    public DataPoint[] performLinearSweep(SMU.Source source, double min, double max, int numSteps, long delay) throws DeviceException, IOException {
+        return new DataPoint[0];
     }
 
     public Function getFunction() {
