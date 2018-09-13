@@ -12,7 +12,7 @@ public class Main {
     private static void run() throws Exception {
 
 
-        SMU smu1 = new K2450(new GPIBAddress(0, 30));
+        K2450 smu1 = new K2450(new GPIBAddress(0, 30));
 
         SMU.DataPoint[] points = smu1.performLinearSweep(
                 SMU.Source.VOLTAGE,
