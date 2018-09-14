@@ -40,7 +40,7 @@ public class Synch {
 
     }
 
-    public static void waitForParamStable(DoubleReturn valueToCheck, double errorPct, int interval, long duration) throws IOException, DeviceException, InterruptedException {
+    public static void waitForParamStable(DoubleReturn valueToCheck, double errorPct, int interval, long duration) throws IOException, DeviceException {
 
         ArrayList<Double> list = new ArrayList<>();
 
@@ -64,7 +64,11 @@ public class Synch {
 
             }
 
-            Thread.sleep(interval);
+            try {
+                Thread.sleep(interval);
+            } catch (Exception e) {
+                throw new DeviceException("Could not sleep!");
+            }
 
         }
 

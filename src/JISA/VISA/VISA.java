@@ -212,23 +212,24 @@ public class VISA {
      * Read from the given instrument, specified by instrument handle returned by openInstrument()
      *
      * @param instrument Instrument handle from openInstrument()
+     * @param bufferSize Number of bytes to allocate for response
      *
      * @return The read string from the device
      *
      * @throws VISAException Upon error with VISA interface
      */
-    public static String read(long instrument) throws VISAException {
+    public static String read(long instrument, int bufferSize) throws VISAException {
 
         if (!instruments.containsKey(instrument)) {
             throw new VISAException("That instrument has not been opened!");
         }
 
-        ByteBuffer            response    = ByteBuffer.allocate(1024);
+        ByteBuffer            response    = ByteBuffer.allocate(bufferSize);
         NativeLongByReference returnCount = new NativeLongByReference();
         NativeLong status = lib.viRead(
                 instruments.get(instrument),
                 response,
-                new NativeLong(1024),
+                new NativeLong(bufferSize),
                 returnCount
         );
 
@@ -242,6 +243,19 @@ public class VISA {
             throw new VISAException("Could not encode returned string!");
         }
 
+    }
+
+    /**
+     * Read from the given instrument, specified by instrument handle returned by openInstrument()
+     *
+     * @param instrument Instrument handle from openInstrument()
+     *
+     * @return The read string from the device
+     *
+     * @throws VISAException Upon error with VISA interface
+     */
+    public static String read(long instrument) throws VISAException {
+        return read(instrument, 1024);
     }
 
     /**

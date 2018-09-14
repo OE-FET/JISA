@@ -26,31 +26,26 @@ public abstract class DCPower extends VISADevice {
 
     public void waitForStableVoltage(double pctError, long time) throws IOException, DeviceException {
 
-        try {
-            Synch.waitForParamStable(
-                    this::getVoltage,
-                    pctError,
-                    100,
-                    time
-            );
-        } catch (InterruptedException e) {
-            throw new DeviceException("Couldn't sleep!");
-        }
+
+        Synch.waitForParamStable(
+                this::getVoltage,
+                pctError,
+                100,
+                time
+        );
+
 
     }
 
     public void waitForStableCurrent(double pctError, long time) throws IOException, DeviceException {
 
-        try {
-            Synch.waitForParamStable(
-                    this::getCurrent,
-                    pctError,
-                    100,
-                    time
-            );
-        } catch (InterruptedException e) {
-            throw new DeviceException("Couldn't sleep!");
-        }
+        Synch.waitForParamStable(
+                this::getCurrent,
+                pctError,
+                100,
+                time
+        );
+
 
     }
 

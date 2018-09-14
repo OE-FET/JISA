@@ -1,31 +1,43 @@
 package JISA;
 
-import JISA.Addresses.*;
-import JISA.Devices.*;
-import JISA.VISA.*;
-import JISA.Control.*;
-
-import java.io.IOException;
+import JISA.Addresses.GPIBAddress;
+import JISA.Devices.K2450;
+import JISA.Devices.SMU;
+import JISA.Experiment.*;
 
 public class Main {
 
     private static void run() throws Exception {
 
-        // Connect to the device
-        K2450 smu1 = new K2450(new GPIBAddress(0, 30));
+        SMU smu1 = new K2450(new GPIBAddress(0, 15));
+        SMU smu2 = new K2450(new GPIBAddress(0, 16));
+        SMU smu3 = new K2450(new GPIBAddress(0, 17));
 
-        // Perform a linear sweep from 0V to 20V in 10 steps with a 500 ms delay
-        SMU.DataPoint[] points = smu1.performLinearSweep(
-                SMU.Source.VOLTAGE,
-                0,
-                20,
-                10,
-                500,
-                (count, V, I) -> {
-                    // Output step number, voltage and current on each step
-                    System.out.printf("%d\t%e\t%e\n", count, V, I);
-                }
-        );
+        ResultList results = new ResultList("Vd", "Id", "Vg", "Ig");
+        results.setUnits("V", "A", "V", "A");
+
+        for (double Vd = 0; Vd <= 10; Vd += 2) {
+
+            smu1.setVoltage(Vd);
+
+            for (double Vg = 0; Vd >= -60; Vd -= 5) {
+
+                smu2.setVoltage(Vg);
+
+                Thread.sleep(500);
+
+                results.addData(
+                        smu1.getVoltage(),
+                        smu1.getCurrent(),
+                        smu2.getVoltage(),
+                        smu2.getCurrent()
+                );
+
+            }
+
+        }
+
+        results.output("fileName.csv");
 
     }
 

@@ -8,9 +8,10 @@ public class VISADevice {
 
     private long              device;
     private InstrumentAddress address;
-    private String            terminator  = "";
-    private String            lastCommand = null;
-    private String            lastRead    = null;
+    private String            terminator     = "";
+    private String            lastCommand    = null;
+    private String            lastRead       = null;
+    private int               readBufferSize = 1024;
 
     public final static int    DEFAULT_TIMEOUT = 13;
     public final static int    DEFAULT_EOI     = 1;
@@ -27,6 +28,10 @@ public class VISADevice {
             throw new IOException(e.getMessage());
         }
 
+    }
+
+    public void setReadBufferSize(int bytes) {
+        readBufferSize = bytes;
     }
 
     public void setEOI(boolean flag) throws IOException {
@@ -85,7 +90,7 @@ public class VISADevice {
 
     public synchronized String read() throws IOException {
         try {
-            lastRead = VISA.read(device);
+            lastRead = VISA.read(device, readBufferSize);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }

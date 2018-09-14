@@ -287,23 +287,6 @@ public class SR830 extends VISADevice implements Commandable {
         return new DataPacket(query(C_QUERY_ALL));
     }
 
-    public void onStableLock(double error, long duration, int interval, SRunnable onStable) {
-        onStableLock(error, duration, interval, onStable, Util::exceptionHandler);
-    }
-
-    public void onStableLock(double error, long duration, int interval, SRunnable onStable, ERunnable onException) {
-
-        Asynch.onParamStable(
-                this::getR,
-                error,
-                duration,
-                interval,
-                onStable,
-                onException
-        );
-
-    }
-
     /**
      * Wait for the R output of the lock-in to remain within the given percentage error for the given duration.
      *
@@ -312,7 +295,7 @@ public class SR830 extends VISADevice implements Commandable {
      *
      * @throws Exception
      */
-    public void waitForStableLock(double errorPct, long duration) throws Exception {
+    public void waitForStableLock(double errorPct, long duration) throws IOException, DeviceException {
 
         Synch.waitForParamStable(
                 this::getR,
@@ -328,7 +311,7 @@ public class SR830 extends VISADevice implements Commandable {
      *
      * @throws Exception
      */
-    public void waitForStableLock() throws Exception {
+    public void waitForStableLock() throws IOException, DeviceException {
         waitForStableLock(STANDARD_ERROR, STANDARD_DURATION);
     }
 
