@@ -9,13 +9,24 @@ import java.util.function.Consumer;
 public class ResultList implements Iterable<Result> {
 
     private String[]          names;
-    private String[]          units   = null;
+    private String[]          units    = null;
     private int               cols;
-    private ArrayList<Result> results = new ArrayList<>();
+    private ArrayList<Result> results  = new ArrayList<>();
+    private ArrayList<Runnable>          onUpdate = new ArrayList<>();
 
     public ResultList(String... names) {
         this.names = names;
         this.cols = this.names.length;
+    }
+
+    public void setOnUpdate(Runnable onUpdate) {
+        this.onUpdate.add(onUpdate);
+    }
+
+    private void doUpdate() {
+        for (Runnable r : onUpdate) {
+            r.run();
+        }
     }
 
     public void setUnits(String... units) {
@@ -25,6 +36,7 @@ public class ResultList implements Iterable<Result> {
         }
 
         this.units = units;
+        doUpdate();
 
     }
 
@@ -37,6 +49,8 @@ public class ResultList implements Iterable<Result> {
         results.add(
                 new Result(data)
         );
+
+        doUpdate();
 
     }
 
@@ -80,6 +94,14 @@ public class ResultList implements Iterable<Result> {
             r.output(stream, delim);
         }
 
+    }
+
+    public Result getLastRow() {
+        return results.get(results.size() - 1);
+    }
+
+    public int getNumCols() {
+        return names.length;
     }
 
     public String getTitle(int col) {

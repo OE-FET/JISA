@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane fx:id="pane" prefWidth="600" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="JISA.GUI.InputWindow">
+
+    <center>
+        <VBox fx:id="list" alignment="CENTER_LEFT" spacing="15.0">
+            <padding>
+                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+            </padding>
+        </VBox>
+    </center>
+
+    <bottom>
+        <ButtonBar>
+            <buttons>
+                <Button onAction="#setVariables" text="Accept" />
+            </buttons>
+            <padding>
+                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+            </padding>
+        </ButtonBar>
+    </bottom>
+    <top>
+        <Label fx:id="title" text="Title" BorderPane.alignment="CENTER">
+            <font>
+                <Font size="18.0" />
+            </font>
+            <padding>
+                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+            </padding>
+        </Label>
+    </top>
+
+</BorderPane>

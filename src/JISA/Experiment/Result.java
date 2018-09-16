@@ -1,6 +1,7 @@
 package JISA.Experiment;
 
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Result {
@@ -28,6 +29,10 @@ public class Result {
 
     public Double get(int i) {
         return data[i];
+    }
+
+    public Double[] getData() {
+        return data.clone();
     }
 
 }
