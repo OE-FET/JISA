@@ -12,7 +12,7 @@
    <center>
       <VBox alignment="CENTER" prefHeight="82.0" prefWidth="451.0" spacing="15.0" BorderPane.alignment="CENTER">
          <children>
-            <Label fx:id="titleText" text="Label" VBox.vgrow="ALWAYS">
+            <Label fx:id="titleText" VBox.vgrow="ALWAYS">
                <font>
                   <Font size="18.0" />
                </font>
@@ -27,7 +27,7 @@
                   <Label fx:id="pctLabel" minWidth="50.0" text="0%" HBox.hgrow="NEVER" />
                </children>
             </HBox>
-            <Label fx:id="statusText" text="Label" />
+            <Label fx:id="statusText"/>
          </children>
          <padding>
             <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />

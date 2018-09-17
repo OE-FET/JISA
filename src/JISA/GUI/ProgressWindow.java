@@ -37,6 +37,7 @@ public class ProgressWindow implements Gridable {
                 Stage stage = new Stage();
                 controller.stage = stage;
                 stage.setTitle(title);
+                controller.setTitleText(title);
                 stage.setScene(scene);
             });
             return controller;
@@ -58,7 +59,7 @@ public class ProgressWindow implements Gridable {
             timeline.play();
 
             pctLabel.setText(
-                    String.format("%d%%", (int) Math.floor(100 * (value/this.max)))
+                    String.format("%d%%", (int) Math.round(100 * (value/this.max)))
             );
 
         });

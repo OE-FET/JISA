@@ -9,10 +9,10 @@ import java.util.TimerTask;
 
 public class MotorController {
 
-    private SR830  lockIn;
-    private K2200  power;
-    private double targetFrequency;
-    private double errorPCT;
+    private LockIn  lockIn;
+    private DCPower power;
+    private double  targetFrequency;
+    private double  errorPCT;
 
     private static final double KNOWN_VOLTAGE   = 10.0;
     private static final double KNOWN_FREQUENCY = 1.0;
@@ -72,16 +72,16 @@ public class MotorController {
 
     }
 
-    public MotorController(SR830 lockInAmplifier, K2200 dcPowerSupply) {
+    public MotorController(LockIn lockInAmplifier, DCPower dcPowerSupply) {
         lockIn = lockInAmplifier;
         power = dcPowerSupply;
     }
 
-    public double getFieldFrequency() throws IOException {
-        return lockIn.getRefFrequency();
+    public double getFieldFrequency() throws IOException, DeviceException {
+        return lockIn.getFrequency();
     }
 
-    public double getVoltage() throws IOException {
+    public double getVoltage() throws IOException, DeviceException {
         return power.getVoltage();
     }
 
@@ -89,7 +89,7 @@ public class MotorController {
         this.targetFrequency = frequency;
     }
 
-    public void start() throws IOException {
+    public void start() throws IOException, DeviceException {
 
         power.setVoltage(0.0);
         power.setCurrent(5.0);
@@ -101,7 +101,7 @@ public class MotorController {
 
     }
 
-    public void stop() throws IOException {
+    public void stop() throws IOException, DeviceException {
 
         pid.cancel();
         power.turnOff();

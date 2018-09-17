@@ -16,6 +16,8 @@ public abstract class DCPower extends VISADevice {
 
     public abstract void turnOff() throws IOException, DeviceException;
 
+    public abstract boolean isOn() throws IOException, DeviceException;
+
     public abstract void setVoltage(double voltage) throws IOException, DeviceException;
 
     public abstract void setCurrent(double current) throws IOException, DeviceException;

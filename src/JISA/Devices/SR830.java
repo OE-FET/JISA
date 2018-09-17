@@ -8,7 +8,7 @@ import JISA.VISA.VISADevice;
 import java.io.IOException;
 import java.util.HashMap;
 
-public class SR830 extends VISADevice implements Commandable {
+public class SR830 extends DPLockIn {
 
     private static final String C_QUERY_FREQ        = "FREQ?";
     private static final String C_SET_FREQ          = "FREQ %f";
@@ -23,50 +23,14 @@ public class SR830 extends VISADevice implements Commandable {
     private static final String C_QUERY_OUTPUT      = "OUTP ? %d";
     private static final String C_QUERY_TIME_CONST  = "OFLT?";
     private static final String C_SET_TIME_CONST    = "OFLT %d";
+    private static final String C_QUERY_ALL         = "SNAP ? 1,2,3,4,9";
     private static final int    OUTPUT_X            = 1;
     private static final int    OUTPUT_Y            = 2;
     private static final int    OUTPUT_R            = 3;
     private static final int    OUTPUT_T            = 4;
-    private static final String C_QUERY_ALL         = "SNAP ? 1,2,3,4,9";
-
-    private static final double STANDARD_ERROR    = 1.0;
-    private static final int    STANDARD_INTERVAL = 100;
-    private static final long   STANDARD_DURATION = 10000;
-
-    private final DeviceCommand[] commands = {
-
-            new DeviceCommand("Get Frequency", "Returns the reference frequency") {
-                @Override
-                public double execute() throws IOException {
-                    return getRefFrequency();
-                }
-            },
-            new DeviceCommand("Get Amplitude", "Returns the amplitude of the locked-in signal") {
-                @Override
-                public double execute() throws IOException {
-                    return getRefAmplitude();
-                }
-            },
-            new DeviceCommand("Set Time Constant", "Sets the time constant to use for locking-on to a signal",
-                              new DeviceCommand.DeviceArgument<TimeConst>("Time Constant", TimeConst.class)) {
-
-                @Override
-                public double execute() throws IOException {
-                    setTimeConst((TimeConst) getArgumentValue(0));
-                    return 0;
-                }
-            },
-            new DeviceCommand("Set Ref Mode", "Sets whether the lock-in uses an internal or external reference signal",
-                              new DeviceCommand.DeviceArgument<RefMode>("Ref Mode", RefMode.class)) {
-
-                @Override
-                public double execute() throws IOException {
-                    setRefMode((RefMode) getArgumentValue(0));
-                    return 0;
-                }
-            }
-
-    };
+    private static final double STANDARD_ERROR      = 1.0;
+    private static final int    STANDARD_INTERVAL   = 100;
+    private static final long   STANDARD_DURATION   = 10000;
 
     /**
      * Open an SR830 device on the given bus and address
@@ -94,34 +58,6 @@ public class SR830 extends VISADevice implements Commandable {
 
     }
 
-
-    @Override
-    public DeviceCommand[] getCommands() {
-        return commands.clone();
-    }
-
-    @Override
-    public DeviceCommand getCommand(int index) {
-        return (index >= 0 && index < commands.length) ? commands[index].clone() : null;
-    }
-
-    @Override
-    public String getName() {
-        return "SR830 Lock-In Amplifier";
-    }
-
-    @Override
-    public HashMap<String, Class> getNameableParams() {
-
-        HashMap<String, Class> map = new HashMap<>();
-        map.put("Reference Mode", RefMode.class);
-        map.put("Sensitivity", Sensitivity.class);
-        map.put("Time Constant", TimeConst.class);
-
-        return map;
-
-    }
-
     /**
      * Returns the current value of the reference signal frequency
      *
@@ -129,7 +65,7 @@ public class SR830 extends VISADevice implements Commandable {
      *
      * @throws IOException Upon communication error
      */
-    public double getRefFrequency() throws IOException {
+    public double getFrequency() throws IOException {
         return queryDouble(C_QUERY_FREQ);
     }
 
@@ -162,7 +98,7 @@ public class SR830 extends VISADevice implements Commandable {
      *
      * @throws IOException Upon communication error
      */
-    public void setRefFrequency(double freq) throws IOException {
+    public void setOscFrequency(double freq) throws IOException {
         write(C_SET_FREQ, freq);
     }
 
@@ -173,7 +109,7 @@ public class SR830 extends VISADevice implements Commandable {
      *
      * @throws IOException Upon communication error
      */
-    public void setRefPhase(double phase) throws IOException {
+    public void setOscPhase(double phase) throws IOException {
         write(C_SET_PHASE, phase);
     }
 
@@ -184,7 +120,7 @@ public class SR830 extends VISADevice implements Commandable {
      *
      * @throws IOException Upon communication error
      */
-    public void setRefAmplitude(double amp) throws IOException {
+    public void setOscAmplitude(double amp) throws IOException {
         write(C_SET_INT_AMP, amp);
     }
 
@@ -206,8 +142,8 @@ public class SR830 extends VISADevice implements Commandable {
      *
      * @throws IOException Upon communication error
      */
-    public void setRefMode(RefMode mode) throws IOException {
-        write(C_SET_REF, mode.toInt());
+    public void setRefMode(LockIn.RefMode mode) throws IOException {
+        write(C_SET_REF, RefMode.fromRefMode(mode).toInt());
     }
 
     /**
@@ -239,7 +175,7 @@ public class SR830 extends VISADevice implements Commandable {
      *
      * @throws IOException Upon communication error
      */
-    public double getX() throws IOException {
+    public double getLockedX() throws IOException {
         return queryDouble(C_QUERY_OUTPUT, OUTPUT_X);
     }
 
@@ -250,7 +186,7 @@ public class SR830 extends VISADevice implements Commandable {
      *
      * @throws IOException Upon communication error
      */
-    public double getY() throws IOException {
+    public double getLockedY() throws IOException {
         return queryDouble(C_QUERY_OUTPUT, OUTPUT_Y);
     }
 
@@ -261,7 +197,7 @@ public class SR830 extends VISADevice implements Commandable {
      *
      * @throws IOException Upon communication error
      */
-    public double getR() throws IOException {
+    public double getLockedAmplitude() throws IOException {
         return queryDouble(C_QUERY_OUTPUT, OUTPUT_R);
     }
 
@@ -272,7 +208,7 @@ public class SR830 extends VISADevice implements Commandable {
      *
      * @throws IOException Upon communication error
      */
-    public double getT() throws IOException {
+    public double getLockedPhase() throws IOException {
         return queryDouble(C_QUERY_OUTPUT, OUTPUT_T);
     }
 
@@ -287,36 +223,16 @@ public class SR830 extends VISADevice implements Commandable {
         return new DataPacket(query(C_QUERY_ALL));
     }
 
-    /**
-     * Wait for the R output of the lock-in to remain within the given percentage error for the given duration.
-     *
-     * @param errorPct The percentage error required
-     * @param duration The duration required
-     *
-     * @throws Exception
-     */
-    public void waitForStableLock(double errorPct, long duration) throws IOException, DeviceException {
-
-        Synch.waitForParamStable(
-                this::getR,
-                errorPct,
-                STANDARD_INTERVAL,
-                duration
-        );
-
-    }
-
-    /**
-     * Wait for the R output of the lock-in to become stable with a 1% error range for at least 10 seconds.
-     *
-     * @throws Exception
-     */
-    public void waitForStableLock() throws IOException, DeviceException {
-        waitForStableLock(STANDARD_ERROR, STANDARD_DURATION);
+    public void setTimeConstant(double seconds) throws IOException {
+        write(C_SET_TIME_CONST, TimeConst.fromSeconds(seconds).toInt());
     }
 
     public void setTimeConst(TimeConst mode) throws IOException {
         write(C_SET_TIME_CONST, mode.toInt());
+    }
+
+    public double getTimeConstant() throws IOException {
+        return TimeConst.fromInt(queryInt(C_QUERY_TIME_CONST)).getValue();
     }
 
     public TimeConst getTimeConst() throws IOException {
@@ -325,25 +241,33 @@ public class SR830 extends VISADevice implements Commandable {
 
     public enum RefMode implements Nameable {
 
-        EXTERNAL(0, "External"),
-        INTERNAL(1, "Internal");
+        EXTERNAL(0, LockIn.RefMode.EXTERNAL, "External"),
+        INTERNAL(1, LockIn.RefMode.INTERNAL, "Internal");
 
-        private        int                       c;
-        private        String                    name;
-        private static HashMap<Integer, RefMode> lookup = new HashMap<>();
+        private        int                              c;
+        private        LockIn.RefMode                   refMode;
+        private        String                           name;
+        private static HashMap<Integer, RefMode>        lookup  = new HashMap<>();
+        private static HashMap<LockIn.RefMode, RefMode> convert = new HashMap<>();
 
         static RefMode fromInt(int i) {
             return lookup.getOrDefault(i, null);
         }
 
+        static RefMode fromRefMode(LockIn.RefMode refMode) {
+            return convert.getOrDefault(refMode, null);
+        }
+
         static {
             for (RefMode mode : RefMode.values()) {
                 lookup.put(mode.toInt(), mode);
+                convert.put(mode.getRefMode(), mode);
             }
         }
 
-        RefMode(int code, String name) {
+        RefMode(int code, LockIn.RefMode mode, String name) {
             c = code;
+            refMode = mode;
             this.name = name;
         }
 
@@ -359,6 +283,10 @@ public class SR830 extends VISADevice implements Commandable {
         @Override
         public String getName() {
             return name;
+        }
+
+        public LockIn.RefMode getRefMode() {
+            return refMode;
         }
     }
 
@@ -452,6 +380,22 @@ public class SR830 extends VISADevice implements Commandable {
 
         static TimeConst fromInt(int i) {
             return lookup.getOrDefault(i, null);
+        }
+
+        static TimeConst fromSeconds(double seconds) {
+
+            TimeConst found = T_30ks;
+
+            for (TimeConst t : values()) {
+
+                if (t.getValue() >= seconds && t.getValue() < found.getValue()) {
+                    found = t;
+                }
+
+            }
+
+            return found;
+
         }
 
         static {
