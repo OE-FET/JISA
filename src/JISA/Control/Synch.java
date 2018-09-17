@@ -20,21 +20,25 @@ public class Synch {
 
     }
 
-    public static void waitForParamWithinRange(DoubleReturn valueToCheck, double minValue, double maxValue, int interval) throws Exception {
+    public static void waitForParamWithinRange(DoubleReturn valueToCheck, double minValue, double maxValue, int interval) throws IOException, DeviceException {
 
         double value = valueToCheck.getValue();
 
         while (minValue > value || maxValue < value) {
-            Thread.sleep(interval);
+            try {
+                Thread.sleep(interval);
+            } catch (InterruptedException e) {
+                throw new DeviceException("Could not sleep!");
+            }
             value = valueToCheck.getValue();
         }
 
     }
 
-    public static void waitForParamWithinError(DoubleReturn valueToCheck, double target, double errorPct, int interval) throws Exception {
+    public static void waitForParamWithinError(DoubleReturn valueToCheck, double target, double errorPct, int interval) throws IOException, DeviceException {
 
-        double minValue = (1D - (errorPct/100D)) * target;
-        double maxValue = (1D + (errorPct/100D)) * target;
+        double minValue = (1D - (errorPct / 100D)) * target;
+        double maxValue = (1D + (errorPct / 100D)) * target;
 
         waitForParamWithinRange(valueToCheck, minValue, maxValue, interval);
 
@@ -50,11 +54,11 @@ public class Synch {
             list.add(value);
 
             // Go back through the list of past values
-            for (int i = list.size() - 1; i >=0; i--) {
+            for (int i = list.size() - 1; i >= 0; i--) {
 
                 double pastValue = list.get(i);
-                double min = pastValue * (1 - (errorPct / 100D));
-                double max = pastValue * (1 + (errorPct / 100D));
+                double min       = pastValue * (1 - (errorPct / 100D));
+                double max       = pastValue * (1 + (errorPct / 100D));
 
                 // When/if we find a value outside our error range, cut out all values before it
                 if (!Util.isBetween(value, min, max)) {

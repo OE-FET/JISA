@@ -227,7 +227,7 @@ public class SR830 extends DPLockIn {
         write(C_SET_TIME_CONST, TimeConst.fromSeconds(seconds).toInt());
     }
 
-    public void setTimeConst(TimeConst mode) throws IOException {
+    public void setTimeConstant(TimeConst mode) throws IOException {
         write(C_SET_TIME_CONST, mode.toInt());
     }
 
@@ -362,7 +362,7 @@ public class SR830 extends DPLockIn {
         T_10ms(6, 10e-3),
         T_30ms(7, 30e-3),
         T_100ms(8, 100e-3),
-        S_300ms(9, 300e-3),
+        T_300ms(9, 300e-3),
         T_1s(10, 1.0),
         T_3s(11, 3.0),
         T_10s(12, 10.0),

@@ -4,6 +4,9 @@ import JISA.Addresses.InstrumentAddress;
 
 import java.io.IOException;
 
+/**
+ * Extension of the LockIn class for lock-in amplifiers with dual-phase capabilities
+ */
 public abstract class DPLockIn extends LockIn {
 
     public DPLockIn(InstrumentAddress address) throws IOException {

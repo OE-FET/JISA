@@ -30,20 +30,19 @@ public class VISA {
 
     static {
 
-        // Try to load the visa library
-        if (OS_NAME.contains("win")) {
-
-            libName = "nivisa64";
-            lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
-
-        } else if (OS_NAME.contains("linux")) {
-
-            libName = "visa";
-            lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
-
-        } else {
-            System.err.println("This system is not yet supported!");
-            System.exit(1);
+        try {
+            if (OS_NAME.contains("win")) {
+                libName = "nivisa64";
+                lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
+            } else if (OS_NAME.contains("linux")) {
+                libName = "visa";
+                lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
+            } else {
+                System.err.println("This system is not yet supported!");
+                System.exit(1);
+            }
+        } catch (UnsatisfiedLinkError e) {
+            lib = null;
         }
 
         if (lib == null) {

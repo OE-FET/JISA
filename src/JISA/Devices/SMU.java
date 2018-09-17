@@ -274,6 +274,10 @@ public abstract class SMU extends VISADevice {
 
     }
 
+    public DataPoint[] performSweep(Source source, double[] values, long delay) throws IOException, DeviceException {
+        return performSweep(source, values, delay, (i,p) -> {});
+    }
+
     /**
      * Enumeration of source modes
      */

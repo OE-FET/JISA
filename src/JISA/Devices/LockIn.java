@@ -6,6 +6,9 @@ import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 
+/**
+ * Abstract class to define the standard functionality of lock-in amplifiers
+ */
 public abstract class LockIn extends VISADevice {
 
     public LockIn(InstrumentAddress address) throws IOException {
@@ -103,6 +106,14 @@ public abstract class LockIn extends VISADevice {
      */
     public abstract double getLockedAmplitude() throws IOException, DeviceException;
 
+    /**
+     * Returns the set time constant, in seconds
+     *
+     * @return Time constant, in seconds
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     public abstract double getTimeConstant() throws IOException, DeviceException;
 
 
