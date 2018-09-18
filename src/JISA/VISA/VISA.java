@@ -215,7 +215,13 @@ public class VISA {
         long writeLength = toWrite.length();
 
         NativeLongByReference returnCount = new NativeLongByReference();
-        NativeLong            status      = lib.viWrite(instruments.get(instrument), pBuffer, new NativeLong(writeLength), returnCount);
+
+        NativeLong status = lib.viWrite(
+                instruments.get(instrument),
+                pBuffer,
+                new NativeLong(writeLength),
+                returnCount
+        );
 
         if (status.longValue() != VI_SUCCESS) {
             throw new VISAException("Could not write to instrument!");
@@ -245,6 +251,7 @@ public class VISA {
 
         ByteBuffer            response    = ByteBuffer.allocate(bufferSize);
         NativeLongByReference returnCount = new NativeLongByReference();
+
         NativeLong status = lib.viRead(
                 instruments.get(instrument),
                 response,
