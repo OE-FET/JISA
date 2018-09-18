@@ -13,6 +13,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+/**
+ * Static class for accessing the native VISA library in a more Java-friendly way
+ */
 public class VISA {
 
     private static       VISANativeInterface       lib;
@@ -28,6 +31,9 @@ public class VISA {
     private static       NativeLong                visaResourceManagerHandle;
     private static       HashMap<Long, NativeLong> instruments      = new HashMap<>();
 
+    /*
+      This gets run the first time this class is accessed
+     */
     static {
 
         try {
@@ -60,6 +66,13 @@ public class VISA {
 
     }
 
+    /**
+     * Sets up the resource manager for this session. Used only internally.
+     *
+     * @return Resource manager handle.
+     *
+     * @throws VISAException When VISA does go gone screw it up
+     */
     private static NativeLong getResourceManager() throws VISAException {
 
         NativeLongByReference pViSession = new NativeLongByReference();
@@ -72,6 +85,13 @@ public class VISA {
 
     }
 
+    /**
+     * Converts a string to bytes in a ByteBuffer, used for sending to VISA library which expects binary strings.
+     *
+     * @param source The string, damn you.
+     *
+     * @return The ByteBuffer that I mentioned.
+     */
     private static ByteBuffer stringToByteBuffer(String source) {
         try {
             ByteBuffer dest = ByteBuffer.allocate(source.length() + 1);
