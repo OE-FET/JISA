@@ -17,12 +17,7 @@ public class Main extends Application {
 
     private static void run() throws Exception {
 
-        K2450 smu = new K2450(new GPIBAddress(0, 15));
-
-        double voltage = smu.getVoltage();
-        double current = smu.getCurrent();
-
-        SMU.DataPoint[] points = smu.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500);
+        
 
     }
 

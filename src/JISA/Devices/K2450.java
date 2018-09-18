@@ -10,6 +10,8 @@ import java.util.HashMap;
 
 public class K2450 extends SMU {
 
+    // TODO: 4PP - Remote Mode, 3PP/2PP - Local Mode
+
     private static final String C_MEASURE_VOLTAGE       = ":MEAS:VOLT?";
     private static final String C_MEASURE_CURRENT       = ":MEAS:CURR?";
     private static final String C_MEASURE_RESISTANCE    = ":MEAS:RES?";
@@ -20,6 +22,7 @@ public class K2450 extends SMU {
     private static final String C_SET_SOURCE_VALUE      = ":SOUR:%s %f";
     private static final String C_SET_TERMINALS         = ":ROUT:TERM %s";
     private static final String C_GET_TERMINALS         = ":ROUT:TERM?";
+    private static final String C_SET_PROBE_MODE        = "%s:RSEN %s";
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
 
@@ -37,6 +40,22 @@ public class K2450 extends SMU {
 
         } catch (IOException e) {
             throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
+        }
+
+    }
+
+    public void setNumProbes(int numProbes) throws IOException, DeviceException {
+
+        if (numProbes > 4 || numProbes < 2) {
+            throw new DeviceException("Number of probes can only be 2, 3 or 4!");
+        }
+
+        if (numProbes > 3) {
+            write(C_SET_PROBE_MODE, Source.VOLTAGE.getTag(), OUTPUT_ON);
+            write(C_SET_PROBE_MODE, Source.CURRENT.getTag(), OUTPUT_ON);
+        } else {
+            write(C_SET_PROBE_MODE, Source.VOLTAGE.getTag(), OUTPUT_OFF);
+            write(C_SET_PROBE_MODE, Source.CURRENT.getTag(), OUTPUT_OFF);
         }
 
     }
