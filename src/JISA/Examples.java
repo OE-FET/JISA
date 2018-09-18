@@ -4,10 +4,13 @@ import JISA.Addresses.GPIBAddress;
 import JISA.Addresses.InstrumentAddress;
 import JISA.Addresses.StrAddress;
 import JISA.Addresses.TCPIPAddress;
-import JISA.Devices.K236;
-import JISA.Devices.K2450;
-import JISA.Devices.SMU;
+import JISA.Devices.*;
+import JISA.Experiment.ResultList;
+import JISA.GUI.PlotWindow;
+import JISA.GUI.TableWindow;
 import JISA.VISA.VISA;
+
+import java.io.IOException;
 
 public class Examples {
 
@@ -85,6 +88,97 @@ public class Examples {
         // common to all SMU implementations, making sure that you program will work no-matter what SMU make/model you use.
         // As far as Java is concerned they are simply both an "SMU" not a Keithley this or Keysight that.
         // As far as the user is concerned, all SMUs work the same way.
+
+
+    }
+
+    public static void handlingResults() throws Exception {
+
+        // You can store numerical results using a ResultList object. These are like tables, you define the columns in
+        // the table and (optionally) their units, then you can add data to it one row at a time.
+
+        // As an example, consider a set-up consisting of a single lock-in amplifier, in this case an SR830.
+        SR830 lock = new SR830(new GPIBAddress(0, 30));
+
+        // We have connected the output of its internal oscillator to its input terminal and want to see how accurately
+        // it locks on to this signal using the same internal oscillator as the reference signal (ie internal referencing
+        // mode).
+        lock.setRefMode(LockIn.RefMode.INTERNAL);
+
+        // Now, to store our data points, we create a ResultList object, specifying columns and units like so:
+        ResultList results = new ResultList("Frequency", "Set Amplitude", "Measured Amplitude");
+        results.setUnits("Hz", "V", "V");
+
+        // Let's sweep frequency from 0.1 Hz to 10 Hz in 0.1 Hz steps:
+        for (double f = 0.1; f <= 10.0; f += 0.1) {
+
+            // We want the time constant to be something like 3x the time period of the oscillation:
+            lock.setTimeConstant(3.0 / f);
+
+            // We then want to set the frequency of the internal oscillator
+            lock.setOscFrequency(f);
+
+            // And wait for the lock to become stable
+            lock.waitForStableLock();
+
+            // Now that we've got a stable lock, record the values into our ResultList object:
+            results.addData(lock.getFrequency(), lock.getRefAmplitude(), lock.getLockedAmplitude());
+
+        }
+
+        // You can do many things with a ResultList once it's been filled. For example you can output it directly as
+        // a CSV file:
+        results.output("/path/to/file.csv");
+
+        // You can output it in an ASCII table to the terminal:
+        results.outputTable();
+
+        // Or output it as a MATLAB script to load the data into variables in MATLAB:
+        results.outputMATLAB("/path/to/file.m", "Freq", "Set", "Meas");
+
+    }
+
+    public static void gettingGraphical() throws Exception {
+
+        SR830      lock    = new SR830(new GPIBAddress(0, 30));
+        ResultList results = new ResultList("Frequency", "Set Amplitude", "Measured Amplitude");
+
+        results.setUnits("Hz", "V", "V");
+
+        lock.setRefMode(LockIn.RefMode.INTERNAL);
+
+        // We can improve upon our approach previously by introducing some GUI elements. This library contains a few
+        // pre-defined "windows" to give live displays of ResultList objects or to ask for user input etc.
+
+        // Let's start with a TableWindow, which is a window that will graphically show the contents of s ResultList
+        // object as a table
+
+        // Creates a TableWindow object with title "Results" that is set to display the contents of our ResultList "results"
+        TableWindow table = TableWindow.create("Results", results);
+
+        // Then to open the window
+        table.show();
+
+        // Now, if we did what we did before, as the ResultList is filled with entries, they shall appear in real-time
+        // in the table window:
+
+        for (double f = 0.1; f <= 10.0; f += 0.1) {
+
+            lock.setTimeConstant(3.0 / f);
+            lock.setOscFrequency(f);
+            lock.waitForStableLock();
+            results.addData(lock.getFrequency(), lock.getRefAmplitude(), lock.getLockedAmplitude());
+
+        }
+
+        // The same can be done but as a plot by use of PlotWindow:
+
+        // Plot title "Plot of Results", watches "results" plotting column 0 (Frequency) on the x-axis
+        // and 2 (Measured Amplitude) on the y-axis
+        PlotWindow plot = PlotWindow.create("Plot of Results", results, 0, 2);
+        plot.show();
+
+        // Just as with TableWindow, this plot will update in real-time as data is added to "results"
 
 
     }
