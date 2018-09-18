@@ -17,7 +17,33 @@ public class Main extends Application {
 
     private static void run() throws Exception {
 
-        
+        K2450 smu = new K2450(new GPIBAddress(0, 2));
+
+        ResultList results = new ResultList("Voltage", "Current");
+        results.setUnits("V", "nA");
+        PlotWindow  plot  = PlotWindow.create("I-V Plot", results);
+        TableWindow table = TableWindow.create("Data", results);
+        GridWindow  grid  = GridWindow.create("Results");
+
+        grid.addPane(table);
+        grid.addPane(plot);
+
+        grid.show();
+
+        smu.performLinearSweep(
+                SMU.Source.VOLTAGE,
+                0,
+                10,
+                20,
+                500,
+                (i, p) -> {
+                    results.addData(p.voltage, p.current * 1e9);
+                }
+        );
+
+        results.outputTable();
+
+        smu.turnOff();
 
     }
 

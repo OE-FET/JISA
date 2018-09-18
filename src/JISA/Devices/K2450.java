@@ -188,7 +188,7 @@ public class K2450 extends SMU {
         }
 
         public static Source fromTag(String tag) {
-            return lookup.getOrDefault(tag, null);
+            return lookup.getOrDefault(tag.trim(), null);
         }
 
         public static Source fromSMU(SMU.Source orig) {
