@@ -7,6 +7,7 @@ import JISA.GUI.Plot;
 import JISA.GUI.Progress;
 import JISA.GUI.Table;
 import javafx.application.Application;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.util.Random;
@@ -21,13 +22,14 @@ public class Main extends Application {
 
         Progress progress = new Progress("Measuring...");
         Table    table    = new Table("Results", list);
-        Plot     plot     = new Plot("Results", list, 1, 2);
-        Grid     grid     = new Grid("Results", progress, table, plot);
-        grid.show();
+        Plot     plot     = new Plot("My Plot Title", "X-Axis Label", "Y-Axis Label");
+        plot.watchList(list, 1, 2, "Current", Color.RED);
+        plot.watchList(list, 1, 0, "Frequency", Color.BLUE);
+        plot.show();
 
         Random rand = new Random();
 
-        for (int i = 0; i <= 10; i++) {
+        for (int i = 1; i <= 10; i++) {
             list.addData(
                     rand.nextDouble() * 100,
                     (double) i,

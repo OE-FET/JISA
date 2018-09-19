@@ -55,6 +55,8 @@ public class PlotWindow implements Gridable {
 
         PlotWindow window = create(title, list.getTitle(x), list.getTitle(y));
         window.watchList(list, x, y, "Data", Color.RED);
+        window.xAxis.setLabel(list.getTitle(x));
+        window.yAxis.setLabel(list.getTitle(y));
         return window;
 
     }
@@ -66,8 +68,6 @@ public class PlotWindow implements Gridable {
     public void watchList(final ResultList list, final int xData, final int yData, String seriesName, Color colour) {
 
         final int series = createSeries(seriesName, colour);
-        xAxis.setLabel(list.getTitle(xData));
-        yAxis.setLabel(list.getTitle(yData));
 
         list.setOnUpdate(() -> {
             Result r = list.getLastRow();
