@@ -8,17 +8,14 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ToolBar;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 
 public class GridWindow {
 
-    public  GridPane   pane;
+    public  TilePane   pane;
     public  BorderPane border;
     private ToolBar    toolBar = null;
     private Stage      stage;
@@ -81,9 +78,7 @@ public class GridWindow {
 
         Pane toAdd = item.getPane();
 
-        pane.add(toAdd, c, r);
-        GridPane.setHgrow(toAdd, Priority.ALWAYS);
-        GridPane.setVgrow(toAdd, Priority.ALWAYS);
+        pane.getChildren().add(toAdd);
 
         c++;
         if (c >= nCols) {
