@@ -26,7 +26,7 @@ public class TaskListWindow implements Gridable {
     public static TaskListWindow create(String title) {
 
         try {
-            FXMLLoader     loader     = new FXMLLoader(TableWindow.class.getResource("FXML/TaskListWindow.fxml"));
+            FXMLLoader     loader     = new FXMLLoader(TableWindow.class.getResource("TaskListWindow.fxml"));
             Parent         root       = loader.load();
             Scene          scene      = new Scene(root);
             TaskListWindow controller = (TaskListWindow) loader.getController();

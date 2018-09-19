@@ -3,8 +3,11 @@ package JISA;
 import JISA.Experiment.*;
 import JISA.GUI.FXML.PlotWindow;
 import JISA.GUI.Plot;
+import JISA.GUI.Table;
 import javafx.application.Application;
 import javafx.stage.Stage;
+
+import java.util.Random;
 
 public class Main extends Application {
 
@@ -12,27 +15,24 @@ public class Main extends Application {
 
 
 
-        ResultList list = new ResultList("Frequency","Set Amplitude","Measured Amplitude","Error");
-        list.setUnits("Hz","V","V","%");
+        ResultList list = new ResultList("Frequency","Voltage","Current");
+        list.setUnits("Hz","V","A");
 
-        Plot plot = new Plot("Results", list, 0, 3);
-        plot.show();
+        Table table = new Table("Results", list);
+        table.show();
 
-        for (double f = 0.1; f <= 10; f += 0.2) {
+        Random rand = new Random();
 
-            double ref = 50e-3;
-            double mes = ref - (1/Math.sqrt(f)) * 0.5e-3;
-
+        for (int i = 0; i < 10; i ++) {
             list.addData(
-                    f,
-                    ref,
-                    mes,
-                    100 * (Math.abs(ref - mes) / Math.max(ref,mes))
+                    rand.nextDouble() * 100,
+                    rand.nextDouble() * 100,
+                    rand.nextDouble() * 100
             );
-
+            Thread.sleep(100);
         }
 
-        list.output(",", System.out);
+        list.outputTable();
 
     }
 

@@ -32,7 +32,7 @@ public class InputWindow implements Gridable {
     public static InputWindow create(String title, boolean closeOnAccept, ClickHandler onAccept) {
 
         try {
-            FXMLLoader  loader     = new FXMLLoader(TableWindow.class.getResource("FXML/InputWindow.fxml"));
+            FXMLLoader  loader     = new FXMLLoader(TableWindow.class.getResource("InputWindow.fxml"));
             Parent      root       = loader.load();
             Scene       scene      = new Scene(root);
             InputWindow controller = (InputWindow) loader.getController();

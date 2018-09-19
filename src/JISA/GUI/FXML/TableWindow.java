@@ -26,7 +26,7 @@ public class TableWindow implements Gridable {
     public static TableWindow create(String title) {
 
         try {
-            FXMLLoader  loader     = new FXMLLoader(TableWindow.class.getResource("FXML/TableWindow.fxml"));
+            FXMLLoader  loader     = new FXMLLoader(TableWindow.class.getResource("TableWindow.fxml"));
             Parent      root       = loader.load();
             Scene       scene      = new Scene(root);
             TableWindow controller = (TableWindow) loader.getController();

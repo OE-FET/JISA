@@ -30,7 +30,7 @@ public class ProgressWindow implements Gridable {
     public static ProgressWindow create(String title) {
 
         try {
-            FXMLLoader     loader     = new FXMLLoader(TableWindow.class.getResource("FXML/ProgressWindow.fxml"));
+            FXMLLoader     loader     = new FXMLLoader(TableWindow.class.getResource("ProgressWindow.fxml"));
             Parent         root       = loader.load();
             Scene          scene      = new Scene(root);
             ProgressWindow controller = (ProgressWindow) loader.getController();
