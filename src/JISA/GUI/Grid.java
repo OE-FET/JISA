@@ -7,8 +7,11 @@ public class Grid implements Gridable {
 
     private GridWindow window;
 
-    public Grid(String title) {
+    public Grid(String title, Gridable... items) {
         window = GridWindow.create(title);
+        for (Gridable item : items) {
+            add(item);
+        }
     }
 
     public void add(Gridable toAdd) {
