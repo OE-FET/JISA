@@ -89,7 +89,7 @@ ResultList results = new ResultList("Voltage", "Current");
 results.setUnits("V", "A");
 
 // Creates a plot and tells it to watch our ResultList "results"
-PlotWindow plot = PlotWindow.create("I-V plot", results);
+Plot plot = new Plot("I-V plot", results);
 plot.show();
 
 SMU smu = new K2450(new SerialAddress(5));
