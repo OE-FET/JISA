@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="pane" prefWidth="600" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="JISA.GUI.InputWindow">
+<BorderPane fx:id="pane" prefWidth="600" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="JISA.GUI.FXML.InputWindow">
 
     <center>
         <VBox fx:id="list" alignment="CENTER_LEFT" spacing="15.0">

@@ -1,12 +1,12 @@
-package JISA.GUI;
+package JISA.GUI.FXML;
 
 import JISA.Experiment.*;
+import JISA.GUI.Gridable;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
-import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -15,9 +15,7 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Arrays;
-import java.util.ResourceBundle;
 
 public class TableWindow implements Gridable {
 

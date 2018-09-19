@@ -6,11 +6,9 @@ import JISA.Addresses.StrAddress;
 import JISA.Addresses.TCPIPAddress;
 import JISA.Devices.*;
 import JISA.Experiment.ResultList;
-import JISA.GUI.PlotWindow;
-import JISA.GUI.TableWindow;
+import JISA.GUI.FXML.PlotWindow;
+import JISA.GUI.FXML.TableWindow;
 import JISA.VISA.VISA;
-
-import java.io.IOException;
 
 public class Examples {
 

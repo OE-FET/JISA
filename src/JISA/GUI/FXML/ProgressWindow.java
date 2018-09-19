@@ -1,5 +1,6 @@
-package JISA.GUI;
+package JISA.GUI.FXML;
 
+import JISA.GUI.Gridable;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;

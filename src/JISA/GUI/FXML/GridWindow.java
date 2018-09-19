@@ -1,7 +1,8 @@
-package JISA.GUI;
+package JISA.GUI.FXML;
 
+import JISA.GUI.ClickHandler;
+import JISA.GUI.Gridable;
 import javafx.application.Platform;
-import javafx.event.EventType;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;

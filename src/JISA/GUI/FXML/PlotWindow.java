@@ -1,17 +1,15 @@
-package JISA.GUI;
+package JISA.GUI.FXML;
 
 import JISA.Experiment.Result;
 import JISA.Experiment.ResultList;
+import JISA.GUI.Gridable;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Side;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -32,7 +30,7 @@ public class PlotWindow implements Gridable {
     public static PlotWindow create(String title, String xAxis, String yAxis) {
 
         try {
-            FXMLLoader loader     = new FXMLLoader(TableWindow.class.getResource("FXML/PlotWindow.fxml"));
+            FXMLLoader loader     = new FXMLLoader(TableWindow.class.getResource("PlotWindow.fxml"));
             Parent     root       = loader.load();
             Scene      scene      = new Scene(root);
             PlotWindow controller = (PlotWindow) loader.getController();
@@ -82,9 +80,9 @@ public class PlotWindow implements Gridable {
 
         XYChart.Series<Double, Double> series = new XYChart.Series<>();
         String rgb = String.format("%d, %d, %d",
-                (int) (colour.getRed() * 255),
-                (int) (colour.getGreen() * 255),
-                (int) (colour.getBlue() * 255));
+                                   (int) (colour.getRed() * 255),
+                                   (int) (colour.getGreen() * 255),
+                                   (int) (colour.getBlue() * 255));
 
         series.setName(name);
 
@@ -92,9 +90,9 @@ public class PlotWindow implements Gridable {
         int index = data.size() - 1;
         Platform.runLater(() -> {
             chart.getData().add(series);
-            chart.setStyle(
+            chart.setStyle(chart.getStyle().concat(
                     String.format("CHART_COLOR_%d: rgba(%f, %f, %f);", index + 1, colour.getRed() * 255, colour.getGreen() * 255, colour.getBlue() * 255)
-            );
+            ));
         });
         return index;
 
@@ -122,22 +120,22 @@ public class PlotWindow implements Gridable {
 
     public void show() {
         Platform.runLater(() -> {
-                    stage.show();
-                }
+                              stage.show();
+                          }
         );
     }
 
     public void hide() {
         Platform.runLater(() -> {
-                    stage.hide();
-                }
+                              stage.hide();
+                          }
         );
     }
 
     public void close() {
         Platform.runLater(() -> {
-                    stage.close();
-                }
+                              stage.close();
+                          }
         );
     }
 
