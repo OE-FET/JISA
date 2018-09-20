@@ -1,5 +1,7 @@
 # JISA - VISA-based experiment toolkit implemented in Java
-Welcome to the JISA wiki! Very modern, wouldn't you say?
+Welcome to the JISA project!
+
+For more info, visit the [wiki](https://github.com/OE-FET/JISA/wiki)
 
 ## What is JISA?
 JISA is a Java libary that I originally designed because I really really really did not want to use LabView. It is largely comprised of three parts:
