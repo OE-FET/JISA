@@ -41,6 +41,8 @@ public class VISADevice {
 
     }
 
+    public VISADevice() {}
+
     /**
      * What default number of bytes should we expect to get when reading from the device?
      *

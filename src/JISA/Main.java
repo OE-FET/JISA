@@ -14,7 +14,7 @@ import javafx.stage.Stage;
 
 import java.util.Random;
 
-public class Main extends Application {
+public class Main extends GUI {
 
     // Declare variable up here so that it's accessible in all methods
     static ResultList list;
@@ -25,7 +25,6 @@ public class Main extends Application {
 
     public static void run() throws Exception {
 
-
         list  = new ResultList("Frequency", "Voltage", "Current");
         list.setUnits("Hz", "V", "A");
 
@@ -33,9 +32,8 @@ public class Main extends Application {
         table = new Table("Results", list);
         plot  = new Plot("Plot of Results", list, 1, 2);
         grid  = new Grid("Experiment Control", bar, table, plot);
-
-        grid.addToolbarButton("Start", Main::startExperiment);
         grid.show();
+        grid.addToolbarButton("Start", Main::startExperiment);
 
     }
 
@@ -53,7 +51,7 @@ public class Main extends Application {
             );
 
             bar.setProgress(i+1,10);
-            Thread.sleep(100);
+            Thread.sleep(1000);
 
         }
 
@@ -69,8 +67,4 @@ public class Main extends Application {
 
     }
 
-    @Override
-    public void start(Stage primaryStage) throws Exception {
-
-    }
 }

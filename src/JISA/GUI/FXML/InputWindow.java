@@ -16,20 +16,21 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class InputWindow implements Gridable {
 
-    public  BorderPane          pane;
-    public  VBox                list;
-    public  Label               title;
-    private FileChooser         fileChooser = new FileChooser();
-    private Stage               stage;
-    private ArrayList<Runnable> toRun       = new ArrayList<>();
-    private boolean             close;
-    private ClickHandler        onAccept    = () -> {
+    public  BorderPane                 pane;
+    public  VBox                       list;
+    public  Label                      title;
+    private FileChooser                fileChooser = new FileChooser();
+    private HashMap<String, TextField> map         = new HashMap<>();
+    private Stage                      stage;
+    private boolean                    close;
+    private InputHandler               onAccept    = (v) -> {
     };
 
-    public static InputWindow create(String title, boolean closeOnAccept, ClickHandler onAccept) {
+    public static InputWindow create(String title, boolean closeOnAccept, InputHandler onAccept) {
 
         try {
             FXMLLoader  loader     = new FXMLLoader(TableWindow.class.getResource("InputWindow.fxml"));
@@ -56,11 +57,14 @@ public class InputWindow implements Gridable {
     public void setVariables(ActionEvent actionEvent) {
 
         Thread t = new Thread(() -> {
+
+            HashMap<String, String> values = new HashMap<>();
+            map.forEach((k, f) -> {
+                values.put(k, f.getText());
+            });
+
             try {
-                for (Runnable r : toRun) {
-                    r.run();
-                }
-                onAccept.click();
+                onAccept.run(values);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -75,7 +79,8 @@ public class InputWindow implements Gridable {
 
     }
 
-    public void addDouble(String name, InputSetter<Double> setter) {
+
+    public void addField(String name) {
 
         HBox box = new HBox();
         box.setSpacing(15);
@@ -92,67 +97,11 @@ public class InputWindow implements Gridable {
 
         label.setText(name);
 
-        toRun.add(() -> {
-            try {
-                setter.set(Double.valueOf(field.getText()));
-            } catch (NumberFormatException e) {
-                setter.set(0D);
-            }
-        });
+        map.put(name, field);
 
     }
 
-
-    public void adInteger(String name, InputSetter<Integer> setter) {
-
-        HBox box = new HBox();
-        box.setSpacing(15);
-        box.setAlignment(Pos.CENTER_LEFT);
-
-        TextField field = new TextField();
-        field.setMaxWidth(Integer.MAX_VALUE);
-        Label label = new Label();
-        label.setMinWidth(150);
-        HBox.setHgrow(field, Priority.ALWAYS);
-
-        box.getChildren().addAll(label, field);
-        list.getChildren().add(box);
-
-        label.setText(name);
-
-        toRun.add(() -> {
-            try {
-                setter.set(Integer.valueOf(field.getText()));
-            } catch (NumberFormatException e) {
-                setter.set(0);
-            }
-        });
-
-    }
-
-
-    public void addString(String name, InputSetter<String> setter) {
-
-        HBox box = new HBox();
-        box.setSpacing(15);
-        box.setAlignment(Pos.CENTER_LEFT);
-
-        TextField field = new TextField();
-        field.setMaxWidth(Integer.MAX_VALUE);
-        Label label = new Label();
-        label.setMinWidth(150);
-        HBox.setHgrow(field, Priority.ALWAYS);
-
-        box.getChildren().addAll(label, field);
-        list.getChildren().add(box);
-
-        label.setText(name);
-
-        toRun.add(() -> setter.set(field.getText()));
-
-    }
-
-    public void addFileSave(String name, InputSetter<String> setter) {
+    public void addFileSave(String name) {
 
         HBox box = new HBox();
         box.setSpacing(15);
@@ -177,7 +126,7 @@ public class InputWindow implements Gridable {
 
         label.setText(name);
 
-        toRun.add(() -> setter.set(field.getText()));
+        map.put(name, field);
 
     }
 
@@ -186,8 +135,10 @@ public class InputWindow implements Gridable {
         return pane;
     }
 
-    public interface InputSetter<T> {
-        public void set(T value);
+    public interface InputHandler {
+
+        public void run(HashMap<String, String> values) throws Exception;
+
     }
 
     public void show() {

@@ -46,30 +46,30 @@ public class GridWindow {
 
     public void addToolbarButton(String text, ClickHandler onClick) {
 
-        if (toolBar == null) {
-            toolBar = new ToolBar();
-            border.setTop(toolBar);
-        }
+        Platform.runLater(() -> {
+            if (toolBar == null) {
+                toolBar = new ToolBar();
+                border.setTop(toolBar);
+            }
 
-        Button button = new Button();
-        button.setText(text);
-        button.setOnAction(
-                (actionEvent) -> {
-                    Thread t = new Thread(() -> {
-                        try {
-                            onClick.click();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
-                    t.setDaemon(true);
-                    t.start();
-                }
-        );
+            Button button = new Button();
+            button.setText(text);
+            button.setOnAction(
+                    (actionEvent) -> {
+                        Thread t = new Thread(() -> {
+                            try {
+                                onClick.click();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                        t.setDaemon(true);
+                        t.start();
+                    }
+            );
 
-        toolBar.getItems().
-
-                add(button);
+            toolBar.getItems().add(button);
+        });
 
     }
 

@@ -14,6 +14,10 @@ public abstract class SMU extends VISADevice {
         super(address);
     }
 
+    public SMU() {
+
+    }
+
     /**
      * Returns the voltage either being applied or measured by the SMU.
      *

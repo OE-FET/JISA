@@ -8,7 +8,9 @@ import javafx.stage.Stage;
 
 public class GUI extends Application {
 
-    public static void showError(String title, String header, String text, ClickHandler onOkay) {
+    private static boolean done = false;
+
+    public static void error(String title, String header, String text) {
 
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.ERROR);
@@ -16,24 +18,17 @@ public class GUI extends Application {
             alert.setHeaderText(header);
             alert.setContentText(text);
             alert.showAndWait();
-
-            if (onOkay != null) {
-
-                Thread t = new Thread(() -> {
-                    try {
-                        onOkay.click();
-                    } catch (Exception e) {
-                        Util.exceptionHandler(e);
-                    }
-                });
-                t.start();
-            }
+            done = true;
         });
 
-    }
+        while (!done) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
 
-    public static void showError(String title, String header, String text) {
-        showError(title, header, text, null);
+            }
+        }
+
     }
 
     @Override
