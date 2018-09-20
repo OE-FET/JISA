@@ -117,10 +117,21 @@ public abstract class LockIn extends VISADevice {
     public abstract double getTimeConstant() throws IOException, DeviceException;
 
 
+    /**
+     * Halts the current thread (ie pauses the program) until the lock-in has a stable lock
+     * (ie the locked-on amplitude has remained within the given percentage margin for at least
+     * the specified number of milliseconds).
+     *
+     * @param pctMargin Percentage margin within which to consider amplitude constant
+     * @param duration  Minimum duration to be considered stable, in milliseconds
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     public void waitForStableLock(double pctMargin, long duration) throws IOException, DeviceException {
 
         Synch.waitForParamStable(
-                this::getRefAmplitude,
+                this::getLockedAmplitude,
                 pctMargin,
                 100,
                 duration
@@ -128,6 +139,13 @@ public abstract class LockIn extends VISADevice {
 
     }
 
+    /**
+     * Halts the current thread (ie pauses the program) until the lock-in has a stable lock
+     * (ie the locked-on amplitude has not varied by more than 0.1% in 5 seconds).
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     public void waitForStableLock() throws IOException, DeviceException {
         waitForStableLock(0.1, 5000);
     }

@@ -1,12 +1,14 @@
 package JISA;
 
+import JISA.Addresses.GPIBAddress;
+import JISA.Devices.K2450;
+import JISA.Devices.SR830;
 import JISA.Experiment.*;
+import JISA.GUI.*;
 import JISA.GUI.FXML.PlotWindow;
-import JISA.GUI.Grid;
-import JISA.GUI.Plot;
-import JISA.GUI.Progress;
-import JISA.GUI.Table;
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
@@ -14,37 +16,50 @@ import java.util.Random;
 
 public class Main extends Application {
 
-    private static void run() throws Exception {
+    // Declare variable up here so that it's accessible in all methods
+    static ResultList list;
+    static Progress   bar;
+    static Table      table;
+    static Plot       plot;
+    static Grid       grid;
+
+    public static void run() throws Exception {
 
 
-        ResultList list = new ResultList("Frequency", "Voltage", "Current");
+        list  = new ResultList("Frequency", "Voltage", "Current");
         list.setUnits("Hz", "V", "A");
 
-        Progress progress = new Progress("Measuring...");
-        Table    table    = new Table("Results", list);
-        Plot     plot     = new Plot("My Plot Title", "X-Axis Label", "Y-Axis Label");
-        plot.watchList(list, 1, 2, "Current", Color.RED);
-        plot.watchList(list, 1, 0, "Frequency", Color.BLUE);
-        plot.show();
+        bar   = new Progress("Experiment Progress");
+        table = new Table("Results", list);
+        plot  = new Plot("Plot of Results", list, 1, 2);
+        grid  = new Grid("Experiment Control", bar, table, plot);
+
+        grid.addToolbarButton("Start", Main::startExperiment);
+        grid.show();
+
+    }
+
+    public static void startExperiment() throws Exception {
 
         Random rand = new Random();
 
-        for (int i = 1; i <= 10; i++) {
-            list.addData(
-                    rand.nextDouble() * 100,
-                    (double) i,
-                    rand.nextDouble() * 100
-            );
-            progress.setProgress(i, 10);
-            Thread.sleep(500);
-        }
+        // Take 10 readings
+        for (int i = 0; i < 10; i++) {
 
-        list.outputTable();
+            list.addData(
+                    rand.nextDouble() * 100D,
+                    rand.nextDouble() * 100D,
+                    rand.nextDouble() * 100D
+            );
+
+            bar.setProgress(i+1,10);
+            Thread.sleep(100);
+
+        }
 
     }
 
     public static void main(String[] args) {
-
 
         try {
             run();
@@ -54,9 +69,8 @@ public class Main extends Application {
 
     }
 
-
     @Override
-    public void start(Stage stage) {
+    public void start(Stage primaryStage) throws Exception {
 
     }
 }
