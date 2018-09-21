@@ -3,6 +3,7 @@ package JISA.Devices;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 public class SMUCluster extends MCSMU {
 
@@ -131,4 +132,9 @@ public class SMUCluster extends MCSMU {
     public SMU.DataPoint[] performSweep(int channel, Source source, double[] values, long delay, ProgressMonitor onUpdate) throws DeviceException, IOException {
         return devices.get(channel).performSweep(source, values, delay, onUpdate);
     }
+
+    public Iterator<SMU> iterator() {
+        return devices.iterator();
+    }
+
 }

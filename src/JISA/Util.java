@@ -54,22 +54,42 @@ public class Util {
         values[0] = min;
 
         for (int i = 1; i < values.length; i++) {
-            values[i] = values[i-1] + step;
+            values[i] = values[i - 1] + step;
         }
 
         return values;
 
     }
 
+    public static double[] symArray(double[] array) {
+
+        double[] results = new double[2 * array.length - 1];
+
+        for (int i = 0; i < array.length; i++) {
+            results[i] = array[i];
+        }
+
+        for (int i = 0; i < array.length - 1; i++) {
+
+            int j = array.length + i;
+            int k = array.length - 2 - i;
+            results[j] = array[k];
+
+        }
+
+        return results;
+
+    }
+
     public static double[] makeLogarithmicArray(double min, double max, int numSteps) {
 
         double[] values = new double[numSteps];
-        double   step   = Math.pow(max/min, 1D/numSteps);
+        double   step   = Math.pow(max / min, 1D / numSteps);
 
         values[0] = min;
 
         for (int i = 1; i < values.length; i++) {
-            values[i] = values[i-1] * step;
+            values[i] = values[i - 1] * step;
         }
 
         return values;

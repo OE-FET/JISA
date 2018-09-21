@@ -5,40 +5,142 @@ import JISA.Util;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
-    public MCSMU () {}
+    public MCSMU() {
+    }
 
     public MCSMU(InstrumentAddress address) throws IOException {
         super(address);
     }
 
+    /**
+     * Returns the voltage of the specified channel
+     *
+     * @param channel Channel number
+     * @return Voltage, in Volts
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
     public abstract double getVoltage(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns the current of the specified channel
+     *
+     * @param channel Channel number
+     * @return Current, in Amps
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
     public abstract double getCurrent(int channel) throws DeviceException, IOException;
 
+    /**
+     * Sets the specified channel to source a the given voltage (when turned on)
+     *
+     * @param channel Channel number
+     * @param voltage Voltage to source, in Volts
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
     public abstract void setVoltage(int channel, double voltage) throws DeviceException, IOException;
 
+    /**
+     * Sets the specified channel to source a the given current (when turned on)
+     *
+     * @param channel Channel number
+     * @param current Current to source, in Amps
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
     public abstract void setCurrent(int channel, double current) throws DeviceException, IOException;
 
+    /**
+     * Enables output on the specified channel
+     *
+     * @param channel Channel number
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
     public abstract void turnOn(int channel) throws DeviceException, IOException;
 
+    /**
+     * Disables output on the specified channel
+     *
+     * @param channel Channel number
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
     public abstract void turnOff(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns whether the specified channel currently has its output enabled
+     *
+     * @param channel Channel number
+     * @return Is it enabled?
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
     public abstract boolean isOn(int channel) throws DeviceException, IOException;
 
+    /**
+     * Sets the source mode of the specified channel
+     *
+     * @param channel Channel number
+     * @param source  VOLTAGE or CURRENT
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
     public abstract void setSource(int channel, Source source) throws DeviceException, IOException;
 
+    /**
+     * Returns the source mode of the specified channel
+     *
+     * @param channel Channel number
+     * @return Source mode (VOLTAGE or CURRENT)
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
     public abstract Source getSource(int channel) throws DeviceException, IOException;
 
+    /**
+     * Sets the level of whichever quantity is being sourced on the specified channel
+     *
+     * @param channel Channel number
+     * @param level   Volts or Amps
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
     public abstract void setBias(int channel, double level) throws DeviceException, IOException;
 
+    /**
+     * Returns the value of whichever quantity is being sourced on the specified channel
+     *
+     * @param channel Channel number
+     * @return Voltage or Current, in Volts or Amps
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
     public abstract double getSourceValue(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns the value of whichever quantity is being measured on the specified channel
+     *
+     * @param channel Channel number
+     * @return Voltage or Current, in Volts or Amps
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
     public abstract double getMeasureValue(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns the number of channels this SMU has.
+     *
+     * @return Number of channels
+     */
     public abstract int getNumChannels();
 
     @Override
@@ -114,20 +216,18 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     /**
      * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of DataPoint objects
      *
-     * @param channel  Channel number to perform sweep on
+     * @param channel  Channel number to do sweep on
      * @param source   VOLTAGE or CURRENT
      * @param min      Minimum source value
      * @param max      Maximum source value
      * @param numSteps Number of steps in sweep
      * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
-     *
      * @return Array of DataPoint objects containing I-V data points
-     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public SMU.DataPoint[] performLinearSweep(int channel, Source source, double min, double max, int numSteps, long delay) throws DeviceException, IOException {
-        return performLinearSweep(channel, source, min, max, numSteps, delay, (i, point) -> {
+    public SMU.DataPoint[] doLinearSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric) throws DeviceException, IOException {
+        return doLinearSweep(channel, source, min, max, numSteps, delay, symmetric, (i, point) -> {
         });
     }
 
@@ -135,55 +235,26 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of DataPoint objects
      * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
      *
-     * @param channel  Channel number to perform sweep on
+     * @param channel  Channel number to do sweep on
      * @param source   VOLTAGE or CURRENT
      * @param min      Minimum source value
      * @param max      Maximum source value
      * @param numSteps Number of steps in sweep
      * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
      * @param onUpdate Method to run each time a new measurement is completed
-     *
      * @return Array of DataPoint objects containing I-V data points
-     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public SMU.DataPoint[] performLinearSweep(int channel, Source source, double min, double max, int numSteps, long delay, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    public SMU.DataPoint[] doLinearSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
-        return performSweep(
+        return doSweep(
                 channel,
                 source,
                 Util.makeLinearArray(min, max, numSteps),
                 delay,
+                symmetric,
                 onUpdate
-        );
-
-    }
-
-    /**
-     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects.
-     *
-     * @param channel  Channel number to perform sweep on
-     * @param source   VOLTAGE or CURRENT
-     * @param min      Minimum source value
-     * @param max      Maximum source value
-     * @param numSteps Number of steps in sweep
-     * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
-     *
-     * @return Array of DataPoint objects containing V-I data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    public SMU.DataPoint[] performLogarithmicSweep(int channel, Source source, double min, double max, int numSteps, long delay) throws DeviceException, IOException {
-
-        return performSweep(
-                channel,
-                source,
-                Util.makeLogarithmicArray(min, max, numSteps),
-                delay,
-                (i, p) -> {
-                }
         );
 
     }
@@ -192,26 +263,25 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects
      * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
      *
-     * @param channel  Channel number to perform sweep on
+     * @param channel  Channel number to do sweep on
      * @param source   VOLTAGE or CURRENT
      * @param min      Minimum source value
      * @param max      Maximum source value
      * @param numSteps Number of steps in sweep
      * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
      * @param onUpdate Method ot run each time a new measurement is completed
-     *
      * @return Array of DataPoint objects containing V-I data points
-     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public SMU.DataPoint[] performLogarithmicSweep(int channel, Source source, double min, double max, int numSteps, long delay, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    public SMU.DataPoint[] doLogarithmicSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
-        return performSweep(
+        return doSweep(
                 channel,
                 source,
                 Util.makeLogarithmicArray(min, max, numSteps),
                 delay,
+                symmetric,
                 onUpdate
         );
 
@@ -221,18 +291,20 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects
      * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
      *
-     * @param channel  Channel number to perform sweep on
+     * @param channel  Channel number to do sweep on
      * @param source   VOLTAGE or CURRENT
      * @param values   Array of values to use in the sweep
      * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
      * @param onUpdate Method ot run each time a new measurement is completed
-     *
      * @return Array of DataPoint objects containing V-I data points
-     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public SMU.DataPoint[] performSweep(int channel, Source source, double[] values, long delay, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    public SMU.DataPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+
+        if (symmetric) {
+            values = Util.symArray(values);
+        }
 
         turnOff(channel);
         setSource(channel, source);
@@ -263,185 +335,66 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
     }
 
-    public SMU.DataPoint[] performSweep(int channel, Source source, double[] values, long delay) throws IOException, DeviceException {
-        return performSweep(source, values, delay, (i, p) -> {
-        });
+
+    public SMU.DataPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+        return doSweep(0, source, values, delay, symmetric, onUpdate);
+    }
+
+    public SMU.DataPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+        return doLinearSweep(0, source, min, max, numSteps, delay, symmetric, onUpdate);
+    }
+
+    public SMU.DataPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+        return doLogarithmicSweep(0, source, min, max, numSteps, delay, symmetric, onUpdate);
     }
 
     /**
-     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of DataPoint objects
+     * Creates an MCSMU.Sweep object allowing the configuration and execution of a multi-channel sweep
      *
-     * @param source   VOLTAGE or CURRENT
-     * @param min      Minimum source value
-     * @param max      Maximum source value
-     * @param numSteps Number of steps in sweep
-     * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
-     *
-     * @return Array of DataPoint objects containing I-V data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
+     * @return Sweep
      */
-    public SMU.DataPoint[] performLinearSweep(Source source, double min, double max, int numSteps, long delay) throws DeviceException, IOException {
-        return performLinearSweep(0, source, min, max, numSteps, delay, (i, point) -> {
-        });
-    }
-
-    /**
-     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of DataPoint objects
-     * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
-     *
-     * @param source   VOLTAGE or CURRENT
-     * @param min      Minimum source value
-     * @param max      Maximum source value
-     * @param numSteps Number of steps in sweep
-     * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
-     * @param onUpdate Method to run each time a new measurement is completed
-     *
-     * @return Array of DataPoint objects containing I-V data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    public SMU.DataPoint[] performLinearSweep(Source source, double min, double max, int numSteps, long delay, ProgressMonitor onUpdate) throws DeviceException, IOException {
-
-        return performSweep(
-                0,
-                source,
-                Util.makeLinearArray(min, max, numSteps),
-                delay,
-                onUpdate
-        );
-
-    }
-
-    /**
-     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects.
-     *
-     * @param source   VOLTAGE or CURRENT
-     * @param min      Minimum source value
-     * @param max      Maximum source value
-     * @param numSteps Number of steps in sweep
-     * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
-     *
-     * @return Array of DataPoint objects containing V-I data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    public SMU.DataPoint[] performLogarithmicSweep(Source source, double min, double max, int numSteps, long delay) throws DeviceException, IOException {
-
-        return performSweep(
-                0,
-                source,
-                Util.makeLogarithmicArray(min, max, numSteps),
-                delay,
-                (i, p) -> {
-                }
-        );
-
-    }
-
-    /**
-     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects
-     * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
-     *
-     * @param source   VOLTAGE or CURRENT
-     * @param min      Minimum source value
-     * @param max      Maximum source value
-     * @param numSteps Number of steps in sweep
-     * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
-     * @param onUpdate Method ot run each time a new measurement is completed
-     *
-     * @return Array of DataPoint objects containing V-I data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    public SMU.DataPoint[] performLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, ProgressMonitor onUpdate) throws DeviceException, IOException {
-
-        return performSweep(
-                0,
-                source,
-                Util.makeLogarithmicArray(min, max, numSteps),
-                delay,
-                onUpdate
-        );
-
-    }
-
-    /**
-     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects
-     * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
-     *
-     * @param source   VOLTAGE or CURRENT
-     * @param values   Array of values to use in the sweep
-     * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
-     * @param onUpdate Method ot run each time a new measurement is completed
-     *
-     * @return Array of DataPoint objects containing V-I data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    public SMU.DataPoint[] performSweep(Source source, double[] values, long delay, ProgressMonitor onUpdate) throws DeviceException, IOException {
-        return performSweep(0, source, values, delay, onUpdate);
-    }
-
-    public SMU.DataPoint[] performSweep(Source source, double[] values, long delay) throws IOException, DeviceException {
-        return performSweep(source, values, delay, (i, p) -> {
-        });
-    }
-
     public Sweep createMultiSweep() {
 
         Sweep sweep = new Sweep() {
 
-            private ArrayList<DataPoint> points = new ArrayList<>();
+            private ArrayList<DataPoint> results = new ArrayList<>();
 
             @Override
             public DataPoint[] run() throws IOException, DeviceException {
-                points.clear();
-                step(0, new ArrayList<>(), new ArrayList<>());
-                return points.toArray(new DataPoint[0]);
+                results.clear();
+                step(0, new HashMap<>());
+                return results.toArray(new DataPoint[0]);
             }
 
-            private void step(int step, ArrayList<Double> v, ArrayList<Double> i) throws IOException, DeviceException {
+            private void step(int step, HashMap<Integer, SMU.DataPoint> points) throws IOException, DeviceException {
 
                 Config conf = sweeps.get(step);
 
                 if (step < sweeps.size() - 1) {
-                    performSweep(
+                    doSweep(
                             conf.channel,
                             conf.source,
                             conf.values,
                             conf.delay,
+                            conf.symmetric,
                             (n, p) -> {
-                                v.add(p.voltage);
-                                i.add(p.current);
-                                step(step + 1, v, i);
+                                points.put(conf.channel, p);
+                                step(step + 1, points);
                             }
                     );
                 } else {
 
-                    performSweep(
+                    doSweep(
                             conf.channel,
                             conf.source,
                             conf.values,
                             conf.delay,
+                            conf.symmetric,
                             (n, p) -> {
-                                ArrayList<Double> voltages = new ArrayList<>();
-                                ArrayList<Double> currents = new ArrayList<>();
-                                voltages.addAll(v);
-                                voltages.add(p.voltage);
-                                currents.addAll(i);
-                                currents.add(p.current);
-                                points.add(
-                                        new DataPoint(
-                                                voltages.toArray(new Double[0]),
-                                                currents.toArray(new Double[0])
-                                        )
-                                );
+                                DataPoint pnt = new DataPoint();
+                                pnt.addAll(points);
+                                pnt.addChannel(conf.channel, p);
+                                results.add(pnt);
                             }
                     );
                 }
@@ -456,12 +409,18 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
     public class DataPoint {
 
-        public Double[] voltages;
-        public Double[] currents;
+        private HashMap<Integer, SMU.DataPoint> channels = new HashMap<>();
 
-        public DataPoint(Double[] v, Double[] i) {
-            voltages = v;
-            currents = i;
+        public void addChannel(int channel, SMU.DataPoint point) {
+            channels.put(channel, point);
+        }
+
+        public void addAll(Map<Integer, SMU.DataPoint> c) {
+            channels.putAll(c);
+        }
+
+        public SMU.DataPoint getChannel(int channel) {
+            return channels.getOrDefault(channel, null);
         }
 
     }
@@ -546,37 +505,41 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
             public Source   source;
             public double[] values;
             public long     delay;
+            public boolean  symmetric;
 
-            public Config(int channel, Source source, double[] values, long delay) {
+            public Config(int channel, Source source, double[] values, long delay, boolean symmetric) {
 
                 this.channel = channel;
                 this.source = source;
                 this.values = values;
                 this.delay = delay;
+                this.symmetric = symmetric;
 
             }
 
         }
 
-        public void addSweep(int channel, Source source, double[] values, long delay) {
-            sweeps.add(new Config(channel, source, values, delay));
+        public void addSweep(int channel, Source source, double[] values, long delay, boolean symmetric) {
+            sweeps.add(new Config(channel, source, values, delay, symmetric));
         }
 
-        public void addLinearSweep(int channel, Source source, double min, double max, int numSteps, long delay) {
+        public void addLinearSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric) {
             addSweep(
                     channel,
                     source,
                     Util.makeLinearArray(min, max, numSteps),
-                    delay
+                    delay,
+                    symmetric
             );
         }
 
-        public void addLogarithmicSweep(int channel, Source source, double min, double max, int numSteps, long delay) {
+        public void addLogarithmicSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric) {
             addSweep(
                     channel,
                     source,
                     Util.makeLogarithmicArray(min, max, numSteps),
-                    delay
+                    delay,
+                    symmetric
             );
         }
 
@@ -587,7 +550,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     public Iterator<SMU> iterator() {
 
         ArrayList<SMU> list = new ArrayList<>();
-        for (int i = 0; i < getNumChannels(); i ++) {
+        for (int i = 0; i < getNumChannels(); i++) {
             try {
                 list.add(getChannel(i));
             } catch (DeviceException e) {

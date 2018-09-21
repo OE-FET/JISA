@@ -31,6 +31,12 @@ public class Main extends GUI {
 
         MCSMU.Sweep sweep = cluster.createMultiSweep();
 
+        MCSMU.DataPoint[] points = sweep.run();
+
+        for (MCSMU.DataPoint point: points) {
+            double voltage0 = point.getChannel(0).voltage;
+        }
+
     }
 
     public static void startExperiment() throws Exception {
