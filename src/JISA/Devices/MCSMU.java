@@ -28,6 +28,18 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      */
     public abstract double getVoltage(int channel) throws DeviceException, IOException;
 
+
+    /**
+     * Returns the voltage of the first channel
+     *
+     * @return Voltage, in Volts
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    public double getVoltage() throws DeviceException, IOException {
+        return getVoltage(0);
+    }
+
     /**
      * Returns the current of the specified channel
      *
@@ -37,6 +49,17 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @throws IOException     Upon communications error
      */
     public abstract double getCurrent(int channel) throws DeviceException, IOException;
+
+    /**
+     * Returns the current of the first channel
+     *
+     * @return Current, in Amps
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    public double getCurrent() throws DeviceException, IOException {
+        return getCurrent(0);
+    }
 
     /**
      * Sets the specified channel to source a the given voltage (when turned on)
@@ -49,6 +72,17 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     public abstract void setVoltage(int channel, double voltage) throws DeviceException, IOException;
 
     /**
+     * Sets the first channel to source a the given voltage (when turned on)
+     *
+     * @param voltage Voltage to source, in Volts
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    public void setVoltage(double voltage) throws DeviceException, IOException {
+        setVoltage(0, voltage);
+    }
+
+    /**
      * Sets the specified channel to source a the given current (when turned on)
      *
      * @param channel Channel number
@@ -57,6 +91,17 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @throws IOException     Upon communications error
      */
     public abstract void setCurrent(int channel, double current) throws DeviceException, IOException;
+
+    /**
+     * Sets the first channel to source a the given current (when turned on)
+     *
+     * @param current Current to source, in Amps
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    public void setCurrent(double current) throws DeviceException, IOException {
+        setCurrent(0, current);
+    }
 
     /**
      * Enables output on the specified channel
@@ -68,6 +113,16 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     public abstract void turnOn(int channel) throws DeviceException, IOException;
 
     /**
+     * Enables output on the first channel
+     *
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    public void turnOn() throws DeviceException, IOException {
+        turnOn(0);
+    }
+
+    /**
      * Disables output on the specified channel
      *
      * @param channel Channel number
@@ -75,6 +130,16 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @throws IOException     Upon communications error
      */
     public abstract void turnOff(int channel) throws DeviceException, IOException;
+
+    /**
+     * Disables output on the first channel
+     *
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    public void turnOff() throws DeviceException, IOException {
+        turnOff(0);
+    }
 
     /**
      * Returns whether the specified channel currently has its output enabled
@@ -87,6 +152,17 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     public abstract boolean isOn(int channel) throws DeviceException, IOException;
 
     /**
+     * Returns whether the first channel currently has its output enabled
+     *
+     * @return Is it enabled?
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    public boolean isOn() throws DeviceException, IOException {
+        return isOn(0);
+    }
+
+    /**
      * Sets the source mode of the specified channel
      *
      * @param channel Channel number
@@ -95,6 +171,17 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @throws IOException     Upon communications error
      */
     public abstract void setSource(int channel, Source source) throws DeviceException, IOException;
+
+    /**
+     * Sets the source mode of the first channel
+     *
+     * @param source VOLTAGE or CURRENT
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    public void setSource(Source source) throws DeviceException, IOException {
+        setSource(0, source);
+    }
 
     /**
      * Returns the source mode of the specified channel
@@ -107,6 +194,17 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     public abstract Source getSource(int channel) throws DeviceException, IOException;
 
     /**
+     * Returns the source mode of the first channel
+     *
+     * @return Source mode (VOLTAGE or CURRENT)
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    public Source getSource() throws DeviceException, IOException {
+        return getSource(0);
+    }
+
+    /**
      * Sets the level of whichever quantity is being sourced on the specified channel
      *
      * @param channel Channel number
@@ -115,6 +213,17 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @throws IOException     Upon communications error
      */
     public abstract void setBias(int channel, double level) throws DeviceException, IOException;
+
+    /**
+     * Sets the level of whichever quantity is being sourced on the first channel
+     *
+     * @param level Volts or Amps
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    public void setBias(double level) throws DeviceException, IOException {
+        setBias(0, level);
+    }
 
     /**
      * Returns the value of whichever quantity is being sourced on the specified channel
@@ -127,6 +236,17 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     public abstract double getSourceValue(int channel) throws DeviceException, IOException;
 
     /**
+     * Returns the value of whichever quantity is being sourced on the first channel
+     *
+     * @return Voltage or Current, in Volts or Amps
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    public double getSourceValue() throws DeviceException, IOException {
+        return getSourceValue(0);
+    }
+
+    /**
      * Returns the value of whichever quantity is being measured on the specified channel
      *
      * @param channel Channel number
@@ -137,72 +257,30 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     public abstract double getMeasureValue(int channel) throws DeviceException, IOException;
 
     /**
+     * Returns the value of whichever quantity is being measured on the first channel
+     *
+     * @return Voltage or Current, in Volts or Amps
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    public double getMeasureValue() throws DeviceException, IOException {
+        return getMeasureValue(0);
+    }
+
+    /**
      * Returns the number of channels this SMU has.
      *
      * @return Number of channels
      */
     public abstract int getNumChannels();
 
-    @Override
-    public double getVoltage() throws DeviceException, IOException {
-        return getVoltage(0);
-    }
-
-    @Override
-    public double getCurrent() throws DeviceException, IOException {
-        return getCurrent(0);
-    }
-
-    @Override
-    public void setVoltage(double voltage) throws DeviceException, IOException {
-        setVoltage(0, voltage);
-    }
-
-    @Override
-    public void setCurrent(double current) throws DeviceException, IOException {
-        setCurrent(0, current);
-    }
-
-    @Override
-    public void turnOn() throws DeviceException, IOException {
-        turnOn(0);
-    }
-
-    @Override
-    public void turnOff() throws DeviceException, IOException {
-        turnOff(0);
-    }
-
-    @Override
-    public boolean isOn() throws DeviceException, IOException {
-        return isOn(0);
-    }
-
-    @Override
-    public void setSource(Source source) throws DeviceException, IOException {
-        setSource(0, source);
-    }
-
-    @Override
-    public Source getSource() throws DeviceException, IOException {
-        return getSource(0);
-    }
-
-    @Override
-    public void setBias(double level) throws DeviceException, IOException {
-        setBias(0, level);
-    }
-
-    @Override
-    public double getSourceValue() throws DeviceException, IOException {
-        return getSourceValue(0);
-    }
-
-    @Override
-    public double getMeasureValue() throws DeviceException, IOException {
-        return getMeasureValue(0);
-    }
-
+    /**
+     * Returns a virtual SMU object to control the specified channel of the MCSMU
+     *
+     * @param channel Channel number
+     * @return Virtual SMU
+     * @throws DeviceException If channel does not exist
+     */
     public SMU getChannel(int channel) throws DeviceException {
 
         if (channel >= getNumChannels()) {
@@ -222,6 +300,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @param max      Maximum source value
      * @param numSteps Number of steps in sweep
      * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
+     * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @return Array of DataPoint objects containing I-V data points
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
@@ -241,6 +320,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @param max      Maximum source value
      * @param numSteps Number of steps in sweep
      * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
+     * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate Method to run each time a new measurement is completed
      * @return Array of DataPoint objects containing I-V data points
      * @throws DeviceException Upon incompatibility with device
@@ -259,6 +339,10 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
     }
 
+    public SMU.DataPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+        return doLinearSweep(0, source, min, max, numSteps, delay, symmetric, onUpdate);
+    }
+
     /**
      * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects
      * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
@@ -269,6 +353,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @param max      Maximum source value
      * @param numSteps Number of steps in sweep
      * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
+     * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate Method ot run each time a new measurement is completed
      * @return Array of DataPoint objects containing V-I data points
      * @throws DeviceException Upon incompatibility with device
@@ -287,6 +372,10 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
     }
 
+    public SMU.DataPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+        return doLogarithmicSweep(0, source, min, max, numSteps, delay, symmetric, onUpdate);
+    }
+
     /**
      * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects
      * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
@@ -295,6 +384,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @param source   VOLTAGE or CURRENT
      * @param values   Array of values to use in the sweep
      * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
+     * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate Method ot run each time a new measurement is completed
      * @return Array of DataPoint objects containing V-I data points
      * @throws DeviceException Upon incompatibility with device
@@ -338,14 +428,6 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
     public SMU.DataPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
         return doSweep(0, source, values, delay, symmetric, onUpdate);
-    }
-
-    public SMU.DataPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
-        return doLinearSweep(0, source, min, max, numSteps, delay, symmetric, onUpdate);
-    }
-
-    public SMU.DataPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
-        return doLogarithmicSweep(0, source, min, max, numSteps, delay, symmetric, onUpdate);
     }
 
     /**
@@ -407,6 +489,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
     }
 
+    /**
+     * Structure to hold I-V data from a multi-channel sweep
+     */
     public class DataPoint {
 
         private HashMap<Integer, SMU.DataPoint> channels = new HashMap<>();
@@ -425,6 +510,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
     }
 
+    /**
+     * Class for controlling an MCSMU channel as if it were a separate SMU
+     */
     public class VirtualSMU extends SMU {
 
         private int channel;
@@ -495,6 +583,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
     }
 
+    /**
+     * Class for configuring then executing multi-channel sweeps
+     */
     public abstract class Sweep {
 
         protected ArrayList<Config> sweeps = new ArrayList<>();
