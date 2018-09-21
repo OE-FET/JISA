@@ -2,21 +2,18 @@
 
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane fx:id="pane" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="JISA.GUI.FXML.PlotWindow">
+<BorderPane fx:id="pane" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="JISA.GUI.FXML.PlotWindow">
 
 
     <center>
         <LineChart fx:id="chart" legendSide="RIGHT" BorderPane.alignment="CENTER">
             <xAxis>
-                <NumberAxis side="BOTTOM" fx:id="xAxis"/>
+                <NumberAxis side="BOTTOM" fx:id="xAxis" />
             </xAxis>
             <yAxis>
-                <NumberAxis fx:id="yAxis" side="LEFT"/>
+                <NumberAxis fx:id="yAxis" side="LEFT" />
             </yAxis>
         </LineChart>
     </center>
