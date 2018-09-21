@@ -1,8 +1,7 @@
 package JISA;
 
 import JISA.Addresses.GPIBAddress;
-import JISA.Devices.K2450;
-import JISA.Devices.SR830;
+import JISA.Devices.*;
 import JISA.Experiment.*;
 import JISA.GUI.*;
 import JISA.GUI.FXML.PlotWindow;
@@ -25,15 +24,12 @@ public class Main extends GUI {
 
     public static void run() throws Exception {
 
-        list  = new ResultList("Frequency", "Voltage", "Current");
-        list.setUnits("Hz", "V", "A");
+        MCSMU cluster = new SMUCluster(
+                new K236(new GPIBAddress(0, 14)),
+                new K2450(new GPIBAddress(0, 15))
+        );
 
-        bar   = new Progress("Experiment Progress");
-        table = new Table("Results", list);
-        plot  = new Plot("Plot of Results", list, 1, 2);
-        grid  = new Grid("Experiment Control", bar, table, plot);
-        grid.show();
-        grid.addToolbarButton("Start", Main::startExperiment);
+        MCSMU.Sweep sweep = cluster.createMultiSweep();
 
     }
 
@@ -50,7 +46,7 @@ public class Main extends GUI {
                     rand.nextDouble() * 100D
             );
 
-            bar.setProgress(i+1,10);
+            bar.setProgress(i + 1, 10);
             Thread.sleep(1000);
 
         }
