@@ -309,7 +309,7 @@ public abstract class SMU extends VISADevice {
      */
     public interface ProgressMonitor {
 
-        public void update(int i, DataPoint point);
+        public void update(int i, DataPoint point) throws IOException, DeviceException;
 
     }
 
