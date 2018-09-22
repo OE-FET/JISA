@@ -129,8 +129,8 @@ public class SMUCluster extends MCSMU {
         return devices.size();
     }
 
-    public SMU.DataPoint[] performSweep(int channel, Source source, double[] values, long delay, ProgressMonitor onUpdate) throws DeviceException, IOException {
-        return devices.get(channel).performSweep(source, values, delay, onUpdate);
+    public SMU.DataPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+        return devices.get(channel).doSweep(source, values, delay, symmetric, onUpdate);
     }
 
     public Iterator<SMU> iterator() {
