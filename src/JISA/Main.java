@@ -24,18 +24,7 @@ public class Main extends GUI {
 
     public static void run() throws Exception {
 
-        MCSMU cluster = new SMUCluster(
-                new K236(new GPIBAddress(0, 14)),
-                new K2450(new GPIBAddress(0, 15))
-        );
-
-        MCSMU.Sweep sweep = cluster.createMultiSweep();
-
-        MCSMU.DataPoint[] points = sweep.run();
-
-        for (MCSMU.DataPoint point: points) {
-            double voltage0 = point.getChannel(0).voltage;
-        }
+        GUI.error("lol", "lol", "lol");
 
     }
 

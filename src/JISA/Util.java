@@ -23,23 +23,23 @@ public class Util {
         switch (exceptionType) {
 
             case IO_EXCEPTION:
-                System.err.printf("Communication error: \"%s\"\n", e.getMessage());
+                System.err.printf("\nCommunication error: \"%s\"\n", e.getMessage());
                 break;
             case DEVICE_EXCEPTION:
-                System.err.printf("Device error: \"%s\"\n", e.getMessage());
+                System.err.printf("\nDevice error: \"%s\"\n", e.getMessage());
                 break;
             case INTERRUPTED_EXCEPTION:
-                System.err.printf("Waiting error: \"%s\"\n", e.getMessage());
+                System.err.printf("\nWaiting error: \"%s\"\n", e.getMessage());
                 break;
             case VISA_EXCEPTION:
-                System.err.printf("VISA error: \"%s\"\n", e.getMessage());
+                System.err.printf("\nVISA error: \"%s\"\n", e.getMessage());
                 break;
             default:
-                System.err.printf("Unknown error: \"%s\"\n", e.getMessage());
+                System.err.printf("\nUnknown error: \"%s\"\n", e.getMessage());
                 break;
         }
 
-        System.out.println("Stack Trace:");
+        System.err.println("\nStack Trace:");
         e.printStackTrace();
 
         System.exit(1);
