@@ -590,7 +590,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
         protected ArrayList<Config> sweeps = new ArrayList<>();
 
-        private class Config {
+        protected class Config {
 
             public int      channel;
             public Source   source;
