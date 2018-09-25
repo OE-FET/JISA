@@ -15,7 +15,7 @@ import java.util.HashMap;
  * <p>
  * GPIBDevice class for controlling mercury ITC503 temperature controllers via GPIB.
  */
-public class ITC503 extends VISADevice {
+public class ITC503 extends MSTController {
 
     private static final String TERMINATOR         = "\r";
     private static final String C_SET_COMM_MODE    = "Q2";
@@ -79,6 +79,16 @@ public class ITC503 extends VISADevice {
      */
     public double getTargetTemperature() throws IOException {
         return readChannel(SET_TEMP_CHANNEL);
+    }
+
+    @Override
+    public double getHeaterPower() throws IOException, DeviceException {
+        return getHeaterOutputPercentage();
+    }
+
+    @Override
+    public double getGasFlow() throws IOException, DeviceException {
+        return getGasFlowOutput();
     }
 
     /**

@@ -37,7 +37,7 @@ public class StrAddress implements InstrumentAddress {
     public GPIBAddress toGPIBAddress() {
 
         Pattern pattern = Pattern.compile("GPIB([0-9]*?)::([0-9]+)::INSTR");
-        Matcher matcher = pattern.matcher(value);
+        Matcher matcher = pattern.matcher(value.trim());
 
         if (matcher.matches()) {
             int board   = Integer.valueOf(matcher.group(1));
@@ -51,8 +51,8 @@ public class StrAddress implements InstrumentAddress {
 
     public SerialAddress toSerialAddress() {
 
-        Pattern pattern = Pattern.compile("ASRL([0-9]*?)::INSTR");
-        Matcher matcher = pattern.matcher(value);
+        Pattern pattern = Pattern.compile("ASRL([0-9]+)::INSTR");
+        Matcher matcher = pattern.matcher(value.trim());
 
         if (matcher.matches()) {
             int board = Integer.valueOf(matcher.group(1));
@@ -66,7 +66,7 @@ public class StrAddress implements InstrumentAddress {
     public TCPIPAddress toTCPIPAddress() {
 
         Pattern pattern = Pattern.compile("TCPIP([0-9]*?)::(.*?)::INSTR");
-        Matcher matcher = pattern.matcher(value);
+        Matcher matcher = pattern.matcher(value.trim());
 
         if (matcher.matches()) {
             int    board = Integer.valueOf(matcher.group(1));
@@ -82,7 +82,7 @@ public class StrAddress implements InstrumentAddress {
     public USBAddress toUSBAddress() {
 
         Pattern pattern = Pattern.compile("USB([0-9]*?)::(.*?)::(.*?)::(.*?)(?:::([0-9]+))?::INSTR");
-        Matcher matcher = pattern.matcher(value);
+        Matcher matcher = pattern.matcher(value.trim());
 
         if (matcher.matches()) {
             int    board   = matcher.group(1).equals("") ? -1 : Integer.valueOf(matcher.group(1));
