@@ -103,11 +103,11 @@ public class ITC503 extends MSTController {
      */
     public synchronized double getTemperature(int sensor) throws IOException, DeviceException {
 
-        if (!Util.isBetween(sensor, 1, 3)) {
+        if (!Util.isBetween(sensor, 0, 2)) {
             throw new DeviceException("Sensor index, %d, out of range!", sensor);
         }
 
-        return readChannel(sensor);
+        return readChannel(sensor + 1);
 
     }
 

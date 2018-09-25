@@ -19,7 +19,7 @@ public abstract class VPreAmp extends VISADevice {
 
     public abstract void setFilterMode(Filter mode) throws IOException, DeviceException;
 
-    public abstract void setFilterLevel(double dbLevel) throws IOException, DeviceException;
+    public abstract void setFilterRollOff(double dbLevel) throws IOException, DeviceException;
 
     public abstract void setFilterHighFrequency(double frequency) throws IOException, DeviceException;
 
@@ -33,7 +33,7 @@ public abstract class VPreAmp extends VISADevice {
 
     public abstract Filter getFilterMode() throws IOException, DeviceException;
 
-    public abstract double getFilterLevel() throws IOException, DeviceException;
+    public abstract double getFilterRollOff() throws IOException, DeviceException;
 
     public abstract double getFilterHighFrequency() throws IOException, DeviceException;
 
