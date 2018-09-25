@@ -8,6 +8,10 @@ public class SerialAddress implements InstrumentAddress {
         this.board = board;
     }
 
+    public int getBoard() {
+        return board;
+    }
+
     @Override
     public String getVISAAddress() {
         return String.format("ASRL%d::INSTR", board);
