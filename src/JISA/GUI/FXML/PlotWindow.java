@@ -18,7 +18,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class PlotWindow implements Gridable {
+public class PlotWindow {
 
     public  BorderPane                                pane;
     private Stage                                     stage;
@@ -139,8 +139,6 @@ public class PlotWindow implements Gridable {
         );
     }
 
-
-    @Override
     public Pane getPane() {
         return pane;
     }

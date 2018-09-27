@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class InputWindow implements Gridable {
+public class InputWindow {
 
     public  BorderPane                 pane;
     public  VBox                       list;
@@ -130,7 +130,6 @@ public class InputWindow implements Gridable {
 
     }
 
-    @Override
     public Pane getPane() {
         return pane;
     }

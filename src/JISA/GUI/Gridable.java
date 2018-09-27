@@ -6,4 +6,6 @@ public interface Gridable {
 
     public Pane getPane();
 
+    public String getTitle();
+
 }

@@ -17,7 +17,7 @@ import javafx.util.Duration;
 
 import java.io.IOException;
 
-public class ProgressWindow implements Gridable {
+public class ProgressWindow {
 
     public  Label       titleText;
     public  ProgressBar progressBar;
@@ -100,7 +100,6 @@ public class ProgressWindow implements Gridable {
         });
     }
 
-    @Override
     public Pane getPane() {
         return pane;
     }

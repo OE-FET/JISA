@@ -17,7 +17,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class TableWindow implements Gridable {
+public class TableWindow {
 
     public  TableView  table;
     public  BorderPane pane;
@@ -113,7 +113,6 @@ public class TableWindow implements Gridable {
         );
     }
 
-    @Override
     public Pane getPane() {
         return pane;
     }

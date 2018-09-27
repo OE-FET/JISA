@@ -15,13 +15,16 @@ import java.util.Arrays;
 public class Table implements Gridable {
 
     private TableWindow window;
+    private String      title;
 
     public Table(String title) {
         window = TableWindow.create(title);
+        this.title = title;
     }
 
     public Table(String title, ResultList list) {
         window = TableWindow.create(title, list);
+        this.title = title;
     }
 
     public void watchList(ResultList list) {
@@ -47,6 +50,11 @@ public class Table implements Gridable {
     @Override
     public Pane getPane() {
         return window.getPane();
+    }
+
+    @Override
+    public String getTitle() {
+        return title;
     }
 
 }

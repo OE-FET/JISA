@@ -24,7 +24,15 @@ public class Main extends GUI {
 
     public static void run() throws Exception {
 
-        GUI.error("lol", "lol", "lol");
+        list = new ResultList("Frequency", "Voltage", "Current");
+        list.setUnits("Hz", "V", "A");
+        plot = new Plot("Plot!", list);
+        table = new Table("Table!", list);
+        bar = new Progress("Progress");
+        grid = new Grid("Yay", bar, plot, table);
+        grid.show();
+
+        startExperiment();
 
     }
 

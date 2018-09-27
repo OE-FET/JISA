@@ -4,6 +4,7 @@ import JISA.GUI.ClickHandler;
 import JISA.GUI.Gridable;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -74,9 +75,7 @@ public class GridWindow {
     }
 
 
-    public void addPane(Gridable item) {
-
-        Pane toAdd = item.getPane();
+    public void addPane(Node toAdd) {
 
         pane.getChildren().add(toAdd);
 
@@ -105,5 +104,7 @@ public class GridWindow {
             stage.close();
         });
     }
-
+    public Pane getPane() {
+        return border;
+    }
 }

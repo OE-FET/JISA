@@ -7,10 +7,12 @@ import javafx.scene.paint.Color;
 
 public class Plot implements Gridable {
 
-    public PlotWindow window;
+    public  PlotWindow window;
+    private String     title;
 
     public Plot(String title, ResultList list, int xColumn, int yColumn) {
         window = PlotWindow.create(title, list, xColumn, yColumn);
+        this.title = title;
     }
 
     public Plot(String title, ResultList list) {
@@ -24,6 +26,11 @@ public class Plot implements Gridable {
     @Override
     public Pane getPane() {
         return window.getPane();
+    }
+
+    @Override
+    public String getTitle() {
+        return title;
     }
 
     public void show() {
