@@ -1,6 +1,8 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
+import JISA.Experiment.IVPoint;
+import JISA.Experiment.MCIVPoint;
 import JISA.Util;
 
 import java.io.IOException;
@@ -292,41 +294,41 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     }
 
     /**
-     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of DataPoint objects
+     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of MCIVPoint objects
      *
-     * @param channel  Channel number to do sweep on
-     * @param source   VOLTAGE or CURRENT
-     * @param min      Minimum source value
-     * @param max      Maximum source value
-     * @param numSteps Number of steps in sweep
-     * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
+     * @param channel   Channel number to do sweep on
+     * @param source    VOLTAGE or CURRENT
+     * @param min       Minimum source value
+     * @param max       Maximum source value
+     * @param numSteps  Number of steps in sweep
+     * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @return Array of DataPoint objects containing I-V data points
+     * @return Array of MCIVPoint objects containing I-V data points
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public SMU.DataPoint[] doLinearSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric) throws DeviceException, IOException {
+    public IVPoint[] doLinearSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric) throws DeviceException, IOException {
         return doLinearSweep(channel, source, min, max, numSteps, delay, symmetric, (i, point) -> {
         });
     }
 
     /**
-     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of DataPoint objects
+     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of MCIVPoint objects
      * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
      *
-     * @param channel  Channel number to do sweep on
-     * @param source   VOLTAGE or CURRENT
-     * @param min      Minimum source value
-     * @param max      Maximum source value
-     * @param numSteps Number of steps in sweep
-     * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
+     * @param channel   Channel number to do sweep on
+     * @param source    VOLTAGE or CURRENT
+     * @param min       Minimum source value
+     * @param max       Maximum source value
+     * @param numSteps  Number of steps in sweep
+     * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @param onUpdate Method to run each time a new measurement is completed
-     * @return Array of DataPoint objects containing I-V data points
+     * @param onUpdate  Method to run each time a new measurement is completed
+     * @return Array of MCIVPoint objects containing I-V data points
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public SMU.DataPoint[] doLinearSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    public IVPoint[] doLinearSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         return doSweep(
                 channel,
@@ -339,27 +341,27 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
     }
 
-    public SMU.DataPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    public IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
         return doLinearSweep(0, source, min, max, numSteps, delay, symmetric, onUpdate);
     }
 
     /**
-     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects
+     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of MCIVPoint objects
      * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
      *
-     * @param channel  Channel number to do sweep on
-     * @param source   VOLTAGE or CURRENT
-     * @param min      Minimum source value
-     * @param max      Maximum source value
-     * @param numSteps Number of steps in sweep
-     * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
+     * @param channel   Channel number to do sweep on
+     * @param source    VOLTAGE or CURRENT
+     * @param min       Minimum source value
+     * @param max       Maximum source value
+     * @param numSteps  Number of steps in sweep
+     * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @param onUpdate Method ot run each time a new measurement is completed
-     * @return Array of DataPoint objects containing V-I data points
+     * @param onUpdate  Method ot run each time a new measurement is completed
+     * @return Array of MCIVPoint objects containing V-I data points
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public SMU.DataPoint[] doLogarithmicSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    public IVPoint[] doLogarithmicSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         return doSweep(
                 channel,
@@ -372,25 +374,25 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
     }
 
-    public SMU.DataPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    public IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
         return doLogarithmicSweep(0, source, min, max, numSteps, delay, symmetric, onUpdate);
     }
 
     /**
-     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects
+     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of MCIVPoint objects
      * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
      *
-     * @param channel  Channel number to do sweep on
-     * @param source   VOLTAGE or CURRENT
-     * @param values   Array of values to use in the sweep
-     * @param delay    Amount of time, in milliseconds, to wait before taking each measurement
+     * @param channel   Channel number to do sweep on
+     * @param source    VOLTAGE or CURRENT
+     * @param values    Array of values to use in the sweep
+     * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @param onUpdate Method ot run each time a new measurement is completed
-     * @return Array of DataPoint objects containing V-I data points
+     * @param onUpdate  Method ot run each time a new measurement is completed
+     * @return Array of MCIVPoint objects containing V-I data points
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public SMU.DataPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    public IVPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         if (symmetric) {
             values = Util.symArray(values);
@@ -400,8 +402,8 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         setSource(channel, source);
         setBias(channel, values[0]);
 
-        int                      i      = 0;
-        ArrayList<SMU.DataPoint> points = new ArrayList<>();
+        int                i      = 0;
+        ArrayList<IVPoint> points = new ArrayList<>();
 
         turnOn();
 
@@ -414,19 +416,19 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
                 throw new DeviceException("Couldn't sleep!");
             }
 
-            SMU.DataPoint point = new SMU.DataPoint(getVoltage(channel), getCurrent(channel));
+            IVPoint point = new IVPoint(getVoltage(channel), getCurrent(channel));
             onUpdate.update(i, point);
             points.add(point);
             i++;
 
         }
 
-        return points.toArray(new SMU.DataPoint[0]);
+        return points.toArray(new IVPoint[0]);
 
     }
 
 
-    public SMU.DataPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    public IVPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
         return doSweep(0, source, values, delay, symmetric, onUpdate);
     }
 
@@ -439,16 +441,16 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
         Sweep sweep = new Sweep() {
 
-            private ArrayList<DataPoint> results = new ArrayList<>();
+            private ArrayList<MCIVPoint> results = new ArrayList<>();
 
             @Override
-            public DataPoint[] run() throws IOException, DeviceException {
+            public MCIVPoint[] run() throws IOException, DeviceException {
                 results.clear();
                 step(0, new HashMap<>());
-                return results.toArray(new DataPoint[0]);
+                return results.toArray(new MCIVPoint[0]);
             }
 
-            private void step(int step, HashMap<Integer, SMU.DataPoint> points) throws IOException, DeviceException {
+            private void step(int step, HashMap<Integer, IVPoint> points) throws IOException, DeviceException {
 
                 Config conf = sweeps.get(step);
 
@@ -473,7 +475,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
                             conf.delay,
                             conf.symmetric,
                             (n, p) -> {
-                                DataPoint pnt = new DataPoint();
+                                MCIVPoint pnt = new MCIVPoint();
                                 pnt.addAll(points);
                                 pnt.addChannel(conf.channel, p);
                                 results.add(pnt);
@@ -486,27 +488,6 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         };
 
         return sweep;
-
-    }
-
-    /**
-     * Structure to hold I-V data from a multi-channel sweep
-     */
-    public class DataPoint {
-
-        private HashMap<Integer, SMU.DataPoint> channels = new HashMap<>();
-
-        public void addChannel(int channel, SMU.DataPoint point) {
-            channels.put(channel, point);
-        }
-
-        public void addAll(Map<Integer, SMU.DataPoint> c) {
-            channels.putAll(c);
-        }
-
-        public SMU.DataPoint getChannel(int channel) {
-            return channels.getOrDefault(channel, null);
-        }
 
     }
 
@@ -634,7 +615,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
             );
         }
 
-        public abstract DataPoint[] run() throws IOException, DeviceException;
+        public abstract MCIVPoint[] run() throws IOException, DeviceException;
 
     }
 

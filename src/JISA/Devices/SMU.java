@@ -1,6 +1,7 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
+import JISA.Experiment.IVPoint;
 import JISA.Util;
 import JISA.VISA.VISADevice;
 
@@ -125,7 +126,7 @@ public abstract class SMU extends VISADevice {
     public abstract double getMeasureValue() throws DeviceException, IOException;
 
     /**
-     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of DataPoint objects
+     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of IVPoint objects
      *
      * @param source    VOLTAGE or CURRENT
      * @param min       Minimum source value
@@ -133,17 +134,17 @@ public abstract class SMU extends VISADevice {
      * @param numSteps  Number of steps in sweep
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @return Array of DataPoint objects containing I-V data points
+     * @return Array of IVPoint objects containing I-V data points
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public DataPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric) throws DeviceException, IOException {
+    public IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric) throws DeviceException, IOException {
         return doLinearSweep(source, min, max, numSteps, delay, symmetric, (i, point) -> {
         });
     }
 
     /**
-     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of DataPoint objects
+     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of IVPoint objects
      * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
      *
      * @param source    VOLTAGE or CURRENT
@@ -153,11 +154,11 @@ public abstract class SMU extends VISADevice {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate  Method to run each time a new measurement is completed
-     * @return Array of DataPoint objects containing I-V data points
+     * @return Array of IVPoint objects containing I-V data points
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public DataPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    public IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         return doSweep(
                 source,
@@ -170,7 +171,7 @@ public abstract class SMU extends VISADevice {
     }
 
     /**
-     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects.
+     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of IVPoint objects.
      *
      * @param source    VOLTAGE or CURRENT
      * @param min       Minimum source value
@@ -178,11 +179,11 @@ public abstract class SMU extends VISADevice {
      * @param numSteps  Number of steps in sweep
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @return Array of DataPoint objects containing V-I data points
+     * @return Array of IVPoint objects containing V-I data points
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public DataPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric) throws DeviceException, IOException {
+    public IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric) throws DeviceException, IOException {
 
         return doLogarithmicSweep(source, min, max, numSteps, delay, symmetric, (i, p) -> {
         });
@@ -190,7 +191,7 @@ public abstract class SMU extends VISADevice {
     }
 
     /**
-     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects
+     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of IVPoint objects
      * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
      *
      * @param source    VOLTAGE or CURRENT
@@ -200,11 +201,11 @@ public abstract class SMU extends VISADevice {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate  Method ot run each time a new measurement is completed
-     * @return Array of DataPoint objects containing V-I data points
+     * @return Array of IVPoint objects containing V-I data points
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public DataPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    public IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         return doSweep(
                 source,
@@ -217,7 +218,7 @@ public abstract class SMU extends VISADevice {
     }
 
     /**
-     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects
+     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of IVPoint objects
      * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
      *
      * @param source    VOLTAGE or CURRENT
@@ -225,11 +226,11 @@ public abstract class SMU extends VISADevice {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate  Method ot run each time a new measurement is completed
-     * @return Array of DataPoint objects containing V-I data points
+     * @return Array of IVPoint objects containing V-I data points
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public DataPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    public IVPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         if (symmetric) {
             values = Util.symArray(values);
@@ -239,8 +240,8 @@ public abstract class SMU extends VISADevice {
         setSource(source);
         setBias(values[0]);
 
-        int                  i      = 0;
-        ArrayList<DataPoint> points = new ArrayList<>();
+        int                i      = 0;
+        ArrayList<IVPoint> points = new ArrayList<>();
 
         turnOn();
 
@@ -253,30 +254,30 @@ public abstract class SMU extends VISADevice {
                 throw new DeviceException("Couldn't sleep!");
             }
 
-            DataPoint point = new DataPoint(getVoltage(), getCurrent());
+            IVPoint point = new IVPoint(getVoltage(), getCurrent());
             onUpdate.update(i, point);
             points.add(point);
             i++;
 
         }
 
-        return points.toArray(new DataPoint[0]);
+        return points.toArray(new IVPoint[0]);
 
     }
 
     /**
-     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of DataPoint objects
+     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of IVPoint objects
      * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
      *
      * @param source    VOLTAGE or CURRENT
      * @param values    Array of values to use in the sweep
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @return Array of DataPoint objects containing V-I data points
+     * @return Array of IVPoint objects containing V-I data points
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public DataPoint[] doSweep(Source source, double[] values, boolean symmetric, long delay) throws IOException, DeviceException {
+    public IVPoint[] doSweep(Source source, double[] values, boolean symmetric, long delay) throws IOException, DeviceException {
         return doSweep(source, values, delay, symmetric, (i, p) -> {
         });
     }
@@ -289,26 +290,13 @@ public abstract class SMU extends VISADevice {
         CURRENT
     }
 
-    /**
-     * Class to contain voltage-current data points
-     */
-    public class DataPoint {
-        public double voltage;
-        public double current;
-
-        public DataPoint(double V, double I) {
-            voltage = V;
-            current = I;
-        }
-
-    }
 
     /**
      * Structure for defining what to do on each update
      */
     public interface ProgressMonitor {
 
-        public void update(int i, DataPoint point) throws IOException, DeviceException;
+        public void update(int i, IVPoint point) throws IOException, DeviceException;
 
     }
 
