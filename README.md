@@ -28,8 +28,8 @@ double current1 = smu1.getCurrent();
 double current2 = smu2.getCurrent();
 
 // Sweep voltage from 0 V to 10 V in 5 steps with a 500 ms delay each time
-SMU.DataPoint[] points1 = smu1.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500);
-SMU.DataPoint[] points2 = smu2.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500);
+IVPoint[] points1 = smu1.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500);
+IVPoint[] points2 = smu2.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500);
 ```
 
 In the example above, we have told both the K2450 and K236 to source 5 V and measure the resulting current. This is done using identical method calls on both despite the fact that the K236 and K2450 will implement these actions using fundamentally different approaches.
