@@ -17,7 +17,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-public class TaskListWindow implements Gridable {
+public class TaskListWindow {
 
     public  BorderPane pane;
     public  ListView   list;
@@ -110,7 +110,6 @@ public class TaskListWindow implements Gridable {
         });
     }
 
-    @Override
     public Pane getPane() {
         return pane;
     }

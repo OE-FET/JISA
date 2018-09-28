@@ -15,9 +15,11 @@ import java.io.File;
 public class Input implements Gridable {
 
     private InputWindow window;
+    private String      title;
 
     public Input(String title, boolean closeOnEnter, InputWindow.InputHandler onEnter) {
         window = InputWindow.create(title, closeOnEnter, onEnter);
+        this.title = title;
     }
 
     public void addField(String name) {
@@ -31,6 +33,11 @@ public class Input implements Gridable {
     @Override
     public Pane getPane() {
         return window.getPane();
+    }
+
+    @Override
+    public String getTitle() {
+        return title;
     }
 
     public void show() {

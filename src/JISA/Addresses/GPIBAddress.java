@@ -10,6 +10,14 @@ public class GPIBAddress implements InstrumentAddress {
         this.address = address;
     }
 
+    public int getBus() {
+        return bus;
+    }
+
+    public int getAddress() {
+        return address;
+    }
+
     @Override
     public String getVISAAddress() {
         return String.format("GPIB%d::%d::INSTR", bus, address);

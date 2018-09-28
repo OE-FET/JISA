@@ -28,6 +28,26 @@ public class USBAddress implements InstrumentAddress {
         this(-1, manufacturer, model, serialNumber, -1);
     }
 
+    public int getBoard() {
+        return board;
+    }
+
+    public String getManufacturer() {
+        return manufacturer;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public String getSerialNumber() {
+        return serialNumber;
+    }
+
+    public int getInterfaceNumber() {
+        return interfaceNumber;
+    }
+
     public String getVISAAddress() {
 
         if (board == -1 && interfaceNumber == -1) {

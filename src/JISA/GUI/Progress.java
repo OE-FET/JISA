@@ -11,9 +11,11 @@ import javafx.util.Duration;
 public class Progress implements Gridable {
 
     private ProgressWindow window;
+    private String         title;
 
     public Progress(String title) {
         window = ProgressWindow.create(title);
+        this.title = title;
     }
 
     public void setProgress(double value, double max) {
@@ -47,5 +49,10 @@ public class Progress implements Gridable {
     @Override
     public Pane getPane() {
         return window.getPane();
+    }
+
+    @Override
+    public String getTitle() {
+        return title;
     }
 }

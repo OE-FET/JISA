@@ -14,6 +14,14 @@ public class TCPIPAddress implements InstrumentAddress {
         this(-1, host);
     }
 
+    public int getBoard() {
+        return board;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
     @Override
     public String getVISAAddress() {
 

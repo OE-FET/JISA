@@ -110,7 +110,7 @@ public class VISA {
      *
      * @throws VISAException Upon error with VISA interface
      */
-    public static InstrumentAddress[] getInstruments() throws VISAException {
+    public static StrAddress[] getInstruments() throws VISAException {
 
         // RegEx for "Anything"
         ByteBuffer            expr       = stringToByteBuffer("?*");
@@ -131,9 +131,9 @@ public class VISA {
             throw new VISAException("Error searching devices");
         }
 
-        int                          count     = listCount.getValue().intValue();
-        ArrayList<InstrumentAddress> addresses = new ArrayList<>();
-        NativeLong                   handle    = listHandle.getValue();
+        int                   count     = listCount.getValue().intValue();
+        ArrayList<StrAddress> addresses = new ArrayList<>();
+        NativeLong            handle    = listHandle.getValue();
 
         for (int i = 0; i < count; i++) {
             final String addr;
@@ -151,7 +151,7 @@ public class VISA {
 
         }
 
-        return addresses.toArray(new InstrumentAddress[0]);
+        return addresses.toArray(new StrAddress[0]);
 
     }
 
