@@ -2,17 +2,72 @@ package JISA.Experiment;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
 public class ResultList implements Iterable<Result> {
 
-    private String[]          names;
-    private String[]          units    = null;
-    private int               cols;
-    private ArrayList<Result> results  = new ArrayList<>();
-    private ArrayList<Runnable>          onUpdate = new ArrayList<>();
+    private String[]            names;
+    private String[]            units    = null;
+    private int                 cols;
+    private ArrayList<Result>   results  = new ArrayList<>();
+    private ArrayList<Runnable> onUpdate = new ArrayList<>();
+
+    public static ResultList mergeLists(ResultList... lists) {
+
+        if (lists.length == 0) {
+            return null;
+        }
+
+        ArrayList<String> columns = new ArrayList<>();
+        ArrayList<String> units   = new ArrayList<>();
+        int               maxRows = 0;
+
+        for (ResultList list : lists) {
+            columns.addAll(Arrays.asList(list.names));
+            if (list.units == null) {
+                for (String name : list.names) {
+                    units.add("");
+                }
+            } else {
+                units.addAll(Arrays.asList(list.units));
+            }
+
+            maxRows = Math.max(maxRows, list.getNumRows());
+
+        }
+
+        ResultList newList = new ResultList(columns.toArray(new String[0]));
+        newList.setUnits(units.toArray(new String[0]));
+
+        ArrayList<Double> data = new ArrayList<>();
+        for (int i = 0; i < maxRows; i ++) {
+
+            data.clear();
+
+            for (ResultList list : lists) {
+
+                Result r = list.getRow(i);
+
+                if (r == null) {
+                    for (String name : list.names) {
+                        data.add(0.0);
+                    }
+                } else {
+                    data.addAll(Arrays.asList(r.getData()));
+                }
+
+            }
+
+            newList.addData(data.toArray(new Double[0]));
+
+        }
+
+        return newList;
+
+    }
 
     public ResultList(String... names) {
         this.names = names;
@@ -96,12 +151,26 @@ public class ResultList implements Iterable<Result> {
 
     }
 
+    public Result getRow(int i) {
+
+        if (i >= results.size()) {
+            return null;
+        } else {
+            return results.get(i);
+        }
+
+    }
+
     public Result getLastRow() {
         return results.get(results.size() - 1);
     }
 
     public int getNumCols() {
         return names.length;
+    }
+
+    public int getNumRows() {
+        return results.size();
     }
 
     public String getTitle(int col) {

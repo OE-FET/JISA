@@ -3,6 +3,7 @@ package JISA.Devices;
 import JISA.Addresses.InstrumentAddress;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.MCIVPoint;
+import JISA.Experiment.ResultList;
 import JISA.Util;
 
 import java.io.IOException;
@@ -24,7 +25,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Returns the voltage of the specified channel
      *
      * @param channel Channel number
+     *
      * @return Voltage, in Volts
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -35,6 +38,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Returns the voltage of the first channel
      *
      * @return Voltage, in Volts
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -46,7 +50,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Returns the current of the specified channel
      *
      * @param channel Channel number
+     *
      * @return Current, in Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -56,6 +62,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Returns the current of the first channel
      *
      * @return Current, in Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -68,6 +75,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      *
      * @param channel Channel number
      * @param voltage Voltage to source, in Volts
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -77,6 +85,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Sets the first channel to source a the given voltage (when turned on)
      *
      * @param voltage Voltage to source, in Volts
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -89,6 +98,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      *
      * @param channel Channel number
      * @param current Current to source, in Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -98,6 +108,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Sets the first channel to source a the given current (when turned on)
      *
      * @param current Current to source, in Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -109,6 +120,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Enables output on the specified channel
      *
      * @param channel Channel number
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -128,6 +140,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Disables output on the specified channel
      *
      * @param channel Channel number
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -147,7 +160,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Returns whether the specified channel currently has its output enabled
      *
      * @param channel Channel number
+     *
      * @return Is it enabled?
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -157,6 +172,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Returns whether the first channel currently has its output enabled
      *
      * @return Is it enabled?
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -169,6 +185,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      *
      * @param channel Channel number
      * @param source  VOLTAGE or CURRENT
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -178,6 +195,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Sets the source mode of the first channel
      *
      * @param source VOLTAGE or CURRENT
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -189,7 +207,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Returns the source mode of the specified channel
      *
      * @param channel Channel number
+     *
      * @return Source mode (VOLTAGE or CURRENT)
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -199,6 +219,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Returns the source mode of the first channel
      *
      * @return Source mode (VOLTAGE or CURRENT)
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -211,6 +232,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      *
      * @param channel Channel number
      * @param level   Volts or Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -220,6 +242,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Sets the level of whichever quantity is being sourced on the first channel
      *
      * @param level Volts or Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -231,7 +254,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Returns the value of whichever quantity is being sourced on the specified channel
      *
      * @param channel Channel number
+     *
      * @return Voltage or Current, in Volts or Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -241,6 +266,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Returns the value of whichever quantity is being sourced on the first channel
      *
      * @return Voltage or Current, in Volts or Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -252,7 +278,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Returns the value of whichever quantity is being measured on the specified channel
      *
      * @param channel Channel number
+     *
      * @return Voltage or Current, in Volts or Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -262,6 +290,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Returns the value of whichever quantity is being measured on the first channel
      *
      * @return Voltage or Current, in Volts or Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -280,7 +309,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * Returns a virtual SMU object to control the specified channel of the MCSMU
      *
      * @param channel Channel number
+     *
      * @return Virtual SMU
+     *
      * @throws DeviceException If channel does not exist
      */
     public SMU getChannel(int channel) throws DeviceException {
@@ -303,7 +334,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @param numSteps  Number of steps in sweep
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
+     *
      * @return Array of MCIVPoint objects containing I-V data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -324,7 +357,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate  Method to run each time a new measurement is completed
+     *
      * @return Array of MCIVPoint objects containing I-V data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -357,7 +392,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate  Method ot run each time a new measurement is completed
+     *
      * @return Array of MCIVPoint objects containing V-I data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -388,7 +425,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate  Method ot run each time a new measurement is completed
+     *
      * @return Array of MCIVPoint objects containing V-I data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -437,20 +476,20 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      *
      * @return Sweep
      */
-    public Sweep createMultiSweep() {
+    public Sweep createNestedSweep() {
 
         Sweep sweep = new Sweep() {
 
             private ArrayList<MCIVPoint> results = new ArrayList<>();
 
             @Override
-            public MCIVPoint[] run() throws IOException, DeviceException {
+            public MCIVPoint[] run(MCUpdateHandler onUpdate) throws IOException, DeviceException {
                 results.clear();
-                step(0, new HashMap<>());
+                step(0, onUpdate);
                 return results.toArray(new MCIVPoint[0]);
             }
 
-            private void step(int step, HashMap<Integer, IVPoint> points) throws IOException, DeviceException {
+            private void step(int step, MCUpdateHandler onUpdate) throws IOException, DeviceException {
 
                 Config conf = sweeps.get(step);
 
@@ -462,8 +501,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
                             conf.delay,
                             conf.symmetric,
                             (n, p) -> {
-                                points.put(conf.channel, p);
-                                step(step + 1, points);
+                                step(step + 1, onUpdate);
                             }
                     );
                 } else {
@@ -476,14 +514,35 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
                             conf.symmetric,
                             (n, p) -> {
                                 MCIVPoint pnt = new MCIVPoint();
-                                pnt.addAll(points);
-                                pnt.addChannel(conf.channel, p);
+                                for (int i = 0; i < getNumChannels(); i ++) {
+                                    pnt.addChannel(i, new IVPoint(getVoltage(i), getCurrent(i)));
+                                }
                                 results.add(pnt);
+                                onUpdate.onUpdate(results.size(), pnt);
                             }
                     );
                 }
 
             }
+
+        };
+
+        return sweep;
+
+    }
+
+    public Sweep createComboSweep() {
+
+        Sweep sweep = new Sweep() {
+
+            private ArrayList<MCIVPoint> results = new ArrayList<>();
+
+            @Override
+            public MCIVPoint[] run(MCUpdateHandler onUpdate) throws IOException, DeviceException {
+                results.clear();
+                return results.toArray(new MCIVPoint[0]);
+            }
+
 
         };
 
@@ -615,8 +674,28 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
             );
         }
 
-        public abstract MCIVPoint[] run() throws IOException, DeviceException;
+        public abstract MCIVPoint[] run(MCUpdateHandler onUpdate) throws IOException, DeviceException;
 
+        public MCIVPoint[] run() throws IOException, DeviceException {
+            return run((i, p) -> {
+            });
+        }
+
+        public MCIVPoint[] run(ResultList list) throws IOException, DeviceException {
+            return run((n, p) -> {
+                Double[] data = new Double[2 * getNumChannels()];
+                for (int i = 0; i < getNumChannels(); i++) {
+                    data[i * 2] = p.getChannel(i).voltage;
+                    data[i * 2 + 1] = p.getChannel(i).current;
+                }
+                list.addData(data);
+            });
+        }
+
+    }
+
+    public interface MCUpdateHandler {
+        public void onUpdate(int count, MCIVPoint point) throws IOException, DeviceException;
     }
 
     public Iterator<SMU> iterator() {

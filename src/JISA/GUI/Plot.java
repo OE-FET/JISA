@@ -21,6 +21,7 @@ public class Plot implements Gridable {
 
     public Plot(String title, String xLabel, String yLabel) {
         window = PlotWindow.create(title, xLabel, yLabel);
+        this.title = title;
     }
 
     @Override

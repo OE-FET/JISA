@@ -13,7 +13,15 @@ public class SMUCluster extends MCSMU {
 
     public SMUCluster(SMU... smus) throws IOException {
         super();
-        devices.addAll(Arrays.asList(smus));
+        for (SMU s : smus) {
+
+            if (s instanceof MCSMU) {
+                add((MCSMU) s);
+            } else {
+                add(s);
+            }
+
+        }
     }
 
     public void add(SMU device) {
