@@ -84,8 +84,10 @@ public class TableWindow implements Gridable {
 
     public void update(ResultList list) {
 
+        final Result row = list.getLastRow();
+
         Platform.runLater(() -> {
-            table.getItems().add(FXCollections.observableArrayList(Arrays.asList(list.getLastRow().getData())));
+            table.getItems().add(FXCollections.observableArrayList(Arrays.asList(row.getData())));
             table.scrollTo(table.getItems().size() - 1);
         });
 

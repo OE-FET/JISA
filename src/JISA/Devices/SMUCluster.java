@@ -1,5 +1,7 @@
 package JISA.Devices;
 
+import JISA.Experiment.IVPoint;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -129,7 +131,7 @@ public class SMUCluster extends MCSMU {
         return devices.size();
     }
 
-    public SMU.DataPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    public IVPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
         return devices.get(channel).doSweep(source, values, delay, symmetric, onUpdate);
     }
 
