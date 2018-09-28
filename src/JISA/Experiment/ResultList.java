@@ -192,7 +192,7 @@ public class ResultList implements Iterable<Result> {
             int max = getTitle(i).length();
 
             for (Result r : this) {
-                max = Math.max(max, String.format("%f", r.get(i)).length());
+                max = Math.max(max, String.format("%e", r.get(i)).length());
             }
 
             widths[i] = max;

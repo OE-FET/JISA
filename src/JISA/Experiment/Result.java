@@ -15,7 +15,7 @@ public class Result {
     public String getOutput(String delim) {
 
         String[] formats = new String[data.length];
-        Arrays.fill(formats, "%f");
+        Arrays.fill(formats, "%e");
 
         String format = String.join(delim, formats).concat("\n");
 
