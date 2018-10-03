@@ -260,4 +260,24 @@ public class VISADevice {
         }
     }
 
+    public synchronized void flushReadBuffer() throws IOException {
+
+        try {
+            VISA.flushReadBuffer(device);
+        } catch (VISAException e) {
+            throw new IOException(e.getMessage());
+        }
+
+    }
+
+    public synchronized void clearDevice() throws IOException {
+
+        try {
+            VISA.clearInstrument(device);
+        } catch (VISAException e) {
+            throw new IOException(e.getMessage());
+        }
+
+    }
+
 }

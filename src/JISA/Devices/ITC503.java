@@ -52,6 +52,7 @@ public class ITC503 extends MSTController {
         enabledReadTerminationCharacter(true);
         setTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);
+        clearDevice();
 
         try {
             String[] idn = query("V").split(" ");
@@ -109,6 +110,10 @@ public class ITC503 extends MSTController {
 
         return readChannel(sensor + 1);
 
+    }
+
+    public String getIDN() throws IOException {
+        return query("V").replace("\n", "").replace("\r", "");
     }
 
     /**

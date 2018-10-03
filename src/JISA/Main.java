@@ -18,12 +18,8 @@ public class Main extends GUI {
 
     public static void run() throws Exception {
 
-        Plot  plot  = new Plot("Plot", "x", "y");
-        Table table = new Table("Table");
-        Table table2 = new Table("Table");
-
-        Grid grid = new Grid("Page", plot, table, table2);
-        grid.show();
+        ITC503 itc503 = new ITC503(new GPIBAddress(0, 20));
+        System.out.println(itc503.getIDN());
 
     }
 

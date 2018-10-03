@@ -366,6 +366,37 @@ public class VISA {
 
     }
 
+    public static void flushReadBuffer(long instrument) throws VISAException {
+
+        if (!instruments.containsKey(instrument)) {
+            throw new VISAException("That instrument has not been opened!");
+        }
+
+        NativeLong status = lib.viFlush(
+                instruments.get(instrument),
+                (short) 4
+        );
+
+        if (status.longValue() != VI_SUCCESS) {
+            throw new VISAException("Error clearing read buffer");
+        }
+
+    }
+
+    public static void clearInstrument(long instrument) throws VISAException {
+
+        if (!instruments.containsKey(instrument)) {
+            throw new VISAException("That instrument has not been opened!");
+        }
+
+        NativeLong status = lib.viClear(instruments.get(instrument));
+
+        if (status.longValue() != VI_SUCCESS) {
+            throw new VISAException("Error clearing instrument!");
+        }
+
+    }
+
     /**
      * Sets whether to send EOI at the end of talking (mostly for GPIB)
      *
