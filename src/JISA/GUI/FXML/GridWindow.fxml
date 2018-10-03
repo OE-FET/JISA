@@ -4,14 +4,15 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.TilePane?>
 
+<?import javafx.scene.layout.GridPane?>
 <BorderPane fx:id="border" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="JISA.GUI.FXML.GridWindow">
 
     <center>
-        <TilePane fx:id="pane" hgap="15.0" prefColumns="3" prefTileHeight="400.0" prefTileWidth="500.0" vgap="15.0">
+        <GridPane fx:id="pane" hgap="15.0" vgap="15.0">
          <padding>
             <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
          </padding>
-        </TilePane>
+        </GridPane>
     </center>
 
 </BorderPane>

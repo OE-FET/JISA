@@ -16,7 +16,7 @@ import java.io.IOException;
 
 public class GridWindow {
 
-    public  TilePane   pane;
+    public  GridPane   pane;
     public  BorderPane border;
     private ToolBar    toolBar = null;
     private Stage      stage;
@@ -77,7 +77,7 @@ public class GridWindow {
 
     public void addPane(Node toAdd) {
 
-        pane.getChildren().add(toAdd);
+        pane.add(toAdd, c, r);
 
         c++;
         if (c >= nCols) {
@@ -104,6 +104,7 @@ public class GridWindow {
             stage.close();
         });
     }
+
     public Pane getPane() {
         return border;
     }

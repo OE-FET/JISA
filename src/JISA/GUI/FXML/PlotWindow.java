@@ -38,6 +38,7 @@ public class PlotWindow {
                 Stage stage = new Stage();
                 stage.setTitle(title);
                 stage.setScene(scene);
+                controller.chart.setStyle("-fx-background-color: white;");
                 controller.xAxis.setLabel(xAxis);
                 controller.yAxis.setLabel(yAxis);
                 controller.chart.setTitle(title);
@@ -79,10 +80,6 @@ public class PlotWindow {
     public int createSeries(String name, Color colour) {
 
         XYChart.Series<Double, Double> series = new XYChart.Series<>();
-        String rgb = String.format("%d, %d, %d",
-                                   (int) (colour.getRed() * 255),
-                                   (int) (colour.getGreen() * 255),
-                                   (int) (colour.getBlue() * 255));
 
         series.setName(name);
 

@@ -7,58 +7,94 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.stage.Window;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class GUI extends Application {
 
     private static boolean done = false;
     private static File    file;
 
-    public static void error(String title, String header, String text) {
+    public static void errorAlert(String title, String header, String text) {
+        alert(Alert.AlertType.ERROR, title, header, text);
+    }
 
+    public static void infoAlert(String title, String header, String text) {
+        alert(Alert.AlertType.INFORMATION, title, header, text);
+    }
+
+    public static void warningAlert(String title, String header, String text) {
+        alert(Alert.AlertType.WARNING, title, header, text);
+    }
+
+    private static void alert(Alert.AlertType type, String title, String header, String text) {
+        Semaphore semaphore = new Semaphore(0);
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
+            Alert alert = new Alert(type);
             alert.setTitle(title);
             alert.setHeaderText(header);
             alert.setContentText(text);
             alert.showAndWait();
-            done = true;
+            semaphore.release();
         });
 
-        while (!done) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-
-            }
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            Util.exceptionHandler(e);
         }
-
     }
 
     public static String saveFileSelect() {
 
-        file = null;
+        Semaphore semaphore = new Semaphore(0);
+
+        AtomicReference<File> file = new AtomicReference<>();
 
         Platform.runLater(() -> {
-            file = null;
             FileChooser chooser = new FileChooser();
-            file = chooser.showSaveDialog(new Stage());
+            file.set(chooser.showSaveDialog(new Stage()));
+            semaphore.release();
         });
 
-        while (file == null) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-
-            }
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException e) {
+            Util.exceptionHandler(e);
         }
 
-        return file.getAbsolutePath();
+        return file.get().getAbsolutePath();
+
+    }
+
+    public static boolean confirmWindow(String title, String header, String text) {
+
+        Semaphore                             semaphore = new Semaphore(0);
+        AtomicReference<Optional<ButtonType>> response  = new AtomicReference<>();
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle(title);
+            alert.setHeaderText(header);
+            alert.setContentText(text);
+            response.set(alert.showAndWait());
+            semaphore.release();
+        });
+
+        try {
+            semaphore.acquire();
+            return response.get().get() == ButtonType.OK;
+        } catch (InterruptedException e) {
+            Util.exceptionHandler(e);
+        }
+
+        return false;
 
     }
 

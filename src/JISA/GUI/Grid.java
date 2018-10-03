@@ -26,9 +26,10 @@ public class Grid implements Gridable {
 
     public void add(Gridable toAdd) {
 
-        BorderPane pane  = new BorderPane();
-        StackPane  stack = new StackPane();
-        Label      t     = new Label();
+        BorderPane pane      = new BorderPane();
+        StackPane  stack     = new StackPane();
+        StackPane  container = new StackPane();
+        Label      t         = new Label();
 
         stack.setPadding(new Insets(10, 10, 10, 10));
         stack.setAlignment(Pos.CENTER_LEFT);
@@ -39,8 +40,10 @@ public class Grid implements Gridable {
         t.setTextFill(Color.WHITE);
         t.setText(toAdd.getTitle());
         stack.getChildren().add(t);
+        container.setPadding(new Insets(15, 15, 15, 15));
+        container.getChildren().add(toAdd.getPane());
         pane.setTop(stack);
-        pane.setCenter(toAdd.getPane());
+        pane.setCenter(container);
 
         window.addPane(pane);
     }
