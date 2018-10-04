@@ -14,9 +14,6 @@ import java.util.Map;
 
 public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
-    public MCSMU() {
-    }
-
     public MCSMU(InstrumentAddress address) throws IOException {
         super(address);
     }
@@ -306,6 +303,55 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     public abstract int getNumChannels();
 
     /**
+     * Sets whether the SMU should apply source using FORCE probes and measure using separate SENSE probes or whether is should
+     * do both with the FORCE probes on the specified channel.
+     *
+     * @param channel    Channel number
+     * @param fourProbes Should it use all four probes?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void useFourProbe(int channel, boolean fourProbes) throws DeviceException, IOException;
+
+    /**
+     * Sets whether the SMU should apply source using FORCE probes and measure using separate SENSE probes or whether is should
+     * do both with the FORCE probes on the first channel.
+     *
+     * @param fourProbes Should it use all four probes?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void useFourProbe(boolean fourProbes) throws DeviceException, IOException {
+        useFourProbe(0, fourProbes);
+    }
+
+    /**
+     * Returns whether the device is currently configured to use all four probes on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Are all probes to be used?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract boolean isUsingFourProbe(int channel) throws DeviceException, IOException;
+
+    /**
+     * Returns whether the device is currently configured to use all four probes on the first channel.
+     *
+     * @return Are all probes to be used?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public boolean isUsingFourProbe() throws DeviceException, IOException {
+        return isUsingFourProbe(0);
+    }
+
+    /**
      * Returns a virtual SMU object to control the specified channel of the MCSMU
      *
      * @param channel Channel number
@@ -320,7 +366,11 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
             throw new DeviceException("This SMU does not have that channel!");
         }
 
-        return new VirtualSMU(channel);
+        try {
+            return new VirtualSMU(channel);
+        } catch (Exception e) {
+            return null;
+        }
 
     }
 
@@ -514,7 +564,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
                             conf.symmetric,
                             (n, p) -> {
                                 MCIVPoint pnt = new MCIVPoint();
-                                for (int i = 0; i < getNumChannels(); i ++) {
+                                for (int i = 0; i < getNumChannels(); i++) {
                                     pnt.addChannel(i, new IVPoint(getVoltage(i), getCurrent(i)));
                                 }
                                 results.add(pnt);
@@ -557,7 +607,8 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
         private int channel;
 
-        public VirtualSMU(int channel) {
+        public VirtualSMU(int channel) throws IOException {
+            super(null);
             this.channel = channel;
         }
 
@@ -619,6 +670,16 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         @Override
         public double getMeasureValue() throws DeviceException, IOException {
             return MCSMU.this.getMeasureValue(channel);
+        }
+
+        @Override
+        public void useFourProbe(boolean fourProbes) throws DeviceException, IOException {
+            MCSMU.this.useFourProbe(channel, fourProbes);
+        }
+
+        @Override
+        public boolean isUsingFourProbe() throws DeviceException, IOException {
+            return MCSMU.this.isUsingFourProbe(channel);
         }
 
     }

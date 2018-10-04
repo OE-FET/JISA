@@ -78,4 +78,30 @@ public class Synch {
 
     }
 
+    public static void waitForStableTarget(Returnable<Double> valueToCheck, double target, double pctMargin, int interval, long duration) throws IOException, DeviceException {
+
+        long   time = 0;
+        double min  = target * (1 - (pctMargin / 100D));
+        double max  = target * (1 + (pctMargin / 100D));
+
+        while (time < duration) {
+
+            double value = valueToCheck.getValue();
+
+            if (Util.isBetween(value, min, max)) {
+                time += duration;
+            } else {
+                time = 0;
+            }
+
+            try {
+                Thread.sleep(duration);
+            } catch (Exception e) {
+                throw new DeviceException("Could not sleep!");
+            }
+
+        }
+
+    }
+
 }

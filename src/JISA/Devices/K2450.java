@@ -22,10 +22,14 @@ public class K2450 extends SMU {
     private static final String C_SET_SOURCE_VALUE      = ":SOUR:%s %f";
     private static final String C_SET_TERMINALS         = ":ROUT:TERM %s";
     private static final String C_GET_TERMINALS         = ":ROUT:TERM?";
-    private static final String C_SET_PROBE_MODE        = "%s:RSEN %s";
+    private static final String C_SET_PROBE_MODE        = ":SENS:RSEN %s";
+    private static final String C_QUERY_PROBE_MODE      = ":SENS:RSEN?";
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
 
+    /**
+     * Constant values for referring to the FRONT and REAR terminals of the Keithley 2450 SMU
+     */
     public static class Terminals {
         public static final int FRONT = 0;
         public static final int REAR  = 1;
@@ -49,20 +53,18 @@ public class K2450 extends SMU {
 
     }
 
-    public void setNumProbes(int numProbes) throws IOException, DeviceException {
+    public void useFourProbe(boolean fourProbe) throws IOException {
 
-        if (numProbes > 4 || numProbes < 2) {
-            throw new DeviceException("Number of probes can only be 2, 3 or 4!");
-        }
-
-        if (numProbes > 3) {
-            write(C_SET_PROBE_MODE, Source.VOLTAGE.getTag(), OUTPUT_ON);
-            write(C_SET_PROBE_MODE, Source.CURRENT.getTag(), OUTPUT_ON);
+        if (fourProbe) {
+            write(C_SET_PROBE_MODE, OUTPUT_ON);
         } else {
-            write(C_SET_PROBE_MODE, Source.VOLTAGE.getTag(), OUTPUT_OFF);
-            write(C_SET_PROBE_MODE, Source.CURRENT.getTag(), OUTPUT_OFF);
+            write(C_SET_PROBE_MODE, OUTPUT_OFF);
         }
 
+    }
+
+    public boolean isUsingFourProbe() throws IOException {
+        return query(C_QUERY_PROBE_MODE).trim().equals(OUTPUT_ON);
     }
 
     public double getVoltage() throws IOException {

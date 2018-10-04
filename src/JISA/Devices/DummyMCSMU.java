@@ -5,20 +5,25 @@ import java.util.Random;
 
 public class DummyMCSMU extends MCSMU {
 
-    private Random   random  = new Random();
-    private Double[] current = {null, null, null, null};
-    private Double[] voltage = {null, null, null, null};
-    private Source[] mode    = {Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE};
-    private double[] R       = {random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500};
+    private Random    random  = new Random();
+    private Double[]  current = {null, null, null, null};
+    private Double[]  voltage = {null, null, null, null};
+    private Source[]  mode    = {Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE};
+    private boolean[] probes  = {true, true, true, true};
+    private double[]  R       = {random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500};
+
+    public DummyMCSMU() throws IOException {
+        super(null);
+    }
 
     @Override
     public double getVoltage(int channel) throws DeviceException, IOException {
-        return voltage[channel] == null ? getCurrent(channel) * (R[channel] + (1 - 2*random.nextDouble()) * 0.05 * R[channel]) : voltage[channel];
+        return voltage[channel] == null ? getCurrent(channel) * (R[channel] + (1 - 2 * random.nextDouble()) * 0.05 * R[channel]) : voltage[channel];
     }
 
     @Override
     public double getCurrent(int channel) throws DeviceException, IOException {
-        return current[channel] == null ? getVoltage(channel) /(R[channel] + (1 - 2*random.nextDouble()) * 0.05 * R[channel]) : current[channel];
+        return current[channel] == null ? getVoltage(channel) / (R[channel] + (1 - 2 * random.nextDouble()) * 0.05 * R[channel]) : current[channel];
     }
 
     @Override
@@ -113,5 +118,15 @@ public class DummyMCSMU extends MCSMU {
     @Override
     public int getNumChannels() {
         return 4;
+    }
+
+    @Override
+    public void useFourProbe(int channel, boolean fourProbes) throws DeviceException, IOException {
+        probes[channel] = fourProbes;
+    }
+
+    @Override
+    public boolean isUsingFourProbe(int channel) throws DeviceException, IOException {
+        return probes[channel];
     }
 }

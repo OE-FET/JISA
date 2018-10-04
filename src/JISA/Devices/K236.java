@@ -18,6 +18,10 @@ public class K236 extends SMU {
     private static final String   C_SET_BIAS      = "B%f,%d,%d";
     private static final String   C_GET_VALUE     = "G%d,%d,%d";
     private static final String   C_EXECUTE       = "X";
+    private static final String   C_SET_SENSE     = "0%d";
+    private static final String   C_OPERATE       = "N%d";
+    private static final int      OPERATE_OFF     = 0;
+    private static final int      OPERATE_ON      = 1;
     private static final int      OUTPUT_NOTHING  = 0;
     private static final int      OUTPUT_SOURCE   = 1;
     private static final int      OUTPUT_DELAY    = 2;
@@ -25,6 +29,8 @@ public class K236 extends SMU {
     private static final int      OUTPUT_TIME     = 8;
     private static final int      FORMAT_CLEAN    = 2;
     private static final int      ONE_DC_DATA     = 0;
+    private static final int      SENSE_LOCAL     = 0;
+    private static final int      SENSE_REMOTE    = 1;
     private static final double   MIN_CURRENT     = -100e-3;
     private static final double   MAX_CURRENT     = +100e-3;
     private static final double   MIN_VOLTAGE     = -110;
@@ -33,6 +39,7 @@ public class K236 extends SMU {
     private              Function function        = null;
     private              double   biasLevel       = 0;
     private              boolean  on              = false;
+    private              boolean  remote          = true;
     private static final Pattern  responsePattern = Pattern.compile("[A-Z]{4}[VI]([+-][0-9]+[.][0-9]+E[+-][0-9]+)");
 
     public K236(InstrumentAddress address) throws IOException {
@@ -40,7 +47,7 @@ public class K236 extends SMU {
         super(address);
 
         biasLevel = getSourceValue();
-        on = biasLevel > 0;
+        turnOff();
 
         // TODO: Add check for correct device (need to test with actual device to see query response)
 
@@ -66,11 +73,8 @@ public class K236 extends SMU {
 
         }
 
-        if (on) {
-            query(C_SET_BIAS, level, 0, 0);
-        } else {
-            query(C_SET_BIAS, 0, 0, 0);
-        }
+        query(C_SET_BIAS, level, 0, 0);
+
     }
 
     private double readValue(int channel) throws IOException {
@@ -95,6 +99,17 @@ public class K236 extends SMU {
 
     public double getMeasureValue() throws IOException {
         return readValue(OUTPUT_MEASURE);
+    }
+
+    @Override
+    public void useFourProbe(boolean fourProbes) throws DeviceException, IOException {
+        query(C_SET_SENSE, fourProbes ? SENSE_REMOTE : SENSE_LOCAL);
+        remote = fourProbes;
+    }
+
+    @Override
+    public boolean isUsingFourProbe() throws DeviceException, IOException {
+        return remote;
     }
 
     public double getVoltage() throws IOException {
@@ -140,20 +155,14 @@ public class K236 extends SMU {
 
     @Override
     public void turnOn() throws IOException {
+        query(C_OPERATE, OPERATE_ON);
         on = true;
-        try {
-            setBias(biasLevel);
-        } catch (DeviceException e) {
-        }
     }
 
     @Override
     public void turnOff() throws IOException {
+        query(C_OPERATE, OPERATE_OFF);
         on = false;
-        try {
-            setBias(biasLevel);
-        } catch (DeviceException e) {
-        }
     }
 
     @Override

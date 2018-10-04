@@ -4,15 +4,24 @@ import JISA.Experiment.IVPoint;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 
+/**
+ * Class to combine multiple SMUs into a single virtual SMU with multiple channels.
+ */
 public class SMUCluster extends MCSMU {
 
     private ArrayList<SMU> devices = new ArrayList<>();
 
+    /**
+     * Creates an SMUCluster using the given SMU objects.
+     *
+     * @param smus SMUs to combine
+     *
+     * @throws IOException Upon communications error
+     */
     public SMUCluster(SMU... smus) throws IOException {
-        super();
+        super(null);
         for (SMU s : smus) {
 
             if (s instanceof MCSMU) {
@@ -24,14 +33,32 @@ public class SMUCluster extends MCSMU {
         }
     }
 
+    /**
+     * Add an SMU to the cluster.
+     *
+     * @param device SMU to add
+     */
     public void add(SMU device) {
         devices.add(device);
     }
 
+    /**
+     * Add one channel from an MCSMU to the cluster
+     *
+     * @param device  The MCSMU
+     * @param channel Channel number to add
+     *
+     * @throws DeviceException If the channel does not exist
+     */
     public void add(MCSMU device, int channel) throws DeviceException {
         devices.add(device.getChannel(channel));
     }
 
+    /**
+     * Add all channels from an MCSMU to the cluster
+     *
+     * @param device MCSMU to add
+     */
     public void add(MCSMU device) {
         for (SMU d : devices) {
             add(d);
@@ -137,6 +164,22 @@ public class SMUCluster extends MCSMU {
     @Override
     public int getNumChannels() {
         return devices.size();
+    }
+
+    @Override
+    public void useFourProbe(int channel, boolean fourProbes) throws DeviceException, IOException {
+        if (devices.size() <= channel) {
+            throw new DeviceException("Channel does not exist!");
+        }
+        devices.get(channel).useFourProbe(fourProbes);
+    }
+
+    @Override
+    public boolean isUsingFourProbe(int channel) throws DeviceException, IOException {
+        if (devices.size() <= channel) {
+            throw new DeviceException("Channel does not exist!");
+        }
+        return devices.get(channel).isUsingFourProbe();
     }
 
     public IVPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {

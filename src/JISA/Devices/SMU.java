@@ -17,10 +17,6 @@ public abstract class SMU extends VISADevice {
         super(address);
     }
 
-    public SMU() {
-
-    }
-
     /**
      * Returns the voltage either being applied or measured by the SMU.
      *
@@ -136,6 +132,28 @@ public abstract class SMU extends VISADevice {
      * @throws IOException     Upon communications error
      */
     public abstract double getMeasureValue() throws DeviceException, IOException;
+
+    /**
+     * Sets whether the SMU should apply source using FORCE probes and measure using separate SENSE probes or whether is should
+     * do both with the FORCE probes.
+     *
+     * @param fourProbes Should it use all four probes?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void useFourProbe(boolean fourProbes) throws DeviceException, IOException;
+
+    /**
+     * Returns whether the device is currently configured to use all four probes.
+     *
+     * @return Are all probes to be used?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract boolean isUsingFourProbe() throws DeviceException, IOException;
+
 
     /**
      * Returns the number of terminals that can be used on the SMU.

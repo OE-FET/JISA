@@ -32,6 +32,10 @@ public class VISADevice {
      */
     public VISADevice(InstrumentAddress address) throws IOException {
 
+        if (address == null) {
+            return;
+        }
+
         try {
             this.device = VISA.openInstrument(address.getVISAAddress());
             this.address = address;
