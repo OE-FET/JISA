@@ -48,6 +48,7 @@ public class K236 extends SMU {
         setTerminator("HX");
         turnOff();
         setSourceFunction(Source.VOLTAGE, Function.DC);
+        write("Y4");
 
         // TODO: Add check for correct device (need to test with actual device to see query response)
 
