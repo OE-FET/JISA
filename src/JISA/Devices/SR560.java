@@ -195,6 +195,10 @@ public class SR560 extends VPreAmp {
 
     }
 
+    public String getIDN() {
+        return "Stanford Research SR560";
+    }
+
     @Override
     public void setGain(double gain) throws IOException {
         Gain mode = Gain.fromDouble(gain);

@@ -20,13 +20,13 @@ public class StrAddress implements InstrumentAddress {
 
         Type type = Type.UNKOWN;
 
-        if (value.substring(0, 4).equals("GPIB")) {
+        if (value.length() >= 4 && value.substring(0, 4).equals("GPIB")) {
             type = Type.GPIB;
-        } else if (value.substring(0, 3).equals("USB")) {
+        } else if (value.length() >= 3 && value.substring(0, 3).equals("USB")) {
             type = Type.USB;
-        } else if (value.substring(0, 4).equals("ASRL")) {
+        } else if (value.length() >= 4 && value.substring(0, 4).equals("ASRL")) {
             type = Type.SERIAL;
-        } else if (value.substring(0, 5).equals("TCPIP")) {
+        } else if (value.length() >= 5 && value.substring(0, 5).equals("TCPIP")) {
             type = Type.TCPIP;
         }
 
