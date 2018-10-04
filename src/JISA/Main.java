@@ -18,8 +18,8 @@ public class Main extends GUI {
 
     public static void run() throws Exception {
 
-        ITC503 itc503 = new ITC503(new GPIBAddress(0, 20));
-        System.out.println(itc503.getIDN());
+        K2450 smu = new K2450(new GPIBAddress(0, 2));
+        smu.setTerminals(K2450.Terminals.REAR);
 
     }
 

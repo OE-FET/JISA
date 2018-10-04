@@ -7,6 +7,9 @@ import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
+/**
+ * Table-like structure for holding numerical data
+ */
 public class ResultList implements Iterable<Result> {
 
     private String[]            names;
@@ -15,6 +18,13 @@ public class ResultList implements Iterable<Result> {
     private ArrayList<Result>   results  = new ArrayList<>();
     private ArrayList<Runnable> onUpdate = new ArrayList<>();
 
+    /**
+     * Merges multiple lists, side-by-side, into a single list.
+     *
+     * @param lists Lists to merge
+     *
+     * @return The merged list
+     */
     public static ResultList mergeLists(ResultList... lists) {
 
         if (lists.length == 0) {
@@ -43,7 +53,7 @@ public class ResultList implements Iterable<Result> {
         newList.setUnits(units.toArray(new String[0]));
 
         ArrayList<Double> data = new ArrayList<>();
-        for (int i = 0; i < maxRows; i ++) {
+        for (int i = 0; i < maxRows; i++) {
 
             data.clear();
 
@@ -69,11 +79,21 @@ public class ResultList implements Iterable<Result> {
 
     }
 
+    /**
+     * Creates a ResultList with the specified columns.
+     *
+     * @param names The names of the columns
+     */
     public ResultList(String... names) {
         this.names = names;
         this.cols = this.names.length;
     }
 
+    /**
+     * Set action to perform each time the list is updated.
+     *
+     * @param onUpdate Runnable to run when updated
+     */
     public void setOnUpdate(Runnable onUpdate) {
         this.onUpdate.add(onUpdate);
     }
@@ -84,6 +104,11 @@ public class ResultList implements Iterable<Result> {
         }
     }
 
+    /**
+     * Sets the units of each column.
+     *
+     * @param units The units for the columns
+     */
     public void setUnits(String... units) {
 
         if (units.length != cols) {
@@ -95,6 +120,11 @@ public class ResultList implements Iterable<Result> {
 
     }
 
+    /**
+     * Add a new row of data.
+     *
+     * @param data Row of data
+     */
     public void addData(Double... data) {
 
         if (data.length != cols) {
@@ -109,6 +139,13 @@ public class ResultList implements Iterable<Result> {
 
     }
 
+    /**
+     * Output as a CSV file to the specified file.
+     *
+     * @param filePath Output file path
+     *
+     * @throws IOException Upon writing error
+     */
     public void output(String filePath) throws IOException {
 
         FileOutputStream f = new FileOutputStream(filePath);
@@ -119,10 +156,24 @@ public class ResultList implements Iterable<Result> {
 
     }
 
+    /**
+     * Output as a delimiter-separated string to the given stream.
+     *
+     * @param delim  Delimiter
+     * @param stream Output stream
+     */
     public void output(String delim, PrintStream stream) {
         output(delim, delim, "", stream);
     }
 
+    /**
+     * Output as a delimiter-separated string, with separated header delimiter and line-start to the given stream.
+     *
+     * @param delim       Delimiter
+     * @param headerDelim Delimiter for headers
+     * @param headerStart Starting character(s) for headers
+     * @param stream      Output stream
+     */
     public void output(String delim, String headerDelim, String headerStart, PrintStream stream) {
 
         stream.print(headerStart);
@@ -151,6 +202,13 @@ public class ResultList implements Iterable<Result> {
 
     }
 
+    /**
+     * Returns the row of data, as a Result object, with the given index.
+     *
+     * @param i Index
+     *
+     * @return Row with index, i
+     */
     public Result getRow(int i) {
 
         if (i >= results.size()) {
@@ -161,18 +219,40 @@ public class ResultList implements Iterable<Result> {
 
     }
 
+    /**
+     * Returns the last row of data that was added.
+     *
+     * @return Last row
+     */
     public Result getLastRow() {
         return results.get(results.size() - 1);
     }
 
+    /**
+     * Returns the number of columns in the list.
+     *
+     * @return Number of columns
+     */
     public int getNumCols() {
         return names.length;
     }
 
+    /**
+     * Returns the number of rows in the list.
+     *
+     * @return Number of rows
+     */
     public int getNumRows() {
         return results.size();
     }
 
+    /**
+     * Returns the fully formatted title (including units) of the specified column.
+     *
+     * @param col Column index
+     *
+     * @return Title of column with units
+     */
     public String getTitle(int col) {
 
         if (units == null) {
@@ -183,6 +263,11 @@ public class ResultList implements Iterable<Result> {
 
     }
 
+    /**
+     * Output the data as a formatted ASCII table to the given stream.
+     *
+     * @param stream Output stream
+     */
     public void outputTable(PrintStream stream) {
 
         int[] widths = new int[cols];
@@ -278,6 +363,13 @@ public class ResultList implements Iterable<Result> {
 
     }
 
+    /**
+     * Output the data as a formatted ASCII table to the file with the given path.
+     *
+     * @param path File path
+     *
+     * @throws IOException Upon writing error
+     */
     public void outputTable(String path) throws IOException {
         FileOutputStream f = new FileOutputStream(path);
         PrintStream      s = new PrintStream(f);
@@ -286,10 +378,20 @@ public class ResultList implements Iterable<Result> {
         s.close();
     }
 
+    /**
+     * Output the data as a formatted ASCII table to the standard out stream (ie terminal window).
+     */
     public void outputTable() {
         outputTable(System.out);
     }
 
+    /**
+     * Output a MATLAB script to the given stream which, when run, will load the data in this table into the specified
+     * MATLAB variables.
+     *
+     * @param stream    Output stream
+     * @param variables Variable names to load into (in column order)
+     */
     public void outputMATLAB(PrintStream stream, String... variables) {
 
         if (variables.length != cols) {
@@ -310,6 +412,13 @@ public class ResultList implements Iterable<Result> {
 
     }
 
+    /**
+     * Output a MATLAB script to the given stream which, when run, will load the data in this table into the specified
+     * MATLAB variables.
+     *
+     * @param path      Output file path
+     * @param variables Variable names to load into (in column order)
+     */
     public void outputMATLAB(String path, String... variables) throws IOException {
         FileOutputStream f = new FileOutputStream(path);
         PrintStream      s = new PrintStream(f);

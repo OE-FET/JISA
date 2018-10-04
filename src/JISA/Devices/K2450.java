@@ -26,6 +26,11 @@ public class K2450 extends SMU {
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
 
+    public static class Terminals {
+        public static final int FRONT = 0;
+        public static final int REAR  = 1;
+    }
+
     public K2450(InstrumentAddress address) throws IOException, DeviceException {
 
         super(address);
@@ -160,16 +165,26 @@ public class K2450 extends SMU {
 
     }
 
+    @Override
+    public int getNumTerminals() throws DeviceException, IOException {
+        return 2;
+    }
+
     public void setSourceValue(Source type, double value) throws IOException {
         write(C_SET_SOURCE_VALUE, type.getTag(), value);
     }
 
-    public void setTerminals(Terminals terminals) throws IOException {
-        write(C_SET_TERMINALS, terminals.getTag());
+    public void setTerminals(int terminalIndex) throws IOException, DeviceException {
+
+        if (terminalIndex >= getNumTerminals()) {
+            throw new DeviceException("Those terminals do not exist!");
+        }
+
+        write(C_SET_TERMINALS, Terms.fromInt(terminalIndex).getTag());
     }
 
-    public Terminals getTerminals() throws IOException {
-        return Terminals.fromTag(query(C_GET_TERMINALS));
+    public int getTerminals() throws IOException {
+        return Terms.fromTag(query(C_GET_TERMINALS)).toInt();
     }
 
     public enum Source {
@@ -213,31 +228,43 @@ public class K2450 extends SMU {
 
     }
 
-    public enum Terminals {
+    private enum Terms {
 
-        FRONT("FRONT"),
-        REAR("REAR");
+        FRONT(0, "FRONT"),
+        REAR(1, "REAR");
 
-        private static HashMap<String, Terminals> lookup = new HashMap<>();
+        private static HashMap<String, Terms>  lookup  = new HashMap<>();
+        private static HashMap<Integer, Terms> indices = new HashMap<>();
 
         static {
-            for (Terminals t : Terminals.values()) {
+            for (Terms t : Terms.values()) {
                 lookup.put(t.getTag(), t);
+                indices.put(t.toInt(), t);
             }
         }
 
-        public static Terminals fromTag(String tag) {
+        public static Terms fromTag(String tag) {
             return lookup.getOrDefault(tag, null);
         }
 
-        private String tag;
+        public static Terms fromInt(int index) {
+            return indices.getOrDefault(index, null);
+        }
 
-        Terminals(String tag) {
+        private String tag;
+        private int    index;
+
+        Terms(int index, String tag) {
+            this.index = index;
             this.tag = tag;
         }
 
         String getTag() {
             return tag;
+        }
+
+        int toInt() {
+            return index;
         }
 
     }
