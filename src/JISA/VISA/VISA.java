@@ -112,7 +112,7 @@ public class VISA {
      */
     public static StrAddress[] getInstruments() throws VISAException {
 
-        // RegEx for "Anything"
+        // VISA RegEx for "Anything" (should be .* but they seem to use their own standard)
         ByteBuffer            expr       = stringToByteBuffer("?*");
         ByteBuffer            desc       = ByteBuffer.allocate(1024);
         NativeLongByReference listHandle = new NativeLongByReference();
