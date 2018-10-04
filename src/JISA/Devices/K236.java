@@ -45,9 +45,9 @@ public class K236 extends SMU {
     public K236(InstrumentAddress address) throws IOException {
 
         super(address);
-
-        biasLevel = getSourceValue();
+        setTerminator("HX");
         turnOff();
+        setSourceFunction(Source.VOLTAGE, Function.DC);
 
         // TODO: Add check for correct device (need to test with actual device to see query response)
 
@@ -73,23 +73,14 @@ public class K236 extends SMU {
 
         }
 
-        query(C_SET_BIAS, level, 0, 0);
+        write(C_SET_BIAS, level, 0, 0);
 
     }
 
     private double readValue(int channel) throws IOException {
 
         // TODO: Test that this works with the actual device in actual reality in the actual lab, actually.
-
-        String  response = query(C_GET_VALUE, channel, FORMAT_CLEAN, ONE_DC_DATA);
-        Matcher matcher  = responsePattern.matcher(response);
-
-        if (matcher.find()) {
-            return Double.parseDouble(matcher.group(1));
-        } else {
-            throw new IOException("Error reading response from K236!");
-        }
-
+        return queryDouble(C_GET_VALUE, channel, FORMAT_CLEAN, ONE_DC_DATA);
 
     }
 
@@ -103,7 +94,7 @@ public class K236 extends SMU {
 
     @Override
     public void useFourProbe(boolean fourProbes) throws DeviceException, IOException {
-        query(C_SET_SENSE, fourProbes ? SENSE_REMOTE : SENSE_LOCAL);
+        write(C_SET_SENSE, fourProbes ? SENSE_REMOTE : SENSE_LOCAL);
         remote = fourProbes;
     }
 
@@ -155,13 +146,13 @@ public class K236 extends SMU {
 
     @Override
     public void turnOn() throws IOException {
-        query(C_OPERATE, OPERATE_ON);
+        write(C_OPERATE, OPERATE_ON);
         on = true;
     }
 
     @Override
     public void turnOff() throws IOException {
-        query(C_OPERATE, OPERATE_OFF);
+        write(C_OPERATE, OPERATE_OFF);
         on = false;
     }
 
@@ -184,7 +175,7 @@ public class K236 extends SMU {
     }
 
     public void setSourceFunction(Source s, Function f) throws IOException {
-        query(C_SET_SRC_FUNC, s.toInt(), f.toInt());
+        write(C_SET_SRC_FUNC, s.toInt(), f.toInt());
         source = s;
         function = f;
     }
