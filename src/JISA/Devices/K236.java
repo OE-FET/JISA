@@ -77,6 +77,10 @@ public class K236 extends SMU {
 
     }
 
+    public String getIDN() throws IOException {
+        return query("U0");
+    }
+
     private double readValue(int channel) throws IOException {
 
         // TODO: Test that this works with the actual device in actual reality in the actual lab, actually.
