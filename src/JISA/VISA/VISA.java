@@ -151,6 +151,8 @@ public class VISA {
 
         }
 
+        lib.viClose(handle);
+
         return addresses.toArray(new StrAddress[0]);
 
     }
