@@ -3,13 +3,14 @@ package JISA.Devices;
 import JISA.Addresses.InstrumentAddress;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.ResultList;
+import JISA.GUI.Progress;
 import JISA.Util;
 import JISA.VISA.VISADevice;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 
 import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.Semaphore;
 
 public abstract class SMU extends VISADevice {
 
@@ -337,6 +338,54 @@ public abstract class SMU extends VISADevice {
         });
     }
 
+    private static class Updater implements Runnable {
+
+        private int                i    = 0;
+        private Semaphore          semaphore;
+        private ArrayList<IVPoint> points;
+        private ProgressMonitor    onUpdate;
+        private boolean            exit = false;
+
+        public Updater(ArrayList<IVPoint> p, ProgressMonitor o) {
+            semaphore = new Semaphore(0);
+            points = p;
+            onUpdate = o;
+        }
+
+        public void runUpdate() {
+            semaphore.release();
+        }
+
+        public void end() {
+            exit = true;
+            semaphore.release();
+        }
+
+        @Override
+        public void run() {
+
+            while (true) {
+                try {
+                    semaphore.acquire();
+                } catch (InterruptedException ignored) {
+                }
+
+                if (exit) {
+                    break;
+                }
+
+                try {
+                    onUpdate.update(i, points.get(i));
+                    i++;
+                } catch (Exception e) {
+                    Util.exceptionHandler(e);
+                }
+
+            }
+
+        }
+    }
+
     /**
      * Performs a sweep of either VOLTAGE or CURRENT using specific values, returning data as an array of IVPoint objects.
      *
@@ -344,7 +393,7 @@ public abstract class SMU extends VISADevice {
      * @param values    Array of values to use in the sweep
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @param onUpdate  Method to run each time a new measurement is completed
+     * @param onUpdate  Method to run each time a new measurement is completed (on separate thread)
      *
      * @return Array of IVPoint objects containing V-I data points
      *
@@ -352,6 +401,14 @@ public abstract class SMU extends VISADevice {
      * @throws IOException     Upon communications error
      */
     public IVPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+
+        final ArrayList<IVPoint> points  = new ArrayList<>();
+        IVPoint                  point   = null;
+        Updater                  updater = new Updater(points, onUpdate);
+
+
+        // Run updater on a new thread
+        (new Thread(updater)).start();
 
         if (symmetric) {
             values = Util.symArray(values);
@@ -361,11 +418,7 @@ public abstract class SMU extends VISADevice {
         setSource(source);
         setBias(values[0]);
 
-        int                i      = 0;
-        ArrayList<IVPoint> points = new ArrayList<>();
-
         turnOn();
-
         for (double b : values) {
 
             setBias(b);
@@ -375,10 +428,107 @@ public abstract class SMU extends VISADevice {
                 throw new DeviceException("Couldn't sleep!");
             }
 
-            IVPoint point = new IVPoint(getVoltage(), getCurrent());
-            onUpdate.update(i, point);
+            point = new IVPoint(getVoltage(), getCurrent());
             points.add(point);
-            i++;
+
+            updater.runUpdate();
+
+        }
+
+        // Unblock updater thread so that it will end
+        updater.end();
+
+        return points.toArray(new IVPoint[0]);
+
+    }
+
+    public IVPoint[] doPulsedSweep(Source source, double baseLevel, double[] values, long delay, long timeOn, long timeOff, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+
+        // The delay time must be smaller than the on and off time.
+        if (delay > timeOn || delay > timeOff) {
+            throw new DeviceException("Delay time cannot be larger than either time on or time off for a pulsed sweep.");
+        }
+
+        final ArrayList<IVPoint> points    = new ArrayList<>();
+        final Semaphore          semaphore = new Semaphore(0);
+        IVPoint                  point1    = null;
+        IVPoint                  point2    = null;
+        long                     lastTime  = 0;
+
+        Runnable updater = new Runnable() {
+            private int i = 0;
+
+            @Override
+            public void run() {
+
+                while (true) {
+                    try {
+                        semaphore.acquire();
+                    } catch (InterruptedException ignored) {
+                    }
+
+                    if (i >= points.size()) {
+                        break;
+                    }
+
+                    try {
+                        onUpdate.update(i, points.get(i));
+                        i++;
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+
+                }
+
+            }
+        };
+
+        // If they want to go forwards then backwards, generate the extra data-points
+        if (symmetric) {
+            values = Util.symArray(values);
+        }
+
+        // Make sure the SMU is not outputting anything right now, set the source mode and initial bias
+        turnOff();
+        setSource(source);
+        setBias(baseLevel);
+
+
+        // Begin!
+        turnOn();
+        for (double b : values) {
+
+            // Set output to the value of the current step and record the time
+            setBias(b);
+            lastTime = System.nanoTime();
+
+            // Wait the specified time before measuring
+            Util.sleep(delay);
+            point1 = new IVPoint(getVoltage(), getCurrent());
+
+            // Store measurement, trigger the onUpdate method
+            points.add(point1);
+            semaphore.release();
+
+            // Work out how much time has passed and how much longer we need to wait before switching off
+            lastTime = (System.nanoTime() - lastTime) / 1000;
+            Util.sleep(Math.max(0, timeOn - lastTime));
+
+            // Switch off by returning to base level, recording the current time
+            setBias(baseLevel);
+            lastTime = System.nanoTime();
+
+            // Wait the specified time before measuring
+            Util.sleep(delay);
+            point2 = new IVPoint(getVoltage(), getCurrent());
+
+            // Store measurement, trigger the onUpdate method
+            points.add(point2);
+            semaphore.release();
+
+            // Work out how much time has passed and how much longer we need to wait before switching on again
+            lastTime = System.nanoTime() - lastTime;
+            Util.sleep(Math.max(0, timeOn - lastTime));
 
         }
 

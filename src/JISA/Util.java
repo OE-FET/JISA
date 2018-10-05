@@ -8,6 +8,12 @@ import java.util.HashMap;
 
 public class Util {
 
+    public static void sleep(long msec) {
+        try {
+            Thread.sleep(msec);
+        } catch (Exception e) {}
+    }
+
     public static boolean isBetween(double value, double min, double max) {
         return value >= min && value <= max;
     }

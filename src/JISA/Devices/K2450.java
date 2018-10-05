@@ -10,8 +10,6 @@ import java.util.HashMap;
 
 public class K2450 extends SMU {
 
-    // TODO: 4PP - Remote Mode, 3PP/2PP - Local Mode
-
     private static final String C_MEASURE_VOLTAGE       = ":MEAS:VOLT?";
     private static final String C_MEASURE_CURRENT       = ":MEAS:CURR?";
     private static final String C_MEASURE_RESISTANCE    = ":MEAS:RES?";
@@ -21,7 +19,7 @@ public class K2450 extends SMU {
     private static final String C_QUERY_OUTPUT_STATE    = ":OUTP:STATE?";
     private static final String C_SET_SOURCE_VALUE      = ":SOUR:%s %f";
     private static final String C_SET_TERMINALS         = ":ROUT:TERM %s";
-    private static final String C_GET_TERMINALS         = ":ROUT:TERM?";
+    private static final String C_QUERY_TERMINALS       = ":ROUT:TERM?";
     private static final String C_SET_PROBE_MODE        = ":SENS:RSEN %s";
     private static final String C_QUERY_PROBE_MODE      = ":SENS:RSEN?";
     private static final String OUTPUT_ON               = "1";
@@ -132,7 +130,7 @@ public class K2450 extends SMU {
     }
 
     @Override
-    public double getSourceValue() throws DeviceException, IOException {
+    public double getSourceValue() throws IOException {
 
         switch (getSource()) {
 
@@ -151,7 +149,7 @@ public class K2450 extends SMU {
 
 
     @Override
-    public double getMeasureValue() throws DeviceException, IOException {
+    public double getMeasureValue() throws IOException {
         switch (getSource()) {
 
             case VOLTAGE:
@@ -168,12 +166,13 @@ public class K2450 extends SMU {
     }
 
     @Override
-    public int getNumTerminals() throws DeviceException, IOException {
+    public int getNumTerminals() {
         return 2;
     }
 
     public void setSourceValue(Source type, double value) throws IOException {
         write(C_SET_SOURCE_VALUE, type.getTag(), value);
+        setSource(type);
     }
 
     public void setTerminals(int terminalIndex) throws IOException, DeviceException {
@@ -186,7 +185,7 @@ public class K2450 extends SMU {
     }
 
     public int getTerminals() throws IOException {
-        return Terms.fromTag(query(C_GET_TERMINALS)).toInt();
+        return Terms.fromTag(query(C_QUERY_TERMINALS)).toInt();
     }
 
     public enum Source {

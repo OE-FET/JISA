@@ -10,5 +10,6 @@
     <orderEntry type="library" name="lib" level="project" />
     <orderEntry type="library" name="jna-3.0.9" level="project" />
     <orderEntry type="library" name="jna-3.0.9" level="project" />
+    <orderEntry type="library" name="jna" level="project" />
   </component>
 </module>

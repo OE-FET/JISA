@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 
 public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
@@ -521,6 +522,54 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         return doSweep(0, source, values, delay, symmetric, onUpdate);
     }
 
+    private static class Updater implements Runnable {
+
+        private int                  i    = 0;
+        private Semaphore            semaphore;
+        private ArrayList<MCIVPoint> points;
+        private MCUpdateHandler      onUpdate;
+        private boolean              exit = false;
+
+        public Updater(ArrayList<MCIVPoint> p, MCUpdateHandler o) {
+            semaphore = new Semaphore(0);
+            points = p;
+            onUpdate = o;
+        }
+
+        public void runUpdate() {
+            semaphore.release();
+        }
+
+        public void end() {
+            exit = true;
+            semaphore.release();
+        }
+
+        @Override
+        public void run() {
+
+            while (true) {
+                try {
+                    semaphore.acquire();
+                } catch (InterruptedException ignored) {
+                }
+
+                if (exit) {
+                    break;
+                }
+
+                try {
+                    onUpdate.onUpdate(i, points.get(i));
+                    i++;
+                } catch (Exception e) {
+                    Util.exceptionHandler(e);
+                }
+
+            }
+
+        }
+    }
+
     /**
      * Creates an MCSMU.Sweep object allowing the configuration and execution of a multi-channel sweep
      *
@@ -531,46 +580,44 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         Sweep sweep = new Sweep() {
 
             private ArrayList<MCIVPoint> results = new ArrayList<>();
+            private Updater updater;
 
             @Override
             public MCIVPoint[] run(MCUpdateHandler onUpdate) throws IOException, DeviceException {
                 results.clear();
-                step(0, onUpdate);
+                updater = new Updater(results, onUpdate);
+                (new Thread(updater)).start();
+                step(0);
+                updater.end();
                 return results.toArray(new MCIVPoint[0]);
             }
 
-            private void step(int step, MCUpdateHandler onUpdate) throws IOException, DeviceException {
+            private void step(int step) throws IOException, DeviceException {
+
+                if (step >= sweeps.size()) {
+
+                    MCIVPoint point = new MCIVPoint();
+                    for (int i = 0;  i < getNumChannels(); i ++) {
+                        point.addChannel(i, new IVPoint(getVoltage(i), getCurrent(i)));
+                    }
+
+                    results.add(point);
+                    updater.runUpdate();
+                    return;
+
+                }
 
                 Config conf = sweeps.get(step);
+                setSource(conf.channel, conf.source);
+                setBias(conf.channel, conf.values[0]);
+                turnOn(conf.channel);
 
-                if (step < sweeps.size() - 1) {
-                    doSweep(
-                            conf.channel,
-                            conf.source,
-                            conf.values,
-                            conf.delay,
-                            conf.symmetric,
-                            (n, p) -> {
-                                step(step + 1, onUpdate);
-                            }
-                    );
-                } else {
+                for (double val : conf.values) {
 
-                    doSweep(
-                            conf.channel,
-                            conf.source,
-                            conf.values,
-                            conf.delay,
-                            conf.symmetric,
-                            (n, p) -> {
-                                MCIVPoint pnt = new MCIVPoint();
-                                for (int i = 0; i < getNumChannels(); i++) {
-                                    pnt.addChannel(i, new IVPoint(getVoltage(i), getCurrent(i)));
-                                }
-                                results.add(pnt);
-                                onUpdate.onUpdate(results.size(), pnt);
-                            }
-                    );
+                    setBias(val);
+                    Util.sleep(conf.delay);
+                    step(step + 1);
+
                 }
 
             }
@@ -757,6 +804,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
     public interface MCUpdateHandler {
         public void onUpdate(int count, MCIVPoint point) throws IOException, DeviceException;
+
     }
 
     public Iterator<SMU> iterator() {

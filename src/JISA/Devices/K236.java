@@ -20,6 +20,9 @@ public class K236 extends SMU {
     private static final String   C_EXECUTE       = "X";
     private static final String   C_SET_SENSE     = "0%d";
     private static final String   C_OPERATE       = "N%d";
+    private static final String   C_NO_TERM       = "Y4";
+    private static final String   C_TRIGGER       = "H0";
+    private static final String   C_RESET         = "J0";
     private static final int      OPERATE_OFF     = 0;
     private static final int      OPERATE_ON      = 1;
     private static final int      OUTPUT_NOTHING  = 0;
@@ -42,15 +45,24 @@ public class K236 extends SMU {
     private              boolean  remote          = true;
     private static final Pattern  responsePattern = Pattern.compile("[A-Z]{4}[VI]([+-][0-9]+[.][0-9]+E[+-][0-9]+)");
 
-    public K236(InstrumentAddress address) throws IOException {
+    public K236(InstrumentAddress address) throws IOException, DeviceException {
 
         super(address);
-        setTerminator("HX");
+        setTerminator(C_EXECUTE);
+        write(C_RESET);
         turnOff();
         setSourceFunction(Source.VOLTAGE, Function.DC);
-        write("Y4");
+        write(C_NO_TERM);
 
-        // TODO: Add check for correct device (need to test with actual device to see query response)
+        try {
+
+            if (!getIDN().trim().substring(0, 3).equals("236")) {
+                throw new DeviceException("Device at address %s is not a Keithley 236!", address.getVISAAddress());
+            }
+
+        } catch (IOException e) {
+            throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
+        }
 
     }
 
@@ -79,13 +91,13 @@ public class K236 extends SMU {
     }
 
     public String getIDN() throws IOException {
-        return query("U0");
+        return query("U0" + C_TRIGGER);
     }
 
     private double readValue(int channel) throws IOException {
 
         // TODO: Test that this works with the actual device in actual reality in the actual lab, actually.
-        return queryDouble(C_GET_VALUE, channel, FORMAT_CLEAN, ONE_DC_DATA);
+        return queryDouble(C_GET_VALUE + C_TRIGGER, channel, FORMAT_CLEAN, ONE_DC_DATA);
 
     }
 
