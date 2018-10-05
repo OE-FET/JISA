@@ -1,6 +1,7 @@
 package JISA;
 
 import JISA.Addresses.GPIBAddress;
+import JISA.Addresses.StrAddress;
 import JISA.Devices.*;
 import JISA.Experiment.*;
 import JISA.GUI.*;
@@ -19,7 +20,9 @@ public class Main extends GUI {
 
     public static void run() throws Exception {
 
-        GUI.infoAlert("JISA", "JISA Library", "JISA - William Wood - 2018");
+        for (StrAddress a : VISA.getInstruments()) {
+            System.out.println(a.getVISAAddress());
+        }
 
     }
 

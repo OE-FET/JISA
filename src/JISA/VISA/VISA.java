@@ -37,31 +37,37 @@ public class VISA {
     static {
 
         try {
-            if (OS_NAME.contains("win")) {
-                libName = "nivisa64";
-                lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
-            } else if (OS_NAME.contains("linux")) {
-                libName = "visa";
-                lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
-            } else {
-                System.err.println("This system is not yet supported!");
+
+            try {
+                if (OS_NAME.contains("win")) {
+                    libName = "nivisa64";
+                    lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
+                } else if (OS_NAME.contains("linux")) {
+                    libName = "visa";
+                    lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
+                } else {
+                    System.err.println("This system is not yet supported!");
+                    System.exit(1);
+                }
+            } catch (UnsatisfiedLinkError e) {
+                lib = null;
+            }
+
+            if (lib == null) {
+                System.err.println("Could not open VISA libaray!");
                 System.exit(1);
             }
-        } catch (UnsatisfiedLinkError e) {
-            lib = null;
-        }
 
-        if (lib == null) {
-            System.err.println("Could not open VISA libaray!");
-            System.exit(1);
-        }
+            // Attempt to get a resource manager handle
+            try {
+                visaResourceManagerHandle = getResourceManager();
+            } catch (VISAException e) {
+                e.printStackTrace();
+                System.exit(1);
+            }
 
-        // Attempt to get a resource manager handle
-        try {
-            visaResourceManagerHandle = getResourceManager();
-        } catch (VISAException e) {
-            e.printStackTrace();
-            System.exit(1);
+        } catch (Exception | Error e) {
+            System.out.println(e.getMessage());
         }
 
     }
