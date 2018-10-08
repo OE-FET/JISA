@@ -34,8 +34,8 @@ public class GUI extends Application {
         alert(Alert.AlertType.WARNING, title, header, text);
     }
 
-    private static void alert(Alert.AlertType type, String title, String header, String text) {
-        Semaphore semaphore = new Semaphore(0);
+    private static void alert(final Alert.AlertType type, final String title, final String header, final String text) {
+        final Semaphore semaphore = new Semaphore(0);
         Platform.runLater(() -> {
             Alert alert = new Alert(type);
             alert.setTitle(title);
