@@ -450,38 +450,10 @@ public abstract class SMU extends VISADevice {
         }
 
         final ArrayList<IVPoint> points    = new ArrayList<>();
-        final Semaphore          semaphore = new Semaphore(0);
         IVPoint                  point1    = null;
         IVPoint                  point2    = null;
         long                     lastTime  = 0;
-
-        Runnable updater = new Runnable() {
-            private int i = 0;
-
-            @Override
-            public void run() {
-
-                while (true) {
-                    try {
-                        semaphore.acquire();
-                    } catch (InterruptedException ignored) {
-                    }
-
-                    if (i >= points.size()) {
-                        break;
-                    }
-
-                    try {
-                        onUpdate.update(i, points.get(i));
-                        i++;
-                    } catch (Exception e) {
-                        Util.exceptionHandler(e);
-                    }
-
-                }
-
-            }
-        };
+        Updater                  updater   = new Updater(points, onUpdate);
 
         // If they want to go forwards then backwards, generate the extra data-points
         if (symmetric) {
@@ -508,13 +480,13 @@ public abstract class SMU extends VISADevice {
 
             // Store measurement, trigger the onUpdate method
             points.add(point1);
-            semaphore.release();
+            updater.runUpdate();
 
             // Work out how much time has passed and how much longer we need to wait before switching off
             lastTime = (System.nanoTime() - lastTime) / 1000;
             Util.sleep(Math.max(0, timeOn - lastTime));
 
-            // Switch off by returning to base level, recording the current time
+            // "Switch off" by returning to base level, recording the current time
             setBias(baseLevel);
             lastTime = System.nanoTime();
 
@@ -524,13 +496,15 @@ public abstract class SMU extends VISADevice {
 
             // Store measurement, trigger the onUpdate method
             points.add(point2);
-            semaphore.release();
+            updater.runUpdate();
 
             // Work out how much time has passed and how much longer we need to wait before switching on again
             lastTime = System.nanoTime() - lastTime;
             Util.sleep(Math.max(0, timeOn - lastTime));
 
         }
+
+        updater.end();
 
         return points.toArray(new IVPoint[0]);
 
@@ -588,7 +562,7 @@ public abstract class SMU extends VISADevice {
      */
     public interface ProgressMonitor {
 
-        public void update(int i, IVPoint point) throws IOException, DeviceException;
+        void update(int i, IVPoint point) throws IOException, DeviceException;
 
     }
 
