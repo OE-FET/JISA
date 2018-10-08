@@ -59,9 +59,13 @@ public class ProgressWindow {
             timeline.getKeyFrames().add(keyFrame);
             timeline.play();
 
-            pctLabel.setText(
-                    String.format("%d%%", (int) Math.round(100 * (value/this.max)))
-            );
+            if (value == -1) {
+                pctLabel.setText("");
+            } else {
+                pctLabel.setText(
+                        String.format("%d%%", (int) Math.round(100 * (value/this.max)))
+                );
+            }
 
         });
     }

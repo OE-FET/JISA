@@ -24,9 +24,14 @@ public class Main extends GUI {
 
         Progress prog = new Progress("JISA Library");
         prog.setStatus("Searching for devices...");
-        prog.setProgress(-1,1);
+        prog.setProgress(-1, 1);
 
-        GUI.infoAlert("JISA", "JISA Library", "JISA - William Wood - 2018\nPress okay to perform test.");
+        boolean result = GUI.confirmWindow("JISA", "JISA Library", "JISA - William Wood - 2018\n\nPerform VISA test?");
+
+        if (!result) {
+            System.exit(0);
+        }
+
         prog.show();
 
         StringWriter writer = new StringWriter();
@@ -56,7 +61,7 @@ public class Main extends GUI {
         try {
             run();
         } catch (Exception e) {
-            Util.exceptionHandler(e);
+            GUI.errorAlert("JISA Library", "Exception Encountered", e.getMessage());
         }
 
     }
