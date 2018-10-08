@@ -62,6 +62,7 @@ public class Main extends GUI {
             run();
         } catch (Exception e) {
             GUI.errorAlert("JISA Library", "Exception Encountered", e.getMessage());
+            System.exit(1);
         }
 
     }
