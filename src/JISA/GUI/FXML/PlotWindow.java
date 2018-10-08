@@ -22,10 +22,15 @@ public class PlotWindow {
 
     public  BorderPane                                pane;
     private Stage                                     stage;
-    private ArrayList<XYChart.Series<Double, Double>> data = new ArrayList<>();
+    private ArrayList<XYChart.Series<Double, Double>> data   = new ArrayList<>();
     public  LineChart                                 chart;
     public  NumberAxis                                xAxis;
     public  NumberAxis                                yAxis;
+    private double                                    xRange = 0;
+    private double                                    maxX   = Double.NEGATIVE_INFINITY;
+    private double                                    minX   = Double.POSITIVE_INFINITY;
+    private double                                    maxY   = Double.NEGATIVE_INFINITY;
+    private double                                    minY   = Double.POSITIVE_INFINITY;
 
     public static PlotWindow create(String title, String xAxis, String yAxis) {
 
@@ -43,6 +48,8 @@ public class PlotWindow {
                 controller.yAxis.setLabel(yAxis);
                 controller.chart.setTitle(title);
                 controller.stage = stage;
+                controller.xAxis.setForceZeroInRange(false);
+                controller.yAxis.setForceZeroInRange(false);
             });
             return controller;
         } catch (IOException e) {
@@ -64,6 +71,36 @@ public class PlotWindow {
 
     public static PlotWindow create(String title, ResultList list) {
         return create(title, list, 0, 1);
+    }
+
+    public void setXLimit(final double min, final double max) {
+        xAxis.setAutoRanging(false);
+        xAxis.setForceZeroInRange(false);
+        xAxis.setLowerBound(min);
+        xAxis.setUpperBound(max);
+    }
+
+    public void setYLimit(final double min, final double max) {
+        yAxis.setAutoRanging(false);
+        yAxis.setForceZeroInRange(false);
+        yAxis.setLowerBound(min);
+        yAxis.setUpperBound(max);
+    }
+
+    public void autoXLimit() {
+        Platform.runLater(() -> {
+            xAxis.setAutoRanging(true);
+        });
+    }
+
+    public void autoYLimit() {
+        Platform.runLater(() -> {
+            yAxis.setAutoRanging(true);
+        });
+    }
+
+    public void autoFollow(double xRange) {
+        this.xRange = xRange;
     }
 
     public void watchList(final ResultList list, final int xData, final int yData, String seriesName, Color colour) {
@@ -111,28 +148,42 @@ public class PlotWindow {
             data.get(series).getData().add(
                     new XYChart.Data<>(x, y)
             );
+
+            maxX = Math.max(maxX, x);
+            maxY = Math.max(maxY, y);
+            minX = Math.min(minX, x);
+            minY = Math.min(minY, y);
+
+            if (xRange > 0) {
+                setXLimit(maxX - xRange, maxX);
+                autoXLimit();
+            } else {
+                setXLimit(minX, maxX);
+                setYLimit(minY, maxY);
+            }
+
         });
 
     }
 
     public void show() {
         Platform.runLater(() -> {
-                              stage.show();
-                          }
+                    stage.show();
+                }
         );
     }
 
     public void hide() {
         Platform.runLater(() -> {
-                              stage.hide();
-                          }
+                    stage.hide();
+                }
         );
     }
 
     public void close() {
         Platform.runLater(() -> {
-                              stage.close();
-                          }
+                    stage.close();
+                }
         );
     }
 

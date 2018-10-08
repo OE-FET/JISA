@@ -62,4 +62,24 @@ public class Plot implements Gridable {
         window.watchList(list, xData, yData, seriesName, colour);
     }
 
+    public void setXLimit(double min, double max) {
+        window.setXLimit(min, max);
+    }
+    
+    public void autoXLimit() {
+        window.autoXLimit();
+    }
+
+    public void setYLimit(double min, double max) {
+        window.setYLimit(min, max);
+    }
+
+    public void autoYLimit() {
+        window.autoYLimit();
+    }
+
+    public void autoFollow(double xRange) {
+        window.autoFollow(xRange);
+    }
+
 }
