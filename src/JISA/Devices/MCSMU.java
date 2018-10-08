@@ -597,7 +597,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
                 if (step >= sweeps.size()) {
 
                     MCIVPoint point = new MCIVPoint();
-                    for (int i = 0;  i < getNumChannels(); i ++) {
+                    for (int i = 0; i < getNumChannels(); i++) {
                         point.addChannel(i, new IVPoint(getVoltage(i), getCurrent(i)));
                     }
 
@@ -633,13 +633,58 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         Sweep sweep = new Sweep() {
 
             private ArrayList<MCIVPoint> results = new ArrayList<>();
+            private Updater updater;
 
             @Override
             public MCIVPoint[] run(MCUpdateHandler onUpdate) throws IOException, DeviceException {
                 results.clear();
-                return results.toArray(new MCIVPoint[0]);
-            }
 
+                if (sweeps.size() == 0) {
+                    throw new DeviceException("No sweeps have been configured!");
+                }
+
+                int size = sweeps.get(0).values.length;
+
+                if (size == 0) {
+                    throw new DeviceException("Empty sweep!");
+                }
+
+                for (Config conf : sweeps) {
+
+                    if (conf.values.length != size) {
+                        throw new DeviceException("Each sweep must be of the same length!");
+                    }
+
+                    setSource(conf.channel, conf.source);
+                    setBias(conf.channel, conf.values[0]);
+                    turnOn(conf.channel);
+
+                }
+
+                updater = new Updater(results, onUpdate);
+                (new Thread(updater)).start();
+
+                MCIVPoint point;
+                for (int i = 0; i < size; i++) {
+
+                    for (Config conf : sweeps) {
+                        setBias(conf.channel, conf.values[i]);
+                        Util.sleep(conf.delay);
+                    }
+
+                    point = new MCIVPoint();
+                    for (int j = 0; j < getNumChannels(); j++) {
+                        point.addChannel(j, new IVPoint(getVoltage(j), getCurrent(j)));
+                    }
+                    results.add(point);
+                    updater.runUpdate();
+
+                }
+
+                updater.end();
+                return results.toArray(new MCIVPoint[0]);
+
+            }
 
         };
 

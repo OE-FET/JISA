@@ -40,7 +40,7 @@ public class Main extends GUI {
             writer.append(a.getVISAAddress());
             VISADevice dev = new VISADevice(a);
             dev.setTimeout(500);
-            writer.append(" - ");
+            writer.append(" \t ");
             try {
                 writer.append(dev.getIDN().replace("\n", "").replace("\r", ""));
             } catch (Exception e) {
