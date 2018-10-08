@@ -110,7 +110,7 @@ public class BrowseVISA {
         try {
             VISADevice device = new VISADevice(address);
             device.setTimeout(100);
-            i = device.getIDN();
+            i = device.getIDN().trim().replace("\n", "").replace("\r", "");
         } catch (Exception e) {
             i = "Unknown Instrument";
         }
