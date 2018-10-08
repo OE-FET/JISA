@@ -1,5 +1,7 @@
 package JISA.GUI;
 
+import JISA.Addresses.InstrumentAddress;
+import JISA.GUI.FXML.BrowseVISA;
 import JISA.Util;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -111,6 +113,32 @@ public class GUI extends Application {
         });
 
         return controller;
+
+    }
+
+    public static InstrumentAddress browseVISA() {
+
+        AtomicReference<InstrumentAddress> ref       = new AtomicReference<>();
+        BrowseVISA                         browse    = BrowseVISA.create("Find Instrument");
+        Semaphore                          semaphore = new Semaphore(0);
+
+        if (browse == null) {
+            return null;
+        }
+
+        Platform.runLater(() -> {
+            browse.search((a) -> {
+                ref.set(a);
+                semaphore.release();
+            });
+        });
+
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException ignored) {
+        }
+
+        return ref.get();
 
     }
 
