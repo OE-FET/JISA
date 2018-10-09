@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.TilePane?>
 
 <?import javafx.scene.layout.GridPane?>
-<BorderPane fx:id="border" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="JISA.GUI.FXML.GridWindow">
+<BorderPane fx:id="border" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
 
     <center>
         <GridPane fx:id="pane" hgap="15.0" vgap="15.0">

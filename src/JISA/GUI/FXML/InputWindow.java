@@ -33,7 +33,7 @@ public class InputWindow {
     public static InputWindow create(String title, boolean closeOnAccept, InputHandler onAccept) {
 
         try {
-            FXMLLoader  loader     = new FXMLLoader(TableWindow.class.getResource("InputWindow.fxml"));
+            FXMLLoader  loader     = new FXMLLoader(InputWindow.class.getResource("InputWindow.fxml"));
             Parent      root       = loader.load();
             Scene       scene      = new Scene(root);
             InputWindow controller = (InputWindow) loader.getController();

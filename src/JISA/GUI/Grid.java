@@ -1,32 +1,104 @@
 package JISA.GUI;
 
 import JISA.GUI.FXML.GridWindow;
+import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ToolBar;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.stage.Stage;
+
+import java.io.IOException;
+import java.util.concurrent.Semaphore;
 
 public class Grid implements Gridable {
 
-    private GridWindow window;
-    private String     title;
+    public  GridPane   pane;
+    public  BorderPane border;
+    private ToolBar    toolBar = null;
+    private Stage      stage;
+    private int        nCols   = 3;
+    private int        r       = 0;
+    private int        c       = 0;
 
-    public Grid(String title, Gridable... items) {
-        window = GridWindow.create(title);
-        for (Gridable item : items) {
-            add(item);
+    public Grid(String title) {
+
+        try {
+
+            FXMLLoader loader = new FXMLLoader(this.getClass().getResource("FXML/GridWindow.fxml"));
+            loader.setController(this);
+            Parent root  = loader.load();
+            Scene  scene = new Scene(root);
+
+            Semaphore semaphore = new Semaphore(0);
+
+            Platform.runLater(() -> {
+                Stage stage = new Stage();
+                stage.setTitle(title);
+                stage.setScene(scene);
+                this.stage = stage;
+                semaphore.release();
+            });
+
+            semaphore.acquire();
+
+        } catch (Exception e) {
+
         }
-        this.title = title;
+
+    }
+
+    public Grid(String title, Gridable... panels) {
+        this(title);
+        for (Gridable g : panels) {
+            add(g);
+        }
+    }
+
+    public void addToolbarButton(String text, ClickHandler onClick) {
+
+        Platform.runLater(() -> {
+            if (toolBar == null) {
+                toolBar = new ToolBar();
+                border.setTop(toolBar);
+            }
+
+            Button button = new Button();
+            button.setText(text);
+            button.setOnAction(
+                    (actionEvent) -> {
+                        Thread t = new Thread(() -> {
+                            try {
+                                onClick.click();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                        t.setDaemon(true);
+                        t.start();
+                    }
+            );
+
+            toolBar.getItems().add(button);
+        });
+
     }
 
     public void add(Gridable toAdd) {
 
-        BorderPane pane      = new BorderPane();
+        BorderPane bPane     = new BorderPane();
         StackPane  stack     = new StackPane();
         StackPane  container = new StackPane();
         Label      t         = new Label();
@@ -34,43 +106,56 @@ public class Grid implements Gridable {
         stack.setPadding(new Insets(10, 10, 10, 10));
         stack.setAlignment(Pos.CENTER_LEFT);
         stack.setStyle("-fx-background-color: #4c4c4c; -fx-background-radius: 5px 5px 0 0;");
-        pane.setStyle("-fx-background-color: white; -fx-background-radius: 5px;");
-        pane.setEffect(new DropShadow(10, new Color(0, 0, 0, 0.25)));
+        bPane.setStyle("-fx-background-color: white; -fx-background-radius: 5px;");
+        bPane.setEffect(new DropShadow(10, new Color(0, 0, 0, 0.25)));
         t.setFont(new Font("System Bold", 14));
         t.setTextFill(Color.WHITE);
         t.setText(toAdd.getTitle());
         stack.getChildren().add(t);
         container.setPadding(new Insets(15, 15, 15, 15));
         container.getChildren().add(toAdd.getPane());
-        pane.setTop(stack);
-        pane.setCenter(container);
+        bPane.setTop(stack);
+        bPane.setCenter(container);
 
-        window.addPane(pane);
+        addPane(bPane);
     }
 
-    public void addToolbarButton(String text, ClickHandler onClick) {
-        window.addToolbarButton(text, onClick);
+    public void addPane(Node toAdd) {
+
+        pane.add(toAdd, c, r);
+
+        c++;
+        if (c >= nCols) {
+            c = 0;
+            r++;
+        }
+
     }
 
     public void show() {
-        window.show();
+        Platform.runLater(() -> {
+            stage.show();
+        });
     }
 
     public void hide() {
-        window.hide();
+        Platform.runLater(() -> {
+            stage.hide();
+        });
     }
 
     public void close() {
-        window.close();
+        Platform.runLater(() -> {
+            stage.close();
+        });
     }
 
-    @Override
     public Pane getPane() {
-        return window.getPane();
+        return border;
     }
 
     @Override
     public String getTitle() {
-        return title;
+        return stage.getTitle();
     }
 }

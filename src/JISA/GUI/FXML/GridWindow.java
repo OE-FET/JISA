@@ -27,7 +27,7 @@ public class GridWindow {
     public static GridWindow create(String title) {
 
         try {
-            FXMLLoader loader     = new FXMLLoader(TableWindow.class.getResource("GridWindow.fxml"));
+            FXMLLoader loader     = new FXMLLoader(GridWindow.class.getResource("GridWindow.fxml"));
             Parent     root       = loader.load();
             Scene      scene      = new Scene(root);
             GridWindow controller = (GridWindow) loader.getController();

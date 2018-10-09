@@ -35,7 +35,7 @@ public class BrowseVISA {
     public static BrowseVISA create(String title) {
 
         try {
-            FXMLLoader loader     = new FXMLLoader(TableWindow.class.getResource("browseVISA.fxml"));
+            FXMLLoader loader     = new FXMLLoader(BrowseVISA.class.getResource("browseVISA.fxml"));
             Parent     root       = loader.load();
             Scene      scene      = new Scene(root);
             BrowseVISA controller = (BrowseVISA) loader.getController();
