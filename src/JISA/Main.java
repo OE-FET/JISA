@@ -18,9 +18,11 @@ import java.io.StringWriter;
 import java.util.Random;
 import java.util.Scanner;
 
-public class Main extends GUI {
+public class Main {
 
     public static void run() throws Exception {
+
+        GUI.startGUI();
 
         Progress prog = new Progress("JISA Library");
         prog.setStatus("Searching for devices...");

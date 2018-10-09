@@ -21,8 +21,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class GUI extends Application {
 
-    private static boolean done = false;
-    private static File    file;
+    private static boolean   done = false;
+    private static File      file;
+    private static Semaphore s;
 
     public static void errorAlert(String title, String header, String text) {
         alert(Alert.AlertType.ERROR, title, header, text);
@@ -144,6 +145,33 @@ public class GUI extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+
+    }
+
+    public static class App extends Application {
+
+        @Override
+        public void start(Stage primaryStage) throws Exception {
+            s.release();
+        }
+
+    }
+
+
+    public static void startGUI() {
+
+        s = new Semaphore(0);
+
+        Thread t = new Thread(() -> {
+            Application.launch(App.class);
+        });
+
+        t.start();
+        try {
+            s.acquire();
+        } catch (InterruptedException ignored) {
+
+        }
 
     }
 
