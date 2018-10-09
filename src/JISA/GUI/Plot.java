@@ -2,6 +2,8 @@ package JISA.GUI;
 
 import JISA.Experiment.Result;
 import JISA.Experiment.ResultList;
+import JISA.GUI.FXML.PlotWindow;
+import JISA.GUI.FXML.TableWindow;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -14,6 +16,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
 
@@ -31,50 +34,46 @@ public class Plot implements Gridable {
     private double                                    maxY   = Double.NEGATIVE_INFINITY;
     private double                                    minY   = Double.POSITIVE_INFINITY;
 
-    public Plot(String title, String xlabel, String ylabel) {
+    public Plot(String title, String xLabel, String yLabel) {
 
         try {
 
-            FXMLLoader loader = new FXMLLoader(Plot.class.getResource("FXML/PlotWindow.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("FXML/PlotWindow.fxml"));
             loader.setController(this);
-            Parent root  = loader.load();
-            Scene  scene = new Scene(root);
-
-            Semaphore semaphore = new Semaphore(0);
-
+            Parent    root  = loader.load();
+            Scene     scene = new Scene(root);
+            Semaphore s     = new Semaphore(0);
             Platform.runLater(() -> {
                 Stage stage = new Stage();
                 stage.setTitle(title);
                 stage.setScene(scene);
-                chart.setStyle("-fx-background-color: white;");
-                xAxis.setLabel(xlabel);
-                yAxis.setLabel(ylabel);
-                chart.setTitle(title);
                 this.stage = stage;
+                chart.setStyle("-fx-background-color: white;");
+                xAxis.setLabel(xLabel);
+                yAxis.setLabel(yLabel);
+                chart.setTitle(title);
                 xAxis.setForceZeroInRange(false);
                 yAxis.setForceZeroInRange(false);
-                semaphore.release();
+                s.release();
             });
-
-            semaphore.acquire();
-
+            s.acquire();
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
 
     }
 
-    public Plot(String title, ResultList list) {
-        this(title, list, 0, 1);
+    public Plot(String title, ResultList list, int xData, int yData, String seriesName, Color colour) {
+        this(title, list.getTitle(xData), list.getTitle(yData));
+        watchList(list, xData, yData, seriesName, colour);
     }
 
     public Plot(String title, ResultList list, int xData, int yData) {
         this(title, list, xData, yData, "Data", Color.RED);
     }
 
-    public Plot(String title, ResultList list, int xData, int yData, String seriesName, Color colour) {
-        this(title, list.getTitle(xData), list.getTitle(yData));
-        watchList(list, xData, yData, seriesName, colour);
+    public Plot(String title, ResultList list) {
+        this(title, list, 0 ,1);
     }
 
     public void setXLimit(final double min, final double max) {
@@ -162,8 +161,8 @@ public class Plot implements Gridable {
                 setXLimit(maxX - xRange, maxX);
                 autoXLimit();
             } else {
-                setXLimit(minX, maxX);
-                setYLimit(minY, maxY);
+                xAxis.setAutoRanging(true);
+                yAxis.setAutoRanging(true);
             }
 
         });
@@ -172,22 +171,22 @@ public class Plot implements Gridable {
 
     public void show() {
         Platform.runLater(() -> {
-                              stage.show();
-                          }
+                    stage.show();
+                }
         );
     }
 
     public void hide() {
         Platform.runLater(() -> {
-                              stage.hide();
-                          }
+                    stage.hide();
+                }
         );
     }
 
     public void close() {
         Platform.runLater(() -> {
-                              stage.close();
-                          }
+                    stage.close();
+                }
         );
     }
 
@@ -197,7 +196,7 @@ public class Plot implements Gridable {
 
     @Override
     public String getTitle() {
-        return chart.getTitle();
+        return stage.getTitle();
     }
 
 }
