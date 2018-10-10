@@ -44,7 +44,8 @@ public class VISADevice {
 
     }
 
-    public VISADevice() {}
+    public VISADevice() {
+    }
 
     /**
      * What default number of bytes should we expect to get when reading from the device?
@@ -164,10 +165,31 @@ public class VISADevice {
      * @throws IOException Upon communications error
      */
     public synchronized String read() throws IOException {
-        try {
-            lastRead = VISA.read(device, readBufferSize);
-        } catch (VISAException e) {
-            throw new IOException(e.getMessage());
+        return read(3);
+    }
+
+    /**
+     * Read a string from the device
+     *
+     * @return The string returned by the device
+     *
+     * @throws IOException Upon communications error
+     */
+    public synchronized String read(int attempts) throws IOException {
+
+        int count = 0;
+
+        // Try n times
+        while (true) {
+            try {
+                lastRead = VISA.read(device, readBufferSize);
+                break;
+            } catch (VISAException e) {
+                count++;
+                if (count >= attempts) {
+                    throw new IOException(e.getMessage());
+                }
+            }
         }
         return lastRead;
     }

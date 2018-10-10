@@ -15,30 +15,45 @@ public class Main {
         Progress prog = new Progress("JISA Library");
 
         try {
+
+            // Prepare the progress window
             prog.setStatus("Searching for devices...");
             prog.setProgress(-1, 1);
 
+            // Ask the user if they want to perform a test
             boolean result = GUI.confirmWindow("JISA", "JISA Library", "JISA - William Wood - 2018\n\nPerform VISA test?");
 
+            // If they press "Cancel", then exit.
             if (!result) {
                 System.exit(0);
             }
 
+            // Show the progress window whilst searching
             prog.show();
 
             StringWriter writer = new StringWriter();
+
+            // Search for devices
             for (StrAddress a : VISA.getInstruments()) {
+
                 writer.append("* ");
                 writer.append(a.getVISAAddress());
+
                 VISADevice dev = new VISADevice(a);
                 dev.setTimeout(500);
+
                 writer.append(" \t ");
+
+                // Try to get the instrument to identify itself
                 try {
-                    writer.append(dev.getIDN().replace("\n", "").replace("\r", ""));
+                    dev.write("*IDN?");
+                    writer.append(dev.read(1).replace("\n", "").replace("\r", ""));
                 } catch (Exception e) {
                     writer.append("Unknown Instrument");
                 }
+
                 writer.append("\n\n");
+
             }
 
 
