@@ -2,15 +2,7 @@ package JISA.GUI;
 
 import JISA.GUI.FXML.InputWindow;
 import JISA.GUI.Gridable;
-import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-
-import java.io.File;
 
 public class Input implements Gridable {
 

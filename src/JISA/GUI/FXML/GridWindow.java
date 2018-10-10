@@ -1,7 +1,6 @@
 package JISA.GUI.FXML;
 
 import JISA.GUI.ClickHandler;
-import JISA.GUI.Gridable;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;

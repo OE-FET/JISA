@@ -1,12 +1,9 @@
 package JISA.VISA;
 
-import JISA.Addresses.InstrumentAddress;
 import JISA.Addresses.StrAddress;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
-import com.sun.jna.Pointer;
 import com.sun.jna.ptr.NativeLongByReference;
-import com.sun.jna.ptr.PointerByReference;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;

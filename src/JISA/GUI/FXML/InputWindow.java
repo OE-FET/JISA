@@ -1,7 +1,5 @@
 package JISA.GUI.FXML;
 
-import JISA.GUI.ClickHandler;
-import JISA.GUI.Gridable;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
@@ -15,7 +13,6 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class InputWindow {

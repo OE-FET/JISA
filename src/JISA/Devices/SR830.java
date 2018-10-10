@@ -1,9 +1,7 @@
 package JISA.Devices;
 
-import JISA.*;
 import JISA.Addresses.InstrumentAddress;
 import JISA.Control.*;
-import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 import java.util.HashMap;

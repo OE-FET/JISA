@@ -1,8 +1,5 @@
 package JISA.Devices;
 
-import JISA.Devices.K2200;
-import JISA.Devices.SR830;
-
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;

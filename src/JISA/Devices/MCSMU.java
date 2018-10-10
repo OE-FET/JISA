@@ -8,9 +8,7 @@ import JISA.Util;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 public abstract class MCSMU extends SMU implements Iterable<SMU> {

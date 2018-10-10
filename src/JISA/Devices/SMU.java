@@ -3,11 +3,9 @@ package JISA.Devices;
 import JISA.Addresses.InstrumentAddress;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.ResultList;
-import JISA.GUI.Progress;
 import JISA.Util;
 import JISA.VISA.VISADevice;
 
-import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Semaphore;

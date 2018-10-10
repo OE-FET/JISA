@@ -2,12 +2,9 @@ package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
 import JISA.Util;
-import JISA.VISA.VISADevice;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class K236 extends SMU {

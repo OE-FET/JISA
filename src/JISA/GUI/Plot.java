@@ -2,8 +2,6 @@ package JISA.GUI;
 
 import JISA.Experiment.Result;
 import JISA.Experiment.ResultList;
-import JISA.GUI.FXML.PlotWindow;
-import JISA.GUI.FXML.TableWindow;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -16,7 +14,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
 

@@ -1,6 +1,5 @@
 package JISA.GUI;
 
-import JISA.GUI.FXML.GridWindow;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -20,7 +19,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
-import java.io.IOException;
 import java.util.concurrent.Semaphore;
 
 public class Grid implements Gridable {

@@ -1,11 +1,8 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
-import JISA.VISA.VISADevice;
 
-import javax.xml.crypto.Data;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 
 public class K2450 extends SMU {

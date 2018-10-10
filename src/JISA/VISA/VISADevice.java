@@ -1,7 +1,6 @@
 package JISA.VISA;
 
 import JISA.Addresses.InstrumentAddress;
-import JISA.Addresses.StrAddress;
 
 import java.io.IOException;
 
