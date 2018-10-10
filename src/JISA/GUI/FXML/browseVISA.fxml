@@ -27,14 +27,13 @@
         </Label>
     </top>
     <center>
-        <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent;" BorderPane.alignment="CENTER">
-            <content>
-                <VBox fx:id="list" prefHeight="800.0" prefWidth="500.0" spacing="15.0">
-                    <padding>
-                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
-                    </padding>
-                </VBox>
-            </content>
+        <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent;"
+                    BorderPane.alignment="CENTER">
+            <VBox fx:id="list" prefHeight="800.0" prefWidth="500.0" spacing="15.0">
+                <padding>
+                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>
+                </padding>
+            </VBox>
         </ScrollPane>
     </center>
 </BorderPane>

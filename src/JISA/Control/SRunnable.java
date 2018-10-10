@@ -2,6 +2,6 @@ package JISA.Control;
 
 public interface SRunnable {
 
-    public void run() throws Exception;
+    void run() throws Exception;
 
 }

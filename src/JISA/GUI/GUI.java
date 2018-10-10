@@ -127,12 +127,10 @@ public class GUI extends Application {
             return null;
         }
 
-        Platform.runLater(() -> {
-            browse.search((a) -> {
-                ref.set(a);
-                semaphore.release();
-            });
-        });
+        Platform.runLater(() -> browse.search((a) -> {
+            ref.set(a);
+            semaphore.release();
+        }));
 
         try {
             semaphore.acquire();
@@ -162,9 +160,7 @@ public class GUI extends Application {
 
         s = new Semaphore(0);
 
-        Thread t = new Thread(() -> {
-            Application.launch(App.class);
-        });
+        Thread t = new Thread(() -> Application.launch(App.class));
 
         t.start();
         try {

@@ -80,27 +80,19 @@ public class Progress implements Gridable {
     }
 
     public void setTitle(String text) {
-        Platform.runLater(() -> {
-            titleText.setText(text);
-        });
+        Platform.runLater(() -> titleText.setText(text));
     }
 
     public void setStatus(String text) {
-        Platform.runLater(() -> {
-            statusText.setText(text);
-        });
+        Platform.runLater(() -> statusText.setText(text));
     }
 
     public void show() {
-        Platform.runLater(() -> {
-            stage.show();
-        });
+        Platform.runLater(() -> stage.show());
     }
 
     public void hide() {
-        Platform.runLater(() -> {
-            stage.hide();
-        });
+        Platform.runLater(() -> stage.hide());
     }
 
     public void close() {

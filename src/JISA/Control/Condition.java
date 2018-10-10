@@ -2,6 +2,6 @@ package JISA.Control;
 
 public interface Condition {
 
-    public boolean isMet() throws Exception;
+    boolean isMet() throws Exception;
 
 }

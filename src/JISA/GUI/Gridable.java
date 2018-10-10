@@ -4,8 +4,8 @@ import javafx.scene.layout.Pane;
 
 public interface Gridable {
 
-    public Pane getPane();
+    Pane getPane();
 
-    public String getTitle();
+    String getTitle();
 
 }

@@ -71,9 +71,7 @@ public class Util {
 
         double[] results = new double[2 * array.length - 1];
 
-        for (int i = 0; i < array.length; i++) {
-            results[i] = array[i];
-        }
+        System.arraycopy(array, 0, results, 0, array.length);
 
         for (int i = 0; i < array.length - 1; i++) {
 

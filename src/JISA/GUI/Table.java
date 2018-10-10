@@ -58,9 +58,7 @@ public class Table implements Gridable {
 
     public void watchList(ResultList list) {
 
-        list.setOnUpdate(() -> {
-            update(list);
-        });
+        list.setOnUpdate(() -> update(list));
 
         setUp(list);
 
@@ -101,23 +99,17 @@ public class Table implements Gridable {
     }
 
     public void show() {
-        Platform.runLater(() -> {
-                              stage.show();
-                          }
+        Platform.runLater(() -> stage.show()
         );
     }
 
     public void hide() {
-        Platform.runLater(() -> {
-                              stage.hide();
-                          }
+        Platform.runLater(() -> stage.hide()
         );
     }
 
     public void close() {
-        Platform.runLater(() -> {
-                              stage.close();
-                          }
+        Platform.runLater(() -> stage.close()
         );
     }
 

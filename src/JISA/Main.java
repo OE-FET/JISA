@@ -4,6 +4,7 @@ import JISA.Addresses.StrAddress;
 import JISA.GUI.*;
 import JISA.VISA.VISA;
 import JISA.VISA.VISADevice;
+import javafx.application.Platform;
 
 import java.io.StringWriter;
 
@@ -25,6 +26,7 @@ public class Main {
 
             // If they press "Cancel", then exit.
             if (!result) {
+                Platform.exit();
                 System.exit(0);
             }
 
@@ -64,7 +66,8 @@ public class Main {
         } catch (Exception e) {
             prog.close();
             GUI.errorAlert("JISA Library", "Exception Encountered", e.getMessage());
-            System.exit(1);
+            Platform.exit();
+            System.exit(0);
         }
 
     }

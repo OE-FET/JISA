@@ -42,9 +42,7 @@ public class BrowseVISA {
             Semaphore  s          = new Semaphore(0);
             Platform.runLater(() -> {
                 Stage stage = new Stage();
-                stage.setOnCloseRequest((ae) -> {
-                    controller.cancel();
-                });
+                stage.setOnCloseRequest((ae) -> controller.cancel());
                 controller.stage = stage;
                 stage.setTitle(title);
                 stage.setScene(scene);
@@ -61,7 +59,7 @@ public class BrowseVISA {
 
     public interface AddrHandler {
 
-        public void onOkay(StrAddress address);
+        void onOkay(StrAddress address);
 
     }
 
@@ -95,9 +93,7 @@ public class BrowseVISA {
                 e.printStackTrace();
             }
             final int c = count;
-            Platform.runLater(() -> {
-                searching.setText(String.format("Done, found %d instruments.", c));
-            });
+            Platform.runLater(() -> searching.setText(String.format("Done, found %d instruments.", c)));
         });
 
         t.start();

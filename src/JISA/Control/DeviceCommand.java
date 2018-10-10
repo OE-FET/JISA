@@ -56,13 +56,7 @@ public abstract class DeviceCommand {
         try {
             DeviceCommand clone = this.getClass().getConstructor(String.class, String.class, DeviceArgument[].class).newInstance(name, description, args);
             return clone;
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
+        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
             e.printStackTrace();
         }
 

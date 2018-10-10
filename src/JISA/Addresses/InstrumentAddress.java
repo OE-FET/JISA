@@ -2,9 +2,9 @@ package JISA.Addresses;
 
 public interface InstrumentAddress {
 
-    public String getVISAAddress();
+    String getVISAAddress();
 
-    public enum Type {
+    enum Type {
         GPIB,
         USB,
         TCPIP,

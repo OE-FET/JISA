@@ -10,28 +10,24 @@
 
 <BorderPane fx:id="pane" prefHeight="200.0" prefWidth="451.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
    <center>
-      <VBox alignment="CENTER" prefHeight="82.0" prefWidth="451.0" spacing="15.0" BorderPane.alignment="CENTER">
-         <children>
-            <Label fx:id="titleText" VBox.vgrow="ALWAYS">
-               <font>
-                  <Font size="18.0" />
-               </font>
-            </Label>
-            <HBox alignment="CENTER" spacing="15.0" VBox.vgrow="NEVER">
-               <children>
-                  <ProgressBar fx:id="progressBar" maxWidth="1.7976931348623157E308" progress="0.0" HBox.hgrow="ALWAYS">
-                     <padding>
-                        <Insets left="65.0" />
-                     </padding>
-                  </ProgressBar>
-                  <Label fx:id="pctLabel" minWidth="50.0" text="0%" HBox.hgrow="NEVER" />
-               </children>
-            </HBox>
-            <Label fx:id="statusText"/>
-         </children>
-         <padding>
-            <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
-         </padding>
-      </VBox>
+       <VBox alignment="CENTER" prefHeight="82.0" prefWidth="451.0" spacing="15.0" BorderPane.alignment="CENTER">
+           <padding>
+               <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>
+           </padding>
+           <Label fx:id="titleText" VBox.vgrow="ALWAYS">
+              <font>
+                  <Font size="18.0"/>
+              </font>
+           </Label>
+           <HBox alignment="CENTER" spacing="15.0" VBox.vgrow="NEVER">
+               <ProgressBar fx:id="progressBar" maxWidth="1.7976931348623157E308" progress="0.0" HBox.hgrow="ALWAYS">
+                   <padding>
+                       <Insets left="65.0"/>
+                   </padding>
+               </ProgressBar>
+               <Label fx:id="pctLabel" minWidth="50.0" text="0%" HBox.hgrow="NEVER"/>
+           </HBox>
+           <Label fx:id="statusText"/>
+       </VBox>
    </center>
 </BorderPane>

@@ -4,12 +4,12 @@ import java.util.HashMap;
 
 public interface Commandable {
 
-    public DeviceCommand[] getCommands();
+    DeviceCommand[] getCommands();
 
-    public DeviceCommand getCommand(int index);
+    DeviceCommand getCommand(int index);
 
-    public String getName();
+    String getName();
 
-    public HashMap<String, Class> getNameableParams();
+    HashMap<String, Class> getNameableParams();
 
 }

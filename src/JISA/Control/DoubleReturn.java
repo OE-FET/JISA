@@ -6,6 +6,6 @@ import java.io.IOException;
 
 public interface DoubleReturn {
 
-    public double getValue() throws IOException, DeviceException;
+    double getValue() throws IOException, DeviceException;
 
 }
