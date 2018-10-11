@@ -13,6 +13,7 @@ public class Main {
     public static void main(String[] args) {
 
         GUI.startGUI();
+        Platform.setImplicitExit(false);
         Progress prog = new Progress("JISA Library");
 
         try {
@@ -27,7 +28,7 @@ public class Main {
             // If they press "Cancel", then exit.
             if (!result) {
                 Platform.exit();
-                System.exit(0);
+                return;
             }
 
             // Show the progress window whilst searching
@@ -59,15 +60,14 @@ public class Main {
             }
 
 
-            prog.hide();
-            GUI.infoAlert("JISA", "Found Devices", writer.toString());
             prog.close();
+            GUI.infoAlert("JISA", "Found Devices", writer.toString());
+            Platform.exit();
 
         } catch (Exception e) {
             prog.close();
             GUI.errorAlert("JISA Library", "Exception Encountered", e.getMessage());
             Platform.exit();
-            System.exit(0);
         }
 
     }

@@ -86,7 +86,7 @@ public class Synch {
 
         while (time < duration) {
 
-            double value = valueToCheck.getValue();
+            double value = valueToCheck.get();
 
             if (Util.isBetween(value, min, max)) {
                 time += duration;
