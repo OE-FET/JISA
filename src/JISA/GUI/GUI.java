@@ -10,6 +10,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -109,24 +111,30 @@ public class GUI extends Application {
 
     public static String[] inputWindow(String title, String header, String message, String... fields) {
 
+        // Reference to take in returned value from the dialog.
+        AtomicReference<String[]> toReturn = new AtomicReference<>();
 
-        Semaphore                 semaphore = new Semaphore(0);
-        AtomicReference<String[]> toReturn  = new AtomicReference<>();
+        // Semaphore to make thread wait until we've returned a value.
+        Semaphore semaphore = new Semaphore(0);
 
+        // All GUI stuff must be done on the GUI thread.
         Platform.runLater(() -> {
 
             Dialog<String[]> dialog = new Dialog<>();
+            Label img = new Label();
+            img.getStyleClass().addAll("choice-dialog", "dialog-pane");
+            dialog.setGraphic(img);
             dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
             dialog.getDialogPane().setMinWidth(400);
             dialog.setTitle(title);
             dialog.setHeaderText(header);
-            dialog.setContentText(message);
 
             dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
             VBox list = new VBox();
             list.setSpacing(15);
             list.setPadding(new Insets(15, 15, 15, 15));
+            list.getChildren().add(new Label(message));
 
             ArrayList<TextField> tFields = new ArrayList<>();
 
@@ -176,12 +184,14 @@ public class GUI extends Application {
 
         });
 
+        // Wait for GUI thread stuff to complete (ie semaphore.release(); to be called)
         try {
             semaphore.acquire();
         } catch (InterruptedException ignored) {
 
         }
 
+        // Return whatever value has been set in the reference
         return toReturn.get();
 
     }
