@@ -60,7 +60,7 @@ public class Main {
 
 
             prog.close();
-            GUI.infoAlert("JISA", "Found Devices", writer.toString());
+            GUI.infoAlert("JISA", "Found Devices", writer.toString(), 1024);
             Platform.exit();
 
         } catch (Exception e) {

@@ -33,6 +33,18 @@ public class GUI extends Application {
     private static File      file;
     private static Semaphore s;
 
+    public static void errorAlert(String title, String header, String text, double width) {
+        alert(Alert.AlertType.ERROR, title, header, text, width);
+    }
+
+    public static void infoAlert(String title, String header, String text, double width) {
+        alert(Alert.AlertType.INFORMATION, title, header, text, width);
+    }
+
+    public static void warningAlert(String title, String header, String text) {
+        alert(Alert.AlertType.WARNING, title, header, text);
+    }
+
     public static void errorAlert(String title, String header, String text) {
         alert(Alert.AlertType.ERROR, title, header, text);
     }
@@ -41,17 +53,22 @@ public class GUI extends Application {
         alert(Alert.AlertType.INFORMATION, title, header, text);
     }
 
-    public static void warningAlert(String title, String header, String text) {
-        alert(Alert.AlertType.WARNING, title, header, text);
+    public static void warningAlert(String title, String header, String text, double width) {
+        alert(Alert.AlertType.WARNING, title, header, text, width);
     }
 
     private static void alert(final Alert.AlertType type, final String title, final String header, final String text) {
+        alert(type, title, header, text, 400);
+    }
+
+    private static void alert(final Alert.AlertType type, final String title, final String header, final String text, final double width) {
         final Semaphore semaphore = new Semaphore(0);
         Platform.runLater(() -> {
             Alert alert = new Alert(type);
             alert.setTitle(title);
             alert.setHeaderText(header);
             alert.setContentText(text);
+            alert.getDialogPane().setMinWidth(width);
             alert.showAndWait();
             semaphore.release();
         });
