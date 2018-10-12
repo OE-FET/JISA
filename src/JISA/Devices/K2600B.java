@@ -13,7 +13,7 @@ public class K2600B extends MCSMU {
     private static final String   C_QUERY_FUNC   = "print(%s.source.func)";
     private static final String   C_QUERY_OUTPUT = "print(%s.source.output)";
     private static final String   C_QUERY_SENSE  = "print(%s.sense)";
-    private static final String   C_SET_SOURCE   = "%1$s.source.func = %1$s.%2$s";
+    private static final String   C_SET_SOURCE   = "%s.source.func = %s";
     private static final String   C_SET_VOLT     = "%s.source.levelv = %f";
     private static final String   C_SET_CURR     = "%s.source.leveli = %f";
     private static final String   C_SET_OUTPUT   = "%s.source.output = %s";
