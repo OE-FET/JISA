@@ -30,8 +30,6 @@ public class Main {
                 return;
             }
 
-            String[] values = GUI.inputWindow("Input Stuff", "Here we go", "Pretty please?", "Name", "Age", "E-Mail");
-
             // Show the progress window whilst searching
             prog.show();
 
