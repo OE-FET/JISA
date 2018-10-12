@@ -14,7 +14,7 @@ public class MotorController {
     private Returnable<Double>   frequency;
     private SetGettable<Double>  voltage;
     private SetGettable<Boolean> power;
-    private SimpleRegression     fit;
+    private SimpleRegression     fit = null;
 
     public double getVoltage() throws IOException, DeviceException {
         return voltage.get();
@@ -51,6 +51,11 @@ public class MotorController {
     }
 
     public void setFrequency(double frequency) throws IOException, DeviceException {
+
+        if (fit == null) {
+            throw new DeviceException("You need to perform a calibration first!");
+        }
+
         voltage.set(fit.predict(frequency));
     }
 
