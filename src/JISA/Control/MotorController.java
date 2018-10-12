@@ -1,8 +1,9 @@
-package JISA.Devices;
+package JISA.Control;
 
 import JISA.Control.Returnable;
 import JISA.Control.SetGettable;
 import JISA.Control.Synch;
+import JISA.Devices.DeviceException;
 import JISA.Util;
 import org.apache.commons.math.stat.regression.SimpleRegression;
 
