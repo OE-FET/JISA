@@ -17,6 +17,12 @@ public class MotorController {
     private SetGettable<Boolean> power;
     private SimpleRegression     fit = null;
 
+    public MotorController(Returnable<Double> frequency, SetGettable<Double> voltage, SetGettable<Boolean> power) {
+        this.frequency = frequency;
+        this.voltage = voltage;
+        this.power = power;
+    }
+
     public double getVoltage() throws IOException, DeviceException {
         return voltage.get();
     }
