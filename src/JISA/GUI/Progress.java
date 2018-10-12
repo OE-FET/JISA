@@ -35,18 +35,13 @@ public class Progress implements Gridable {
             Parent root  = loader.load();
             Scene  scene = new Scene(root);
 
-            Semaphore semaphore = new Semaphore(0);
-
-            Platform.runLater(() -> {
+            GUI.runNow(() -> {
                 Stage stage = new Stage();
                 stage.setTitle(title);
                 stage.setScene(scene);
                 setTitle(title);
                 this.stage = stage;
-                semaphore.release();
             });
-
-            semaphore.acquire();
 
         } catch (Exception e) {
 

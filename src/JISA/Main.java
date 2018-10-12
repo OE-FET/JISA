@@ -14,28 +14,8 @@ import java.io.*;
 
 public class Main {
 
+
     public static void main(String[] args) {
-        try {
-            run();
-        } catch (Exception e) {
-            Util.exceptionHandler(e);
-        }
-    }
-
-    public static void run() throws Exception {
-
-        SR830                   lockIn     = new SR830(new GPIBAddress(0, 30));
-        K2200                   power      = new K2200(new GPIBAddress(0, 22));
-        DCPowerLockInController controller = new DCPowerLockInController(power, lockIn);
-
-        controller.calibrate(2.5, 6.5, 6000);
-
-        controller.setFrequency(1.0);
-        controller.start();
-
-    }
-
-    public static void oldmain(String[] args) {
 
         GUI.startGUI();
         Progress prog = new Progress("JISA Library");

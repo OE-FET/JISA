@@ -37,10 +37,9 @@ public class Plot implements Gridable {
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource("FXML/PlotWindow.fxml"));
             loader.setController(this);
-            Parent    root  = loader.load();
-            Scene     scene = new Scene(root);
-            Semaphore s     = new Semaphore(0);
-            Platform.runLater(() -> {
+            Parent root  = loader.load();
+            Scene  scene = new Scene(root);
+            GUI.runNow(() -> {
                 Stage stage = new Stage();
                 stage.setTitle(title);
                 stage.setScene(scene);
@@ -51,9 +50,7 @@ public class Plot implements Gridable {
                 chart.setTitle(title);
                 xAxis.setForceZeroInRange(false);
                 yAxis.setForceZeroInRange(false);
-                s.release();
             });
-            s.acquire();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -70,7 +67,7 @@ public class Plot implements Gridable {
     }
 
     public Plot(String title, ResultList list) {
-        this(title, list, 0 ,1);
+        this(title, list, 0, 1);
     }
 
     public void setXLimit(final double min, final double max) {

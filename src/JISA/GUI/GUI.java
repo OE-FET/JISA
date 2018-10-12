@@ -63,40 +63,24 @@ public class GUI extends Application {
 
     private static void alert(final Alert.AlertType type, final String title, final String header, final String text, final double width) {
         final Semaphore semaphore = new Semaphore(0);
-        Platform.runLater(() -> {
+        GUI.runNow(() -> {
             Alert alert = new Alert(type);
             alert.setTitle(title);
             alert.setHeaderText(header);
             alert.setContentText(text);
             alert.getDialogPane().setMinWidth(width);
             alert.showAndWait();
-            semaphore.release();
         });
-
-        try {
-            semaphore.acquire();
-        } catch (InterruptedException e) {
-            Util.exceptionHandler(e);
-        }
     }
 
     public static String saveFileSelect() {
 
-        Semaphore semaphore = new Semaphore(0);
-
         AtomicReference<File> file = new AtomicReference<>();
 
-        Platform.runLater(() -> {
+        GUI.runNow(() -> {
             FileChooser chooser = new FileChooser();
             file.set(chooser.showSaveDialog(new Stage()));
-            semaphore.release();
         });
-
-        try {
-            semaphore.acquire();
-        } catch (InterruptedException e) {
-            Util.exceptionHandler(e);
-        }
 
         return file.get().getAbsolutePath();
 
@@ -104,25 +88,16 @@ public class GUI extends Application {
 
     public static boolean confirmWindow(String title, String header, String text) {
 
-        Semaphore                             semaphore = new Semaphore(0);
-        AtomicReference<Optional<ButtonType>> response  = new AtomicReference<>();
-        Platform.runLater(() -> {
+        AtomicReference<Optional<ButtonType>> response = new AtomicReference<>();
+        GUI.runNow(() -> {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle(title);
             alert.setHeaderText(header);
             alert.setContentText(text);
             response.set(alert.showAndWait());
-            semaphore.release();
         });
 
-        try {
-            semaphore.acquire();
-            return response.get().get() == ButtonType.OK;
-        } catch (InterruptedException e) {
-            Util.exceptionHandler(e);
-        }
-
-        return false;
+        return response.get().get() == ButtonType.OK;
 
     }
 
@@ -131,14 +106,11 @@ public class GUI extends Application {
         // Reference to take in returned value from the dialog.
         AtomicReference<String[]> toReturn = new AtomicReference<>();
 
-        // Semaphore to make thread wait until we've returned a value.
-        Semaphore semaphore = new Semaphore(0);
-
         // All GUI stuff must be done on the GUI thread.
-        Platform.runLater(() -> {
+        GUI.runNow(() -> {
 
             Dialog<String[]> dialog = new Dialog<>();
-            Label img = new Label();
+            Label            img    = new Label();
             img.getStyleClass().addAll("choice-dialog", "dialog-pane");
             dialog.setGraphic(img);
             dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
@@ -197,16 +169,8 @@ public class GUI extends Application {
 
             Optional<String[]> values = dialog.showAndWait();
             toReturn.set(values.orElse(null));
-            semaphore.release();
 
         });
-
-        // Wait for GUI thread stuff to complete (ie semaphore.release(); to be called)
-        try {
-            semaphore.acquire();
-        } catch (InterruptedException ignored) {
-
-        }
 
         // Return whatever value has been set in the reference
         return toReturn.get();
@@ -220,7 +184,7 @@ public class GUI extends Application {
         Object     controller = loader.getController();
         Scene      scene      = new Scene(root);
 
-        Platform.runLater(() -> {
+        GUI.runNow(() -> {
             Stage stage = new Stage();
             stage.setScene(scene);
         });
@@ -235,7 +199,7 @@ public class GUI extends Application {
         BrowseVISA                         browse    = new BrowseVISA("Find Instrument");
         Semaphore                          semaphore = new Semaphore(0);
 
-        Platform.runLater(() -> browse.search((a) -> {
+        GUI.runNow(() -> browse.search((a) -> {
             ref.set(a);
             semaphore.release();
         }));
@@ -282,6 +246,25 @@ public class GUI extends Application {
 
     public static void stopGUI() {
         Platform.exit();
+    }
+
+    public static void runNow(Runnable toRun) {
+
+        if (Platform.isFxApplicationThread()) {
+            toRun.run();
+        } else {
+            Semaphore s = new Semaphore(0);
+            Platform.runLater(() -> {
+                toRun.run();
+                s.release();
+            });
+            try {
+                s.acquire();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
 }
