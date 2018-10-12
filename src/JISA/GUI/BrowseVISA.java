@@ -1,4 +1,4 @@
-package JISA.GUI.FXML;
+package JISA.GUI;
 
 import JISA.Addresses.*;
 import JISA.VISA.VISA;
@@ -32,28 +32,26 @@ public class BrowseVISA {
     private AddrHandler           onOkay;
     private Stage                 stage;
 
-    public static BrowseVISA create(String title) {
+    public BrowseVISA(String title) {
 
         try {
-            FXMLLoader loader     = new FXMLLoader(BrowseVISA.class.getResource("browseVISA.fxml"));
-            Parent     root       = loader.load();
-            Scene      scene      = new Scene(root);
-            BrowseVISA controller = (BrowseVISA) loader.getController();
-            Semaphore  s          = new Semaphore(0);
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("FXML/browseVISA.fxml"));
+            loader.setController(this);
+            Parent    root  = loader.load();
+            Scene     scene = new Scene(root);
+            Semaphore s     = new Semaphore(0);
             Platform.runLater(() -> {
                 Stage stage = new Stage();
-                stage.setOnCloseRequest((ae) -> controller.cancel());
-                controller.stage = stage;
                 stage.setTitle(title);
                 stage.setScene(scene);
+                this.stage = stage;
                 s.release();
             });
             s.acquire();
-            return controller;
-        } catch (IOException | InterruptedException ignored) {
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        return null;
 
     }
 

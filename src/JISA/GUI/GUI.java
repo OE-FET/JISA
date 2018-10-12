@@ -1,7 +1,6 @@
 package JISA.GUI;
 
 import JISA.Addresses.InstrumentAddress;
-import JISA.GUI.FXML.BrowseVISA;
 import JISA.Util;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -16,7 +15,7 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class GUI extends Application {
@@ -120,12 +119,8 @@ public class GUI extends Application {
     public static InstrumentAddress browseVISA() {
 
         AtomicReference<InstrumentAddress> ref       = new AtomicReference<>();
-        BrowseVISA                         browse    = BrowseVISA.create("Find Instrument");
+        BrowseVISA                         browse    = new BrowseVISA("Find Instrument");
         Semaphore                          semaphore = new Semaphore(0);
-
-        if (browse == null) {
-            return null;
-        }
 
         Platform.runLater(() -> browse.search((a) -> {
             ref.set(a);

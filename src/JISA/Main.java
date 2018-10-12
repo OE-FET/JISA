@@ -31,6 +31,8 @@ public class Main {
                 return;
             }
 
+            GUI.browseVISA();
+
             // Show the progress window whilst searching
             prog.show();
 
