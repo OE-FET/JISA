@@ -6,14 +6,13 @@ import JISA.VISA.VISA;
 import JISA.VISA.VISADevice;
 import javafx.application.Platform;
 
-import java.io.StringWriter;
+import java.io.*;
 
 public class Main {
 
     public static void main(String[] args) {
 
         GUI.startGUI();
-        Platform.setImplicitExit(false);
         Progress prog = new Progress("JISA Library");
 
         try {
@@ -31,7 +30,7 @@ public class Main {
                 return;
             }
 
-            GUI.browseVISA();
+            String[] values = GUI.inputWindow("Input Stuff", "Here we go", "Pretty please?", "Name", "Age", "E-Mail");
 
             // Show the progress window whilst searching
             prog.show();
@@ -68,7 +67,12 @@ public class Main {
 
         } catch (Exception e) {
             prog.close();
-            GUI.errorAlert("JISA Library", "Exception Encountered", e.getMessage());
+            StringWriter writer = new StringWriter();
+            writer.append(e.getMessage());
+            writer.append("\n\n");
+            PrintWriter pw = new PrintWriter(writer);
+            e.printStackTrace(pw);
+            GUI.errorAlert("JISA Library", "Exception Encountered", writer.toString());
             Platform.exit();
         }
 

@@ -5,15 +5,22 @@ import JISA.Util;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
+import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -100,6 +107,85 @@ public class GUI extends Application {
 
     }
 
+    public static String[] inputWindow(String title, String header, String message, String... fields) {
+
+
+        Semaphore                 semaphore = new Semaphore(0);
+        AtomicReference<String[]> toReturn  = new AtomicReference<>();
+
+        Platform.runLater(() -> {
+
+            Dialog<String[]> dialog = new Dialog<>();
+            dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+            dialog.getDialogPane().setMinWidth(400);
+            dialog.setTitle(title);
+            dialog.setHeaderText(header);
+            dialog.setContentText(message);
+
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            VBox list = new VBox();
+            list.setSpacing(15);
+            list.setPadding(new Insets(15, 15, 15, 15));
+
+            ArrayList<TextField> tFields = new ArrayList<>();
+
+            for (String field : fields) {
+
+                HBox box = new HBox();
+                box.setAlignment(Pos.CENTER_LEFT);
+                box.setSpacing(15);
+
+                Label fieldName = new Label(field.concat(":"));
+                fieldName.setAlignment(Pos.CENTER_RIGHT);
+                fieldName.setMinWidth(75);
+                HBox.setHgrow(fieldName, Priority.NEVER);
+
+                TextField fieldInput = new TextField();
+                fieldInput.setMaxWidth(Double.MAX_VALUE);
+                HBox.setHgrow(fieldInput, Priority.ALWAYS);
+
+                tFields.add(fieldInput);
+
+                box.getChildren().addAll(fieldName, fieldInput);
+                list.getChildren().add(box);
+
+            }
+
+            dialog.getDialogPane().setContent(list);
+
+            dialog.setResultConverter((b) -> {
+
+                if (b != ButtonType.OK) {
+                    return null;
+                }
+
+                String[] values = new String[tFields.size()];
+
+                for (int i = 0; i < values.length; i++) {
+                    values[i] = tFields.get(i).getText();
+                }
+
+                return values;
+
+            });
+
+            Optional<String[]> values = dialog.showAndWait();
+            toReturn.set(values.orElse(null));
+            semaphore.release();
+
+        });
+
+        try {
+            semaphore.acquire();
+        } catch (InterruptedException ignored) {
+
+        }
+
+        return toReturn.get();
+
+    }
+
     public static Object create(String fxmlFile) throws IOException {
 
         FXMLLoader loader     = new FXMLLoader(GUI.class.getResource(fxmlFile));
@@ -160,10 +246,15 @@ public class GUI extends Application {
         t.start();
         try {
             s.acquire();
+            Platform.setImplicitExit(false);
         } catch (InterruptedException ignored) {
 
         }
 
+    }
+
+    public static void stopGUI() {
+        Platform.exit();
     }
 
 }
