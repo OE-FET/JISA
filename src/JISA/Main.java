@@ -12,14 +12,13 @@ import javafx.application.Platform;
 
 import java.io.*;
 
-public class Main {
+public class Main extends GUI {
 
 
     public static void main(String[] args) {
 
-        GUI.startGUI();
-        Progress prog = new Progress("JISA Library");
-
+        Progress     prog   = new Progress("JISA Library");
+        StringWriter writer = new StringWriter();
         try {
 
             // Prepare the progress window
@@ -38,8 +37,6 @@ public class Main {
             // Show the progress window whilst searching
             prog.show();
 
-            StringWriter writer = new StringWriter();
-
             // Search for devices
             for (StrAddress a : VISA.getInstruments()) {
 
@@ -48,13 +45,13 @@ public class Main {
 
                 VISADevice dev = new VISADevice(a);
                 dev.setTimeout(500);
+                dev.setRetryCount(1);
 
                 writer.append(" \t ");
 
                 // Try to get the instrument to identify itself
                 try {
-                    dev.write("*IDN?");
-                    writer.append(dev.read(1).replace("\n", "").replace("\r", ""));
+                    writer.append(dev.getIDN().replace("\n", "").replace("\r", ""));
                 } catch (Exception e) {
                     writer.append("Unknown Instrument");
                 }
@@ -69,14 +66,16 @@ public class Main {
             Platform.exit();
 
         } catch (Exception e) {
+            Util.sleep(500);
             prog.close();
-            StringWriter writer = new StringWriter();
-            writer.append(e.getMessage());
-            writer.append("\n\n");
-            PrintWriter pw = new PrintWriter(writer);
+            StringWriter w = new StringWriter();
+            w.append(e.getMessage());
+            w.append("\n\n");
+            PrintWriter pw = new PrintWriter(w);
             e.printStackTrace(pw);
-            GUI.errorAlert("JISA Library", "Exception Encountered", writer.toString());
+            GUI.errorAlert("JISA Library", "Exception Encountered", w.toString(), 800);
             Platform.exit();
+            System.exit(0);
         }
 
     }

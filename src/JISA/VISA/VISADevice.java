@@ -15,6 +15,7 @@ public class VISADevice {
     private String            lastCommand    = null;
     private String            lastRead       = null;
     private int               readBufferSize = 1024;
+    private int               retryCount     = 3;
 
     public final static int    DEFAULT_TIMEOUT = 13;
     public final static int    DEFAULT_EOI     = 1;
@@ -26,7 +27,6 @@ public class VISADevice {
      * Opens the device at the specified address
      *
      * @param address Some form of InstrumentAddress (eg GPIBAddress, USBAddress etc)
-     *
      * @throws IOException Upon communications error
      */
     public VISADevice(InstrumentAddress address) throws IOException {
@@ -61,7 +61,6 @@ public class VISADevice {
      * however older devices from more anarchic times (such as the 70s) may needs this disabling.
      *
      * @param flag Do we, don't we?
-     *
      * @throws IOException Upon communications error
      */
     public void setEOI(boolean flag) throws IOException {
@@ -78,7 +77,6 @@ public class VISADevice {
      * Sets which character we should expect to read from the device to indicate that it's done talking to us.
      *
      * @param character The character code
-     *
      * @throws IOException Upon communications error
      */
     public void setReadTerminationCharacter(long character) throws IOException {
@@ -95,7 +93,6 @@ public class VISADevice {
      * Enables or disables the controller from waiting for the termination character set by setReadTerminationCharacter()
      *
      * @param flag Do we wait?
-     *
      * @throws IOException Upon communications error
      */
     public void enabledReadTerminationCharacter(boolean flag) throws IOException {
@@ -110,7 +107,6 @@ public class VISADevice {
      * Sets the timeout, in milliseconds, for operations with the device
      *
      * @param timeoutMSec Timeout, milliseconds
-     *
      * @throws IOException Upon communications error
      */
     public void setTimeout(long timeoutMSec) throws IOException {
@@ -119,6 +115,10 @@ public class VISADevice {
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
+    }
+
+    public void setRetryCount(int count) {
+        retryCount = count;
     }
 
     /**
@@ -144,7 +144,6 @@ public class VISADevice {
      *
      * @param command The string to write
      * @param args    Any formatting arguments
-     *
      * @throws IOException Upon communications error
      */
     public synchronized void write(String command, Object... args) throws IOException {
@@ -161,18 +160,16 @@ public class VISADevice {
      * Read a string from the device
      *
      * @return The string returned by the device
-     *
      * @throws IOException Upon communications error
      */
     public synchronized String read() throws IOException {
-        return read(3);
+        return read(retryCount);
     }
 
     /**
      * Read a string from the device
      *
      * @return The string returned by the device
-     *
      * @throws IOException Upon communications error
      */
     public synchronized String read(int attempts) throws IOException {
@@ -198,7 +195,6 @@ public class VISADevice {
      * Read a double from the device
      *
      * @return The number returned by the device
-     *
      * @throws IOException Upon communications error
      */
     public synchronized double readDouble() throws IOException {
@@ -209,7 +205,6 @@ public class VISADevice {
      * Read an integer from the device
      *
      * @return Integer read from the device
-     *
      * @throws IOException Upon communications error
      */
     public synchronized int readInt() throws IOException {
@@ -221,9 +216,7 @@ public class VISADevice {
      *
      * @param command String to write
      * @param args    Formatting arguments
-     *
      * @return Numerical response
-     *
      * @throws IOException Upon communications error
      */
     public synchronized double queryDouble(String command, Object... args) throws IOException {
@@ -236,9 +229,7 @@ public class VISADevice {
      *
      * @param command String to write
      * @param args    Formatting arguments
-     *
      * @return Numerical response
-     *
      * @throws IOException Upon communications error
      */
     public synchronized int queryInt(String command, Object... args) throws IOException {
@@ -251,9 +242,7 @@ public class VISADevice {
      *
      * @param command String to write
      * @param args    Formatting arguments
-     *
      * @return String response
-     *
      * @throws IOException Upon communications error
      */
     public synchronized String query(String command, Object... args) throws IOException {
@@ -265,7 +254,6 @@ public class VISADevice {
      * Sends the standard identifications query to the device (*IDN?)
      *
      * @return The resposne of the device
-     *
      * @throws IOException Upon communications error
      */
     public synchronized String getIDN() throws IOException {
