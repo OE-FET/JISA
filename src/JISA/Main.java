@@ -85,8 +85,7 @@ public class Main {
             StringWriter w = new StringWriter();
             w.append(e.getMessage());
             w.append("\n\n");
-            PrintWriter pw = new PrintWriter(w);
-            e.printStackTrace(pw);
+            e.printStackTrace(new PrintWriter(w));
             GUI.errorAlert("JISA Library", "Exception Encountered", w.toString(), 800);
             Platform.exit();
             System.exit(0);
