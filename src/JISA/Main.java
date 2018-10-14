@@ -8,14 +8,17 @@ import JISA.Devices.SR830;
 import JISA.GUI.*;
 import JISA.VISA.VISA;
 import JISA.VISA.VISADevice;
+import com.sun.jna.Native;
 import javafx.application.Platform;
 
 import java.io.*;
 
-public class Main extends GUI {
+public class Main {
 
 
     public static void main(String[] args) {
+
+        GUI.startGUI();
 
         Progress     prog   = new Progress("JISA Library");
         StringWriter writer = new StringWriter();
@@ -36,9 +39,11 @@ public class Main extends GUI {
 
             // Show the progress window whilst searching
             prog.show();
+            boolean found = false;
 
             // Search for devices
-            for (StrAddress a : VISA.getInstruments()) {
+            StrAddress[] addresses = VISA.getInstruments();
+            for (StrAddress a : addresses) {
 
                 writer.append("* ");
                 writer.append(a.getVISAAddress());
@@ -57,13 +62,22 @@ public class Main extends GUI {
                 }
 
                 writer.append("\n\n");
+                dev.close();
+                found = true;
 
             }
 
-
+            Util.sleep(500);
             prog.close();
-            GUI.infoAlert("JISA", "Found Devices", writer.toString(), 1024);
+
+            if (found) {
+                GUI.infoAlert("JISA", "Found Devices", writer.toString(), 1024);
+            } else {
+                GUI.errorAlert("JISA", "Nothing Found", "No devices were found using VISA.\n\nCheck your VISA installation.");
+            }
+
             Platform.exit();
+            System.exit(0);
 
         } catch (Exception e) {
             Util.sleep(500);

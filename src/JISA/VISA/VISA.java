@@ -1,6 +1,8 @@
 package JISA.VISA;
 
 import JISA.Addresses.StrAddress;
+import com.sun.jna.Callback;
+import com.sun.jna.CallbackThreadInitializer;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.NativeLongByReference;
@@ -73,7 +75,6 @@ public class VISA {
      * Sets up the resource manager for this session. Used only internally.
      *
      * @return Resource manager handle.
-     *
      * @throws VISAException When VISA does go gone screw it up
      */
     private static NativeLong getResourceManager() throws VISAException {
@@ -92,7 +93,6 @@ public class VISA {
      * Converts a string to bytes in a ByteBuffer, used for sending to VISA library which expects binary strings.
      *
      * @param source The string, damn you.
-     *
      * @return The ByteBuffer that I mentioned.
      */
     private static ByteBuffer stringToByteBuffer(String source) {
@@ -110,7 +110,6 @@ public class VISA {
      * Returns an array of all instrument addressed detected by VISA
      *
      * @return Array of instrument addresses
-     *
      * @throws VISAException Upon error with VISA interface
      */
     public static StrAddress[] getInstruments() throws VISAException {
@@ -130,29 +129,32 @@ public class VISA {
                 desc
         );
 
+        if (status.longValue() == VISANativeInterface.VI_ERROR_RSRC_NFOUND) {
+            lib.viClose(listHandle.getValue());
+            return new StrAddress[0];
+        }
+
         if (status.longValue() != VI_SUCCESS) {
-            throw new VISAException("Error searching devices");
+            lib.viClose(listHandle.getValue());
+            throw new VISAException("Error searching for devices.");
         }
 
         int                   count     = listCount.getValue().intValue();
         ArrayList<StrAddress> addresses = new ArrayList<>();
         NativeLong            handle    = listHandle.getValue();
+        String                address;
 
-        for (int i = 0; i < count; i++) {
-            final String addr;
+        do {
+
             try {
-                addr = new String(desc.array(), 0, 1024, responseEncoding);
+                address = new String(desc.array(), 0, 1024, responseEncoding);
             } catch (UnsupportedEncodingException e) {
                 throw new VISAException("Unable to encode address!");
             }
-            addresses.add(new StrAddress(addr));
-            status = lib.viFindNext(handle, desc);
+            addresses.add(new StrAddress(address));
 
-            if (status.longValue() != VI_SUCCESS) {
-                break;
-            }
+        } while (lib.viFindNext(handle, desc).longValue() == VI_SUCCESS);
 
-        }
 
         lib.viClose(handle);
 
@@ -164,9 +166,7 @@ public class VISA {
      * Open the instrument with the given VISA resource address
      *
      * @param address Resource address
-     *
      * @return Instrument handle
-     *
      * @throws VISAException Upon error with VISA interface
      */
     public static long openInstrument(String address) throws VISAException {
@@ -201,7 +201,6 @@ public class VISA {
      *
      * @param instrument Instrument handle from openInstrument()
      * @param toWrite    String the write to the instrument
-     *
      * @throws VISAException Upon error with VISA interface
      */
     public static void write(long instrument, String toWrite) throws VISAException {
@@ -243,9 +242,7 @@ public class VISA {
      *
      * @param instrument Instrument handle from openInstrument()
      * @param bufferSize Number of bytes to allocate for response
-     *
      * @return The read string from the device
-     *
      * @throws VISAException Upon error with VISA interface
      */
     public static String read(long instrument, int bufferSize) throws VISAException {
@@ -280,9 +277,7 @@ public class VISA {
      * Read from the given instrument, specified by instrument handle returned by openInstrument()
      *
      * @param instrument Instrument handle from openInstrument()
-     *
      * @return The read string from the device
-     *
      * @throws VISAException Upon error with VISA interface
      */
     public static String read(long instrument) throws VISAException {
@@ -293,7 +288,6 @@ public class VISA {
      * Closes the connection to the given instrument, specified by instrument handle returned by openInstrument()
      *
      * @param instrument Instrument handle from openInstrument()
-     *
      * @throws VISAException Upon error with VISA interface
      */
     public static void closeInstrument(long instrument) throws VISAException {
@@ -318,7 +312,6 @@ public class VISA {
      * @param instrument Instrument handle from openInstrument()
      * @param attribute  The attribute to set (defined in VISANativeInterface)
      * @param value      The value to give it
-     *
      * @throws VISAException Upon error with VISA interface
      */
     public static void setAttribute(long instrument, long attribute, long value) throws VISAException {
@@ -344,9 +337,7 @@ public class VISA {
      *
      * @param instrument Instrument handle from openInstrument()
      * @param attribute  The attribute to read
-     *
      * @return Value assigned to the attribute
-     *
      * @throws VISAException Upon error with VISA interface
      */
     public static long getAttribute(long instrument, long attribute) throws VISAException {
@@ -407,7 +398,6 @@ public class VISA {
      *
      * @param instrument Instrument handle from openInstrument()
      * @param set        Should it send?
-     *
      * @throws VISAException Upon error with VISA interface
      */
     public static void setEOI(long instrument, boolean set) throws VISAException {
@@ -419,7 +409,6 @@ public class VISA {
      *
      * @param instrument  Instrument handle from openInstrument()
      * @param timeoutMSec Timeout in milliseconds
-     *
      * @throws VISAException Upon error with VISA interface
      */
     public static void setTimeout(long instrument, long timeoutMSec) throws VISAException {
@@ -431,7 +420,6 @@ public class VISA {
      *
      * @param instrument Instrument handle from openInstrument()
      * @param set        Should it look?
-     *
      * @throws VISAException Upon error with VISA interface
      */
     public static void enableTerminationCharacter(long instrument, boolean set) throws VISAException {
@@ -443,7 +431,6 @@ public class VISA {
      *
      * @param instrument Instrument handle from openInstrument()
      * @param eos        Character to look for
-     *
      * @throws VISAException Upon error with VISA interface
      */
     public static void setTerminationCharacter(long instrument, long eos) throws VISAException {
