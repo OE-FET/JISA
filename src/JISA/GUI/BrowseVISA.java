@@ -49,6 +49,9 @@ public class BrowseVISA {
                 stage.setScene(scene);
                 this.stage = stage;
                 s.release();
+                this.stage.setOnCloseRequest((we) -> {
+                    cancel();
+                });
             });
             s.acquire();
         } catch (Exception e) {

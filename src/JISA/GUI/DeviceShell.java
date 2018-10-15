@@ -81,7 +81,7 @@ public class DeviceShell {
     public void writeLine() {
 
         String line = input.getText();
-
+        input.setText("");
         try {
             device.write(line);
             addInputLine(line);
@@ -89,17 +89,21 @@ public class DeviceShell {
             addErrorLine(e.getMessage());
         }
 
-        while (true) {
+    }
 
-            try {
-                addReturnLine(device.read(1));
-            } catch (Exception e) {
-                break;
-            }
+    public void readLine() {
 
+        try {
+            addReturnLine(device.read(1));
+        } catch (Exception e) {
+            addErrorLine(e.getMessage());
         }
 
+    }
 
+    public void queryLine() {
+        writeLine();
+        readLine();
     }
 
     private void addStatusLine(String text) {
