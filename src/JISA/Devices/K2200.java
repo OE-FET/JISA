@@ -12,6 +12,7 @@ public class K2200 extends DCPower {
     private static final String C_SET_CURRENT   = "CURRENT %f";
     private static final String C_SET_OUTPUT    = "OUTPUT %s";
     private static final String C_QUERY_OUTPUT  = "OUTPUT?";
+    private static final String C_SET_REMOTE    = "SYSTEM:REMOTE";
     private static final String OUTPUT_ON       = "1";
     private static final String OUTPUT_OFF      = "0";
 
@@ -26,6 +27,8 @@ public class K2200 extends DCPower {
             if (!idn[1].trim().equals("2200-30-5")) {
                 throw new DeviceException("Device at address %s is not a Keithley 2200-30-5!", address.getVISAAddress());
             }
+
+            write(C_SET_REMOTE);
 
         } catch (IOException e) {
 

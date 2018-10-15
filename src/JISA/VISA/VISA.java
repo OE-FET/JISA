@@ -55,7 +55,15 @@ public class VISA {
 
         for (Driver driver : drivers) {
             for (StrAddress a : driver.search()) {
-                addresses.putIfAbsent(a.getVISAAddress(), a);
+                boolean found = false;
+                for (String s : addresses.keySet()) {
+                    if (s.trim().equals(a.getVISAAddress().trim())) {
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    addresses.put(a.getVISAAddress(), a);
+                }
             }
         }
 

@@ -3,6 +3,7 @@ package JISA.VISA;
 import JISA.Addresses.GPIBAddress;
 import JISA.Addresses.InstrumentAddress;
 import JISA.Addresses.StrAddress;
+import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
@@ -90,7 +91,7 @@ public class GPIBDriver implements Driver {
 
         try {
             if (OS_NAME.contains("win")) {
-                libName = "ni4882";
+                libName = "C:\\Windows\\system32\\ni4882.dll";
                 lib = (GPIBNativeInterface) Native.loadLibrary(libName, GPIBNativeInterface.class);
             } else if (OS_NAME.contains("linux")) {
                 libName = "gpib";
@@ -104,13 +105,16 @@ public class GPIBDriver implements Driver {
         }
 
         if (lib == null) {
+            System.err.println("GPIB driver not loaded.");
             throw new VISAException("Could not load GPIB library");
+        } else {
+            System.out.println("GPIB driver loaded.");
         }
 
     }
 
     private static boolean wasError() {
-        return (lib.Ibsta() * GPIBNativeInterface.ERR) != 0;
+        return (lib.Ibsta() & GPIBNativeInterface.ERR) != 0;
     }
 
     /**
@@ -140,7 +144,9 @@ public class GPIBDriver implements Driver {
             throw new VISAException("Can only open GPIB devices using GPIB driver!");
         }
 
-        int ud = lib.ibdev(addr.getBus(), addr.getAddress(), 0, 7, 1, 0);
+        lib.SendIFC(addr.getBus());
+
+        int ud = lib.ibdev(addr.getBus(), addr.getAddress(), 0, GPIBNativeInterface.T3s, 1, 0);
 
         if (wasError()) {
             throw new VISAException("Could not open %s using GPIB.", addr.getVISAAddress());
@@ -164,12 +170,11 @@ public class GPIBDriver implements Driver {
     @Override
     public void write(long instrument, String toWrite) throws VISAException {
 
-        Pointer ptr = (new PointerByReference()).getValue();
-        ptr.setString(0, toWrite);
+        NativeString nToWrite = new NativeString(toWrite);
 
         lib.ibwrt(
                 (int) instrument,
-                ptr,
+                nToWrite.getPointer(),
                 toWrite.length()
         );
 
@@ -182,7 +187,7 @@ public class GPIBDriver implements Driver {
     @Override
     public String read(long instrument, int bufferSize) throws VISAException {
 
-        Pointer ptr = (new PointerByReference()).getValue();
+        Pointer ptr = new Memory(bufferSize);
 
         lib.ibrd(
                 (int) instrument,
@@ -194,7 +199,7 @@ public class GPIBDriver implements Driver {
             throw new VISAException("Error reading from instrument.");
         }
 
-        return ptr.getString(0);
+        return ptr.getString(0).substring(0, lib.Ibcnt()).replace("\n", "").replace("\r", "");
 
     }
 
@@ -252,7 +257,8 @@ public class GPIBDriver implements Driver {
 
             try {
                 addresses.addAll(search(i));
-            } catch (VISAException ignored) {}
+            } catch (VISAException ignored) {
+            }
         }
 
         return addresses.toArray(new StrAddress[0]);
@@ -261,10 +267,12 @@ public class GPIBDriver implements Driver {
 
     public List<StrAddress> search(int board) throws VISAException {
 
+        lib.SendIFC(board);
+
         short[] addrList = new short[31];
 
         for (short i = 0; i < 31; i++) {
-            addrList[i] = i;
+            addrList[i] = (short) (i + 1);
         }
 
         addrList[30] = -1;

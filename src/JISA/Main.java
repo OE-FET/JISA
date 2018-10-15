@@ -4,6 +4,8 @@ import JISA.Addresses.GPIBAddress;
 import JISA.Addresses.StrAddress;
 import JISA.Control.DCPowerLockInController;
 import JISA.Devices.K2200;
+import JISA.Devices.K236;
+import JISA.Devices.K2450;
 import JISA.Devices.SR830;
 import JISA.GUI.*;
 import JISA.VISA.VISA;
@@ -23,6 +25,10 @@ public class Main {
         Progress     prog   = new Progress("JISA Library");
         StringWriter writer = new StringWriter();
         try {
+
+            K2200 power = new K2200(new GPIBAddress(0, 22));
+            power.turnOn();
+
 
             // Prepare the progress window
             prog.setStatus("Searching for devices...");
@@ -79,7 +85,7 @@ public class Main {
             Platform.exit();
             System.exit(0);
 
-        } catch (Exception e) {
+        } catch (Exception | Error e) {
             Util.sleep(500);
             prog.close();
             StringWriter w = new StringWriter();
