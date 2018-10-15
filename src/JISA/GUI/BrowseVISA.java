@@ -12,6 +12,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -28,6 +29,7 @@ public class BrowseVISA {
 
     public  VBox                  list;
     public  Label                 searching;
+    public  ProgressBar           progBar;
     private ArrayList<StrAddress> found = new ArrayList<>();
     private AddrHandler           onOkay;
     private Stage                 stage;
@@ -64,6 +66,8 @@ public class BrowseVISA {
     public void search(AddrHandler onOkay) {
 
         stage.show();
+        progBar.setVisible(true);
+        progBar.setManaged(true);
 
         list.getChildren().clear();
         searching.setText("Searching...");
@@ -91,7 +95,11 @@ public class BrowseVISA {
                 e.printStackTrace();
             }
             final int c = count;
-            Platform.runLater(() -> searching.setText(String.format("Done, found %d instruments.", c)));
+            Platform.runLater(() -> {
+                searching.setText(String.format("Done, found %d instruments.", c));
+                progBar.setVisible(false);
+                progBar.setManaged(false);
+            });
         });
 
         t.start();
@@ -104,7 +112,9 @@ public class BrowseVISA {
         try {
             VISADevice device = new VISADevice(address);
             device.setTimeout(100);
+            device.setRetryCount(1);
             i = device.getIDN().trim().replace("\n", "").replace("\r", "");
+            device.close();
         } catch (Exception e) {
             i = "Unknown Instrument";
         }

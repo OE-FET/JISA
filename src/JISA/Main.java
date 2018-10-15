@@ -73,7 +73,7 @@ public class Main {
             if (found) {
                 GUI.infoAlert("JISA", "Found Devices", writer.toString(), 1024);
             } else {
-                GUI.errorAlert("JISA", "Nothing Found", "No devices were found using VISA.\n\nCheck your VISA installation.");
+                GUI.errorAlert("JISA", "Nothing Found", "No devices were found.\n\nCheck your VISA/GPIB installation.");
             }
 
             Platform.exit();

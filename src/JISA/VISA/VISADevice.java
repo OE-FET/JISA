@@ -36,7 +36,7 @@ public class VISADevice {
         }
 
         try {
-            this.device = VISA.openInstrument(address.getVISAAddress());
+            this.device = VISA.openInstrument(address);
             this.address = address;
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
@@ -87,20 +87,6 @@ public class VISADevice {
             throw new IOException(e.getMessage());
         }
 
-    }
-
-    /**
-     * Enables or disables the controller from waiting for the termination character set by setReadTerminationCharacter()
-     *
-     * @param flag Do we wait?
-     * @throws IOException Upon communications error
-     */
-    public void enabledReadTerminationCharacter(boolean flag) throws IOException {
-        try {
-            VISA.enableTerminationCharacter(device, flag);
-        } catch (VISAException e) {
-            throw new IOException(e.getMessage());
-        }
     }
 
     /**
@@ -271,26 +257,6 @@ public class VISADevice {
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
-    }
-
-    public synchronized void flushReadBuffer() throws IOException {
-
-        try {
-            VISA.flushReadBuffer(device);
-        } catch (VISAException e) {
-            throw new IOException(e.getMessage());
-        }
-
-    }
-
-    public synchronized void clearDevice() throws IOException {
-
-        try {
-            VISA.clearInstrument(device);
-        } catch (VISAException e) {
-            throw new IOException(e.getMessage());
-        }
-
     }
 
 }

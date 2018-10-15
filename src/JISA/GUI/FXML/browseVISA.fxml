@@ -4,6 +4,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ButtonBar?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
@@ -19,21 +20,29 @@
             </padding>
         </ButtonBar>
     </bottom>
-    <top>
-        <Label fx:id="searching" text="Searching..." BorderPane.alignment="CENTER_LEFT">
-            <padding>
-                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
-            </padding>
-        </Label>
-    </top>
     <center>
-        <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent;"
-                    BorderPane.alignment="CENTER">
+        <ScrollPane fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" style="-fx-background-color: transparent;" BorderPane.alignment="CENTER">
             <VBox fx:id="list" prefHeight="800.0" prefWidth="500.0" spacing="15.0">
                 <padding>
-                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>
+                    <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
                 </padding>
             </VBox>
         </ScrollPane>
     </center>
+   <top>
+      <VBox BorderPane.alignment="CENTER">
+         <children>
+              <Label fx:id="searching" text="Searching..." VBox.vgrow="NEVER">
+                  <padding>
+                      <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                  </padding>
+              </Label>
+            <ProgressBar fx:id="progBar" maxWidth="1.7976931348623157E308" VBox.vgrow="NEVER">
+               <padding>
+                  <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+               </padding>
+            </ProgressBar>
+         </children>
+      </VBox>
+   </top>
 </BorderPane>

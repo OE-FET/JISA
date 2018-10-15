@@ -48,10 +48,8 @@ public class ITC503 extends MSTController {
         super(address);
         setEOI(false);
         setReadTerminationCharacter(EOS_RETURN);
-        enabledReadTerminationCharacter(true);
         setTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);
-        clearDevice();
 
         try {
             String[] idn = query("V").split(" ");
