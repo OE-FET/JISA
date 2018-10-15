@@ -3,10 +3,7 @@ package JISA.VISA;
 import JISA.Addresses.GPIBAddress;
 import JISA.Addresses.InstrumentAddress;
 import JISA.Addresses.StrAddress;
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import com.sun.jna.ptr.NativeLongByReference;
 import com.sun.jna.ptr.PointerByReference;
 
@@ -111,17 +108,22 @@ public class GPIBDriver implements Driver {
             System.out.println("GPIB driver loaded.");
         }
 
+        NativeLibrary nLib = NativeLibrary.getInstance(libName);
+        lib.ibsta.setPointer(nLib.getGlobalVariableAddress("ibsta"));
+        lib.iberr.setPointer(nLib.getGlobalVariableAddress("iberr"));
+        lib.ibcnt.setPointer(nLib.getGlobalVariableAddress("ibcnt"));
+        lib.ibcntl.setPointer(nLib.getGlobalVariableAddress("ibcntl"));
+
     }
 
     private static boolean wasError() {
-        return (lib.Ibsta() & GPIBNativeInterface.ERR) != 0;
+        return (lib.ibsta.getValue() & GPIBNativeInterface.ERR) != 0;
     }
 
     /**
      * Converts a string to bytes in a ByteBuffer, used for sending to VISA library which expects binary strings.
      *
      * @param source The string, damn you.
-     *
      * @return The ByteBuffer that I mentioned.
      */
     private static ByteBuffer stringToByteBuffer(String source) {
@@ -199,7 +201,7 @@ public class GPIBDriver implements Driver {
             throw new VISAException("Error reading from instrument.");
         }
 
-        return ptr.getString(0).substring(0, lib.Ibcnt()).replace("\n", "").replace("\r", "");
+        return ptr.getString(0).substring(0, lib.ibcnt.getValue()).replace("\n", "").replace("\r", "");
 
     }
 
