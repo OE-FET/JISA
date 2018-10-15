@@ -68,7 +68,7 @@ public class K2600B extends MCSMU {
             throw new DeviceException("Channel does not exist!");
         }
 
-        write(C_SET_VOLT, voltage);
+        write(C_SET_VOLT, CHANNELS[channel], voltage);
         setSource(channel, Source.VOLTAGE);
 
     }
@@ -80,7 +80,7 @@ public class K2600B extends MCSMU {
             throw new DeviceException("Channel does not exist!");
         }
 
-        write(C_SET_CURR, current);
+        write(C_SET_CURR, CHANNELS[channel], current);
         setSource(channel, Source.CURRENT);
 
     }
