@@ -546,6 +546,12 @@ public abstract class SMU extends VISADevice {
         });
     }
 
+    public ResultList createSweepList() {
+        ResultList list = new ResultList("Voltage", "Current");
+        list.setUnits("V", "A");
+        return list;
+    }
+
     /**
      * Enumeration of source modes
      */

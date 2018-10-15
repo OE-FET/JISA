@@ -612,7 +612,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
                 for (double val : conf.values) {
 
-                    setBias(val);
+                    setBias(conf.channel, val);
                     Util.sleep(conf.delay);
                     step(step + 1);
 
@@ -793,7 +793,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
                 this.channel = channel;
                 this.source = source;
-                this.values = values;
+                this.values = symmetric ? Util.symArray(values) : values;
                 this.delay = delay;
                 this.symmetric = symmetric;
 
@@ -842,6 +842,26 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
                 list.addData(data);
             });
         }
+
+    }
+
+
+    public ResultList createSweepList() {
+
+        String[] titles = new String[getNumChannels() * 2];
+        String[] units  = new String[getNumChannels() * 2];
+
+        for (int i = 0; i < getNumChannels(); i++) {
+            titles[i * 2] = String.format("Voltage %d", i);
+            titles[i * 2 + 1] = String.format("Current %d", i);
+            units[i * 2] = "V";
+            units[i * 2 + 1] = "A";
+        }
+
+        ResultList list = new ResultList(titles);
+        list.setUnits(units);
+
+        return list;
 
     }
 
