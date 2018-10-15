@@ -91,7 +91,7 @@ public class GPIBDriver implements Driver {
 
         try {
             if (OS_NAME.contains("win")) {
-                libName = "C:\\Windows\\system32\\ni4882.dll";
+                libName = "ni4882";
                 lib = (GPIBNativeInterface) Native.loadLibrary(libName, GPIBNativeInterface.class);
             } else if (OS_NAME.contains("linux")) {
                 libName = "gpib";

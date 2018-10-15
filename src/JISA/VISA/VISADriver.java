@@ -30,7 +30,7 @@ public class VISADriver implements Driver {
 
         try {
             if (OS_NAME.contains("win")) {
-                libName = "C:\\Windows\\system32\\nivisa64.dll";
+                libName = "nivisa64";
                 lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
             } else if (OS_NAME.contains("linux")) {
                 libName = "visa";

@@ -1,6 +1,7 @@
 package JISA;
 
 import JISA.Addresses.GPIBAddress;
+import JISA.Addresses.InstrumentAddress;
 import JISA.Addresses.StrAddress;
 import JISA.Control.DCPowerLockInController;
 import JISA.Devices.K2200;
@@ -21,18 +22,9 @@ public class Main {
     public static void main(String[] args) {
 
         GUI.startGUI();
-
-        Progress     prog   = new Progress("JISA Library");
         StringWriter writer = new StringWriter();
         try {
 
-            K2200 power = new K2200(new GPIBAddress(0, 22));
-            power.turnOn();
-
-
-            // Prepare the progress window
-            prog.setStatus("Searching for devices...");
-            prog.setProgress(-1, 1);
 
             // Ask the user if they want to perform a test
             boolean result = GUI.confirmWindow("JISA", "JISA Library", "JISA - William Wood - 2018\n\nPerform VISA test?");
@@ -43,51 +35,23 @@ public class Main {
                 return;
             }
 
-            // Show the progress window whilst searching
-            prog.show();
-            boolean found = false;
+            while (true) {
 
-            // Search for devices
-            StrAddress[] addresses = VISA.getInstruments();
-            for (StrAddress a : addresses) {
+                InstrumentAddress address = GUI.browseVISA();
 
-                writer.append("* ");
-                writer.append(a.getVISAAddress());
-
-                VISADevice dev = new VISADevice(a);
-                dev.setTimeout(500);
-                dev.setRetryCount(1);
-
-                writer.append(" \t ");
-
-                // Try to get the instrument to identify itself
-                try {
-                    writer.append(dev.getIDN().replace("\n", "").replace("\r", ""));
-                } catch (Exception e) {
-                    writer.append("Unknown Instrument");
+                if (address == null) {
+                    Platform.exit();
+                    System.exit(0);
                 }
 
-                writer.append("\n\n");
-                dev.close();
-                found = true;
+                DeviceShell shell = new DeviceShell(address);
+                shell.connect();
+                shell.showAndWait();
 
             }
-
-            Util.sleep(500);
-            prog.close();
-
-            if (found) {
-                GUI.infoAlert("JISA", "Found Devices", writer.toString(), 1024);
-            } else {
-                GUI.errorAlert("JISA", "Nothing Found", "No devices were found.\n\nCheck your VISA/GPIB installation.");
-            }
-
-            Platform.exit();
-            System.exit(0);
 
         } catch (Exception | Error e) {
             Util.sleep(500);
-            prog.close();
             StringWriter w = new StringWriter();
             w.append(e.getMessage());
             w.append("\n\n");
