@@ -17,7 +17,7 @@ import java.io.*;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void test(String[] args) {
 
         try {
             run();
@@ -58,7 +58,7 @@ public class Main {
 
     }
 
-    public static void mainold(String[] args) {
+    public static void main(String[] args) {
 
         GUI.startGUI();
         StringWriter writer = new StringWriter();
