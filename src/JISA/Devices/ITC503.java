@@ -63,6 +63,8 @@ public class ITC503 extends MSTController {
             throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
         }
 
+        setMode(Mode.REMOTE_UNLOCKED);
+
     }
 
     private void clearRead() throws IOException {
