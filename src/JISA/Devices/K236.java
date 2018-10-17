@@ -45,7 +45,7 @@ public class K236 extends SMU {
     public K236(InstrumentAddress address) throws IOException, DeviceException {
 
         super(address);
-        setTerminator(C_EXECUTE);
+        setTerminator(C_TRIGGER + C_EXECUTE);
         write(C_RESET);
         turnOff();
         setSourceFunction(Source.VOLTAGE, Function.DC);
@@ -88,13 +88,13 @@ public class K236 extends SMU {
     }
 
     public String getIDN() throws IOException {
-        return query("U0" + C_TRIGGER);
+        return query("U0");
     }
 
     private double readValue(int channel) throws IOException {
 
         // TODO: Test that this works with the actual device in actual reality in the actual lab, actually.
-        return queryDouble(C_GET_VALUE + C_TRIGGER, channel, FORMAT_CLEAN, ONE_DC_DATA);
+        return queryDouble(C_GET_VALUE, channel, FORMAT_CLEAN, ONE_DC_DATA);
 
     }
 

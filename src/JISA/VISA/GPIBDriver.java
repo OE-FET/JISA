@@ -115,7 +115,7 @@ public class GPIBDriver implements Driver {
 
     }
 
-    private boolean wasError() {
+    protected boolean wasError() {
         return (Ibsta() & GPIBNativeInterface.ERR) != 0;
     }
 

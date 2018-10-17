@@ -51,6 +51,8 @@ public class ITC503 extends MSTController {
         setTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);
 
+        clearRead();
+
         try {
             String[] idn = query("V").split(" ");
 
@@ -63,7 +65,26 @@ public class ITC503 extends MSTController {
 
     }
 
+    private void clearRead() throws IOException {
+
+        setTimeout(10);
+
+        while (true) {
+
+            try {
+                read();
+            } catch (Exception e) {
+                break;
+            }
+
+        }
+
+        setTimeout(2000);
+
+    }
+
     private synchronized double readChannel(int channel) throws IOException {
+        clearRead();
         String reply = query(C_READ, channel);
         return Double.parseDouble(reply.substring(1));
     }
