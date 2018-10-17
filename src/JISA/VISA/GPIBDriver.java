@@ -160,7 +160,7 @@ public class GPIBDriver implements Driver {
             throw new VISAException("Could not open %s using GPIB.", addr.getVISAAddress());
         }
 
-        lib.EnableRemote(addr.getBus(), new short[]{(short) addr.getAddress()});
+        lib.EnableRemote(addr.getBus(), new short[]{(short) addr.getAddress(), -1});
 
         if (wasError()) {
             throw new VISAException("Could putting %s into remote mode using GPIB.", addr.getVISAAddress());
