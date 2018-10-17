@@ -8,7 +8,7 @@ public class StrAddress implements InstrumentAddress {
     private String value;
 
     public StrAddress(String value) {
-        this.value = value;
+        this.value = value.trim();
     }
 
     @Override

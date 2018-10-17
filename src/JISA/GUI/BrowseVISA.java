@@ -179,7 +179,7 @@ public class BrowseVISA {
                         g = new GPIBAddress(0, 0);
                     }
                     uri = String.format("Board %d, Address %d", g.getBus(), g.getAddress());
-                    image.setImage(new Image("/JISA/GUI/Images/gpib.png"));
+                    image.setImage(new Image(getClass().getResource("Images/gpib.png").toString()));
                     break;
 
                 case TCPIP:
@@ -189,7 +189,7 @@ public class BrowseVISA {
                         t = new TCPIPAddress("Unknown");
                     }
                     uri = t.getHost();
-                    image.setImage(new Image("/JISA/GUI/Images/tcpip.png"));
+                    image.setImage(new Image(getClass().getResource("Images/tcpip.png").toString()));
                     break;
                 case USB:
                     prot = "USB-TMC";
@@ -198,7 +198,7 @@ public class BrowseVISA {
                         u = new USBAddress("0", "0", "0");
                     }
                     uri = String.format("VendorID: %s, ProductID: %s", u.getManufacturer(), u.getModel());
-                    image.setImage(new Image("/JISA/GUI/Images/usb.png"));
+                    image.setImage(new Image(getClass().getResource("Images/usb.png").toString()));
                     break;
                 case SERIAL:
                     prot = "Serial";
@@ -207,12 +207,12 @@ public class BrowseVISA {
                         s = new SerialAddress(0);
                     }
                     uri = String.format("Port %d", s.getBoard());
-                    image.setImage(new Image("/JISA/GUI/Images/serial.png"));
+                    image.setImage(new Image(getClass().getResource("Images/serial.png").toString()));
                     break;
                 default:
                     prot = "Unknown";
                     uri = address.getVISAAddress();
-                    image.setImage(new Image("/JISA/GUI/Images/serial.png"));
+                    image.setImage(new Image(getClass().getResource("Images/serial.png").toString()));
                     break;
 
 
