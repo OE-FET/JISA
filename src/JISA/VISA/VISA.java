@@ -35,6 +35,11 @@ public class VISA {
             drivers.add(new GPIBDriver());
         } catch (VISAException ignored) { }
 
+        try {
+            NIGPIBDriver.init();
+            drivers.add(new NIGPIBDriver());
+        } catch (VISAException ignored) { }
+
         if (drivers.size() == 0) {
             System.err.println("Could not load any drivers!");
             System.exit(1);

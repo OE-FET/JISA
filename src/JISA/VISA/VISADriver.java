@@ -44,7 +44,7 @@ public class VISADriver implements Driver {
         }
 
         if (lib == null) {
-            System.err.println("VISA driver not loaded.");
+            System.out.println("VISA driver not loaded.");
             throw new VISAException("Could not load VISA library");
         } else {
             System.out.println("VISA driver loaded.");

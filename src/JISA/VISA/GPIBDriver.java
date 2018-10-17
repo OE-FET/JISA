@@ -16,18 +16,18 @@ import java.util.List;
 
 public class GPIBDriver implements Driver {
 
-    private static       GPIBNativeInterface       lib;
-    private static final String                    OS_NAME          = System.getProperty("os.name").toLowerCase();
-    private static       String                    libName;
-    private static final String                    responseEncoding = "UTF8";
-    private static final long                      VISA_ERROR       = 0x7FFFFFFF;
-    private static final int                       _VI_ERROR        = -2147483648;
-    private static final int                       VI_SUCCESS       = 0;
-    private static final int                       VI_NULL          = 0;
-    private static final int                       VI_TRUE          = 1;
-    private static final int                       VI_FALSE         = 0;
-    private static       NativeLong                visaResourceManagerHandle;
-    private static       HashMap<Long, NativeLong> instruments      = new HashMap<>();
+    protected static       GPIBNativeInterface       lib;
+    protected static final String                    OS_NAME          = System.getProperty("os.name").toLowerCase();
+    protected static       String                    libName;
+    protected static final String                    responseEncoding = "UTF8";
+    protected static final long                      VISA_ERROR       = 0x7FFFFFFF;
+    protected static final int                       _VI_ERROR        = -2147483648;
+    protected static final int                       VI_SUCCESS       = 0;
+    protected static final int                       VI_NULL          = 0;
+    protected static final int                       VI_TRUE          = 1;
+    protected static final int                       VI_FALSE         = 0;
+    protected static       NativeLong                visaResourceManagerHandle;
+    protected static       HashMap<Long, NativeLong> instruments      = new HashMap<>();
 
     private enum TMO {
 
@@ -94,7 +94,7 @@ public class GPIBDriver implements Driver {
                 libName = "gpib";
                 lib = (GPIBNativeInterface) Native.loadLibrary(libName, GPIBNativeInterface.class);
             } else {
-                System.err.println("This system is not yet supported!");
+                System.out.println("This system is not yet supported!");
                 System.exit(1);
             }
         } catch (UnsatisfiedLinkError e) {
@@ -102,7 +102,7 @@ public class GPIBDriver implements Driver {
         }
 
         if (lib == null) {
-            System.err.println("GPIB driver not loaded.");
+            System.out.println("Linux GPIB driver not loaded.");
             throw new VISAException("Could not load GPIB library");
         }
 
@@ -111,18 +111,29 @@ public class GPIBDriver implements Driver {
             lib.ibsta.setPointer(nLib.getGlobalVariableAddress("ibsta"));
             lib.iberr.setPointer(nLib.getGlobalVariableAddress("iberr"));
             lib.ibcnt.setPointer(nLib.getGlobalVariableAddress("ibcnt"));
-            lib.ibcntl.setPointer(nLib.getGlobalVariableAddress("ibcntl"));
         } catch (Exception | Error e) {
-            System.err.println("GPIB driver not loaded.");
+            System.out.println("Linux GPIB driver not loaded.");
             throw new VISAException("Could not link global variables");
         }
 
-        System.out.println("GPIB driver loaded.");
+        System.out.println("Linux GPIB driver loaded.");
 
     }
 
     private static boolean wasError() {
-        return (lib.ibsta.getValue() & GPIBNativeInterface.ERR) != 0;
+        return (Ibsta() & GPIBNativeInterface.ERR) != 0;
+    }
+
+    protected static int Ibsta() {
+        return lib.ibsta.getValue();
+    }
+
+    protected static int Iberr() {
+        return lib.iberr.getValue();
+    }
+
+    protected static int Ibcnt() {
+        return lib.ibcnt.getValue();
     }
 
     /**
@@ -213,7 +224,7 @@ public class GPIBDriver implements Driver {
             throw new VISAException("Error reading from instrument.");
         }
 
-        return ptr.getString(0).substring(0, lib.ibcnt.getValue()).replace("\n", "").replace("\r", "");
+        return ptr.getString(0).substring(0, Ibcnt()).replace("\n", "").replace("\r", "");
 
     }
 
@@ -304,7 +315,7 @@ public class GPIBDriver implements Driver {
 
         for (short n : listList) {
 
-            if (n >= 0) {
+            if (n > 0) {
                 list.add(new StrAddress((new GPIBAddress(board, (int) n)).getVISAAddress()));
             }
 
