@@ -228,7 +228,7 @@ public class K2450 extends SMU {
 
     private enum Terms {
 
-        FRONT(0, "FRONT"),
+        FRONT(0, "FRON"),
         REAR(1, "REAR");
 
         private static HashMap<String, Terms>  lookup  = new HashMap<>();
@@ -242,7 +242,7 @@ public class K2450 extends SMU {
         }
 
         public static Terms fromTag(String tag) {
-            return lookup.getOrDefault(tag, null);
+            return lookup.getOrDefault(tag.trim(), null);
         }
 
         public static Terms fromInt(int index) {
