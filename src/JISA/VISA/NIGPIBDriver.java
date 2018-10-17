@@ -33,15 +33,15 @@ public class NIGPIBDriver extends GPIBDriver {
 
     }
 
-    protected static int Ibsta() {
+    protected int Ibsta() {
         return lib.Ibsta();
     }
 
-    protected static int Iberr() {
+    protected int Iberr() {
         return lib.Iberr();
     }
 
-    protected static int Ibcnt() {
+    protected int Ibcnt() {
         return lib.Ibcnt();
     }
 

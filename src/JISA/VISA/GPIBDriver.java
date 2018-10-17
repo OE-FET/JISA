@@ -120,19 +120,19 @@ public class GPIBDriver implements Driver {
 
     }
 
-    private static boolean wasError() {
+    private boolean wasError() {
         return (Ibsta() & GPIBNativeInterface.ERR) != 0;
     }
 
-    protected static int Ibsta() {
+    protected int Ibsta() {
         return lib.ibsta.getValue();
     }
 
-    protected static int Iberr() {
+    protected int Iberr() {
         return lib.iberr.getValue();
     }
 
-    protected static int Ibcnt() {
+    protected int Ibcnt() {
         return lib.ibcnt.getValue();
     }
 
