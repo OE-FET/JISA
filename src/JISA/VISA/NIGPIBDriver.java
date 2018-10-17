@@ -17,19 +17,15 @@ public class NIGPIBDriver extends GPIBDriver {
                 libName = "gpib";
                 lib = (NIGPIBNativeInterface) Native.loadLibrary(libName, NIGPIBNativeInterface.class);
             } else {
-                System.err.println("This system is not yet supported!");
-                System.exit(1);
+                throw new VISAException("Platform not yet supported!");
             }
         } catch (UnsatisfiedLinkError e) {
             lib = null;
         }
 
         if (lib == null) {
-            System.out.println("NI-GPIB driver not loaded.");
             throw new VISAException("Could not load GPIB library");
         }
-
-        System.out.println("NI-GPIB driver loaded.");
 
     }
 

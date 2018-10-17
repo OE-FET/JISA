@@ -94,15 +94,13 @@ public class GPIBDriver implements Driver {
                 libName = "gpib";
                 lib = (GPIBNativeInterface) Native.loadLibrary(libName, GPIBNativeInterface.class);
             } else {
-                System.out.println("This system is not yet supported!");
-                System.exit(1);
+                throw new VISAException("Platform not yet supported!");
             }
         } catch (UnsatisfiedLinkError e) {
             lib = null;
         }
 
         if (lib == null) {
-            System.out.println("Linux GPIB driver not loaded.");
             throw new VISAException("Could not load GPIB library");
         }
 
@@ -112,11 +110,8 @@ public class GPIBDriver implements Driver {
             lib.iberr.setPointer(nLib.getGlobalVariableAddress("iberr"));
             lib.ibcnt.setPointer(nLib.getGlobalVariableAddress("ibcnt"));
         } catch (Exception | Error e) {
-            System.out.println("Linux GPIB driver not loaded.");
             throw new VISAException("Could not link global variables");
         }
-
-        System.out.println("Linux GPIB driver loaded.");
 
     }
 

@@ -36,20 +36,14 @@ public class VISADriver implements Driver {
                 libName = "visa";
                 lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
             } else {
-                System.err.println("This system is not yet supported!");
-                System.exit(1);
+                throw new VISAException("Platform not yet supported!");
             }
         } catch (UnsatisfiedLinkError e) {
             lib = null;
         }
 
-        lib = null;
-
         if (lib == null) {
-            System.out.println("VISA driver not loaded.");
             throw new VISAException("Could not load VISA library");
-        } else {
-            System.out.println("VISA driver loaded.");
         }
 
         // Attempt to get a resource manager handle

@@ -2,6 +2,7 @@ package JISA.VISA;
 
 import JISA.Addresses.InstrumentAddress;
 import JISA.Addresses.StrAddress;
+import JISA.Util;
 import com.sun.jna.Callback;
 import com.sun.jna.CallbackThreadInitializer;
 import com.sun.jna.Native;
@@ -26,23 +27,38 @@ public class VISA {
     static {
 
         try {
+            System.out.print("Trying VISA driver...                \t");
             VISADriver.init();
             drivers.add(new VISADriver());
-        } catch (VISAException ignored) { }
+            System.out.println("Success.");
+        } catch (VISAException ignored) {
+            System.out.println("Nope.");
+        }
 
         try {
+            System.out.print("Trying Linux GPIB (libgpib) driver...\t");
             GPIBDriver.init();
             drivers.add(new GPIBDriver());
-        } catch (VISAException ignored) { }
+            System.out.println("Success.");
+        } catch (VISAException ignored) {
+            System.out.println("Nope.");
+        }
 
         try {
+            System.out.print("Trying NI-GPIB (ni4882) driver...    \t");
             NIGPIBDriver.init();
             drivers.add(new NIGPIBDriver());
-        } catch (VISAException ignored) { }
+            System.out.println("Success.");
+        } catch (VISAException ignored) {
+            System.out.println("Nope.");
+        }
 
         if (drivers.size() == 0) {
-            System.err.println("Could not load any drivers!");
+            Util.sleep(500);
+            System.err.println("ERROR: Could not load any drivers!");
             System.exit(1);
+        } else {
+            System.out.printf("Successfully loaded %d drivers.\n", drivers.size());
         }
 
     }
