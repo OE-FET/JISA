@@ -77,6 +77,16 @@ public class DeviceShell {
 
     }
 
+    public void textEnter() {
+
+        if (input.getText().contains("?")) {
+            queryLine();
+        } else {
+            writeLine();
+        }
+
+    }
+
     @FXML
     public void writeLine() {
 

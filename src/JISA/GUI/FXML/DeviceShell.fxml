@@ -17,7 +17,7 @@
    <bottom>
       <HBox spacing="15.0" BorderPane.alignment="CENTER">
          <children>
-            <TextField fx:id="input" onAction="#writeLine" HBox.hgrow="ALWAYS">
+            <TextField fx:id="input" onAction="#textEnter" HBox.hgrow="ALWAYS">
                <HBox.margin>
                   <Insets />
                </HBox.margin>
