@@ -104,15 +104,20 @@ public class GPIBDriver implements Driver {
         if (lib == null) {
             System.err.println("GPIB driver not loaded.");
             throw new VISAException("Could not load GPIB library");
-        } else {
-            System.out.println("GPIB driver loaded.");
         }
 
-        NativeLibrary nLib = NativeLibrary.getInstance(libName);
-        lib.ibsta.setPointer(nLib.getGlobalVariableAddress("ibsta"));
-        lib.iberr.setPointer(nLib.getGlobalVariableAddress("iberr"));
-        lib.ibcnt.setPointer(nLib.getGlobalVariableAddress("ibcnt"));
-        lib.ibcntl.setPointer(nLib.getGlobalVariableAddress("ibcntl"));
+        try {
+            NativeLibrary nLib = NativeLibrary.getInstance(libName);
+            lib.ibsta.setPointer(nLib.getGlobalVariableAddress("ibsta"));
+            lib.iberr.setPointer(nLib.getGlobalVariableAddress("iberr"));
+            lib.ibcnt.setPointer(nLib.getGlobalVariableAddress("ibcnt"));
+            lib.ibcntl.setPointer(nLib.getGlobalVariableAddress("ibcntl"));
+        } catch (Exception | Error e) {
+            System.err.println("GPIB driver not loaded.");
+            throw new VISAException("Could not link global variables");
+        }
+
+        System.out.println("GPIB driver loaded.");
 
     }
 
@@ -124,6 +129,7 @@ public class GPIBDriver implements Driver {
      * Converts a string to bytes in a ByteBuffer, used for sending to VISA library which expects binary strings.
      *
      * @param source The string, damn you.
+     *
      * @return The ByteBuffer that I mentioned.
      */
     private static ByteBuffer stringToByteBuffer(String source) {
