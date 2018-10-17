@@ -35,6 +35,8 @@ public class ITC503 extends MSTController {
     private static final int    STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
     private static final double STANDARD_ERROR_PERC           = 10;
 
+    private long timeout = 2000;
+
     /**
      * Open the ITC503 device at the given bus and address
      *
@@ -69,8 +71,10 @@ public class ITC503 extends MSTController {
 
     private void clearRead() throws IOException {
 
+        // Use a short time-out
         setTimeout(10);
 
+        // Keep reading until there's nothing left to read
         while (true) {
 
             try {
@@ -81,8 +85,14 @@ public class ITC503 extends MSTController {
 
         }
 
-        setTimeout(2000);
+        // Put the time-out back to normal
+        setTimeout(timeout);
 
+    }
+
+    public void setTimeout(long value) throws IOException {
+        timeout = value;
+        super.setTimeout(value);
     }
 
     private synchronized double readChannel(int channel) throws IOException {
