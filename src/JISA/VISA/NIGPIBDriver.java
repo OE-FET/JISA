@@ -27,6 +27,12 @@ public class NIGPIBDriver extends GPIBDriver {
             throw new VISAException("Could not load GPIB library");
         }
 
+        try {
+            lib.Ibsta();
+        } catch (UnsatisfiedLinkError e) {
+            throw new VISAException("Could not link to global var methods.");
+        }
+
     }
 
     protected int Ibsta() {

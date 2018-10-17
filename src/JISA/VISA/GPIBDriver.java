@@ -273,7 +273,7 @@ public class GPIBDriver implements Driver {
 
         ArrayList<StrAddress> addresses = new ArrayList<>();
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 16; i++) {
 
             try {
                 addresses.addAll(search(i));
