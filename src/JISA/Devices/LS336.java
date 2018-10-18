@@ -28,7 +28,7 @@ public class LS336 extends MSMOTController {
                 throw new DeviceException("Device at address %s is not a LakeShore 336!", address.getVISAAddress());
             }
 
-        } catch (IOException | DeviceException e) {
+        } catch (IOException e) {
             throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
         }
 
