@@ -62,12 +62,9 @@ public class LS336 extends MSMOTController {
     public void useSensor(int output, int sensor) throws IOException, DeviceException {
         checkOutput(output);
         checkSensor(sensor);
-        write(C_SET_OUT_MODE,
-                output + 1,
-                isPIDAuto(output) ? 2 : 1,
-                sensor + 1,
-                0
-        );
+        OutMode mode = getOutMode(output);
+        mode.input = sensor + 1;
+        write(C_SET_OUT_MODE, mode.output, mode.mode, mode.input, mode.powerUp ? 1 : 0);
     }
 
     @Override
