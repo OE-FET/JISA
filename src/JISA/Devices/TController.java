@@ -73,14 +73,22 @@ public abstract class TController extends VISADevice {
     public abstract double getGasFlow() throws IOException, DeviceException;
 
     /**
-     * Sets whether the heater should be operated automatically or manually
-     *
-     * @param auto Automatic?
+     * Sets the heater to be operated automatically
      *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void useAutoHeater(boolean auto) throws IOException, DeviceException;
+    public abstract void useAutoHeater() throws IOException, DeviceException;
+
+    /**
+     * Sets the heater to be operated manually with the specified power output percentage
+     *
+     * @param powerPCT Output power (percentage of max)
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract void setManualHeater(double powerPCT) throws IOException, DeviceException;
 
     /**
      * Returns whether the heater is currently operating automatically or manually
@@ -93,14 +101,22 @@ public abstract class TController extends VISADevice {
     public abstract boolean isHeaterAuto() throws IOException, DeviceException;
 
     /**
-     * Sets whether the gas flow should be controlled automatically or manually
-     *
-     * @param auto Automatic?
+     * Sets the gas flow to be controlled automatically
      *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void useAutoFlow(boolean auto) throws IOException, DeviceException;
+    public abstract void useAutoFlow() throws IOException, DeviceException;
+
+    /**
+     * Sets the gas flow to be controlled manually with the specified output
+     *
+     * @param outputPCT Output
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract void setManualFlow(double outputPCT) throws IOException, DeviceException;
 
     /**
      * Returns whether the gas flow is currently controlled automatically or manually

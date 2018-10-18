@@ -30,6 +30,8 @@ public class ITC503 extends MSTController {
     private static final String C_SET_P            = "P%f";
     private static final String C_SET_I            = "I%f";
     private static final String C_SET_D            = "D%f";
+    private static final String C_SET_HEATER       = "O%f";
+    private static final String C_SET_FLOW         = "G%f";
     private static final String C_QUERY_STATUS     = "X";
     private static final int    SET_TEMP_CHANNEL   = 0;
     private static final int    TEMP_ERROR_CHANNEL = 4;
@@ -134,8 +136,15 @@ public class ITC503 extends MSTController {
     }
 
     @Override
-    public void useAutoHeater(boolean auto) throws IOException, DeviceException {
-        AutoMode mode = AutoMode.fromMode(auto, isFlowAuto());
+    public void useAutoHeater() throws IOException, DeviceException {
+        AutoMode mode = AutoMode.fromMode(true, isFlowAuto());
+        query(C_SET_AUTO, mode.toInt());
+    }
+
+    @Override
+    public void setManualHeater(double powerPCT) throws IOException, DeviceException {
+        query(C_SET_HEATER, powerPCT);
+        AutoMode mode = AutoMode.fromMode(false, isFlowAuto());
         query(C_SET_AUTO, mode.toInt());
     }
 
@@ -145,8 +154,15 @@ public class ITC503 extends MSTController {
     }
 
     @Override
-    public void useAutoFlow(boolean auto) throws IOException, DeviceException {
-        AutoMode mode = AutoMode.fromMode(isHeaterAuto(), auto);
+    public void useAutoFlow() throws IOException, DeviceException {
+        AutoMode mode = AutoMode.fromMode(isHeaterAuto(), true);
+        query(C_SET_AUTO, mode.toInt());
+    }
+
+    @Override
+    public void setManualFlow(double outputPCT) throws IOException, DeviceException {
+        query(C_SET_FLOW, outputPCT);
+        AutoMode mode = AutoMode.fromMode(isHeaterAuto(), false);
         query(C_SET_AUTO, mode.toInt());
     }
 
@@ -236,6 +252,11 @@ public class ITC503 extends MSTController {
     @Override
     public int getUsedSensor() throws IOException, DeviceException {
         return getStatus().H - 1;
+    }
+
+    @Override
+    public int getNumSensors() {
+        return 3;
     }
 
     public String getIDN() throws IOException {
