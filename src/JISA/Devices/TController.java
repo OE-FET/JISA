@@ -73,6 +73,126 @@ public abstract class TController extends VISADevice {
     public abstract double getGasFlow() throws IOException, DeviceException;
 
     /**
+     * Sets whether the heater should be operated automatically or manually
+     *
+     * @param auto Automatic?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract void useAutoHeater(boolean auto) throws IOException, DeviceException;
+
+    /**
+     * Returns whether the heater is currently operating automatically or manually
+     *
+     * @return Automatic?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract boolean isHeaterAuto() throws IOException, DeviceException;
+
+    /**
+     * Sets whether the gas flow should be controlled automatically or manually
+     *
+     * @param auto Automatic?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract void useAutoFlow(boolean auto) throws IOException, DeviceException;
+
+    /**
+     * Returns whether the gas flow is currently controlled automatically or manually
+     *
+     * @return Automatic?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract boolean isFlowAuto() throws IOException, DeviceException;
+
+    /**
+     * Sets whether the PID values are being automatically controlled
+     *
+     * @return Automatic?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract void useAutoPID(boolean auto) throws IOException, DeviceException;
+
+    /**
+     * Returns whether the PID values are being automatically controlled
+     *
+     * @return Automatic?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract boolean isPIDAuto() throws IOException, DeviceException;
+
+    /**
+     * Sets the proportional term co-efficient for PID control
+     *
+     * @param value Proportional co-efficient
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract void setPValue(double value) throws IOException, DeviceException;
+
+    /**
+     * Sets the integral term co-efficient for PID control
+     *
+     * @param value Integral co-efficient
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract void setIValue(double value) throws IOException, DeviceException;
+
+    /**
+     * Sets the derivative term co-efficient for PID control
+     *
+     * @param value Derivative co-efficient
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract void setDValue(double value) throws IOException, DeviceException;
+
+    /**
+     * Returns the proportional term co-efficient used for PID control
+     *
+     * @return Proportional co-efficient
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract double getPValue() throws IOException, DeviceException;
+
+    /**
+     * Returns the integral term co-efficient used for PID control
+     *
+     * @return Integral co-efficient
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract double getIValue() throws IOException, DeviceException;
+
+    /**
+     * Returns the derivative term co-efficient used for PID control
+     *
+     * @return Derivative co-efficient
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract double getDValue() throws IOException, DeviceException;
+
+    /**
      * Sets the target temperature and waits for it to be stably reached.
      *
      * @param temperature Target temperature, in Kelvin
