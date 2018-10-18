@@ -24,7 +24,7 @@ public class LS336 extends MSMOTController {
 
         try {
 
-            if (!getIDN().trim().split(",")[1].equals("MODEL336")) {
+            if (!getIDN().trim().split(",")[1].trim().equals("MODEL336")) {
                 throw new DeviceException("Device at address %s is not a LakeShore 336!", address.getVISAAddress());
             }
 
