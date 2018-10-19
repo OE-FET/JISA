@@ -9,7 +9,7 @@ JISA is a Java libary that I originally designed because I really really really 
 2. Dealing with experimental data
 3. Creating simple GUIs to control and observe experiments
 
-### Currently supported devices:
+**Currently Implemented Devices:**
 |Class|Type|Model|Link|
 |-----|----|-----|----|
 |`K2450`|SMU|Keithley 2450|[Source](./src/JISA/Devices/K2450.java)|
