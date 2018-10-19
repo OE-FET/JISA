@@ -9,6 +9,18 @@ JISA is a Java libary that I originally designed because I really really really 
 2. Dealing with experimental data
 3. Creating simple GUIs to control and observe experiments
 
+### Currently supported devices:
+|Class|Type|Model|Link|
+|-----|----|-----|----|
+|`K2450`|SMU|Keithley 2450|[Source](./src/JISA/Devices/K2450.java)|
+|`K236`|SMU|Keithley 236|[Source](./src/JISA/Devices/K236.java)|
+|`K2600B`|SMU|Keithley 2600B Series|[Source](./src/JISA/Devices/K2600B.java)|
+|`K2200`|DC Power Supply|Keithley 2200 Series|[Source](./src/JISA/Devices/K2200.java)|
+|`ITC503`|Temperature Controller|Mercury ITC 503|[Source](./src/JISA/Devices/ITC503.java)|
+|`LS336`|Temperature Controller|LakeShore 336|[Source](./src/JISA/Devices/LS336.java)|
+|`SR830`|Lock-In Amplifier|Stanford Research Systems SR830|[Source](./src/JISA/Devices/SR830.java)|
+|`SR560`|Voltage Pre-Amp|Stanford Research Systems SR560|[Source](./src/JISA/Devices/SR560.java)|
+
 ## Instrument Control
 The guiding principle behind the instrument control is to provide a common interface for each type of device, with the code underneath bridging the gap between what the user sees and what the instrument itself requires.
 
@@ -35,18 +47,6 @@ IVPoint[] points2 = smu2.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500);
 In the example above, we have told both the K2450 and K236 to source 5 V and measure the resulting current. This is done using identical method calls on both despite the fact that the K236 and K2450 will implement these actions using fundamentally different approaches.
 
 The same applies for all other types of device implemented so far, including lock-in amplifiers and DC power supplies.
-
-### Currently supported devices:
-|Class|Type|Model|Link|
-|-----|----|-----|----|
-|`K2450`|SMU|Keithley 2450|[Source](./src/JISA/Devices/K2450.java)|
-|`K236`|SMU|Keithley 236|[Source](./src/JISA/Devices/K236.java)|
-|`K2600B`|SMU|Keithley 2600B Series|[Source](./src/JISA/Devices/K2600B.java)|
-|`K2200`|DC Power Supply|Keithley 2200 Series|[Source](./src/JISA/Devices/K2200.java)|
-|`ITC503`|Temperature Controller|Mercury ITC 503|[Source](./src/JISA/Devices/ITC503.java)|
-|`LS336`|Temperature Controller|LakeShore 336|[Source](./src/JISA/Devices/LS336.java)|
-|`SR830`|Lock-In Amplifier|Stanford Research Systems SR830|[Source](./src/JISA/Devices/SR830.java)|
-|`SR560`|Voltage Pre-Amp|Stanford Research Systems SR560|[Source](./src/JISA/Devices/SR560.java)|
 
 ## Handling Results
 JISA provides a class called ``ResultList`` designed to encapsulate experimental data generated using the instrument control structures. This provides a quick way to record data and then export it as a CSV file, MATLAB script or even an ASCII table.
