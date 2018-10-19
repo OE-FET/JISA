@@ -111,6 +111,7 @@ public class Grid implements Gridable {
         t.setText(toAdd.getTitle());
         stack.getChildren().add(t);
         container.setPadding(new Insets(15, 15, 15, 15));
+        toAdd.getPane().setStyle("-fx-background-color: transparent;");
         container.getChildren().add(toAdd.getPane());
         bPane.setTop(stack);
         bPane.setCenter(container);

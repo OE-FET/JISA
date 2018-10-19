@@ -104,6 +104,10 @@ public class Plot implements Gridable {
 
         final int series = createSeries(seriesName, colour);
 
+        for (Result row : list) {
+            addPoint(series, row.get(xData), row.get(yData));
+        }
+
         list.setOnUpdate(() -> {
             Result r = list.getLastRow();
             addPoint(series, r.get(xData), r.get(yData));
