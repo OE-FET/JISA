@@ -22,6 +22,20 @@ JISA is a Java libary that I originally designed because I really really really 
 |`SR830`|Lock-In Amplifier|Stanford Research Systems SR830|[Source](./src/JISA/Devices/SR830.java)|
 |`SR560`|Voltage Pre-Amp|Stanford Research Systems SR560|[Source](./src/JISA/Devices/SR560.java)|
 
+**Currently Implemented Device Types:**
+
+|Abstract Class|Type|Link|
+|--------------|----|----|
+|`SMU`|Source-Measure Unit|[Source](./src/JISA/Devices/SMU.java)|
+|`MCSMU`|Multi-Channel Source-Measure Unit|[Source](./src/JISA/Devices/MCSMU.java)|
+|`DCPower`|DC Power Supply|[Source](./src/JISA/Devices/DCPower.java)|
+|`TController`|Temperature Controller|[Source](./src/JISA/Devices/TController.java)|
+|`MSTController`|Multi-Sensor Temperature Controller|[Source](./src/JISA/Devices/MSTController.java)|
+|`MSMOTController`|Multi-Sensor, Multi-Output Temperature Controller|[Source](./src/JISA/Devices/MSMOTController.java)|
+|`LockIn`|Lock-In Amplifier|[Source](./src/JISA/Devices/LockIn.java)|
+|`DPLockIn`|Dual-Phase Lock-In Amplifier|[Source](./src/JISA/Devices/DPLockIn.java)|
+|`VPreAmp`|Voltage Pre-Amplifier|[Source](./src/JISA/Devices/VPreAmp.java)|
+
 ## Instrument Control
 The guiding principle behind the instrument control is to provide a common interface for each type of device, with the code underneath bridging the gap between what the user sees and what the instrument itself requires.
 
