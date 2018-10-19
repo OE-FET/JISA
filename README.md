@@ -37,16 +37,16 @@ In the example above, we have told both the K2450 and K236 to source 5 V and mea
 The same applies for all other types of device implemented so far, including lock-in amplifiers and DC power supplies.
 
 ### Currently supported devices:
-|Class|Type|Model|
-|-----|----|------|
-|`K2450`|SMU|Keithley 2450|
-|`K236`|SMU|Keithley 236|
-|`K2600B`|SMU|Keithley 2600B Series|
-|`K2200`|DC Power Supply|Keithley 2200 Series|
-|`ITC503`|Temperature Controller|Mercury ITC 503|
-|`LS336`|Temperature Controller|LakeShore 336|
-|`SR830`|Lock-In Amplifier|Stanford Research Systems SR830|
-|`SR560`|Voltage Pre-Amp|Stanford Research Systems SR560|
+|Class|Type|Model|Link|
+|-----|----|-----|----|
+|`K2450`|SMU|Keithley 2450|[Source](./blob/master/src/JISA/Devices/K2450.java)|
+|`K236`|SMU|Keithley 236|[Source](./blob/master/src/JISA/Devices/K236.java)|
+|`K2600B`|SMU|Keithley 2600B Series|[Source](./blob/master/src/JISA/Devices/K2600B.java)|
+|`K2200`|DC Power Supply|Keithley 2200 Series|[Source](./blob/master/src/JISA/Devices/K2200.java)|
+|`ITC503`|Temperature Controller|Mercury ITC 503|[Source](./blob/master/src/JISA/Devices/ITC503.java)|
+|`LS336`|Temperature Controller|LakeShore 336|[Source](./blob/master/src/JISA/Devices/LS336.java)|
+|`SR830`|Lock-In Amplifier|Stanford Research Systems SR830|[Source](./blob/master/src/JISA/Devices/SR830.java)|
+|`SR560`|Voltage Pre-Amp|Stanford Research Systems SR560|[Source](./blob/master/src/JISA/Devices/SR560.java)|
 
 ## Handling Results
 JISA provides a class called ``ResultList`` designed to encapsulate experimental data generated using the instrument control structures. This provides a quick way to record data and then export it as a CSV file, MATLAB script or even an ASCII table.
