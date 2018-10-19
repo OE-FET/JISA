@@ -161,4 +161,17 @@ public abstract class MSMOTController extends MSTController {
         setManualFlow(defaultOutput, outputPCT);
     }
 
+    public void waitForStableTemperature(int output) throws IOException, DeviceException {
+
+        checkOutput(output);
+        waitForStableTemperature(getUsedSensor(output), getTargetTemperature(output));
+
+    }
+
+    public void setTargetAndWait(int output, double temperature) throws IOException, DeviceException {
+        checkOutput(output);
+        setTargetTemperature(output, temperature);
+        waitForStableTemperature(output);
+    }
+
 }

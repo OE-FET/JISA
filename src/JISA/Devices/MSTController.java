@@ -1,11 +1,14 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
+import JISA.Control.Synch;
 import JISA.Util;
 
 import java.io.IOException;
 
 public abstract class MSTController extends TController {
+
+    protected int defaultSensor = 0;
 
     public MSTController(InstrumentAddress address) throws IOException {
         super(address);
@@ -25,7 +28,7 @@ public abstract class MSTController extends TController {
 
     @Override
     public double getTemperature() throws IOException, DeviceException {
-        return getTemperature(0);
+        return getTemperature(defaultSensor);
     }
 
     /**
@@ -54,6 +57,33 @@ public abstract class MSTController extends TController {
         if (!Util.isBetween(sensor, 0, getNumSensors() - 1)) {
             throw new DeviceException("This temperature controller only has %d sensors.", getNumSensors());
         }
+    }
+
+    public void waitForStableTemperature(int sensor, double temperature, double pctMargin, long time) throws IOException, DeviceException {
+
+        checkSensor(sensor);
+
+        Synch.waitForStableTarget(
+                () -> getTemperature(sensor),
+                temperature,
+                pctMargin,
+                100,
+                time
+        );
+
+    }
+
+    public void waitForStableTemperature(int sensor, double temperature) throws IOException, DeviceException {
+        waitForStableTemperature(sensor, temperature, 1.0, 10000);
+    }
+
+    public void waitForStableTemperature() throws IOException, DeviceException {
+        waitForStableTemperature(getUsedSensor(), getTargetTemperature());
+    }
+
+    public void setTargetAndWait(double temperature) throws IOException, DeviceException {
+        setTargetTemperature(temperature);
+        waitForStableTemperature();
     }
 
 }
