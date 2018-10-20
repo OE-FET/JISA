@@ -11,30 +11,30 @@ JISA is a Java libary that I originally designed because I really really really 
 
 **Currently Implemented Devices:**
 
-|Class|Type|Model|Link|
-|-----|----|-----|----|
-|`K2450`|SMU|Keithley 2450|[Source](./src/JISA/Devices/K2450.java)|
-|`K236`|SMU|Keithley 236|[Source](./src/JISA/Devices/K236.java)|
-|`K2600B`|SMU|Keithley 2600B Series|[Source](./src/JISA/Devices/K2600B.java)|
-|`K2200`|DC Power Supply|Keithley 2200 Series|[Source](./src/JISA/Devices/K2200.java)|
-|`ITC503`|Temperature Controller|Mercury ITC 503|[Source](./src/JISA/Devices/ITC503.java)|
-|`LS336`|Temperature Controller|LakeShore 336|[Source](./src/JISA/Devices/LS336.java)|
-|`SR830`|Lock-In Amplifier|Stanford Research Systems SR830|[Source](./src/JISA/Devices/SR830.java)|
-|`SR560`|Voltage Pre-Amp|Stanford Research Systems SR560|[Source](./src/JISA/Devices/SR560.java)|
+|Class|Type|Model|Source|JavaDoc|
+|-----|----|-----|------|-------|
+|`K2450`|SMU|Keithley 2450|[Source](./src/JISA/Devices/K2450.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2450.html)|
+|`K236`|SMU|Keithley 236|[Source](./src/JISA/Devices/K236.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K236.html)|
+|`K2600B`|SMU|Keithley 2600B Series|[Source](./src/JISA/Devices/K2600B.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2600B.html)|
+|`K2200`|DC Power Supply|Keithley 2200 Series|[Source](./src/JISA/Devices/K2200.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2200.html)|
+|`ITC503`|Temperature Controller|Mercury ITC 503|[Source](./src/JISA/Devices/ITC503.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/ITC503.html)|
+|`LS336`|Temperature Controller|LakeShore 336|[Source](./src/JISA/Devices/LS336.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/LS336.html)|
+|`SR830`|Lock-In Amplifier|Stanford Research Systems SR830|[Source](./src/JISA/Devices/SR830.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SR830.html)|
+|`SR560`|Voltage Pre-Amp|Stanford Research Systems SR560|[Source](./src/JISA/Devices/SR560.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SR560.html)|
 
 **Currently Implemented Device Types:**
 
-|Abstract Class|Type|Link|
-|--------------|----|----|
-|`SMU`|Source-Measure Unit|[Source](./src/JISA/Devices/SMU.java)|
-|`MCSMU`|Multi-Channel Source-Measure Unit|[Source](./src/JISA/Devices/MCSMU.java)|
-|`DCPower`|DC Power Supply|[Source](./src/JISA/Devices/DCPower.java)|
-|`TController`|Temperature Controller|[Source](./src/JISA/Devices/TController.java)|
-|`MSTController`|Multi-Sensor Temperature Controller|[Source](./src/JISA/Devices/MSTController.java)|
-|`MSMOTController`|Multi-Sensor, Multi-Output Temperature Controller|[Source](./src/JISA/Devices/MSMOTController.java)|
-|`LockIn`|Lock-In Amplifier|[Source](./src/JISA/Devices/LockIn.java)|
-|`DPLockIn`|Dual-Phase Lock-In Amplifier|[Source](./src/JISA/Devices/DPLockIn.java)|
-|`VPreAmp`|Voltage Pre-Amplifier|[Source](./src/JISA/Devices/VPreAmp.java)|
+|Abstract Class|Type|Source|JavaDoc|
+|--------------|----|------|-------|
+|`SMU`|Source-Measure Unit|[Source](./src/JISA/Devices/SMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SMU.html)|
+|`MCSMU`|Multi-Channel Source-Measure Unit|[Source](./src/JISA/Devices/MCSMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MCSMU.html)|
+|`DCPower`|DC Power Supply|[Source](./src/JISA/Devices/DCPower.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DCPower.html)|
+|`TController`|Temperature Controller|[Source](./src/JISA/Devices/TController.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/TController.html)|
+|`MSTController`|Multi-Sensor Temperature Controller|[Source](./src/JISA/Devices/MSTController.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSTController.html)|
+|`MSMOTController`|Multi-Sensor, Multi-Output Temperature Controller|[Source](./src/JISA/Devices/MSMOTController.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSMOTController.html)|
+|`LockIn`|Lock-In Amplifier|[Source](./src/JISA/Devices/LockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/LockIn.html)|
+|`DPLockIn`|Dual-Phase Lock-In Amplifier|[Source](./src/JISA/Devices/DPLockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DPLockIn.html)|
+|`VPreAmp`|Voltage Pre-Amplifier|[Source](./src/JISA/Devices/VPreAmp.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/VPreAmp.html)|
 
 ## Instrument Control
 The guiding principle behind the instrument control is to provide a common interface for each type of device, with the code underneath bridging the gap between what the user sees and what the instrument itself requires.
