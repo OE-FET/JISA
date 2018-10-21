@@ -4,6 +4,7 @@ import JISA.Addresses.GPIBAddress;
 import JISA.Addresses.InstrumentAddress;
 import JISA.Addresses.StrAddress;
 import JISA.Control.DCPowerLockInController;
+import JISA.Control.SetGettable;
 import JISA.Devices.*;
 import JISA.Experiment.ResultList;
 import JISA.GUI.*;
@@ -16,7 +17,6 @@ import javafx.scene.paint.Color;
 import java.io.*;
 
 public class Main {
-
 
     public static void main(String[] args) {
 
