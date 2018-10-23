@@ -350,6 +350,42 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         return isUsingFourProbe(0);
     }
 
+    public abstract void setAverageMode(int channel, AMode mode) throws DeviceException, IOException;
+
+    public void setAverageMode(AMode mode) throws DeviceException, IOException {
+        setAverageMode(0, mode);
+    }
+
+    public abstract void setAverageCount(int channel, int count) throws DeviceException, IOException;
+
+    public void setAverageCount(int count) throws DeviceException, IOException {
+        setAverageCount(0, count);
+    }
+
+    public abstract int getAverageCount(int channel) throws DeviceException, IOException;
+
+    public int getAverageCount() throws DeviceException, IOException {
+        return getAverageCount(0);
+    }
+
+    public abstract AMode getAverageMode(int channel) throws DeviceException, IOException;
+
+    public AMode getAverageMode() throws DeviceException, IOException {
+        return getAverageMode(0);
+    }
+
+    public abstract void useAverage(int channel, boolean use) throws DeviceException, IOException;
+
+    public void useAverage(boolean use) throws DeviceException, IOException {
+        useAverage(0, use);
+    }
+
+    public abstract boolean isAverageUsed(int channel) throws DeviceException, IOException;
+
+    public boolean isAverageUsed() throws DeviceException, IOException {
+        return isAverageUsed(0);
+    }
+
     /**
      * Returns a virtual SMU object to control the specified channel of the MCSMU
      *
@@ -770,6 +806,36 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         @Override
         public boolean isUsingFourProbe() throws DeviceException, IOException {
             return MCSMU.this.isUsingFourProbe(channel);
+        }
+
+        @Override
+        public void setAverageMode(AMode mode) throws DeviceException, IOException {
+            MCSMU.this.setAverageMode(channel, mode);
+        }
+
+        @Override
+        public void setAverageCount(int count) throws DeviceException, IOException {
+            MCSMU.this.setAverageCount(channel, count);
+        }
+
+        @Override
+        public AMode getAverageMode() throws DeviceException, IOException {
+            return MCSMU.this.getAverageMode(channel);
+        }
+
+        @Override
+        public void useAverage(boolean use) throws DeviceException, IOException {
+            MCSMU.this.useAverage(channel, use);
+        }
+
+        @Override
+        public boolean isAverageUsed() throws DeviceException, IOException {
+            return MCSMU.this.isAverageUsed(channel);
+        }
+
+        @Override
+        public int getAverageCount() throws DeviceException, IOException {
+            return MCSMU.this.getAverageCount(channel);
         }
 
     }

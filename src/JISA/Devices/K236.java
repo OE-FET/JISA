@@ -117,6 +117,36 @@ public class K236 extends SMU {
         return remote;
     }
 
+    @Override
+    public void setAverageMode(AMode mode) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public void setAverageCount(int count) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public AMode getAverageMode() throws DeviceException, IOException {
+        return null;
+    }
+
+    @Override
+    public void useAverage(boolean use) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public boolean isAverageUsed() throws DeviceException, IOException {
+        return false;
+    }
+
+    @Override
+    public int getAverageCount() throws DeviceException, IOException {
+        return 0;
+    }
+
     public double getVoltage() throws IOException {
 
         switch (source) {

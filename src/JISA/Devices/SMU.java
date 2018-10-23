@@ -153,6 +153,50 @@ public abstract class SMU extends VISADevice {
      */
     public abstract boolean isUsingFourProbe() throws DeviceException, IOException;
 
+    /**
+     * Sets the averaging mode of the SMU.
+     *
+     * @param mode Mode to use
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void setAverageMode(AMode mode) throws DeviceException, IOException;
+
+    /**
+     * Sets how many measurements the SMU should average over.
+     *
+     * @param count Number of measurements
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void setAverageCount(int count) throws DeviceException, IOException;
+
+    /**
+     * Returns the averaging mode of the SMU.
+     *
+     * @return Mode being used
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract AMode getAverageMode() throws DeviceException, IOException;
+
+    public abstract void useAverage(boolean use) throws DeviceException, IOException;
+
+    public abstract boolean isAverageUsed() throws DeviceException, IOException;
+
+    /**
+     * Returns the number of measurements used for averaging by the SMU.
+     *
+     * @return Number of measurements
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract int getAverageCount() throws DeviceException, IOException;
+
 
     /**
      * Returns the number of terminals that can be used on the SMU.
@@ -447,11 +491,11 @@ public abstract class SMU extends VISADevice {
             throw new DeviceException("Delay time cannot be larger than either time on or time off for a pulsed sweep.");
         }
 
-        final ArrayList<IVPoint> points    = new ArrayList<>();
-        IVPoint                  point1    = null;
-        IVPoint                  point2    = null;
-        long                     lastTime  = 0;
-        Updater                  updater   = new Updater(points, onUpdate);
+        final ArrayList<IVPoint> points   = new ArrayList<>();
+        IVPoint                  point1   = null;
+        IVPoint                  point2   = null;
+        long                     lastTime = 0;
+        Updater                  updater  = new Updater(points, onUpdate);
 
         // If they want to go forwards then backwards, generate the extra data-points
         if (symmetric) {
@@ -558,6 +602,13 @@ public abstract class SMU extends VISADevice {
     public enum Source {
         VOLTAGE,
         CURRENT
+    }
+
+    public enum AMode {
+        MEAN_REPEAT,
+        MEAN_MOVING,
+        MEDIAN_REPEAT,
+        MEDIAN_MOVING
     }
 
 
