@@ -25,6 +25,8 @@ public class VISA {
 
     static {
 
+        System.out.println("Attempting to load drivers.");
+
         try {
             System.out.print("Trying VISA driver...                \t");
             VISADriver.init();
@@ -57,7 +59,7 @@ public class VISA {
             System.err.println("ERROR: Could not load any drivers!");
 
             try {
-                GUI.errorAlert("JISA Library", "No Drivers", "Could not load any drivers for instrument control!\n\nCheck your VISA/GPIB installation.");
+                GUI.errorAlert("JISA Library", "No Drivers", "Could not load any drivers for instrument control!\n\nCheck your driver installation(s).");
             } catch (Exception | Error ignored) {}
 
             System.exit(1);
@@ -66,6 +68,8 @@ public class VISA {
         }
 
     }
+
+    public static void init() {}
 
     /**
      * Returns an array of all instrument addressed detected by VISA
