@@ -20,10 +20,9 @@ public class Main {
 
     public static void main(String[] args) {
 
+        // Start the GUI thread
         GUI.startGUI();
-        StringWriter writer = new StringWriter();
         try {
-
 
             // Ask the user if they want to perform a test
             boolean result = GUI.confirmWindow("JISA", "JISA Library", "JISA - William Wood - 2018\n\nPerform VISA test?");
@@ -34,8 +33,10 @@ public class Main {
                 return;
             }
 
-            VISA.getInstruments();
+            // Trigger VISA initialisation before we try browsing.
+            VISA.init();
 
+            // Keep going until they press cancel
             while (true) {
 
                 InstrumentAddress address = GUI.browseVISA();
@@ -45,6 +46,7 @@ public class Main {
                     System.exit(0);
                 }
 
+                // Create the device shell, connect to the device and show
                 DeviceShell shell = new DeviceShell(address);
                 shell.connect();
                 shell.showAndWait();
