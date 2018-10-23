@@ -182,6 +182,36 @@ public class SMUCluster extends MCSMU {
         return devices.get(channel).isUsingFourProbe();
     }
 
+    @Override
+    public void setAverageMode(int channel, AMode mode) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public void setAverageCount(int channel, int count) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public int getAverageCount(int channel) throws DeviceException, IOException {
+        return 0;
+    }
+
+    @Override
+    public AMode getAverageMode(int channel) throws DeviceException, IOException {
+        return null;
+    }
+
+    @Override
+    public void useAverage(int channel, boolean use) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public boolean isAverageUsed(int channel) throws DeviceException, IOException {
+        return false;
+    }
+
     public IVPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
         return devices.get(channel).doSweep(source, values, delay, symmetric, onUpdate);
     }
