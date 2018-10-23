@@ -19,6 +19,10 @@ public class K2450 extends SMU {
     private static final String C_QUERY_TERMINALS       = ":ROUT:TERM?";
     private static final String C_SET_PROBE_MODE        = ":SENS:RSEN %s";
     private static final String C_QUERY_PROBE_MODE      = ":SENS:RSEN?";
+    private static final String C_SET_AVG_COUNT         = "AVER:COUNT %d";
+    private static final String C_QUERY_AVG_COUNT       = "AVER:COUNT?";
+    private static final String C_SET_AVG_MODE          = "AVER:TCON %s";
+    private static final String C_QUERY_AVG_MODE        = "AVER:TCON?";
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
 
@@ -60,6 +64,54 @@ public class K2450 extends SMU {
 
     public boolean isUsingFourProbe() throws IOException {
         return query(C_QUERY_PROBE_MODE).trim().equals(OUTPUT_ON);
+    }
+
+    @Override
+    public void setAverageMode(AMode mode) throws DeviceException, IOException {
+        String code = "";
+
+        switch (mode) {
+
+            case MEAN_REPEAT:
+            case MEDIAN_REPEAT:
+                code = "REPEAT";
+                break;
+            case MEAN_MOVING:
+            case MEDIAN_MOVING:
+                code = "MOVING";
+                break;
+            default:
+                code = "REPEAT";
+                break;
+        }
+
+        write(C_SET_AVG_MODE, code);
+
+    }
+
+    @Override
+    public void setAverageCount(int count) throws IOException {
+        write(C_SET_AVG_COUNT, count);
+    }
+
+    @Override
+    public AMode getAverageMode() throws DeviceException, IOException {
+        return null;
+    }
+
+    @Override
+    public void useAverage(boolean use) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public boolean isAverageUsed() throws DeviceException, IOException {
+        return false;
+    }
+
+    @Override
+    public int getAverageCount() throws DeviceException, IOException {
+        return 0;
     }
 
     public double getVoltage() throws IOException {
