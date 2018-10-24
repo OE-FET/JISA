@@ -1,10 +1,12 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
+import JISA.Control.Returnable;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.ResultList;
 import JISA.Util;
 import JISA.VISA.VISADevice;
+import org.apache.commons.math.stat.descriptive.rank.Median;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -619,6 +621,179 @@ public abstract class SMU extends VISADevice {
 
         void update(int i, IVPoint point) throws IOException, DeviceException;
 
+    }
+
+    protected interface ReadFilter {
+        double getValue() throws IOException, DeviceException;
+
+        void setCount(int count);
+
+        int getCount();
+    }
+
+    protected class MeanRepeatFilter implements ReadFilter {
+
+        protected int                count = 1;
+        protected Returnable<Double> value;
+
+        @Override
+        public double getValue() throws IOException, DeviceException {
+
+            double total = 0;
+
+            for (int i = 0; i < count; i++) {
+                total += value.get();
+            }
+
+            return total / ((double) count);
+
+        }
+
+        @Override
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        @Override
+        public int getCount() {
+            return count;
+        }
+    }
+
+    protected class MeanMovingFilter implements ReadFilter {
+
+        protected int                count = 1;
+        protected Returnable<Double> value;
+        protected ArrayList<Double>  queue = new ArrayList<>();
+
+        @Override
+        public double getValue() throws IOException, DeviceException {
+
+            queue.subList(0, Math.max(0, queue.size() - (count - 1))).clear();
+
+            int toFill = (count - queue.size());
+            for (int i = 0; i < toFill; i++) {
+                queue.add(value.get());
+            }
+
+            double total = 0;
+            for (double v : queue) {
+                total += v;
+            }
+
+            return total / ((double) queue.size());
+
+        }
+
+        @Override
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        @Override
+        public int getCount() {
+            return count;
+        }
+    }
+
+    protected class MedianRepeatFilter implements ReadFilter {
+
+        protected int                count  = 1;
+        protected Returnable<Double> value;
+        protected Median             median = new Median();
+
+        public MedianRepeatFilter(Returnable<Double> v) {
+            value = v;
+        }
+
+        @Override
+        public double getValue() throws IOException, DeviceException {
+
+            double[] values = new double[count];
+
+            for (int i = 0; i < count; i++) {
+                values[i] = value.get();
+            }
+
+            return median.evaluate(values);
+
+        }
+
+        @Override
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        @Override
+        public int getCount() {
+            return count;
+        }
+    }
+
+    protected class MedianMovingFilter implements ReadFilter {
+
+        protected int                count  = 1;
+        protected Returnable<Double> value;
+        protected ArrayList<Double>  queue  = new ArrayList<>();
+        protected Median             median = new Median();
+
+        public MedianMovingFilter(Returnable<Double> v) {
+            value = v;
+        }
+
+        @Override
+        public double getValue() throws IOException, DeviceException {
+
+            queue.subList(0, Math.max(0, queue.size() - (count - 1))).clear();
+
+            int toFill = (count - queue.size());
+            for (int i = 0; i < toFill; i++) {
+                queue.add(value.get());
+            }
+
+            double[] values = new double[count];
+
+            for (int i = 0; i < count; i++) {
+                values[i] = queue.get(i);
+            }
+
+            return median.evaluate(values);
+
+        }
+
+        @Override
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        @Override
+        public int getCount() {
+            return count;
+        }
+    }
+
+    protected class BypassFilter implements ReadFilter {
+
+        protected Returnable<Double> value;
+        protected int count = 1;
+        public BypassFilter(Returnable<Double> v) {
+            value = v;
+        }
+
+        @Override
+        public double getValue() throws IOException, DeviceException {
+            return value.get();
+        }
+
+        @Override
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        @Override
+        public int getCount() {
+            return count;
+        }
     }
 
 }

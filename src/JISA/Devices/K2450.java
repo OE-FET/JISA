@@ -23,8 +23,22 @@ public class K2450 extends SMU {
     private static final String C_QUERY_AVG_COUNT       = "AVER:COUNT?";
     private static final String C_SET_AVG_MODE          = "AVER:TCON %s";
     private static final String C_QUERY_AVG_MODE        = "AVER:TCON?";
+    private static final String C_SET_AVG_STATE         = "AVER %s";
+    private static final String C_QUERY_AVG_STATE       = "AVER?";
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
+
+    private final MedianRepeatFilter mrfV = new MedianRepeatFilter(() -> queryDouble(C_MEASURE_VOLTAGE));
+    private final MedianRepeatFilter mrfI = new MedianRepeatFilter(() -> queryDouble(C_MEASURE_CURRENT));
+    private final MedianMovingFilter mmfV = new MedianMovingFilter(() -> queryDouble(C_MEASURE_VOLTAGE));
+    private final MedianMovingFilter mmfI = new MedianMovingFilter(() -> queryDouble(C_MEASURE_CURRENT));
+    private final BypassFilter       bpV  = new BypassFilter(() -> queryDouble(C_MEASURE_VOLTAGE));
+    private final BypassFilter       bpI  = new BypassFilter(() -> queryDouble(C_MEASURE_CURRENT));
+
+    private ReadFilter filterV     = bpV;
+    private ReadFilter filterI     = bpI;
+    private boolean    usingFilter = false;
+    private AMode      filterMode  = AMode.MEAN_REPEAT;
 
     /**
      * Constant values for referring to the FRONT and REAR terminals of the Keithley 2450 SMU
@@ -45,6 +59,9 @@ public class K2450 extends SMU {
             if (!iden[1].trim().equals("MODEL 2450")) {
                 throw new DeviceException("Device at address %s is not a Keithley 2450!", address.getVISAAddress());
             }
+
+            setAverageMode(AMode.MEAN_REPEAT);
+            useAverage(false);
 
         } catch (IOException e) {
             throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
@@ -67,63 +84,104 @@ public class K2450 extends SMU {
     }
 
     @Override
-    public void setAverageMode(AMode mode) throws DeviceException, IOException {
+    public void setAverageMode(AMode mode) throws IOException {
         String code = "";
 
         switch (mode) {
 
             case MEAN_REPEAT:
-            case MEDIAN_REPEAT:
-                code = "REPEAT";
+                filterV = bpV;
+                filterI = bpI;
+                write(C_SET_AVG_MODE, "REPEAT");
                 break;
+
             case MEAN_MOVING:
+                filterV = bpV;
+                filterI = bpI;
+                write(C_SET_AVG_MODE, "MOVING");
+                break;
+
+            case MEDIAN_REPEAT:
+                filterV = mrfV;
+                filterI = mrfI;
+                filterV.setCount(getAverageCount());
+                filterI.setCount(getAverageCount());
+                write(C_SET_AVG_MODE, "REPEAT");
+                break;
+
             case MEDIAN_MOVING:
-                code = "MOVING";
+                filterV = mmfV;
+                filterI = mmfI;
+                filterV.setCount(getAverageCount());
+                filterI.setCount(getAverageCount());
+                write(C_SET_AVG_MODE, "REPEAT");
                 break;
-            default:
-                code = "REPEAT";
-                break;
+
         }
 
-        write(C_SET_AVG_MODE, code);
+        useAverage(isAverageUsed());
 
     }
 
     @Override
     public void setAverageCount(int count) throws IOException {
         write(C_SET_AVG_COUNT, count);
+        mmfV.setCount(count);
+        mmfI.setCount(count);
+        mrfV.setCount(count);
+        mrfI.setCount(count);
     }
 
     @Override
-    public AMode getAverageMode() throws DeviceException, IOException {
-        return null;
+    public AMode getAverageMode() throws IOException {
+
+        if (filterV instanceof BypassFilter) {
+            String response = query(C_QUERY_AVG_MODE).trim();
+            if (response.equals("MOV")) {
+                return AMode.MEAN_MOVING;
+            } else if (response.equals("REP")) {
+                return AMode.MEAN_REPEAT;
+            }
+        } else {
+            if (filterV instanceof MedianRepeatFilter) {
+                return AMode.MEDIAN_REPEAT;
+            } else if (filterV instanceof MeanMovingFilter) {
+                return AMode.MEDIAN_MOVING;
+            }
+        }
+
+        return AMode.MEAN_REPEAT;
+
     }
 
     @Override
-    public void useAverage(boolean use) throws DeviceException, IOException {
+    public void useAverage(boolean use) throws IOException {
 
+        if (filterV instanceof BypassFilter) {
+            write(C_SET_AVG_STATE, OUTPUT_OFF);
+        } else {
+            write(C_SET_AVG_STATE, use ? OUTPUT_ON : OUTPUT_OFF);
+        }
+
+        usingFilter = use;
     }
 
     @Override
-    public boolean isAverageUsed() throws DeviceException, IOException {
-        return false;
+    public boolean isAverageUsed() {
+        return usingFilter;
     }
 
     @Override
-    public int getAverageCount() throws DeviceException, IOException {
-        return 0;
+    public int getAverageCount() {
+        return filterV.getCount();
     }
 
-    public double getVoltage() throws IOException {
-        return queryDouble(C_MEASURE_VOLTAGE);
+    public double getVoltage() throws DeviceException, IOException {
+        return isAverageUsed() ? filterV.getValue() : bpV.getValue();
     }
 
-    public double getCurrent() throws IOException {
-        return queryDouble(C_MEASURE_CURRENT);
-    }
-
-    public double getResistance() throws IOException {
-        return queryDouble(C_MEASURE_RESISTANCE);
+    public double getCurrent() throws IOException, DeviceException {
+        return isAverageUsed() ? filterI.getValue() : bpI.getValue();
     }
 
     public void turnOn() throws IOException {
@@ -179,7 +237,7 @@ public class K2450 extends SMU {
     }
 
     @Override
-    public double getSourceValue() throws IOException {
+    public double getSourceValue() throws DeviceException, IOException {
 
         switch (getSource()) {
 
@@ -198,7 +256,7 @@ public class K2450 extends SMU {
 
 
     @Override
-    public double getMeasureValue() throws IOException {
+    public double getMeasureValue() throws DeviceException, IOException {
         switch (getSource()) {
 
             case VOLTAGE:
