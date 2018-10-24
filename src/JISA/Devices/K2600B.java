@@ -7,21 +7,27 @@ import java.util.HashMap;
 
 public class K2600B extends MCSMU {
 
-    private static final String[] CHANNELS       = {"smua", "smub"};
-    private static final String   C_QUERY_VOLT   = "print(%s.measure.v())";
-    private static final String   C_QUERY_CURR   = "print(%s.measure.i())";
-    private static final String   C_QUERY_FUNC   = "print(%s.source.func)";
-    private static final String   C_QUERY_OUTPUT = "print(%s.source.output)";
-    private static final String   C_QUERY_SENSE  = "print(%s.sense)";
-    private static final String   C_SET_SOURCE   = "%s.source.func = %s";
-    private static final String   C_SET_VOLT     = "%s.source.levelv = %f";
-    private static final String   C_SET_CURR     = "%s.source.leveli = %f";
-    private static final String   C_SET_OUTPUT   = "%s.source.output = %s";
-    private static final String   C_SET_SENSE    = "%s.sense = %s";
-    private static final String   SENSE_LOCAL    = "0";
-    private static final String   SENSE_REMOTE   = "1";
-    private static final String   OUTPUT_ON      = "1";
-    private static final String   OUTPUT_OFF     = "0";
+    private static final String[] CHANNELS          = {"smua", "smub"};
+    private static final String   C_QUERY_VOLT      = "print(%s.measure.v())";
+    private static final String   C_QUERY_CURR      = "print(%s.measure.i())";
+    private static final String   C_QUERY_FUNC      = "print(%s.source.func)";
+    private static final String   C_QUERY_OUTPUT    = "print(%s.source.output)";
+    private static final String   C_QUERY_SENSE     = "print(%s.sense)";
+    private static final String   C_SET_SOURCE      = "%s.source.func = %s";
+    private static final String   C_SET_VOLT        = "%s.source.levelv = %f";
+    private static final String   C_SET_CURR        = "%s.source.leveli = %f";
+    private static final String   C_SET_OUTPUT      = "%s.source.output = %s";
+    private static final String   C_SET_SENSE       = "%s.sense = %s";
+    private static final String   C_SET_AVG_COUNT   = "%s.measure.filer.count = %d";
+    private static final String   C_QUERY_AVG_COUNT = "print(%s.measure.filter.count)";
+    private static final String   C_SET_AVG_MODE    = "%s.measure.filer.type = %d";
+    private static final String   C_QUERY_AVG_MODE  = "print(%s.measure.filer.type)";
+    private static final String   C_SET_AVG_STATE   = "%s.measure.filter.enable = %d";
+    private static final String   C_QUERY_AVG_STATE = "print(%s.measure.filer.enable)";
+    private static final String   SENSE_LOCAL       = "0";
+    private static final String   SENSE_REMOTE      = "1";
+    private static final String   OUTPUT_ON         = "1";
+    private static final String   OUTPUT_OFF        = "0";
 
     public K2600B(InstrumentAddress address) throws IOException, DeviceException {
 
@@ -30,7 +36,7 @@ public class K2600B extends MCSMU {
         // TODO: Check that this IDN check actually works
         try {
             String[] idn = getIDN().split(", ");
-            if (!idn[1].trim().substring(0 ,8).equals("Model 26")) {
+            if (!idn[1].trim().substring(0, 8).equals("Model 26")) {
                 throw new DeviceException("The instrument at address %s is not a Keithley 2600 series!", address.getVISAAddress());
             }
         } catch (IOException e) {
