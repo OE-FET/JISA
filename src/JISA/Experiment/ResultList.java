@@ -263,6 +263,12 @@ public class ResultList implements Iterable<Result> {
 
     }
 
+    public String getUnits(int col) {
+
+        return units[col];
+
+    }
+
     /**
      * Output the data as a formatted ASCII table to the given stream.
      *

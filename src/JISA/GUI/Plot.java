@@ -15,7 +15,8 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
-import java.util.concurrent.Semaphore;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Plot implements Gridable {
 
@@ -60,6 +61,11 @@ public class Plot implements Gridable {
     public Plot(String title, ResultList list, int xData, int yData, String seriesName, Color colour) {
         this(title, list.getTitle(xData), list.getTitle(yData));
         watchList(list, xData, yData, seriesName, colour);
+    }
+
+    public Plot(String title, ResultList list, int xData, int yData, int sData) {
+        this(title, list.getTitle(xData), list.getTitle(yData));
+        watchList(list, xData, yData, sData);
     }
 
     public Plot(String title, ResultList list, int xData, int yData) {
@@ -115,6 +121,40 @@ public class Plot implements Gridable {
 
     }
 
+    public void watchList(final ResultList list, final int xData, final int yData, final int sData) {
+
+        final HashMap<Double, Integer> map = new HashMap<>();
+        for (Result row : list) {
+
+            int series;
+            if (map.containsKey(row.get(sData))) {
+                series = map.get(row.get(sData));
+            } else {
+                series = createSeries(String.format("%s %s", row.get(sData), list.getUnits(sData)), null);
+            }
+
+            map.put(row.get(sData), series);
+            addPoint(series, row.get(xData), row.get(yData));
+
+        }
+
+        list.setOnUpdate(() -> {
+
+            Result row = list.getLastRow();
+            int    series;
+            if (map.containsKey(row.get(sData))) {
+                series = map.get(row.get(sData));
+            } else {
+                series = createSeries(String.format("%s %s", row.get(sData), list.getUnits(sData)), null);
+            }
+
+            map.put(row.get(sData), series);
+            addPoint(series, row.get(xData), row.get(yData));
+
+        });
+
+    }
+
     public int createSeries(String name, Color colour) {
 
         XYChart.Series<Double, Double> series = new XYChart.Series<>();
@@ -125,10 +165,15 @@ public class Plot implements Gridable {
         int index = data.size() - 1;
         Platform.runLater(() -> {
             chart.getData().add(series);
-            chart.setStyle(chart.getStyle().concat(
-                    String.format("CHART_COLOR_%d: rgba(%f, %f, %f);", index + 1, colour.getRed() * 255, colour.getGreen() * 255, colour.getBlue() * 255)
-            ));
+
+            if (colour != null) {
+                chart.setStyle(chart.getStyle().concat(
+                        String.format("CHART_COLOR_%d: rgba(%f, %f, %f);", index + 1, colour.getRed() * 255, colour.getGreen() * 255, colour.getBlue() * 255)
+
+                ));
+            }
         });
+
         return index;
 
     }
