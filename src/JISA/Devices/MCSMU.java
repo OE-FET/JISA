@@ -380,10 +380,10 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         useAverage(0, use);
     }
 
-    public abstract boolean isAverageUsed(int channel) throws DeviceException, IOException;
+    public abstract boolean isUsingAverage(int channel) throws DeviceException, IOException;
 
-    public boolean isAverageUsed() throws DeviceException, IOException {
-        return isAverageUsed(0);
+    public boolean isUsingAverage() throws DeviceException, IOException {
+        return isUsingAverage(0);
     }
 
     /**
@@ -829,8 +829,8 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         }
 
         @Override
-        public boolean isAverageUsed() throws DeviceException, IOException {
-            return MCSMU.this.isAverageUsed(channel);
+        public boolean isUsingAverage() throws DeviceException, IOException {
+            return MCSMU.this.isUsingAverage(channel);
         }
 
         @Override

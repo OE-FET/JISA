@@ -122,7 +122,7 @@ public class K2450 extends SMU {
 
         filterV.clear();
         filterI.clear();
-        useAverage(isAverageUsed());
+        useAverage(isUsingAverage());
 
     }
 
@@ -174,7 +174,7 @@ public class K2450 extends SMU {
     }
 
     @Override
-    public boolean isAverageUsed() {
+    public boolean isUsingAverage() {
         return usingFilter;
     }
 
@@ -184,11 +184,11 @@ public class K2450 extends SMU {
     }
 
     public double getVoltage() throws DeviceException, IOException {
-        return isAverageUsed() ? filterV.getValue() : bpV.getValue();
+        return isUsingAverage() ? filterV.getValue() : bpV.getValue();
     }
 
     public double getCurrent() throws IOException, DeviceException {
-        return isAverageUsed() ? filterI.getValue() : bpI.getValue();
+        return isUsingAverage() ? filterI.getValue() : bpI.getValue();
     }
 
     public void turnOn() throws IOException {
