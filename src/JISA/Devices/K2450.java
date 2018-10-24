@@ -20,11 +20,11 @@ public class K2450 extends SMU {
     private static final String C_SET_PROBE_MODE        = ":SENS:RSEN %s";
     private static final String C_QUERY_PROBE_MODE      = ":SENS:RSEN?";
     private static final String C_SET_AVG_COUNT         = "AVER:COUNT %d";
-    private static final String C_QUERY_AVG_COUNT       = "AVER:COUNT?";
+    private static final String C_QUERY_AVG_COUNT       = "VOLT:AVER:COUNT?";
     private static final String C_SET_AVG_MODE          = "AVER:TCON %s";
-    private static final String C_QUERY_AVG_MODE        = "AVER:TCON?";
+    private static final String C_QUERY_AVG_MODE        = "VOLT:AVER:TCON?";
     private static final String C_SET_AVG_STATE         = "AVER %s";
-    private static final String C_QUERY_AVG_STATE       = "AVER?";
+    private static final String C_QUERY_AVG_STATE       = "VOLT:AVER?";
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
 
