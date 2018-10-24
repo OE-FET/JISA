@@ -260,7 +260,7 @@ public class K2600B extends MCSMU {
     }
 
     @Override
-    public boolean isAverageUsed(int channel) throws DeviceException, IOException {
+    public boolean isUsingAverage(int channel) throws DeviceException, IOException {
         return false;
     }
 

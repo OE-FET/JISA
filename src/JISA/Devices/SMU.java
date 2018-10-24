@@ -187,7 +187,7 @@ public abstract class SMU extends VISADevice {
 
     public abstract void useAverage(boolean use) throws DeviceException, IOException;
 
-    public abstract boolean isAverageUsed() throws DeviceException, IOException;
+    public abstract boolean isUsingAverage() throws DeviceException, IOException;
 
     /**
      * Returns the number of measurements used for averaging by the SMU.

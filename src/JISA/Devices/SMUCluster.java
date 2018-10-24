@@ -208,7 +208,7 @@ public class SMUCluster extends MCSMU {
     }
 
     @Override
-    public boolean isAverageUsed(int channel) throws DeviceException, IOException {
+    public boolean isUsingAverage(int channel) throws DeviceException, IOException {
         return false;
     }
 

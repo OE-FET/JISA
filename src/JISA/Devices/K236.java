@@ -138,7 +138,7 @@ public class K236 extends SMU {
     }
 
     @Override
-    public boolean isAverageUsed() throws DeviceException, IOException {
+    public boolean isUsingAverage() throws DeviceException, IOException {
         return false;
     }
 
