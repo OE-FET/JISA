@@ -177,7 +177,7 @@ public class VISA {
         return instrDrivers.get(instrument).read(
                 instrIDs.get(instrument),
                 bufferSize
-        );
+        ).trim();
 
     }
 

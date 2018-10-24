@@ -62,16 +62,15 @@ public class ITC503 extends MSTController {
 
         super(address);
         setEOI(false);
-        setReadTerminationCharacter(EOS_RETURN);
         setTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);
+        setReadTerminationCharacter(EOS_RETURN);
 
         clearRead();
 
         try {
-            String[] idn = query("V").split(" ");
-
-            if (!idn[0].trim().equals("ITC503")) {
+            String idn = query("V");
+            if (!idn.split(" ")[0].trim().equals("ITC503")) {
                 throw new DeviceException("Device at address %s is not an ITC503!", address.getVISAAddress());
             }
         } catch (IOException e) {
@@ -83,24 +82,7 @@ public class ITC503 extends MSTController {
     }
 
     private void clearRead() throws IOException {
-
-        // Use a short time-out
-        setTimeout(10);
-
-        // Keep reading until there's nothing left to read
-        while (true) {
-
-            try {
-                read();
-            } catch (Exception e) {
-                break;
-            }
-
-        }
-
-        // Put the time-out back to normal
-        setTimeout(timeout);
-
+        write(C_SET_COMM_MODE);
     }
 
     public void setTimeout(long value) throws IOException {
@@ -110,8 +92,14 @@ public class ITC503 extends MSTController {
 
     private synchronized double readChannel(int channel) throws IOException {
         clearRead();
-        String reply = query(C_READ, channel);
-        return Double.parseDouble(reply.substring(1));
+        try {
+            String reply = query(C_READ, channel);
+            return Double.parseDouble(reply.substring(1));
+        } catch (Exception e) {
+            clearRead();
+            String reply = query(C_READ, channel);
+            return Double.parseDouble(reply.substring(1));
+        }
     }
 
     /**
@@ -260,6 +248,7 @@ public class ITC503 extends MSTController {
     }
 
     public String getIDN() throws IOException {
+        clearRead();
         return query("V").replace("\n", "").replace("\r", "");
     }
 

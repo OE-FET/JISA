@@ -20,29 +20,6 @@ public class Main {
 
     public static void main(String[] args) {
 
-        GUI.startGUI();
-
-        ResultList list = new ResultList("Frequency", "Voltage", "Current");
-        list.setUnits("Hz", "V", "A");
-
-        Plot plot = new Plot("Results", list, 1, 2, 0);
-        plot.show();
-
-        for (double f = 0; f <= 10; f++) {
-
-            for (double x = 0; x < 50; x += 5) {
-
-                list.addData(f, x, f*x);
-                Util.sleep(150);
-
-            }
-
-        }
-
-    }
-
-    public static void old(String[] args) {
-
         // Start the GUI thread
         GUI.startGUI();
         try {
