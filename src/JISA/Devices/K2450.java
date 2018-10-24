@@ -62,6 +62,7 @@ public class K2450 extends SMU {
 
             setAverageMode(AMode.MEAN_REPEAT);
             useAverage(false);
+            setAverageCount(queryInt(C_QUERY_AVG_COUNT));
 
         } catch (IOException e) {
             throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
@@ -130,6 +131,8 @@ public class K2450 extends SMU {
         mmfI.setCount(count);
         mrfV.setCount(count);
         mrfI.setCount(count);
+        bpV.setCount(count);
+        bpI.setCount(count);
     }
 
     @Override
