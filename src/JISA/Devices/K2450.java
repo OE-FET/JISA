@@ -120,6 +120,8 @@ public class K2450 extends SMU {
 
         }
 
+        filterV.clear();
+        filterI.clear();
         useAverage(isAverageUsed());
 
     }
@@ -133,6 +135,8 @@ public class K2450 extends SMU {
         mrfI.setCount(count);
         bpV.setCount(count);
         bpI.setCount(count);
+        filterV.clear();
+        filterI.clear();
     }
 
     @Override

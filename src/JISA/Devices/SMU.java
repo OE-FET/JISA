@@ -629,6 +629,8 @@ public abstract class SMU extends VISADevice {
         void setCount(int count);
 
         int getCount();
+
+        void clear();
     }
 
     protected class MeanRepeatFilter implements ReadFilter {
@@ -657,6 +659,11 @@ public abstract class SMU extends VISADevice {
         @Override
         public int getCount() {
             return count;
+        }
+
+        @Override
+        public void clear() {
+
         }
     }
 
@@ -694,6 +701,11 @@ public abstract class SMU extends VISADevice {
         public int getCount() {
             return count;
         }
+
+        @Override
+        public void clear() {
+            queue.clear();
+        }
     }
 
     protected class MedianRepeatFilter implements ReadFilter {
@@ -727,6 +739,11 @@ public abstract class SMU extends VISADevice {
         @Override
         public int getCount() {
             return count;
+        }
+
+        @Override
+        public void clear() {
+
         }
     }
 
@@ -770,12 +787,18 @@ public abstract class SMU extends VISADevice {
         public int getCount() {
             return count;
         }
+
+        @Override
+        public void clear() {
+            queue.clear();
+        }
     }
 
     protected class BypassFilter implements ReadFilter {
 
         protected Returnable<Double> value;
-        protected int count = 1;
+        protected int                count = 1;
+
         public BypassFilter(Returnable<Double> v) {
             value = v;
         }
@@ -793,6 +816,11 @@ public abstract class SMU extends VISADevice {
         @Override
         public int getCount() {
             return count;
+        }
+
+        @Override
+        public void clear() {
+
         }
     }
 
