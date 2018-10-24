@@ -180,8 +180,8 @@ public class LS336 extends MSMOTController {
     }
 
     @Override
-    public void setManualFlow(int output, double outputPCT) {
-        System.err.println("WARNING: LakeShore 336 does not control gas flow.");
+    public void setManualFlow(int output, double outputPCT) throws DeviceException {
+        throw new DeviceException("LS336 does not control gas flow.");
     }
 
     private static class OutMode {
