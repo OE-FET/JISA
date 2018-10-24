@@ -158,9 +158,9 @@ public class K2450 extends SMU {
     public void useAverage(boolean use) throws IOException {
 
         if (filterV instanceof BypassFilter) {
-            write(C_SET_AVG_STATE, OUTPUT_OFF);
-        } else {
             write(C_SET_AVG_STATE, use ? OUTPUT_ON : OUTPUT_OFF);
+        } else {
+            write(C_SET_AVG_STATE, OUTPUT_OFF);
         }
 
         usingFilter = use;
