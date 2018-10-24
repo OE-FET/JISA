@@ -18,10 +18,10 @@ public class SR830 extends DPLockIn {
     private static final String C_SET_REF           = "FMOD %d";
     private static final String C_QUERY_SENSITIVITY = "SENS?";
     private static final String C_SET_SENSITIVITY   = "SENS %d";
-    private static final String C_QUERY_OUTPUT      = "OUTP ? %d";
+    private static final String C_QUERY_OUTPUT      = "OUTP? %d";
     private static final String C_QUERY_TIME_CONST  = "OFLT?";
     private static final String C_SET_TIME_CONST    = "OFLT %d";
-    private static final String C_QUERY_ALL         = "SNAP ? 1,2,3,4,9";
+    private static final String C_QUERY_ALL         = "SNAP? 1,2,3,4,9";
     private static final int    OUTPUT_X            = 1;
     private static final int    OUTPUT_Y            = 2;
     private static final int    OUTPUT_R            = 3;
