@@ -76,6 +76,14 @@ public class Table implements Gridable {
                 );
                 table.getColumns().add(col);
             }
+
+            Platform.runLater(() -> {
+                for (Result row : list) {
+                    table.getItems().add(FXCollections.observableArrayList(Arrays.asList(row.getData())));
+                    table.scrollTo(table.getItems().size() - 1);
+                }
+            });
+
         });
 
 

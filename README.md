@@ -9,6 +9,35 @@ JISA is a Java libary that I originally designed because I really really really 
 2. Dealing with experimental data
 3. Creating simple GUIs to control and observe experiments
 
+You can also use it in python by using the Jython interpreter.
+
+**Currently Implemented Devices:**
+
+|Class|Type|Model|Source|JavaDoc|
+|-----|----|-----|------|-------|
+|`K2450`|SMU|Keithley 2450|[Source](./src/JISA/Devices/K2450.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2450.html)|
+|`K236`|SMU|Keithley 236|[Source](./src/JISA/Devices/K236.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K236.html)|
+|`K2600B`|SMU|Keithley 2600B Series|[Source](./src/JISA/Devices/K2600B.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2600B.html)|
+|`K2200`|DC Power Supply|Keithley 2200 Series|[Source](./src/JISA/Devices/K2200.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2200.html)|
+|`ITC503`|Temperature Controller|Mercury ITC 503|[Source](./src/JISA/Devices/ITC503.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/ITC503.html)|
+|`LS336`|Temperature Controller|LakeShore 336|[Source](./src/JISA/Devices/LS336.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/LS336.html)|
+|`SR830`|Lock-In Amplifier|Stanford Research Systems SR830|[Source](./src/JISA/Devices/SR830.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SR830.html)|
+|`SR560`|Voltage Pre-Amp|Stanford Research Systems SR560|[Source](./src/JISA/Devices/SR560.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SR560.html)|
+
+**Currently Implemented Device Types:**
+
+|Abstract Class|Type|Source|JavaDoc|
+|--------------|----|------|-------|
+|`SMU`|Source-Measure Unit|[Source](./src/JISA/Devices/SMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SMU.html)|
+|`MCSMU`|Multi-Channel Source-Measure Unit|[Source](./src/JISA/Devices/MCSMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MCSMU.html)|
+|`DCPower`|DC Power Supply|[Source](./src/JISA/Devices/DCPower.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DCPower.html)|
+|`TController`|Temperature Controller|[Source](./src/JISA/Devices/TController.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/TController.html)|
+|`MSTController`|Multi-Sensor Temperature Controller|[Source](./src/JISA/Devices/MSTController.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSTController.html)|
+|`MSMOTController`|Multi-Sensor, Multi-Output Temperature Controller|[Source](./src/JISA/Devices/MSMOTController.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSMOTController.html)|
+|`LockIn`|Lock-In Amplifier|[Source](./src/JISA/Devices/LockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/LockIn.html)|
+|`DPLockIn`|Dual-Phase Lock-In Amplifier|[Source](./src/JISA/Devices/DPLockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DPLockIn.html)|
+|`VPreAmp`|Voltage Pre-Amplifier|[Source](./src/JISA/Devices/VPreAmp.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/VPreAmp.html)|
+
 ## Instrument Control
 The guiding principle behind the instrument control is to provide a common interface for each type of device, with the code underneath bridging the gap between what the user sees and what the instrument itself requires.
 
@@ -28,8 +57,26 @@ double current1 = smu1.getCurrent();
 double current2 = smu2.getCurrent();
 
 // Sweep voltage from 0 V to 10 V in 5 steps with a 500 ms delay each time
-IVPoint[] points1 = smu1.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500);
-IVPoint[] points2 = smu2.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500);
+IVPoint[] points1 = smu1.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500, true);
+IVPoint[] points2 = smu2.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500, true);
+```
+or, in python:
+```python
+smu1 = K2450(GPIBAddress(0, 15))
+smu2 = K236(GPIBAddress(0, 16))
+
+smu1.setVoltage(5.0)
+smu2.setVoltage(5.0)
+
+smu1.turnOn()
+smu2.turnOn()
+
+current1 = smu1.getCurrent()
+current2 = smu2.getCurrent()
+
+# Sweep voltage from 0 V to 10 V in 5 steps with a 500 ms delay each time
+points1 = smu1.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500, True)
+points2 = smu2.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500, True)
 ```
 
 In the example above, we have told both the K2450 and K236 to source 5 V and measure the resulting current. This is done using identical method calls on both despite the fact that the K236 and K2450 will implement these actions using fundamentally different approaches.
@@ -58,7 +105,23 @@ results.output("/path/to/file.csv");
 results.outputMATLAB("/path/to/file.m", "V", "I");
 results.outputTable();
 ```
+or in python:
+```python
+results = ResultList(["Voltage", "Current"])
+results.setUnits(["V", "A"])
 
+smu = K2450(SerialAddress(5))
+
+smu.turnOn()
+
+for v in range(0, 21, 2):
+    smu.setVoltage(v)
+    results.addData([smu.getVoltage(), smu.getCurrent()])
+
+results.output("/path/to/file.csv")
+results.outputMATLAB("/path/to/file.m", ["V", "I"])
+results.outputTable()
+```
 ```
 +=============+=============+
 | Voltage [V] | Current [A] |
@@ -109,6 +172,25 @@ for (double v = 0; v <= 20; v += 2) {
 
 }
 ```
+likewise, in python:
+```python
+results = ResultList(["Voltage", "Current"])
+results.setUnits(["V", "A"])
+
+# Creates a plot and tells it to watch our ResultList "results"
+plot = Plot("I-V plot", results)
+plot.show()
+
+smu = K2450(SerialAddress(5))
+
+smu.turnOn()
+
+for v in range(0, 21, 2):
+    smu.setVoltage(v)
+    results.addData([smu.getVoltage(), smu.getCurrent()])
+    
+```
+
 ![Plot Window](https://i.imgur.com/PPgdyCa.png)
 
 As mentioned, these GUI elements work in real-time, so every time a new data point gets added to ``results``, the plot will update (with a nifty animation too!)

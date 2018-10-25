@@ -1,10 +1,14 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
+import JISA.Control.ERunnable;
+import JISA.Control.Returnable;
+import JISA.Control.SRunnable;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.ResultList;
 import JISA.Util;
 import JISA.VISA.VISADevice;
+import org.apache.commons.math.stat.descriptive.rank.Median;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -152,6 +156,46 @@ public abstract class SMU extends VISADevice {
      * @throws IOException     Upon communications error
      */
     public abstract boolean isUsingFourProbe() throws DeviceException, IOException;
+
+    /**
+     * Sets the averaging mode of the SMU.
+     *
+     * @param mode Mode to use
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void setAverageMode(AMode mode) throws DeviceException, IOException;
+
+    /**
+     * Sets how many measurements the SMU should average over.
+     *
+     * @param count Number of measurements
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void setAverageCount(int count) throws DeviceException, IOException;
+
+    /**
+     * Returns the averaging mode of the SMU.
+     *
+     * @return Mode being used
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract AMode getAverageMode() throws DeviceException, IOException;
+
+    /**
+     * Returns the number of measurements used for averaging by the SMU.
+     *
+     * @return Number of measurements
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract int getAverageCount() throws DeviceException, IOException;
 
 
     /**
@@ -447,11 +491,11 @@ public abstract class SMU extends VISADevice {
             throw new DeviceException("Delay time cannot be larger than either time on or time off for a pulsed sweep.");
         }
 
-        final ArrayList<IVPoint> points    = new ArrayList<>();
-        IVPoint                  point1    = null;
-        IVPoint                  point2    = null;
-        long                     lastTime  = 0;
-        Updater                  updater   = new Updater(points, onUpdate);
+        final ArrayList<IVPoint> points   = new ArrayList<>();
+        IVPoint                  point1   = null;
+        IVPoint                  point2   = null;
+        long                     lastTime = 0;
+        Updater                  updater  = new Updater(points, onUpdate);
 
         // If they want to go forwards then backwards, generate the extra data-points
         if (symmetric) {
@@ -560,6 +604,14 @@ public abstract class SMU extends VISADevice {
         CURRENT
     }
 
+    public enum AMode {
+        NONE,
+        MEAN_REPEAT,
+        MEAN_MOVING,
+        MEDIAN_REPEAT,
+        MEDIAN_MOVING
+    }
+
 
     /**
      * Structure for defining what to do on each update
@@ -568,6 +620,258 @@ public abstract class SMU extends VISADevice {
 
         void update(int i, IVPoint point) throws IOException, DeviceException;
 
+    }
+
+    public interface Setupable {
+        public void run(int count) throws IOException, DeviceException;
+    }
+
+    protected interface ReadFilter {
+        double getValue() throws IOException, DeviceException;
+
+        void setCount(int count);
+
+        int getCount();
+
+        void clear();
+
+        void setUp() throws IOException, DeviceException;
+
+    }
+
+    protected class MeanRepeatFilter implements ReadFilter {
+
+        protected int                count = 1;
+        protected Returnable<Double> value;
+        protected Setupable          setUp;
+
+        public MeanRepeatFilter(Returnable<Double> v, Setupable s) {
+            value = v;
+            setUp = s;
+        }
+
+        @Override
+        public double getValue() throws IOException, DeviceException {
+
+            double total = 0;
+
+            for (int i = 0; i < count; i++) {
+                total += value.get();
+            }
+
+            return total / ((double) count);
+
+        }
+
+        @Override
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        @Override
+        public int getCount() {
+            return count;
+        }
+
+        @Override
+        public void clear() {
+
+        }
+
+        @Override
+        public void setUp() throws IOException, DeviceException {
+            setUp.run(getCount());
+        }
+
+    }
+
+    protected class MeanMovingFilter implements ReadFilter {
+
+        protected int                count = 1;
+        protected Returnable<Double> value;
+        protected ArrayList<Double>  queue = new ArrayList<>();
+        protected Setupable          setUp;
+
+        public MeanMovingFilter(Returnable<Double> v, Setupable s) {
+            value = v;
+            setUp = s;
+        }
+
+        @Override
+        public double getValue() throws IOException, DeviceException {
+
+            queue.subList(0, Math.max(0, queue.size() - (count - 1))).clear();
+
+            int toFill = (count - queue.size());
+            for (int i = 0; i < toFill; i++) {
+                queue.add(value.get());
+            }
+
+            double total = 0;
+            for (double v : queue) {
+                total += v;
+            }
+
+            return total / ((double) queue.size());
+
+        }
+
+        @Override
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        @Override
+        public int getCount() {
+            return count;
+        }
+
+        @Override
+        public void clear() {
+            queue.clear();
+        }
+
+        @Override
+        public void setUp() throws IOException, DeviceException {
+            setUp.run(getCount());
+        }
+    }
+
+    protected class MedianRepeatFilter implements ReadFilter {
+
+        protected int                count  = 1;
+        protected Returnable<Double> value;
+        protected Median             median = new Median();
+        protected Setupable          setUp;
+
+        public MedianRepeatFilter(Returnable<Double> v, Setupable s) {
+            value = v;
+            setUp = s;
+        }
+
+        @Override
+        public double getValue() throws IOException, DeviceException {
+
+            double[] values = new double[count];
+
+            for (int i = 0; i < count; i++) {
+                values[i] = value.get();
+            }
+
+            return median.evaluate(values);
+
+        }
+
+        @Override
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        @Override
+        public int getCount() {
+            return count;
+        }
+
+        @Override
+        public void clear() {
+
+        }
+
+        @Override
+        public void setUp() throws IOException, DeviceException {
+            setUp.run(getCount());
+        }
+    }
+
+    protected class MedianMovingFilter implements ReadFilter {
+
+        protected int                count  = 1;
+        protected Returnable<Double> value;
+        protected ArrayList<Double>  queue  = new ArrayList<>();
+        protected Median             median = new Median();
+        protected Setupable          setUp;
+
+        public MedianMovingFilter(Returnable<Double> v, Setupable s) {
+            value = v;
+            setUp = s;
+        }
+
+        @Override
+        public double getValue() throws IOException, DeviceException {
+
+            queue.subList(0, Math.max(0, queue.size() - (count - 1))).clear();
+
+            int toFill = (count - queue.size());
+            for (int i = 0; i < toFill; i++) {
+                queue.add(value.get());
+            }
+
+            double[] values = new double[count];
+
+            for (int i = 0; i < count; i++) {
+                values[i] = queue.get(i);
+            }
+
+            return median.evaluate(values);
+
+        }
+
+        @Override
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        @Override
+        public int getCount() {
+            return count;
+        }
+
+        @Override
+        public void clear() {
+            queue.clear();
+        }
+
+        @Override
+        public void setUp() throws IOException, DeviceException {
+            setUp.run(getCount());
+        }
+    }
+
+    protected class BypassFilter implements ReadFilter {
+
+        protected Returnable<Double> value;
+        protected int                count = 1;
+        protected Setupable          setUp;
+
+        public BypassFilter(Returnable<Double> v, Setupable s) {
+            value = v;
+            setUp = s;
+        }
+
+        @Override
+        public double getValue() throws IOException, DeviceException {
+            return value.get();
+        }
+
+        @Override
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        @Override
+        public int getCount() {
+            return count;
+        }
+
+        @Override
+        public void clear() {
+
+        }
+
+        @Override
+        public void setUp() throws IOException, DeviceException {
+            setUp.run(getCount());
+        }
     }
 
 }

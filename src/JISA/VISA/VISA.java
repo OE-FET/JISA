@@ -2,12 +2,11 @@ package JISA.VISA;
 
 import JISA.Addresses.InstrumentAddress;
 import JISA.Addresses.StrAddress;
+import JISA.GUI.GUI;
 import JISA.Util;
-import com.sun.jna.Callback;
-import com.sun.jna.CallbackThreadInitializer;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
+import com.sun.jna.*;
 import com.sun.jna.ptr.NativeLongByReference;
+import javafx.application.Platform;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -25,6 +24,8 @@ public class VISA {
     private static long                  counter      = 0;
 
     static {
+
+        System.out.println("Attempting to load drivers.");
 
         try {
             System.out.print("Trying VISA driver...                \t");
@@ -56,12 +57,19 @@ public class VISA {
         if (drivers.size() == 0) {
             Util.sleep(500);
             System.err.println("ERROR: Could not load any drivers!");
+
+            try {
+                GUI.errorAlert("JISA Library", "No Drivers", "Could not load any drivers for instrument control!\n\nCheck your driver installation(s).");
+            } catch (Exception | Error ignored) {}
+
             System.exit(1);
         } else {
             System.out.printf("Successfully loaded %d drivers.\n", drivers.size());
         }
 
     }
+
+    public static void init() {}
 
     /**
      * Returns an array of all instrument addressed detected by VISA
@@ -169,7 +177,7 @@ public class VISA {
         return instrDrivers.get(instrument).read(
                 instrIDs.get(instrument),
                 bufferSize
-        );
+        ).trim();
 
     }
 

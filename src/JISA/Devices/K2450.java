@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 public class K2450 extends SMU {
 
+    // == COMMANDS =====================================================================================================
     private static final String C_MEASURE_VOLTAGE       = ":MEAS:VOLT?";
     private static final String C_MEASURE_CURRENT       = ":MEAS:CURR?";
     private static final String C_MEASURE_RESISTANCE    = ":MEAS:RES?";
@@ -19,8 +20,109 @@ public class K2450 extends SMU {
     private static final String C_QUERY_TERMINALS       = ":ROUT:TERM?";
     private static final String C_SET_PROBE_MODE        = ":SENS:RSEN %s";
     private static final String C_QUERY_PROBE_MODE      = ":SENS:RSEN?";
+    private static final String C_SET_AVG_COUNT         = "AVER:COUNT %d";
+    private static final String C_QUERY_AVG_COUNT       = "VOLT:AVER:COUNT?";
+    private static final String C_SET_AVG_MODE          = "AVER:TCON %s";
+    private static final String C_QUERY_AVG_MODE        = "VOLT:AVER:TCON?";
+    private static final String C_SET_AVG_STATE         = "AVER %s";
+    private static final String C_QUERY_AVG_STATE       = "VOLT:AVER?";
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
+
+    // == FILTERS ======================================================================================================
+    private final MedianRepeatFilter MEDIAN_REPEAT_V = new MedianRepeatFilter(
+            () -> queryDouble(C_MEASURE_VOLTAGE),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, 1);
+                write(C_SET_AVG_STATE, OUTPUT_OFF);
+            }
+    );
+
+    private final MedianRepeatFilter MEDIAN_REPEAT_I = new MedianRepeatFilter(
+            () -> queryDouble(C_MEASURE_CURRENT),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, 1);
+                write(C_SET_AVG_STATE, OUTPUT_OFF);
+            });
+
+    private final MedianMovingFilter MEDIAN_MOVING_V = new MedianMovingFilter(
+            () -> queryDouble(C_MEASURE_VOLTAGE),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, 1);
+                write(C_SET_AVG_STATE, OUTPUT_OFF);
+            }
+    );
+
+    private final MedianMovingFilter MEDIAN_MOVING_I = new MedianMovingFilter(
+            () -> queryDouble(C_MEASURE_CURRENT),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, 1);
+                write(C_SET_AVG_STATE, OUTPUT_OFF);
+            });
+
+    private final BypassFilter MEAN_REPEAT_V = new BypassFilter(
+            () -> queryDouble(C_MEASURE_VOLTAGE),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, c);
+                write(C_SET_AVG_STATE, OUTPUT_ON);
+            }
+    );
+
+    private final BypassFilter MEAN_REPEAT_I = new BypassFilter(
+            () -> queryDouble(C_MEASURE_CURRENT),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, c);
+                write(C_SET_AVG_STATE, OUTPUT_ON);
+            }
+    );
+
+    private final BypassFilter MEAN_MOVING_V = new BypassFilter(
+            () -> queryDouble(C_MEASURE_VOLTAGE),
+            (c) -> {
+                write(C_SET_AVG_MODE, "MOVING");
+                write(C_SET_AVG_COUNT, c);
+                write(C_SET_AVG_STATE, OUTPUT_ON);
+            }
+    );
+
+    private final BypassFilter MEAN_MOVING_I = new BypassFilter(
+            () -> queryDouble(C_MEASURE_CURRENT),
+            (c) -> {
+                write(C_SET_AVG_MODE, "MOVING");
+                write(C_SET_AVG_COUNT, c);
+                write(C_SET_AVG_STATE, OUTPUT_ON);
+            }
+    );
+
+    private final BypassFilter NONE_V = new BypassFilter(
+            () -> queryDouble(C_MEASURE_VOLTAGE),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, 1);
+                write(C_SET_AVG_STATE, OUTPUT_OFF);
+            }
+    );
+
+    private final BypassFilter NONE_I = new BypassFilter(
+            () -> queryDouble(C_MEASURE_CURRENT),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, 1);
+                write(C_SET_AVG_STATE, OUTPUT_OFF);
+            }
+    );
+
+    // == INTERNAL VARIABLES ===========================================================================================
+    private ReadFilter filterV     = NONE_V;
+    private ReadFilter filterI     = NONE_I;
+    private AMode      filterMode  = AMode.NONE;
+    private int        filterCount = 1;
 
     /**
      * Constant values for referring to the FRONT and REAR terminals of the Keithley 2450 SMU
@@ -30,6 +132,7 @@ public class K2450 extends SMU {
         public static final int REAR  = 1;
     }
 
+    // == CONSTRUCTORS =================================================================================================
     public K2450(InstrumentAddress address) throws IOException, DeviceException {
 
         super(address);
@@ -42,12 +145,15 @@ public class K2450 extends SMU {
                 throw new DeviceException("Device at address %s is not a Keithley 2450!", address.getVISAAddress());
             }
 
+            setAverageMode(AMode.NONE);
+
         } catch (IOException e) {
             throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
         }
 
     }
 
+    // == METHODS ======================================================================================================
     public void useFourProbe(boolean fourProbe) throws IOException {
 
         if (fourProbe) {
@@ -62,16 +168,78 @@ public class K2450 extends SMU {
         return query(C_QUERY_PROBE_MODE).trim().equals(OUTPUT_ON);
     }
 
-    public double getVoltage() throws IOException {
-        return queryDouble(C_MEASURE_VOLTAGE);
+    @Override
+    public void setAverageMode(AMode mode) throws IOException, DeviceException {
+
+        switch (mode) {
+
+            case NONE:
+                filterV = NONE_V;
+                filterI = NONE_I;
+                break;
+
+            case MEAN_REPEAT:
+                filterV = MEAN_REPEAT_V;
+                filterI = MEAN_REPEAT_I;
+                break;
+
+            case MEAN_MOVING:
+                filterV = MEAN_MOVING_V;
+                filterI = MEAN_MOVING_I;
+                break;
+
+            case MEDIAN_REPEAT:
+                filterV = MEDIAN_REPEAT_V;
+                filterI = MEDIAN_REPEAT_I;
+                break;
+
+            case MEDIAN_MOVING:
+                filterV = MEDIAN_MOVING_V;
+                filterI = MEDIAN_MOVING_I;
+                break;
+
+        }
+
+        filterMode = mode;
+        resetFilters();
+
     }
 
-    public double getCurrent() throws IOException {
-        return queryDouble(C_MEASURE_CURRENT);
+    private void resetFilters() throws IOException, DeviceException {
+
+        filterV.setCount(filterCount);
+        filterI.setCount(filterCount);
+
+        filterV.setUp();
+        filterI.setUp();
+
+        filterV.clear();
+        filterI.clear();
     }
 
-    public double getResistance() throws IOException {
-        return queryDouble(C_MEASURE_RESISTANCE);
+    @Override
+    public void setAverageCount(int count) throws IOException, DeviceException {
+        filterCount = count;
+        resetFilters();
+    }
+
+    @Override
+    public AMode getAverageMode() {
+        return filterMode;
+
+    }
+
+    @Override
+    public int getAverageCount() {
+        return filterCount;
+    }
+
+    public double getVoltage() throws DeviceException, IOException {
+        return filterV.getValue();
+    }
+
+    public double getCurrent() throws IOException, DeviceException {
+        return filterI.getValue();
     }
 
     public void turnOn() throws IOException {
@@ -127,7 +295,7 @@ public class K2450 extends SMU {
     }
 
     @Override
-    public double getSourceValue() throws IOException {
+    public double getSourceValue() throws DeviceException, IOException {
 
         switch (getSource()) {
 
@@ -146,7 +314,7 @@ public class K2450 extends SMU {
 
 
     @Override
-    public double getMeasureValue() throws IOException {
+    public double getMeasureValue() throws DeviceException, IOException {
         switch (getSource()) {
 
             case VOLTAGE:

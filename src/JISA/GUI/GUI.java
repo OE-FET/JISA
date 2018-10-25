@@ -82,7 +82,20 @@ public class GUI extends Application {
             file.set(chooser.showSaveDialog(new Stage()));
         });
 
-        return file.get().getAbsolutePath();
+        return (file.get() == null ? null : file.get().getAbsolutePath());
+
+    }
+
+    public static String openFileSelect() {
+
+        AtomicReference<File> file = new AtomicReference<>();
+
+        GUI.runNow(() -> {
+            FileChooser chooser = new FileChooser();
+            file.set(chooser.showOpenDialog(new Stage()));
+        });
+
+        return (file.get() == null ? null : file.get().getAbsolutePath());
 
     }
 

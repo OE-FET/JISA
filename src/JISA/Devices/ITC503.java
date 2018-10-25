@@ -8,6 +8,9 @@ import JISA.Control.SRunnable;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Class ITC503
@@ -21,6 +24,15 @@ public class ITC503 extends MSTController {
     private static final String C_READ             = "R%d";
     private static final String C_SET_MODE         = "C%d";
     private static final String C_SET_TEMP         = "T%f";
+    private static final String C_SET_AUTO         = "A%d";
+    private static final String C_SET_SENSOR       = "H%d";
+    private static final String C_SET_AUTO_PID     = "L%d";
+    private static final String C_SET_P            = "P%f";
+    private static final String C_SET_I            = "I%f";
+    private static final String C_SET_D            = "D%f";
+    private static final String C_SET_HEATER       = "O%f";
+    private static final String C_SET_FLOW         = "G%f";
+    private static final String C_QUERY_STATUS     = "X";
     private static final int    SET_TEMP_CHANNEL   = 0;
     private static final int    TEMP_ERROR_CHANNEL = 4;
     private static final int    HEATER_OP_PERC     = 5;
@@ -30,6 +42,7 @@ public class ITC503 extends MSTController {
     private static final int    INT_ACTION_TIME    = 9;
     private static final int    DER_ACTION_TIME    = 10;
     private static final int    FREQ_CHAN_OFFSET   = 10;
+
 
     private static final long   STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
     private static final int    STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
@@ -49,16 +62,15 @@ public class ITC503 extends MSTController {
 
         super(address);
         setEOI(false);
-        setReadTerminationCharacter(EOS_RETURN);
         setTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);
+        setReadTerminationCharacter(EOS_RETURN);
 
         clearRead();
 
         try {
-            String[] idn = query("V").split(" ");
-
-            if (!idn[0].trim().equals("ITC503")) {
+            String idn = query("V");
+            if (!idn.split(" ")[0].trim().equals("ITC503")) {
                 throw new DeviceException("Device at address %s is not an ITC503!", address.getVISAAddress());
             }
         } catch (IOException e) {
@@ -70,24 +82,7 @@ public class ITC503 extends MSTController {
     }
 
     private void clearRead() throws IOException {
-
-        // Use a short time-out
-        setTimeout(10);
-
-        // Keep reading until there's nothing left to read
-        while (true) {
-
-            try {
-                read();
-            } catch (Exception e) {
-                break;
-            }
-
-        }
-
-        // Put the time-out back to normal
-        setTimeout(timeout);
-
+        write(C_SET_COMM_MODE);
     }
 
     public void setTimeout(long value) throws IOException {
@@ -97,8 +92,14 @@ public class ITC503 extends MSTController {
 
     private synchronized double readChannel(int channel) throws IOException {
         clearRead();
-        String reply = query(C_READ, channel);
-        return Double.parseDouble(reply.substring(1));
+        try {
+            String reply = query(C_READ, channel);
+            return Double.parseDouble(reply.substring(1));
+        } catch (Exception e) {
+            clearRead();
+            String reply = query(C_READ, channel);
+            return Double.parseDouble(reply.substring(1));
+        }
     }
 
     /**
@@ -114,12 +115,95 @@ public class ITC503 extends MSTController {
 
     @Override
     public double getHeaterPower() throws IOException, DeviceException {
-        return getHeaterOutputPercentage();
+        return readChannel(HEATER_OP_PERC);
     }
 
     @Override
     public double getGasFlow() throws IOException, DeviceException {
-        return getGasFlowOutput();
+        return readChannel(GAS_OP);
+    }
+
+    @Override
+    public void useAutoHeater() throws IOException, DeviceException {
+        AutoMode mode = AutoMode.fromMode(true, isFlowAuto());
+        query(C_SET_AUTO, mode.toInt());
+    }
+
+    @Override
+    public void setManualHeater(double powerPCT) throws IOException, DeviceException {
+        query(C_SET_HEATER, powerPCT);
+        AutoMode mode = AutoMode.fromMode(false, isFlowAuto());
+        query(C_SET_AUTO, mode.toInt());
+    }
+
+    @Override
+    public boolean isHeaterAuto() throws IOException, DeviceException {
+        return AutoMode.fromInt(getStatus().A).heaterAuto();
+    }
+
+    @Override
+    public void useAutoFlow() throws IOException, DeviceException {
+        AutoMode mode = AutoMode.fromMode(isHeaterAuto(), true);
+        query(C_SET_AUTO, mode.toInt());
+    }
+
+    @Override
+    public void setManualFlow(double outputPCT) throws IOException, DeviceException {
+        query(C_SET_FLOW, outputPCT);
+        AutoMode mode = AutoMode.fromMode(isHeaterAuto(), false);
+        query(C_SET_AUTO, mode.toInt());
+    }
+
+    @Override
+    public boolean isFlowAuto() throws IOException, DeviceException {
+        return AutoMode.fromInt(getStatus().A).gasAuto();
+    }
+
+    @Override
+    public void useAutoPID(boolean auto) throws IOException, DeviceException {
+        query(C_SET_AUTO_PID, auto ? 1 : 0);
+    }
+
+    @Override
+    public boolean isPIDAuto() throws IOException, DeviceException {
+        return getStatus().L > 0;
+    }
+
+    @Override
+    public void setPValue(double value) throws IOException, DeviceException {
+        query(C_SET_P, value);
+    }
+
+    @Override
+    public void setIValue(double value) throws IOException, DeviceException {
+        query(C_SET_I, value);
+
+    }
+
+    @Override
+    public void setDValue(double value) throws IOException, DeviceException {
+        query(C_SET_D, value);
+
+    }
+
+    @Override
+    public double getPValue() throws IOException, DeviceException {
+        return readChannel(PROP_BAND);
+    }
+
+    @Override
+    public double getIValue() throws IOException, DeviceException {
+        return readChannel(INT_ACTION_TIME);
+    }
+
+    @Override
+    public double getDValue() throws IOException, DeviceException {
+        return readChannel(DER_ACTION_TIME);
+    }
+
+    private Status getStatus() throws IOException, DeviceException {
+        clearRead();
+        return new Status(query(C_QUERY_STATUS));
     }
 
     /**
@@ -142,43 +226,30 @@ public class ITC503 extends MSTController {
 
     }
 
+    @Override
+    public void useSensor(int sensor) throws IOException, DeviceException {
+
+        if (!Util.isBetween(sensor, 0, 2)) {
+            throw new DeviceException("Sensor index, %d, out of range!", sensor);
+        }
+
+        query(C_SET_SENSOR, sensor + 1);
+
+    }
+
+    @Override
+    public int getUsedSensor() throws IOException, DeviceException {
+        return getStatus().H - 1;
+    }
+
+    @Override
+    public int getNumSensors() {
+        return 3;
+    }
+
     public String getIDN() throws IOException {
+        clearRead();
         return query("V").replace("\n", "").replace("\r", "");
-    }
-
-    /**
-     * Returns the current error value in the cryostat temperature (vs what it was set to be)
-     *
-     * @return Error
-     *
-     * @throws IOException Upon communication error
-     */
-    public double getTemperatureError() throws IOException {
-        return readChannel(TEMP_ERROR_CHANNEL);
-    }
-
-    public double getHeaterOutputPercentage() throws IOException {
-        return readChannel(HEATER_OP_PERC);
-    }
-
-    public double getHeaterOutputVolts() throws IOException {
-        return readChannel(HEATER_OP_VOLTS);
-    }
-
-    public double getGasFlowOutput() throws IOException {
-        return readChannel(GAS_OP);
-    }
-
-    public double getProportionalBand() throws IOException {
-        return readChannel(PROP_BAND);
-    }
-
-    public double getIntegrationActionTime() throws IOException {
-        return readChannel(INT_ACTION_TIME);
-    }
-
-    public double getDerivativeActionTime() throws IOException {
-        return readChannel(DER_ACTION_TIME);
     }
 
     public double getChannelFrequency(int channel) throws IOException, DeviceException {
@@ -197,24 +268,6 @@ public class ITC503 extends MSTController {
 
     public void setMode(Mode mode) throws IOException {
         query(C_SET_MODE, mode.toInt());
-    }
-
-    public void onStableTemperature(final int sensor, double temperature, SRunnable onStable, ERunnable onException) {
-        onStableTemperature(sensor, temperature, STANDARD_TEMP_STABLE_DURATION, STANDARD_CHECK_INTERVAL, STANDARD_ERROR_PERC, onStable, onException);
-    }
-
-    public void onStableTemperature(final int sensor, double temperature, long minDuration, int checkInterval, double percError, SRunnable onStable, ERunnable onException) {
-
-        Asynch.onParamWithinError(
-                () -> getTemperature(sensor),
-                temperature,
-                percError,
-                minDuration,
-                checkInterval,
-                onStable,
-                onException
-        );
-
     }
 
 
@@ -248,5 +301,88 @@ public class ITC503 extends MSTController {
 
     }
 
+    private enum AutoMode {
+
+        H_MAN_G_MAN(0),
+        H_AUTO_G_MAN(1),
+        H_MAN_G_AUTO(2),
+        H_AUTO_G_AUTO(3);
+
+        private              int                        c;
+        private static final int                        H      = 1;
+        private static final int                        G      = 2;
+        private static       HashMap<Integer, AutoMode> lookup = new HashMap<>();
+
+        static AutoMode fromInt(int i) {
+            return lookup.getOrDefault(i, null);
+        }
+
+        static AutoMode fromMode(boolean heater, boolean gas) {
+
+            for (AutoMode mode : values()) {
+                boolean mheater = (mode.toInt() & H) != 0;
+                boolean mGas    = (mode.toInt() & G) != 0;
+                if (mheater == heater && mGas == gas) {
+                    return mode;
+                }
+            }
+
+            return H_AUTO_G_AUTO;
+
+        }
+
+        static {
+            for (AutoMode mode : values()) {
+                lookup.put(mode.toInt(), mode);
+            }
+        }
+
+        AutoMode(int code) {
+            c = code;
+        }
+
+        int toInt() {
+            return c;
+        }
+
+        boolean heaterAuto() {
+            return (c & H) != 0;
+        }
+
+        boolean gasAuto() {
+            return (c & G) != 0;
+        }
+
+    }
+
+    private static class Status {
+
+        private static final Pattern PATTERN = Pattern.compile("X([0-9])A([0-9])C([0-9])S([0-9][0-9])H([0-9])L([0-9])");
+
+        public int X;
+        public int A;
+        public int C;
+        public int S;
+        public int H;
+        public int L;
+
+        public Status(String response) throws IOException {
+
+            Matcher match = PATTERN.matcher(response);
+
+            if (!match.find()) {
+                throw new IOException("Improperly formatted response from ITC503");
+            }
+
+            X = Integer.valueOf(match.group(1));
+            A = Integer.valueOf(match.group(2));
+            C = Integer.valueOf(match.group(3));
+            S = Integer.valueOf(match.group(4));
+            H = Integer.valueOf(match.group(5));
+            L = Integer.valueOf(match.group(6));
+
+        }
+
+    }
 
 }
