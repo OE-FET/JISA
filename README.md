@@ -105,7 +105,23 @@ results.output("/path/to/file.csv");
 results.outputMATLAB("/path/to/file.m", "V", "I");
 results.outputTable();
 ```
+or in python:
+```python
+results = ResultList(["Voltage", "Current"])
+results.setUnits(["V", "A"])
 
+smu = K2450(SerialAddress(5))
+
+smu.turnOn()
+
+for v in range(0, 21, 2):
+    smu.setVoltage(v)
+    results.addData([smu.getVoltage(), smu.getCurrent()])
+
+results.output("/path/to/file.csv")
+results.outputMATLAB("/path/to/file.m", ["V", "I"])
+results.outputTable()
+```
 ```
 +=============+=============+
 | Voltage [V] | Current [A] |
@@ -156,6 +172,25 @@ for (double v = 0; v <= 20; v += 2) {
 
 }
 ```
+likewise, in python:
+```python
+results = ResultList(["Voltage", "Current"])
+results.setUnits(["V", "A"])
+
+# Creates a plot and tells it to watch our ResultList "results"
+plot = Plot("I-V plot", results)
+plot.show()
+
+smu = K2450(SerialAddress(5))
+
+smu.turnOn()
+
+for v in range(0, 21, 2):
+    smu.setVoltage(v)
+    results.addData([smu.getVoltage(), smu.getCurrent()])
+    
+```
+
 ![Plot Window](https://i.imgur.com/PPgdyCa.png)
 
 As mentioned, these GUI elements work in real-time, so every time a new data point gets added to ``results``, the plot will update (with a nifty animation too!)
