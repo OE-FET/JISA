@@ -184,32 +184,34 @@ public class SMUCluster extends MCSMU {
 
     @Override
     public void setAverageMode(int channel, AMode mode) throws DeviceException, IOException {
-
+        if (devices.size() <= channel) {
+            throw new DeviceException("Channel does not exist!");
+        }
+        devices.get(channel).setAverageMode(mode);
     }
 
     @Override
     public void setAverageCount(int channel, int count) throws DeviceException, IOException {
-
+        if (devices.size() <= channel) {
+            throw new DeviceException("Channel does not exist!");
+        }
+        devices.get(channel).setAverageCount(count);
     }
 
     @Override
     public int getAverageCount(int channel) throws DeviceException, IOException {
-        return 0;
+        if (devices.size() <= channel) {
+            throw new DeviceException("Channel does not exist!");
+        }
+        return devices.get(channel).getAverageCount();
     }
 
     @Override
     public AMode getAverageMode(int channel) throws DeviceException, IOException {
-        return null;
-    }
-
-    @Override
-    public void useAverage(int channel, boolean use) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public boolean isUsingAverage(int channel) throws DeviceException, IOException {
-        return false;
+        if (devices.size() <= channel) {
+            throw new DeviceException("Channel does not exist!");
+        }
+        return devices.get(channel).getAverageMode();
     }
 
     public IVPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {

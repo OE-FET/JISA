@@ -1,7 +1,9 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
+import JISA.Control.ERunnable;
 import JISA.Control.Returnable;
+import JISA.Control.SRunnable;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.ResultList;
 import JISA.Util;
@@ -184,10 +186,6 @@ public abstract class SMU extends VISADevice {
      * @throws IOException     Upon communications error
      */
     public abstract AMode getAverageMode() throws DeviceException, IOException;
-
-    public abstract void useAverage(boolean use) throws DeviceException, IOException;
-
-    public abstract boolean isUsingAverage() throws DeviceException, IOException;
 
     /**
      * Returns the number of measurements used for averaging by the SMU.
@@ -607,6 +605,7 @@ public abstract class SMU extends VISADevice {
     }
 
     public enum AMode {
+        NONE,
         MEAN_REPEAT,
         MEAN_MOVING,
         MEDIAN_REPEAT,
@@ -623,6 +622,10 @@ public abstract class SMU extends VISADevice {
 
     }
 
+    public interface Setupable {
+        public void run(int count) throws IOException, DeviceException;
+    }
+
     protected interface ReadFilter {
         double getValue() throws IOException, DeviceException;
 
@@ -631,12 +634,21 @@ public abstract class SMU extends VISADevice {
         int getCount();
 
         void clear();
+
+        void setUp() throws IOException, DeviceException;
+
     }
 
     protected class MeanRepeatFilter implements ReadFilter {
 
         protected int                count = 1;
         protected Returnable<Double> value;
+        protected Setupable          setUp;
+
+        public MeanRepeatFilter(Returnable<Double> v, Setupable s) {
+            value = v;
+            setUp = s;
+        }
 
         @Override
         public double getValue() throws IOException, DeviceException {
@@ -665,6 +677,12 @@ public abstract class SMU extends VISADevice {
         public void clear() {
 
         }
+
+        @Override
+        public void setUp() throws IOException, DeviceException {
+            setUp.run(getCount());
+        }
+
     }
 
     protected class MeanMovingFilter implements ReadFilter {
@@ -672,6 +690,12 @@ public abstract class SMU extends VISADevice {
         protected int                count = 1;
         protected Returnable<Double> value;
         protected ArrayList<Double>  queue = new ArrayList<>();
+        protected Setupable          setUp;
+
+        public MeanMovingFilter(Returnable<Double> v, Setupable s) {
+            value = v;
+            setUp = s;
+        }
 
         @Override
         public double getValue() throws IOException, DeviceException {
@@ -706,6 +730,11 @@ public abstract class SMU extends VISADevice {
         public void clear() {
             queue.clear();
         }
+
+        @Override
+        public void setUp() throws IOException, DeviceException {
+            setUp.run(getCount());
+        }
     }
 
     protected class MedianRepeatFilter implements ReadFilter {
@@ -713,9 +742,11 @@ public abstract class SMU extends VISADevice {
         protected int                count  = 1;
         protected Returnable<Double> value;
         protected Median             median = new Median();
+        protected Setupable          setUp;
 
-        public MedianRepeatFilter(Returnable<Double> v) {
+        public MedianRepeatFilter(Returnable<Double> v, Setupable s) {
             value = v;
+            setUp = s;
         }
 
         @Override
@@ -745,6 +776,11 @@ public abstract class SMU extends VISADevice {
         public void clear() {
 
         }
+
+        @Override
+        public void setUp() throws IOException, DeviceException {
+            setUp.run(getCount());
+        }
     }
 
     protected class MedianMovingFilter implements ReadFilter {
@@ -753,9 +789,11 @@ public abstract class SMU extends VISADevice {
         protected Returnable<Double> value;
         protected ArrayList<Double>  queue  = new ArrayList<>();
         protected Median             median = new Median();
+        protected Setupable          setUp;
 
-        public MedianMovingFilter(Returnable<Double> v) {
+        public MedianMovingFilter(Returnable<Double> v, Setupable s) {
             value = v;
+            setUp = s;
         }
 
         @Override
@@ -792,15 +830,22 @@ public abstract class SMU extends VISADevice {
         public void clear() {
             queue.clear();
         }
+
+        @Override
+        public void setUp() throws IOException, DeviceException {
+            setUp.run(getCount());
+        }
     }
 
     protected class BypassFilter implements ReadFilter {
 
         protected Returnable<Double> value;
         protected int                count = 1;
+        protected Setupable          setUp;
 
-        public BypassFilter(Returnable<Double> v) {
+        public BypassFilter(Returnable<Double> v, Setupable s) {
             value = v;
+            setUp = s;
         }
 
         @Override
@@ -821,6 +866,11 @@ public abstract class SMU extends VISADevice {
         @Override
         public void clear() {
 
+        }
+
+        @Override
+        public void setUp() throws IOException, DeviceException {
+            setUp.run(getCount());
         }
     }
 

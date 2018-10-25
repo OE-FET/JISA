@@ -150,13 +150,4 @@ public class DummyMCSMU extends MCSMU {
         return null;
     }
 
-    @Override
-    public void useAverage(int channel, boolean use) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public boolean isUsingAverage(int channel) throws DeviceException, IOException {
-        return false;
-    }
 }
