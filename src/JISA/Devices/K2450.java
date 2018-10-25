@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 public class K2450 extends SMU {
 
+    // == COMMANDS =====================================================================================================
     private static final String C_MEASURE_VOLTAGE       = ":MEAS:VOLT?";
     private static final String C_MEASURE_CURRENT       = ":MEAS:CURR?";
     private static final String C_MEASURE_RESISTANCE    = ":MEAS:RES?";
@@ -28,17 +29,100 @@ public class K2450 extends SMU {
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
 
-    private final MedianRepeatFilter mrfV = new MedianRepeatFilter(() -> queryDouble(C_MEASURE_VOLTAGE));
-    private final MedianRepeatFilter mrfI = new MedianRepeatFilter(() -> queryDouble(C_MEASURE_CURRENT));
-    private final MedianMovingFilter mmfV = new MedianMovingFilter(() -> queryDouble(C_MEASURE_VOLTAGE));
-    private final MedianMovingFilter mmfI = new MedianMovingFilter(() -> queryDouble(C_MEASURE_CURRENT));
-    private final BypassFilter       bpV  = new BypassFilter(() -> queryDouble(C_MEASURE_VOLTAGE));
-    private final BypassFilter       bpI  = new BypassFilter(() -> queryDouble(C_MEASURE_CURRENT));
+    // == FILTERS ======================================================================================================
+    private final MedianRepeatFilter MEDIAN_REPEAT_V = new MedianRepeatFilter(
+            () -> queryDouble(C_MEASURE_VOLTAGE),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, 1);
+                write(C_SET_AVG_STATE, OUTPUT_OFF);
+            }
+    );
 
-    private ReadFilter filterV     = bpV;
-    private ReadFilter filterI     = bpI;
-    private boolean    usingFilter = false;
-    private AMode      filterMode  = AMode.MEAN_REPEAT;
+    private final MedianRepeatFilter MEDIAN_REPEAT_I = new MedianRepeatFilter(
+            () -> queryDouble(C_MEASURE_CURRENT),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, 1);
+                write(C_SET_AVG_STATE, OUTPUT_OFF);
+            });
+
+    private final MedianMovingFilter MEDIAN_MOVING_V = new MedianMovingFilter(
+            () -> queryDouble(C_MEASURE_VOLTAGE),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, 1);
+                write(C_SET_AVG_STATE, OUTPUT_OFF);
+            }
+    );
+
+    private final MedianMovingFilter MEDIAN_MOVING_I = new MedianMovingFilter(
+            () -> queryDouble(C_MEASURE_CURRENT),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, 1);
+                write(C_SET_AVG_STATE, OUTPUT_OFF);
+            });
+
+    private final BypassFilter MEAN_REPEAT_V = new BypassFilter(
+            () -> queryDouble(C_MEASURE_VOLTAGE),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, c);
+                write(C_SET_AVG_STATE, OUTPUT_ON);
+            }
+    );
+
+    private final BypassFilter MEAN_REPEAT_I = new BypassFilter(
+            () -> queryDouble(C_MEASURE_CURRENT),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, c);
+                write(C_SET_AVG_STATE, OUTPUT_ON);
+            }
+    );
+
+    private final BypassFilter MEAN_MOVING_V = new BypassFilter(
+            () -> queryDouble(C_MEASURE_VOLTAGE),
+            (c) -> {
+                write(C_SET_AVG_MODE, "MOVING");
+                write(C_SET_AVG_COUNT, c);
+                write(C_SET_AVG_STATE, OUTPUT_ON);
+            }
+    );
+
+    private final BypassFilter MEAN_MOVING_I = new BypassFilter(
+            () -> queryDouble(C_MEASURE_CURRENT),
+            (c) -> {
+                write(C_SET_AVG_MODE, "MOVING");
+                write(C_SET_AVG_COUNT, c);
+                write(C_SET_AVG_STATE, OUTPUT_ON);
+            }
+    );
+
+    private final BypassFilter NONE_V = new BypassFilter(
+            () -> queryDouble(C_MEASURE_VOLTAGE),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, 1);
+                write(C_SET_AVG_STATE, OUTPUT_OFF);
+            }
+    );
+
+    private final BypassFilter NONE_I = new BypassFilter(
+            () -> queryDouble(C_MEASURE_CURRENT),
+            (c) -> {
+                write(C_SET_AVG_MODE, "REPEAT");
+                write(C_SET_AVG_COUNT, 1);
+                write(C_SET_AVG_STATE, OUTPUT_OFF);
+            }
+    );
+
+    // == INTERNAL VARIABLES ===========================================================================================
+    private ReadFilter filterV     = NONE_V;
+    private ReadFilter filterI     = NONE_I;
+    private AMode      filterMode  = AMode.NONE;
+    private int        filterCount = 1;
 
     /**
      * Constant values for referring to the FRONT and REAR terminals of the Keithley 2450 SMU
@@ -48,6 +132,7 @@ public class K2450 extends SMU {
         public static final int REAR  = 1;
     }
 
+    // == CONSTRUCTORS =================================================================================================
     public K2450(InstrumentAddress address) throws IOException, DeviceException {
 
         super(address);
@@ -60,9 +145,7 @@ public class K2450 extends SMU {
                 throw new DeviceException("Device at address %s is not a Keithley 2450!", address.getVISAAddress());
             }
 
-            setAverageMode(AMode.MEAN_REPEAT);
-            useAverage(false);
-            setAverageCount(queryInt(C_QUERY_AVG_COUNT));
+            setAverageMode(AMode.NONE);
 
         } catch (IOException e) {
             throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
@@ -70,6 +153,7 @@ public class K2450 extends SMU {
 
     }
 
+    // == METHODS ======================================================================================================
     public void useFourProbe(boolean fourProbe) throws IOException {
 
         if (fourProbe) {
@@ -85,110 +169,77 @@ public class K2450 extends SMU {
     }
 
     @Override
-    public void setAverageMode(AMode mode) throws IOException {
-        String code = "";
+    public void setAverageMode(AMode mode) throws IOException, DeviceException {
 
         switch (mode) {
 
+            case NONE:
+                filterV = NONE_V;
+                filterI = NONE_I;
+                break;
+
             case MEAN_REPEAT:
-                filterV = bpV;
-                filterI = bpI;
-                write(C_SET_AVG_MODE, "REPEAT");
+                filterV = MEAN_REPEAT_V;
+                filterI = MEAN_REPEAT_I;
                 break;
 
             case MEAN_MOVING:
-                filterV = bpV;
-                filterI = bpI;
-                write(C_SET_AVG_MODE, "MOVING");
+                filterV = MEAN_MOVING_V;
+                filterI = MEAN_MOVING_I;
                 break;
 
             case MEDIAN_REPEAT:
-                filterV = mrfV;
-                filterI = mrfI;
-                filterV.setCount(getAverageCount());
-                filterI.setCount(getAverageCount());
-                write(C_SET_AVG_MODE, "REPEAT");
+                filterV = MEDIAN_REPEAT_V;
+                filterI = MEDIAN_REPEAT_I;
                 break;
 
             case MEDIAN_MOVING:
-                filterV = mmfV;
-                filterI = mmfI;
-                filterV.setCount(getAverageCount());
-                filterI.setCount(getAverageCount());
-                write(C_SET_AVG_MODE, "REPEAT");
+                filterV = MEDIAN_MOVING_V;
+                filterI = MEDIAN_MOVING_I;
                 break;
 
         }
 
+        filterMode = mode;
+        resetFilters();
+
+    }
+
+    private void resetFilters() throws IOException, DeviceException {
+
+        filterV.setCount(filterCount);
+        filterI.setCount(filterCount);
+
+        filterV.setUp();
+        filterI.setUp();
+
         filterV.clear();
         filterI.clear();
-        useAverage(isUsingAverage());
-
     }
 
     @Override
-    public void setAverageCount(int count) throws IOException {
-        write(C_SET_AVG_COUNT, count);
-        mmfV.setCount(count);
-        mmfI.setCount(count);
-        mrfV.setCount(count);
-        mrfI.setCount(count);
-        bpV.setCount(count);
-        bpI.setCount(count);
-        filterV.clear();
-        filterI.clear();
+    public void setAverageCount(int count) throws IOException, DeviceException {
+        filterCount = count;
+        resetFilters();
     }
 
     @Override
-    public AMode getAverageMode() throws IOException {
+    public AMode getAverageMode() {
+        return filterMode;
 
-        if (filterV instanceof BypassFilter) {
-            String response = query(C_QUERY_AVG_MODE).trim();
-            if (response.equals("MOV")) {
-                return AMode.MEAN_MOVING;
-            } else if (response.equals("REP")) {
-                return AMode.MEAN_REPEAT;
-            }
-        } else {
-            if (filterV instanceof MedianRepeatFilter) {
-                return AMode.MEDIAN_REPEAT;
-            } else if (filterV instanceof MeanMovingFilter) {
-                return AMode.MEDIAN_MOVING;
-            }
-        }
-
-        return AMode.MEAN_REPEAT;
-
-    }
-
-    @Override
-    public void useAverage(boolean use) throws IOException {
-
-        if (filterV instanceof BypassFilter) {
-            write(C_SET_AVG_STATE, use ? OUTPUT_ON : OUTPUT_OFF);
-        } else {
-            write(C_SET_AVG_STATE, OUTPUT_OFF);
-        }
-
-        usingFilter = use;
-    }
-
-    @Override
-    public boolean isUsingAverage() {
-        return usingFilter;
     }
 
     @Override
     public int getAverageCount() {
-        return filterV.getCount();
+        return filterCount;
     }
 
     public double getVoltage() throws DeviceException, IOException {
-        return isUsingAverage() ? filterV.getValue() : bpV.getValue();
+        return filterV.getValue();
     }
 
     public double getCurrent() throws IOException, DeviceException {
-        return isUsingAverage() ? filterI.getValue() : bpI.getValue();
+        return filterI.getValue();
     }
 
     public void turnOn() throws IOException {

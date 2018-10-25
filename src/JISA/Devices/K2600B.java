@@ -1,33 +1,114 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
+import JISA.Control.Returnable;
 
 import java.io.IOException;
 import java.util.HashMap;
 
 public class K2600B extends MCSMU {
 
-    private static final String[] CHANNELS          = {"smua", "smub"};
-    private static final String   C_QUERY_VOLT      = "print(%s.measure.v())";
-    private static final String   C_QUERY_CURR      = "print(%s.measure.i())";
-    private static final String   C_QUERY_FUNC      = "print(%s.source.func)";
-    private static final String   C_QUERY_OUTPUT    = "print(%s.source.output)";
-    private static final String   C_QUERY_SENSE     = "print(%s.sense)";
-    private static final String   C_SET_SOURCE      = "%s.source.func = %s";
-    private static final String   C_SET_VOLT        = "%s.source.levelv = %f";
-    private static final String   C_SET_CURR        = "%s.source.leveli = %f";
-    private static final String   C_SET_OUTPUT      = "%s.source.output = %s";
-    private static final String   C_SET_SENSE       = "%s.sense = %s";
-    private static final String   C_SET_AVG_COUNT   = "%s.measure.filer.count = %d";
-    private static final String   C_QUERY_AVG_COUNT = "print(%s.measure.filter.count)";
-    private static final String   C_SET_AVG_MODE    = "%s.measure.filer.type = %d";
-    private static final String   C_QUERY_AVG_MODE  = "print(%s.measure.filer.type)";
-    private static final String   C_SET_AVG_STATE   = "%s.measure.filter.enable = %d";
-    private static final String   C_QUERY_AVG_STATE = "print(%s.measure.filer.enable)";
-    private static final String   SENSE_LOCAL       = "0";
-    private static final String   SENSE_REMOTE      = "1";
-    private static final String   OUTPUT_ON         = "1";
-    private static final String   OUTPUT_OFF        = "0";
+    private static final String[] CHANNELS             = {"smua", "smub"};
+    private static final String   C_QUERY_VOLT         = "print(%s.measure.v())";
+    private static final String   C_QUERY_CURR         = "print(%s.measure.i())";
+    private static final String   C_QUERY_FUNC         = "print(%s.source.func)";
+    private static final String   C_QUERY_OUTPUT       = "print(%s.source.output)";
+    private static final String   C_QUERY_SENSE        = "print(%s.sense)";
+    private static final String   C_SET_SOURCE         = "%s.source.func = %s";
+    private static final String   C_SET_VOLT           = "%s.source.levelv = %f";
+    private static final String   C_SET_CURR           = "%s.source.leveli = %f";
+    private static final String   C_SET_OUTPUT         = "%s.source.output = %s";
+    private static final String   C_SET_SENSE          = "%s.sense = %s";
+    private static final String   C_SET_AVG_COUNT      = "%s.measure.filer.count = %d";
+    private static final String   C_QUERY_AVG_COUNT    = "print(%s.measure.filter.count)";
+    private static final String   C_SET_AVG_MODE       = "%s.measure.filer.type = %s";
+    private static final String   C_QUERY_AVG_MODE     = "print(%s.measure.filer.type)";
+    private static final String   C_SET_AVG_STATE      = "%s.measure.filter.enable = %s";
+    private static final String   C_QUERY_AVG_STATE    = "print(%s.measure.filer.enable)";
+    private static final String   SENSE_LOCAL          = "0";
+    private static final String   SENSE_REMOTE         = "1";
+    private static final String   OUTPUT_ON            = "1";
+    private static final String   OUTPUT_OFF           = "0";
+    private static final String   FILTER_MOVING_MEAN   = "0";
+    private static final String   FILTER_REPEAT_MEAN   = "1";
+    private static final String   FILTER_MOVING_MEDIAN = "2";
+
+    private AMode[]      filterMode  = {AMode.NONE, AMode.NONE};
+    private int[]        filterCount = {1, 1};
+    private ReadFilter[] filterV     = {null, null};
+    private ReadFilter[] filterI     = {null, null};
+
+    // == FILTERS ======================================================================================================
+    private class BlankFilter extends BypassFilter {
+
+        public BlankFilter(int channel, String command, Object... args) {
+            super(
+                    () -> queryDouble(command, args),
+                    (c) -> {
+                        write(C_SET_AVG_COUNT, CHANNELS[channel], 1);
+                        write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_REPEAT_MEAN);
+                        write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_OFF);
+                    }
+            );
+        }
+    }
+
+    private class MeanRFilter extends BypassFilter {
+
+        public MeanRFilter(int channel, String command, Object... args) {
+            super(
+                    () -> queryDouble(command, args),
+                    (c) -> {
+                        write(C_SET_AVG_COUNT, CHANNELS[channel], c);
+                        write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_REPEAT_MEAN);
+                        write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_ON);
+                    }
+            );
+        }
+    }
+
+    private class MeanMFilter extends BypassFilter {
+
+        public MeanMFilter(int channel, String command, Object... args) {
+            super(
+                    () -> queryDouble(command, args),
+                    (c) -> {
+                        write(C_SET_AVG_COUNT, CHANNELS[channel], c);
+                        write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_MOVING_MEAN);
+                        write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_ON);
+                    }
+            );
+        }
+    }
+
+    private class MedRFilter extends MedianRepeatFilter {
+
+        public MedRFilter(int channel, String command, Object... args) {
+            super(
+                    () -> queryDouble(command, args),
+                    (c) -> {
+                        write(C_SET_AVG_COUNT, CHANNELS[channel], 1);
+                        write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_REPEAT_MEAN);
+                        write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_OFF);
+                    }
+            );
+        }
+    }
+
+
+    private class MedMFilter extends BypassFilter {
+
+        public MedMFilter(int channel, String command, Object... args) {
+            super(
+                    () -> queryDouble(command, args),
+                    (c) -> {
+                        write(C_SET_AVG_COUNT, CHANNELS[channel], c);
+                        write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_MOVING_MEDIAN);
+                        write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_ON);
+                    }
+            );
+        }
+    }
 
     public K2600B(InstrumentAddress address) throws IOException, DeviceException {
 
@@ -43,6 +124,10 @@ public class K2600B extends MCSMU {
             throw new DeviceException("The instrument at address %s is not responding!", address.getVISAAddress());
         }
 
+        for (int i = 0; i < getNumChannels(); i ++) {
+            setAverageMode(i, AMode.NONE);
+        }
+
     }
 
     @Override
@@ -52,7 +137,7 @@ public class K2600B extends MCSMU {
             throw new DeviceException("Channel does not exist!");
         }
 
-        return queryDouble(C_QUERY_VOLT, CHANNELS[channel]);
+        return filterV[channel].getValue();
 
     }
 
@@ -63,7 +148,7 @@ public class K2600B extends MCSMU {
             throw new DeviceException("Channel does not exist!");
         }
 
-        return queryDouble(C_QUERY_CURR, CHANNELS[channel]);
+        return filterI[channel].getValue();
 
     }
 
@@ -243,31 +328,89 @@ public class K2600B extends MCSMU {
     @Override
     public void setAverageMode(int channel, AMode mode) throws DeviceException, IOException {
 
+        if (channel >= getNumChannels() || channel < 0) {
+            throw new DeviceException("Channel does not exist!");
+        }
+
+        switch (mode) {
+
+            case NONE:
+                filterV[channel] = new BlankFilter(channel, C_QUERY_VOLT, CHANNELS[channel]);
+                filterI[channel] = new BlankFilter(channel, C_QUERY_CURR, CHANNELS[channel]);
+                break;
+
+            case MEAN_REPEAT:
+                filterV[channel] = new MeanRFilter(channel, C_QUERY_VOLT, CHANNELS[channel]);
+                filterI[channel] = new MeanRFilter(channel, C_QUERY_CURR, CHANNELS[channel]);
+                break;
+
+            case MEAN_MOVING:
+                filterV[channel] = new MeanMFilter(channel, C_QUERY_VOLT, CHANNELS[channel]);
+                filterI[channel] = new MeanMFilter(channel, C_QUERY_CURR, CHANNELS[channel]);
+                break;
+
+            case MEDIAN_REPEAT:
+                filterV[channel] = new MedRFilter(channel, C_QUERY_VOLT, CHANNELS[channel]);
+                filterI[channel] = new MedRFilter(channel, C_QUERY_CURR, CHANNELS[channel]);
+                break;
+
+            case MEDIAN_MOVING:
+                filterV[channel] = new MedMFilter(channel, C_QUERY_VOLT, CHANNELS[channel]);
+                filterI[channel] = new MedMFilter(channel, C_QUERY_CURR, CHANNELS[channel]);
+                break;
+
+        }
+
+        filterMode[channel] = mode;
+        resetFilters(channel);
+
+    }
+
+    private void resetFilters(int channel) throws IOException, DeviceException {
+
+        filterV[channel].setCount(filterCount[channel]);
+        filterI[channel].setCount(filterCount[channel]);
+
+        filterV[channel].setUp();
+        filterI[channel].setUp();
+
+        filterV[channel].clear();
+        filterI[channel].clear();
+
     }
 
     @Override
     public void setAverageCount(int channel, int count) throws DeviceException, IOException {
 
+        if (channel >= getNumChannels() || channel < 0) {
+            throw new DeviceException("Channel does not exist!");
+        }
+
+        filterCount[channel] = count;
+        resetFilters(channel);
+
     }
 
     @Override
     public int getAverageCount(int channel) throws DeviceException, IOException {
-        return 0;
+
+        if (channel >= getNumChannels() || channel < 0) {
+            throw new DeviceException("Channel does not exist!");
+        }
+
+        return filterCount[channel];
+
     }
 
     @Override
     public AMode getAverageMode(int channel) throws DeviceException, IOException {
-        return null;
-    }
 
-    @Override
-    public void useAverage(int channel, boolean use) throws DeviceException, IOException {
+        if (channel >= getNumChannels() || channel < 0) {
+            throw new DeviceException("Channel does not exist!");
+        }
 
-    }
+        return filterMode[channel];
 
-    @Override
-    public boolean isUsingAverage(int channel) throws DeviceException, IOException {
-        return false;
     }
 
     private enum SFunc {

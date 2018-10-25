@@ -9,38 +9,95 @@ import java.util.regex.Pattern;
 
 public class K236 extends SMU {
 
-    // TODO: Test with actual instrument in lab
+    // == CONSTANTS ====================================================================================================
+    private static final String C_SET_SRC_FUNC   = "F%d,%d";
+    private static final String C_SET_BIAS       = "B%f,%d,%d";
+    private static final String C_GET_VALUE      = "G%d,%d,%d";
+    private static final String C_EXECUTE        = "X";
+    private static final String C_SET_SENSE      = "0%d";
+    private static final String C_OPERATE        = "N%d";
+    private static final String C_NO_TERM        = "Y4";
+    private static final String C_TRIGGER        = "H0";
+    private static final String C_RESET          = "J0";
+    private static final String C_DISABLE_FILTER = "P0";
+    private static final int    OPERATE_OFF      = 0;
+    private static final int    OPERATE_ON       = 1;
+    private static final int    OUTPUT_NOTHING   = 0;
+    private static final int    OUTPUT_SOURCE    = 1;
+    private static final int    OUTPUT_DELAY     = 2;
+    private static final int    OUTPUT_MEASURE   = 4;
+    private static final int    OUTPUT_TIME      = 8;
+    private static final int    FORMAT_CLEAN     = 2;
+    private static final int    ONE_DC_DATA      = 0;
+    private static final int    SENSE_LOCAL      = 0;
+    private static final int    SENSE_REMOTE     = 1;
+    private static final double MIN_CURRENT      = -100e-3;
+    private static final double MAX_CURRENT      = +100e-3;
+    private static final double MIN_VOLTAGE      = -110;
+    private static final double MAX_VOLTAGE      = +110;
 
-    private static final String   C_SET_SRC_FUNC  = "F%d,%d";
-    private static final String   C_SET_BIAS      = "B%f,%d,%d";
-    private static final String   C_GET_VALUE     = "G%d,%d,%d";
-    private static final String   C_EXECUTE       = "X";
-    private static final String   C_SET_SENSE     = "0%d";
-    private static final String   C_OPERATE       = "N%d";
-    private static final String   C_NO_TERM       = "Y4";
-    private static final String   C_TRIGGER       = "H0";
-    private static final String   C_RESET         = "J0";
-    private static final int      OPERATE_OFF     = 0;
-    private static final int      OPERATE_ON      = 1;
-    private static final int      OUTPUT_NOTHING  = 0;
-    private static final int      OUTPUT_SOURCE   = 1;
-    private static final int      OUTPUT_DELAY    = 2;
-    private static final int      OUTPUT_MEASURE  = 4;
-    private static final int      OUTPUT_TIME     = 8;
-    private static final int      FORMAT_CLEAN    = 2;
-    private static final int      ONE_DC_DATA     = 0;
-    private static final int      SENSE_LOCAL     = 0;
-    private static final int      SENSE_REMOTE    = 1;
-    private static final double   MIN_CURRENT     = -100e-3;
-    private static final double   MAX_CURRENT     = +100e-3;
-    private static final double   MIN_VOLTAGE     = -110;
-    private static final double   MAX_VOLTAGE     = +110;
-    private              Source   source          = null;
-    private              Function function        = null;
-    private              double   biasLevel       = 0;
-    private              boolean  on              = false;
-    private              boolean  remote          = true;
-    private static final Pattern  responsePattern = Pattern.compile("[A-Z]{4}[VI]([+-][0-9]+[.][0-9]+E[+-][0-9]+)");
+    // == FILTERS ======================================================================================================
+    private final MedianRepeatFilter MEDIAN_REPEAT_S = new MedianRepeatFilter(
+            () -> readValue(OUTPUT_SOURCE),
+            (c) -> write(C_DISABLE_FILTER)
+    );
+
+    private final MedianRepeatFilter MEDIAN_REPEAT_M = new MedianRepeatFilter(
+            () -> readValue(OUTPUT_MEASURE),
+            (c) -> write(C_DISABLE_FILTER)
+    );
+
+    private final MedianMovingFilter MEDIAN_MOVING_S = new MedianMovingFilter(
+            () -> readValue(OUTPUT_SOURCE),
+            (c) -> write(C_DISABLE_FILTER)
+    );
+
+    private final MedianMovingFilter MEDIAN_MOVING_M = new MedianMovingFilter(
+            () -> readValue(OUTPUT_MEASURE),
+            (c) -> write(C_DISABLE_FILTER)
+    );
+
+    private final MeanRepeatFilter MEAN_REPEAT_S = new MeanRepeatFilter(
+            () -> readValue(OUTPUT_SOURCE),
+            (c) -> write(C_DISABLE_FILTER)
+    );
+
+    private final MeanRepeatFilter MEAN_REPEAT_M = new MeanRepeatFilter(
+            () -> readValue(OUTPUT_MEASURE),
+            (c) -> write(C_DISABLE_FILTER)
+    );
+
+    private final MeanMovingFilter MEAN_MOVING_S = new MeanMovingFilter(
+            () -> readValue(OUTPUT_SOURCE),
+            (c) -> write(C_DISABLE_FILTER)
+    );
+
+    private final MeanMovingFilter MEAN_MOVING_M = new MeanMovingFilter(
+            () -> readValue(OUTPUT_MEASURE),
+            (c) -> write(C_DISABLE_FILTER)
+    );
+
+    private final BypassFilter NONE_S = new BypassFilter(
+            () -> readValue(OUTPUT_SOURCE),
+            (c) -> write(C_DISABLE_FILTER)
+    );
+
+    private final BypassFilter NONE_M = new BypassFilter(
+            () -> readValue(OUTPUT_MEASURE),
+            (c) -> write(C_DISABLE_FILTER)
+    );
+
+
+    // == INTERNAL VARIABLES ===========================================================================================
+    private Source     source      = null;
+    private Function   function    = null;
+    private double     biasLevel   = 0;
+    private boolean    on          = false;
+    private boolean    remote      = true;
+    private AMode      filterMode  = AMode.NONE;
+    private ReadFilter filterS     = NONE_S;
+    private ReadFilter filterM     = NONE_M;
+    private int        filterCount = 1;
 
     public K236(InstrumentAddress address) throws IOException, DeviceException {
 
@@ -50,6 +107,7 @@ public class K236 extends SMU {
         turnOff();
         setSourceFunction(Source.VOLTAGE, Function.DC);
         write(C_NO_TERM);
+        setAverageMode(AMode.NONE);
 
         try {
 
@@ -98,12 +156,12 @@ public class K236 extends SMU {
 
     }
 
-    public double getSourceValue() throws IOException {
-        return readValue(OUTPUT_SOURCE);
+    public double getSourceValue() throws IOException, DeviceException {
+        return filterS.getValue();
     }
 
-    public double getMeasureValue() throws IOException {
-        return readValue(OUTPUT_MEASURE);
+    public double getMeasureValue() throws IOException, DeviceException {
+        return filterM.getValue();
     }
 
     @Override
@@ -117,37 +175,73 @@ public class K236 extends SMU {
         return remote;
     }
 
+    private void resetFilters() throws DeviceException, IOException {
+
+        filterS.setCount(filterCount);
+        filterM.setCount(filterCount);
+
+        filterS.setUp();
+        filterM.setUp();
+
+        filterS.clear();
+        filterM.clear();
+
+    }
+
     @Override
     public void setAverageMode(AMode mode) throws DeviceException, IOException {
+
+        switch (mode) {
+
+            case NONE:
+                filterS = NONE_S;
+                filterM = NONE_M;
+                break;
+
+            case MEAN_REPEAT:
+                filterS = MEAN_REPEAT_S;
+                filterM = MEAN_REPEAT_M;
+                break;
+
+            case MEAN_MOVING:
+                filterS = MEAN_MOVING_S;
+                filterM = MEAN_MOVING_M;
+                break;
+
+            case MEDIAN_REPEAT:
+                filterS = MEDIAN_REPEAT_S;
+                filterM = MEDIAN_REPEAT_M;
+                break;
+
+            case MEDIAN_MOVING:
+                filterS = MEDIAN_MOVING_S;
+                filterM = MEDIAN_MOVING_M;
+                break;
+
+        }
+
+        filterMode = mode;
+        resetFilters();
 
     }
 
     @Override
     public void setAverageCount(int count) throws DeviceException, IOException {
-
+        filterCount = count;
+        resetFilters();
     }
 
     @Override
     public AMode getAverageMode() throws DeviceException, IOException {
-        return null;
-    }
-
-    @Override
-    public void useAverage(boolean use) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public boolean isUsingAverage() throws DeviceException, IOException {
-        return false;
+        return filterMode;
     }
 
     @Override
     public int getAverageCount() throws DeviceException, IOException {
-        return 0;
+        return filterCount;
     }
 
-    public double getVoltage() throws IOException {
+    public double getVoltage() throws IOException, DeviceException {
 
         switch (source) {
             case VOLTAGE:
@@ -160,7 +254,7 @@ public class K236 extends SMU {
 
     }
 
-    public double getCurrent() throws IOException {
+    public double getCurrent() throws IOException, DeviceException {
 
         switch (source) {
             case VOLTAGE:
