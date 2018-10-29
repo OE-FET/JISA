@@ -211,7 +211,11 @@ public class Plot implements Gridable {
 
                 List points = data.get(series).getData();
                 points.subList(0, Math.max(0, points.size() - maxPoints)).clear();
-
+                xAxis.setAutoRanging(false);
+                xAxis.setAnimated(false);
+                yAxis.setAnimated(false);
+                xAxis.setLowerBound(data.get(series).getData().get(0).getXValue());
+                xAxis.setUpperBound(data.get(series).getData().get(data.get(series).getData().size()-1).getXValue());
             }
 
         });
