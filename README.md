@@ -9,6 +9,8 @@ JISA is a Java libary that I originally designed because I really really really 
 2. Dealing with experimental data
 3. Creating simple GUIs to control and observe experiments
 
+You can also use it in python by using the Jython interpreter.
+
 **Currently Implemented Devices:**
 
 |Class|Type|Model|Source|JavaDoc|
@@ -55,8 +57,26 @@ double current1 = smu1.getCurrent();
 double current2 = smu2.getCurrent();
 
 // Sweep voltage from 0 V to 10 V in 5 steps with a 500 ms delay each time
-IVPoint[] points1 = smu1.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500);
-IVPoint[] points2 = smu2.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500);
+IVPoint[] points1 = smu1.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500, true);
+IVPoint[] points2 = smu2.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500, true);
+```
+or, in python:
+```python
+smu1 = K2450(GPIBAddress(0, 15))
+smu2 = K236(GPIBAddress(0, 16))
+
+smu1.setVoltage(5.0)
+smu2.setVoltage(5.0)
+
+smu1.turnOn()
+smu2.turnOn()
+
+current1 = smu1.getCurrent()
+current2 = smu2.getCurrent()
+
+# Sweep voltage from 0 V to 10 V in 5 steps with a 500 ms delay each time
+points1 = smu1.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500, True)
+points2 = smu2.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500, True)
 ```
 
 In the example above, we have told both the K2450 and K236 to source 5 V and measure the resulting current. This is done using identical method calls on both despite the fact that the K236 and K2450 will implement these actions using fundamentally different approaches.
@@ -85,7 +105,23 @@ results.output("/path/to/file.csv");
 results.outputMATLAB("/path/to/file.m", "V", "I");
 results.outputTable();
 ```
+or in python:
+```python
+results = ResultList(["Voltage", "Current"])
+results.setUnits(["V", "A"])
 
+smu = K2450(SerialAddress(5))
+
+smu.turnOn()
+
+for v in range(0, 21, 2):
+    smu.setVoltage(v)
+    results.addData([smu.getVoltage(), smu.getCurrent()])
+
+results.output("/path/to/file.csv")
+results.outputMATLAB("/path/to/file.m", ["V", "I"])
+results.outputTable()
+```
 ```
 +=============+=============+
 | Voltage [V] | Current [A] |
@@ -136,6 +172,25 @@ for (double v = 0; v <= 20; v += 2) {
 
 }
 ```
+likewise, in python:
+```python
+results = ResultList(["Voltage", "Current"])
+results.setUnits(["V", "A"])
+
+# Creates a plot and tells it to watch our ResultList "results"
+plot = Plot("I-V plot", results)
+plot.show()
+
+smu = K2450(SerialAddress(5))
+
+smu.turnOn()
+
+for v in range(0, 21, 2):
+    smu.setVoltage(v)
+    results.addData([smu.getVoltage(), smu.getCurrent()])
+    
+```
+
 ![Plot Window](https://i.imgur.com/PPgdyCa.png)
 
 As mentioned, these GUI elements work in real-time, so every time a new data point gets added to ``results``, the plot will update (with a nifty animation too!)
