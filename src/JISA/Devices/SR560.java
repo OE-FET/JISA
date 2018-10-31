@@ -13,6 +13,7 @@ public class SR560 extends VPreAmp {
     private static final String C_H_FREQ      = "HFRQ %d";
     private static final String C_L_FREQ      = "LFRQ %d";
     private static final String C_SOURCE      = "SRCE %d";
+    private static final String TERMINATOR    = "\r\n";
 
     private enum FMode {
         BYPASS(0, 0.0, Filter.NONE),
@@ -181,6 +182,8 @@ public class SR560 extends VPreAmp {
     public SR560(InstrumentAddress address) throws IOException {
 
         super(address);
+        setEOI(false);
+        setTerminator(TERMINATOR);
 
         // Tell device to listen
         write(C_LISTEN);

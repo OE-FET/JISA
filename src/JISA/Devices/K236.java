@@ -109,6 +109,8 @@ public class K236 extends SMU {
         write(C_NO_TERM);
         setAverageMode(AMode.NONE);
 
+        read();
+
         try {
 
             if (!getIDN().trim().substring(0, 3).equals("236")) {
