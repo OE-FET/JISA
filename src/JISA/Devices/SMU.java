@@ -235,6 +235,18 @@ public abstract class SMU extends VISADevice {
     }
 
     /**
+     * Returns a combined voltage and current measurement.
+     *
+     * @return Voltage and Current
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public IVPoint getIVPoint() throws DeviceException, IOException {
+        return new IVPoint(getVoltage(), getCurrent());
+    }
+
+    /**
      * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of IVPoint objects
      *
      * @param source    VOLTAGE or CURRENT
