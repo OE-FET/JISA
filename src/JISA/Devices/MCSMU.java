@@ -374,6 +374,25 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         return getAverageMode(0);
     }
 
+    public IVPoint getIVPoint(int channel) throws DeviceException, IOException {
+        return new IVPoint(getVoltage(channel), getCurrent(channel));
+    }
+
+    public IVPoint getIVPoint() throws DeviceException, IOException {
+        return getIVPoint(0);
+    }
+
+    public MCIVPoint getMCIVPoint() throws DeviceException, IOException {
+        MCIVPoint point = new MCIVPoint();
+
+        for (int i = 0; i < getNumChannels(); i ++) {
+            point.addChannel(i, new IVPoint(getVoltage(i), getCurrent(i)));
+        }
+
+        return point;
+
+    }
+
     /**
      * Returns a virtual SMU object to control the specified channel of the MCSMU
      *
