@@ -17,6 +17,7 @@ public class ResultList implements Iterable<Result> {
     private int                 cols;
     private ArrayList<Result>   results  = new ArrayList<>();
     private ArrayList<Runnable> onUpdate = new ArrayList<>();
+    private PrintStream         output   = null;
 
     /**
      * Merges multiple lists, side-by-side, into a single list.
@@ -131,12 +132,29 @@ public class ResultList implements Iterable<Result> {
             throw new IndexOutOfBoundsException("Number of columns does not match.");
         }
 
-        results.add(
-                new Result(data)
-        );
+        Result r = new Result(data);
+        results.add(r);
+
+        if (output != null) {
+            r.output(output, ",");
+        }
 
         doUpdate();
 
+    }
+
+    public void setStreamingOutput(String filePath) throws IOException {
+
+        FileOutputStream f = new FileOutputStream(filePath);
+        output = new PrintStream(f);
+
+    }
+
+    public void close() throws IOException {
+        if (output != null) {
+            output.close();
+        }
+        output = null;
     }
 
     /**

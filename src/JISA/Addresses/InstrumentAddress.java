@@ -8,6 +8,7 @@ public interface InstrumentAddress {
         GPIB,
         USB,
         TCPIP,
+        TCPIP_SOCKET,
         SERIAL,
         UNKOWN
     }
