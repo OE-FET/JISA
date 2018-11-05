@@ -269,6 +269,11 @@ public class GPIBDriver implements Driver {
     }
 
     @Override
+    public void setSerial(long instrument, int baud, int data, int parity, int stop, int flow) throws VISAException {
+        
+    }
+
+    @Override
     public StrAddress[] search() throws VISAException {
 
         ArrayList<StrAddress> addresses = new ArrayList<>();

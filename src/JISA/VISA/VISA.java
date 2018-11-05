@@ -255,4 +255,68 @@ public class VISA {
         instrDrivers.get(instrument).setEOS(instrIDs.get(instrument), eos);
     }
 
+    public static void setSerialParameters(long instrument, int baudRate, int dataBits, Parity parity, StopBits stopBits, Flow flowControl) throws VISAException {
+        // Check that we have actually opened this device
+        if (!instrIDs.containsKey(instrument)) {
+            throw new VISAException("That instrument has not been opened!");
+        }
+
+        instrDrivers.get(instrument).setSerial(instrIDs.get(instrument), baudRate, dataBits, parity.toInt(), stopBits.toInt(), flowControl.toInt());
+
+    }
+
+    public enum Parity {
+        NONE(0),
+        ODD(1),
+        EVEN(2),
+        MARK(3),
+        SPACE(4);
+
+        private int value;
+
+        Parity(int v) {
+            value = v;
+        }
+
+        public int toInt() {
+            return value;
+        }
+
+    }
+
+    public enum StopBits {
+        ONE(10),
+        ONE_HALF(15),
+        TWO(20);
+
+        private int value;
+
+        StopBits(int v) {
+            value = v;
+        }
+
+        public int toInt() {
+            return value;
+        }
+
+    }
+
+    public enum Flow {
+        NONE(0),
+        XON_XOFF(1),
+        RTS_CTS(2),
+        DTR_DSR(4);
+
+        private int value;
+
+        Flow(int v) {
+            value = v;
+        }
+
+        public int toInt() {
+            return value;
+        }
+
+    }
+
 }

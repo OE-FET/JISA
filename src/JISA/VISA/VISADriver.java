@@ -217,6 +217,17 @@ public class VISADriver implements Driver {
     }
 
     @Override
+    public void setSerial(long instrument, int baud, int data, int parity, int stop, int flow) throws VISAException {
+
+        setAttribute(instrument, VISANativeInterface.VI_ATTR_ASRL_BAUD, baud);
+        setAttribute(instrument, VISANativeInterface.VI_ATTR_ASRL_DATA_BITS, data);
+        setAttribute(instrument, VISANativeInterface.VI_ATTR_ASRL_PARITY, parity);
+        setAttribute(instrument, VISANativeInterface.VI_ATTR_ASRL_STOP_BITS, stop);
+        setAttribute(instrument, VISANativeInterface.VI_ATTR_ASRL_FLOW_CNTRL, flow);
+
+    }
+
+    @Override
     public StrAddress[] search() throws VISAException {
         // VISA RegEx for "Anything" (should be .* but they seem to use their own standard)
         ByteBuffer            expr       = stringToByteBuffer("?*");
