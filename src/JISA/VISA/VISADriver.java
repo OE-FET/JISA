@@ -263,6 +263,7 @@ public class VISADriver implements Driver {
 
             try {
                 address = new String(desc.array(), 0, 1024, responseEncoding);
+                desc.clear();
             } catch (UnsupportedEncodingException e) {
                 throw new VISAException("Unable to encode address!");
             }
