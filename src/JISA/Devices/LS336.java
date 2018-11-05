@@ -17,6 +17,7 @@ import java.util.concurrent.Semaphore;
  */
 public class LS336 extends MSMOTController {
 
+    private static final String[]        CHANNELS          = {"A", "B", "C", "D"};
     private static final String          C_QUERY_SENSOR    = "KRDG? %s";
     private static final String          C_SET_SET_POINT   = "SETP %d,%f";
     private static final String          C_QUERY_SET_POINT = "SETP? %d";
@@ -77,7 +78,7 @@ public class LS336 extends MSMOTController {
     @Override
     public double getTemperature(int sensor) throws IOException, DeviceException {
         checkSensor(sensor);
-        return queryDouble(C_QUERY_SENSOR, sensor + 1);
+        return queryDouble(C_QUERY_SENSOR, CHANNELS[sensor]);
     }
 
     @Override
@@ -104,7 +105,7 @@ public class LS336 extends MSMOTController {
         checkSensor(sensor);
         OutMode mode = getOutMode(output);
         mode.input = sensor + 1;
-        write(C_SET_OUT_MODE, mode.output, mode.mode, mode.input, mode.powerUp ? 1 : 0);
+        write(C_SET_OUT_MODE, output, mode.mode, mode.input, mode.powerUp ? 1 : 0);
     }
 
     @Override
@@ -204,7 +205,7 @@ public class LS336 extends MSMOTController {
         checkOutput(output);
         OutMode mode = getOutMode(output);
         mode.mode = auto ? 2 : 1;
-        write(C_SET_OUT_MODE, mode.output, mode.mode, mode.input, mode.powerUp ? 1 : 0);
+        write(C_SET_OUT_MODE, output, mode.mode, mode.input, mode.powerUp ? 1 : 0);
     }
 
     @Override
@@ -226,7 +227,6 @@ public class LS336 extends MSMOTController {
 
     private static class OutMode {
 
-        public int     output;
         public int     mode;
         public int     input;
         public boolean powerUp;
@@ -235,10 +235,9 @@ public class LS336 extends MSMOTController {
 
             String[] vals = response.trim().split(",");
 
-            output = Integer.valueOf(vals[0].trim());
-            mode = Integer.valueOf(vals[1].trim());
-            input = Integer.valueOf(vals[2].trim());
-            powerUp = vals[3].trim().equals("1");
+            mode = Integer.valueOf(vals[0].trim());
+            input = Integer.valueOf(vals[1].trim());
+            powerUp = vals[2].trim().equals("1");
 
         }
 
