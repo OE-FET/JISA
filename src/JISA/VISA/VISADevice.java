@@ -60,6 +60,16 @@ public class VISADevice {
         readBufferSize = bytes;
     }
 
+    public void setSerialParameters(int baudRate, int dataBits, VISA.Parity parity, VISA.StopBits stopBits, VISA.Flow flowControl) throws IOException {
+
+        try {
+            VISA.setSerialParameters(device, baudRate, dataBits, parity, stopBits, flowControl);
+        } catch (VISAException e) {
+            throw new IOException(e.getMessage());
+        }
+
+    }
+
     /**
      * Should we send an EOI signal at the end of writing to the device? Generally, this should be true and is by default
      * however older devices from more anarchic times (such as the 70s) may needs this disabling.
