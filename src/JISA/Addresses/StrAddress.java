@@ -26,8 +26,10 @@ public class StrAddress implements InstrumentAddress {
             type = Type.USB;
         } else if (value.length() >= 4 && value.substring(0, 4).equals("ASRL")) {
             type = Type.SERIAL;
-        } else if (value.length() >= 5 && value.substring(0, 5).equals("TCPIP")) {
+        } else if (value.length() >= 5 && value.substring(0, 5).equals("TCPIP") && value.contains("INSTR")) {
             type = Type.TCPIP;
+        } else if (value.length() >= 5 && value.substring(0, 5).equals("TCPIP") && value.contains("SOCKET")) {
+            type = Type.TCPIP_SOCKET;
         }
 
         return type;
@@ -72,6 +74,23 @@ public class StrAddress implements InstrumentAddress {
             int    board = Integer.valueOf(matcher.group(1));
             String host  = matcher.group(2);
             return new TCPIPAddress(board, host);
+        } else {
+            return null;
+        }
+
+
+    }
+
+    public TCPIPSocketAddress toTCPIPSocketAddress() {
+
+        Pattern pattern = Pattern.compile("TCPIP([0-9]*?)::(.*?)::([0-9]*?)::INSTR");
+        Matcher matcher = pattern.matcher(value.trim());
+
+        if (matcher.matches()) {
+            int    board = Integer.valueOf(matcher.group(1));
+            String host  = matcher.group(2);
+            int    port  = Integer.valueOf(matcher.group(3));
+            return new TCPIPSocketAddress(board, host, port);
         } else {
             return null;
         }

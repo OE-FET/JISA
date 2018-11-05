@@ -4,23 +4,37 @@ import JISA.Addresses.InstrumentAddress;
 import JISA.Util;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
+/**
+ * Class for controlling Lake Shore Model 336 temperature controllers.
+ *
+ * They are generally annoying with a shoddy communications implementation. Hooray!
+ */
 public class LS336 extends MSMOTController {
 
-    private static final String C_QUERY_SENSOR    = "KRDG? %s";
-    private static final String C_SET_SET_POINT   = "SETP %d,%f";
-    private static final String C_QUERY_SET_POINT = "SETP? %d";
-    private static final String C_QUERY_PID       = "PID?";
-    private static final String C_SET_PID         = "PID %f,%f,%f";
-    private static final String C_SET_OUT_MODE    = "OUTMODE %d,%d,%d,%d";
-    private static final String C_QUERY_OUT_MODE  = "OUTMODE? %d";
-    private static final String C_QUERY_HEATER    = "HTR? %d";
-    private static final String C_SET_HEATER      = "MOUT %d,%f";
-    private static final String C_QUERY_M_HEATER  = "MOUT? %d";
+    private static final String          C_QUERY_SENSOR    = "KRDG? %s";
+    private static final String          C_SET_SET_POINT   = "SETP %d,%f";
+    private static final String          C_QUERY_SET_POINT = "SETP? %d";
+    private static final String          C_QUERY_PID       = "PID?";
+    private static final String          C_SET_PID         = "PID %f,%f,%f";
+    private static final String          C_SET_OUT_MODE    = "OUTMODE %d,%d,%d,%d";
+    private static final String          C_QUERY_OUT_MODE  = "OUTMODE? %d";
+    private static final String          C_QUERY_HEATER    = "HTR? %d";
+    private static final String          C_SET_HEATER      = "MOUT %d,%f";
+    private static final String          C_QUERY_M_HEATER  = "MOUT? %d";
+    private static final String          TERMINATOR        = "\r\n";
+    private              Semaphore       timingControl     = new Semaphore(1);
+    private              ExecutorService timingService     = Executors.newFixedThreadPool(1);
 
     public LS336(InstrumentAddress address) throws IOException, DeviceException {
 
         super(address);
+        setReadTerminationCharacter(CRLF_TERMINATOR);
+        setTerminator(TERMINATOR);
 
         try {
 
@@ -30,6 +44,30 @@ public class LS336 extends MSMOTController {
 
         } catch (IOException e) {
             throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
+        }
+
+    }
+
+    public synchronized void write(String command, Object... args) throws IOException {
+
+        // Can only write to the device if we have waited enough time since the last write (50 ms)
+        try {
+            timingControl.acquire();
+        } catch (InterruptedException ignored) {
+        }
+
+        try {
+
+            super.write(command, args);
+
+        } finally {
+
+            // Do not allow another write until 50 ms from now.
+            timingService.submit(() -> {
+                Util.sleep(50);
+                timingControl.release();
+            });
+
         }
 
     }
