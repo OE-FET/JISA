@@ -1,6 +1,7 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
+import JISA.VISA.VISA;
 
 import java.io.IOException;
 
@@ -182,7 +183,9 @@ public class SR560 extends VPreAmp {
     public SR560(InstrumentAddress address) throws IOException {
 
         super(address);
-        setEOI(false);
+
+        setSerialParameters(9600, 8, VISA.Parity.NONE, VISA.StopBits.TWO, VISA.Flow.NONE);
+
         setTerminator(TERMINATOR);
 
         // Tell device to listen

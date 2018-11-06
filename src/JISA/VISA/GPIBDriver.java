@@ -269,8 +269,8 @@ public class GPIBDriver implements Driver {
     }
 
     @Override
-    public void setSerial(long instrument, int baud, int data, int parity, int stop, int flow) throws VISAException {
-        
+    public void setSerial(long instrument, int baud, int data, VISA.Parity parity, VISA.StopBits stop, VISA.Flow flow) throws VISAException {
+
     }
 
     @Override

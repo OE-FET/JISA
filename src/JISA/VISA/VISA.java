@@ -268,7 +268,7 @@ public class VISA {
             throw new VISAException("That instrument has not been opened!");
         }
 
-        instrDrivers.get(instrument).setSerial(instrIDs.get(instrument), baudRate, dataBits, parity.toInt(), stopBits.toInt(), flowControl.toInt());
+        instrDrivers.get(instrument).setSerial(instrIDs.get(instrument), baudRate, dataBits, parity, stopBits, flowControl);
 
     }
 

@@ -217,13 +217,13 @@ public class VISADriver implements Driver {
     }
 
     @Override
-    public void setSerial(long instrument, int baud, int data, int parity, int stop, int flow) throws VISAException {
+    public void setSerial(long instrument, int baud, int data, VISA.Parity parity, VISA.StopBits stop, VISA.Flow flow) throws VISAException {
 
         setAttribute(instrument, VISANativeInterface.VI_ATTR_ASRL_BAUD, baud);
         setAttribute(instrument, VISANativeInterface.VI_ATTR_ASRL_DATA_BITS, data);
-        setAttribute(instrument, VISANativeInterface.VI_ATTR_ASRL_PARITY, parity);
-        setAttribute(instrument, VISANativeInterface.VI_ATTR_ASRL_STOP_BITS, stop);
-        setAttribute(instrument, VISANativeInterface.VI_ATTR_ASRL_FLOW_CNTRL, flow);
+        setAttribute(instrument, VISANativeInterface.VI_ATTR_ASRL_PARITY, parity.toInt());
+        setAttribute(instrument, VISANativeInterface.VI_ATTR_ASRL_STOP_BITS, stop.toInt());
+        setAttribute(instrument, VISANativeInterface.VI_ATTR_ASRL_FLOW_CNTRL, flow.toInt());
 
     }
 

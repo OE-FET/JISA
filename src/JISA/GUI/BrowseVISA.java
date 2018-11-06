@@ -113,14 +113,18 @@ public class BrowseVISA {
     public void addInstrument(StrAddress address) throws IOException {
 
         String i = "Unknown Instrument";
+        VISADevice device = null;
         try {
-            VISADevice device = new VISADevice(address);
+            device = new VISADevice(address);
             device.setTimeout(100);
             device.setRetryCount(1);
             i = device.getIDN().trim().replace("\n", "").replace("\r", "");
-            device.close();
         } catch (Exception e) {
             i = "Unknown Instrument";
+        } finally {
+            if (device != null) {
+                device.close();
+            }
         }
 
         final String idn = i;

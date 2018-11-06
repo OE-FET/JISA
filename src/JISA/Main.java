@@ -2,6 +2,7 @@ package JISA;
 
 import JISA.Addresses.GPIBAddress;
 import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.SerialAddress;
 import JISA.Addresses.StrAddress;
 import JISA.Control.DCPowerLockInController;
 import JISA.Control.SetGettable;
