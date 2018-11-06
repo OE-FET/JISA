@@ -30,6 +30,7 @@ public class SerialDriver implements Driver {
 
         SerialPort port   = new SerialPort(String.format("COM%d", addr.getBoard()));
         boolean    result = false;
+
         try {
             result = port.openPort();
         } catch (SerialPortException e) {
@@ -57,6 +58,8 @@ public class SerialDriver implements Driver {
         boolean result = false;
 
         try {
+            ports.get(instrument).purgePort(1);
+            ports.get(instrument).purgePort(2);
             result = ports.get(instrument).closePort();
         } catch (SerialPortException e) {
             throw new VISAException(e.getMessage());
@@ -138,7 +141,7 @@ public class SerialDriver implements Driver {
 
         ByteBuffer buffer = ByteBuffer.allocate(bytes.length - offset);
 
-        for (int i = offset; i < bytes.length; i ++) {
+        for (int i = offset; i < bytes.length; i++) {
             buffer.put(bytes[i]);
         }
 
@@ -158,14 +161,32 @@ public class SerialDriver implements Driver {
     }
 
     @Override
-    public void setSerial(long instrument, int baud, int data, int parity, int stop, int flow) throws VISAException {
+    public void setSerial(long instrument, int baud, int data, VISA.Parity parity, VISA.StopBits stop, VISA.Flow flow) throws VISAException {
 
         if (!ports.containsKey(instrument)) {
             throw new VISAException("That instrument has not been opened!");
         }
 
+        int stopBits = 1;
+
+        switch (stop) {
+
+            case ONE:
+                stopBits = 1;
+                break;
+
+            case ONE_HALF:
+                stopBits = 3;
+                break;
+
+            case TWO:
+                stopBits = 2;
+                break;
+
+        }
+
         try {
-            ports.get(instrument).setParams(baud, data, stop, parity, false, false);
+            ports.get(instrument).setParams(baud, data, stopBits, parity.toInt(), false, false);
         } catch (SerialPortException e) {
             throw new VISAException(e.getMessage());
         }

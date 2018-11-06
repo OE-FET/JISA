@@ -19,7 +19,7 @@ public interface Driver {
 
     void setTMO(long instrument, long duration) throws VISAException;
 
-    void setSerial(long instrument, int baud, int data, int parity, int stop, int flow) throws VISAException;
+    void setSerial(long instrument, int baud, int data, VISA.Parity parity, VISA.StopBits stop, VISA.Flow flow) throws VISAException;
 
     StrAddress[] search() throws VISAException;
 
