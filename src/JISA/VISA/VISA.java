@@ -104,7 +104,23 @@ public class VISA {
             }
         }
 
-        return addresses.values().toArray(new StrAddress[0]);
+        StrAddress[] toReturn = new StrAddress[addresses.size()];
+        int count = 0;
+
+        for (InstrumentAddress.Type t : InstrumentAddress.Type.values()) {
+
+            for (StrAddress a : addresses.values()) {
+
+                if (a.getType().equals(t)) {
+                    toReturn[count] = a;
+                    count++;
+                }
+
+            }
+
+        }
+
+        return toReturn;
 
     }
 
