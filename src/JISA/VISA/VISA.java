@@ -54,9 +54,13 @@ public class VISA {
             System.out.println("Nope.");
         }
 
-        System.out.print("Trying Serial driver...              \t");
-        drivers.add(new SerialDriver());
-        System.out.println("Success.");
+        try {
+            System.out.print("Trying Serial driver...              \t");
+            drivers.add(new SerialDriver());
+            System.out.println("Success.");
+        } catch (Exception | Error ignored) {
+            System.out.println("Nope.");
+        }
 
         if (drivers.size() == 0) {
             Util.sleep(500);
