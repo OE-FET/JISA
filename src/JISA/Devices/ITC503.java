@@ -82,7 +82,19 @@ public class ITC503 extends MSTController {
     }
 
     private void clearRead() throws IOException {
-        write(C_SET_COMM_MODE);
+
+        setTMO(50);
+
+        while (true) {
+            try {
+                read();
+            } catch (IOException e) {
+                break;
+            }
+        }
+
+        setTMO(timeout);
+
     }
 
     public void setTimeout(long value) throws IOException {
@@ -90,8 +102,11 @@ public class ITC503 extends MSTController {
         super.setTimeout(value);
     }
 
+    private void setTMO(long value) throws IOException {
+        super.setTimeout(value);
+    }
+
     private synchronized double readChannel(int channel) throws IOException {
-        clearRead();
         try {
             String reply = query(C_READ, channel);
             return Double.parseDouble(reply.substring(1));
@@ -202,7 +217,6 @@ public class ITC503 extends MSTController {
     }
 
     private Status getStatus() throws IOException, DeviceException {
-        clearRead();
         return new Status(query(C_QUERY_STATUS));
     }
 
@@ -248,7 +262,6 @@ public class ITC503 extends MSTController {
     }
 
     public String getIDN() throws IOException {
-        clearRead();
         return query("V").replace("\n", "").replace("\r", "");
     }
 
