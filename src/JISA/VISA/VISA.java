@@ -54,6 +54,10 @@ public class VISA {
             System.out.println("Nope.");
         }
 
+        System.out.print("Trying Serial driver...              \t");
+        drivers.add(new SerialDriver());
+        System.out.println("Success.");
+
         if (drivers.size() == 0) {
             Util.sleep(500);
             System.err.println("ERROR: Could not load any drivers!");
@@ -113,6 +117,7 @@ public class VISA {
 
         long id    = -1;
         long index = -1;
+        ArrayList<String> errors = new ArrayList<>();
         for (Driver d : drivers) {
 
             try {
@@ -123,11 +128,13 @@ public class VISA {
                 break;
             } catch (VISAException e) {
                 id = -1;
+                errors.add(e.getMessage());
             }
 
         }
 
         if (id == -1) {
+            System.err.println(String.join("Driver Errors:\n", errors));
             throw new VISAException("Could not open %s using any driver!", address.getVISAAddress());
         }
 
