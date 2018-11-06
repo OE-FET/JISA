@@ -108,7 +108,7 @@ public class StrAddress implements InstrumentAddress {
             String vendor  = matcher.group(2);
             String product = matcher.group(3);
             String serial  = matcher.group(4);
-            int    intfce  = matcher.group(5).equals("") ? -1 : Integer.valueOf(matcher.group(5));
+            int    intfce  = matcher.groupCount() <= 5 ? -1 : Integer.valueOf(matcher.group(5));
             return new USBAddress(board, vendor, product, serial, intfce);
         } else {
             return null;
