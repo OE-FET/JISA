@@ -20,6 +20,8 @@ public class K2200 extends DCPower {
 
         super(address);
 
+        clearRead();
+
         try {
 
             String[] idn = query("*IDN?").split(",");

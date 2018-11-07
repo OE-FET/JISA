@@ -42,6 +42,8 @@ public class SR830 extends DPLockIn {
 
         super(address);
 
+        clearRead();
+
         try {
 
             String[] idn = query("*IDN?").split(",");
