@@ -137,6 +137,8 @@ public class K2450 extends SMU {
 
         super(address);
 
+        clearRead();
+
         try {
 
             String[] iden = query("*IDN?").split(",");

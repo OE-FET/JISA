@@ -114,6 +114,8 @@ public class K2600B extends MCSMU {
 
         super(address);
 
+        clearRead();
+
         // TODO: Check that this IDN check actually works
         try {
             String[] idn = getIDN().split(", ");
