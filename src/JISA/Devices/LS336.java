@@ -2,6 +2,7 @@ package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
 import JISA.Util;
+import JISA.VISA.Connection;
 import JISA.VISA.VISA;
 
 import java.io.IOException;
@@ -35,7 +36,7 @@ public class LS336 extends MSMOTController {
     public LS336(InstrumentAddress address) throws IOException, DeviceException {
 
         super(address);
-        setSerialParameters(57600, 7, VISA.Parity.ODD, VISA.StopBits.ONE, VISA.Flow.NONE);
+        setSerialParameters(57600, 7, Connection.Parity.ODD, Connection.StopBits.ONE, Connection.Flow.NONE);
         setReadTerminationCharacter(CRLF_TERMINATOR);
         setTerminator(TERMINATOR);
 

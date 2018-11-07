@@ -14,13 +14,10 @@ import java.util.HashMap;
 
 public class SerialDriver implements Driver {
 
-    protected static long                      counter = 0;
-    protected static HashMap<Long, SerialPort> ports   = new HashMap<>();
-    protected static HashMap<Long, Integer>    tmos    = new HashMap<>();
-    protected static HashMap<Long, String>     terms   = new HashMap<>();
+    protected static long counter = 0;
 
     @Override
-    public long open(InstrumentAddress address) throws VISAException {
+    public Connection open(InstrumentAddress address) throws VISAException {
 
         SerialAddress addr = (new StrAddress(address.getVISAAddress())).toSerialAddress();
 
@@ -41,154 +38,136 @@ public class SerialDriver implements Driver {
             throw new VISAException("Error opening port!");
         }
 
-        long handle = counter++;
-        ports.put(handle, port);
-
-        return handle;
+        return new SerialConnection(port);
 
     }
 
-    @Override
-    public void close(long instrument) throws VISAException {
 
-        if (!ports.containsKey(instrument)) {
-            throw new VISAException("That instrument has not been opened!");
+    public class SerialConnection implements Connection {
+
+        private SerialPort port;
+        private int        tmo;
+        private String     terms;
+
+        public SerialConnection(SerialPort comPort) {
+            port = comPort;
         }
 
-        boolean result = false;
+        @Override
+        public void write(String toWrite) throws VISAException {
 
-        try {
-            ports.get(instrument).purgePort(1);
-            ports.get(instrument).purgePort(2);
-            result = ports.get(instrument).closePort();
-        } catch (SerialPortException e) {
-            throw new VISAException(e.getMessage());
-        }
+            boolean result = false;
 
-        if (!result) {
-            throw new VISAException("Error closing port!");
-        }
-
-        ports.remove(instrument);
-
-    }
-
-    @Override
-    public void write(long instrument, String toWrite) throws VISAException {
-
-        if (!ports.containsKey(instrument)) {
-            throw new VISAException("That instrument has not been opened!");
-        }
-
-        boolean result = false;
-        try {
-            result = ports.get(instrument).writeString(toWrite);
-        } catch (SerialPortException e) {
-            e.printStackTrace();
-        }
-
-        if (!result) {
-            throw new VISAException("Error writing to port!");
-        }
-
-    }
-
-    @Override
-    public String read(long instrument, int bufferSize) throws VISAException {
-
-        SerialPort    port = ports.get(instrument);
-        StringBuilder read = new StringBuilder();
-
-        while (!read.toString().contains(terms.get(instrument))) {
             try {
-                read.append(port.readString(1, tmos.get(instrument)));
-            } catch (SerialPortException | SerialPortTimeoutException e) {
+                result = port.writeString(toWrite);
+            } catch (SerialPortException e) {
+                e.printStackTrace();
+            }
+
+            if (!result) {
+                throw new VISAException("Error writing to port!");
+            }
+
+        }
+
+        @Override
+        public String read(int bufferSize) throws VISAException {
+
+            StringBuilder read = new StringBuilder();
+
+            while (!read.toString().contains(terms)) {
+                try {
+                    read.append(port.readString(1, tmo));
+                } catch (SerialPortException | SerialPortTimeoutException e) {
+                    throw new VISAException(e.getMessage());
+                }
+            }
+
+            return read.toString();
+
+        }
+
+        @Override
+        public void setEOI(boolean set) throws VISAException {
+
+        }
+
+        @Override
+        public void setEOS(long character) throws VISAException {
+
+            byte[] bytes = ByteBuffer.allocate(Long.BYTES).putLong(character).array();
+
+            int offset = 0;
+            for (int i = 0; i < bytes.length; i++) {
+
+                if (bytes[i] > (byte) 0) {
+                    offset = i;
+                    break;
+                }
+
+            }
+
+            ByteBuffer buffer = ByteBuffer.allocate(bytes.length - offset);
+
+            for (int i = offset; i < bytes.length; i++) {
+                buffer.put(bytes[i]);
+            }
+
+            terms = new String(buffer.array());
+
+        }
+
+        @Override
+        public void setTMO(long duration) throws VISAException {
+            tmo = (int) duration;
+        }
+
+        @Override
+        public void setSerial(int baud, int data, Parity parity, StopBits stop, Flow flow) throws VISAException {
+
+            int stopBits = 1;
+
+            switch (stop) {
+
+                case ONE:
+                    stopBits = 1;
+                    break;
+
+                case ONE_HALF:
+                    stopBits = 3;
+                    break;
+
+                case TWO:
+                    stopBits = 2;
+                    break;
+
+            }
+
+            try {
+                port.setParams(baud, data, stopBits, parity.toInt(), false, false);
+            } catch (SerialPortException e) {
                 throw new VISAException(e.getMessage());
             }
+
         }
 
-        return read.toString();
+        @Override
+        public void close() throws VISAException {
 
-    }
+            boolean result = false;
 
-    @Override
-    public void setEOI(long instrument, boolean set) throws VISAException {
-
-        if (!ports.containsKey(instrument)) {
-            throw new VISAException("That instrument has not been opened!");
-        }
-
-    }
-
-    @Override
-    public void setEOS(long instrument, long character) throws VISAException {
-
-        if (!ports.containsKey(instrument)) {
-            throw new VISAException("That instrument has not been opened!");
-        }
-
-        byte[] bytes = ByteBuffer.allocate(Long.BYTES).putLong(character).array();
-
-        int offset = 0;
-        for (int i = 0; i < bytes.length; i++) {
-
-            if (bytes[i] > (byte) 0) {
-                offset = i;
-                break;
+            try {
+                port.purgePort(1);
+                port.purgePort(2);
+                result = port.closePort();
+            } catch (SerialPortException e) {
+                throw new VISAException(e.getMessage());
             }
 
-        }
+            if (!result) {
+                throw new VISAException("Error closing port!");
+            }
 
-        ByteBuffer buffer = ByteBuffer.allocate(bytes.length - offset);
-
-        for (int i = offset; i < bytes.length; i++) {
-            buffer.put(bytes[i]);
-        }
-
-        String term = new String(buffer.array());
-
-        terms.put(instrument, term);
-    }
-
-    @Override
-    public void setTMO(long instrument, long duration) throws VISAException {
-
-        if (!ports.containsKey(instrument)) {
-            throw new VISAException("That instrument has not been opened!");
-        }
-
-        tmos.put(instrument, (int) duration);
-    }
-
-    @Override
-    public void setSerial(long instrument, int baud, int data, VISA.Parity parity, VISA.StopBits stop, VISA.Flow flow) throws VISAException {
-
-        if (!ports.containsKey(instrument)) {
-            throw new VISAException("That instrument has not been opened!");
-        }
-
-        int stopBits = 1;
-
-        switch (stop) {
-
-            case ONE:
-                stopBits = 1;
-                break;
-
-            case ONE_HALF:
-                stopBits = 3;
-                break;
-
-            case TWO:
-                stopBits = 2;
-                break;
-
-        }
-
-        try {
-            ports.get(instrument).setParams(baud, data, stopBits, parity.toInt(), false, false);
-        } catch (SerialPortException e) {
-            throw new VISAException(e.getMessage());
         }
     }
 
