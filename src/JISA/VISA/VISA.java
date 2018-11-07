@@ -60,6 +60,14 @@ public class VISA {
             System.out.println("Nope.");
         }
 
+        try {
+            System.out.print("Trying Raw TCP-IP driver...          \t");
+            drivers.add(new RawTCPIPDriver());
+            System.out.println("Success.");
+        } catch (Exception | Error ignored) {
+            System.out.println("Nope.");
+        }
+
         if (drivers.size() == 0) {
             Util.sleep(500);
             System.err.println("ERROR: Could not load any drivers!");
