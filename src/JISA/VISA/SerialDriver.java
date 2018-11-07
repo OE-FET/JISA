@@ -3,18 +3,38 @@ package JISA.VISA;
 import JISA.Addresses.InstrumentAddress;
 import JISA.Addresses.SerialAddress;
 import JISA.Addresses.StrAddress;
-import jssc.SerialPort;
-import jssc.SerialPortException;
-import jssc.SerialPortList;
-import jssc.SerialPortTimeoutException;
+import jssc.*;
+import sun.plugin2.jvm.CircularByteBuffer;
 
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class SerialDriver implements Driver {
 
-    protected static long counter = 0;
+    private static final String PATTERN_LINUX_MAC = "/dev/ttyS%d";
+    private static final String PATTERN_WINDOWS   = "COM%d";
+
+    protected String pattern;
+
+    public SerialDriver() {
+
+        String osName = System.getProperty("os.name").trim().toLowerCase();
+
+        if (osName.contains("linux") || osName.contains("mac")) {
+            pattern = PATTERN_LINUX_MAC;
+        } else {
+            pattern = PATTERN_WINDOWS;
+        }
+
+    }
 
     @Override
     public Connection open(InstrumentAddress address) throws VISAException {
@@ -25,7 +45,7 @@ public class SerialDriver implements Driver {
             throw new VISAException("Can only open serial connections with the serial driver!");
         }
 
-        SerialPort port   = new SerialPort(String.format("COM%d", addr.getBoard()));
+        SerialPort port   = new SerialPort(String.format(pattern, addr.getBoard()));
         boolean    result = false;
 
         try {
@@ -182,7 +202,10 @@ public class SerialDriver implements Driver {
 
             if (name.substring(0, 3).equals("COM")) {
                 int board = Integer.valueOf(name.substring(3));
-                addresses.add(new StrAddress(new SerialAddress(board).getVISAAddress()));
+                addresses.add((new SerialAddress(board)).toStrAddress());
+            } else if (name.substring(0, 9).equals("/dev/ttyS")) {
+                int board = Integer.valueOf(name.substring(9));
+                addresses.add((new SerialAddress(board)).toStrAddress());
             }
 
         }

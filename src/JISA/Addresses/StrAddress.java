@@ -83,11 +83,11 @@ public class StrAddress implements InstrumentAddress {
 
     public TCPIPSocketAddress toTCPIPSocketAddress() {
 
-        Pattern pattern = Pattern.compile("TCPIP([0-9]*?)::(.*?)::([0-9]*?)::INSTR");
+        Pattern pattern = Pattern.compile("TCPIP([0-9]*?)::(.*?)::([0-9]*?)::SOCKET");
         Matcher matcher = pattern.matcher(value.trim());
 
         if (matcher.matches()) {
-            int    board = Integer.valueOf(matcher.group(1));
+            int    board = matcher.group(1).equals("") ? -1 :Integer.valueOf(matcher.group(1));
             String host  = matcher.group(2);
             int    port  = Integer.valueOf(matcher.group(3));
             return new TCPIPSocketAddress(board, host, port);
