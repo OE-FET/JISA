@@ -16,6 +16,7 @@ public class VISADevice {
     private String            lastRead       = null;
     private int               readBufferSize = 1024;
     private int               retryCount     = 3;
+    private long              timeout        = 2000;
 
     public final static int    DEFAULT_TIMEOUT = 13;
     public final static int    DEFAULT_EOI     = 1;
@@ -48,7 +49,29 @@ public class VISADevice {
 
     }
 
-    public VISADevice() {
+
+    public void clearRead() throws IOException {
+
+        try {
+            VISA.setTimeout(device, 50);
+        } catch (VISAException e) {
+            throw new IOException(e.getMessage());
+        }
+
+        while (true) {
+            try {
+                read();
+            } catch (IOException e) {
+                break;
+            }
+        }
+
+        try {
+            VISA.setTimeout(device, timeout);
+        } catch (VISAException e) {
+            throw new IOException(e.getMessage());
+        }
+
     }
 
     /**
@@ -118,6 +141,7 @@ public class VISADevice {
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
+        timeout = timeoutMSec;
     }
 
     public void setRetryCount(int count) {
