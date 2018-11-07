@@ -1,6 +1,7 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
+import JISA.VISA.Connection;
 import JISA.VISA.VISA;
 
 import java.io.IOException;
@@ -184,7 +185,7 @@ public class SR560 extends VPreAmp {
 
         super(address);
 
-        setSerialParameters(9600, 8, VISA.Parity.NONE, VISA.StopBits.TWO, VISA.Flow.NONE);
+        setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.TWO, Connection.Flow.NONE);
 
         setTerminator(TERMINATOR);
 

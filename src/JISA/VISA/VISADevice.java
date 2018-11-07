@@ -9,7 +9,7 @@ import java.io.IOException;
  */
 public class VISADevice {
 
-    private long              device;
+    private Connection        connection;
     private InstrumentAddress address;
     private String            terminator     = "";
     private String            lastCommand    = null;
@@ -41,7 +41,7 @@ public class VISADevice {
         }
 
         try {
-            this.device = VISA.openInstrument(address);
+            this.connection = VISA.openInstrument(address);
             this.address = address;
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
@@ -53,7 +53,7 @@ public class VISADevice {
     public void clearRead() throws IOException {
 
         try {
-            VISA.setTimeout(device, 50);
+            connection.setTMO(50);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
@@ -67,7 +67,7 @@ public class VISADevice {
         }
 
         try {
-            VISA.setTimeout(device, timeout);
+            connection.setTMO(timeout);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
@@ -83,10 +83,10 @@ public class VISADevice {
         readBufferSize = bytes;
     }
 
-    public void setSerialParameters(int baudRate, int dataBits, VISA.Parity parity, VISA.StopBits stopBits, VISA.Flow flowControl) throws IOException {
+    public void setSerialParameters(int baudRate, int dataBits, Connection.Parity parity, Connection.StopBits stopBits, Connection.Flow flowControl) throws IOException {
 
         try {
-            VISA.setSerialParameters(device, baudRate, dataBits, parity, stopBits, flowControl);
+            connection.setSerial(baudRate, dataBits, parity, stopBits, flowControl);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
@@ -104,7 +104,7 @@ public class VISADevice {
     public void setEOI(boolean flag) throws IOException {
 
         try {
-            VISA.setEOI(device, flag);
+            connection.setEOI(flag);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
@@ -121,7 +121,7 @@ public class VISADevice {
     public void setReadTerminationCharacter(long character) throws IOException {
 
         try {
-            VISA.setTerminationCharacter(device, character);
+            connection.setEOS(character);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
@@ -137,7 +137,7 @@ public class VISADevice {
      */
     public void setTimeout(long timeoutMSec) throws IOException {
         try {
-            VISA.setTimeout(device, timeoutMSec);
+            connection.setTMO(timeoutMSec);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
@@ -178,7 +178,7 @@ public class VISADevice {
         String commandParsed = String.format(command, args).concat(terminator);
         lastCommand = commandParsed;
         try {
-            VISA.write(device, commandParsed);
+            connection.write(commandParsed);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
@@ -209,7 +209,7 @@ public class VISADevice {
         // Try n times
         while (true) {
             try {
-                lastRead = VISA.read(device, readBufferSize);
+                lastRead = connection.read(readBufferSize);
                 break;
             } catch (VISAException e) {
                 count++;
@@ -306,7 +306,7 @@ public class VISADevice {
      */
     public synchronized void close() throws IOException {
         try {
-            VISA.closeInstrument(device);
+            connection.close();
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
