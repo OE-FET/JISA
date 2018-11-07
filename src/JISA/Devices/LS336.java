@@ -40,6 +40,8 @@ public class LS336 extends MSMOTController {
         setReadTerminationCharacter(CRLF_TERMINATOR);
         setTerminator(TERMINATOR);
 
+        clearRead();
+
         try {
 
             if (!getIDN().trim().split(",")[1].trim().equals("MODEL336")) {
