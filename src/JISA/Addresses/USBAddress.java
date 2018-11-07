@@ -1,5 +1,7 @@
 package JISA.Addresses;
 
+import java.util.ArrayList;
+
 public class USBAddress implements InstrumentAddress {
 
     private int    board;
@@ -28,6 +30,10 @@ public class USBAddress implements InstrumentAddress {
         this(-1, manufacturer, model, serialNumber, -1);
     }
 
+    public USBAddress(String manufacturer, String model) {
+        this(-1, manufacturer, model, null);
+    }
+
     public int getBoard() {
         return board;
     }
@@ -50,15 +56,28 @@ public class USBAddress implements InstrumentAddress {
 
     public String getVISAAddress() {
 
-        if (board == -1 && interfaceNumber == -1) {
-            return String.format("USB::%s::%s::%s::INSTR", manufacturer, model, serialNumber);
-        } else if (board == -1) {
-            return String.format("USB::%s::%s::%s::%d::INSTR", manufacturer, model, serialNumber, interfaceNumber);
-        } else if (interfaceNumber == -1) {
-            return String.format("USB%d::%s::%s::%s::INSTR", board, manufacturer, model, serialNumber);
+        ArrayList<String> parts = new ArrayList<>();
+
+        if (board == -1) {
+            parts.add("USB");
         } else {
-            return String.format("USB%d::%s::%s::%s::%d::INSTR", board, manufacturer, model, serialNumber, interfaceNumber);
+            parts.add(String.format("USB%d", board));
         }
+
+        parts.add(manufacturer);
+        parts.add(model);
+
+        if (serialNumber != null) {
+            parts.add(serialNumber);
+        }
+
+        if (interfaceNumber != -1) {
+            parts.add(String.format("%d", interfaceNumber));
+        }
+
+        parts.add("INSTR");
+
+        return String.join("::", parts);
 
     }
 
