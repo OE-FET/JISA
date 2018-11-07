@@ -13,4 +13,8 @@ public interface InstrumentAddress {
         UNKOWN
     }
 
+    public default StrAddress toStrAddress() {
+        return new StrAddress(getVISAAddress());
+    }
+
 }
