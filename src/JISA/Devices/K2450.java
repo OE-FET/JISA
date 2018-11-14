@@ -448,12 +448,59 @@ public class K2450 extends SMU {
 
     @Override
     public void setOutputLimit(double value) throws IOException {
-        write(C_SET_LIMIT, getSourceMode().getTag(), getMeasureMode().getSymbol(), value);
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                setVoltageLimit(value);
+                break;
+
+            case CURRENT:
+                setCurrentLimit(value);
+                break;
+
+        }
+
     }
 
     @Override
     public double getOutputLimit() throws IOException {
-        return queryDouble(C_QUERY_LIMIT, getSourceMode().getTag(), getMeasureMode().getSymbol());
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                return getVoltageLimit();
+
+            case CURRENT:
+                return getCurrentLimit();
+
+            default:
+                return getCurrentLimit();
+
+        }
+
+    }
+
+    @Override
+    public void setVoltageLimit(double voltage) throws IOException {
+        write(C_SET_LIMIT, Source.VOLTAGE.getTag(), Source.VOLTAGE.getSymbol(), voltage);
+        write(C_SET_LIMIT, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol(), voltage);
+    }
+
+    @Override
+    public double getVoltageLimit() throws IOException {
+        return queryDouble(C_QUERY_LIMIT, getSourceMode().getTag(), Source.VOLTAGE.getSymbol());
+    }
+
+    @Override
+    public void setCurrentLimit(double current) throws IOException {
+        write(C_SET_LIMIT, Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol(), current);
+        write(C_SET_LIMIT, Source.CURRENT.getTag(), Source.CURRENT.getSymbol(), current);
+    }
+
+    @Override
+    public double getCurrentLimit() throws IOException {
+        return queryDouble(C_QUERY_LIMIT, getSourceMode().getTag(), Source.CURRENT.getSymbol());
     }
 
     public double getVoltage() throws DeviceException, IOException {

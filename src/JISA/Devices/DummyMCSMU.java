@@ -240,4 +240,24 @@ public class DummyMCSMU extends MCSMU {
         return 0;
     }
 
+    @Override
+    public void setVoltageLimit(int channel, double value) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public double getVoltageLimit(int channel) throws DeviceException, IOException {
+        return 0;
+    }
+
+    @Override
+    public void setCurrentLimit(int channel, double value) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public double getCurrentLimit(int channel) throws DeviceException, IOException {
+        return 0;
+    }
+
 }
