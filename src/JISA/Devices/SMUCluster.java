@@ -214,6 +214,114 @@ public class SMUCluster extends MCSMU {
         return devices.get(channel).getAverageMode();
     }
 
+    @Override
+    public void setSourceRange(int channel, double value) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).setSourceRange(value);
+    }
+
+    @Override
+    public double getSourceRange(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).getSourceRange();
+    }
+
+    @Override
+    public void useAutoSourceRange(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).useAutoSourceRange();
+    }
+
+    @Override
+    public boolean isSourceRangeAuto(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).isSourceRangeAuto();
+    }
+
+    @Override
+    public void setMeasureRange(int channel, double value) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).setMeasureRange(value);
+    }
+
+    @Override
+    public double getMeasureRange(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).getMeasureRange();
+    }
+
+    @Override
+    public void useAutoMeasureRange(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).useAutoMeasureRange();
+    }
+
+    @Override
+    public boolean isMeasureRangeAuto(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).isMeasureRangeAuto();
+    }
+
+    @Override
+    public void setVoltageRange(int channel, double value) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).setVoltageRange(value);
+    }
+
+    @Override
+    public double getVoltageRange(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).getVoltageRange();
+    }
+
+    @Override
+    public void useAutoVoltageRange(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).useAutoVoltageRange();
+    }
+
+    @Override
+    public boolean isVoltageRangeAuto(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).isVoltageRangeAuto();
+    }
+
+    @Override
+    public void setCurrentRange(int channel, double value) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).setCurrentRange(value);
+    }
+
+    @Override
+    public double getCurrentRange(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).getCurrentRange();
+    }
+
+    @Override
+    public void useAutoCurrentRange(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).useAutoCurrentRange();
+    }
+
+    @Override
+    public boolean isCurrentRangeAuto(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).isCurrentRangeAuto();
+    }
+
+    @Override
+    public void setOutputLimit(int channel, double value) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).setOutputLimit(value);
+    }
+
+    @Override
+    public double getOutputLimit(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).getOutputLimit();
+    }
+
     public IVPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
         return devices.get(channel).doSweep(source, values, delay, symmetric, onUpdate);
     }

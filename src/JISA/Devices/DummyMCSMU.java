@@ -150,4 +150,94 @@ public class DummyMCSMU extends MCSMU {
         return null;
     }
 
+    @Override
+    public void setSourceRange(int channel, double value) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public double getSourceRange(int channel) throws DeviceException, IOException {
+        return 0;
+    }
+
+    @Override
+    public void useAutoSourceRange(int channel) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public boolean isSourceRangeAuto(int channel) throws DeviceException, IOException {
+        return false;
+    }
+
+    @Override
+    public void setMeasureRange(int channel, double value) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public double getMeasureRange(int channel) throws DeviceException, IOException {
+        return 0;
+    }
+
+    @Override
+    public void useAutoMeasureRange(int channel) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public boolean isMeasureRangeAuto(int channel) throws DeviceException, IOException {
+        return false;
+    }
+
+    @Override
+    public void setVoltageRange(int channel, double value) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public double getVoltageRange(int channel) throws DeviceException, IOException {
+        return 0;
+    }
+
+    @Override
+    public void useAutoVoltageRange(int channel) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public boolean isVoltageRangeAuto(int channel) throws DeviceException, IOException {
+        return false;
+    }
+
+    @Override
+    public void setCurrentRange(int channel, double value) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public double getCurrentRange(int channel) throws DeviceException, IOException {
+        return 0;
+    }
+
+    @Override
+    public void useAutoCurrentRange(int channel) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public boolean isCurrentRangeAuto(int channel) throws DeviceException, IOException {
+        return false;
+    }
+
+    @Override
+    public void setOutputLimit(int channel, double value) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public double getOutputLimit(int channel) throws DeviceException, IOException {
+        return 0;
+    }
+
 }

@@ -374,6 +374,155 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         return getAverageMode(0);
     }
 
+    /**
+     * Sets the range of allowed values for the quantity being sourced by the SMU on the given channel.
+     * A value of n indicates a range of -n to +n.
+     *
+     * @param channel Channel number
+     * @param value   Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void setSourceRange(int channel, double value) throws DeviceException, IOException;
+
+    public void setSourceRange(double value) throws DeviceException, IOException {
+        setSourceRange(0, value);
+    }
+
+    /**
+     * Returns the range of allowed values for the quantity being sourced by the SMU on the given channel.
+     * A value of n indicates a range of -n to +n.
+     *
+     * @param channel Channel number
+     *
+     * @return Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract double getSourceRange(int channel) throws DeviceException, IOException;
+
+    public double getSourceRange() throws DeviceException, IOException {
+        return getSourceRange(0);
+    }
+
+    public abstract void useAutoSourceRange(int channel) throws DeviceException, IOException;
+
+    public void useAutoSourceRange() throws DeviceException, IOException {
+        useAutoSourceRange(0);
+    }
+
+    public abstract boolean isSourceRangeAuto(int channel) throws DeviceException, IOException;
+
+    public boolean isSourceRangeAuto() throws DeviceException, IOException {
+        return isSourceRangeAuto(0);
+    }
+
+    /**
+     * Sets the range of allowed values for the quantity being measured by the SMU on the given channel.
+     *
+     * @param channel Channel number
+     * @param value   Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void setMeasureRange(int channel, double value) throws DeviceException, IOException;
+
+    public void setMeasureRange(double value) throws DeviceException, IOException {
+        setMeasureRange(0, value);
+    }
+
+
+    /**
+     * Returns the range of allowed values for the quantity being measured by the SMU on the given channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract double getMeasureRange(int channel) throws DeviceException, IOException;
+
+    public double getMeasureRange() throws DeviceException, IOException {
+        return getMeasureRange(0);
+    }
+
+    public abstract void useAutoMeasureRange(int channel) throws DeviceException, IOException;
+
+    public void useAutoMeasureRange() throws DeviceException, IOException {
+        useAutoMeasureRange(0);
+    }
+
+    public abstract boolean isMeasureRangeAuto(int channel) throws DeviceException, IOException;
+
+    public boolean isMeasureRangeAuto() throws DeviceException, IOException {
+        return isMeasureRangeAuto(0);
+    }
+
+    public abstract void setVoltageRange(int channel, double value) throws DeviceException, IOException;
+
+    public void setVoltageRange(double value) throws DeviceException, IOException {
+        setVoltageRange(0, value);
+    }
+
+    public abstract double getVoltageRange(int channel) throws DeviceException, IOException;
+
+    public double getVoltageRange() throws DeviceException, IOException {
+        return getVoltageRange(0);
+    }
+
+    public abstract void useAutoVoltageRange(int channel) throws DeviceException, IOException;
+
+    public void useAutoVoltageRange() throws DeviceException, IOException {
+        useAutoMeasureRange(0);
+    }
+
+    public abstract boolean isVoltageRangeAuto(int channel) throws DeviceException, IOException;
+
+    public boolean isVoltageRangeAuto() throws DeviceException, IOException {
+        return isMeasureRangeAuto(0);
+    }
+
+    public abstract void setCurrentRange(int channel, double value) throws DeviceException, IOException;
+
+    public void setCurrentRange(double value) throws DeviceException, IOException {
+        setCurrentRange(0, value);
+    }
+
+    public abstract double getCurrentRange(int channel) throws DeviceException, IOException;
+
+    public double getCurrentRange() throws DeviceException, IOException {
+        return getCurrentRange(0);
+    }
+
+    public abstract void useAutoCurrentRange(int channel) throws DeviceException, IOException;
+
+    public void useAutoCurrentRange() throws DeviceException, IOException {
+        useAutoMeasureRange(0);
+    }
+
+    public abstract boolean isCurrentRangeAuto(int channel) throws DeviceException, IOException;
+
+    public boolean isCurrentRangeAuto() throws DeviceException, IOException {
+        return isMeasureRangeAuto(0);
+    }
+
+    public abstract void setOutputLimit(int channel, double value) throws DeviceException, IOException;
+
+    public void setOutputLimit(double value) throws DeviceException, IOException {
+        setOutputLimit(0, value);
+    }
+
+    public abstract double getOutputLimit(int channel) throws DeviceException, IOException;
+
+    public double getOutputLimit() throws DeviceException, IOException {
+        return getOutputLimit(0);
+    }
+
     public IVPoint getIVPoint(int channel) throws DeviceException, IOException {
         return new IVPoint(getVoltage(channel), getCurrent(channel));
     }
@@ -385,7 +534,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     public MCIVPoint getMCIVPoint() throws DeviceException, IOException {
         MCIVPoint point = new MCIVPoint();
 
-        for (int i = 0; i < getNumChannels(); i ++) {
+        for (int i = 0; i < getNumChannels(); i++) {
             point.addChannel(i, new IVPoint(getVoltage(i), getCurrent(i)));
         }
 
@@ -561,6 +710,12 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
     public IVPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
         return doSweep(0, source, values, delay, symmetric, onUpdate);
+    }
+
+    protected void checkChannel(int channel) throws DeviceException {
+        if (!Util.isBetween(channel, 0, getNumChannels() - 1)) {
+            throw new DeviceException("Channel %d does not exist for this SMU", channel);
+        }
     }
 
     private static class Updater implements Runnable {
@@ -833,6 +988,96 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         @Override
         public int getAverageCount() throws DeviceException, IOException {
             return MCSMU.this.getAverageCount(channel);
+        }
+
+        @Override
+        public void setSourceRange(double value) throws DeviceException, IOException {
+            MCSMU.this.setSourceRange(channel, value);
+        }
+
+        @Override
+        public double getSourceRange() throws DeviceException, IOException {
+            return MCSMU.this.getSourceRange(channel);
+        }
+
+        @Override
+        public void useAutoSourceRange() throws DeviceException, IOException {
+            MCSMU.this.useAutoSourceRange(channel);
+        }
+
+        @Override
+        public boolean isSourceRangeAuto() throws DeviceException, IOException {
+            return MCSMU.this.isSourceRangeAuto(channel);
+        }
+
+        @Override
+        public void setMeasureRange(double value) throws DeviceException, IOException {
+            MCSMU.this.setMeasureRange(channel, value);
+        }
+
+        @Override
+        public double getMeasureRange() throws DeviceException, IOException {
+            return MCSMU.this.getMeasureRange(channel);
+        }
+
+        @Override
+        public void useAutoMeasureRange() throws DeviceException, IOException {
+            MCSMU.this.useAutoMeasureRange(channel);
+        }
+
+        @Override
+        public boolean isMeasureRangeAuto() throws DeviceException, IOException {
+            return MCSMU.this.isMeasureRangeAuto(channel);
+        }
+
+        @Override
+        public void setVoltageRange(double value) throws DeviceException, IOException {
+            MCSMU.this.setVoltageRange(channel, value);
+        }
+
+        @Override
+        public double getVoltageRange() throws DeviceException, IOException {
+            return MCSMU.this.getVoltageRange(channel);
+        }
+
+        @Override
+        public void useAutoVoltageRange() throws DeviceException, IOException {
+            MCSMU.this.useAutoVoltageRange(channel);
+        }
+
+        @Override
+        public boolean isVoltageRangeAuto() throws DeviceException, IOException {
+            return MCSMU.this.isVoltageRangeAuto(channel);
+        }
+
+        @Override
+        public void setCurrentRange(double value) throws DeviceException, IOException {
+            MCSMU.this.setCurrentRange(channel, value);
+        }
+
+        @Override
+        public double getCurrentRange() throws DeviceException, IOException {
+            return MCSMU.this.getCurrentRange(channel);
+        }
+
+        @Override
+        public void useAutoCurrentRange() throws DeviceException, IOException {
+            MCSMU.this.useAutoCurrentRange(channel);
+        }
+
+        @Override
+        public boolean isCurrentRangeAuto() throws DeviceException, IOException {
+            return MCSMU.this.isCurrentRangeAuto(channel);
+        }
+
+        @Override
+        public void setOutputLimit(double value) throws DeviceException, IOException {
+            MCSMU.this.setOutputLimit(channel, value);
+        }
+
+        @Override
+        public double getOutputLimit() throws DeviceException, IOException {
+            return MCSMU.this.getOutputLimit(channel);
         }
 
     }
