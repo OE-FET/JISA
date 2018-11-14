@@ -162,7 +162,7 @@ public class K236 extends SMU {
     }
 
     private void setCompliance() throws IOException {
-        write(C_SET_COMPLIANCE, mRange, compliance);
+        write(C_SET_COMPLIANCE, compliance, mRange.toInt());
     }
 
     public String getIDN() throws IOException {
@@ -788,8 +788,8 @@ public class K236 extends SMU {
                 lines = Integer.valueOf(matcher.group(3).trim());
                 EOI = Integer.valueOf(matcher.group(4).trim());
                 mask = Integer.valueOf(matcher.group(5).trim());
-                on = matcher.group(6).trim().equals("1");
-                triggering = matcher.group(7).trim().equals("1");
+                on = matcher.group(7).trim().equals("1");
+                triggering = matcher.group(8).trim().equals("1");
 
             }
 
