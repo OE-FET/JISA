@@ -4,7 +4,6 @@ import JISA.Addresses.InstrumentAddress;
 import JISA.Addresses.SerialAddress;
 import JISA.Addresses.StrAddress;
 import jssc.*;
-import sun.plugin2.jvm.CircularByteBuffer;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
