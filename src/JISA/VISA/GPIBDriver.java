@@ -150,7 +150,7 @@ public class GPIBDriver implements Driver {
     }
 
     @Override
-    public long open(InstrumentAddress address) throws VISAException {
+    public Connection open(InstrumentAddress address) throws VISAException {
 
         GPIBAddress addr = (new StrAddress(address.getVISAAddress())).toGPIBAddress();
 
@@ -172,100 +172,112 @@ public class GPIBDriver implements Driver {
             throw new VISAException("Error putting %s into remote mode using GPIB.", addr.getVISAAddress());
         }
 
-        return (long) ud;
+        return new GPIBConnection(ud);
 
     }
 
-    @Override
-    public void close(long instrument) throws VISAException {
+    public class GPIBConnection implements Connection {
 
-        lib.ibonl((int) instrument, 0);
+        private int handle;
 
-        if (wasError()) {
-            throw new VISAException("Could not close instrument.");
+        public GPIBConnection(int ibHandle) {
+            handle = ibHandle;
         }
 
-    }
+        @Override
+        public void write(String toWrite) throws VISAException {
 
-    @Override
-    public void write(long instrument, String toWrite) throws VISAException {
+            NativeString nToWrite = new NativeString(toWrite);
 
-        NativeString nToWrite = new NativeString(toWrite);
+            lib.ibwrt(
+                    handle,
+                    nToWrite.getPointer(),
+                    toWrite.length()
+            );
 
-        lib.ibwrt(
-                (int) instrument,
-                nToWrite.getPointer(),
-                toWrite.length()
-        );
+            if (wasError()) {
+                throw new VISAException("Could not write to instrument.");
+            }
 
-        if (wasError()) {
-            throw new VISAException("Could not write to instrument.");
         }
 
-    }
+        @Override
+        public String read(int bufferSize) throws VISAException {
 
-    @Override
-    public String read(long instrument, int bufferSize) throws VISAException {
+            Pointer ptr = new Memory(bufferSize);
 
-        Pointer ptr = new Memory(bufferSize);
+            lib.ibrd(
+                    handle,
+                    ptr,
+                    bufferSize
+            );
 
-        lib.ibrd(
-                (int) instrument,
-                ptr,
-                bufferSize
-        );
+            if (wasError()) {
+                throw new VISAException("Error reading from instrument.");
+            }
 
-        if (wasError()) {
-            throw new VISAException("Error reading from instrument.");
+            return ptr.getString(0).substring(0, Ibcnt()).replace("\n", "").replace("\r", "");
+
         }
 
-        return ptr.getString(0).substring(0, Ibcnt()).replace("\n", "").replace("\r", "");
+        @Override
+        public void setEOI(boolean set) throws VISAException {
 
-    }
+            lib.ibconfig(
+                    handle,
+                    GPIBNativeInterface.IbcEOT,
+                    set ? 1 : 0
+            );
 
-    @Override
-    public void setEOI(long instrument, boolean set) throws VISAException {
+            if (wasError()) {
+                throw new VISAException("Error setting EOI");
+            }
 
-        lib.ibconfig(
-                (int) instrument,
-                GPIBNativeInterface.IbcEOT,
-                set ? 1 : 0
-        );
-
-        if (wasError()) {
-            throw new VISAException("Error setting EOI");
         }
 
-    }
+        @Override
+        public void setEOS(long character) throws VISAException {
 
-    @Override
-    public void setEOS(long instrument, long character) throws VISAException {
+            lib.ibconfig(
+                    handle,
+                    GPIBNativeInterface.IbcEOS,
+                    (int) character
+            );
 
-        lib.ibconfig(
-                (int) instrument,
-                GPIBNativeInterface.IbcEOS,
-                (int) character
-        );
+            if (wasError()) {
+                throw new VISAException("Error setting EOI");
+            }
 
-        if (wasError()) {
-            throw new VISAException("Error setting EOI");
         }
 
-    }
+        @Override
+        public void setTMO(long duration) throws VISAException {
 
-    @Override
-    public void setTMO(long instrument, long duration) throws VISAException {
+            lib.ibconfig(
+                    handle,
+                    GPIBNativeInterface.IbcTMO,
+                    TMO.fromMSec(duration).getCode()
+            );
 
-        lib.ibconfig(
-                (int) instrument,
-                GPIBNativeInterface.IbcTMO,
-                TMO.fromMSec(duration).getCode()
-        );
+            if (wasError()) {
+                throw new VISAException("Error setting TMO");
+            }
 
-        if (wasError()) {
-            throw new VISAException("Error setting TMO");
         }
 
+        @Override
+        public void setSerial(int baud, int data, Parity parity, StopBits stop, Flow flow) throws VISAException {
+
+        }
+
+        @Override
+        public void close() throws VISAException {
+            lib.ibonl(handle, 0);
+
+            if (wasError()) {
+                throw new VISAException("Could not close instrument.");
+            }
+        }
     }
 
     @Override

@@ -11,20 +11,21 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import static JISA.VISA.VISANativeInterface.*;
+
 public class VISADriver implements Driver {
 
-    private static       VISANativeInterface       lib;
-    private static final String                    OS_NAME          = System.getProperty("os.name").toLowerCase();
-    private static       String                    libName;
-    private static final String                    responseEncoding = "UTF8";
-    private static final long                      VISA_ERROR       = 0x7FFFFFFF;
-    private static final int                       _VI_ERROR        = -2147483648;
-    private static final int                       VI_SUCCESS       = 0;
-    private static final int                       VI_NULL          = 0;
-    private static final int                       VI_TRUE          = 1;
-    private static final int                       VI_FALSE         = 0;
-    private static       NativeLong                visaResourceManagerHandle;
-    private static       HashMap<Long, NativeLong> instruments      = new HashMap<>();
+    private static       VISANativeInterface lib;
+    private static final String              OS_NAME          = System.getProperty("os.name").toLowerCase();
+    private static       String              libName;
+    private static final String              responseEncoding = "UTF8";
+    private static final long                VISA_ERROR       = 0x7FFFFFFF;
+    private static final int                 _VI_ERROR        = -2147483648;
+    private static final int                 VI_SUCCESS       = 0;
+    private static final int                 VI_NULL          = 0;
+    private static final int                 VI_TRUE          = 1;
+    private static final int                 VI_FALSE         = 0;
+    private static       NativeLong          visaResourceManagerHandle;
 
     public static void init() throws VISAException {
 
@@ -32,7 +33,7 @@ public class VISADriver implements Driver {
             if (OS_NAME.contains("win")) {
                 libName = "nivisa64";
                 lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
-            } else if (OS_NAME.contains("linux")) {
+            } else if (OS_NAME.contains("linux") || OS_NAME.contains("mac")) {
                 libName = "visa";
                 lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
             } else {
@@ -93,16 +94,15 @@ public class VISADriver implements Driver {
     }
 
     @Override
-    public long open(InstrumentAddress address) throws VISAException {
+    public Connection open(InstrumentAddress address) throws VISAException {
 
-        NativeLong            visaStatus;
         NativeLongByReference pViInstrument = new NativeLongByReference();
 
         ByteBuffer pViString = stringToByteBuffer(address.getVISAAddress());
         if (pViString == null) {
             throw new VISAException("Error encoding address to ByteBuffer.");
         }
-        visaStatus = lib.viOpen(
+        NativeLong status = lib.viOpen(
                 visaResourceManagerHandle,
                 pViString,         // byte buffer for instrument string
                 new NativeLong(0), // access mode (locking or not). 0:Use Visa default
@@ -110,110 +110,174 @@ public class VISADriver implements Driver {
                 pViInstrument      // pointer to instrument object
         );
 
-        if (visaStatus.longValue() == VI_SUCCESS) {
-            instruments.put(pViInstrument.getValue().longValue(), pViInstrument.getValue());
-            return pViInstrument.getValue().longValue();
+        if (status.longValue() == VI_SUCCESS) {
+            return new VISAConnection(pViInstrument.getValue());
         } else {
-            throw new VISAException("Could not open device: \"%s\"!", address);
+
+            switch (status.intValue()) {
+
+                case VI_ERROR_INV_OBJECT:
+                    throw new VISAException("No resource manager is open to open \"%s\".", address.getVISAAddress());
+
+                case VI_ERROR_INV_RSRC_NAME:
+                    throw new VISAException("Invalid address: \"%s\".", address.getVISAAddress());
+
+                case VI_ERROR_RSRC_NFOUND:
+                    throw new VISAException("No resource found at \"%s\".", address.getVISAAddress());
+
+                case VI_ERROR_RSRC_BUSY:
+                    throw new VISAException("Resource busy at \"%s\".", address.getVISAAddress());
+
+                case VI_ERROR_TMO:
+                    throw new VISAException("Open operation timed out.");
+
+                default:
+                    throw new VISAException("Error writing to instrument.");
+
+            }
         }
 
     }
 
-    @Override
-    public void close(long instrument) throws VISAException {
+    public class VISAConnection implements Connection {
 
-        if (!instruments.containsKey(instrument)) {
-            throw new VISAException("That instrument has not been opened!");
+        private NativeLong handle;
+
+        public VISAConnection(NativeLong viHandle) {
+            handle = viHandle;
         }
 
-        NativeLong status = lib.viClose(instruments.get(instrument));
+        @Override
+        public void write(String toWrite) throws VISAException {
 
-        if (status.longValue() != VI_SUCCESS) {
-            throw new VISAException("Error closing instrument!");
+            // Convert string to bytes to send
+            ByteBuffer pBuffer = stringToByteBuffer(toWrite);
+            if (pBuffer == null) {
+                throw new VISAException("Error converting command to ByteBuffer");
+            }
+
+            long writeLength = toWrite.length();
+
+            NativeLongByReference returnCount = new NativeLongByReference();
+
+            NativeLong status = lib.viWrite(
+                    handle,
+                    pBuffer,
+                    new NativeLong(writeLength),
+                    returnCount
+            );
+
+            if (status.longValue() != VI_SUCCESS) {
+
+                switch (status.intValue()) {
+
+                    case VI_ERROR_INV_OBJECT:
+                        throw new VISAException("That connection is not open.");
+
+                    case VI_ERROR_TMO:
+                        throw new VISAException("Write operation timed out.");
+
+                    default:
+                        throw new VISAException("Error writing to instrument.");
+
+                }
+            }
+
+            if (returnCount.getValue().longValue() != writeLength) {
+                throw new VISAException("Command was not fully sent!");
+            }
+
         }
 
-        instruments.remove(instrument);
+        @Override
+        public String read(int bufferSize) throws VISAException {
 
-    }
 
-    @Override
-    public void write(long instrument, String toWrite) throws VISAException {
+            ByteBuffer            response    = ByteBuffer.allocate(bufferSize);
+            NativeLongByReference returnCount = new NativeLongByReference();
 
-        // Check that we have actually opened this device
-        if (!instruments.containsKey(instrument)) {
-            throw new VISAException("That instrument has not been opened!");
+            NativeLong status = lib.viRead(
+                    handle,
+                    response,
+                    new NativeLong(bufferSize),
+                    returnCount
+            );
+
+            if (status.longValue() != VI_SUCCESS) {
+
+                switch (status.intValue()) {
+
+                    case VI_ERROR_INV_OBJECT:
+                        throw new VISAException("That connection is not open.");
+
+                    case VI_ERROR_TMO:
+                        throw new VISAException("Read operation timed out.");
+
+                    default:
+                        throw new VISAException("Error reading from instrument.");
+
+                }
+            }
+
+            try {
+                return new String(response.array(), 0, returnCount.getValue().intValue(), responseEncoding);
+            } catch (UnsupportedEncodingException e) {
+                throw new VISAException("Could not encode returned string!");
+            }
         }
 
-        // Convert string to bytes to send
-        ByteBuffer pBuffer = stringToByteBuffer(toWrite);
-        if (pBuffer == null) {
-            throw new VISAException("Error converting command to ByteBuffer");
+        @Override
+        public void setEOI(boolean set) throws VISAException {
+            setAttribute(VI_ATTR_SEND_END_EN, set ? VI_TRUE : VI_FALSE);
         }
 
-        long writeLength = toWrite.length();
-
-        NativeLongByReference returnCount = new NativeLongByReference();
-
-        NativeLong status = lib.viWrite(
-                instruments.get(instrument),
-                pBuffer,
-                new NativeLong(writeLength),
-                returnCount
-        );
-
-        if (status.longValue() != VI_SUCCESS) {
-            throw new VISAException("Could not write to instrument!");
+        @Override
+        public void setEOS(long character) throws VISAException {
+            setAttribute(VI_ATTR_TERMCHAR, character);
+            setAttribute(VI_ATTR_TERMCHAR_EN, character != 0 ? VI_TRUE : VI_FALSE);
         }
 
-        if (returnCount.getValue().longValue() != writeLength) {
-            throw new VISAException("Command was not fully sent!");
+        @Override
+        public void setTMO(long duration) throws VISAException {
+            setAttribute(VI_ATTR_TMO_VALUE, duration);
         }
 
-    }
+        @Override
+        public void setSerial(int baud, int data, Parity parity, StopBits stop, Flow flow) throws VISAException {
 
-    @Override
-    public String read(long instrument, int bufferSize) throws VISAException {
+            setAttribute(VI_ATTR_ASRL_BAUD, baud);
+            setAttribute(VI_ATTR_ASRL_DATA_BITS, data);
+            setAttribute(VI_ATTR_ASRL_PARITY, parity.toInt());
+            setAttribute(VI_ATTR_ASRL_STOP_BITS, stop.toInt());
+            setAttribute(VI_ATTR_ASRL_FLOW_CNTRL, flow.toInt());
 
-        if (!instruments.containsKey(instrument)) {
-            throw new VISAException("That instrument has not been opened!");
         }
 
-        ByteBuffer            response    = ByteBuffer.allocate(bufferSize);
-        NativeLongByReference returnCount = new NativeLongByReference();
+        @Override
+        public void close() throws VISAException {
 
-        NativeLong status = lib.viRead(
-                instruments.get(instrument),
-                response,
-                new NativeLong(bufferSize),
-                returnCount
-        );
+            NativeLong status = lib.viClose(handle);
 
-        if (status.longValue() != VI_SUCCESS) {
-            throw new VISAException("Error reading from instrument!");
+            if (status.longValue() != VI_SUCCESS) {
+                throw new VISAException("Error closing instrument!");
+            }
+
         }
 
-        try {
-            return new String(response.array(), 0, returnCount.getValue().intValue(), responseEncoding);
-        } catch (UnsupportedEncodingException e) {
-            throw new VISAException("Could not encode returned string!");
+        public void setAttribute(long attribute, long value) throws VISAException {
+
+            NativeLong status = lib.viSetAttribute(
+                    handle,
+                    new NativeLong(attribute),
+                    new NativeLong(value)
+            );
+
+            if (status.longValue() != VI_SUCCESS) {
+                throw new VISAException("Error setting attribute.");
+            }
+
         }
 
-    }
-
-    @Override
-    public void setEOI(long instrument, boolean set) throws VISAException {
-        setAttribute(instrument, VISANativeInterface.VI_ATTR_SEND_END_EN, set ? VI_TRUE : VI_FALSE);
-    }
-
-    @Override
-    public void setEOS(long instrument, long character) throws VISAException {
-        setAttribute(instrument, VISANativeInterface.VI_ATTR_TERMCHAR, character);
-        setAttribute(instrument, VISANativeInterface.VI_ATTR_TERMCHAR_EN, character != 0 ? VI_TRUE : VI_FALSE);
-    }
-
-    @Override
-    public void setTMO(long instrument, long duration) throws VISAException {
-        setAttribute(instrument, VISANativeInterface.VI_ATTR_TMO_VALUE, duration);
     }
 
     @Override
@@ -233,7 +297,7 @@ public class VISADriver implements Driver {
                 desc
         );
 
-        if (status.longValue() == VISANativeInterface.VI_ERROR_RSRC_NFOUND) {
+        if (status.longValue() == VI_ERROR_RSRC_NFOUND) {
             lib.viClose(listHandle.getValue());
             return new StrAddress[0];
         }
@@ -257,74 +321,14 @@ public class VISADriver implements Driver {
             }
             addresses.add(new StrAddress(address));
 
+            desc = ByteBuffer.allocate(1024);
+
         } while (lib.viFindNext(handle, desc).longValue() == VI_SUCCESS);
 
 
         lib.viClose(handle);
 
         return addresses.toArray(new StrAddress[0]);
-    }
-
-
-    /**
-     * Sets a VISA attribute for an instrument
-     *
-     * @param instrument Instrument handle from openInstrument()
-     * @param attribute  The attribute to set (defined in VISANativeInterface)
-     * @param value      The value to give it
-     *
-     * @throws VISAException Upon error with VISA interface
-     */
-    public static void setAttribute(long instrument, long attribute, long value) throws VISAException {
-
-        if (!instruments.containsKey(instrument)) {
-            throw new VISAException("That instrument has not been opened!");
-        }
-
-        NativeLong status = lib.viSetAttribute(
-                instruments.get(instrument),
-                new NativeLong(attribute),
-                new NativeLong(value)
-        );
-
-        if (status.longValue() != VI_SUCCESS) {
-            throw new VISAException("Error setting EOI flag!");
-        }
-
-    }
-
-
-
-    /**
-     * Returns the value of the given VISA Attribute for the given instrument
-     *
-     * @param instrument Instrument handle from openInstrument()
-     * @param attribute  The attribute to read
-     *
-     * @return Value assigned to the attribute
-     *
-     * @throws VISAException Upon error with VISA interface
-     */
-    public static long getAttribute(long instrument, long attribute) throws VISAException {
-
-        if (!instruments.containsKey(instrument)) {
-            throw new VISAException("That instrument has not been opened!");
-        }
-
-        NativeLongByReference value = new NativeLongByReference();
-
-        NativeLong status = lib.viGetAttribute(
-                instruments.get(instrument),
-                new NativeLong(attribute),
-                value.getPointer()
-        );
-
-        if (status.longValue() != VI_SUCCESS) {
-            throw new VISAException("Error reading attribute!");
-        }
-
-        return value.getValue().longValue();
-
     }
 
 }

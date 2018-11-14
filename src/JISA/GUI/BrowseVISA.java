@@ -83,8 +83,9 @@ public class BrowseVISA {
             int count = 0;
             try {
                 for (StrAddress a : VISA.getInstruments()) {
-                    String[] addr = a.getVISAAddress().trim().split("::");
-                    if (!addr[addr.length - 1].trim().equals("INSTR")) {
+                    String[] addr   = a.getVISAAddress().trim().split("::");
+                    String   ending = addr[addr.length - 1].trim();
+                    if (ending.equals("INTFC")) {
                         continue;
                     }
                     try {
@@ -112,14 +113,18 @@ public class BrowseVISA {
     public void addInstrument(StrAddress address) throws IOException {
 
         String i = "Unknown Instrument";
+        VISADevice device = null;
         try {
-            VISADevice device = new VISADevice(address);
+            device = new VISADevice(address);
             device.setTimeout(100);
             device.setRetryCount(1);
             i = device.getIDN().trim().replace("\n", "").replace("\r", "");
-            device.close();
         } catch (Exception e) {
             i = "Unknown Instrument";
+        } finally {
+            if (device != null) {
+                device.close();
+            }
         }
 
         final String idn = i;
@@ -191,6 +196,15 @@ public class BrowseVISA {
                     uri = t.getHost();
                     image.setImage(new Image(getClass().getResource("Images/tcpip.png").toString()));
                     break;
+                case TCPIP_SOCKET:
+                    prot = "TCP-IP Socket";
+                    TCPIPSocketAddress ts = address.toTCPIPSocketAddress();
+                    if (ts == null) {
+                        ts = new TCPIPSocketAddress("Unknown", 0);
+                    }
+                    uri = ts.getHost() + ":" + ts.getPort();
+                    image.setImage(new Image(getClass().getResource("Images/tcpip.png").toString()));
+                    break;
                 case USB:
                     prot = "USB-TMC";
                     USBAddress u = address.toUSBAddress();
@@ -206,7 +220,7 @@ public class BrowseVISA {
                     if (s == null) {
                         s = new SerialAddress(0);
                     }
-                    uri = String.format("Port %d", s.getBoard());
+                    uri = String.format("COM %d", s.getBoard());
                     image.setImage(new Image(getClass().getResource("Images/serial.png").toString()));
                     break;
                 default:

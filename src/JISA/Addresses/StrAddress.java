@@ -26,8 +26,10 @@ public class StrAddress implements InstrumentAddress {
             type = Type.USB;
         } else if (value.length() >= 4 && value.substring(0, 4).equals("ASRL")) {
             type = Type.SERIAL;
-        } else if (value.length() >= 5 && value.substring(0, 5).equals("TCPIP")) {
+        } else if (value.length() >= 5 && value.substring(0, 5).equals("TCPIP") && value.contains("INSTR")) {
             type = Type.TCPIP;
+        } else if (value.length() >= 5 && value.substring(0, 5).equals("TCPIP") && value.contains("SOCKET")) {
+            type = Type.TCPIP_SOCKET;
         }
 
         return type;
@@ -79,6 +81,23 @@ public class StrAddress implements InstrumentAddress {
 
     }
 
+    public TCPIPSocketAddress toTCPIPSocketAddress() {
+
+        Pattern pattern = Pattern.compile("TCPIP([0-9]*?)::(.*?)::([0-9]*?)::SOCKET");
+        Matcher matcher = pattern.matcher(value.trim());
+
+        if (matcher.matches()) {
+            int    board = matcher.group(1).equals("") ? -1 :Integer.valueOf(matcher.group(1));
+            String host  = matcher.group(2);
+            int    port  = Integer.valueOf(matcher.group(3));
+            return new TCPIPSocketAddress(board, host, port);
+        } else {
+            return null;
+        }
+
+
+    }
+
     public USBAddress toUSBAddress() {
 
         Pattern pattern = Pattern.compile("USB([0-9]*?)::(.*?)::(.*?)::(.*?)(?:::([0-9]+))?::INSTR");
@@ -89,7 +108,7 @@ public class StrAddress implements InstrumentAddress {
             String vendor  = matcher.group(2);
             String product = matcher.group(3);
             String serial  = matcher.group(4);
-            int    intfce  = matcher.group(5).equals("") ? -1 : Integer.valueOf(matcher.group(5));
+            int    intfce  = matcher.groupCount() <= 5 ? -1 : Integer.valueOf(matcher.group(5));
             return new USBAddress(board, vendor, product, serial, intfce);
         } else {
             return null;

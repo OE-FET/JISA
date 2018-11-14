@@ -197,6 +197,124 @@ public abstract class SMU extends VISADevice {
      */
     public abstract int getAverageCount() throws DeviceException, IOException;
 
+    /**
+     * Sets the range of allowed values for the quantity being sourced by the SMU.
+     * A value of n indicates a range of -n to +n.
+     *
+     * @param value Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void setSourceRange(double value) throws DeviceException, IOException;
+
+    /**
+     * Returns the range of allowed values for the quantity being sourced by the SMU.
+     * A value of n indicates a range of -n to +n.
+     *
+     * @return Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract double getSourceRange() throws DeviceException, IOException;
+
+    /**
+     * Sets the SMU to automatically determine the source range to use.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void useAutoSourceRange() throws DeviceException, IOException;
+
+    /**
+     * Returns whether the SMU is set to automatically determine the source range to use.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract boolean isSourceRangeAuto() throws DeviceException, IOException;
+
+    /**
+     * Sets the range of allowed values for the quantity being measured by the SMU.
+     *
+     * @param value Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void setMeasureRange(double value) throws DeviceException, IOException;
+
+
+    /**
+     * Returns the range of allowed values for the quantity being measured by the SMU.
+     *
+     * @return Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract double getMeasureRange() throws DeviceException, IOException;
+
+    public abstract void useAutoMeasureRange() throws DeviceException, IOException;
+
+    public abstract boolean isMeasureRangeAuto() throws DeviceException, IOException;
+
+    /**
+     * Sets the range of allowed values for voltages being sourced or measured by the SMU.
+     * A value of n indicates a range of -n to +n.
+     *
+     * @param value Range value, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void setVoltageRange(double value) throws DeviceException, IOException;
+
+    /**
+     * Returns the range of allowed values for voltages being sourced or measured by the SMU.
+     * A value of n indicates a range of -n to +n.
+     *
+     * @return Range value, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract double getVoltageRange() throws DeviceException, IOException;
+
+    public abstract void useAutoVoltageRange() throws DeviceException, IOException;
+
+    public abstract boolean isVoltageRangeAuto() throws DeviceException, IOException;
+
+    /**
+     * Sets the range of allowed values for currents being sourced or measured by the SMU.
+     *
+     * @param value Range value, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void setCurrentRange(double value) throws DeviceException, IOException;
+
+
+    /**
+     * Returns the range of allowed values for currents being sourced or measured by the SMU.
+     *
+     * @return Range value, inAmps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract double getCurrentRange() throws DeviceException, IOException;
+
+    public abstract void useAutoCurrentRange() throws DeviceException, IOException;
+
+    public abstract boolean isCurrentRangeAuto() throws DeviceException, IOException;
+
+    public abstract void setOutputLimit(double value) throws DeviceException, IOException;
+
+    public abstract double getOutputLimit() throws DeviceException, IOException;
+
 
     /**
      * Returns the number of terminals that can be used on the SMU.
@@ -232,6 +350,18 @@ public abstract class SMU extends VISADevice {
      */
     public int getTerminals() throws DeviceException, IOException {
         return 0;
+    }
+
+    /**
+     * Returns a combined voltage and current measurement.
+     *
+     * @return Voltage and Current
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public IVPoint getIVPoint() throws DeviceException, IOException {
+        return new IVPoint(getVoltage(), getCurrent());
     }
 
     /**

@@ -26,6 +26,16 @@ public class K2450 extends SMU {
     private static final String C_QUERY_AVG_MODE        = "VOLT:AVER:TCON?";
     private static final String C_SET_AVG_STATE         = "AVER %s";
     private static final String C_QUERY_AVG_STATE       = "VOLT:AVER?";
+    private static final String C_SET_SRC_RANGE         = ":SOUR:%s:RANG %f";
+    private static final String C_QUERY_SRC_RANGE       = ":SOUR:%s:RANG?";
+    private static final String C_SET_SRC_AUTO_RANGE    = ":SOUR:%s:RANG:AUTO %s";
+    private static final String C_QUERY_SRC_AUTO_RANGE  = ":SOUR:%s:RANG:AUTO?";
+    private static final String C_SET_MEAS_RANGE        = ":SENS:%s:RANG %f";
+    private static final String C_QUERY_MEAS_RANGE      = ":SENS:%s:RANG?";
+    private static final String C_SET_MEAS_AUTO_RANGE   = ":SENS:%s:RANG:AUTO %s";
+    private static final String C_QUERY_MEAS_AUTO_RANGE = ":SENS:%s:RANG:AUTO?";
+    private static final String C_SET_LIMIT             = ":SOUR:%s:%sLIM %f";
+    private static final String C_QUERY_LIMIT           = ":SOUR:%s:%sLIM?";
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
 
@@ -137,6 +147,9 @@ public class K2450 extends SMU {
 
         super(address);
 
+        clearRead();
+        write(":SYSTEM:CLEAR");
+
         try {
 
             String[] iden = query("*IDN?").split(",");
@@ -234,6 +247,215 @@ public class K2450 extends SMU {
         return filterCount;
     }
 
+    @Override
+    public void setSourceRange(double value) throws IOException {
+
+        switch (getSourceMode()) {
+
+            case VOLTAGE:
+                setVoltageRange(value);
+                break;
+
+            case CURRENT:
+                setCurrentRange(value);
+        }
+
+    }
+
+    @Override
+    public double getSourceRange() throws IOException {
+
+        switch (getSourceMode()) {
+
+            case VOLTAGE:
+                return getVoltageRange();
+
+            case CURRENT:
+                return getCurrentRange();
+
+            default:
+                return getVoltageRange();
+
+        }
+
+    }
+
+    @Override
+    public void useAutoSourceRange() throws IOException {
+
+        switch (getSourceMode()) {
+
+            case VOLTAGE:
+                useAutoVoltageRange();
+                break;
+
+            case CURRENT:
+                useAutoSourceRange();
+                break;
+
+        }
+
+    }
+
+    @Override
+    public boolean isSourceRangeAuto() throws IOException {
+
+        switch (getSourceMode()) {
+
+            case VOLTAGE:
+                return isVoltageRangeAuto();
+
+            case CURRENT:
+                return isCurrentRangeAuto();
+
+            default:
+                return isVoltageRangeAuto();
+
+        }
+
+    }
+
+    @Override
+    public void setMeasureRange(double value) throws IOException {
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                setVoltageRange(value);
+                break;
+
+            case CURRENT:
+                setCurrentRange(value);
+        }
+
+    }
+
+    @Override
+    public double getMeasureRange() throws IOException {
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                return getVoltageRange();
+
+            case CURRENT:
+                return getCurrentRange();
+
+            default:
+                return getCurrentRange();
+
+        }
+
+    }
+
+    @Override
+    public void useAutoMeasureRange() throws IOException {
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                useAutoVoltageRange();
+                break;
+
+            case CURRENT:
+                useAutoSourceRange();
+                break;
+
+        }
+
+    }
+
+    @Override
+    public boolean isMeasureRangeAuto() throws IOException {
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                return isVoltageRangeAuto();
+
+            case CURRENT:
+                return isCurrentRangeAuto();
+
+            default:
+                return isCurrentRangeAuto();
+
+        }
+
+    }
+
+    @Override
+    public void setVoltageRange(double value) throws IOException {
+        switch(getSourceMode()) {
+
+            case VOLTAGE:
+                write(C_SET_SRC_AUTO_RANGE, Source.VOLTAGE.getTag(), OUTPUT_OFF);
+                write(C_SET_SRC_RANGE, Source.VOLTAGE.getTag(), value);
+                break;
+
+            case CURRENT:
+                write(C_SET_MEAS_AUTO_RANGE, Source.VOLTAGE.getTag(), OUTPUT_OFF);
+                write(C_SET_MEAS_RANGE, Source.VOLTAGE.getTag(), value);
+
+        }
+    }
+
+    @Override
+    public double getVoltageRange() throws IOException {
+        return queryDouble(C_QUERY_SRC_RANGE, Source.VOLTAGE.getTag());
+    }
+
+    @Override
+    public void useAutoVoltageRange() throws IOException {
+        write(C_SET_SRC_AUTO_RANGE, Source.VOLTAGE.getTag(), OUTPUT_ON);
+    }
+
+    @Override
+    public boolean isVoltageRangeAuto() throws IOException {
+        return query(C_QUERY_SRC_AUTO_RANGE, Source.VOLTAGE.getTag()).trim().equals(OUTPUT_ON);
+    }
+
+    @Override
+    public void setCurrentRange(double value) throws IOException {
+
+        switch(getSourceMode()) {
+
+            case CURRENT:
+                write(C_SET_SRC_AUTO_RANGE, Source.CURRENT.getTag(), OUTPUT_OFF);
+                write(C_SET_SRC_RANGE, Source.CURRENT.getTag(), value);
+                break;
+
+            case VOLTAGE:
+                write(C_SET_MEAS_AUTO_RANGE, Source.CURRENT.getTag(), OUTPUT_OFF);
+                write(C_SET_MEAS_RANGE, Source.CURRENT.getTag(), value);
+
+        }
+    }
+
+    @Override
+    public double getCurrentRange() throws IOException {
+        return queryDouble(C_QUERY_SRC_RANGE, Source.CURRENT.getTag());
+    }
+
+    @Override
+    public void useAutoCurrentRange() throws IOException {
+        write(C_SET_SRC_AUTO_RANGE, Source.CURRENT.getTag(), OUTPUT_ON);
+    }
+
+    @Override
+    public boolean isCurrentRangeAuto() throws IOException {
+        return query(C_QUERY_SRC_AUTO_RANGE, Source.CURRENT.getTag()).trim().equals(OUTPUT_ON);
+    }
+
+    @Override
+    public void setOutputLimit(double value) throws IOException {
+        write(C_SET_LIMIT, getSourceMode().getTag(), getMeasureMode().getSymbol(), value);
+    }
+
+    @Override
+    public double getOutputLimit() throws IOException {
+        return queryDouble(C_QUERY_LIMIT, getSourceMode().getTag(), getMeasureMode().getSymbol());
+    }
+
     public double getVoltage() throws DeviceException, IOException {
         return filterV.getValue();
     }
@@ -260,6 +482,24 @@ public class K2450 extends SMU {
 
     public SMU.Source getSource() throws IOException {
         return Source.fromTag(query(C_QUERY_SOURCE_FUNCTION)).getSMU();
+    }
+
+    public Source getSourceMode() throws IOException {
+        return Source.fromTag(query(C_QUERY_SOURCE_FUNCTION));
+    }
+
+    public Source getMeasureMode() throws IOException {
+
+        switch (Source.fromTag(query(C_QUERY_SOURCE_FUNCTION))) {
+            case VOLTAGE:
+                return Source.CURRENT;
+
+            case CURRENT:
+                return Source.VOLTAGE;
+        }
+
+        return Source.CURRENT;
+
     }
 
     public void setSource(SMU.Source source) throws IOException {
@@ -355,8 +595,8 @@ public class K2450 extends SMU {
 
     public enum Source {
 
-        VOLTAGE("VOLT", SMU.Source.VOLTAGE),
-        CURRENT("CURR", SMU.Source.CURRENT);
+        VOLTAGE("VOLT", "V", SMU.Source.VOLTAGE),
+        CURRENT("CURR", "I", SMU.Source.CURRENT);
 
         private static HashMap<String, Source>     lookup  = new HashMap<>();
         private static HashMap<SMU.Source, Source> convert = new HashMap<>();
@@ -377,15 +617,21 @@ public class K2450 extends SMU {
         }
 
         private String     tag;
+        private String     symbol;
         private SMU.Source orig;
 
-        Source(String tag, SMU.Source orig) {
+        Source(String tag, String symbol, SMU.Source orig) {
             this.tag = tag;
+            this.symbol = symbol;
             this.orig = orig;
         }
 
         String getTag() {
             return tag;
+        }
+
+        String getSymbol() {
+            return symbol;
         }
 
         SMU.Source getSMU() {

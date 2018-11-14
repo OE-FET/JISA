@@ -2,25 +2,45 @@ package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
 import JISA.Util;
+import JISA.VISA.Connection;
+import JISA.VISA.VISA;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
+/**
+ * Class for controlling Lake Shore Model 336 temperature controllers.
+ *
+ * They are generally annoying with a shoddy communications implementation. Hooray!
+ */
 public class LS336 extends MSMOTController {
 
-    private static final String C_QUERY_SENSOR    = "KRDG? %s";
-    private static final String C_SET_SET_POINT   = "SETP %d,%f";
-    private static final String C_QUERY_SET_POINT = "SETP? %d";
-    private static final String C_QUERY_PID       = "PID?";
-    private static final String C_SET_PID         = "PID %f,%f,%f";
-    private static final String C_SET_OUT_MODE    = "OUTMODE %d,%d,%d,%d";
-    private static final String C_QUERY_OUT_MODE  = "OUTMODE? %d";
-    private static final String C_QUERY_HEATER    = "HTR? %d";
-    private static final String C_SET_HEATER      = "MOUT %d,%f";
-    private static final String C_QUERY_M_HEATER  = "MOUT? %d";
+    private static final String[]        CHANNELS          = {"A", "B", "C", "D"};
+    private static final String          C_QUERY_SENSOR    = "KRDG? %s";
+    private static final String          C_SET_SET_POINT   = "SETP %d,%f";
+    private static final String          C_QUERY_SET_POINT = "SETP? %d";
+    private static final String          C_QUERY_PID       = "PID?";
+    private static final String          C_SET_PID         = "PID %f,%f,%f";
+    private static final String          C_SET_OUT_MODE    = "OUTMODE %d,%d,%d,%d";
+    private static final String          C_QUERY_OUT_MODE  = "OUTMODE? %d";
+    private static final String          C_QUERY_HEATER    = "HTR? %d";
+    private static final String          C_SET_HEATER      = "MOUT %d,%f";
+    private static final String          C_QUERY_M_HEATER  = "MOUT? %d";
+    private static final String          TERMINATOR        = "\r\n";
+    private              Semaphore       timingControl     = new Semaphore(1);
+    private              ExecutorService timingService     = Executors.newFixedThreadPool(1);
 
     public LS336(InstrumentAddress address) throws IOException, DeviceException {
 
         super(address);
+        setSerialParameters(57600, 7, Connection.Parity.ODD, Connection.StopBits.ONE, Connection.Flow.NONE);
+        setReadTerminationCharacter(CRLF_TERMINATOR);
+        setTerminator(TERMINATOR);
+
+        clearRead();
 
         try {
 
@@ -34,10 +54,34 @@ public class LS336 extends MSMOTController {
 
     }
 
+    public synchronized void write(String command, Object... args) throws IOException {
+
+        // Can only write to the device if we have waited enough time since the last write (50 ms)
+        try {
+            timingControl.acquire();
+        } catch (InterruptedException ignored) {
+        }
+
+        try {
+
+            super.write(command, args);
+
+        } finally {
+
+            // Do not allow another write until 50 ms from now.
+            timingService.submit(() -> {
+                Util.sleep(50);
+                timingControl.release();
+            });
+
+        }
+
+    }
+
     @Override
     public double getTemperature(int sensor) throws IOException, DeviceException {
         checkSensor(sensor);
-        return queryDouble(C_QUERY_SENSOR, sensor + 1);
+        return queryDouble(C_QUERY_SENSOR, CHANNELS[sensor]);
     }
 
     @Override
@@ -64,7 +108,7 @@ public class LS336 extends MSMOTController {
         checkSensor(sensor);
         OutMode mode = getOutMode(output);
         mode.input = sensor + 1;
-        write(C_SET_OUT_MODE, mode.output, mode.mode, mode.input, mode.powerUp ? 1 : 0);
+        write(C_SET_OUT_MODE, output, mode.mode, mode.input, mode.powerUp ? 1 : 0);
     }
 
     @Override
@@ -164,7 +208,7 @@ public class LS336 extends MSMOTController {
         checkOutput(output);
         OutMode mode = getOutMode(output);
         mode.mode = auto ? 2 : 1;
-        write(C_SET_OUT_MODE, mode.output, mode.mode, mode.input, mode.powerUp ? 1 : 0);
+        write(C_SET_OUT_MODE, output, mode.mode, mode.input, mode.powerUp ? 1 : 0);
     }
 
     @Override
@@ -186,7 +230,6 @@ public class LS336 extends MSMOTController {
 
     private static class OutMode {
 
-        public int     output;
         public int     mode;
         public int     input;
         public boolean powerUp;
@@ -195,10 +238,9 @@ public class LS336 extends MSMOTController {
 
             String[] vals = response.trim().split(",");
 
-            output = Integer.valueOf(vals[0].trim());
-            mode = Integer.valueOf(vals[1].trim());
-            input = Integer.valueOf(vals[2].trim());
-            powerUp = vals[3].trim().equals("1");
+            mode = Integer.valueOf(vals[0].trim());
+            input = Integer.valueOf(vals[1].trim());
+            powerUp = vals[2].trim().equals("1");
 
         }
 

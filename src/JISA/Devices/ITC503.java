@@ -48,8 +48,6 @@ public class ITC503 extends MSTController {
     private static final int    STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
     private static final double STANDARD_ERROR_PERC           = 10;
 
-    private long timeout = 2000;
-
     /**
      * Open the ITC503 device at the given bus and address
      *
@@ -81,17 +79,11 @@ public class ITC503 extends MSTController {
 
     }
 
-    private void clearRead() throws IOException {
-        write(C_SET_COMM_MODE);
-    }
-
     public void setTimeout(long value) throws IOException {
-        timeout = value;
         super.setTimeout(value);
     }
 
     private synchronized double readChannel(int channel) throws IOException {
-        clearRead();
         try {
             String reply = query(C_READ, channel);
             return Double.parseDouble(reply.substring(1));
@@ -202,7 +194,6 @@ public class ITC503 extends MSTController {
     }
 
     private Status getStatus() throws IOException, DeviceException {
-        clearRead();
         return new Status(query(C_QUERY_STATUS));
     }
 
@@ -248,7 +239,6 @@ public class ITC503 extends MSTController {
     }
 
     public String getIDN() throws IOException {
-        clearRead();
         return query("V").replace("\n", "").replace("\r", "");
     }
 

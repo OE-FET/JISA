@@ -5,6 +5,7 @@ import JISA.Util;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class K236 extends SMU {
@@ -20,6 +21,10 @@ public class K236 extends SMU {
     private static final String C_TRIGGER        = "H0";
     private static final String C_RESET          = "J0";
     private static final String C_DISABLE_FILTER = "P0";
+    private static final String C_SET_COMPLIANCE = "L%f,%d";
+    private static final String C_GET_STATUS     = "U3";
+    private static final String C_GET_PARAMS     = "U4";
+    private static final String C_GET_COMPLIANCE = "U5";
     private static final int    OPERATE_OFF      = 0;
     private static final int    OPERATE_ON       = 1;
     private static final int    OUTPUT_NOTHING   = 0;
@@ -98,16 +103,24 @@ public class K236 extends SMU {
     private ReadFilter filterS     = NONE_S;
     private ReadFilter filterM     = NONE_M;
     private int        filterCount = 1;
+    private SRange     sRange      = SRange.AUTO;
+    private SRange     mRange      = SRange.AUTO;
+    private double     compliance  = 100;
 
     public K236(InstrumentAddress address) throws IOException, DeviceException {
 
         super(address);
         setTerminator(C_TRIGGER + C_EXECUTE);
         write(C_RESET);
+        write(C_NO_TERM);
         turnOff();
         setSourceFunction(Source.VOLTAGE, Function.DC);
-        write(C_NO_TERM);
+        useAutoSourceRange();
+        useAutoMeasureRange();
         setAverageMode(AMode.NONE);
+        compliance = getOutputLimit();
+
+        read();
 
         try {
 
@@ -122,8 +135,6 @@ public class K236 extends SMU {
     }
 
     public void setBias(double level) throws IOException, DeviceException {
-
-        biasLevel = level;
 
         switch (source) {
 
@@ -141,8 +152,17 @@ public class K236 extends SMU {
 
         }
 
-        write(C_SET_BIAS, level, 0, 0);
+        biasLevel = level;
+        setBias();
 
+    }
+
+    private void setBias() throws IOException {
+        write(C_SET_BIAS, biasLevel, sRange.toInt(), 0);
+    }
+
+    private void setCompliance() throws IOException {
+        write(C_SET_COMPLIANCE, compliance, mRange.toInt());
     }
 
     public String getIDN() throws IOException {
@@ -172,7 +192,7 @@ public class K236 extends SMU {
 
     @Override
     public boolean isUsingFourProbe() throws DeviceException, IOException {
-        return remote;
+        return getMeasureParams().fourProbe;
     }
 
     private void resetFilters() throws DeviceException, IOException {
@@ -241,6 +261,279 @@ public class K236 extends SMU {
         return filterCount;
     }
 
+    @Override
+    public void setSourceRange(double value) throws IOException {
+
+        SRange range;
+
+        switch (getSource()) {
+
+            case VOLTAGE:
+                range = SRange.fromVoltage(value, true);
+                break;
+
+            case CURRENT:
+                range = SRange.fromCurrent(value, true);
+                break;
+
+            default:
+                range = SRange.AUTO;
+
+        }
+
+        sRange = range;
+        setBias();
+
+    }
+
+    @Override
+    public double getSourceRange() {
+
+        switch (source) {
+
+            case VOLTAGE:
+                return sRange.getVoltage();
+
+            case CURRENT:
+                return sRange.getCurrent();
+
+            default:
+                return sRange.getVoltage();
+
+        }
+
+    }
+
+    @Override
+    public void useAutoSourceRange() throws IOException {
+        sRange = SRange.AUTO;
+        setBias();
+    }
+
+    @Override
+    public boolean isSourceRangeAuto() {
+        return sRange.equals(SRange.AUTO);
+    }
+
+    @Override
+    public void setMeasureRange(double value) throws DeviceException, IOException {
+        SRange range;
+
+        switch (source) {
+
+            case VOLTAGE:
+                range = SRange.fromVoltage(value, true);
+                break;
+
+            case CURRENT:
+                range = SRange.fromCurrent(value, true);
+                break;
+
+            default:
+                range = SRange.AUTO;
+
+        }
+
+        sRange = range;
+        setCompliance();
+
+    }
+
+    @Override
+    public double getMeasureRange() {
+        switch (source) {
+
+            case VOLTAGE:
+                return mRange.getCurrent();
+
+            case CURRENT:
+                return mRange.getVoltage();
+
+            default:
+                return mRange.getCurrent();
+
+        }
+    }
+
+    @Override
+    public void useAutoMeasureRange() throws DeviceException, IOException {
+        mRange = SRange.AUTO;
+        setCompliance();
+    }
+
+    @Override
+    public boolean isMeasureRangeAuto() {
+        return mRange.equals(SRange.AUTO);
+    }
+
+    @Override
+    public void setVoltageRange(double value) throws DeviceException, IOException {
+
+        switch (source) {
+
+            case VOLTAGE:
+                setSourceRange(value);
+                break;
+
+            case CURRENT:
+                setMeasureRange(value);
+                break;
+
+        }
+
+    }
+
+    @Override
+    public double getVoltageRange() {
+
+        switch (source) {
+
+            case VOLTAGE:
+                return getSourceRange();
+
+            case CURRENT:
+                return getMeasureRange();
+
+            default:
+                return getSourceRange();
+
+        }
+
+    }
+
+    @Override
+    public void useAutoVoltageRange() throws DeviceException, IOException {
+
+        switch (source) {
+
+            case VOLTAGE:
+                useAutoSourceRange();
+                break;
+
+            case CURRENT:
+                useAutoMeasureRange();
+                break;
+
+        }
+
+    }
+
+    @Override
+    public boolean isVoltageRangeAuto() throws DeviceException, IOException {
+
+        switch (source) {
+
+            case VOLTAGE:
+                return isSourceRangeAuto();
+
+            case CURRENT:
+                return isMeasureRangeAuto();
+
+            default:
+                return isSourceRangeAuto();
+
+        }
+
+    }
+
+    @Override
+    public void setCurrentRange(double value) throws DeviceException, IOException {
+
+        switch (source) {
+
+            case CURRENT:
+                setSourceRange(value);
+                break;
+
+            case VOLTAGE:
+                setMeasureRange(value);
+                break;
+
+        }
+
+    }
+
+    @Override
+    public double getCurrentRange() {
+
+        switch (source) {
+
+            case CURRENT:
+                return getSourceRange();
+
+            case VOLTAGE:
+                return getMeasureRange();
+
+            default:
+                return getMeasureRange();
+
+        }
+
+    }
+
+    @Override
+    public void useAutoCurrentRange() throws DeviceException, IOException {
+
+        switch (source) {
+
+            case VOLTAGE:
+                useAutoMeasureRange();
+                break;
+
+            case CURRENT:
+                useAutoSourceRange();
+                break;
+
+        }
+
+    }
+
+    @Override
+    public boolean isCurrentRangeAuto() throws DeviceException, IOException {
+
+        switch (source) {
+
+            case VOLTAGE:
+                return isMeasureRangeAuto();
+
+            case CURRENT:
+                return isSourceRangeAuto();
+
+            default:
+                return isMeasureRangeAuto();
+
+        }
+
+    }
+
+    @Override
+    public void setOutputLimit(double value) throws DeviceException, IOException {
+
+        switch (source) {
+
+            case VOLTAGE:
+                if (!Util.isBetween(value, 0, +110)) {
+                    throw new DeviceException("Output limit of %f V is out of range.", value);
+                }
+                break;
+
+            case CURRENT:
+                if (!Util.isBetween(value, 0, 0.1)) {
+                    throw new DeviceException("Output limit of %f A is out of range.", value);
+                }
+                break;
+
+        }
+
+        compliance = value;
+        setCompliance();
+    }
+
+    @Override
+    public double getOutputLimit() throws IOException {
+        return Double.valueOf(query(C_GET_COMPLIANCE).substring(3));
+    }
+
     public double getVoltage() throws IOException, DeviceException {
 
         switch (source) {
@@ -295,8 +588,8 @@ public class K236 extends SMU {
     }
 
     @Override
-    public boolean isOn() throws DeviceException, IOException {
-        return on;
+    public boolean isOn() throws IOException {
+        return getMachineStatus().on;
     }
 
     @Override
@@ -304,18 +597,27 @@ public class K236 extends SMU {
         setSourceFunction(Source.fromSMU(source), getFunction());
     }
 
-    public SMU.Source getSource() {
-        return source.getOriginal();
+    public SMU.Source getSource() throws IOException {
+        return getMeasureParams().source.getOriginal();
     }
 
-    public Function getFunction() {
-        return function;
+    public Function getFunction() throws IOException {
+        return getMeasureParams().function;
     }
 
     public void setSourceFunction(Source s, Function f) throws IOException {
         write(C_SET_SRC_FUNC, s.toInt(), f.toInt());
         source = s;
         function = f;
+        compliance = getOutputLimit();
+    }
+
+    private MStatus getMachineStatus() throws IOException {
+        return new MStatus(query(C_GET_STATUS));
+    }
+
+    private MParams getMeasureParams() throws IOException {
+        return new MParams(query(C_GET_PARAMS));
     }
 
     public enum Source {
@@ -384,4 +686,141 @@ public class K236 extends SMU {
             return c;
         }
     }
+
+    private enum SRange {
+
+        AUTO(0, 0, 0),
+        R_1NA_1_1V(1, 1e-9, 1.1),
+        R_10NA_11V(2, 10e-9, 11),
+        R_100NA_110V(3, 100e-9, 110),
+        R_1UA(4, 1e-6, -1),
+        R_10UA(5, 10e-6, -1),
+        R_100UA(6, 100e-6, -1),
+        R_1MA(7, 1e-3, -1),
+        R_10MA(8, 10e-3, -1),
+        R_100MA(9, 100e-3, -1);
+
+        private static final HashMap<Integer, SRange> lookup = new HashMap<>();
+
+        static {
+            for (SRange r : values()) {
+                lookup.put(r.toInt(), r);
+            }
+        }
+
+        static SRange fromInt(int value) {
+            return lookup.getOrDefault(value, null);
+        }
+
+        static SRange fromVoltage(double value, boolean over) {
+
+            SRange found = R_100NA_110V;
+
+            for (SRange r : values()) {
+                if ((Math.abs(r.getVoltage() - value) < Math.abs(found.getVoltage() - value)) && (r.getVoltage() >= value || !over) && (r.getVoltage() <= value || over)) {
+                    found = r;
+                }
+            }
+
+            return found;
+
+        }
+
+        static SRange fromCurrent(double value, boolean over) {
+
+            SRange found = R_100MA;
+
+            for (SRange r : values()) {
+                if ((Math.abs(r.getCurrent() - value) < Math.abs(found.getCurrent() - value)) && (r.getCurrent() >= value || !over) && (r.getCurrent() <= value || over)) {
+                    found = r;
+                }
+            }
+
+            return found;
+
+        }
+
+        private int    mode;
+        private double current;
+        private double voltage;
+
+        SRange(int mode, double current, double voltage) {
+            this.mode = mode;
+            this.current = current;
+            this.voltage = voltage;
+        }
+
+        int toInt() {
+            return mode;
+        }
+
+        double getCurrent() {
+            return current;
+        }
+
+        double getVoltage() {
+            return voltage;
+        }
+
+    }
+
+    private static class MStatus {
+
+        private static final Pattern PATTERN = Pattern.compile("MSTG([0-9]{2}),([0-9]),([0-9])K([0-3])M([0-9]{3}),([0-9])N([0-1])R([0-1])T([0-4]),([0-8]),([0-8]),([0-1])V([0-1])Y([0-4])");
+
+        public int     items;
+        public int     format;
+        public int     lines;
+        public int     EOI;
+        public int     mask;
+        public boolean on;
+        public boolean triggering;
+
+
+        public MStatus(String response) {
+
+            Matcher matcher = PATTERN.matcher(response);
+
+            if (matcher.find()) {
+
+                items = Integer.valueOf(matcher.group(1).trim());
+                format = Integer.valueOf(matcher.group(2).trim());
+                lines = Integer.valueOf(matcher.group(3).trim());
+                EOI = Integer.valueOf(matcher.group(4).trim());
+                mask = Integer.valueOf(matcher.group(5).trim());
+                on = matcher.group(7).trim().equals("1");
+                triggering = matcher.group(8).trim().equals("1");
+
+            }
+
+        }
+
+    }
+
+    private static class MParams {
+
+        private static final Pattern PATTERN = Pattern.compile("[IV]MPL,([0-9]{2})F([0-1]),([0-1])O([0-1])P([0-5])S([0-3])W([0-1])Z([0-1])");
+
+        public SRange   mRange;
+        public Source   source;
+        public Function function;
+        public boolean  fourProbe;
+
+        public MParams(String response) {
+
+            Matcher matcher = PATTERN.matcher(response);
+
+            if (matcher.find()) {
+
+                mRange = SRange.fromInt(Integer.valueOf(matcher.group(1).trim()));
+                source = Source.fromInt(Integer.valueOf(matcher.group(2).trim()));
+                function = Function.fromInt(Integer.valueOf(matcher.group(3).trim()));
+                fourProbe = matcher.group(4).trim().equals("1");
+
+            }
+
+        }
+
+    }
+
 }

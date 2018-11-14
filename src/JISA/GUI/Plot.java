@@ -16,21 +16,24 @@ import javafx.stage.Stage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Plot implements Gridable {
 
     public  BorderPane                                pane;
     private Stage                                     stage;
-    private ArrayList<XYChart.Series<Double, Double>> data   = new ArrayList<>();
+    private ArrayList<XYChart.Series<Double, Double>> data     = new ArrayList<>();
     public  LineChart                                 chart;
     public  NumberAxis                                xAxis;
     public  NumberAxis                                yAxis;
-    private double                                    xRange = 0;
-    private double                                    maxX   = Double.NEGATIVE_INFINITY;
-    private double                                    minX   = Double.POSITIVE_INFINITY;
-    private double                                    maxY   = Double.NEGATIVE_INFINITY;
-    private double                                    minY   = Double.POSITIVE_INFINITY;
+    private double                                    xRange   = 0;
+    private double                                    maxX     = Double.NEGATIVE_INFINITY;
+    private double                                    minX     = Double.POSITIVE_INFINITY;
+    private double                                    maxY     = Double.NEGATIVE_INFINITY;
+    private double                                    minY     = Double.POSITIVE_INFINITY;
+    private double                                    maxRange = -1;
 
     public Plot(String title, String xLabel, String yLabel) {
 
@@ -90,6 +93,12 @@ public class Plot implements Gridable {
         yAxis.setUpperBound(max);
     }
 
+    public void showMarkers(boolean show) {
+        GUI.runNow(() -> {
+            chart.setCreateSymbols(show);
+        });
+    }
+
     public void autoXLimit() {
         Platform.runLater(() -> {
             xAxis.setAutoRanging(true);
@@ -104,6 +113,10 @@ public class Plot implements Gridable {
 
     public void autoFollow(double xRange) {
         this.xRange = xRange;
+    }
+
+    public void setMaxRange(double range) {
+        maxRange = range;
     }
 
     public void watchList(final ResultList list, final int xData, final int yData, String seriesName, Color colour) {
@@ -200,12 +213,15 @@ public class Plot implements Gridable {
             minX = Math.min(minX, x);
             minY = Math.min(minY, y);
 
-            if (xRange > 0) {
-                setXLimit(maxX - xRange, maxX);
-                autoXLimit();
-            } else {
-                xAxis.setAutoRanging(true);
-                yAxis.setAutoRanging(true);
+            if (maxRange > 0) {
+                xAxis.setAutoRanging(false);
+                xAxis.setAnimated(false);
+                yAxis.setAnimated(false);
+
+                data.get(series).getData().removeIf(data -> data.getXValue() < (maxX - maxRange));
+
+                xAxis.setLowerBound(Math.max(minX, maxX - maxRange));
+                xAxis.setUpperBound(maxX);
             }
 
         });

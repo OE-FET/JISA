@@ -8,8 +8,13 @@ public interface InstrumentAddress {
         GPIB,
         USB,
         TCPIP,
+        TCPIP_SOCKET,
         SERIAL,
         UNKOWN
+    }
+
+    public default StrAddress toStrAddress() {
+        return new StrAddress(getVISAAddress());
     }
 
 }
