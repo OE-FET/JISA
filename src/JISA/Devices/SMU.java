@@ -24,6 +24,7 @@ public abstract class SMU extends VISADevice {
      * Returns the voltage either being applied or measured by the SMU.
      *
      * @return Voltage value
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -33,6 +34,7 @@ public abstract class SMU extends VISADevice {
      * Returns the current either being injected or measured by the SMU.
      *
      * @return Current value
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -42,6 +44,7 @@ public abstract class SMU extends VISADevice {
      * Sets the voltage value to be applied by the SMU (switching to voltage source mode if not already)
      *
      * @param voltage Value to set
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -51,6 +54,7 @@ public abstract class SMU extends VISADevice {
      * Sets the current value to be applied by the SMU (switching to current source mode if not already)
      *
      * @param current Value to set
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -76,6 +80,7 @@ public abstract class SMU extends VISADevice {
      * Checks whether the output of the SMU is currently enabled
      *
      * @return Is the output on?
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -85,6 +90,7 @@ public abstract class SMU extends VISADevice {
      * Sets the source mode of the SMU (VOLTAGE or CURRENT)
      *
      * @param source Source mode to set
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -94,6 +100,7 @@ public abstract class SMU extends VISADevice {
      * Returns the current source mode of the SMU (VOLTAGE OR CURRENT)
      *
      * @return Source mode
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -103,6 +110,7 @@ public abstract class SMU extends VISADevice {
      * Sets the value for whichever parameter is currently being sourced
      *
      * @param level The level to set
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -112,6 +120,7 @@ public abstract class SMU extends VISADevice {
      * Returns the value of whichever parameter is set as source currently
      *
      * @return Value of source
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -121,6 +130,7 @@ public abstract class SMU extends VISADevice {
      * Returns the value of whichever parameter is set as measure currently
      *
      * @return Value of measure
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -131,6 +141,7 @@ public abstract class SMU extends VISADevice {
      * do both with the FORCE probes.
      *
      * @param fourProbes Should it use all four probes?
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -140,6 +151,7 @@ public abstract class SMU extends VISADevice {
      * Returns whether the device is currently configured to use all four probes.
      *
      * @return Are all probes to be used?
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -149,6 +161,7 @@ public abstract class SMU extends VISADevice {
      * Sets the averaging mode of the SMU.
      *
      * @param mode Mode to use
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -158,6 +171,7 @@ public abstract class SMU extends VISADevice {
      * Sets how many measurements the SMU should average over.
      *
      * @param count Number of measurements
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -167,6 +181,7 @@ public abstract class SMU extends VISADevice {
      * Returns the averaging mode of the SMU.
      *
      * @return Mode being used
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -176,6 +191,7 @@ public abstract class SMU extends VISADevice {
      * Returns the number of measurements used for averaging by the SMU.
      *
      * @return Number of measurements
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -186,6 +202,7 @@ public abstract class SMU extends VISADevice {
      * A value of n indicates a range of -n to +n.
      *
      * @param value Range value, in Volts or Amps
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -196,6 +213,7 @@ public abstract class SMU extends VISADevice {
      * A value of n indicates a range of -n to +n.
      *
      * @return Range value, in Volts or Amps
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -221,6 +239,7 @@ public abstract class SMU extends VISADevice {
      * Sets the range of allowed values for the quantity being measured by the SMU.
      *
      * @param value Range value, in Volts or Amps
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -231,13 +250,28 @@ public abstract class SMU extends VISADevice {
      * Returns the range of allowed values for the quantity being measured by the SMU.
      *
      * @return Range value, in Volts or Amps
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
     public abstract double getMeasureRange() throws DeviceException, IOException;
 
+    /**
+     * Tells the SMU to automatically determine the range to use for the measured quantity.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void useAutoMeasureRange() throws DeviceException, IOException;
 
+    /**
+     * Returns whether the SMU is currently determining its measure range automatically.
+     *
+     * @return Is it automatic?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract boolean isMeasureRangeAuto() throws DeviceException, IOException;
 
     /**
@@ -245,6 +279,7 @@ public abstract class SMU extends VISADevice {
      * A value of n indicates a range of -n to +n.
      *
      * @param value Range value, in Volts
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -255,19 +290,35 @@ public abstract class SMU extends VISADevice {
      * A value of n indicates a range of -n to +n.
      *
      * @return Range value, in Volts
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
     public abstract double getVoltageRange() throws DeviceException, IOException;
 
+    /**
+     * Tells the SMU to automatically determine the range it uses for voltages.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void useAutoVoltageRange() throws DeviceException, IOException;
 
+    /**
+     * Returns whether the SMU is automatically determining the range to use for voltages.
+     *
+     * @return Is it automatic?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract boolean isVoltageRangeAuto() throws DeviceException, IOException;
 
     /**
      * Sets the range of allowed values for currents being sourced or measured by the SMU.
      *
      * @param value Range value, in Amps
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -278,25 +329,88 @@ public abstract class SMU extends VISADevice {
      * Returns the range of allowed values for currents being sourced or measured by the SMU.
      *
      * @return Range value, inAmps
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
     public abstract double getCurrentRange() throws DeviceException, IOException;
 
+    /**
+     * Tells the SMU to automatically determine the range to use for current values.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void useAutoCurrentRange() throws DeviceException, IOException;
 
+    /**
+     * Returns whether the SMU is currently determining its current range automatically.
+     *
+     * @return Is it automatic?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract boolean isCurrentRangeAuto() throws DeviceException, IOException;
 
+    /**
+     * Sets the limit for the measured quantity (ie compliance value).
+     *
+     * @param value The limit to use, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void setOutputLimit(double value) throws DeviceException, IOException;
 
+    /**
+     * Returns the limit for the measured quantity (compliance value).
+     *
+     * @return The limit, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract double getOutputLimit() throws DeviceException, IOException;
 
+    /**
+     * Sets the limit for voltages output when sourcing current (compliance value).
+     *
+     * @param voltage The limit, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void setVoltageLimit(double voltage) throws DeviceException, IOException;
 
+    /**
+     * Returns the limit on voltages output when sourcing current (compliance value).
+     *
+     * @return The limit, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract double getVoltageLimit() throws DeviceException, IOException;
 
+    /**
+     * Sets the limit for currents output when sourcing voltage (compliance value).
+     *
+     * @param current The limit, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void setCurrentLimit(double current) throws DeviceException, IOException;
 
+    /**
+     * Returns the limit for currents output when sourcing voltage (compliance value).
+     *
+     * @return The limit, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract double getCurrentLimit() throws DeviceException, IOException;
 
 
@@ -304,6 +418,7 @@ public abstract class SMU extends VISADevice {
      * Returns the number of terminals that can be used on the SMU.
      *
      * @return Number of terminals
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -315,6 +430,7 @@ public abstract class SMU extends VISADevice {
      * Sets which set of terminals should be used on the SMU.
      *
      * @param terminalNumber Index of terminal set, starting at 0
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -326,6 +442,7 @@ public abstract class SMU extends VISADevice {
      * Returns the index of the set of terminals currently being used on the SMU.
      *
      * @return Index of terminal set
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -337,6 +454,7 @@ public abstract class SMU extends VISADevice {
      * Returns a combined voltage and current measurement.
      *
      * @return Voltage and Current
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -353,7 +471,9 @@ public abstract class SMU extends VISADevice {
      * @param numSteps  Number of steps in sweep
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
+     *
      * @return Array of IVPoint objects containing I-V data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -373,7 +493,9 @@ public abstract class SMU extends VISADevice {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate  Method to run each time a new measurement is completed
+     *
      * @return Array of IVPoint objects containing I-V data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -400,7 +522,9 @@ public abstract class SMU extends VISADevice {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param list      ResultList to update with data points column 0: Voltage, column 1: Current
+     *
      * @return Array of IVPoint objects containing I-V data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -419,7 +543,9 @@ public abstract class SMU extends VISADevice {
      * @param numSteps  Number of steps in sweep
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
+     *
      * @return Array of IVPoint objects containing V-I data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -441,7 +567,9 @@ public abstract class SMU extends VISADevice {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate  Method ot run each time a new measurement is completed
+     *
      * @return Array of IVPoint objects containing V-I data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -468,7 +596,9 @@ public abstract class SMU extends VISADevice {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param list      ResultList to update with data points column 0: Voltage, column 1: Current
+     *
      * @return Array of IVPoint objects containing I-V data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -534,7 +664,9 @@ public abstract class SMU extends VISADevice {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate  Method to run each time a new measurement is completed (on separate thread)
+     *
      * @return Array of IVPoint objects containing V-I data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -655,7 +787,9 @@ public abstract class SMU extends VISADevice {
      * @param values    Array of values to use in the sweep
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
+     *
      * @return Array of IVPoint objects containing V-I data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -672,7 +806,9 @@ public abstract class SMU extends VISADevice {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param list      ResultList object to update with measurements, column 0: Voltage, column 1: Current.
+     *
      * @return Array of IVPoint objects containing V-I data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */

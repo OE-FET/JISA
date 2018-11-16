@@ -19,9 +19,9 @@ public class K2600B extends MCSMU {
     private static final String   C_SET_CURR                 = "%s.source.leveli = %f";
     private static final String   C_SET_OUTPUT               = "%s.source.output = %s";
     private static final String   C_SET_SENSE                = "%s.sense = %s";
-    private static final String   C_SET_AVG_COUNT            = "%s.measure.filer.count = %d";
+    private static final String   C_SET_AVG_COUNT            = "%s.measure.filter.count = %d";
     private static final String   C_QUERY_AVG_COUNT          = "print(%s.measure.filter.count)";
-    private static final String   C_SET_AVG_MODE             = "%s.measure.filer.type = %s";
+    private static final String   C_SET_AVG_MODE             = "%s.measure.filter.type = %s";
     private static final String   C_QUERY_AVG_MODE           = "print(%s.measure.filer.type)";
     private static final String   C_SET_AVG_STATE            = "%s.measure.filter.enable = %s";
     private static final String   C_QUERY_AVG_STATE          = "print(%s.measure.filer.enable)";
