@@ -611,6 +611,30 @@ public class K2600B extends MCSMU {
         return queryDouble(C_QUERY_LIMIT, CHANNELS[channel], getMeasureMode(channel).getSymbol());
     }
 
+    @Override
+    public void setVoltageLimit(int channel, double value) throws DeviceException, IOException {
+        checkChannel(channel);
+        write(C_SET_LIMIT, CHANNELS[channel], SFunc.VOLTAGE.getSymbol(), value);
+    }
+
+    @Override
+    public double getVoltageLimit(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return queryDouble(C_QUERY_LIMIT, CHANNELS[channel], SFunc.VOLTAGE.getSymbol());
+    }
+
+    @Override
+    public void setCurrentLimit(int channel, double value) throws DeviceException, IOException {
+        checkChannel(channel);
+        write(C_SET_LIMIT, CHANNELS[channel], SFunc.CURRENT.getSymbol(), value);
+    }
+
+    @Override
+    public double getCurrentLimit(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return queryDouble(C_QUERY_LIMIT, CHANNELS[channel], SFunc.CURRENT.getSymbol());
+    }
+
     private enum SFunc {
 
         VOLTAGE("1", "v", Source.VOLTAGE),

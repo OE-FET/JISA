@@ -105,7 +105,9 @@ public class K236 extends SMU {
     private int        filterCount = 1;
     private SRange     sRange      = SRange.AUTO;
     private SRange     mRange      = SRange.AUTO;
-    private double     compliance  = 100;
+    private double     iLimit      = 0.1;
+    private double     vLimit      = 110;
+    private double     mLimit      = 0.1;
 
     public K236(InstrumentAddress address) throws IOException, DeviceException {
 
@@ -117,8 +119,9 @@ public class K236 extends SMU {
         setSourceFunction(Source.VOLTAGE, Function.DC);
         useAutoSourceRange();
         useAutoMeasureRange();
+        setVoltageLimit(110);
+        setCurrentLimit(0.1);
         setAverageMode(AMode.NONE);
-        compliance = getOutputLimit();
 
         read();
 
@@ -161,8 +164,22 @@ public class K236 extends SMU {
         write(C_SET_BIAS, biasLevel, sRange.toInt(), 0);
     }
 
+    private void updateLimit() {
+        switch (source) {
+
+            case VOLTAGE:
+                mLimit = iLimit;
+                break;
+
+            case CURRENT:
+                mLimit = vLimit;
+                break;
+
+        }
+    }
+
     private void setCompliance() throws IOException {
-        write(C_SET_COMPLIANCE, compliance, mRange.toInt());
+        write(C_SET_COMPLIANCE, mLimit, mRange.toInt());
     }
 
     public String getIDN() throws IOException {
@@ -511,27 +528,64 @@ public class K236 extends SMU {
 
         switch (source) {
 
-            case VOLTAGE:
+            case CURRENT:
                 if (!Util.isBetween(value, 0, +110)) {
                     throw new DeviceException("Output limit of %f V is out of range.", value);
                 }
+                vLimit = value;
                 break;
 
-            case CURRENT:
+            case VOLTAGE:
                 if (!Util.isBetween(value, 0, 0.1)) {
                     throw new DeviceException("Output limit of %f A is out of range.", value);
                 }
+                iLimit = value;
                 break;
 
         }
 
-        compliance = value;
+        mLimit = value;
         setCompliance();
     }
 
     @Override
     public double getOutputLimit() throws IOException {
         return Double.valueOf(query(C_GET_COMPLIANCE).substring(3));
+    }
+
+    @Override
+    public void setVoltageLimit(double voltage) throws DeviceException, IOException {
+        vLimit = voltage;
+        updateLimit();
+        setCompliance();
+    }
+
+    @Override
+    public double getVoltageLimit() throws IOException {
+
+        if (source.equals(Source.CURRENT)) {
+            vLimit = getOutputLimit();
+        }
+
+        return vLimit;
+    }
+
+    @Override
+    public void setCurrentLimit(double current) throws DeviceException, IOException {
+        iLimit = current;
+        updateLimit();
+        setCompliance();
+    }
+
+    @Override
+    public double getCurrentLimit() throws DeviceException, IOException {
+
+        if (source.equals(Source.VOLTAGE)) {
+            iLimit = getOutputLimit();
+        }
+
+        return iLimit;
+
     }
 
     public double getVoltage() throws IOException, DeviceException {
@@ -562,7 +616,9 @@ public class K236 extends SMU {
     @Override
     public void setVoltage(double voltage) throws IOException, DeviceException {
 
-        setSourceFunction(Source.VOLTAGE, getFunction());
+        if (!source.equals(Source.VOLTAGE)) {
+            setSourceFunction(Source.VOLTAGE, getFunction());
+        }
         setBias(voltage);
 
     }
@@ -570,7 +626,9 @@ public class K236 extends SMU {
     @Override
     public void setCurrent(double current) throws IOException, DeviceException {
 
-        setSourceFunction(Source.CURRENT, getFunction());
+        if (!source.equals(Source.CURRENT)) {
+            setSourceFunction(Source.CURRENT, getFunction());
+        }
         setBias(current);
 
     }
@@ -609,7 +667,8 @@ public class K236 extends SMU {
         write(C_SET_SRC_FUNC, s.toInt(), f.toInt());
         source = s;
         function = f;
-        compliance = getOutputLimit();
+        updateLimit();
+        setCompliance();
     }
 
     private MStatus getMachineStatus() throws IOException {
