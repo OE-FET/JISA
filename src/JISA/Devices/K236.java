@@ -15,7 +15,7 @@ public class K236 extends SMU {
     private static final String C_SET_BIAS       = "B%f,%d,%d";
     private static final String C_GET_VALUE      = "G%d,%d,%d";
     private static final String C_EXECUTE        = "X";
-    private static final String C_SET_SENSE      = "0%d";
+    private static final String C_SET_SENSE      = "O%d";
     private static final String C_OPERATE        = "N%d";
     private static final String C_NO_TERM        = "Y4";
     private static final String C_TRIGGER        = "H0";
@@ -123,7 +123,9 @@ public class K236 extends SMU {
         setCurrentLimit(0.1);
         setAverageMode(AMode.NONE);
 
-        read();
+        for (int i = 0; i < 10; i ++) {
+            read();
+        }
 
         try {
 
@@ -183,7 +185,7 @@ public class K236 extends SMU {
     }
 
     public String getIDN() throws IOException {
-        return query("U0");
+        return query("U0").trim();
     }
 
     private double readValue(int channel) throws IOException {

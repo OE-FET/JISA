@@ -477,19 +477,17 @@ public class K2450 extends SMU {
 
     @Override
     public void setVoltageLimit(double voltage) throws IOException {
-        write(C_SET_LIMIT, Source.VOLTAGE.getTag(), Source.VOLTAGE.getSymbol(), voltage);
         write(C_SET_LIMIT, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol(), voltage);
     }
 
     @Override
     public double getVoltageLimit() throws IOException {
-        return queryDouble(C_QUERY_LIMIT, getSourceMode().getTag(), Source.VOLTAGE.getSymbol());
+        return queryDouble(C_QUERY_LIMIT, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol());
     }
 
     @Override
     public void setCurrentLimit(double current) throws IOException {
         write(C_SET_LIMIT, Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol(), current);
-        write(C_SET_LIMIT, Source.CURRENT.getTag(), Source.CURRENT.getSymbol(), current);
     }
 
     @Override
