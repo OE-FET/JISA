@@ -168,13 +168,7 @@ public class K2450 extends SMU {
 
     // == METHODS ======================================================================================================
     public void useFourProbe(boolean fourProbe) throws IOException {
-
-        if (fourProbe) {
-            write(C_SET_PROBE_MODE, OUTPUT_ON);
-        } else {
-            write(C_SET_PROBE_MODE, OUTPUT_OFF);
-        }
-
+        write(C_SET_PROBE_MODE, fourProbe ? OUTPUT_ON : OUTPUT_OFF);
     }
 
     public boolean isUsingFourProbe() throws IOException {
