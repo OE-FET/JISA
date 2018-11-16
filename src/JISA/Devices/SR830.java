@@ -214,12 +214,12 @@ public class SR830 extends DPLockIn {
     }
 
     @Override
-    public void setSensitivity(double voltDivision) throws IOException, DeviceException {
-        write(C_SET_SENSITIVITY, Sensitivity.fromDouble(voltDivision).toInt());
+    public void setRange(double voltRange) throws IOException, DeviceException {
+        write(C_SET_SENSITIVITY, Sensitivity.fromDouble(voltRange).toInt());
     }
 
     @Override
-    public double getSensitivity() throws IOException {
+    public double getRange() throws IOException {
         return Sensitivity.fromInt(queryInt(C_QUERY_SENSITIVITY)).toDouble();
     }
 
@@ -325,18 +325,18 @@ public class SR830 extends DPLockIn {
 
         public static Sensitivity fromDouble(double voltage) throws DeviceException {
 
-            Sensitivity selected = S_2nV_fA;
+            Sensitivity selected = S_1V_uA;
 
             for (Sensitivity s : values()) {
 
-                if (s.toDouble() < voltage && s.toDouble() > selected.toDouble()) {
+                if (s.toDouble() >= voltage && s.toDouble() < selected.toDouble()) {
                     selected = s;
                 }
 
             }
 
-            if (selected.toDouble() > voltage) {
-                throw new DeviceException("Sensitivity of %f is out of range.", voltage);
+            if (selected.toDouble() < voltage) {
+                throw new DeviceException("Range of %f is out of range for SR830.", voltage);
             }
 
             return selected;

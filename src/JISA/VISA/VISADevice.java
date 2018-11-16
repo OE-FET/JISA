@@ -229,7 +229,7 @@ public class VISADevice {
      * @throws IOException Upon communications error
      */
     public synchronized double readDouble() throws IOException {
-        return Double.parseDouble(read());
+        return Double.parseDouble(read().replace("\n","").replace("\r", "").trim());
     }
 
     /**
@@ -240,7 +240,7 @@ public class VISADevice {
      * @throws IOException Upon communications error
      */
     public synchronized int readInt() throws IOException {
-        return Integer.parseInt(read());
+        return Integer.parseInt(read().replace("\n","").replace("\r", "").trim());
     }
 
     /**
