@@ -147,28 +147,6 @@ public class SR830 extends DPLockIn {
     }
 
     /**
-     * Returns the current sensitivity mode of the SR830
-     *
-     * @return Sensitivity mode
-     *
-     * @throws IOException Upon communication error
-     */
-    public Sensitivity getSensitivity() throws IOException {
-        return Sensitivity.fromInt(queryInt(C_QUERY_SENSITIVITY));
-    }
-
-    /**
-     * Sets the sensitivity mode of the SR830
-     *
-     * @param mode Sensitivity mode
-     *
-     * @throws IOException Upon communication error
-     */
-    public void setSensitivity(Sensitivity mode) throws IOException {
-        write(C_SET_SENSITIVITY, mode.toInt());
-    }
-
-    /**
      * Returns the voltage reported by the X channel (in phase with reference)
      *
      * @return X channel voltage
@@ -235,6 +213,16 @@ public class SR830 extends DPLockIn {
         return TimeConst.fromInt(queryInt(C_QUERY_TIME_CONST)).getValue();
     }
 
+    @Override
+    public void setSensitivity(double voltDivision) throws IOException, DeviceException {
+        write(C_SET_SENSITIVITY, Sensitivity.fromDouble(voltDivision).toInt());
+    }
+
+    @Override
+    public double getSensitivity() throws IOException {
+        return Sensitivity.fromInt(queryInt(C_QUERY_SENSITIVITY)).toDouble();
+    }
+
     public TimeConst getTimeConst() throws IOException {
         return TimeConst.fromInt(queryInt(C_QUERY_TIME_CONST));
     }
@@ -290,35 +278,35 @@ public class SR830 extends DPLockIn {
         }
     }
 
-    public enum Sensitivity implements Nameable {
+    private enum Sensitivity implements Nameable {
 
-        S_2nV_PER_fA(0, 2e-9, 1e-15),
-        S_5nV_PER_fA(1, 5e-9, 1e-15),
-        S_10nV_PER_fA(2, 10e-9, 1e-15),
-        S_20nV_PER_fA(3, 20e-9, 1e-15),
-        S_50nV_PER_fA(4, 50e-9, 1e-15),
-        S_100nV_PER_fA(5, 100e-9, 1e-15),
-        S_200nV_PER_fA(6, 200e-9, 1e-15),
-        S_500nV_PER_fA(7, 500e-9, 1e-15),
-        S_1uV_PER_pA(8, 1e-6, 1e-12),
-        S_2uV_PER_pA(9, 2e-6, 1e-12),
-        S_5uV_PER_pA(10, 5e-6, 1e-12),
-        S_10uV_PER_pA(11, 10e-6, 1e-12),
-        S_20uV_PER_pA(12, 20e-6, 1e-12),
-        S_50uV_PER_pA(13, 50e-16, 1e-12),
-        S_100uV_PER_pA(14, 100e-6, 1e-12),
-        S_200uV_PER_pA(15, 200e-6, 1e-12),
-        S_500uV_PER_pA(16, 500e-6, 1e-12),
-        S_1mV_PER_nA(17, 1e-3, 1e-9),
-        S_2mV_PER_nA(18, 2e-3, 1e-9),
-        S_5mV_PER_nA(19, 5e-3, 1e-9),
-        S_10mV_PER_nA(20, 10e-3, 1e-9),
-        S_20mV_PER_nA(21, 20e-3, 1e-9),
-        S_50mV_PER_nA(22, 50e-3, 1e-9),
-        S_100mV_PER_nA(23, 100e-3, 1e-9),
-        S_200mV_PER_nA(24, 200e-3, 1e-9),
-        S_500mV_PER_nA(25, 500e-3, 1e-9),
-        S_1V_PER_uA(26, 1.0, 1e-6);
+        S_2nV_fA(0, 2e-9, 2e-15),
+        S_5nV_fA(1, 5e-9, 5e-15),
+        S_10nV_fA(2, 10e-9, 10e-15),
+        S_20nV_fA(3, 20e-9, 20e-15),
+        S_50nV_fA(4, 50e-9, 50e-15),
+        S_100nV_fA(5, 100e-9, 100e-15),
+        S_200nV_fA(6, 200e-9, 200e-15),
+        S_500nV_fA(7, 500e-9, 500e-15),
+        S_1uV_pA(8, 1e-6, 1e-12),
+        S_2uV_pA(9, 2e-6, 2e-12),
+        S_5uV_pA(10, 5e-6, 5e-12),
+        S_10uV_pA(11, 10e-6, 10e-12),
+        S_20uV_pA(12, 20e-6, 20e-12),
+        S_50uV_pA(13, 50e-16, 50e-12),
+        S_100uV_pA(14, 100e-6, 100e-12),
+        S_200uV_pA(15, 200e-6, 200e-12),
+        S_500uV_pA(16, 500e-6, 500e-12),
+        S_1mV_nA(17, 1e-3, 1e-9),
+        S_2mV_nA(18, 2e-3, 2e-9),
+        S_5mV_nA(19, 5e-3, 5e-9),
+        S_10mV_nA(20, 10e-3, 10e-9),
+        S_20mV_nA(21, 20e-3, 20e-9),
+        S_50mV_nA(22, 50e-3, 50e-9),
+        S_100mV_nA(23, 100e-3, 100e-9),
+        S_200mV_nA(24, 200e-3, 200e-9),
+        S_500mV_nA(25, 500e-3, 500e-9),
+        S_1V_uA(26, 1.0, 1e-6);
 
         private        int                           c;
         private        double                        volt;
@@ -335,10 +323,29 @@ public class SR830 extends DPLockIn {
             }
         }
 
+        public static Sensitivity fromDouble(double voltage) throws DeviceException {
+
+            Sensitivity selected = S_2nV_fA;
+
+            for (Sensitivity s : values()) {
+
+                if (s.toDouble() < voltage && s.toDouble() > selected.toDouble()) {
+                    selected = s;
+                }
+
+            }
+
+            if (selected.toDouble() > voltage) {
+                throw new DeviceException("Sensitivity of %f is out of range.", voltage);
+            }
+
+            return selected;
+
+        }
+
         Sensitivity(int code, double V, double I) {
             c = code;
             volt = V;
-            current = I;
         }
 
         int toInt() {
@@ -348,6 +355,10 @@ public class SR830 extends DPLockIn {
         @Override
         public String getName() {
             return String.format("V: %f, I: %f", volt, current);
+        }
+
+        public double toDouble() {
+            return volt;
         }
     }
 

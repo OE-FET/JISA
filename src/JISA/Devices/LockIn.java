@@ -116,6 +116,27 @@ public abstract class LockIn extends VISADevice {
      */
     public abstract double getTimeConstant() throws IOException, DeviceException;
 
+    /**
+     * Sets the smallest division of voltage to measure, trading-off precision against range. For systems with discrete
+     * settings this will choose the largest value that will accommodate the given division.
+     *
+     * @param voltDivision Sensitivity, in Volts
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error (eg sensitivity greater than can be achieved by instrument)
+     */
+    public abstract void setSensitivity(double voltDivision) throws IOException, DeviceException;
+
+    /**
+     * Returns the smallest division of voltage being measured.
+     *
+     * @return Sensitivity, in Volts
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract double getSensitivity() throws IOException, DeviceException;
+
 
     /**
      * Halts the current thread (ie pauses the program) until the lock-in has a stable lock
