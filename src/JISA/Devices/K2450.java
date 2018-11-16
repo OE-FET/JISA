@@ -26,10 +26,14 @@ public class K2450 extends SMU {
     private static final String C_QUERY_AVG_MODE        = "VOLT:AVER:TCON?";
     private static final String C_SET_AVG_STATE         = "AVER %s";
     private static final String C_QUERY_AVG_STATE       = "VOLT:AVER?";
-    private static final String C_SET_RANGE             = ":SOUR:%s:RANG %f";
-    private static final String C_QUERY_RANGE           = ":SOUR:%s:RANG?";
-    private static final String C_SET_AUTO_RANGE        = ":SOUR:%s:RANG:AUTO %s";
-    private static final String C_QUERY_AUTO_RANGE      = ":SOUR:%s:RANG:AUTO?";
+    private static final String C_SET_SRC_RANGE         = ":SOUR:%s:RANG %f";
+    private static final String C_QUERY_SRC_RANGE       = ":SOUR:%s:RANG?";
+    private static final String C_SET_SRC_AUTO_RANGE    = ":SOUR:%s:RANG:AUTO %s";
+    private static final String C_QUERY_SRC_AUTO_RANGE  = ":SOUR:%s:RANG:AUTO?";
+    private static final String C_SET_MEAS_RANGE        = ":SENS:%s:RANG %f";
+    private static final String C_QUERY_MEAS_RANGE      = ":SENS:%s:RANG?";
+    private static final String C_SET_MEAS_AUTO_RANGE   = ":SENS:%s:RANG:AUTO %s";
+    private static final String C_QUERY_MEAS_AUTO_RANGE = ":SENS:%s:RANG:AUTO?";
     private static final String C_SET_LIMIT             = ":SOUR:%s:%sLIM %f";
     private static final String C_QUERY_LIMIT           = ":SOUR:%s:%sLIM?";
     private static final String OUTPUT_ON               = "1";
@@ -144,6 +148,7 @@ public class K2450 extends SMU {
         super(address);
 
         clearRead();
+        write(":SYSTEM:CLEAR");
 
         try {
 
@@ -380,54 +385,122 @@ public class K2450 extends SMU {
 
     @Override
     public void setVoltageRange(double value) throws IOException {
-        write(C_SET_AUTO_RANGE, Source.VOLTAGE.getTag(), OUTPUT_OFF);
-        write(C_SET_RANGE, Source.VOLTAGE.getTag(), value);
+        switch(getSourceMode()) {
+
+            case VOLTAGE:
+                write(C_SET_SRC_AUTO_RANGE, Source.VOLTAGE.getTag(), OUTPUT_OFF);
+                write(C_SET_SRC_RANGE, Source.VOLTAGE.getTag(), value);
+                break;
+
+            case CURRENT:
+                write(C_SET_MEAS_AUTO_RANGE, Source.VOLTAGE.getTag(), OUTPUT_OFF);
+                write(C_SET_MEAS_RANGE, Source.VOLTAGE.getTag(), value);
+
+        }
     }
 
     @Override
     public double getVoltageRange() throws IOException {
-        return queryDouble(C_QUERY_RANGE, Source.VOLTAGE.getTag());
+        return queryDouble(C_QUERY_SRC_RANGE, Source.VOLTAGE.getTag());
     }
 
     @Override
     public void useAutoVoltageRange() throws IOException {
-        write(C_SET_AUTO_RANGE, Source.VOLTAGE.getTag(), OUTPUT_ON);
+        write(C_SET_SRC_AUTO_RANGE, Source.VOLTAGE.getTag(), OUTPUT_ON);
     }
 
     @Override
     public boolean isVoltageRangeAuto() throws IOException {
-        return query(C_QUERY_AUTO_RANGE, Source.VOLTAGE.getTag()).trim().equals(OUTPUT_ON);
+        return query(C_QUERY_SRC_AUTO_RANGE, Source.VOLTAGE.getTag()).trim().equals(OUTPUT_ON);
     }
 
     @Override
     public void setCurrentRange(double value) throws IOException {
-        write(C_SET_AUTO_RANGE, Source.CURRENT.getTag(), OUTPUT_OFF);
-        write(C_SET_RANGE, Source.CURRENT.getTag(), value);
+
+        switch(getSourceMode()) {
+
+            case CURRENT:
+                write(C_SET_SRC_AUTO_RANGE, Source.CURRENT.getTag(), OUTPUT_OFF);
+                write(C_SET_SRC_RANGE, Source.CURRENT.getTag(), value);
+                break;
+
+            case VOLTAGE:
+                write(C_SET_MEAS_AUTO_RANGE, Source.CURRENT.getTag(), OUTPUT_OFF);
+                write(C_SET_MEAS_RANGE, Source.CURRENT.getTag(), value);
+
+        }
     }
 
     @Override
     public double getCurrentRange() throws IOException {
-        return queryDouble(C_QUERY_RANGE, Source.CURRENT.getTag());
+        return queryDouble(C_QUERY_SRC_RANGE, Source.CURRENT.getTag());
     }
 
     @Override
     public void useAutoCurrentRange() throws IOException {
-        write(C_SET_AUTO_RANGE, Source.CURRENT.getTag(), OUTPUT_ON);
+        write(C_SET_SRC_AUTO_RANGE, Source.CURRENT.getTag(), OUTPUT_ON);
     }
 
     @Override
     public boolean isCurrentRangeAuto() throws IOException {
-        return query(C_QUERY_AUTO_RANGE, Source.CURRENT.getTag()).trim().equals(OUTPUT_ON);
+        return query(C_QUERY_SRC_AUTO_RANGE, Source.CURRENT.getTag()).trim().equals(OUTPUT_ON);
     }
 
     @Override
     public void setOutputLimit(double value) throws IOException {
-        write(C_SET_LIMIT, getSourceMode().getTag(), getMeasureMode().getSymbol(), value);
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                setVoltageLimit(value);
+                break;
+
+            case CURRENT:
+                setCurrentLimit(value);
+                break;
+
+        }
+
     }
 
     @Override
     public double getOutputLimit() throws IOException {
-        return queryDouble(C_QUERY_LIMIT, getSourceMode().getTag(), getMeasureMode().getSymbol());
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                return getVoltageLimit();
+
+            case CURRENT:
+                return getCurrentLimit();
+
+            default:
+                return getCurrentLimit();
+
+        }
+
+    }
+
+    @Override
+    public void setVoltageLimit(double voltage) throws IOException {
+        write(C_SET_LIMIT, Source.VOLTAGE.getTag(), Source.VOLTAGE.getSymbol(), voltage);
+        write(C_SET_LIMIT, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol(), voltage);
+    }
+
+    @Override
+    public double getVoltageLimit() throws IOException {
+        return queryDouble(C_QUERY_LIMIT, getSourceMode().getTag(), Source.VOLTAGE.getSymbol());
+    }
+
+    @Override
+    public void setCurrentLimit(double current) throws IOException {
+        write(C_SET_LIMIT, Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol(), current);
+        write(C_SET_LIMIT, Source.CURRENT.getTag(), Source.CURRENT.getSymbol(), current);
+    }
+
+    @Override
+    public double getCurrentLimit() throws IOException {
+        return queryDouble(C_QUERY_LIMIT, getSourceMode().getTag(), Source.CURRENT.getSymbol());
     }
 
     public double getVoltage() throws DeviceException, IOException {

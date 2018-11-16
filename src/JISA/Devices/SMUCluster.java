@@ -322,6 +322,30 @@ public class SMUCluster extends MCSMU {
         return devices.get(channel).getOutputLimit();
     }
 
+    @Override
+    public void setVoltageLimit(int channel, double value) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).setVoltageLimit(value);
+    }
+
+    @Override
+    public double getVoltageLimit(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).getVoltageLimit();
+    }
+
+    @Override
+    public void setCurrentLimit(int channel, double value) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).setCurrentLimit(value);
+    }
+
+    @Override
+    public double getCurrentLimit(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).getCurrentLimit();
+    }
+
     public IVPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
         return devices.get(channel).doSweep(source, values, delay, symmetric, onUpdate);
     }
