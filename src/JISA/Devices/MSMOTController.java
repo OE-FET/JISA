@@ -174,4 +174,119 @@ public abstract class MSMOTController extends MSTController {
         waitForStableTemperature(output);
     }
 
+    public TController getOutput(int output) throws DeviceException, IOException {
+        checkOutput(output);
+        return new VirtualTC(output);
+    }
+
+    public class VirtualTC extends TController {
+
+        private int output;
+
+        /**
+         * Connects to the temperature controller at the given address, returning an instrument object to control it.
+         *
+         *
+         * @throws IOException Upon communications error
+         */
+        public VirtualTC(int output) throws IOException {
+            super(null);
+        }
+
+        @Override
+        public void setTargetTemperature(double temperature) throws IOException, DeviceException {
+            MSMOTController.this.setTargetTemperature(output, temperature);
+        }
+
+        @Override
+        public double getTemperature() throws IOException, DeviceException {
+            return MSMOTController.this.getTemperature(getUsedSensor(output));
+        }
+
+        @Override
+        public double getTargetTemperature() throws IOException, DeviceException {
+            return MSMOTController.this.getTargetTemperature(output);
+        }
+
+        @Override
+        public double getHeaterPower() throws IOException, DeviceException {
+            return MSMOTController.this.getHeaterPower(output);
+        }
+
+        @Override
+        public double getGasFlow() throws IOException, DeviceException {
+            return MSMOTController.this.getGasFlow(output);
+        }
+
+        @Override
+        public void useAutoHeater() throws IOException, DeviceException {
+            MSMOTController.this.useAutoHeater(output);
+        }
+
+        @Override
+        public void setManualHeater(double powerPCT) throws IOException, DeviceException {
+            MSMOTController.this.setManualHeater(output, powerPCT);
+        }
+
+        @Override
+        public boolean isHeaterAuto() throws IOException, DeviceException {
+            return MSMOTController.this.isHeaterAuto(output);
+        }
+
+        @Override
+        public void useAutoFlow() throws IOException, DeviceException {
+            MSMOTController.this.useAutoFlow(output);
+        }
+
+        @Override
+        public void setManualFlow(double outputPCT) throws IOException, DeviceException {
+            MSMOTController.this.setManualFlow(output, outputPCT);
+        }
+
+        @Override
+        public boolean isFlowAuto() throws IOException, DeviceException {
+            return MSMOTController.this.isFlowAuto(output);
+        }
+
+        @Override
+        public void useAutoPID(boolean auto) throws IOException, DeviceException {
+            MSMOTController.this.useAutoPID(output, auto);
+        }
+
+        @Override
+        public boolean isPIDAuto() throws IOException, DeviceException {
+            return MSMOTController.this.isPIDAuto(output);
+        }
+
+        @Override
+        public void setPValue(double value) throws IOException, DeviceException {
+            MSMOTController.this.setPValue(output, value);
+        }
+
+        @Override
+        public void setIValue(double value) throws IOException, DeviceException {
+            MSMOTController.this.setIValue(output, value);
+        }
+
+        @Override
+        public void setDValue(double value) throws IOException, DeviceException {
+            MSMOTController.this.setDValue(output, value);
+        }
+
+        @Override
+        public double getPValue() throws IOException, DeviceException {
+            return MSMOTController.this.getPValue(output);
+        }
+
+        @Override
+        public double getIValue() throws IOException, DeviceException {
+            return MSMOTController.this.getIValue(output);
+        }
+
+        @Override
+        public double getDValue() throws IOException, DeviceException {
+            return MSMOTController.this.getDValue(output);
+        }
+    }
+
 }
