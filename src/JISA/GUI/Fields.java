@@ -73,6 +73,36 @@ public class Fields implements Gridable {
 
     }
 
+    public SetGettable<Boolean> addCheckBox(String name) {
+
+        HBox box = new HBox();
+        box.setSpacing(15);
+        box.setAlignment(Pos.CENTER_LEFT);
+
+        CheckBox field = new CheckBox();
+        field.setMaxWidth(Integer.MAX_VALUE);
+        Label label = new Label(name);
+        label.setMinWidth(150);
+        HBox.setHgrow(field, Priority.ALWAYS);
+
+        box.getChildren().addAll(label, field);
+        list.getChildren().add(box);
+
+
+        return new SetGettable<Boolean>() {
+            @Override
+            public void set(Boolean value) throws IOException, DeviceException {
+                field.setSelected(value);
+            }
+
+            @Override
+            public Boolean get() throws IOException, DeviceException {
+                return field.isSelected();
+            }
+        };
+
+    }
+
 
     public SetGettable<String> addFileSave(String name) {
 
