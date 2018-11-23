@@ -119,6 +119,14 @@ public class Grid implements Gridable {
         addPane(bPane);
     }
 
+    public void setNumColumns(int columns) {
+        nCols = columns;
+    }
+
+    public int getNumColumns() {
+        return nCols;
+    }
+
     public void addPane(Node toAdd) {
 
         pane.add(toAdd, c, r);
