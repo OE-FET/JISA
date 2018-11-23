@@ -48,4 +48,10 @@ public class JFXWindow {
         });
     }
 
+    public void setMaximised(boolean flag) {
+        GUI.runNow(() -> {
+            stage.setMaximized(flag);
+        });
+    }
+
 }
