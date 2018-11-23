@@ -25,34 +25,48 @@ public class Main {
         GUI.startGUI();
         try {
 
-            // Ask the user if they want to perform a test
-            boolean result = GUI.confirmWindow("JISA", "JISA Library", "JISA - William Wood - 2018\n\nPerform VISA test?");
+            Table table = new Table("TABLE");
+            Plot  plot  = new Plot("PLOT", "PLOT", "PLOT");
+            Grid  grid1  = new Grid("Page One", table, plot);
 
-            // If they press "Cancel", then exit.
-            if (!result) {
-                Platform.exit();
-                return;
-            }
+            Fields fields = new Fields("FIELDS!");
+            Grid grid2 = new Grid("Page Two", fields);
 
-            // Trigger VISA initialisation before we try browsing.
-            VISA.init();
+            Tabs tabs = new Tabs("Tabs");
 
-            // Keep going until they press cancel
-            while (true) {
+            tabs.addTab(grid1);
+            tabs.addTab(grid2);
 
-                InstrumentAddress address = GUI.browseVISA();
+            tabs.show();
 
-                if (address == null) {
-                    Platform.exit();
-                    System.exit(0);
-                }
-
-                // Create the device shell, connect to the device and show
-                DeviceShell shell = new DeviceShell(address);
-                shell.connect();
-                shell.showAndWait();
-
-            }
+//            // Ask the user if they want to perform a test
+//            boolean result = GUI.confirmWindow("JISA", "JISA Library", "JISA - William Wood - 2018\n\nPerform VISA test?");
+//
+//            // If they press "Cancel", then exit.
+//            if (!result) {
+//                Platform.exit();
+//                return;
+//            }
+//
+//            // Trigger VISA initialisation before we try browsing.
+//            VISA.init();
+//
+//            // Keep going until they press cancel
+//            while (true) {
+//
+//                InstrumentAddress address = GUI.browseVISA();
+//
+//                if (address == null) {
+//                    Platform.exit();
+//                    System.exit(0);
+//                }
+//
+//                // Create the device shell, connect to the device and show
+//                DeviceShell shell = new DeviceShell(address);
+//                shell.connect();
+//                shell.showAndWait();
+//
+//            }
 
         } catch (Exception | Error e) {
             Util.sleep(500);

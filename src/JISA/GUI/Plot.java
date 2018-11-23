@@ -54,6 +54,8 @@ public class Plot implements Gridable {
                 chart.setTitle(title);
                 xAxis.setForceZeroInRange(false);
                 yAxis.setForceZeroInRange(false);
+                xAxis.setAnimated(false);
+                yAxis.setAnimated(false);
             });
         } catch (Exception e) {
             e.printStackTrace();

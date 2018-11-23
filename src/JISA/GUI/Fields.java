@@ -2,20 +2,14 @@ package JISA.GUI;
 
 import JISA.Control.SetGettable;
 import JISA.Devices.DeviceException;
-import JISA.GUI.FXML.InputWindow;
-import JISA.GUI.Gridable;
 import JISA.Util;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.util.converter.NumberStringConverter;
 
 import java.io.File;
 import java.io.IOException;
