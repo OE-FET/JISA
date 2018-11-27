@@ -23,6 +23,7 @@ public class Plot implements Gridable, Clearable {
     private Stage                                                  stage;
     private LinkedHashMap<Integer, XYChart.Series<Double, Double>> data     = new LinkedHashMap<>();
     private HashMap<Integer, Boolean>                              auto     = new HashMap<>();
+    private ArrayList<HashMap<Double, Integer>>                    maps     = new ArrayList<>();
     public  LineChart                                              chart;
     public  NumberAxis                                             xAxis;
     public  NumberAxis                                             yAxis;
@@ -139,13 +140,14 @@ public class Plot implements Gridable, Clearable {
     public void watchList(final ResultList list, final int xData, final int yData, final int sData) {
 
         final HashMap<Double, Integer> map = new HashMap<>();
+        maps.add(map);
         for (Result row : list) {
 
             int series;
             if (map.containsKey(row.get(sData))) {
                 series = map.get(row.get(sData));
             } else {
-                series = createSeries(String.format("%s %s", row.get(sData), list.getUnits(sData)), null);
+                series = createSeries(String.format("%s %s", row.get(sData), list.getUnits(sData)), null, true);
             }
 
             map.put(row.get(sData), series);
@@ -160,7 +162,7 @@ public class Plot implements Gridable, Clearable {
             if (map.containsKey(row.get(sData))) {
                 series = map.get(row.get(sData));
             } else {
-                series = createSeries(String.format("%s %s", row.get(sData), list.getUnits(sData)), null);
+                series = createSeries(String.format("%s %s", row.get(sData), list.getUnits(sData)), null, true);
             }
 
             map.put(row.get(sData), series);
@@ -269,18 +271,33 @@ public class Plot implements Gridable, Clearable {
 
     public void clear() {
 
-        for (Integer i : data.keySet()) {
 
-            if (auto.get(i)) {
-                chart.getData().remove(data.get(i));
-                data.get(i).getData().clear();
-                data.remove(i);
-                auto.remove(i);
-            } else {
-                data.get(i).getData().clear();
+        for (HashMap<Double, Integer> map : maps) {
+            map.clear();
+        }
+
+        GUI.runNow(() -> {
+
+            chart.getData().removeAll(chart.getData());
+
+            for (Integer i : data.keySet()) {
+
+                if (!auto.get(i)) {
+                    data.get(i).getData().clear();
+                    XYChart.Series<Double, Double> series = new XYChart.Series<>();
+                    series.setName(data.get(i).getName());
+                    chart.getData().add(series);
+                    data.put(i, series);
+                } else {
+                    data.get(i).getData().clear();
+                    data.remove(i);
+                    auto.remove(i);
+                }
+
             }
 
-        }
+
+        });
 
     }
 

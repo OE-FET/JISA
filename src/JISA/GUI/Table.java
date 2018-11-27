@@ -72,7 +72,7 @@ public class Table implements Gridable, Clearable {
                 final int                                   finalI = i;
                 TableColumn<ObservableList<Double>, Double> col    = new TableColumn(list.getTitle(i));
                 col.setCellValueFactory(param ->
-                                                new ReadOnlyObjectWrapper<>(param.getValue().get(finalI))
+                        new ReadOnlyObjectWrapper<>(param.getValue().get(finalI))
                 );
                 table.getColumns().add(col);
             }
@@ -127,6 +127,8 @@ public class Table implements Gridable, Clearable {
 
     @Override
     public void clear() {
-        table.getItems().clear();
+        GUI.runNow(() -> {
+            table.getItems().clear();
+        });
     }
 }

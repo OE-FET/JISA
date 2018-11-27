@@ -121,6 +121,25 @@ public class Grid implements Gridable {
 
     public void setNumColumns(int columns) {
         nCols = columns;
+        updateGridding();
+    }
+
+    private void updateGridding() {
+
+        r = 0;
+        c = 0;
+        for (Node node : pane.getChildren()) {
+
+            GridPane.setRowIndex(node, r);
+            GridPane.setColumnIndex(node, c);
+
+            c++;
+            if (c >= nCols) {
+                c = 0;
+                r++;
+            }
+        }
+
     }
 
     public int getNumColumns() {
