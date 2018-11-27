@@ -23,6 +23,26 @@ public class Main {
 
         // Start the GUI thread
         GUI.startGUI();
+
+
+        ResultList list = new ResultList("Number", "5 * Number");
+        list.setUnits("N", "A");
+
+        Plot  plot  = new Plot("My Plot", list);
+        Table table = new Table("My Table", list);
+        Grid  grid  = new Grid("Grid", table, plot);
+
+        grid.show();
+
+        for (int i = 0; i < 10; i ++) {
+
+            list.addData(1.0 * i, 5.0 * i);
+            Util.sleep(1000);
+
+        }
+
+        list.clear();
+
         try {
 
             Table table = new Table("TABLE");

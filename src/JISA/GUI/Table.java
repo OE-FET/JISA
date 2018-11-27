@@ -18,7 +18,7 @@ import javafx.stage.Stage;
 import java.util.Arrays;
 import java.util.concurrent.Semaphore;
 
-public class Table implements Gridable {
+public class Table implements Gridable, Clearable {
 
     public  TableView  table;
     public  BorderPane pane;
@@ -54,8 +54,8 @@ public class Table implements Gridable {
     public void watchList(ResultList list) {
 
         list.setOnUpdate(() -> update(list));
-
         setUp(list);
+        list.addClearable(this);
 
     }
 
@@ -125,4 +125,8 @@ public class Table implements Gridable {
         return stage.getTitle();
     }
 
+    @Override
+    public void clear() {
+        table.getItems().clear();
+    }
 }

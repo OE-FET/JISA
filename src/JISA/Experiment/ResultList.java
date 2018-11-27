@@ -1,5 +1,7 @@
 package JISA.Experiment;
 
+import JISA.GUI.Clearable;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +19,7 @@ public class ResultList implements Iterable<Result> {
     private int                 cols;
     private ArrayList<Result>   results  = new ArrayList<>();
     private ArrayList<Runnable> onUpdate = new ArrayList<>();
+    private ArrayList<Clearable> toClear = new ArrayList<>();
     private PrintStream         output   = null;
 
     /**
@@ -97,6 +100,10 @@ public class ResultList implements Iterable<Result> {
      */
     public void setOnUpdate(Runnable onUpdate) {
         this.onUpdate.add(onUpdate);
+    }
+
+    public void addClearable(Clearable cl) {
+        toClear.add(cl);
     }
 
     private void doUpdate() {
@@ -449,6 +456,15 @@ public class ResultList implements Iterable<Result> {
         outputMATLAB(s, variables);
         f.close();
         s.close();
+    }
+
+    public void clear() {
+        results.clear();
+
+        for (Clearable c : toClear) {
+            c.clear();
+        }
+
     }
 
     @Override

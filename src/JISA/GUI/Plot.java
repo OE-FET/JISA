@@ -14,26 +14,24 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Plot implements Gridable {
+public class Plot implements Gridable, Clearable {
 
-    public  BorderPane                                pane;
-    private Stage                                     stage;
-    private ArrayList<XYChart.Series<Double, Double>> data     = new ArrayList<>();
-    public  LineChart                                 chart;
-    public  NumberAxis                                xAxis;
-    public  NumberAxis                                yAxis;
-    private double                                    xRange   = 0;
-    private double                                    maxX     = Double.NEGATIVE_INFINITY;
-    private double                                    minX     = Double.POSITIVE_INFINITY;
-    private double                                    maxY     = Double.NEGATIVE_INFINITY;
-    private double                                    minY     = Double.POSITIVE_INFINITY;
-    private double                                    maxRange = -1;
+    public  BorderPane                                             pane;
+    private Stage                                                  stage;
+    private LinkedHashMap<Integer, XYChart.Series<Double, Double>> data     = new LinkedHashMap<>();
+    private HashMap<Integer, Boolean>                              auto     = new HashMap<>();
+    public  LineChart                                              chart;
+    public  NumberAxis                                             xAxis;
+    public  NumberAxis                                             yAxis;
+    private double                                                 xRange   = 0;
+    private double                                                 maxX     = Double.NEGATIVE_INFINITY;
+    private double                                                 minX     = Double.POSITIVE_INFINITY;
+    private double                                                 maxY     = Double.NEGATIVE_INFINITY;
+    private double                                                 minY     = Double.POSITIVE_INFINITY;
+    private double                                                 maxRange = -1;
 
     public Plot(String title, String xLabel, String yLabel) {
 
@@ -134,6 +132,8 @@ public class Plot implements Gridable {
             addPoint(series, r.get(xData), r.get(yData));
         });
 
+        list.addClearable(this);
+
     }
 
     public void watchList(final ResultList list, final int xData, final int yData, final int sData) {
@@ -168,16 +168,23 @@ public class Plot implements Gridable {
 
         });
 
+        list.addClearable(this);
+
     }
 
     public int createSeries(String name, Color colour) {
+        return createSeries(name, colour, false);
+    }
+
+    public int createSeries(String name, Color colour, boolean a) {
 
         XYChart.Series<Double, Double> series = new XYChart.Series<>();
 
         series.setName(name);
 
-        data.add(series);
-        int index = data.size() - 1;
+        int index = data.size();
+        data.put(index, series);
+        auto.put(index, a);
         Platform.runLater(() -> {
             chart.getData().add(series);
 
@@ -258,6 +265,23 @@ public class Plot implements Gridable {
     @Override
     public String getTitle() {
         return stage.getTitle();
+    }
+
+    public void clear() {
+
+        for (Integer i : data.keySet()) {
+
+            if (auto.get(i)) {
+                chart.getData().remove(data.get(i));
+                data.get(i).getData().clear();
+                data.remove(i);
+                auto.remove(i);
+            } else {
+                data.get(i).getData().clear();
+            }
+
+        }
+
     }
 
 }
