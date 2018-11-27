@@ -24,69 +24,36 @@ public class Main {
         // Start the GUI thread
         GUI.startGUI();
 
-
-        ResultList list = new ResultList("Number", "5 * Number");
-        list.setUnits("N", "A");
-
-        Plot  plot  = new Plot("My Plot", list);
-        Table table = new Table("My Table", list);
-        Grid  grid  = new Grid("Grid", table, plot);
-
-        grid.show();
-
-        for (int i = 0; i < 10; i ++) {
-
-            list.addData(1.0 * i, 5.0 * i);
-            Util.sleep(1000);
-
-        }
-
-        list.clear();
-
         try {
 
-            Table table = new Table("TABLE");
-            Plot  plot  = new Plot("PLOT", "PLOT", "PLOT");
-            Grid  grid1  = new Grid("Page One", table, plot);
+            // Ask the user if they want to perform a test
+            boolean result = GUI.confirmWindow("JISA", "JISA Library", "JISA - William Wood - 2018\n\nPerform VISA test?");
 
-            Fields fields = new Fields("FIELDS!");
-            Grid grid2 = new Grid("Page Two", fields);
+            // If they press "Cancel", then exit.
+            if (!result) {
+                Platform.exit();
+                return;
+            }
 
-            Tabs tabs = new Tabs("Tabs");
+            // Trigger VISA initialisation before we try browsing.
+            VISA.init();
 
-            tabs.addTab(grid1);
-            tabs.addTab(grid2);
+            // Keep going until they press cancel
+            while (true) {
 
-            tabs.show();
+                InstrumentAddress address = GUI.browseVISA();
 
-//            // Ask the user if they want to perform a test
-//            boolean result = GUI.confirmWindow("JISA", "JISA Library", "JISA - William Wood - 2018\n\nPerform VISA test?");
-//
-//            // If they press "Cancel", then exit.
-//            if (!result) {
-//                Platform.exit();
-//                return;
-//            }
-//
-//            // Trigger VISA initialisation before we try browsing.
-//            VISA.init();
-//
-//            // Keep going until they press cancel
-//            while (true) {
-//
-//                InstrumentAddress address = GUI.browseVISA();
-//
-//                if (address == null) {
-//                    Platform.exit();
-//                    System.exit(0);
-//                }
-//
-//                // Create the device shell, connect to the device and show
-//                DeviceShell shell = new DeviceShell(address);
-//                shell.connect();
-//                shell.showAndWait();
-//
-//            }
+                if (address == null) {
+                    Platform.exit();
+                    System.exit(0);
+                }
+
+                // Create the device shell, connect to the device and show
+                DeviceShell shell = new DeviceShell(address);
+                shell.connect();
+                shell.showAndWait();
+
+            }
 
         } catch (Exception | Error e) {
             Util.sleep(500);
