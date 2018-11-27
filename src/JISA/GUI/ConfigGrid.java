@@ -41,11 +41,6 @@ public class ConfigGrid extends Grid {
     }
 
     @Override
-    public Pane getPane() {
-        return pane;
-    }
-
-    @Override
     public String getTitle() {
         return title;
     }

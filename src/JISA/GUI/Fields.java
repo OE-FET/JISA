@@ -236,7 +236,7 @@ public class Fields implements Gridable {
 
     }
 
-    public SetGettable<Enum> addChoice(String name, Class<? extends Enum> enumClass, String[] names) {
+    public SetGettable<? extends Enum> addChoice(String name, Class<? extends Enum> enumClass, String[] names) {
 
         Enum[] values = enumClass.getEnumConstants();
 
@@ -254,8 +254,7 @@ public class Fields implements Gridable {
         list.getChildren().add(box);
 
 
-
-        for (int i = 0; i < values.length; i ++) {
+        for (int i = 0; i < values.length; i++) {
             field.getItems().add(names[i]);
         }
 
@@ -263,7 +262,7 @@ public class Fields implements Gridable {
             @Override
             public void set(Enum value) {
 
-                for (int i = 0; i < values.length; i ++) {
+                for (int i = 0; i < values.length; i++) {
 
                     if (value == values[i]) {
                         field.getSelectionModel().select(i);
@@ -280,6 +279,36 @@ public class Fields implements Gridable {
             }
         };
 
+    }
+
+    public SetGettable<Integer> addChoice(String name, String[] options) {
+
+        HBox box = new HBox();
+        box.setSpacing(15);
+        box.setAlignment(Pos.CENTER_LEFT);
+
+        ChoiceBox<String> field = new ChoiceBox<>();
+        field.setMaxWidth(Integer.MAX_VALUE);
+        Label label = new Label(name);
+        label.setMinWidth(150);
+        HBox.setHgrow(field, Priority.ALWAYS);
+
+        box.getChildren().addAll(label, field);
+        list.getChildren().add(box);
+
+        field.getItems().addAll(options);
+
+        return new SetGettable<Integer>() {
+            @Override
+            public void set(Integer value) {
+                field.getSelectionModel().select(value);
+            }
+
+            @Override
+            public Integer get() {
+                return field.getSelectionModel().getSelectedIndex();
+            }
+        };
     }
 
     @Override
@@ -327,13 +356,14 @@ public class Fields implements Gridable {
         Button button = new Button(text);
 
         button.setOnAction((ae) -> {
-            try {
-                onClick.click();
-            } catch (Exception e) {
-                Util.exceptionHandler(e);
-            }
+            (new Thread(() -> {
+                try {
+                    onClick.click();
+                } catch (Exception e) {
+                    Util.exceptionHandler(e);
+                }
+            })).start();
         });
-
         buttonBar.getButtons().add(button);
 
     }

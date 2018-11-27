@@ -83,7 +83,7 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
 
         for (Class driver : list) {
 
-            if (Modifier.isAbstract(driver.getModifiers()) || driver.equals(SMUCluster.class) || driver.getSimpleName().toLowerCase().contains("virtual")) {
+            if (Modifier.isAbstract(driver.getModifiers()) || driver.equals(SMUCluster.class) || driver.getSimpleName().toLowerCase().contains("virtual") || driver.getSimpleName().toLowerCase().contains("dummy")) {
                 continue;
             }
 
