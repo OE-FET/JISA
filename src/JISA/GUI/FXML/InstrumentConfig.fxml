@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<StackPane fx:id="pane" prefWidth="600.0" style="-fx-background-color: white; -fx-background-radius: 5px;" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+    <effect>
+        <DropShadow color="#00000040" />
+    </effect>
+    <children>
+        <BorderPane>
+            <center>
+                <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="15.0" BorderPane.alignment="TOP_LEFT">
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="15.0" VBox.vgrow="NEVER">
+                            <children>
+                                <Label alignment="TOP_RIGHT" minWidth="75.0" text="Driver:" HBox.hgrow="NEVER">
+                                    <font>
+                                        <Font size="14.0" />
+                                    </font>
+                                </Label>
+                        <ChoiceBox fx:id="driverChoice" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                           <items>
+                              <FXCollections fx:factory="observableArrayList">
+                                 <String fx:value="GPIB" />
+                                 <String fx:value="USB" />
+                                 <String fx:value="TCP-IP" />
+                              </FXCollections>
+                           </items>
+                        </ChoiceBox>
+                            </children>
+                        </HBox>
+                        <HBox alignment="CENTER_LEFT" spacing="15.0" VBox.vgrow="NEVER">
+                            <children>
+                                <Label alignment="TOP_RIGHT" minWidth="75.0" text="Protocol:" HBox.hgrow="NEVER">
+                                    <font>
+                                        <Font size="14.0" />
+                                    </font>
+                                </Label>
+                                <ChoiceBox fx:id="protChoice" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
+                                    <items>
+                                        <FXCollections fx:factory="observableArrayList">
+                                            <String fx:id="CHOICE_GPIB" fx:value="GPIB" />
+                                            <String fx:id="CHOICE_USB" fx:value="USB" />
+                                            <String fx:id="CHOICE_TCPIP" fx:value="TCP-IP" />
+                                            <String fx:id="CHOICE_TCPIP_RAW" fx:value="Raw TCP-IP" />
+                                            <String fx:id="CHOICE_COM" fx:value="Serial" />
+                                        </FXCollections>
+                                    </items>
+                                </ChoiceBox>
+                            </children>
+                        </HBox>
+                        <HBox fx:id="GPIBRow" alignment="CENTER_LEFT" spacing="15.0" VBox.vgrow="NEVER">
+                            <children>
+                                <Label alignment="CENTER_RIGHT" minWidth="75.0" text="Board:" HBox.hgrow="NEVER">
+                                    <font>
+                                        <Font size="14.0" />
+                                    </font>
+                                </Label>
+                        <TextField fx:id="GPIBBoard" HBox.hgrow="ALWAYS" />
+                        <Label alignment="CENTER_RIGHT" layoutX="10.0" layoutY="13.0" minWidth="75.0" text="Address:">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                        </Label>
+                        <TextField fx:id="GPIBAddr" HBox.hgrow="ALWAYS" />
+                            </children>
+                        </HBox>
+                  <HBox fx:id="TCPIPRow" alignment="CENTER_LEFT" layoutX="25.0" layoutY="105.0" spacing="15.0" VBox.vgrow="NEVER">
+                     <children>
+                        <Label alignment="CENTER_RIGHT" minWidth="75.0" text="Host:" HBox.hgrow="NEVER">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                        </Label>
+                        <TextField fx:id="TCPIPHost" HBox.hgrow="ALWAYS" />
+                        <Label fx:id="TCPIPPortLabel" alignment="CENTER_RIGHT" layoutX="10.0" layoutY="13.0" minWidth="75.0" text="Port:">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                        </Label>
+                        <TextField fx:id="TCPIPPort" layoutX="100.0" layoutY="10.0" />
+                     </children>
+                  </HBox>
+                  <VBox fx:id="USBRow" spacing="15.0" VBox.vgrow="NEVER">
+                     <children>
+                        <HBox alignment="CENTER_LEFT" spacing="15.0" VBox.vgrow="NEVER">
+                           <children>
+                              <Label alignment="CENTER_RIGHT" layoutX="10.0" layoutY="13.0" minWidth="75.0" text="B:" HBox.hgrow="NEVER">
+                                 <font>
+                                    <Font size="14.0" />
+                                 </font>
+                              </Label>
+                              <TextField fx:id="USBBoard" layoutX="100.0" layoutY="10.0" HBox.hgrow="ALWAYS" />
+                              <Label alignment="CENTER_RIGHT" minWidth="20.0" text="V:" HBox.hgrow="NEVER">
+                                 <font>
+                                    <Font size="14.0" />
+                                 </font>
+                              </Label>
+                              <TextField fx:id="USBVendor" HBox.hgrow="ALWAYS" />
+                           </children>
+                        </HBox>
+                        <HBox fx:id="USBRow1" alignment="CENTER_LEFT" layoutX="10.0" layoutY="10.0" spacing="15.0" VBox.vgrow="NEVER">
+                           <children>
+                              <Label alignment="CENTER_RIGHT" minWidth="75.0" text="P:" HBox.hgrow="NEVER">
+                                 <font>
+                                    <Font size="14.0" />
+                                 </font>
+                              </Label>
+                              <TextField fx:id="USBProduct" HBox.hgrow="ALWAYS" />
+                              <Label alignment="CENTER_RIGHT" minWidth="20.0" text="S:" HBox.hgrow="NEVER">
+                                 <font>
+                                    <Font size="14.0" />
+                                 </font>
+                              </Label>
+                              <TextField fx:id="USBSN" HBox.hgrow="ALWAYS" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+                  <HBox fx:id="COMRow" alignment="CENTER_LEFT" layoutX="25.0" layoutY="145.0" spacing="15.0" VBox.vgrow="NEVER">
+                     <children>
+                        <Label alignment="CENTER_RIGHT" minWidth="75.0" text="Port No.:" HBox.hgrow="NEVER">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                        </Label>
+                        <TextField fx:id="COMPort" HBox.hgrow="ALWAYS" />
+                     </children>
+                  </HBox>
+                    </children>
+                    <padding>
+                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                    </padding>
+                </VBox>
+            </center>
+            <top>
+                <StackPane fx:id="topPanel" style="-fx-background-color: #4c4c4c;" BorderPane.alignment="CENTER">
+                    <padding>
+                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                    </padding>
+                    <children>
+                        <Label fx:id="title" text="Instrument Description" textFill="WHITE" StackPane.alignment="CENTER_LEFT">
+                            <font>
+                                <Font name="System Bold" size="14.0" />
+                            </font>
+                        </Label>
+                    </children>
+                </StackPane>
+            </top>
+            <left>
+                <ImageView fx:id="image" fitHeight="64.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="TOP_LEFT">
+                    <image>
+                        <Image url="@../Images/smu.png" />
+                    </image>
+                    <BorderPane.margin>
+                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                    </BorderPane.margin>
+                </ImageView>
+            </left>
+         <bottom>
+            <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+              <buttons>
+                <Button fx:id="browseButton" mnemonicParsing="false" onAction="#browse" text="Browse..." />
+                  <Button fx:id="applyButton" layoutX="313.0" layoutY="10.0" mnemonicParsing="false" onAction="#apply" text="Apply" />
+              </buttons>
+               <padding>
+                  <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+               </padding>
+            </ButtonBar>
+         </bottom>
+        </BorderPane>
+    </children>
+</StackPane>

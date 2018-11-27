@@ -26,6 +26,14 @@ public class Main {
 
         try {
 
+            ConfigGrid grid = new ConfigGrid("Instruments");
+            SetGettable<SMU> smu1 = grid.addInstrument("Source-Drain SMU", SMU.class);
+            SetGettable<SMU> smu2 = grid.addInstrument("Gate SMU", SMU.class);
+
+            grid.show();
+
+            System.in.read();
+
             // Ask the user if they want to perform a test
             boolean result = GUI.confirmWindow("JISA", "JISA Library", "JISA - William Wood - 2018\n\nPerform VISA test?");
 
