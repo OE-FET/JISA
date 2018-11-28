@@ -19,8 +19,8 @@ public class ConfigStore {
 
         path = System.getProperty("user.home") + File.separator + ".config" + File.separator + name + ".json";
 
-        if (!Files.exists(Paths.get(System.getProperty("user.home") + File.separator + ".config/"))) {
-            Files.createDirectory(Paths.get(System.getProperty("user.home") + File.separator + ".config/"));
+        if (!Files.exists(Paths.get(System.getProperty("user.home") + File.separator + ".config"))) {
+            Files.createDirectory(Paths.get(System.getProperty("user.home") + File.separator + ".config"));
         }
 
         if (Files.exists(Paths.get(path))) {
