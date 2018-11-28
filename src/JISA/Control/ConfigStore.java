@@ -69,4 +69,8 @@ public class ConfigStore {
         writer.close();
     }
 
+    public boolean hasValue(String key) {
+        return data.has(key);
+    }
+
 }
