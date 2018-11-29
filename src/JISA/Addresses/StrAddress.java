@@ -71,7 +71,7 @@ public class StrAddress implements InstrumentAddress {
         Matcher matcher = pattern.matcher(value.trim());
 
         if (matcher.matches()) {
-            int    board = Integer.valueOf(matcher.group(1));
+            int    board = matcher.group(1).equals("") ? -1 : Integer.valueOf(matcher.group(1));
             String host  = matcher.group(2);
             return new TCPIPAddress(board, host);
         } else {

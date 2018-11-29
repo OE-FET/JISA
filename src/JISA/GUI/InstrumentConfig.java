@@ -323,6 +323,7 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
 
     public void setDriver(Class<? extends VISADevice> d) {
         driver = d;
+        driverChoice.setValue(driver.getSimpleName());
     }
 
     public Class<? extends VISADevice> getDriver() {

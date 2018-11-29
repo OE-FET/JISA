@@ -1,5 +1,6 @@
 package JISA.GUI;
 
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -15,11 +16,12 @@ import java.util.ArrayList;
 
 public class Tabs extends JFXWindow implements Gridable {
 
-    public  BorderPane      pane;
-    public  VBox            sidebar;
-    public  ScrollPane      scrollPane;
-    private String          title;
-    private ArrayList<HBox> tabs = new ArrayList<>();
+    public  BorderPane          pane;
+    public  VBox                sidebar;
+    public  ScrollPane          scrollPane;
+    private String              title;
+    private ArrayList<HBox>     tabs      = new ArrayList<>();
+    private ArrayList<Runnable> switchers = new ArrayList<>();
 
     public Tabs(String title) throws IOException {
         super(title, "FXML/TabWindow.fxml");
@@ -36,7 +38,7 @@ public class Tabs extends JFXWindow implements Gridable {
 
         tab.getChildren().add(name);
 
-        tab.setOnMouseClicked((ae) -> {
+        Runnable onClick = () -> {
 
             for (HBox other : tabs) {
                 other.setStyle("-fx-background-color: transparent;");
@@ -47,17 +49,25 @@ public class Tabs extends JFXWindow implements Gridable {
             name.setStyle("-fx-text-fill: #4c4c4c;");
 
             scrollPane.setContent(element.getPane());
+        };
 
-        });
+        tab.setOnMouseClicked((ae) -> onClick.run());
 
         sidebar.getChildren().add(tab);
         tabs.add(tab);
+        switchers.add(onClick);
 
         if (tabs.size() == 1) {
-            tab.setStyle("-fx-background-color: white;");
-            name.setStyle("-fx-text-fill: #4c4c4c;");
-            scrollPane.setContent(element.getPane());
+            onClick.run();
         }
+
+    }
+
+    public void changeTab(int pane) {
+
+        GUI.runNow(() -> {
+            switchers.get(pane).run();
+        });
 
     }
 
