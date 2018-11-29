@@ -1,6 +1,7 @@
 package JISA.GUI;
 
 import JISA.Addresses.*;
+import JISA.Control.ConfigStore;
 import JISA.Control.SetGettable;
 import JISA.Devices.DeviceException;
 import JISA.Devices.MCSMU;
@@ -58,8 +59,10 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
     private T                           instrument      = null;
     private String                      realTitle;
     public  StackPane                   pane;
+    private ConfigStore                 config          = null;
+    private String                      key;
 
-    public InstrumentConfig(String title, Class<T> type) throws IOException {
+    public InstrumentConfig(String title, String key, Class<T> type, ConfigStore c) throws IOException {
         super(title, "FXML/InstrumentConfig.fxml");
         realTitle = title;
         this.title.setText(title);
@@ -70,6 +73,13 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
         });
         makeRed();
         chooseProtocol();
+        config = c;
+        this.key = key;
+
+        if (config != null) {
+            config.loadInstrument(key, this);
+        }
+
     }
 
     public void updateDrivers() {
@@ -136,11 +146,19 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
         int selectedDriver = driverChoice.getSelectionModel().getSelectedIndex();
         driver = possibleDrivers.get(selectedDriver);
 
+        if (config != null) {
+            config.saveInstrument(key, this);
+        }
+
         (new Thread(this::connect)).start();
 
     }
 
     public void connect() {
+        connect(true);
+    }
+
+    public void connect(boolean message) {
 
         makeAmber();
         try {
@@ -149,7 +167,11 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
             makeGreen();
         } catch (Throwable e) {
             instrument = null;
-            GUI.errorAlert("Connection Error", "Connection Error", e.getCause() == null ? e.getMessage() : e.getCause().getMessage(), 600);
+            if (message) {
+                GUI.errorAlert("Connection Error", "Connection Error", e.getCause() == null ? e.getMessage() : e.getCause().getMessage(), 600);
+            } else {
+                System.err.println(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
+            }
             makeRed();
         }
 
@@ -174,35 +196,6 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
             topPanel.setStyle("-fx-background-color: teal; -fx-background-radius: 5px 5px 0 0;");
             title.setText(realTitle);
         });
-    }
-
-    public SetGettable<T> getHandle() {
-        return new SetGettable<T>() {
-            @Override
-            public void set(T value) throws IOException, DeviceException {
-
-                address = value.getAddress();
-                instrument = value;
-
-                for (Class d : possibleDrivers) {
-
-                    if (d.equals(instrument.getClass())) {
-                        driver = d;
-                        break;
-                    }
-
-                }
-
-                driverChoice.setValue(driver.getSimpleName());
-                updateAddress();
-
-            }
-
-            @Override
-            public T get() throws IOException, DeviceException {
-                return instrument;
-            }
-        };
     }
 
     private void updateAddress() {
@@ -296,6 +289,44 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
     @Override
     public String getTitle() {
         return realTitle;
+    }
+
+    public T get() {
+        return instrument;
+    }
+
+    public void set(T value) {
+        address = value.getAddress();
+        instrument = value;
+
+        for (Class d : possibleDrivers) {
+
+            if (d.equals(instrument.getClass())) {
+                driver = d;
+                break;
+            }
+
+        }
+
+        driverChoice.setValue(driver.getSimpleName());
+        updateAddress();
+    }
+
+    public void setAddress(InstrumentAddress a) {
+        address = a;
+        updateAddress();
+    }
+
+    public InstrumentAddress getAddress() {
+        return address;
+    }
+
+    public void setDriver(Class<? extends VISADevice> d) {
+        driver = d;
+    }
+
+    public Class<? extends VISADevice> getDriver() {
+        return driver;
     }
 
 }

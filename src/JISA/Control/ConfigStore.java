@@ -1,5 +1,9 @@
 package JISA.Control;
 
+import JISA.Addresses.StrAddress;
+import JISA.GUI.InstrumentConfig;
+import JISA.VISA.VISADevice;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -11,8 +15,9 @@ import java.nio.file.Paths;
 
 public class ConfigStore {
 
-    private JSONObject json;
-    private JSONObject data;
+    private JSONObject json        = null;
+    private JSONObject data        = null;
+    private JSONObject instruments = null;
     private String     path;
 
     public ConfigStore(String name) throws IOException {
@@ -25,14 +30,31 @@ public class ConfigStore {
 
         if (Files.exists(Paths.get(path))) {
             String raw = new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
-            json = new JSONObject(raw);
-            data = json.getJSONObject("data");
+            try {
+                json = new JSONObject(raw);
+                data = json.getJSONObject("data");
+                instruments = json.getJSONObject("instruments");
+            } catch (Exception e) {
+                if (json == null) {
+                    json = new JSONObject();
+                }
+                if (data == null) {
+                    data = new JSONObject();
+                    json.put("data", data);
+                }
+                if (instruments == null) {
+                    instruments = new JSONObject();
+                    json.put("instruments", instruments);
+                }
+            }
         } else {
             json = new JSONObject();
             data = new JSONObject();
+            instruments = new JSONObject();
             json.put("name", name);
             json.put("lastSave", System.currentTimeMillis());
             json.put("data", data);
+            json.put("instruments", instruments);
         }
 
     }
@@ -65,12 +87,36 @@ public class ConfigStore {
     public void save() throws IOException {
         json.put("lastSave", System.currentTimeMillis());
         FileWriter writer = new FileWriter(path);
-        json.write(writer);
+        json.write(writer, 4, 0);
         writer.close();
     }
 
     public boolean has(String key) {
         return data.has(key);
+    }
+
+    public void saveInstrument(String key, InstrumentConfig config) {
+        JSONObject output = new JSONObject();
+        output.put("address", config.getAddress() == null ? "null" : config.getAddress().getVISAAddress());
+        output.put("driver", config.getDriver() == null ? "null" : config.getDriver().getName());
+        instruments.put(key, output);
+        try {
+            save();
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+        }
+    }
+
+    public void loadInstrument(String key, InstrumentConfig config) {
+
+        try {
+            JSONObject input = instruments.getJSONObject(key);
+            config.setAddress(new StrAddress(input.getString("address")));
+            config.setDriver(Class.forName(input.getString("driver")));
+        } catch (Exception e) {
+            System.err.println(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
+        }
+
     }
 
 }
