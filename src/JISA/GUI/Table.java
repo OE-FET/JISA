@@ -1,7 +1,7 @@
 package JISA.GUI;
 
 import JISA.Experiment.Result;
-import JISA.Experiment.ResultList;
+import JISA.Experiment.ResultTable;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
@@ -46,20 +46,20 @@ public class Table implements Gridable, Clearable {
 
     }
 
-    public Table(String title, ResultList list) {
+    public Table(String title, ResultTable list) {
         this(title);
         watchList(list);
     }
 
-    public void watchList(ResultList list) {
+    public void watchList(ResultTable list) {
 
-        list.setOnUpdate(() -> update(list));
+        list.addOnUpdate((r) -> update(r));
         setUp(list);
         list.addClearable(this);
 
     }
 
-    private void setUp(ResultList list) {
+    private void setUp(ResultTable list) {
 
         Platform.runLater(() -> {
 
@@ -89,9 +89,7 @@ public class Table implements Gridable, Clearable {
 
     }
 
-    public void update(ResultList list) {
-
-        final Result row = list.getLastRow();
+    public void update(Result row) {
 
         Platform.runLater(() -> {
             table.getItems().add(FXCollections.observableArrayList(Arrays.asList(row.getData())));

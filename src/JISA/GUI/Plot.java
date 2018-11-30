@@ -1,7 +1,7 @@
 package JISA.GUI;
 
 import JISA.Experiment.Result;
-import JISA.Experiment.ResultList;
+import JISA.Experiment.ResultTable;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -62,21 +62,21 @@ public class Plot implements Gridable, Clearable {
 
     }
 
-    public Plot(String title, ResultList list, int xData, int yData, String seriesName, Color colour) {
+    public Plot(String title, ResultTable list, int xData, int yData, String seriesName, Color colour) {
         this(title, list.getTitle(xData), list.getTitle(yData));
         watchList(list, xData, yData, seriesName, colour);
     }
 
-    public Plot(String title, ResultList list, int xData, int yData, int sData) {
+    public Plot(String title, ResultTable list, int xData, int yData, int sData) {
         this(title, list.getTitle(xData), list.getTitle(yData));
         watchList(list, xData, yData, sData);
     }
 
-    public Plot(String title, ResultList list, int xData, int yData) {
+    public Plot(String title, ResultTable list, int xData, int yData) {
         this(title, list, xData, yData, "Data", Color.RED);
     }
 
-    public Plot(String title, ResultList list) {
+    public Plot(String title, ResultTable list) {
         this(title, list, 0, 1);
     }
 
@@ -120,7 +120,7 @@ public class Plot implements Gridable, Clearable {
         maxRange = range;
     }
 
-    public void watchList(final ResultList list, final int xData, final int yData, String seriesName, Color colour) {
+    public void watchList(final ResultTable list, final int xData, final int yData, String seriesName, Color colour) {
 
         final int series = createSeries(seriesName, colour);
 
@@ -128,8 +128,7 @@ public class Plot implements Gridable, Clearable {
             addPoint(series, row.get(xData), row.get(yData));
         }
 
-        list.setOnUpdate(() -> {
-            Result r = list.getLastRow();
+        list.addOnUpdate((r) -> {
             addPoint(series, r.get(xData), r.get(yData));
         });
 
@@ -137,7 +136,7 @@ public class Plot implements Gridable, Clearable {
 
     }
 
-    public void watchList(final ResultList list, final int xData, final int yData, final int sData) {
+    public void watchList(final ResultTable list, final int xData, final int yData, final int sData) {
 
         final HashMap<Double, Integer> map = new HashMap<>();
         maps.add(map);
@@ -155,9 +154,8 @@ public class Plot implements Gridable, Clearable {
 
         }
 
-        list.setOnUpdate(() -> {
+        list.addOnUpdate((row) -> {
 
-            Result row = list.getLastRow();
             int    series;
             if (map.containsKey(row.get(sData))) {
                 series = map.get(row.get(sData));
