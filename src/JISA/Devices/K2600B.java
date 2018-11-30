@@ -53,11 +53,11 @@ public class K2600B extends MCSMU {
 
         public BlankFilter(int channel, String command, Object... args) {
             super(
-                    () -> queryDouble(command, args),
+                    () -> K2600B.this.queryDouble(command, args),
                     (c) -> {
-                        write(C_SET_AVG_COUNT, CHANNELS[channel], 1);
-                        write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_REPEAT_MEAN);
-                        write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_OFF);
+                        K2600B.this.write(C_SET_AVG_COUNT, CHANNELS[channel], 1);
+                        K2600B.this.write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_REPEAT_MEAN);
+                        K2600B.this.write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_OFF);
                     }
             );
         }
@@ -67,11 +67,11 @@ public class K2600B extends MCSMU {
 
         public MeanRFilter(int channel, String command, Object... args) {
             super(
-                    () -> queryDouble(command, args),
+                    () -> K2600B.this.queryDouble(command, args),
                     (c) -> {
-                        write(C_SET_AVG_COUNT, CHANNELS[channel], c);
-                        write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_REPEAT_MEAN);
-                        write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_ON);
+                        K2600B.this.write(C_SET_AVG_COUNT, CHANNELS[channel], c);
+                        K2600B.this.write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_REPEAT_MEAN);
+                        K2600B.this.write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_ON);
                     }
             );
         }
@@ -81,11 +81,11 @@ public class K2600B extends MCSMU {
 
         public MeanMFilter(int channel, String command, Object... args) {
             super(
-                    () -> queryDouble(command, args),
+                    () -> K2600B.this.queryDouble(command, args),
                     (c) -> {
-                        write(C_SET_AVG_COUNT, CHANNELS[channel], c);
-                        write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_MOVING_MEAN);
-                        write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_ON);
+                        K2600B.this.write(C_SET_AVG_COUNT, CHANNELS[channel], c);
+                        K2600B.this.write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_MOVING_MEAN);
+                        K2600B.this.write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_ON);
                     }
             );
         }
@@ -95,11 +95,11 @@ public class K2600B extends MCSMU {
 
         public MedRFilter(int channel, String command, Object... args) {
             super(
-                    () -> queryDouble(command, args),
+                    () -> K2600B.this.queryDouble(command, args),
                     (c) -> {
-                        write(C_SET_AVG_COUNT, CHANNELS[channel], 1);
-                        write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_REPEAT_MEAN);
-                        write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_OFF);
+                        K2600B.this.write(C_SET_AVG_COUNT, CHANNELS[channel], 1);
+                        K2600B.this.write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_REPEAT_MEAN);
+                        K2600B.this.write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_OFF);
                     }
             );
         }
@@ -110,11 +110,11 @@ public class K2600B extends MCSMU {
 
         public MedMFilter(int channel, String command, Object... args) {
             super(
-                    () -> queryDouble(command, args),
+                    () -> K2600B.this.queryDouble(command, args),
                     (c) -> {
-                        write(C_SET_AVG_COUNT, CHANNELS[channel], c);
-                        write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_MOVING_MEDIAN);
-                        write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_ON);
+                        K2600B.this.write(C_SET_AVG_COUNT, CHANNELS[channel], c);
+                        K2600B.this.write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_MOVING_MEDIAN);
+                        K2600B.this.write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_ON);
                     }
             );
         }
