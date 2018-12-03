@@ -23,9 +23,14 @@ public class Tabs extends JFXWindow implements Gridable {
     private ArrayList<HBox>     tabs      = new ArrayList<>();
     private ArrayList<Runnable> switchers = new ArrayList<>();
 
-    public Tabs(String title) throws IOException {
+    public Tabs(String title, Gridable... toAdd) throws IOException {
         super(title, "FXML/TabWindow.fxml");
         this.title = title;
+
+        for (Gridable g : toAdd) {
+            addTab(g);
+        }
+
     }
 
     public void addTab(Gridable element) {

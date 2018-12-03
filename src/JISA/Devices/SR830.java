@@ -22,6 +22,16 @@ public class SR830 extends DPLockIn {
     private static final String C_QUERY_TIME_CONST  = "OFLT?";
     private static final String C_SET_TIME_CONST    = "OFLT %d";
     private static final String C_QUERY_ALL         = "SNAP? 1,2,3,4,9";
+    private static final String C_QUERY_FILTER      = "OFSL?";
+    private static final String C_SET_FILTER        = "OFSL %d";
+    private static final String C_QUERY_SYNC        = "SYNC?";
+    private static final String C_SET_SYNC          = "SYNC %d";
+    private static final String C_QUERY_COUPLING    = "ICPL?";
+    private static final String C_SET_COUPLING      = "ICPL %d";
+    private static final String C_QUERY_GROUND      = "IGND?";
+    private static final String C_SET_GROUND        = "IGND %d";
+    private static final String C_QUERY_LINE        = "ILIN?";
+    private static final String C_SET_LINE          = "ILIN %d";
     private static final int    OUTPUT_X            = 1;
     private static final int    OUTPUT_Y            = 2;
     private static final int    OUTPUT_R            = 3;
@@ -29,6 +39,15 @@ public class SR830 extends DPLockIn {
     private static final double STANDARD_ERROR      = 1.0;
     private static final int    STANDARD_INTERVAL   = 100;
     private static final long   STANDARD_DURATION   = 10000;
+
+    private static final int COUPLING_AC = 0;
+    private static final int COUPLING_DC = 1;
+    private static final int GND_FLOAT   = 0;
+    private static final int GND_GROUND  = 1;
+    private static final int LINE_NONE   = 0;
+    private static final int LINE_X1     = 1;
+    private static final int LINE_X2     = 2;
+    private static final int LINE_X1_X2  = 3;
 
     /**
      * Open an SR830 device on the given bus and address
@@ -221,6 +240,146 @@ public class SR830 extends DPLockIn {
     @Override
     public double getRange() throws IOException {
         return Sensitivity.fromInt(queryInt(C_QUERY_SENSITIVITY)).toDouble();
+    }
+
+    @Override
+    public void useSyncFiltering(boolean flag) throws IOException, DeviceException {
+        write(C_SET_SYNC, flag ? 1 : 0);
+    }
+
+    @Override
+    public boolean isUsingSyncFiltering() throws IOException, DeviceException {
+        return queryInt(C_QUERY_SYNC) == 1;
+    }
+
+    @Override
+    public void setFilterRollOff(double dBperOct) throws IOException, DeviceException {
+        write(C_SET_FILTER, FilterRO.fromDouble(dBperOct));
+    }
+
+    @Override
+    public double getFilterRollOff() throws IOException, DeviceException {
+        return FilterRO.fromInt(queryInt(C_QUERY_FILTER)).toDB();
+    }
+
+    @Override
+    public void setCoupling(Coupling mode) throws IOException, DeviceException {
+
+        switch (mode) {
+
+            case AC:
+                write(C_SET_COUPLING, COUPLING_AC);
+                break;
+
+            case DC:
+                write(C_SET_COUPLING, COUPLING_DC);
+                break;
+
+        }
+
+    }
+
+    @Override
+    public Coupling getCoupling() throws IOException, DeviceException {
+
+        switch (queryInt(C_QUERY_COUPLING)) {
+
+            case COUPLING_AC:
+                return Coupling.AC;
+
+            case COUPLING_DC:
+                return Coupling.DC;
+
+            default:
+                return null;
+
+        }
+
+    }
+
+    @Override
+    public void setGround(Ground mode) throws IOException, DeviceException {
+
+        switch (mode) {
+
+            case FLOAT:
+                write(C_SET_GROUND, GND_FLOAT);
+                break;
+
+            case GROUND:
+                write(C_SET_GROUND, GND_GROUND);
+                break;
+
+
+        }
+
+    }
+
+    @Override
+    public Ground getGround() throws IOException, DeviceException {
+
+        switch (queryInt(C_QUERY_GROUND)) {
+
+            case GND_FLOAT:
+                return Ground.FLOAT;
+
+            case GND_GROUND:
+                return Ground.GROUND;
+
+            default:
+                return null;
+
+        }
+
+    }
+
+    @Override
+    public void setLineFilter(LineFilter mode) throws IOException, DeviceException {
+
+        switch (mode) {
+
+            case NONE:
+                write(C_SET_LINE, LINE_NONE);
+                break;
+
+            case X1:
+                write(C_SET_LINE, LINE_X1);
+                break;
+
+            case X2:
+                write(C_SET_LINE, LINE_X2);
+                break;
+
+            case X1_X2:
+                write(C_SET_LINE, LINE_X1_X2);
+                break;
+
+        }
+
+    }
+
+    @Override
+    public LineFilter getLineFilter() throws IOException, DeviceException {
+
+        switch (queryInt(C_QUERY_LINE)) {
+
+            case LINE_NONE:
+                return LineFilter.NONE;
+
+            case LINE_X1:
+                return LineFilter.X1;
+
+            case LINE_X2:
+                return LineFilter.X2;
+
+            case LINE_X1_X2:
+                return LineFilter.X1_X2;
+
+            default:
+                return null;
+
+        }
+
     }
 
     public TimeConst getTimeConst() throws IOException {
@@ -432,6 +591,62 @@ public class SR830 extends DPLockIn {
         public String getName() {
             return String.format("%e s", value);
         }
+    }
+
+    private enum FilterRO {
+
+        F6(0, 6),
+        F12(1, 12),
+        F18(2, 18),
+        F24(3, 24);
+
+        private int    tag;
+        private double db;
+
+        public static FilterRO fromDouble(double value) {
+
+            FilterRO found = F6;
+
+            for (FilterRO f : values()) {
+
+                if (Math.abs(f.toDB() - value) < Math.abs(found.toDB() - value)) {
+                    found = f;
+                }
+
+            }
+
+            return found;
+
+        }
+
+        public static FilterRO fromInt(int value) {
+
+
+            for (FilterRO f : values()) {
+
+                if (f.toInt() == value) {
+                    return f;
+                }
+
+            }
+
+            return null;
+
+        }
+
+        FilterRO(int mode, double value) {
+            tag = mode;
+            db = value;
+        }
+
+        public int toInt() {
+            return tag;
+        }
+
+        public double toDB() {
+            return db;
+        }
+
     }
 
     public class DataPacket {

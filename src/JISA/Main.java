@@ -1,19 +1,9 @@
 package JISA;
 
-import JISA.Addresses.GPIBAddress;
 import JISA.Addresses.InstrumentAddress;
-import JISA.Addresses.SerialAddress;
-import JISA.Addresses.StrAddress;
-import JISA.Control.DCPowerLockInController;
-import JISA.Control.SetGettable;
-import JISA.Devices.*;
-import JISA.Experiment.ResultList;
 import JISA.GUI.*;
 import JISA.VISA.VISA;
-import JISA.VISA.VISADevice;
-import com.sun.jna.Native;
 import javafx.application.Platform;
-import javafx.scene.paint.Color;
 
 import java.io.*;
 

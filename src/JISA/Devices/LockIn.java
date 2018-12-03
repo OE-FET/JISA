@@ -136,6 +136,73 @@ public abstract class LockIn extends VISADevice {
      */
     public abstract double getRange() throws IOException, DeviceException;
 
+    /**
+     * Instructs the lock-in to use synchronous filtering (removes higher harmonics of reference frequency from signal).
+     *
+     * @param flag Should this feature be enabled?
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract void useSyncFiltering(boolean flag) throws IOException, DeviceException;
+
+    /**
+     * Returns whether the lock-in is currently using synchronous filtering.
+     *
+     * @return Enabled?
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract boolean isUsingSyncFiltering() throws IOException, DeviceException;
+
+    /**
+     * Sets the filter roll-off for the lock-in's input filter.
+     *
+     * @param dBperOct Roll-off in dB/oct
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract void setFilterRollOff(double dBperOct) throws IOException, DeviceException;
+
+    /**
+     * Returns the filter roll-off used by the lock-in.
+     *
+     * @return Roll-off in dB/oct
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract double getFilterRollOff() throws IOException, DeviceException;
+
+    /**
+     * Sets the input coupling mode of the lock-in.
+     *
+     * @param mode AC or DC?
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract void setCoupling(Coupling mode) throws IOException, DeviceException;
+
+    /**
+     * Returns the input coupling mode of the lock-in.
+     *
+     * @return AC or DC
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    public abstract Coupling getCoupling() throws IOException, DeviceException;
+
+    public abstract void setGround(Ground mode) throws IOException, DeviceException;
+
+    public abstract Ground getGround() throws IOException, DeviceException;
+
+    public abstract void setLineFilter(LineFilter mode) throws IOException, DeviceException;
+
+    public abstract LineFilter getLineFilter() throws IOException, DeviceException;
 
     /**
      * Halts the current thread (ie pauses the program) until the lock-in has a stable lock
@@ -176,6 +243,23 @@ public abstract class LockIn extends VISADevice {
     public enum RefMode {
         INTERNAL,
         EXTERNAL
+    }
+
+    public enum Coupling {
+        AC,
+        DC;
+    }
+
+    public enum Ground {
+        GROUND,
+        FLOAT;
+    }
+
+    public enum LineFilter {
+        NONE,
+        X1,
+        X2,
+        X1_X2;
     }
 
 }
