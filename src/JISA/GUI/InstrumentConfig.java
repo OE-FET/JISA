@@ -199,21 +199,20 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
     }
 
     private void updateAddress() {
-        StrAddress str = address.toStrAddress();
 
         GUI.runNow(() -> {
-            switch (str.getType()) {
+            switch (address.getType()) {
 
                 case GPIB:
                     protChoice.setValue(CHOICE_GPIB);
-                    GPIBAddress gpib = str.toGPIBAddress();
+                    GPIBAddress gpib = address.toGPIBAddress();
                     GPIBBoard.setText(String.valueOf(gpib.getBus()));
                     GPIBAddr.setText(String.valueOf(gpib.getAddress()));
                     break;
 
                 case USB:
                     protChoice.setValue(CHOICE_USB);
-                    USBAddress usb = str.toUSBAddress();
+                    USBAddress usb = address.toUSBAddress();
                     USBBoard.setText(Integer.toString(usb.getBoard()));
                     USBVendor.setText(usb.getManufacturer());
                     USBProduct.setText(usb.getModel());
@@ -222,17 +221,17 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
 
                 case SERIAL:
                     protChoice.setValue(CHOICE_COM);
-                    COMPort.setText(String.valueOf(str.toSerialAddress().getBoard()));
+                    COMPort.setText(String.valueOf(address.toSerialAddress().getBoard()));
                     break;
 
                 case TCPIP:
                     protChoice.setValue(CHOICE_TCPIP);
-                    TCPIPHost.setText(str.toTCPIPAddress().getHost());
+                    TCPIPHost.setText(address.toTCPIPAddress().getHost());
                     break;
 
                 case TCPIP_SOCKET:
                     protChoice.setValue(CHOICE_TCPIP_RAW);
-                    TCPIPSocketAddress socket = str.toTCPIPSocketAddress();
+                    TCPIPSocketAddress socket = address.toTCPIPSocketAddress();
                     TCPIPHost.setText(socket.getHost());
                     TCPIPPort.setText(String.valueOf(socket.getPort()));
                     break;
