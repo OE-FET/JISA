@@ -29,8 +29,8 @@ public class RTask {
             public void run() {
                 try {
                     toRun.run();
-                } catch (Exception e) {
-                    System.err.println(e.getMessage());
+                } catch (Throwable e) {
+                    System.err.printf("Exception encountered running repeat task: \"%s\"\n", e.getMessage());
                 }
             }
         };

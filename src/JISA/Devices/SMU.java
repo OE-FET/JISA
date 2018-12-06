@@ -8,6 +8,7 @@ import JISA.Experiment.IVPoint;
 import JISA.Experiment.ResultList;
 import JISA.Util;
 import JISA.VISA.VISADevice;
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import org.apache.commons.math.stat.descriptive.rank.Median;
 
 import java.io.IOException;
@@ -412,6 +413,26 @@ public abstract class SMU extends VISADevice {
      * @throws IOException     Upon communications error
      */
     public abstract double getCurrentLimit() throws DeviceException, IOException;
+
+    /**
+     * Sets the integration time for each individual measurement, or closest over-estimate possible.
+     *
+     * @param time Integration time, in seconds
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void setIntegrationTime(double time) throws DeviceException, IOException;
+
+    /**
+     * Returns the integration time used for each individual measurement.
+     *
+     * @return Integration time, in seconds
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract double getIntegrationTime() throws DeviceException, IOException;
 
 
     /**

@@ -35,6 +35,9 @@ public class K2600B extends MCSMU {
     private static final String   C_QUERY_SOURCE_AUTO_RANGE  = "print(%s.source.autorange%s)";
     private static final String   C_SET_MEASURE_AUTO_RANGE   = "%s.measure.autorange%s = %s";
     private static final String   C_QUERY_MEASURE_AUTO_RANGE = "print(%s.measure.autorange%s)";
+    private static final String   C_SET_NPLC                 = "%s.measure.nplc = %f";
+    private static final String   C_QUERY_NPLC               = "print(%s.measure.nplc)";
+    private static final String   C_QUERY_LFR                = "print(localnode.linefreq)";
     private static final String   SENSE_LOCAL                = "0";
     private static final String   SENSE_REMOTE               = "1";
     private static final String   OUTPUT_ON                  = "1";
@@ -42,6 +45,7 @@ public class K2600B extends MCSMU {
     private static final String   FILTER_MOVING_MEAN         = "0";
     private static final String   FILTER_REPEAT_MEAN         = "1";
     private static final String   FILTER_MOVING_MEDIAN       = "2";
+    private final        double   LINE_FREQUENCY;
 
     private AMode[]      filterMode  = {AMode.NONE, AMode.NONE};
     private int[]        filterCount = {1, 1};
@@ -139,6 +143,8 @@ public class K2600B extends MCSMU {
         for (int i = 0; i < getNumChannels(); i++) {
             setAverageMode(i, AMode.NONE);
         }
+
+        LINE_FREQUENCY = queryDouble(C_QUERY_LFR);
 
     }
 
@@ -633,6 +639,18 @@ public class K2600B extends MCSMU {
     public double getCurrentLimit(int channel) throws DeviceException, IOException {
         checkChannel(channel);
         return queryDouble(C_QUERY_LIMIT, CHANNELS[channel], SFunc.CURRENT.getSymbol());
+    }
+
+    @Override
+    public void setIntegrationTime(int channel, double time) throws DeviceException, IOException {
+        checkChannel(channel);
+        write(C_SET_NPLC, CHANNELS[channel], time * LINE_FREQUENCY);
+    }
+
+    @Override
+    public double getIntegrationTime(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return queryDouble(C_QUERY_NPLC, CHANNELS[channel]) / LINE_FREQUENCY;
     }
 
     private enum SFunc {

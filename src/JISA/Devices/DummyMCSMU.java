@@ -260,4 +260,14 @@ public class DummyMCSMU extends MCSMU {
         return 0;
     }
 
+    @Override
+    public void setIntegrationTime(int channel, double time) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public double getIntegrationTime(int channel) throws DeviceException, IOException {
+        return 100e-6;
+    }
+
 }

@@ -346,6 +346,18 @@ public class SMUCluster extends MCSMU {
         return devices.get(channel).getCurrentLimit();
     }
 
+    @Override
+    public void setIntegrationTime(int channel, double time) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).setIntegrationTime(time);
+    }
+
+    @Override
+    public double getIntegrationTime(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).getIntegrationTime();
+    }
+
     public IVPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
         return devices.get(channel).doSweep(source, values, delay, symmetric, onUpdate);
     }

@@ -36,8 +36,12 @@ public class K2450 extends SMU {
     private static final String C_QUERY_MEAS_AUTO_RANGE = ":SENS:%s:RANG:AUTO?";
     private static final String C_SET_LIMIT             = ":SOUR:%s:%sLIM %f";
     private static final String C_QUERY_LIMIT           = ":SOUR:%s:%sLIM?";
+    private static final String C_SET_NPLC              = ":SENS:NPLC %f";
+    private static final String C_QUERY_NPLC            = ":SENS:%s:NPLC?";
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
+    private static final String C_QUERY_LFR             = "SYS:LFR?";
+    private final        double LINE_FREQUENCY;
 
     // == FILTERS ======================================================================================================
     private final MedianRepeatFilter MEDIAN_REPEAT_V = new MedianRepeatFilter(
@@ -163,6 +167,8 @@ public class K2450 extends SMU {
         } catch (IOException e) {
             throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
         }
+
+        LINE_FREQUENCY = queryDouble(C_QUERY_LFR);
 
     }
 
@@ -379,7 +385,7 @@ public class K2450 extends SMU {
 
     @Override
     public void setVoltageRange(double value) throws IOException {
-        switch(getSourceMode()) {
+        switch (getSourceMode()) {
 
             case VOLTAGE:
                 write(C_SET_SRC_AUTO_RANGE, Source.VOLTAGE.getTag(), OUTPUT_OFF);
@@ -411,7 +417,7 @@ public class K2450 extends SMU {
     @Override
     public void setCurrentRange(double value) throws IOException {
 
-        switch(getSourceMode()) {
+        switch (getSourceMode()) {
 
             case CURRENT:
                 write(C_SET_SRC_AUTO_RANGE, Source.CURRENT.getTag(), OUTPUT_OFF);
@@ -493,6 +499,16 @@ public class K2450 extends SMU {
     @Override
     public double getCurrentLimit() throws IOException {
         return queryDouble(C_QUERY_LIMIT, getSourceMode().getTag(), Source.CURRENT.getSymbol());
+    }
+
+    @Override
+    public void setIntegrationTime(double time) throws IOException {
+        write(C_SET_NPLC, LINE_FREQUENCY * time);
+    }
+
+    @Override
+    public double getIntegrationTime() throws IOException {
+        return queryDouble(C_QUERY_NPLC, getMeasureMode().getTag()) / LINE_FREQUENCY;
     }
 
     public double getVoltage() throws DeviceException, IOException {

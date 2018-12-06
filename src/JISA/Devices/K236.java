@@ -25,6 +25,7 @@ public class K236 extends SMU {
     private static final String C_GET_STATUS     = "U3";
     private static final String C_GET_PARAMS     = "U4";
     private static final String C_GET_COMPLIANCE = "U5";
+    private static final String C_SET_INT_TIME   = "S%d";
     private static final int    OPERATE_OFF      = 0;
     private static final int    OPERATE_ON       = 1;
     private static final int    OUTPUT_NOTHING   = 0;
@@ -40,6 +41,8 @@ public class K236 extends SMU {
     private static final double MAX_CURRENT      = +100e-3;
     private static final double MIN_VOLTAGE      = -110;
     private static final double MAX_VOLTAGE      = +110;
+
+    private double lineFrequency;
 
     // == FILTERS ======================================================================================================
     private final MedianRepeatFilter MEDIAN_REPEAT_S = new MedianRepeatFilter(
@@ -123,7 +126,7 @@ public class K236 extends SMU {
         setCurrentLimit(0.1);
         setAverageMode(AMode.NONE);
 
-        for (int i = 0; i < 10; i ++) {
+        for (int i = 0; i < 10; i++) {
             read();
         }
 
@@ -590,6 +593,16 @@ public class K236 extends SMU {
 
     }
 
+    @Override
+    public void setIntegrationTime(double time) throws IOException {
+        write(C_SET_INT_TIME, IntTime.fromDouble(time).toInt());
+    }
+
+    @Override
+    public double getIntegrationTime() throws IOException {
+        return getMeasureParams().intTime.toDouble();
+    }
+
     public double getVoltage() throws IOException, DeviceException {
 
         switch (source) {
@@ -825,6 +838,57 @@ public class K236 extends SMU {
 
     }
 
+    private enum IntTime {
+
+        S0(0, 416e-6),
+        S1(1, 4e-3),
+        S2(2, 16.67e-3),
+        S3(3, 20e-3);
+
+        private int    code;
+        private double time;
+
+        public static IntTime fromInt(int i) {
+
+            for (IntTime it : values()) {
+                if (it.toInt() == i) {
+                    return it;
+                }
+            }
+
+            return null;
+
+        }
+
+        public static IntTime fromDouble(double time) {
+
+            IntTime found = S3;
+
+            for (IntTime it : values()) {
+                if (it.toDouble() >= time && it.toDouble() < found.toDouble()) {
+                    found = it;
+                }
+            }
+
+            return found;
+
+        }
+
+        IntTime(int c, double t) {
+            code = c;
+            time = t;
+        }
+
+        public int toInt() {
+            return code;
+        }
+
+        public double toDouble() {
+            return time;
+        }
+
+    }
+
     private static class MStatus {
 
         private static final Pattern PATTERN = Pattern.compile("MSTG([0-9]{2}),([0-9]),([0-9])K([0-3])M([0-9]{3}),([0-9])N([0-1])R([0-1])T([0-4]),([0-8]),([0-8]),([0-1])V([0-1])Y([0-4])");
@@ -866,6 +930,7 @@ public class K236 extends SMU {
         public Source   source;
         public Function function;
         public boolean  fourProbe;
+        public IntTime  intTime;
 
         public MParams(String response) {
 
@@ -877,6 +942,7 @@ public class K236 extends SMU {
                 source = Source.fromInt(Integer.valueOf(matcher.group(2).trim()));
                 function = Function.fromInt(Integer.valueOf(matcher.group(3).trim()));
                 fourProbe = matcher.group(4).trim().equals("1");
+                intTime = IntTime.fromInt(Integer.valueOf(matcher.group(6).trim()));
 
             }
 

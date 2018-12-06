@@ -508,6 +508,18 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         return getCurrentLimit(0);
     }
 
+    public abstract void setIntegrationTime(int channel, double time) throws DeviceException, IOException;
+
+    public void setIntegrationTime(double time) throws DeviceException, IOException {
+        setIntegrationTime(0, time);
+    }
+
+    public abstract double getIntegrationTime(int channel) throws DeviceException, IOException;
+
+    public double getIntegrationTime() throws DeviceException, IOException {
+        return getIntegrationTime(0);
+    }
+
     public IVPoint getIVPoint(int channel) throws DeviceException, IOException {
         return new IVPoint(getVoltage(channel), getCurrent(channel));
     }
@@ -1073,6 +1085,16 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         @Override
         public double getCurrentLimit() throws DeviceException, IOException {
             return MCSMU.this.getCurrentLimit(channel);
+        }
+
+        @Override
+        public void setIntegrationTime(double time) throws DeviceException, IOException {
+            MCSMU.this.setIntegrationTime(channel, time);
+        }
+
+        @Override
+        public double getIntegrationTime() throws DeviceException, IOException {
+            return MCSMU.this.getIntegrationTime(channel);
         }
 
     }
