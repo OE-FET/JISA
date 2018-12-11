@@ -34,6 +34,13 @@ public class Plot implements Gridable, Clearable {
     private double                                                 minY     = Double.POSITIVE_INFINITY;
     private double                                                 maxRange = -1;
 
+    /**
+     * Creates an empty plot from the given title, x-axis label, and y-axis label.
+     *
+     * @param title  Title of the plot
+     * @param xLabel X-Axis Label
+     * @param yLabel Y-Axis Lable
+     */
     public Plot(String title, String xLabel, String yLabel) {
 
         try {
@@ -62,64 +69,140 @@ public class Plot implements Gridable, Clearable {
 
     }
 
+    /**
+     * Creates a plot that automatically tracks and plots a ResultTable (ResultList or ResultStream) object, specifying
+     * which columns to plot, the name of the data series and its colour.
+     *
+     * @param title      Title for the plot
+     * @param list       The ResultTable (ResultList/ResultStream) to track
+     * @param xData      Column number to plot on the x-axis
+     * @param yData      Column number to plot on the y-axis
+     * @param seriesName The name of the data series to create
+     * @param colour     The colour to use for the plotted points and line
+     */
     public Plot(String title, ResultTable list, int xData, int yData, String seriesName, Color colour) {
         this(title, list.getTitle(xData), list.getTitle(yData));
         watchList(list, xData, yData, seriesName, colour);
     }
 
+    /**
+     * Creates a plot that automatically tracks and plots a ResultTable (ResultList or ResultStream) object, specifying
+     * which columns to plot but also specifying which column to use to sort the data into separate series.
+     *
+     * @param title Title for the plot
+     * @param list  The ResultTable to track
+     * @param xData Column number to plot on the x-axis
+     * @param yData Column number to plot on the y-axis
+     * @param sData Column number to use for sorting into series
+     */
     public Plot(String title, ResultTable list, int xData, int yData, int sData) {
         this(title, list.getTitle(xData), list.getTitle(yData));
         watchList(list, xData, yData, sData);
     }
 
+    /**
+     * Creates a plot that automatically tracks and plots a ResultTable (ResultList or ResultStream) object, specifying
+     * which two columns to plot. Colour and series name automatically chosen.
+     *
+     * @param title Title for the plot
+     * @param list  The ResultTable to track
+     * @param xData Column number to plot on the x-axis
+     * @param yData Column number to plot on the y-axis
+     */
     public Plot(String title, ResultTable list, int xData, int yData) {
         this(title, list, xData, yData, "Data", Color.RED);
     }
 
+    /**
+     * Creates a plot that automatically tracks and plots the first two columns of a ResultTable. Column 0 on the x-axis
+     * and column 1 on the y-axis. Series name and colour automatically chosen.
+     *
+     * @param title The title of the plot
+     * @param list  The ResultTable to track
+     */
     public Plot(String title, ResultTable list) {
         this(title, list, 0, 1);
     }
 
+    /**
+     * Sets the bounds on the x-axis.
+     *
+     * @param min Minimum value to show on x-axis
+     * @param max Maximum value to show on x-axis
+     */
     public void setXLimit(final double min, final double max) {
-        xAxis.setAutoRanging(false);
-        xAxis.setForceZeroInRange(false);
-        xAxis.setLowerBound(min);
-        xAxis.setUpperBound(max);
+        GUI.runNow(() -> {
+            xAxis.setAutoRanging(false);
+            xAxis.setForceZeroInRange(false);
+            xAxis.setLowerBound(min);
+            xAxis.setUpperBound(max);
+        });
     }
 
+    /**
+     * Sets the bounds on the y-axis.
+     *
+     * @param min Minimum value to show on y-axis
+     * @param max Maximum value to show on y-axis
+     */
     public void setYLimit(final double min, final double max) {
-        yAxis.setAutoRanging(false);
-        yAxis.setForceZeroInRange(false);
-        yAxis.setLowerBound(min);
-        yAxis.setUpperBound(max);
+        GUI.runNow(() -> {
+            yAxis.setAutoRanging(false);
+            yAxis.setForceZeroInRange(false);
+            yAxis.setLowerBound(min);
+            yAxis.setUpperBound(max);
+        });
     }
 
+    /**
+     * Sets whether or not to show markers on the plot.
+     *
+     * @param show Show markers?
+     */
     public void showMarkers(boolean show) {
         GUI.runNow(() -> {
             chart.setCreateSymbols(show);
         });
     }
 
+    /**
+     * Sets the x-axis to automatically choose its bounds.
+     */
     public void autoXLimit() {
         Platform.runLater(() -> {
             xAxis.setAutoRanging(true);
         });
     }
 
+    /**
+     * Sets the y-axis to automatically choose its bounds.
+     */
     public void autoYLimit() {
         Platform.runLater(() -> {
             yAxis.setAutoRanging(true);
         });
     }
 
-    public void autoFollow(double xRange) {
-        this.xRange = xRange;
-    }
-
+    /**
+     * Sets the max x-axis range to show on the plot. Points that are outside this range from the maximum x-axis value
+     * will be removed from the plot automatically.
+     *
+     * @param range The range, set to -1 to disable
+     */
     public void setMaxRange(double range) {
         maxRange = range;
     }
 
+    /**
+     * Set the plot to automatically track and plot a ResultTable object, specifying which columns to plot, the name of
+     * the series and its colour.
+     *
+     * @param list       The ResultTable to track
+     * @param xData      Column number to plot on the x-axis
+     * @param yData      Column number to plot on the y-axis
+     * @param seriesName Name of the data series
+     * @param colour     Colour of the series (eg try: Color.RED or Color.GREEN, etc)
+     */
     public void watchList(final ResultTable list, final int xData, final int yData, String seriesName, Color colour) {
 
         final int series = createSeries(seriesName, colour);
@@ -136,6 +219,15 @@ public class Plot implements Gridable, Clearable {
 
     }
 
+    /**
+     * Set the plot to automatically track and plot a ResultTable object, split into multiple data series, specifying
+     * which columns to plot and which column to use to sort into series.
+     *
+     * @param list  The ResultTable to track
+     * @param xData Column number to plot on the x-axis
+     * @param yData Column number to plot on the y-axis
+     * @param sData Column number to use for series sorting
+     */
     public void watchList(final ResultTable list, final int xData, final int yData, final int sData) {
 
         final HashMap<Double, Integer> map = new HashMap<>();
@@ -156,7 +248,7 @@ public class Plot implements Gridable, Clearable {
 
         list.addOnUpdate((row) -> {
 
-            int    series;
+            int series;
             if (map.containsKey(row.get(sData))) {
                 series = map.get(row.get(sData));
             } else {
@@ -172,6 +264,14 @@ public class Plot implements Gridable, Clearable {
 
     }
 
+    /**
+     * Creates a new data series, returning its number.
+     *
+     * @param name   The series name
+     * @param colour The series colour (eg Color.RED, Color.GREEN, Color.BLUE etc)
+     *
+     * @return The id of the new series
+     */
     public int createSeries(String name, Color colour) {
         return createSeries(name, colour, false);
     }
@@ -200,6 +300,12 @@ public class Plot implements Gridable, Clearable {
 
     }
 
+    /**
+     * Add a point to the plot (in the last series created).
+     *
+     * @param x X-Value
+     * @param y Y-Value
+     */
     public void addPoint(double x, double y) {
 
         if (data.size() == 0) {
@@ -210,6 +316,13 @@ public class Plot implements Gridable, Clearable {
 
     }
 
+    /**
+     * Add a point to the plot in the specified series.
+     *
+     * @param series The series id number, returned by createSeries(...)
+     * @param x      X-Value
+     * @param y      Y-Value
+     */
     public void addPoint(int series, double x, double y) {
 
         Platform.runLater(() -> {
@@ -237,6 +350,9 @@ public class Plot implements Gridable, Clearable {
 
     }
 
+    /**
+     * Show the plot window.
+     */
     public void show() {
         Platform.runLater(() -> {
                     stage.show();
@@ -244,6 +360,9 @@ public class Plot implements Gridable, Clearable {
         );
     }
 
+    /**
+     * Hide the plot window.
+     */
     public void hide() {
         Platform.runLater(() -> {
                     stage.hide();
@@ -251,6 +370,9 @@ public class Plot implements Gridable, Clearable {
         );
     }
 
+    /**
+     * Close the plot window.
+     */
     public void close() {
         Platform.runLater(() -> {
                     stage.close();
@@ -258,6 +380,7 @@ public class Plot implements Gridable, Clearable {
         );
     }
 
+    @Override
     public Pane getPane() {
         return pane;
     }
@@ -267,6 +390,7 @@ public class Plot implements Gridable, Clearable {
         return stage.getTitle();
     }
 
+    @Override
     public void clear() {
 
 

@@ -9,30 +9,44 @@ public class RTask {
     private SRunnable toRun;
     private boolean   running = false;
     private long      started;
+    private int       iteration;
     private Timer     timer   = new Timer();
     private TimerTask task;
 
+    /**
+     * Creates a repeating task to run at the given interval.
+     *
+     * @param interval Interval, in milliseconds
+     * @param toRun    Code to run at each interval
+     */
     public RTask(long interval, SRunnable toRun) {
         this.interval = interval;
         this.toRun = toRun;
     }
 
+    /**
+     * Start the timer to periodically run the task.
+     */
     public synchronized void start() {
 
         if (running) {
             return;
         }
-        started = System.currentTimeMillis();
+
+        started   = System.currentTimeMillis();
+        iteration = 0;
 
         task = new TimerTask() {
-            @Override
+
             public void run() {
                 try {
                     toRun.run();
                 } catch (Throwable e) {
                     System.err.printf("Exception encountered running repeat task: \"%s\"\n", e.getMessage());
                 }
+                iteration++;
             }
+
         };
 
         timer.scheduleAtFixedRate(task, 0, interval);
@@ -40,6 +54,9 @@ public class RTask {
 
     }
 
+    /**
+     * Stop the timer from running the task.
+     */
     public synchronized void stop() {
 
         if (!running) {
@@ -51,16 +68,40 @@ public class RTask {
 
     }
 
+    /**
+     * Is the task currently set to run?
+     *
+     * @return Running?
+     */
     public boolean isRunning() {
         return running;
     }
 
+    /**
+     * Returns the number of milliseconds that have elapsed since the task was started.
+     *
+     * @return Time running, in milliseconds
+     */
     public long getMSecFromStart() {
         return System.currentTimeMillis() - started;
     }
 
+    /**
+     * Returns the time that has elapsed since the task was started, in seconds.
+     *
+     * @return Time running, in seconds
+     */
     public double getSecFromStart() {
         return ((double) getMSecFromStart()) / 1000D;
+    }
+
+    /**
+     * Returns how many times the task has been run since the timer was last started.
+     *
+     * @return Run count
+     */
+    public int getCount() {
+        return iteration;
     }
 
 }
