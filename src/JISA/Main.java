@@ -1,6 +1,9 @@
 package JISA;
 
 import JISA.Addresses.InstrumentAddress;
+import JISA.Devices.LockIn;
+import JISA.Devices.SMU;
+import JISA.Devices.TController;
 import JISA.GUI.*;
 import JISA.VISA.VISA;
 import javafx.application.Platform;
@@ -14,7 +17,17 @@ public class Main {
         // Start the GUI thread
         GUI.startGUI();
 
+        ConfigGrid                    configGrid = new ConfigGrid("Instrument Connection");
+        InstrumentConfig<SMU>         smu1       = configGrid.addInstrument("SMU 1", SMU.class);
+        InstrumentConfig<SMU>         smu2       = configGrid.addInstrument("SMU 2", SMU.class);
+        InstrumentConfig<TController> tc         = configGrid.addInstrument("Temperature Control", TController.class);
+        InstrumentConfig<LockIn>      lock       = configGrid.addInstrument("Lock-In Amplifier", LockIn.class);
+        configGrid.setNumColumns(2);
+        configGrid.show();
+
+
         try {
+            System.in.read();
 
             // Ask the user if they want to perform a test
             boolean result = GUI.confirmWindow("JISA", "JISA Library", "JISA - William Wood - 2018\n\nPerform VISA test?");

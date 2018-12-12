@@ -115,6 +115,10 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
 
     }
 
+    public boolean isConnected() {
+        return instrument != null;
+    }
+
     public void apply() {
 
         String selected = (String) protChoice.getValue();
