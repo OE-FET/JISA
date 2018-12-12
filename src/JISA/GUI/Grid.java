@@ -11,10 +11,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToolBar;
 import javafx.scene.effect.DropShadow;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
@@ -149,6 +146,9 @@ public class Grid implements Gridable {
     public void addPane(Node toAdd) {
 
         pane.add(toAdd, c, r);
+
+        GridPane.setHgrow(toAdd, Priority.ALWAYS);
+        GridPane.setVgrow(toAdd, Priority.ALWAYS);
 
         c++;
         if (c >= nCols) {
