@@ -102,4 +102,17 @@ public class JFXWindow {
         return stage.getTitle();
     }
 
+    public void setExitOnClose(boolean close) {
+
+        if (close) {
+            stage.setOnCloseRequest((a) -> {
+                GUI.startGUI();
+                System.exit(0);
+            });
+        } else {
+            stage.setOnCloseRequest((a) -> {});
+        }
+
+    }
+
 }

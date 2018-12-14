@@ -17,10 +17,9 @@ import javafx.stage.Stage;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Plot implements Gridable, Clearable {
+public class Plot extends JFXWindow implements Gridable, Clearable {
 
     public  BorderPane                                             pane;
-    private Stage                                                  stage;
     private LinkedHashMap<Integer, XYChart.Series<Double, Double>> data     = new LinkedHashMap<>();
     private HashMap<Integer, Boolean>                              auto     = new HashMap<>();
     private ArrayList<HashMap<Double, Integer>>                    maps     = new ArrayList<>();
@@ -43,29 +42,18 @@ public class Plot implements Gridable, Clearable {
      */
     public Plot(String title, String xLabel, String yLabel) {
 
-        try {
+        super(title, "FXML/PlotWindow.fxml", true);
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("FXML/PlotWindow.fxml"));
-            loader.setController(this);
-            Parent root  = loader.load();
-            Scene  scene = new Scene(root);
-            GUI.runNow(() -> {
-                Stage stage = new Stage();
-                stage.setTitle(title);
-                stage.setScene(scene);
-                this.stage = stage;
-                chart.setStyle("-fx-background-color: white;");
-                xAxis.setLabel(xLabel);
-                yAxis.setLabel(yLabel);
-                chart.setTitle(title);
-                xAxis.setForceZeroInRange(false);
-                yAxis.setForceZeroInRange(false);
-                xAxis.setAnimated(false);
-                yAxis.setAnimated(false);
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        GUI.runNow(() -> {
+            chart.setStyle("-fx-background-color: white;");
+            xAxis.setLabel(xLabel);
+            yAxis.setLabel(yLabel);
+            chart.setTitle(title);
+            xAxis.setForceZeroInRange(false);
+            yAxis.setForceZeroInRange(false);
+            xAxis.setAnimated(false);
+            yAxis.setAnimated(false);
+        });
 
     }
 
@@ -162,6 +150,12 @@ public class Plot implements Gridable, Clearable {
     public void showMarkers(boolean show) {
         GUI.runNow(() -> {
             chart.setCreateSymbols(show);
+        });
+    }
+
+    public void showLegend(boolean show) {
+        GUI.runNow(()-> {
+            chart.setLegendVisible(show);
         });
     }
 
@@ -350,44 +344,9 @@ public class Plot implements Gridable, Clearable {
 
     }
 
-    /**
-     * Show the plot window.
-     */
-    public void show() {
-        Platform.runLater(() -> {
-                    stage.show();
-                }
-        );
-    }
-
-    /**
-     * Hide the plot window.
-     */
-    public void hide() {
-        Platform.runLater(() -> {
-                    stage.hide();
-                }
-        );
-    }
-
-    /**
-     * Close the plot window.
-     */
-    public void close() {
-        Platform.runLater(() -> {
-                    stage.close();
-                }
-        );
-    }
-
     @Override
     public Pane getPane() {
         return pane;
-    }
-
-    @Override
-    public String getTitle() {
-        return stage.getTitle();
     }
 
     @Override

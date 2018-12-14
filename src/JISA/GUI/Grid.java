@@ -18,7 +18,7 @@ import javafx.stage.Stage;
 
 import java.util.concurrent.Semaphore;
 
-public class Grid implements Gridable {
+public class Grid extends JFXWindow implements Gridable {
 
     public  GridPane   pane;
     public  BorderPane border;
@@ -29,30 +29,7 @@ public class Grid implements Gridable {
     private int        c       = 0;
 
     public Grid(String title) {
-
-        try {
-
-            FXMLLoader loader = new FXMLLoader(this.getClass().getResource("FXML/GridWindow.fxml"));
-            loader.setController(this);
-            Parent root  = loader.load();
-            Scene  scene = new Scene(root);
-
-            Semaphore semaphore = new Semaphore(0);
-
-            Platform.runLater(() -> {
-                Stage stage = new Stage();
-                stage.setTitle(title);
-                stage.setScene(scene);
-                this.stage = stage;
-                semaphore.release();
-            });
-
-            semaphore.acquire();
-
-        } catch (Exception e) {
-
-        }
-
+        super(title, "FXML/GridWindow.fxml", true);
     }
 
     public Grid(String title, Gridable... panels) {
@@ -158,30 +135,8 @@ public class Grid implements Gridable {
 
     }
 
-    public void show() {
-        Platform.runLater(() -> {
-            stage.show();
-        });
-    }
-
-    public void hide() {
-        Platform.runLater(() -> {
-            stage.hide();
-        });
-    }
-
-    public void close() {
-        Platform.runLater(() -> {
-            stage.close();
-        });
-    }
-
     public Pane getPane() {
         return border;
     }
 
-    @Override
-    public String getTitle() {
-        return stage.getTitle();
-    }
 }

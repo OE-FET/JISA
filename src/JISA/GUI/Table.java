@@ -18,32 +18,13 @@ import javafx.stage.Stage;
 import java.util.Arrays;
 import java.util.concurrent.Semaphore;
 
-public class Table implements Gridable, Clearable {
+public class Table extends JFXWindow implements Gridable, Clearable {
 
     public  TableView  table;
     public  BorderPane pane;
-    private Stage      stage;
 
     public Table(String title) {
-
-        try {
-
-            FXMLLoader loader = new FXMLLoader(this.getClass().getResource("FXML/TableWindow.fxml"));
-            loader.setController(this);
-            Parent root  = loader.load();
-            Scene  scene = new Scene(root);
-
-            GUI.runNow(() -> {
-                Stage stage = new Stage();
-                stage.setTitle(title);
-                stage.setScene(scene);
-                this.stage = stage;
-            });
-
-        } catch (Exception e) {
-
-        }
-
+        super(title, "FXML/TableWindow.fxml", true);
     }
 
     public Table(String title, ResultTable list) {
@@ -99,28 +80,8 @@ public class Table implements Gridable, Clearable {
 
     }
 
-    public void show() {
-        Platform.runLater(() -> stage.show()
-        );
-    }
-
-    public void hide() {
-        Platform.runLater(() -> stage.hide()
-        );
-    }
-
-    public void close() {
-        Platform.runLater(() -> stage.close()
-        );
-    }
-
     public Pane getPane() {
         return pane;
-    }
-
-    @Override
-    public String getTitle() {
-        return stage.getTitle();
     }
 
     @Override

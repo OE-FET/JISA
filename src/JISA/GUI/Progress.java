@@ -16,7 +16,7 @@ import javafx.util.Duration;
 
 import java.util.concurrent.Semaphore;
 
-public class Progress implements Gridable {
+public class Progress extends JFXWindow implements Gridable {
 
     public  Label       titleText;
     public  ProgressBar progressBar;
@@ -28,24 +28,7 @@ public class Progress implements Gridable {
 
     public Progress(String title) {
 
-        try {
-
-            FXMLLoader loader = new FXMLLoader(this.getClass().getResource("FXML/ProgressWindow.fxml"));
-            loader.setController(this);
-            Parent root  = loader.load();
-            Scene  scene = new Scene(root);
-
-            GUI.runNow(() -> {
-                Stage stage = new Stage();
-                stage.setTitle(title);
-                stage.setScene(scene);
-                setTitle(title);
-                this.stage = stage;
-            });
-
-        } catch (Exception e) {
-
-        }
+        super(title, "FXML/ProgressWindow.fxml", true);
 
     }
 
@@ -82,26 +65,8 @@ public class Progress implements Gridable {
         Platform.runLater(() -> statusText.setText(text));
     }
 
-    public void show() {
-        Platform.runLater(() -> stage.show());
-    }
-
-    public void hide() {
-        Platform.runLater(() -> stage.hide());
-    }
-
-    public void close() {
-        Platform.runLater(() -> {
-            stage.close();
-        });
-    }
-
     public Pane getPane() {
         return pane;
     }
 
-    @Override
-    public String getTitle() {
-        return titleText.getText();
-    }
 }
