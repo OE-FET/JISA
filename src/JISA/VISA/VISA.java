@@ -68,7 +68,7 @@ public class VISA {
             System.out.println("Nope.");
         }
 
-        if (drivers.size() == 0) {
+        if (drivers.isEmpty()) {
             Util.sleep(500);
             System.err.println("ERROR: Could not load any drivers!");
 
