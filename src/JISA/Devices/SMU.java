@@ -231,6 +231,8 @@ public abstract class SMU extends VISADevice {
     /**
      * Returns whether the SMU is set to automatically determine the source range to use.
      *
+     * @return Automatic?
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -481,6 +483,45 @@ public abstract class SMU extends VISADevice {
      */
     public IVPoint getIVPoint() throws DeviceException, IOException {
         return new IVPoint(getVoltage(), getCurrent());
+    }
+
+    /**
+     * Sets the value ranges for both voltage and current.
+     *
+     * @param voltageRange Range to use for voltage
+     * @param currentRange Range to use for current
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void setRanges(double voltageRange, double currentRange) throws DeviceException, IOException {
+        setVoltageRange(voltageRange);
+        setCurrentRange(currentRange);
+    }
+
+    /**
+     * Tells the SMU to use auto-ranging for both current and voltage.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void useAutoRanges() throws DeviceException, IOException {
+        useAutoVoltageRange();
+        useAutoCurrentRange();
+    }
+
+    /**
+     * Sets the limits (compliance values) for both voltage and current.
+     *
+     * @param voltageLimit Limit for voltage when not being sourced
+     * @param currentLimit Limit for current when not being sourced
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void setLimits(double voltageLimit, double currentLimit) throws DeviceException, IOException {
+        setVoltageLimit(voltageLimit);
+        setCurrentLimit(currentLimit);
     }
 
     /**

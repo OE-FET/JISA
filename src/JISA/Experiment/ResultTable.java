@@ -12,8 +12,20 @@ public abstract class ResultTable implements Iterable<Result> {
     protected ArrayList<OnUpdate>  onUpdate = new ArrayList<>();
     protected ArrayList<Clearable> toClear  = new ArrayList<>();
 
+    /**
+     * Sets the units for each column in the result table
+     *
+     * @param units Units
+     */
     public abstract void setUnits(String... units);
 
+    /**
+     * Returns the name of the column with the given number.
+     *
+     * @param i Column number
+     *
+     * @return Name of the column
+     */
     public abstract String getName(int i);
 
     public abstract String getUnits(int i);

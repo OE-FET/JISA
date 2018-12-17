@@ -1,5 +1,6 @@
 package JISA;
 
+import JISA.Control.ERunnable;
 import JISA.Devices.DeviceException;
 import JISA.VISA.VISAException;
 
@@ -8,21 +9,7 @@ import java.util.HashMap;
 
 public class Util {
 
-    public static void sleep(long msec) {
-        try {
-            Thread.sleep(msec);
-        } catch (Exception e) {}
-    }
-
-    public static boolean isBetween(double value, double min, double max) {
-        return value >= min && value <= max;
-    }
-
-    public static boolean isBetween(int value, int min, int max) {
-        return value >= min && value <= max;
-    }
-
-    public static void exceptionHandler(Exception e) {
+    private static ERunnable exHandler = (e) -> {
 
         ExType exceptionType = ExType.fromClass(e.getClass());
 
@@ -50,6 +37,28 @@ public class Util {
 
         System.exit(1);
 
+    };
+
+    public static void sleep(long msec) {
+        try {
+            Thread.sleep(msec);
+        } catch (Exception e) {}
+    }
+
+    public static boolean isBetween(double value, double min, double max) {
+        return value >= min && value <= max;
+    }
+
+    public static boolean isBetween(int value, int min, int max) {
+        return value >= min && value <= max;
+    }
+
+    public static void setExceptionHandler(ERunnable handler) {
+        exHandler = handler;
+    }
+
+    public static void exceptionHandler(Exception e) {
+        exHandler.run(e);
     }
 
     public static double[] makeLinearArray(double min, double max, int numSteps) {

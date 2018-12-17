@@ -131,7 +131,7 @@ public abstract class TController extends VISADevice {
     /**
      * Sets whether the PID values are being automatically controlled
      *
-     * @return Automatic?
+     * @param auto Automatic?
      *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
@@ -209,7 +209,7 @@ public abstract class TController extends VISADevice {
     public abstract double getDValue() throws IOException, DeviceException;
 
     /**
-     * Sets the target temperature and waits for it to be stably reached.
+     * Sets the target temperature and waits for it to be stably reached (within 1% for at least 1 minute).
      *
      * @param temperature Target temperature, in Kelvin
      *
@@ -245,7 +245,8 @@ public abstract class TController extends VISADevice {
     }
 
     /**
-     * Halts the current thread until the temperature has stabilised to the specified value within 1% for at least 10 seconds.
+     * Halts the current thread until the temperature has stabilised to the specified value within 1% for at least 1
+     * minute.
      *
      * @param temperature Target temperature, in Kelvin
      *
@@ -253,11 +254,12 @@ public abstract class TController extends VISADevice {
      * @throws DeviceException Upon compatibility error
      */
     public void waitForStableTemperature(double temperature) throws IOException, DeviceException {
-        waitForStableTemperature(temperature, 1.0, 10000);
+        waitForStableTemperature(temperature, 1.0, 60000);
     }
 
     /**
-     * Halts the current thread until the temperature has stabilised to the target value within 1% for at least 10 seconds.
+     * Halts the current thread until the temperature has stabilised to the target value within 1% for at least 1
+     * minute.
      *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error

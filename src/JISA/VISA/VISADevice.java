@@ -198,6 +198,8 @@ public class VISADevice {
     /**
      * Read a string from the device
      *
+     * @param attempts Number of failed attempts to read before throwing an exception
+     *
      * @return The string returned by the device
      *
      * @throws IOException Upon communications error
@@ -229,7 +231,7 @@ public class VISADevice {
      * @throws IOException Upon communications error
      */
     public synchronized double readDouble() throws IOException {
-        return Double.parseDouble(read().replace("\n","").replace("\r", "").trim());
+        return Double.parseDouble(read().replace("\n", "").replace("\r", "").trim());
     }
 
     /**
@@ -240,7 +242,7 @@ public class VISADevice {
      * @throws IOException Upon communications error
      */
     public synchronized int readInt() throws IOException {
-        return Integer.parseInt(read().replace("\n","").replace("\r", "").trim());
+        return Integer.parseInt(read().replace("\n", "").replace("\r", "").trim());
     }
 
     /**

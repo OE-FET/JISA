@@ -11,17 +11,55 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.Semaphore;
 
+/**
+ * Abstract class defining the standard interface for controller Multiple-Channel SMUs.
+ */
 public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
+    /**
+     * The default channel number to use for method calls that don't specify a channel number
+     */
+    protected int defaultChannel = 0;
+
+    /**
+     * Opens the MCSMU device at the specified address.
+     *
+     * @param address Address of instrument
+     *
+     * @throws IOException Upon communications error
+     */
     public MCSMU(InstrumentAddress address) throws IOException {
         super(address);
+    }
+
+    /**
+     * Sets the default channel to use when no channel number is specified in a method call.
+     *
+     * @param channel Channel number
+     *
+     * @throws DeviceException Upon an invalid channel number being specified
+     */
+    public void setDefaultChannel(int channel) throws DeviceException {
+        checkChannel(channel);
+        defaultChannel = channel;
+    }
+
+    /**
+     * Returns which channel is currently set as the default to use when none is specified in a method call.
+     *
+     * @return Default channel number
+     */
+    public int getDefaultChannel() {
+        return defaultChannel;
     }
 
     /**
      * Returns the voltage of the specified channel
      *
      * @param channel Channel number
+     *
      * @return Voltage, in Volts
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
@@ -29,136 +67,157 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
 
     /**
-     * Returns the voltage of the first channel
+     * Returns the voltage of the default channel
      *
      * @return Voltage, in Volts
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public double getVoltage() throws DeviceException, IOException {
-        return getVoltage(0);
+        return getVoltage(defaultChannel);
     }
 
     /**
      * Returns the current of the specified channel
      *
      * @param channel Channel number
+     *
      * @return Current, in Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public abstract double getCurrent(int channel) throws DeviceException, IOException;
 
     /**
-     * Returns the current of the first channel
+     * Returns the current of the default channel
      *
      * @return Current, in Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public double getCurrent() throws DeviceException, IOException {
-        return getCurrent(0);
+        return getCurrent(defaultChannel);
     }
 
     /**
-     * Sets the specified channel to source a the given voltage (when turned on)
+     * Sets the specified channel to source the given voltage (when turned on)
      *
      * @param channel Channel number
      * @param voltage Voltage to source, in Volts
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public abstract void setVoltage(int channel, double voltage) throws DeviceException, IOException;
 
     /**
-     * Sets the first channel to source a the given voltage (when turned on)
+     * Sets the default channel to source the given voltage (when turned on)
      *
      * @param voltage Voltage to source, in Volts
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public void setVoltage(double voltage) throws DeviceException, IOException {
-        setVoltage(0, voltage);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setVoltage(cn, voltage);
+        }
     }
 
     /**
-     * Sets the specified channel to source a the given current (when turned on)
+     * Sets the specified channel to source the given current (when turned on)
      *
      * @param channel Channel number
      * @param current Current to source, in Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public abstract void setCurrent(int channel, double current) throws DeviceException, IOException;
 
     /**
-     * Sets the first channel to source a the given current (when turned on)
+     * Sets the default channel to source the given current (when turned on)
      *
      * @param current Current to source, in Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public void setCurrent(double current) throws DeviceException, IOException {
-        setCurrent(0, current);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setCurrent(cn, current);
+        }
     }
 
     /**
      * Enables output on the specified channel
      *
      * @param channel Channel number
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public abstract void turnOn(int channel) throws DeviceException, IOException;
 
     /**
-     * Enables output on the first channel
+     * Enables output on all channels
      *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public void turnOn() throws DeviceException, IOException {
-        turnOn(0);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            turnOn(cn);
+        }
     }
 
     /**
      * Disables output on the specified channel
      *
      * @param channel Channel number
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public abstract void turnOff(int channel) throws DeviceException, IOException;
 
     /**
-     * Disables output on the first channel
+     * Disables output on all channels
      *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public void turnOff() throws DeviceException, IOException {
-        turnOff(0);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            turnOff(cn);
+        }
     }
 
     /**
      * Returns whether the specified channel currently has its output enabled
      *
      * @param channel Channel number
+     *
      * @return Is it enabled?
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public abstract boolean isOn(int channel) throws DeviceException, IOException;
 
     /**
-     * Returns whether the first channel currently has its output enabled
+     * Returns whether the default channel currently has its output enabled
      *
      * @return Is it enabled?
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public boolean isOn() throws DeviceException, IOException {
-        return isOn(0);
+        return isOn(defaultChannel);
     }
 
     /**
@@ -166,41 +225,48 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      *
      * @param channel Channel number
      * @param source  VOLTAGE or CURRENT
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public abstract void setSource(int channel, Source source) throws DeviceException, IOException;
 
     /**
-     * Sets the source mode of the first channel
+     * Sets the source mode of all channels
      *
      * @param source VOLTAGE or CURRENT
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public void setSource(Source source) throws DeviceException, IOException {
-        setSource(0, source);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setSource(cn, source);
+        }
     }
 
     /**
      * Returns the source mode of the specified channel
      *
      * @param channel Channel number
+     *
      * @return Source mode (VOLTAGE or CURRENT)
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public abstract Source getSource(int channel) throws DeviceException, IOException;
 
     /**
-     * Returns the source mode of the first channel
+     * Returns the source mode of the default channel
      *
      * @return Source mode (VOLTAGE or CURRENT)
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public Source getSource() throws DeviceException, IOException {
-        return getSource(0);
+        return getSource(defaultChannel);
     }
 
     /**
@@ -208,62 +274,72 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      *
      * @param channel Channel number
      * @param level   Volts or Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public abstract void setBias(int channel, double level) throws DeviceException, IOException;
 
     /**
-     * Sets the level of whichever quantity is being sourced on the first channel
+     * Sets the level of whichever quantity is being sourced on all channels
      *
      * @param level Volts or Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public void setBias(double level) throws DeviceException, IOException {
-        setBias(0, level);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setBias(cn, level);
+        }
     }
 
     /**
      * Returns the value of whichever quantity is being sourced on the specified channel
      *
      * @param channel Channel number
+     *
      * @return Voltage or Current, in Volts or Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public abstract double getSourceValue(int channel) throws DeviceException, IOException;
 
     /**
-     * Returns the value of whichever quantity is being sourced on the first channel
+     * Returns the value of whichever quantity is being sourced on the default channel
      *
      * @return Voltage or Current, in Volts or Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public double getSourceValue() throws DeviceException, IOException {
-        return getSourceValue(0);
+        return getSourceValue(defaultChannel);
     }
 
     /**
      * Returns the value of whichever quantity is being measured on the specified channel
      *
      * @param channel Channel number
+     *
      * @return Voltage or Current, in Volts or Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public abstract double getMeasureValue(int channel) throws DeviceException, IOException;
 
     /**
-     * Returns the value of whichever quantity is being measured on the first channel
+     * Returns the value of whichever quantity is being measured on the default channel
      *
      * @return Voltage or Current, in Volts or Amps
+     *
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
     public double getMeasureValue() throws DeviceException, IOException {
-        return getMeasureValue(0);
+        return getMeasureValue(defaultChannel);
     }
 
     /**
@@ -279,6 +355,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      *
      * @param channel    Channel number
      * @param fourProbes Should it use all four probes?
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -286,248 +363,751 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
     /**
      * Sets whether the SMU should apply source using FORCE probes and measure using separate SENSE probes or whether is should
-     * do both with the FORCE probes on the first channel.
+     * do both with the FORCE probes on all channels.
      *
      * @param fourProbes Should it use all four probes?
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
     public void useFourProbe(boolean fourProbes) throws DeviceException, IOException {
-        useFourProbe(0, fourProbes);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            useFourProbe(cn, fourProbes);
+        }
     }
 
     /**
      * Returns whether the device is currently configured to use all four probes on the specified channel.
      *
      * @param channel Channel number
+     *
      * @return Are all probes to be used?
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
     public abstract boolean isUsingFourProbe(int channel) throws DeviceException, IOException;
 
     /**
-     * Returns whether the device is currently configured to use all four probes on the first channel.
+     * Returns whether the device is currently configured to use all four probes on the default channel.
      *
      * @return Are all probes to be used?
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
     public boolean isUsingFourProbe() throws DeviceException, IOException {
-        return isUsingFourProbe(0);
-    }
-
-    public abstract void setAverageMode(int channel, AMode mode) throws DeviceException, IOException;
-
-    public void setAverageMode(AMode mode) throws DeviceException, IOException {
-        setAverageMode(0, mode);
-    }
-
-    public abstract void setAverageCount(int channel, int count) throws DeviceException, IOException;
-
-    public void setAverageCount(int count) throws DeviceException, IOException {
-        setAverageCount(0, count);
-    }
-
-    public abstract int getAverageCount(int channel) throws DeviceException, IOException;
-
-    public int getAverageCount() throws DeviceException, IOException {
-        return getAverageCount(0);
-    }
-
-    public abstract AMode getAverageMode(int channel) throws DeviceException, IOException;
-
-    public AMode getAverageMode() throws DeviceException, IOException {
-        return getAverageMode(0);
+        return isUsingFourProbe(defaultChannel);
     }
 
     /**
-     * Sets the range of allowed values for the quantity being sourced by the SMU on the given channel.
-     * A value of n indicates a range of -n to +n.
+     * Sets which type of averaging the SMU should use when making a measurement on the specified channel.
+     *
+     * @param channel Channel number
+     * @param mode    Averaging mode
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void setAverageMode(int channel, AMode mode) throws DeviceException, IOException;
+
+    /**
+     * Sets which type of averaging the SMU should use when making a measurement on all channels.
+     *
+     * @param mode Averaging mode
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void setAverageMode(AMode mode) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setAverageMode(cn, mode);
+        }
+    }
+
+    /**
+     * Sets how many measurements to use when averaging on the specified channel.
+     *
+     * @param channel Channel number
+     * @param count   Averaging count
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void setAverageCount(int channel, int count) throws DeviceException, IOException;
+
+    /**
+     * Sets how many measurements to use when averaging on all channels.
+     *
+     * @param count Averaging count
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void setAverageCount(int count) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setAverageCount(cn, count);
+        }
+    }
+
+    /**
+     * Returns how many measurements the SMU is using to perform its averaging on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Averaging count
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract int getAverageCount(int channel) throws DeviceException, IOException;
+
+    /**
+     * Returns how many measurements the SMU is using to perform its averaging on the default channel.
+     *
+     * @return Averaging count
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public int getAverageCount() throws DeviceException, IOException {
+        return getAverageCount(defaultChannel);
+    }
+
+    /**
+     * Returns which averaging mode the SMU is currently using for measurements on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Averaging mode
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract AMode getAverageMode(int channel) throws DeviceException, IOException;
+
+    /**
+     * Returns which averaging mode the SMU is currently using for measurements on the default channel.
+     *
+     * @return Averaging mode
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public AMode getAverageMode() throws DeviceException, IOException {
+        return getAverageMode(defaultChannel);
+    }
+
+    /**
+     * Sets the range (and thus precision) to use for the sourced quantity on the given channel.
      *
      * @param channel Channel number
      * @param value   Range value, in Volts or Amps
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
     public abstract void setSourceRange(int channel, double value) throws DeviceException, IOException;
 
+    /**
+     * Sets the range (and thus precision) to use for the sourced quantity on all channels.
+     *
+     * @param value Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public void setSourceRange(double value) throws DeviceException, IOException {
-        setSourceRange(0, value);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setSourceRange(cn, value);
+        }
     }
 
     /**
-     * Returns the range of allowed values for the quantity being sourced by the SMU on the given channel.
-     * A value of n indicates a range of -n to +n.
+     * Returns the range being used for the sourced quantity on the specified channel.
      *
      * @param channel Channel number
+     *
      * @return Range value, in Volts or Amps
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
     public abstract double getSourceRange(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns the range being used for the sourced quantity on the default channel.
+     *
+     * @return Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public double getSourceRange() throws DeviceException, IOException {
-        return getSourceRange(0);
-    }
-
-    public abstract void useAutoSourceRange(int channel) throws DeviceException, IOException;
-
-    public void useAutoSourceRange() throws DeviceException, IOException {
-        useAutoSourceRange(0);
-    }
-
-    public abstract boolean isSourceRangeAuto(int channel) throws DeviceException, IOException;
-
-    public boolean isSourceRangeAuto() throws DeviceException, IOException {
-        return isSourceRangeAuto(0);
+        return getSourceRange(defaultChannel);
     }
 
     /**
-     * Sets the range of allowed values for the quantity being measured by the SMU on the given channel.
+     * Tells the SMU to use auto-ranging for the sourced quantity on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract void useAutoSourceRange(int channel) throws DeviceException, IOException;
+
+    /**
+     * Tells the SMU to use auto-ranging for the sourced quantity on all channels.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void useAutoSourceRange() throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            useAutoSourceRange(cn);
+        }
+    }
+
+    /**
+     * Returns whether auto-ranging is being used for the source quantity on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Auto-ranging in use?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public abstract boolean isSourceRangeAuto(int channel) throws DeviceException, IOException;
+
+    /**
+     * Returns whether auto-ranging is being used for the source quantity on the default channel.
+     *
+     * @return Auto-ranging in use?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public boolean isSourceRangeAuto() throws DeviceException, IOException {
+        return isSourceRangeAuto(defaultChannel);
+    }
+
+    /**
+     * Sets the range (and thus precision) to use for the measured quantity on the given channel.
      *
      * @param channel Channel number
      * @param value   Range value, in Volts or Amps
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
     public abstract void setMeasureRange(int channel, double value) throws DeviceException, IOException;
 
+    /**
+     * Sets the range (and thus precision) to use for the measured quantity on all channels.
+     *
+     * @param value Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public void setMeasureRange(double value) throws DeviceException, IOException {
-        setMeasureRange(0, value);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setMeasureRange(cn, value);
+        }
     }
 
-
     /**
-     * Returns the range of allowed values for the quantity being measured by the SMU on the given channel.
+     * Returns the range being used for the measured quantity on the specified channel.
      *
      * @param channel Channel number
+     *
      * @return Range value, in Volts or Amps
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
     public abstract double getMeasureRange(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns the range being used for the measured quantity on the default channel.
+     *
+     * @return Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public double getMeasureRange() throws DeviceException, IOException {
-        return getMeasureRange(0);
+        return getMeasureRange(defaultChannel);
     }
 
+    /**
+     * Tells the SMU to use auto-ranging for the measured quantity on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void useAutoMeasureRange(int channel) throws DeviceException, IOException;
 
+    /**
+     * Tells the SMU to use auto-ranging for the measured quantity on all channels.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public void useAutoMeasureRange() throws DeviceException, IOException {
-        useAutoMeasureRange(0);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            useAutoMeasureRange(cn);
+        }
     }
 
+    /**
+     * Returns whether auto-ranging is being used for the measured quantity on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Auto-ranging in use?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract boolean isMeasureRangeAuto(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns whether auto-ranging is being used for the measured quantity on the default channel.
+     *
+     * @return Auto-ranging in use?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public boolean isMeasureRangeAuto() throws DeviceException, IOException {
-        return isMeasureRangeAuto(0);
+        return isMeasureRangeAuto(defaultChannel);
     }
 
+    /**
+     * Sets the range (and thus precision) to use for voltage values on the specified channel.
+     *
+     * @param channel Channel number
+     * @param value   Range, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void setVoltageRange(int channel, double value) throws DeviceException, IOException;
 
+    /**
+     * Sets the range (and thus precision) to use for voltage values on all channels.
+     *
+     * @param value Range, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public void setVoltageRange(double value) throws DeviceException, IOException {
-        setVoltageRange(0, value);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setVoltageRange(cn, value);
+        }
     }
 
+    /**
+     * Returns the range being used for voltage values on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Range, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract double getVoltageRange(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns the range being used for voltage values on the default channel.
+     *
+     * @return Range, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public double getVoltageRange() throws DeviceException, IOException {
-        return getVoltageRange(0);
+        return getVoltageRange(defaultChannel);
     }
 
+    /**
+     * Tells the SMU to use auto-ranging for voltage values on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void useAutoVoltageRange(int channel) throws DeviceException, IOException;
 
+    /**
+     * Tells the SMU to use auto-ranging for voltage values on all channels.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public void useAutoVoltageRange() throws DeviceException, IOException {
-        useAutoMeasureRange(0);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            useAutoMeasureRange(cn);
+        }
     }
 
+    /**
+     * Returns whether auto-ranging is being used for voltage values on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Auto-ranging in use?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract boolean isVoltageRangeAuto(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns whether auto-ranging is being used for voltage values on the default channel.
+     *
+     * @return Auto-ranging in use?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public boolean isVoltageRangeAuto() throws DeviceException, IOException {
-        return isMeasureRangeAuto(0);
+        return isMeasureRangeAuto(defaultChannel);
     }
 
+    /**
+     * Sets the range (and thus precision) to use for current values on the specified channel.
+     *
+     * @param channel Channel number
+     * @param value   Range, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void setCurrentRange(int channel, double value) throws DeviceException, IOException;
 
+    /**
+     * Sets the range (and thus precision) to use for current values on all channels.
+     *
+     * @param value Range, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public void setCurrentRange(double value) throws DeviceException, IOException {
-        setCurrentRange(0, value);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setCurrentRange(cn, value);
+        }
     }
 
+    /**
+     * Returns the range being used for current values on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Range, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract double getCurrentRange(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns the range being used for voltage values on the default channel.
+     *
+     * @return Range, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public double getCurrentRange() throws DeviceException, IOException {
-        return getCurrentRange(0);
+        return getCurrentRange(defaultChannel);
     }
 
+    /**
+     * Tells the SMU to use auto-ranging for current values on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void useAutoCurrentRange(int channel) throws DeviceException, IOException;
 
+    /**
+     * Tells the SMU to use auto-ranging for voltage values on all channels.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public void useAutoCurrentRange() throws DeviceException, IOException {
-        useAutoMeasureRange(0);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            useAutoMeasureRange(cn);
+        }
     }
 
+    /**
+     * Returns whether auto-ranging is being used for current values on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Auto-ranging in use?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract boolean isCurrentRangeAuto(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns whether auto-ranging is being used for voltage values on the default channel.
+     *
+     * @return Auto-ranging in use?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public boolean isCurrentRangeAuto() throws DeviceException, IOException {
-        return isMeasureRangeAuto(0);
+        return isMeasureRangeAuto(defaultChannel);
     }
 
+    /**
+     * Sets the limit (compliance) on whichever quantity is not being sourced on the given channel.
+     *
+     * @param channel Channel number
+     * @param value   Limit, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void setOutputLimit(int channel, double value) throws DeviceException, IOException;
 
+    /**
+     * Sets the limit (compliance) on whichever quantity is not being sourced on all channels.
+     *
+     * @param value Limit, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public void setOutputLimit(double value) throws DeviceException, IOException {
-        setOutputLimit(0, value);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setOutputLimit(cn, value);
+        }
     }
 
+    /**
+     * Returns the limit (compliance) on whichever quantity is not being sourced on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Limit, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract double getOutputLimit(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns the limit (compliance) on whichever quantity is not being sourced on the default channel.
+     *
+     * @return Limit, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public double getOutputLimit() throws DeviceException, IOException {
-        return getOutputLimit(0);
+        return getOutputLimit(defaultChannel);
     }
 
+    /**
+     * Sets the limit (compliance) on voltage values when not being sourced on the specified channel.
+     *
+     * @param channel Channel number
+     * @param value   Limit, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void setVoltageLimit(int channel, double value) throws DeviceException, IOException;
 
+    /**
+     * Sets the limit (compliance) on voltage when not being sourced on all channels.
+     *
+     * @param value Limit, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public void setVoltageLimit(double value) throws DeviceException, IOException {
-        setVoltageLimit(0, value);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setVoltageLimit(cn, value);
+        }
     }
 
+    /**
+     * Returns the limit (compliance) on voltage when not being sourced on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Limit, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract double getVoltageLimit(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns the limit (compliance) on voltage when not being sourced on the default channel.
+     *
+     * @return Limit, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public double getVoltageLimit() throws DeviceException, IOException {
-        return getVoltageLimit(0);
+        return getVoltageLimit(defaultChannel);
     }
 
+    /**
+     * Sets the limit (compliance) on current when not being sourced on the specified channel.
+     *
+     * @param channel Channel number
+     * @param value   Limit, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void setCurrentLimit(int channel, double value) throws DeviceException, IOException;
 
+    /**
+     * Sets the limit (compliance) on current when not being sourced on the all channels.
+     *
+     * @param value Limit, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public void setCurrentLimit(double value) throws DeviceException, IOException {
-        setCurrentLimit(0, value);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setCurrentLimit(cn, value);
+        }
     }
 
+    /**
+     * Returns the limit (compliance) on current when not being sourced on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Limit, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract double getCurrentLimit(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns the limit (compliance) on current when not being sourced on the default channel.
+     *
+     * @return Limit, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public double getCurrentLimit() throws DeviceException, IOException {
-        return getCurrentLimit(0);
+        return getCurrentLimit(defaultChannel);
     }
 
+    /**
+     * Sets the integration time to use for measurements on the specified channel.
+     *
+     * @param channel Channel number
+     * @param time    Integration time, in seconds
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract void setIntegrationTime(int channel, double time) throws DeviceException, IOException;
 
+    /**
+     * Sets the integration time to use for measurements on all channels.
+     *
+     * @param time Integration time, in seconds
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public void setIntegrationTime(double time) throws DeviceException, IOException {
-        setIntegrationTime(0, time);
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setIntegrationTime(cn, time);
+        }
     }
 
+    /**
+     * Returns the integration time used for measurements on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Integration time, in seconds
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public abstract double getIntegrationTime(int channel) throws DeviceException, IOException;
 
+    /**
+     * Returns the integration time used for measurements on the default channel.
+     *
+     * @return Integration time, in seconds
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public double getIntegrationTime() throws DeviceException, IOException {
-        return getIntegrationTime(0);
+        return getIntegrationTime(defaultChannel);
     }
 
+    /**
+     * Returns a combined voltage and current measurement from the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @return Voltage and current
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public IVPoint getIVPoint(int channel) throws DeviceException, IOException {
         return new IVPoint(getVoltage(channel), getCurrent(channel));
     }
 
+    /**
+     * Returns a combined voltage and current measurement from the default channel.
+     *
+     * @return Voltage and current
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public IVPoint getIVPoint() throws DeviceException, IOException {
-        return getIVPoint(0);
+        return getIVPoint(defaultChannel);
     }
 
+    /**
+     * Returns combined voltage and current measurements for each channel.
+     *
+     * @return Voltages and currents
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
     public MCIVPoint getMCIVPoint() throws DeviceException, IOException {
         MCIVPoint point = new MCIVPoint();
 
@@ -540,10 +1120,97 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     }
 
     /**
+     * Sets both the voltage and current ranges to use on the specified channel.
+     *
+     * @param channel      Channel number
+     * @param voltageRange Voltage range, in Volts
+     * @param currentRange Current range, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void setRanges(int channel, double voltageRange, double currentRange) throws DeviceException, IOException {
+        setVoltageRange(channel, voltageRange);
+        setCurrentRange(channel, currentRange);
+    }
+
+    /**
+     * Sets both the voltage and current ranges to use on all channels.
+     *
+     * @param voltageRange Voltage range, in Volts
+     * @param currentRange Current range, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void setRanges(double voltageRange, double currentRange) throws DeviceException, IOException {
+        for (int i = 0; i < getNumChannels(); i++) {
+            setRanges(i, voltageRange, currentRange);
+        }
+    }
+
+    /**
+     * Tells the SMU to use auto-ranging for both voltage and current on the specified channel.
+     *
+     * @param channel Channel number
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void useAutoRanges(int channel) throws DeviceException, IOException {
+        useAutoVoltageRange(channel);
+        useAutoCurrentRange(channel);
+    }
+
+    /**
+     * Tells the SMU to use auto-ranging for both voltage and current on all channels.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void useAutoRanges() throws DeviceException, IOException {
+        for (int i = 0; i < getNumChannels(); i++) {
+            useAutoRanges(i);
+        }
+    }
+
+    /**
+     * Sets the limits for both voltage and current (when not being sourced) on the specified channel.
+     *
+     * @param channel      Channel number
+     * @param voltageLimit Voltage limit, in Volts
+     * @param currentLimit Current limit, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void setLimits(int channel, double voltageLimit, double currentLimit) throws DeviceException, IOException {
+        setVoltageLimit(channel, voltageLimit);
+        setCurrentLimit(channel, currentLimit);
+    }
+
+    /**
+     * Sets the limits for both voltage and current (when not being sourced) on all channels.
+     *
+     * @param voltageLimit Voltage limit, in Volts
+     * @param currentLimit Current limit, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void setLimits(double voltageLimit, double currentLimit) throws DeviceException, IOException {
+        for (int i = 0; i < getNumChannels(); i++) {
+            setLimits(i, voltageLimit, currentLimit);
+        }
+    }
+
+    /**
      * Returns a virtual SMU object to control the specified channel of the MCSMU
      *
      * @param channel Channel number
+     *
      * @return Virtual SMU
+     *
      * @throws DeviceException If channel does not exist
      */
     public SMU getChannel(int channel) throws DeviceException {
@@ -570,7 +1237,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @param numSteps  Number of steps in sweep
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
+     *
      * @return Array of MCIVPoint objects containing I-V data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -591,7 +1260,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate  Method to run each time a new measurement is completed
+     *
      * @return Array of MCIVPoint objects containing I-V data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -609,7 +1280,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     }
 
     public IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
-        return doLinearSweep(0, source, min, max, numSteps, delay, symmetric, onUpdate);
+        return doLinearSweep(defaultChannel, source, min, max, numSteps, delay, symmetric, onUpdate);
     }
 
     /**
@@ -624,7 +1295,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate  Method ot run each time a new measurement is completed
+     *
      * @return Array of MCIVPoint objects containing V-I data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -642,7 +1315,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     }
 
     public IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
-        return doLogarithmicSweep(0, source, min, max, numSteps, delay, symmetric, onUpdate);
+        return doLogarithmicSweep(defaultChannel, source, min, max, numSteps, delay, symmetric, onUpdate);
     }
 
     /**
@@ -655,7 +1328,9 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
      * @param symmetric Should we sweep back to starting point after sweeping forwards?
      * @param onUpdate  Method ot run each time a new measurement is completed
+     *
      * @return Array of MCIVPoint objects containing V-I data points
+     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -696,7 +1371,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
 
     public IVPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
-        return doSweep(0, source, values, delay, symmetric, onUpdate);
+        return doSweep(defaultChannel, source, values, delay, symmetric, onUpdate);
     }
 
     protected void checkChannel(int channel) throws DeviceException {
@@ -760,7 +1435,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      */
     public Sweep createNestedSweep() {
 
-        Sweep sweep = new Sweep() {
+        return new Sweep() {
 
             private ArrayList<MCIVPoint> results = new ArrayList<>();
             private Updater updater;
@@ -807,13 +1482,11 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
         };
 
-        return sweep;
-
     }
 
     public Sweep createComboSweep() {
 
-        Sweep sweep = new Sweep() {
+        return new Sweep() {
 
             private ArrayList<MCIVPoint> results = new ArrayList<>();
             private Updater updater;
@@ -870,8 +1543,6 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
             }
 
         };
-
-        return sweep;
 
     }
 
