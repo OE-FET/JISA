@@ -64,27 +64,21 @@ public class JFXWindow {
      * Shows the window.
      */
     public void show() {
-        GUI.runNow(() -> {
-            stage.show();
-        });
+        GUI.runNow(() -> stage.show());
     }
 
     /**
      * Hides the window
      */
     public void hide() {
-        GUI.runNow(() -> {
-            stage.hide();
-        });
+        GUI.runNow(() -> stage.hide());
     }
 
     /**
      * Closes the window
      */
     public void close() {
-        GUI.runNow(() -> {
-            stage.close();
-        });
+        GUI.runNow(() -> stage.close());
     }
 
     /**
@@ -93,9 +87,7 @@ public class JFXWindow {
      * @param flag Maximised?
      */
     public void setMaximised(boolean flag) {
-        GUI.runNow(() -> {
-            stage.setMaximized(flag);
-        });
+        GUI.runNow(() -> stage.setMaximized(flag));
     }
 
     public String getTitle() {
@@ -106,7 +98,7 @@ public class JFXWindow {
 
         if (close) {
             stage.setOnCloseRequest((a) -> {
-                GUI.startGUI();
+                GUI.stopGUI();
                 System.exit(0);
             });
         } else {

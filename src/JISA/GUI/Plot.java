@@ -148,33 +148,25 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
      * @param show Show markers?
      */
     public void showMarkers(boolean show) {
-        GUI.runNow(() -> {
-            chart.setCreateSymbols(show);
-        });
+        GUI.runNow(() -> chart.setCreateSymbols(show));
     }
 
     public void showLegend(boolean show) {
-        GUI.runNow(()-> {
-            chart.setLegendVisible(show);
-        });
+        GUI.runNow(()-> chart.setLegendVisible(show));
     }
 
     /**
      * Sets the x-axis to automatically choose its bounds.
      */
     public void autoXLimit() {
-        Platform.runLater(() -> {
-            xAxis.setAutoRanging(true);
-        });
+        Platform.runLater(() -> xAxis.setAutoRanging(true));
     }
 
     /**
      * Sets the y-axis to automatically choose its bounds.
      */
     public void autoYLimit() {
-        Platform.runLater(() -> {
-            yAxis.setAutoRanging(true);
-        });
+        Platform.runLater(() -> yAxis.setAutoRanging(true));
     }
 
     /**
@@ -205,9 +197,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
             addPoint(series, row.get(xData), row.get(yData));
         }
 
-        list.addOnUpdate((r) -> {
-            addPoint(series, r.get(xData), r.get(yData));
-        });
+        list.addOnUpdate((r) -> addPoint(series, r.get(xData), r.get(yData)));
 
         list.addClearable(this);
 
