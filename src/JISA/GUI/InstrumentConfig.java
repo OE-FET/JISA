@@ -84,9 +84,14 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
 
     public void updateDrivers() {
 
-        Reflections      reflections = new Reflections("JISA");
-        Set              drivers     = reflections.getSubTypesOf(deviceType);
-        ArrayList<Class> list        = new ArrayList<Class>(drivers);
+        Reflections reflections = new Reflections("JISA");
+        Set         drivers     = reflections.getSubTypesOf(deviceType);
+
+        if (!Modifier.isAbstract(deviceType.getModifiers())) {
+            drivers.add(deviceType);
+        }
+
+        ArrayList<Class> list = new ArrayList<Class>(drivers);
 
         driverChoice.getItems().clear();
         possibleDrivers.clear();
