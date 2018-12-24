@@ -272,7 +272,7 @@ public class Fields extends JFXWindow implements Gridable {
      *
      * @return SetGettable to set and get the selected value, represented as an integer (0 = first option, 1 = second option etc)
      */
-    public SetGettable<Integer> addChoice(String name, String[] options) {
+    public SetGettable<Integer> addChoice(String name, String... options) {
 
         HBox box = new HBox();
         box.setSpacing(15);
