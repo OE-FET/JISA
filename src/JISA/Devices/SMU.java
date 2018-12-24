@@ -179,6 +179,20 @@ public abstract class SMU extends VISADevice {
     public abstract void setAverageCount(int count) throws DeviceException, IOException;
 
     /**
+     * Sets both the averaging mode and count together.
+     *
+     * @param mode  Averaging mode
+     * @param count Averaging count
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void setAveraging(AMode mode, int count) throws DeviceException, IOException {
+        setAverageMode(mode);
+        setAverageCount(count);
+    }
+
+    /**
      * Returns the averaging mode of the SMU.
      *
      * @return Mode being used

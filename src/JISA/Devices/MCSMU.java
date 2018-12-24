@@ -450,6 +450,37 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         }
     }
 
+
+    /**
+     * Sets both the averaging mode and count together for the specified channel.
+     *
+     * @param channel Channel number
+     * @param mode    Averaging mode
+     * @param count   Averaging count
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void setAveraging(int channel, AMode mode, int count) throws DeviceException, IOException {
+        setAverageMode(channel, mode);
+        setAverageCount(channel, count);
+    }
+
+    /**
+     * Sets both the averaging mode and count together for all channels.
+     *
+     * @param mode  Averaging mode
+     * @param count Averaging count
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    public void setAveraging(AMode mode, int count) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setAveraging(cn, mode, count);
+        }
+    }
+
     /**
      * Returns how many measurements the SMU is using to perform its averaging on the specified channel.
      *
