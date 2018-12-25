@@ -40,7 +40,7 @@ public class K2450 extends SMU {
     private static final String C_QUERY_NPLC            = ":SENS:%s:NPLC?";
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
-    private static final String C_QUERY_LFR             = "SYS:LFR?";
+    private static final String C_QUERY_LFR             = ":SYST:LFR?";
     private final        double LINE_FREQUENCY;
 
     // == FILTERS ======================================================================================================

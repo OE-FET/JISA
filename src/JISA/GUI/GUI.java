@@ -33,26 +33,71 @@ public class GUI extends Application {
     private static File      file;
     private static Semaphore s;
 
+    /**
+     * Displays an error dialogue box, halting the thread until the user closes it.
+     *
+     * @param title  Window title
+     * @param header Header text
+     * @param text   Message text
+     * @param width  Width of the window, in pixels
+     */
     public static void errorAlert(String title, String header, String text, double width) {
         alert(Alert.AlertType.ERROR, title, header, text, width);
     }
 
+    /**
+     * Displays an information dialogue box, halting the thread until the user closes it.
+     *
+     * @param title  Window title
+     * @param header Header text
+     * @param text   Message text
+     * @param width  Width of the window, in pixels
+     */
     public static void infoAlert(String title, String header, String text, double width) {
         alert(Alert.AlertType.INFORMATION, title, header, text, width);
     }
 
+    /**
+     * Displays a warning dialogue box, halting the thread until the user closes it.
+     *
+     * @param title  Window title
+     * @param header Header text
+     * @param text   Message text
+     */
     public static void warningAlert(String title, String header, String text) {
         alert(Alert.AlertType.WARNING, title, header, text);
     }
 
+    /**
+     * Displays an error dialogue box, halting the thread until the user closes it.
+     *
+     * @param title  Window title
+     * @param header Header text
+     * @param text   Message text
+     */
     public static void errorAlert(String title, String header, String text) {
         alert(Alert.AlertType.ERROR, title, header, text);
     }
 
+    /**
+     * Displays an information dialogue box, halting the thread until the user closes it.
+     *
+     * @param title  Window title
+     * @param header Header text
+     * @param text   Message text
+     */
     public static void infoAlert(String title, String header, String text) {
         alert(Alert.AlertType.INFORMATION, title, header, text);
     }
 
+    /**
+     * Displays a warning dialogue box, halting the thread until the user closes it.
+     *
+     * @param title  Window title
+     * @param header Header text
+     * @param text   Message text
+     * @param width  Width of the window, in pixels
+     */
     public static void warningAlert(String title, String header, String text, double width) {
         alert(Alert.AlertType.WARNING, title, header, text, width);
     }
@@ -73,6 +118,11 @@ public class GUI extends Application {
         });
     }
 
+    /**
+     * Opens a file-select dialogue box for choosing a file path to write to.
+     *
+     * @return Selected file path, null if cancelled
+     */
     public static String saveFileSelect() {
 
         AtomicReference<File> file = new AtomicReference<>();
@@ -86,6 +136,11 @@ public class GUI extends Application {
 
     }
 
+    /**
+     * Opens a file-select dialogue box for choosing an already existing file to open.
+     *
+     * @return Selected file path, null if cancelled
+     */
     public static String openFileSelect() {
 
         AtomicReference<File> file = new AtomicReference<>();
@@ -99,6 +154,15 @@ public class GUI extends Application {
 
     }
 
+    /**
+     * Opens a confirmation dialogue, returning the users response as a boolean.
+     *
+     * @param title  Window title
+     * @param header Header text
+     * @param text   Message text
+     *
+     * @return Boolean result, true for okay, false for cancel
+     */
     public static boolean confirmWindow(String title, String header, String text) {
 
         AtomicReference<Optional<ButtonType>> response = new AtomicReference<>();
@@ -114,6 +178,16 @@ public class GUI extends Application {
 
     }
 
+    /**
+     * Opens a dialogue box with text-boxes for user-input, returning the user-input values as an array of Strings.
+     *
+     * @param title   Window title
+     * @param header  Header text
+     * @param message Message text
+     * @param fields  Names of the input-fields
+     *
+     * @return Array of input values
+     */
     public static String[] inputWindow(String title, String header, String message, String... fields) {
 
         // Reference to take in returned value from the dialog.
@@ -206,6 +280,11 @@ public class GUI extends Application {
 
     }
 
+    /**
+     * Opens a window listing all instruments detected by VISA etc, allowing the user to select one.
+     *
+     * @return Address object of the selected instrument
+     */
     public static InstrumentAddress browseVISA() {
 
         AtomicReference<InstrumentAddress> ref       = new AtomicReference<>();
@@ -241,6 +320,9 @@ public class GUI extends Application {
     }
 
 
+    /**
+     * Starts the GUI thread so that GUI elements can be used.
+     */
     public static void startGUI() {
 
         s = new Semaphore(0);
@@ -257,10 +339,18 @@ public class GUI extends Application {
 
     }
 
+    /**
+     * Stops the GUI thread. It cannot be restarted afterwards.
+     */
     public static void stopGUI() {
         Platform.exit();
     }
 
+    /**
+     * Runs the supplied Runnable on the GUI thread, waits until it has finished.
+     *
+     * @param toRun Code to run on GUI thread
+     */
     public static void runNow(Runnable toRun) {
 
         if (Platform.isFxApplicationThread()) {

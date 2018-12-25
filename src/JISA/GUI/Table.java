@@ -20,18 +20,34 @@ import java.util.concurrent.Semaphore;
 
 public class Table extends JFXWindow implements Gridable, Clearable {
 
-    public  TableView  table;
-    public  BorderPane pane;
+    public TableView  table;
+    public BorderPane pane;
 
+    /**
+     * Creates an empty table.
+     *
+     * @param title Window title
+     */
     public Table(String title) {
         super(title, "FXML/TableWindow.fxml", true);
     }
 
+    /**
+     * Creates a table that watches and displays the contents of a ResultTable object.
+     *
+     * @param title Window title
+     * @param list  ResultTable to display
+     */
     public Table(String title, ResultTable list) {
         this(title);
         watchList(list);
     }
 
+    /**
+     * Watch the given ResultTable to display its contents.
+     *
+     * @param list ResultTable to watch
+     */
     public void watchList(ResultTable list) {
 
         list.addOnUpdate((r) -> update(r));

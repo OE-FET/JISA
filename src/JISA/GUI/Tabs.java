@@ -23,6 +23,14 @@ public class Tabs extends JFXWindow implements Gridable {
     private ArrayList<HBox>     tabs      = new ArrayList<>();
     private ArrayList<Runnable> switchers = new ArrayList<>();
 
+    /**
+     * Creates an element that displays other GUI elements in their own individual tabs.
+     *
+     * @param title Window title
+     * @param toAdd Elements to add
+     *
+     * @throws IOException
+     */
     public Tabs(String title, Gridable... toAdd) throws IOException {
         super(title, "FXML/TabWindow.fxml");
         this.title = title;
@@ -33,6 +41,11 @@ public class Tabs extends JFXWindow implements Gridable {
 
     }
 
+    /**
+     * Adds an element as a tab.
+     *
+     * @param element Element to add
+     */
     public void addTab(Gridable element) {
 
         HBox tab = new HBox();
@@ -68,6 +81,11 @@ public class Tabs extends JFXWindow implements Gridable {
 
     }
 
+    /**
+     * Selects the specified tab.
+     *
+     * @param pane Pane to select
+     */
     public void changeTab(int pane) {
 
         GUI.runNow(() -> {
