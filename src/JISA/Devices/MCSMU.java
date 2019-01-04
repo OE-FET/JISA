@@ -9,6 +9,7 @@ import JISA.Util;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -1105,6 +1106,26 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         return getIntegrationTime(defaultChannel);
     }
 
+    public abstract TType getTerminalType(int channel, Terminals terminals) throws DeviceException, IOException;
+
+    public TType getTerminalType(Terminals terminals) throws DeviceException, IOException {
+        return getTerminalType(defaultChannel, terminals);
+    }
+
+    public abstract void setTerminals(int channel, Terminals terminals) throws DeviceException, IOException;
+
+    public void setTerminals(Terminals terminals) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setTerminals(cn, terminals);
+        }
+    }
+
+    public abstract Terminals getTerminals(int channel) throws DeviceException, IOException;
+
+    public Terminals getTerminals() throws DeviceException, IOException {
+        return getTerminals(defaultChannel);
+    }
+
     /**
      * Returns a combined voltage and current measurement from the specified channel.
      *
@@ -1797,6 +1818,20 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         @Override
         public double getIntegrationTime() throws DeviceException, IOException {
             return MCSMU.this.getIntegrationTime(channel);
+        }
+
+        public TType getTerminalType(Terminals terminals) throws DeviceException, IOException {
+            return MCSMU.this.getTerminalType(channel, terminals);
+        }
+
+        @Override
+        public void setTerminals(Terminals terminals) throws DeviceException, IOException {
+            MCSMU.this.setTerminals(channel, terminals);
+        }
+
+        @Override
+        public Terminals getTerminals() throws DeviceException, IOException {
+            return MCSMU.this.getTerminals(channel);
         }
 
     }

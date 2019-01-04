@@ -1,18 +1,16 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
-import JISA.Control.ERunnable;
 import JISA.Control.Returnable;
-import JISA.Control.SRunnable;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.ResultList;
 import JISA.Util;
 import JISA.VISA.VISADevice;
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
 import org.apache.commons.math.stat.descriptive.rank.Median;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 
 public abstract class SMU extends VISADevice {
@@ -452,40 +450,36 @@ public abstract class SMU extends VISADevice {
 
 
     /**
-     * Returns the number of terminals that can be used on the SMU.
+     * Returns what type of connector is used for the given terminal.
      *
-     * @return Number of terminals
+     * @param terminals Which terminal
      *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
+     * @return Terminal type (TRIAX, PHOENIX, BNC or BANANA)
+     *
+     * @throws DeviceException
+     * @throws IOException
      */
-    public int getNumTerminals() throws DeviceException, IOException {
-        return 1;
-    }
+    public abstract TType getTerminalType(Terminals terminals) throws DeviceException, IOException;
 
     /**
      * Sets which set of terminals should be used on the SMU.
      *
-     * @param terminalNumber Index of terminal set, starting at 0
+     * @param terminals Which type of terminals to use
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public void setTerminals(int terminalNumber) throws DeviceException, IOException {
-
-    }
+    public abstract void setTerminals(Terminals terminals) throws DeviceException, IOException;
 
     /**
-     * Returns the index of the set of terminals currently being used on the SMU.
+     * Returns the type of the set of terminals currently being used on the SMU.
      *
-     * @return Index of terminal set
+     * @return The type of terminals being used
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public int getTerminals() throws DeviceException, IOException {
-        return 0;
-    }
+    public abstract Terminals getTerminals() throws DeviceException, IOException;
 
     /**
      * Returns a combined voltage and current measurement.
@@ -605,9 +599,7 @@ public abstract class SMU extends VISADevice {
      * @throws IOException     Upon communications error
      */
     public IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ResultList list) throws DeviceException, IOException {
-        return doLinearSweep(source, min, max, numSteps, delay, symmetric, (i, p) -> {
-            list.addData(p.voltage, p.current);
-        });
+        return doLinearSweep(source, min, max, numSteps, delay, symmetric, (i, p) -> list.addData(p.voltage, p.current));
     }
 
     /**
@@ -679,9 +671,7 @@ public abstract class SMU extends VISADevice {
      * @throws IOException     Upon communications error
      */
     public IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ResultList list) throws DeviceException, IOException {
-        return doLogarithmicSweep(source, min, max, numSteps, delay, symmetric, (i, p) -> {
-            list.addData(p.voltage, p.current);
-        });
+        return doLogarithmicSweep(source, min, max, numSteps, delay, symmetric, (i, p) -> list.addData(p.voltage, p.current));
     }
 
     private static class Updater implements Runnable {
@@ -749,7 +739,7 @@ public abstract class SMU extends VISADevice {
     public IVPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         final ArrayList<IVPoint> points  = new ArrayList<>();
-        IVPoint                  point   = null;
+        IVPoint                  point;
         Updater                  updater = new Updater(points, onUpdate);
 
 
@@ -795,11 +785,11 @@ public abstract class SMU extends VISADevice {
             throw new DeviceException("Delay time cannot be larger than either time on or time off for a pulsed sweep.");
         }
 
-        final ArrayList<IVPoint> points   = new ArrayList<>();
-        IVPoint                  point1   = null;
-        IVPoint                  point2   = null;
-        long                     lastTime = 0;
-        Updater                  updater  = new Updater(points, onUpdate);
+        final ArrayList<IVPoint> points  = new ArrayList<>();
+        IVPoint                  point1;
+        IVPoint                  point2;
+        long                     lastTime;
+        Updater                  updater = new Updater(points, onUpdate);
 
         // If they want to go forwards then backwards, generate the extra data-points
         if (symmetric) {
@@ -889,9 +879,7 @@ public abstract class SMU extends VISADevice {
      * @throws IOException     Upon communications error
      */
     public IVPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ResultList list) throws DeviceException, IOException {
-        return doSweep(source, values, delay, symmetric, (i, p) -> {
-            list.addData(p.voltage, p.current);
-        });
+        return doSweep(source, values, delay, symmetric, (i, p) -> list.addData(p.voltage, p.current));
     }
 
     public ResultList createSweepList() {
@@ -906,6 +894,19 @@ public abstract class SMU extends VISADevice {
     public enum Source {
         VOLTAGE,
         CURRENT
+    }
+
+    public enum Terminals {
+        FRONT,
+        REAR
+    }
+
+    public enum TType {
+        TRIAX,
+        PHOENIX,
+        BNC,
+        BANANA,
+        NONE
     }
 
     /**
@@ -936,7 +937,7 @@ public abstract class SMU extends VISADevice {
         /**
          * Median average, only taking one new data point each time and using the previous n-1 points.
          */
-        MEDIAN_MOVING;
+        MEDIAN_MOVING
 
     }
 
@@ -951,7 +952,7 @@ public abstract class SMU extends VISADevice {
     }
 
     public interface Setupable {
-        public void run(int count) throws IOException, DeviceException;
+        void run(int count) throws IOException, DeviceException;
     }
 
     protected interface ReadFilter {

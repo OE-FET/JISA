@@ -2,9 +2,11 @@ package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
 import JISA.Control.Returnable;
+import com.sun.javafx.UnmodifiableArrayList;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 
 public class K2600B extends MCSMU {
 
@@ -651,6 +653,32 @@ public class K2600B extends MCSMU {
     public double getIntegrationTime(int channel) throws DeviceException, IOException {
         checkChannel(channel);
         return queryDouble(C_QUERY_NPLC, CHANNELS[channel]) / LINE_FREQUENCY;
+    }
+
+    @Override
+    public TType getTerminalType(int channel, Terminals terminals) throws DeviceException, IOException {
+
+        checkChannel(channel);
+        if (terminals == Terminals.REAR) {
+            return TType.PHOENIX;
+        } else {
+            return TType.NONE;
+        }
+
+    }
+
+    @Override
+    public void setTerminals(int channel, Terminals terminals) throws DeviceException, IOException {
+        checkChannel(channel);
+        if (terminals != Terminals.REAR) {
+            throw new DeviceException("Keithley 2600B does not have front terminals", terminals.name());
+        }
+    }
+
+    @Override
+    public Terminals getTerminals(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return Terminals.REAR;
     }
 
     private enum SFunc {

@@ -5,6 +5,7 @@ import JISA.Experiment.IVPoint;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Class to combine multiple SMUs into a single virtual SMU with multiple channels.
@@ -356,6 +357,24 @@ public class SMUCluster extends MCSMU {
     public double getIntegrationTime(int channel) throws DeviceException, IOException {
         checkChannel(channel);
         return devices.get(channel).getIntegrationTime();
+    }
+
+    @Override
+    public TType getTerminalType(int channel, Terminals terminals) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).getTerminalType(terminals);
+    }
+
+    @Override
+    public void setTerminals(int channel, Terminals terminals) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).setTerminals(terminals);
+    }
+
+    @Override
+    public Terminals getTerminals(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).getTerminals();
     }
 
     public IVPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {

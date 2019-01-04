@@ -1,9 +1,10 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
+import com.sun.javafx.UnmodifiableArrayList;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.*;
 
 public class K2450 extends SMU {
 
@@ -40,6 +41,8 @@ public class K2450 extends SMU {
     private static final String C_QUERY_NPLC            = ":SENS:%s:NPLC?";
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
+    private static final String TERMS_FRONT             = "FRON";
+    private static final String TERMS_REAR              = "REAR";
     private static final String C_QUERY_LFR             = ":SYST:LFR?";
     private final        double LINE_FREQUENCY;
 
@@ -137,14 +140,6 @@ public class K2450 extends SMU {
     private ReadFilter filterI     = NONE_I;
     private AMode      filterMode  = AMode.NONE;
     private int        filterCount = 1;
-
-    /**
-     * Constant values for referring to the FRONT and REAR terminals of the Keithley 2450 SMU
-     */
-    public static class Terminals {
-        public static final int FRONT = 0;
-        public static final int REAR  = 1;
-    }
 
     // == CONSTRUCTORS =================================================================================================
     public K2450(InstrumentAddress address) throws IOException, DeviceException {
@@ -385,6 +380,7 @@ public class K2450 extends SMU {
 
     @Override
     public void setVoltageRange(double value) throws IOException {
+
         switch (getSourceMode()) {
 
             case VOLTAGE:
@@ -395,8 +391,10 @@ public class K2450 extends SMU {
             case CURRENT:
                 write(C_SET_MEAS_AUTO_RANGE, Source.VOLTAGE.getTag(), OUTPUT_OFF);
                 write(C_SET_MEAS_RANGE, Source.VOLTAGE.getTag(), value);
+                break;
 
         }
+
     }
 
     @Override
@@ -509,6 +507,24 @@ public class K2450 extends SMU {
     @Override
     public double getIntegrationTime() throws IOException {
         return queryDouble(C_QUERY_NPLC, getMeasureMode().getTag()) / LINE_FREQUENCY;
+    }
+
+    @Override
+    public TType getTerminalType(Terminals terminals) {
+
+        switch (terminals) {
+
+            case FRONT:
+                return TType.BANANA;
+
+            case REAR:
+                return TType.TRIAX;
+
+            default:
+                return TType.NONE;
+
+        }
+
     }
 
     public double getVoltage() throws DeviceException, IOException {
@@ -625,27 +641,42 @@ public class K2450 extends SMU {
 
     }
 
-    @Override
-    public int getNumTerminals() {
-        return 2;
-    }
-
     public void setSourceValue(Source type, double value) throws IOException {
         write(C_SET_SOURCE_VALUE, type.getTag(), value);
         setSource(type);
     }
 
-    public void setTerminals(int terminalIndex) throws IOException, DeviceException {
+    public void setTerminals(Terminals terminals) throws IOException, DeviceException {
 
-        if (terminalIndex >= getNumTerminals()) {
-            throw new DeviceException("Those terminals do not exist!");
+        switch (terminals) {
+
+            case FRONT:
+                write(C_SET_TERMINALS, TERMS_FRONT);
+                break;
+
+            case REAR:
+                write(C_SET_TERMINALS, TERMS_REAR);
+                break;
+
+            default:
+                throw new DeviceException("Keithley 2450 does not have terminals of type: %s", terminals.name());
+
         }
 
-        write(C_SET_TERMINALS, Terms.fromInt(terminalIndex).getTag());
     }
 
-    public int getTerminals() throws IOException {
-        return Terms.fromTag(query(C_QUERY_TERMINALS)).toInt();
+    public Terminals getTerminals() throws IOException {
+
+        String response = query(C_QUERY_TERMINALS);
+
+        if (response.contains(TERMS_FRONT)) {
+            return Terminals.FRONT;
+        } else if (response.contains(TERMS_REAR)) {
+            return Terminals.REAR;
+        } else {
+            throw new IOException("Invalid response from Keithley 2450");
+        }
+
     }
 
     public enum Source {
@@ -691,47 +722,6 @@ public class K2450 extends SMU {
 
         SMU.Source getSMU() {
             return orig;
-        }
-
-    }
-
-    private enum Terms {
-
-        FRONT(0, "FRON"),
-        REAR(1, "REAR");
-
-        private static HashMap<String, Terms>  lookup  = new HashMap<>();
-        private static HashMap<Integer, Terms> indices = new HashMap<>();
-
-        static {
-            for (Terms t : Terms.values()) {
-                lookup.put(t.getTag(), t);
-                indices.put(t.toInt(), t);
-            }
-        }
-
-        public static Terms fromTag(String tag) {
-            return lookup.getOrDefault(tag.trim(), null);
-        }
-
-        public static Terms fromInt(int index) {
-            return indices.getOrDefault(index, null);
-        }
-
-        private String tag;
-        private int    index;
-
-        Terms(int index, String tag) {
-            this.index = index;
-            this.tag = tag;
-        }
-
-        String getTag() {
-            return tag;
-        }
-
-        int toInt() {
-            return index;
         }
 
     }

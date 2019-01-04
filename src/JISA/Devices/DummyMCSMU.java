@@ -270,4 +270,19 @@ public class DummyMCSMU extends MCSMU {
         return 100e-6;
     }
 
+    @Override
+    public TType getTerminalType(int channel, Terminals terminals) throws DeviceException, IOException {
+        return TType.TRIAX;
+    }
+
+    @Override
+    public void setTerminals(int channel, Terminals terminals) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public Terminals getTerminals(int channel) throws DeviceException, IOException {
+        return Terminals.FRONT;
+    }
+
 }

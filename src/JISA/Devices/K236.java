@@ -2,9 +2,11 @@ package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
 import JISA.Util;
+import com.sun.javafx.UnmodifiableArrayList;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -601,6 +603,37 @@ public class K236 extends SMU {
     @Override
     public double getIntegrationTime() throws IOException {
         return getMeasureParams().intTime.toDouble();
+    }
+
+    public TType getTerminalType(Terminals terminals) throws DeviceException, IOException {
+
+        switch (terminals) {
+
+            case FRONT:
+                return TType.NONE;
+
+            case REAR:
+                return TType.TRIAX;
+
+            default:
+                return TType.NONE;
+
+        }
+
+    }
+
+    @Override
+    public void setTerminals(Terminals terminals) throws DeviceException, IOException {
+
+        if (terminals != Terminals.REAR) {
+            throw new DeviceException("Keithley 236 does not have front terminals.");
+        }
+
+    }
+
+    @Override
+    public Terminals getTerminals() throws DeviceException, IOException {
+        return Terminals.REAR;
     }
 
     public double getVoltage() throws IOException, DeviceException {
