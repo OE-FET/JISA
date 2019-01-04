@@ -623,11 +623,7 @@ public class K236 extends SMU {
     }
 
     @Override
-    public void setTerminals(Terminals terminals) throws DeviceException, IOException {
-
-        if (terminals != Terminals.REAR) {
-            throw new DeviceException("Keithley 236 does not have front terminals.");
-        }
+    public void setTerminals(Terminals terminals) {
 
     }
 

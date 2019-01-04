@@ -668,11 +668,8 @@ public class K2600B extends MCSMU {
     }
 
     @Override
-    public void setTerminals(int channel, Terminals terminals) throws DeviceException, IOException {
+    public void setTerminals(int channel, Terminals terminals) throws DeviceException {
         checkChannel(channel);
-        if (terminals != Terminals.REAR) {
-            throw new DeviceException("Keithley 2600B does not have front terminals", terminals.name());
-        }
     }
 
     @Override
