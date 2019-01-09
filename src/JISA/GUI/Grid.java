@@ -27,6 +27,8 @@ public class Grid extends JFXWindow implements Gridable {
     private int        nCols   = 3;
     private int        r       = 0;
     private int        c       = 0;
+    private boolean    hGrow   = true;
+    private boolean    vGrow   = true;
 
     public Grid(String title) {
         super(title, "FXML/GridWindow.fxml", true);
@@ -124,13 +126,37 @@ public class Grid extends JFXWindow implements Gridable {
 
         pane.add(toAdd, c, r);
 
-        GridPane.setHgrow(toAdd, Priority.ALWAYS);
-        GridPane.setVgrow(toAdd, Priority.ALWAYS);
+        if (hGrow) {
+            GridPane.setHgrow(toAdd, Priority.ALWAYS);
+        }
+
+        if (vGrow) {
+            GridPane.setVgrow(toAdd, Priority.ALWAYS);
+        }
 
         c++;
         if (c >= nCols) {
             c = 0;
             r++;
+        }
+
+    }
+
+    public void setGrowth(boolean horizontal, boolean vertical) {
+
+        hGrow = horizontal;
+        vGrow = vertical;
+
+        for (Node node : pane.getChildren()) {
+
+            if (hGrow) {
+                GridPane.setHgrow(node, Priority.ALWAYS);
+            }
+
+            if (vGrow) {
+                GridPane.setVgrow(node, Priority.ALWAYS);
+            }
+
         }
 
     }

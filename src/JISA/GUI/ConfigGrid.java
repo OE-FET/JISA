@@ -18,6 +18,7 @@ public class ConfigGrid extends Grid {
         super(title);
         this.title = title;
         addToolbarButton("Connect All", this::connectAll);
+        setGrowth(true, false);
     }
 
     public ConfigGrid(String title, ConfigStore c) {
