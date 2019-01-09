@@ -194,3 +194,7 @@ for v in range(0, 21, 2):
 ![Plot Window](https://i.imgur.com/PPgdyCa.png)
 
 As mentioned, these GUI elements work in real-time, so every time a new data point gets added to ``results``, the plot will update (with a nifty animation too!)
+
+By putting together these individual elements you can build up a fully functional GUI to control your experiment like so:
+
+[![GUI Example](https://i.imgur.com/j93Jttm.png)](https://i.imgur.com/j93Jttm.png)
