@@ -493,6 +493,15 @@ public class Fields extends JFXWindow implements Gridable {
         return pane;
     }
 
+
+    public void addSeparator() {
+
+        Separator separator = new Separator();
+        list.getChildren().add(separator);
+        VBox.setVgrow(separator, Priority.ALWAYS);
+
+    }
+
     /**
      * Add a button to the bottom of the fields group.
      *
