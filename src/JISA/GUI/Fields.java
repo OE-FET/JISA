@@ -1,8 +1,12 @@
 package JISA.GUI;
 
+import JISA.Control.Field;
+import JISA.Control.SRunnable;
 import JISA.Control.SetGettable;
 import JISA.Devices.DeviceException;
 import JISA.Util;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
@@ -38,7 +42,7 @@ public class Fields extends JFXWindow implements Gridable {
      *
      * @return Reference object (SetGettable) to set and get the value of the text-box
      */
-    public SetGettable<String> addTextField(String name) {
+    public Field<String> addTextField(String name) {
 
         HBox box = new HBox();
         box.setSpacing(15);
@@ -54,15 +58,40 @@ public class Fields extends JFXWindow implements Gridable {
         list.getChildren().add(box);
 
 
-        return new SetGettable<String>() {
+        return new Field<String>() {
+
+            private ChangeListener<String> list = null;
+
             @Override
-            public void set(String value) throws IOException, DeviceException {
+            public void set(String value) {
                 field.setText(value);
             }
 
             @Override
-            public String get() throws IOException, DeviceException {
+            public String get() {
                 return field.getText();
+            }
+
+            @Override
+            public void setOnChange(SRunnable onChange) {
+
+                if (list != null) {
+                    field.textProperty().removeListener(list);
+                }
+
+                list = (observable, oldValue, newValue) -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                };
+                field.textProperty().addListener(list);
+            }
+
+            @Override
+            public void editValues(String... values) {
+
             }
         };
 
@@ -75,7 +104,7 @@ public class Fields extends JFXWindow implements Gridable {
      *
      * @return Reference object to set and get the value (true or false) of the check-box
      */
-    public SetGettable<Boolean> addCheckBox(String name) {
+    public Field<Boolean> addCheckBox(String name) {
 
         HBox box = new HBox();
         box.setSpacing(15);
@@ -91,15 +120,41 @@ public class Fields extends JFXWindow implements Gridable {
         list.getChildren().add(box);
 
 
-        return new SetGettable<Boolean>() {
+        return new Field<Boolean>() {
+
+            private ChangeListener<Boolean> list = null;
+
             @Override
-            public void set(Boolean value) throws IOException, DeviceException {
+            public void set(Boolean value) {
                 field.setSelected(value);
             }
 
             @Override
-            public Boolean get() throws IOException, DeviceException {
+            public Boolean get() {
                 return field.isSelected();
+            }
+
+            @Override
+            public void setOnChange(SRunnable onChange) {
+
+                if (list != null) {
+                    field.selectedProperty().removeListener(list);
+                }
+
+                list = (observable, oldValue, newValue) -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                };
+
+                field.selectedProperty().addListener(list);
+            }
+
+            @Override
+            public void editValues(String... values) {
+
             }
         };
 
@@ -112,7 +167,7 @@ public class Fields extends JFXWindow implements Gridable {
      *
      * @return SetGettable object that can set or get the selected file path as a String
      */
-    public SetGettable<String> addFileSave(String name) {
+    public Field<String> addFileSave(String name) {
 
         HBox box = new HBox();
         box.setSpacing(15);
@@ -135,15 +190,41 @@ public class Fields extends JFXWindow implements Gridable {
         list.getChildren().add(box);
 
 
-        return new SetGettable<String>() {
+        return new Field<String>() {
+
+            private ChangeListener<String> list = null;
+
             @Override
-            public void set(String value) throws IOException, DeviceException {
+            public void set(String value) {
                 field.setText(value);
             }
 
             @Override
-            public String get() throws IOException, DeviceException {
+            public String get() {
                 return field.getText();
+            }
+
+            @Override
+            public void setOnChange(SRunnable onChange) {
+
+                if (list != null) {
+                    field.textProperty().removeListener(list);
+                }
+
+                list = (observable, oldValue, newValue) -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                };
+
+                field.textProperty().addListener(list);
+            }
+
+            @Override
+            public void editValues(String... values) {
+
             }
         };
 
@@ -156,7 +237,7 @@ public class Fields extends JFXWindow implements Gridable {
      *
      * @return SetGettable object that can set or get the selected file path as a String
      */
-    public SetGettable<String> addFileOpen(String name) {
+    public Field<String> addFileOpen(String name) {
 
         HBox box = new HBox();
         box.setSpacing(15);
@@ -178,15 +259,41 @@ public class Fields extends JFXWindow implements Gridable {
         box.getChildren().addAll(label, field, button);
         list.getChildren().add(box);
 
-        return new SetGettable<String>() {
+        return new Field<String>() {
+
+            private ChangeListener<String> list = null;
+
             @Override
-            public void set(String value) throws IOException, DeviceException {
+            public void set(String value) {
                 field.setText(value);
             }
 
             @Override
-            public String get() throws IOException, DeviceException {
+            public String get() {
                 return field.getText();
+            }
+
+            @Override
+            public void setOnChange(SRunnable onChange) {
+
+                if (list != null) {
+                    field.textProperty().removeListener(list);
+                }
+
+                list = (observable, oldValue, newValue) -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                };
+
+                field.textProperty().addListener(list);
+            }
+
+            @Override
+            public void editValues(String... values) {
+
             }
         };
 
@@ -199,7 +306,7 @@ public class Fields extends JFXWindow implements Gridable {
      *
      * @return SetGettable to set or get the value as an integer
      */
-    public SetGettable<Integer> addIntegerField(String name) {
+    public Field<Integer> addIntegerField(String name) {
 
         HBox box = new HBox();
         box.setSpacing(15);
@@ -214,15 +321,40 @@ public class Fields extends JFXWindow implements Gridable {
         box.getChildren().addAll(label, field);
         list.getChildren().add(box);
 
-        return new SetGettable<Integer>() {
+        return new Field<Integer>() {
+
+            private ChangeListener<String> list = null;
+
             @Override
-            public void set(Integer value) throws IOException, DeviceException {
+            public void set(Integer value) {
                 field.setText(value.toString());
             }
 
             @Override
-            public Integer get() throws IOException, DeviceException {
-                return Integer.valueOf(field.getText());
+            public Integer get() {
+                return field.getIntValue();
+            }
+
+            @Override
+            public void setOnChange(SRunnable onChange) {
+                if (list != null) {
+                    field.textProperty().removeListener(list);
+                }
+
+                list = (observable, oldValue, newValue) -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                };
+
+                field.textProperty().addListener(list);
+            }
+
+            @Override
+            public void editValues(String... values) {
+
             }
         };
 
@@ -235,7 +367,7 @@ public class Fields extends JFXWindow implements Gridable {
      *
      * @return SetGettable to set or get the value as a double
      */
-    public SetGettable<Double> addDoubleField(String name) {
+    public Field<Double> addDoubleField(String name) {
 
         HBox box = new HBox();
         box.setSpacing(15);
@@ -250,15 +382,42 @@ public class Fields extends JFXWindow implements Gridable {
         box.getChildren().addAll(label, field);
         list.getChildren().add(box);
 
-        return new SetGettable<Double>() {
+        return new Field<Double>() {
+
+            private ChangeListener<String> list = null;
+
             @Override
-            public void set(Double value) throws IOException, DeviceException {
+            public void set(Double value) {
                 field.setText(value.toString());
             }
 
             @Override
-            public Double get() throws IOException, DeviceException {
+            public Double get() {
                 return field.getDoubleValue();
+            }
+
+            @Override
+            public void setOnChange(SRunnable onChange) {
+
+                if (list != null) {
+                    field.textProperty().removeListener(list);
+                }
+
+                list = (observable, oldValue, newValue) -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                };
+
+                field.textProperty().addListener(list);
+
+            }
+
+            @Override
+            public void editValues(String... values) {
+
             }
         };
 
@@ -272,7 +431,7 @@ public class Fields extends JFXWindow implements Gridable {
      *
      * @return SetGettable to set and get the selected value, represented as an integer (0 = first option, 1 = second option etc)
      */
-    public SetGettable<Integer> addChoice(String name, String... options) {
+    public Field<Integer> addChoice(String name, String... options) {
 
         HBox box = new HBox();
         box.setSpacing(15);
@@ -289,7 +448,10 @@ public class Fields extends JFXWindow implements Gridable {
 
         field.getItems().addAll(options);
 
-        return new SetGettable<Integer>() {
+        return new Field<Integer>() {
+
+            private ChangeListener<Number> list = null;
+
             @Override
             public void set(Integer value) {
                 field.getSelectionModel().select(value);
@@ -298,6 +460,30 @@ public class Fields extends JFXWindow implements Gridable {
             @Override
             public Integer get() {
                 return field.getSelectionModel().getSelectedIndex();
+            }
+
+            @Override
+            public void setOnChange(SRunnable onChange) {
+
+                if (list != null) {
+                    field.getSelectionModel().selectedIndexProperty().removeListener(list);
+                }
+
+                list = (observable, oldValue, newValue) -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                };
+
+                field.getSelectionModel().selectedIndexProperty().addListener(list);
+            }
+
+            @Override
+            public void editValues(String... values) {
+                field.getItems().clear();
+                field.getItems().addAll(values);
             }
         };
     }
