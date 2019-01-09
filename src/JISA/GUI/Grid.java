@@ -126,13 +126,8 @@ public class Grid extends JFXWindow implements Gridable {
 
         pane.add(toAdd, c, r);
 
-        if (hGrow) {
-            GridPane.setHgrow(toAdd, Priority.ALWAYS);
-        }
-
-        if (vGrow) {
-            GridPane.setVgrow(toAdd, Priority.ALWAYS);
-        }
+        GridPane.setHgrow(toAdd, hGrow ? Priority.ALWAYS : Priority.NEVER);
+        GridPane.setVgrow(toAdd, vGrow ? Priority.ALWAYS : Priority.NEVER);
 
         c++;
         if (c >= nCols) {
@@ -149,13 +144,8 @@ public class Grid extends JFXWindow implements Gridable {
 
         for (Node node : pane.getChildren()) {
 
-            if (hGrow) {
-                GridPane.setHgrow(node, Priority.ALWAYS);
-            }
-
-            if (vGrow) {
-                GridPane.setVgrow(node, Priority.ALWAYS);
-            }
+            GridPane.setHgrow(node, hGrow ? Priority.ALWAYS : Priority.NEVER);
+            GridPane.setVgrow(node, vGrow ? Priority.ALWAYS : Priority.NEVER);
 
         }
 
