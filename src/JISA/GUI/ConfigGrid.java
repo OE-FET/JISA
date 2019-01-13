@@ -26,11 +26,11 @@ public class ConfigGrid extends Grid {
         setConfigStore(c);
     }
 
-    public InstrumentConfig addInstrument(String name, Class<? extends VISADevice> type) {
+    public <T extends VISADevice> InstrumentConfig<T> addInstrument(String name, Class<T> type) {
 
         try {
             String key = String.format("instrument%d", configs.size());
-            InstrumentConfig<? extends VISADevice> conf = new InstrumentConfig<>(name, key, type, config);
+            InstrumentConfig<T> conf = new InstrumentConfig<>(name, key, type, config);
             addPane(conf.getPane());
             configs.add(conf);
             return conf;
