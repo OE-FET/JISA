@@ -2,11 +2,12 @@ package JISA.GUI;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 
-public class JFXWindow {
+public class JFXWindow implements Gridable {
 
     protected Stage stage;
 
@@ -88,6 +89,11 @@ public class JFXWindow {
      */
     public void setMaximised(boolean flag) {
         GUI.runNow(() -> stage.setMaximized(flag));
+    }
+
+    @Override
+    public Pane getPane() {
+        return (Pane) stage.getScene().getRoot();
     }
 
     public String getTitle() {
