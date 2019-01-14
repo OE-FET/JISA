@@ -44,6 +44,8 @@ public class PIDController {
     }
 
     public void start() {
+        sum  = 0;
+        last = 0;
         control.start();
     }
 
