@@ -10,4 +10,8 @@ public interface Field<T> {
 
     void editValues(String... values);
 
+    void setDisabled(boolean disabled);
+
+    boolean isDisabled();
+
 }

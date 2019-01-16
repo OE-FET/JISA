@@ -61,6 +61,8 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
     public  StackPane                   pane;
     private ConfigStore                 config          = null;
     private String                      key;
+    private Runnable                    onApply         = () -> {
+    };
 
     public InstrumentConfig(String title, String key, Class<T> type, ConfigStore c) throws IOException {
         super(title, "FXML/InstrumentConfig.fxml");
@@ -183,7 +185,12 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
             }
             makeRed();
         }
+        onApply.run();
 
+    }
+
+    public void setOnConnect(Runnable onConnect) {
+        onApply = onConnect;
     }
 
     private void makeRed() {

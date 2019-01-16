@@ -93,6 +93,16 @@ public class Fields extends JFXWindow implements Gridable {
             public void editValues(String... values) {
 
             }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+                field.setDisable(disabled);
+            }
+
+            @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
+            }
         };
 
     }
@@ -155,6 +165,16 @@ public class Fields extends JFXWindow implements Gridable {
             @Override
             public void editValues(String... values) {
 
+            }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+                field.setDisable(disabled);
+            }
+
+            @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
             }
         };
 
@@ -226,6 +246,16 @@ public class Fields extends JFXWindow implements Gridable {
             public void editValues(String... values) {
 
             }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+                field.setDisable(disabled);
+            }
+
+            @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
+            }
         };
 
     }
@@ -295,6 +325,16 @@ public class Fields extends JFXWindow implements Gridable {
             public void editValues(String... values) {
 
             }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+                field.setDisable(disabled);
+            }
+
+            @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
+            }
         };
 
     }
@@ -355,6 +395,16 @@ public class Fields extends JFXWindow implements Gridable {
             @Override
             public void editValues(String... values) {
 
+            }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+                field.setDisable(disabled);
+            }
+
+            @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
             }
         };
 
@@ -418,6 +468,16 @@ public class Fields extends JFXWindow implements Gridable {
             @Override
             public void editValues(String... values) {
 
+            }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+                field.setDisable(disabled);
+            }
+
+            @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
             }
         };
 
@@ -484,6 +544,16 @@ public class Fields extends JFXWindow implements Gridable {
             public void editValues(String... values) {
                 field.getItems().clear();
                 field.getItems().addAll(values);
+            }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+                field.setDisable(disabled);
+            }
+
+            @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
             }
         };
     }
