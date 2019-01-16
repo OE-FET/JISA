@@ -28,7 +28,7 @@ public class Progress extends JFXWindow implements Gridable {
 
     public Progress(String title) {
 
-        super(title, "FXML/ProgressWindow.fxml", true);
+        super(title, Progress.class.getResource("FXML/ProgressWindow.fxml"));
 
     }
 

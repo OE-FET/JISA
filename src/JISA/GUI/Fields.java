@@ -32,7 +32,7 @@ public class Fields extends JFXWindow implements Gridable {
      * @param title Title of the window/grid-element.
      */
     public Fields(String title) {
-        super(title, "FXML/InputWindow.fxml", true);
+        super(title, Fields.class.getResource("FXML/InputWindow.fxml"));
     }
 
     /**

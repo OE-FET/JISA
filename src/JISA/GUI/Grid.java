@@ -31,7 +31,7 @@ public class Grid extends JFXWindow implements Gridable {
     private boolean    vGrow   = true;
 
     public Grid(String title) {
-        super(title, "FXML/GridWindow.fxml", true);
+        super(title, Grid.class.getResource("FXML/GridWindow.fxml"));
     }
 
     public Grid(String title, Gridable... panels) {

@@ -29,7 +29,7 @@ public class DeviceShell {
 
         try {
 
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("FXML/DeviceShell.fxml"));
+            FXMLLoader loader = new FXMLLoader(DeviceShell.class.getResource("FXML/DeviceShell.fxml"));
             loader.setController(this);
             Parent root  = loader.load();
             Scene  scene = new Scene(root);

@@ -6,6 +6,7 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.net.URL;
 
 public class JFXWindow implements Gridable {
 
@@ -50,6 +51,28 @@ public class JFXWindow implements Gridable {
         try {
             Scene scene = new Scene(loader.load());
 
+            // Create the stage (window) and add the layout to it in GUI thread.
+            GUI.runNow(() -> {
+                stage = new Stage();
+                stage.setScene(scene);
+                stage.setTitle(title);
+            });
+        } catch (IOException ignored) {
+
+        }
+    }
+
+    protected JFXWindow(String title, URL resource) {
+
+        // Create a loader for our FXML file
+        FXMLLoader loader = new FXMLLoader(resource);
+
+        // Tell the loader to link the FXML file to this object
+        loader.setController(this);
+
+        // Load our layout from our FXML file as a "Scene":
+        try {
+            Scene scene = new Scene(loader.load());
             // Create the stage (window) and add the layout to it in GUI thread.
             GUI.runNow(() -> {
                 stage = new Stage();
@@ -108,7 +131,8 @@ public class JFXWindow implements Gridable {
                 System.exit(0);
             });
         } else {
-            stage.setOnCloseRequest((a) -> {});
+            stage.setOnCloseRequest((a) -> {
+            });
         }
 
     }

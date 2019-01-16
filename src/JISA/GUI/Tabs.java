@@ -31,8 +31,8 @@ public class Tabs extends JFXWindow implements Gridable {
      *
      * @throws IOException
      */
-    public Tabs(String title, Gridable... toAdd) throws IOException {
-        super(title, "FXML/TabWindow.fxml");
+    public Tabs(String title, Gridable... toAdd) {
+        super(title, Tabs.class.getResource("FXML/TabWindow.fxml"));
         this.title = title;
 
         for (Gridable g : toAdd) {

@@ -42,7 +42,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
      */
     public Plot(String title, String xLabel, String yLabel) {
 
-        super(title, "FXML/PlotWindow.fxml", true);
+        super(title, Plot.class.getResource("FXML/PlotWindow.fxml"));
 
         GUI.runNow(() -> {
             chart.setStyle("-fx-background-color: white;");

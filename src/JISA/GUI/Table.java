@@ -29,7 +29,7 @@ public class Table extends JFXWindow implements Gridable, Clearable {
      * @param title Window title
      */
     public Table(String title) {
-        super(title, "FXML/TableWindow.fxml", true);
+        super(title, Table.class.getResource("FXML/TableWindow.fxml"));
     }
 
     /**
