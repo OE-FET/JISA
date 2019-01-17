@@ -4,11 +4,11 @@
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.layout.BorderPane?>
 
-<BorderPane fx:id="pane" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane fx:id="pane" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
 
 
     <center>
-        <LineChart fx:id="chart" legendSide="RIGHT" BorderPane.alignment="CENTER">
+        <LineChart fx:id="chart" legendSide="RIGHT" minHeight="600.0" BorderPane.alignment="CENTER">
             <xAxis>
                 <NumberAxis side="BOTTOM" fx:id="xAxis" />
             </xAxis>
