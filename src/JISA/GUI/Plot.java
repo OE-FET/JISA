@@ -152,7 +152,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
     }
 
     public void showLegend(boolean show) {
-        GUI.runNow(()-> chart.setLegendVisible(show));
+        GUI.runNow(() -> chart.setLegendVisible(show));
     }
 
     /**
@@ -231,6 +231,70 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
         }
 
         list.addOnUpdate((row) -> {
+
+            int series;
+            if (map.containsKey(row.get(sData))) {
+                series = map.get(row.get(sData));
+            } else {
+                series = createSeries(String.format("%s %s", row.get(sData), list.getUnits(sData)), null, true);
+            }
+
+            map.put(row.get(sData), series);
+            addPoint(series, row.get(xData), row.get(yData));
+
+        });
+
+        list.addClearable(this);
+
+    }
+
+    public void watchList(final ResultTable list, final int xData, final int yData, final int fData, final double fValue, String seriesName, Color colour) {
+
+        final int series = createSeries(seriesName, colour);
+
+        for (Result row : list) {
+            if (row.get(fData) == fValue) {
+                addPoint(series, row.get(xData), row.get(yData));
+            }
+        }
+
+        list.addOnUpdate((r) -> {
+            if (r.get(fData) == fValue) {
+                addPoint(series, r.get(xData), r.get(yData));
+            }
+        });
+
+        list.addClearable(this);
+
+    }
+
+    public void watchList(final ResultTable list, final int xData, final int yData, final int sData, final int fData, final double fValue) {
+
+        final HashMap<Double, Integer> map = new HashMap<>();
+        maps.add(map);
+        for (Result row : list) {
+
+            if (row.get(fData) != fValue) {
+                continue;
+            }
+
+            int series;
+            if (map.containsKey(row.get(sData))) {
+                series = map.get(row.get(sData));
+            } else {
+                series = createSeries(String.format("%s %s", row.get(sData), list.getUnits(sData)), null, true);
+            }
+
+            map.put(row.get(sData), series);
+            addPoint(series, row.get(xData), row.get(yData));
+
+        }
+
+        list.addOnUpdate((row) -> {
+
+            if (row.get(fData) != fValue) {
+                return;
+            }
 
             int series;
             if (map.containsKey(row.get(sData))) {

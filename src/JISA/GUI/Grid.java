@@ -16,19 +16,21 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
 
 public class Grid extends JFXWindow implements Gridable {
 
-    public  GridPane   pane;
-    public  BorderPane border;
-    private ToolBar    toolBar = null;
-    private Stage      stage;
-    private int        nCols   = 3;
-    private int        r       = 0;
-    private int        c       = 0;
-    private boolean    hGrow   = true;
-    private boolean    vGrow   = true;
+    public  GridPane            pane;
+    public  BorderPane          border;
+    private ToolBar             toolBar = null;
+    private Stage               stage;
+    private int                 nCols   = 3;
+    private int                 r       = 0;
+    private int                 c       = 0;
+    private boolean             hGrow   = true;
+    private boolean             vGrow   = true;
+    private ArrayList<Gridable> added   = new ArrayList<>();
 
     public Grid(String title) {
         super(title, Grid.class.getResource("FXML/GridWindow.fxml"));
@@ -92,6 +94,8 @@ public class Grid extends JFXWindow implements Gridable {
         bPane.setTop(stack);
         bPane.setCenter(container);
 
+        added.add(toAdd);
+
         addPane(bPane);
     }
 
@@ -102,19 +106,42 @@ public class Grid extends JFXWindow implements Gridable {
 
     private void updateGridding() {
 
-        r = 0;
-        c = 0;
-        for (Node node : pane.getChildren()) {
+        GUI.runNow(() -> {
+            r = 0;
+            c = 0;
+            for (Node node : pane.getChildren()) {
 
-            GridPane.setRowIndex(node, r);
-            GridPane.setColumnIndex(node, c);
+                GridPane.setRowIndex(node, r);
+                GridPane.setColumnIndex(node, c);
 
-            c++;
-            if (c >= nCols) {
-                c = 0;
-                r++;
+                c++;
+                if (c >= nCols) {
+                    c = 0;
+                    r++;
+                }
             }
-        }
+        });
+
+    }
+
+    public void remove(Gridable toRemove) {
+
+        GUI.runNow(() -> {
+            int index = added.indexOf(toRemove);
+            added.remove(index);
+            Node node = pane.getChildren().remove(index);
+        });
+
+        updateGridding();
+
+    }
+
+    public void clear() {
+
+        GUI.runNow(() -> {
+            added.clear();
+            pane.getChildren().clear();
+        });
 
     }
 
@@ -124,31 +151,34 @@ public class Grid extends JFXWindow implements Gridable {
 
     public void addPane(Node toAdd) {
 
-        pane.add(toAdd, c, r);
+        GUI.runNow(() -> {
+            pane.add(toAdd, c, r);
 
-        GridPane.setHgrow(toAdd, hGrow ? Priority.ALWAYS : Priority.NEVER);
-        GridPane.setVgrow(toAdd, vGrow ? Priority.ALWAYS : Priority.NEVER);
+            GridPane.setHgrow(toAdd, hGrow ? Priority.ALWAYS : Priority.NEVER);
+            GridPane.setVgrow(toAdd, vGrow ? Priority.ALWAYS : Priority.NEVER);
 
-        c++;
-        if (c >= nCols) {
-            c = 0;
-            r++;
-        }
+            c++;
+            if (c >= nCols) {
+                c = 0;
+                r++;
+            }
+        });
 
     }
 
     public void setGrowth(boolean horizontal, boolean vertical) {
 
-        hGrow = horizontal;
-        vGrow = vertical;
+        GUI.runNow(() -> {
+            hGrow = horizontal;
+            vGrow = vertical;
 
-        for (Node node : pane.getChildren()) {
+            for (Node node : pane.getChildren()) {
 
-            GridPane.setHgrow(node, hGrow ? Priority.ALWAYS : Priority.NEVER);
-            GridPane.setVgrow(node, vGrow ? Priority.ALWAYS : Priority.NEVER);
+                GridPane.setHgrow(node, hGrow ? Priority.ALWAYS : Priority.NEVER);
+                GridPane.setVgrow(node, vGrow ? Priority.ALWAYS : Priority.NEVER);
 
-        }
-
+            }
+        });
     }
 
     public Pane getPane() {
