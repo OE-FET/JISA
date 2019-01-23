@@ -251,6 +251,20 @@ public abstract class MSMOTController extends MSTController {
         return getPValue(defaultOutput);
     }
 
+    public abstract void setHeaterRange(int output, double range) throws IOException, DeviceException;
+
+    public void setHeaterRange(double range) throws IOException, DeviceException {
+        for (int onum = 0; onum < getNumOutputs(); onum++) {
+            setHeaterRange(onum, range);
+        }
+    }
+
+    public abstract double getHeaterRange(int output) throws IOException, DeviceException;
+
+    public double getHeaterRange() throws IOException, DeviceException {
+        return getHeaterRange(defaultOutput);
+    }
+
     /**
      * Sets the target temperature (set-point) for the specified output/control-loop.
      *
@@ -755,6 +769,16 @@ public abstract class MSMOTController extends MSTController {
         public double getDValue() throws IOException, DeviceException {
             return MSMOTController.this.getDValue(output);
         }
+
+        @Override
+        public void setHeaterRange(double range) throws IOException, DeviceException {
+            MSMOTController.this.setHeaterRange(output, range);
+        }
+
+        @Override
+        public double getHeaterRange() throws IOException, DeviceException {
+            return MSMOTController.this.getHeaterRange(output);
+        }
     }
 
     protected class Zoner implements Runnable {
@@ -796,6 +820,12 @@ public abstract class MSMOTController extends MSTController {
         @Override
         public void run() {
 
+            try {
+                applyZone(currentZone);
+            } catch (Exception e) {
+                System.err.printf("Error in starting auto-PID control: \"%s\"\n", e.getMessage());
+            }
+
             while (running) {
 
                 try {
@@ -823,9 +853,7 @@ public abstract class MSMOTController extends MSTController {
 
                         }
 
-                        setPValue(output, currentZone.getP());
-                        setIValue(output, currentZone.getI());
-                        setDValue(output, currentZone.getD());
+                        applyZone(currentZone);
 
                     }
 
@@ -838,6 +866,20 @@ public abstract class MSMOTController extends MSTController {
                 }
 
                 Util.sleep(1000);
+            }
+
+        }
+
+        private void applyZone(PIDZone zone) throws IOException, DeviceException {
+
+            if (zone.isAuto()) {
+                setHeaterRange(output, zone.getRange());
+                setPValue(output, zone.getP());
+                setIValue(output, zone.getI());
+                setDValue(output, zone.getD());
+            } else {
+                setHeaterRange(output, zone.getRange());
+                setManualHeater(output, zone.getPower());
             }
 
         }

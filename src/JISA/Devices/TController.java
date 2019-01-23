@@ -193,6 +193,10 @@ public abstract class TController extends VISADevice {
      */
     public abstract double getDValue() throws IOException, DeviceException;
 
+    public abstract void setHeaterRange(double rangePCT) throws IOException, DeviceException;
+
+    public abstract double getHeaterRange() throws IOException, DeviceException;
+
     /**
      * Sets the target temperature and waits for it to be stably reached (within 1% for at least 1 minute).
      *
@@ -352,6 +356,12 @@ public abstract class TController extends VISADevice {
         @Override
         public void run() {
 
+            try {
+                applyZone(currentZone);
+            } catch (Exception e) {
+                System.err.printf("Error in starting auto-PID control: \"%s\"\n", e.getMessage());
+            }
+
             while (running) {
 
                 try {
@@ -379,9 +389,7 @@ public abstract class TController extends VISADevice {
 
                         }
 
-                        setPValue(currentZone.getP());
-                        setIValue(currentZone.getI());
-                        setDValue(currentZone.getD());
+                        applyZone(currentZone);
 
                     }
 
@@ -394,6 +402,21 @@ public abstract class TController extends VISADevice {
                 }
 
                 Util.sleep(1000);
+            }
+
+        }
+
+        private void applyZone(PIDZone zone) throws IOException, DeviceException {
+
+            if (zone.isAuto()) {
+                useAutoHeater();
+                setHeaterRange(zone.getRange());
+                setPValue(currentZone.getP());
+                setIValue(currentZone.getI());
+                setDValue(currentZone.getD());
+            } else {
+                setHeaterRange(zone.getRange());
+                setManualHeater(currentZone.getPower());
             }
 
         }
@@ -417,18 +440,35 @@ public abstract class TController extends VISADevice {
 
     public static class PIDZone {
 
-        private final double minT;
-        private final double maxT;
-        private final double P;
-        private final double I;
-        private final double D;
+        private final double  minT;
+        private final double  maxT;
+        private final double  P;
+        private final double  I;
+        private final double  D;
+        private final double  range;
+        private final boolean auto;
+        private final double  power;
 
-        public PIDZone(double minT, double maxT, double P, double I, double D) {
+        public PIDZone(double minT, double maxT, double P, double I, double D, double range) {
             this.minT = minT;
             this.maxT = maxT;
             this.P = P;
             this.I = I;
             this.D = D;
+            this.range = range;
+            auto = true;
+            power = 0;
+        }
+
+        public PIDZone(double minT, double maxT, double heaterPower, double range) {
+            this.minT = minT;
+            this.maxT = maxT;
+            P = 0;
+            I = 0;
+            D = 0;
+            this.range = range;
+            auto = false;
+            power = heaterPower;
         }
 
         public double getMinT() {
@@ -449,6 +489,18 @@ public abstract class TController extends VISADevice {
 
         public double getD() {
             return D;
+        }
+
+        public double getRange() {
+            return range;
+        }
+
+        public boolean isAuto() {
+            return auto;
+        }
+
+        public double getPower() {
+            return power;
         }
 
         public boolean matches(double temperature) {

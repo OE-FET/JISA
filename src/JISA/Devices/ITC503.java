@@ -32,6 +32,7 @@ public class ITC503 extends MSTController {
     private static final String C_SET_D            = "D%f";
     private static final String C_SET_HEATER       = "O%f";
     private static final String C_SET_FLOW         = "G%f";
+    private static final String C_SET_HEATER_LIM   = "M%f";
     private static final String C_QUERY_STATUS     = "X";
     private static final int    SET_TEMP_CHANNEL   = 0;
     private static final int    TEMP_ERROR_CHANNEL = 4;
@@ -42,6 +43,7 @@ public class ITC503 extends MSTController {
     private static final int    INT_ACTION_TIME    = 9;
     private static final int    DER_ACTION_TIME    = 10;
     private static final int    FREQ_CHAN_OFFSET   = 10;
+    private static final double MAX_HEATER_VOLTAGE = 40.0;
 
 
     private static final long   STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
@@ -108,7 +110,7 @@ public class ITC503 extends MSTController {
 
     @Override
     public double getHeaterPower() throws IOException, DeviceException {
-        return readChannel(HEATER_OP_PERC);
+        return Math.sqrt(readChannel(HEATER_OP_PERC) / 100.0) * 100.0;
     }
 
     @Override
@@ -124,7 +126,7 @@ public class ITC503 extends MSTController {
 
     @Override
     public void setManualHeater(double powerPCT) throws IOException, DeviceException {
-        query(C_SET_HEATER, powerPCT);
+        query(C_SET_HEATER, Math.pow(powerPCT / 100.0, 2) * 100.0);
         AutoMode mode = AutoMode.fromMode(false, isFlowAuto());
         query(C_SET_AUTO, mode.toInt());
     }
@@ -182,6 +184,20 @@ public class ITC503 extends MSTController {
     @Override
     public double getDValue() throws IOException, DeviceException {
         return readChannel(DER_ACTION_TIME);
+    }
+
+    @Override
+    public void setHeaterRange(double range) throws IOException, DeviceException {
+
+        double voltage = MAX_HEATER_VOLTAGE * Math.sqrt(range / 100.0);
+
+        query(C_SET_HEATER_LIM, voltage);
+
+    }
+
+    @Override
+    public double getHeaterRange() throws IOException, DeviceException {
+        return Math.pow(((readChannel(HEATER_OP_VOLTS) / (readChannel(HEATER_OP_PERC) / 100.0)) / MAX_HEATER_VOLTAGE), 2) * 100.0;
     }
 
     private Status getStatus() throws IOException, DeviceException {

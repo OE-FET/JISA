@@ -13,25 +13,30 @@ import java.util.concurrent.Semaphore;
 
 /**
  * Class for controlling Lake Shore Model 336 temperature controllers.
- *
+ * <p>
  * They are generally annoying with a shoddy communications implementation. Hooray!
  */
 public class LS336 extends MSMOTController {
 
-    private static final String[]        CHANNELS          = {"A", "B", "C", "D"};
-    private static final String          C_QUERY_SENSOR    = "KRDG? %s";
-    private static final String          C_SET_SET_POINT   = "SETP %d,%f";
-    private static final String          C_QUERY_SET_POINT = "SETP? %d";
-    private static final String          C_QUERY_PID       = "PID?";
-    private static final String          C_SET_PID         = "PID %f,%f,%f";
-    private static final String          C_SET_OUT_MODE    = "OUTMODE %d,%d,%d,%d";
-    private static final String          C_QUERY_OUT_MODE  = "OUTMODE? %d";
-    private static final String          C_QUERY_HEATER    = "HTR? %d";
-    private static final String          C_SET_HEATER      = "MOUT %d,%f";
-    private static final String          C_QUERY_M_HEATER  = "MOUT? %d";
-    private static final String          TERMINATOR        = "\r\n";
-    private              Semaphore       timingControl     = new Semaphore(1);
-    private              ExecutorService timingService     = Executors.newFixedThreadPool(1);
+    private static final String[]        CHANNELS             = {"A", "B", "C", "D"};
+    private static final String          C_QUERY_SENSOR       = "KRDG? %s";
+    private static final String          C_SET_SET_POINT      = "SETP %d,%f";
+    private static final String          C_QUERY_SET_POINT    = "SETP? %d";
+    private static final String          C_QUERY_PID          = "PID?";
+    private static final String          C_SET_PID            = "PID %f,%f,%f";
+    private static final String          C_SET_OUT_MODE       = "OUTMODE %d,%d,%d,%d";
+    private static final String          C_QUERY_OUT_MODE     = "OUTMODE? %d";
+    private static final String          C_QUERY_HEATER       = "HTR? %d";
+    private static final String          C_SET_HEATER         = "MOUT %d,%f";
+    private static final String          C_QUERY_M_HEATER     = "MOUT? %d";
+    private static final String          C_SET_HEATER_RANGE   = "RANGE %d,%d";
+    private static final String          C_QUERY_HEATER_RANGE = "RANGE? %d";
+    private static final String          C_SET_ZONE           = "ZONE %d,%d,%f,%f,%f,%f,%f,%d,0,0";
+    private static final String          C_QUERY_ZONE         = "ZONE? %d,%d";
+    private static final String          TERMINATOR           = "\r\n";
+    private              Semaphore       timingControl        = new Semaphore(1);
+    private              ExecutorService timingService        = Executors.newFixedThreadPool(1);
+    private              boolean[]       nativeAPID           = {false, false};
 
     public LS336(InstrumentAddress address) throws IOException, DeviceException {
 
@@ -157,6 +162,18 @@ public class LS336 extends MSMOTController {
     }
 
     @Override
+    public void setHeaterRange(int output, double range) throws IOException, DeviceException {
+        checkOutput(output);
+        write(C_SET_HEATER_RANGE, output, HRange.fromDouble(range).ordinal());
+    }
+
+    @Override
+    public double getHeaterRange(int output) throws IOException, DeviceException {
+        checkOutput(output);
+        return HRange.values()[queryInt(C_QUERY_HEATER_RANGE, output)].getPCT();
+    }
+
+    @Override
     public void setTargetTemperature(int output, double temperature) throws IOException, DeviceException {
         checkOutput(output);
         write(C_SET_SET_POINT, output + 1, temperature);
@@ -205,16 +222,59 @@ public class LS336 extends MSMOTController {
 
     @Override
     public void useAutoPID(int output, boolean auto) throws IOException, DeviceException {
+
         checkOutput(output);
-        OutMode mode = getOutMode(output);
-        mode.mode = auto ? 2 : 1;
-        write(C_SET_OUT_MODE, output, mode.mode, mode.input, mode.powerUp ? 1 : 0);
+
+        if (nativeAPID[output]) {
+            OutMode mode = getOutMode(output);
+            mode.mode = auto ? 2 : 1;
+            write(C_SET_OUT_MODE, output, mode.mode, mode.input, mode.powerUp ? 1 : 0);
+        } else {
+            super.useAutoPID(output, auto);
+        }
+
     }
 
     @Override
     public boolean isPIDAuto(int output) throws IOException, DeviceException {
         checkOutput(output);
-        return getOutMode(output).mode == 2;
+        if (nativeAPID[output]) {
+            return getOutMode(output).mode == 2;
+        } else {
+            return super.isPIDAuto(output);
+        }
+    }
+
+    public void setAutoPIDZones(int output, PIDZone[] zones) throws IOException, DeviceException {
+
+        checkOutput(output);
+        nativeAPID[output] = false;
+
+        if (nativeAPID[output]) {
+
+            for (int i = 0; i < zones.length; i++) {
+                PIDZone z = zones[i];
+                write(C_SET_ZONE, output, i + 1, z.getMaxT(), z.getP(), z.getI(), z.getD(), z.getPower(), HRange.fromDouble(z.getRange()).ordinal());
+            }
+
+        } else {
+            super.setAutoPIDZones(output, zones);
+        }
+
+    }
+
+    public PIDZone[] getAutoPIDZones(int output) throws IOException, DeviceException {
+
+        checkOutput(output);
+
+        if (nativeAPID[output]) {
+
+            return new PIDZone[10];
+
+        } else {
+            return super.getAutoPIDZones(output);
+        }
+
     }
 
     @Override
@@ -259,6 +319,40 @@ public class LS336 extends MSMOTController {
             D = Double.valueOf(vals[2].trim());
 
         }
+    }
+
+    private enum HRange {
+        OFF(0.0),
+        LOW(1.0),
+        MED(10.0),
+        HIGH(100.0);
+
+        private double pct;
+
+        public static HRange fromDouble(double pct) {
+
+            HRange found = HIGH;
+
+            for (HRange range : values()) {
+
+                if (range.getPCT() <= pct && Math.abs(range.getPCT() - pct) < Math.abs(found.getPCT() - pct)) {
+                    found = range;
+                }
+
+            }
+
+            return found;
+
+        }
+
+        HRange(double factorPCT) {
+            pct = factorPCT;
+        }
+
+        public double getPCT() {
+            return pct;
+        }
+
     }
 
 }

@@ -33,6 +33,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
     private double                                                 minY     = Double.POSITIVE_INFINITY;
     private double                                                 maxRange = -1;
 
+
     /**
      * Creates an empty plot from the given title, x-axis label, and y-axis label.
      *
