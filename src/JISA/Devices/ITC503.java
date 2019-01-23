@@ -76,6 +76,7 @@ public class ITC503 extends MSTController {
         }
 
         setMode(Mode.REMOTE_UNLOCKED);
+        write(C_SET_AUTO_PID, 0);
 
     }
 
@@ -149,16 +150,6 @@ public class ITC503 extends MSTController {
     @Override
     public boolean isFlowAuto() throws IOException, DeviceException {
         return AutoMode.fromInt(getStatus().A).gasAuto();
-    }
-
-    @Override
-    public void useAutoPID(boolean auto) throws IOException, DeviceException {
-        query(C_SET_AUTO_PID, auto ? 1 : 0);
-    }
-
-    @Override
-    public boolean isPIDAuto() throws IOException, DeviceException {
-        return getStatus().L > 0;
     }
 
     @Override

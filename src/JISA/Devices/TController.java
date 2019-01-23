@@ -1,7 +1,10 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
+import JISA.Control.Returnable;
+import JISA.Control.SetGettable;
 import JISA.Control.Synch;
+import JISA.Util;
 import JISA.VISA.VISADevice;
 
 import java.io.IOException;
@@ -10,6 +13,8 @@ import java.io.IOException;
  * Abstract class to define the standard functionality of temperature controllers
  */
 public abstract class TController extends VISADevice {
+
+    private Zoner zoner = null;
 
     /**
      * Connects to the temperature controller at the given address, returning an instrument object to control it.
@@ -129,26 +134,6 @@ public abstract class TController extends VISADevice {
     public abstract boolean isFlowAuto() throws IOException, DeviceException;
 
     /**
-     * Sets whether the PID values are being automatically controlled
-     *
-     * @param auto Automatic?
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    public abstract void useAutoPID(boolean auto) throws IOException, DeviceException;
-
-    /**
-     * Returns whether the PID values are being automatically controlled
-     *
-     * @return Automatic?
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    public abstract boolean isPIDAuto() throws IOException, DeviceException;
-
-    /**
      * Sets the proportional term co-efficient for PID control
      *
      * @param value Proportional co-efficient
@@ -266,6 +251,210 @@ public abstract class TController extends VISADevice {
      */
     public void waitForStableTemperature() throws IOException, DeviceException {
         waitForStableTemperature(getTargetTemperature());
+    }
+
+    /**
+     * Sets the zones to use (ie the look-up table) for auto PID control.
+     *
+     * @param zones Zones to use
+     */
+    public void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+
+        if (zoner != null && zoner.isRunning()) {
+            zoner.stop();
+            zoner = new Zoner(zones);
+            zoner.start();
+        } else {
+            zoner = new Zoner(zones);
+        }
+    }
+
+    /**
+     * Returns an array of PIDZone object representing the zones used for auto PID control.
+     *
+     * @return Zones used
+     */
+    public PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
+
+        if (zoner == null) {
+            return new PIDZone[0];
+        } else {
+            return zoner.getZones();
+        }
+
+    }
+
+    /**
+     * Sets whether the PID values are being automatically controlled using the look-up table defined with setAutoPIDZones().
+     *
+     * @param auto Automatic?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public void useAutoPID(boolean auto) throws IOException, DeviceException {
+
+        if (auto && zoner == null) {
+            throw new DeviceException("You must set PID zones before using this feature.");
+        }
+
+        if (auto && !zoner.isRunning()) {
+            zoner.start();
+        } else if (zoner != null && zoner.isRunning()) {
+            zoner.stop();
+        }
+
+    }
+
+    /**
+     * Returns whether auto PID control is currently active or not.
+     *
+     * @return Is PID control auto?
+     */
+    public boolean isPIDAuto() throws IOException, DeviceException {
+        return zoner != null && zoner.isRunning();
+    }
+
+    protected class Zoner implements Runnable {
+
+        private final PIDZone[] zones;
+        private       PIDZone   currentZone;
+        private       boolean   running = false;
+        private       PIDZone   minZone;
+        private       PIDZone   maxZone;
+        private       Thread    thread;
+
+        public Zoner(PIDZone[] zones) {
+
+            this.zones = zones;
+            currentZone = zones[0];
+            minZone = zones[0];
+            maxZone = zones[0];
+
+            for (PIDZone zone : zones) {
+
+                if (zone.getMinT() < minZone.getMinT()) {
+                    minZone = zone;
+                }
+
+                if (zone.getMaxT() > maxZone.getMaxT()) {
+                    maxZone = zone;
+                }
+
+            }
+
+        }
+
+        public PIDZone[] getZones() {
+            return zones.clone();
+        }
+
+        @Override
+        public void run() {
+
+            while (running) {
+
+                try {
+
+                    double T = getTemperature();
+
+                    if (!currentZone.matches(T)) {
+
+                        boolean found = false;
+                        for (PIDZone zone : zones) {
+                            if (zone.matches(T)) {
+                                currentZone = zone;
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (!found) {
+
+                            if (T <= minZone.getMinT()) {
+                                currentZone = minZone;
+                            } else {
+                                currentZone = maxZone;
+                            }
+
+                        }
+
+                        setPValue(currentZone.getP());
+                        setIValue(currentZone.getI());
+                        setDValue(currentZone.getD());
+
+                    }
+
+                } catch (Exception e) {
+                    System.err.printf("Error in auto-PID control: \"%s\"\n", e.getMessage());
+                }
+
+                if (!running) {
+                    break;
+                }
+
+                Util.sleep(1000);
+            }
+
+        }
+
+        public void start() {
+            running = true;
+            thread = new Thread(this);
+            thread.start();
+        }
+
+        public void stop() {
+            running = false;
+            thread.interrupt();
+        }
+
+        public boolean isRunning() {
+            return running;
+        }
+
+    }
+
+    public static class PIDZone {
+
+        private final double minT;
+        private final double maxT;
+        private final double P;
+        private final double I;
+        private final double D;
+
+        public PIDZone(double minT, double maxT, double P, double I, double D) {
+            this.minT = minT;
+            this.maxT = maxT;
+            this.P = P;
+            this.I = I;
+            this.D = D;
+        }
+
+        public double getMinT() {
+            return minT;
+        }
+
+        public double getMaxT() {
+            return maxT;
+        }
+
+        public double getP() {
+            return P;
+        }
+
+        public double getI() {
+            return I;
+        }
+
+        public double getD() {
+            return D;
+        }
+
+        public boolean matches(double temperature) {
+            return (temperature >= minT && temperature <= maxT);
+        }
+
     }
 
 }

@@ -7,10 +7,19 @@ import java.io.IOException;
 
 public abstract class MSMOTController extends MSTController {
 
-    protected int defaultOutput = 0;
+    protected int     defaultOutput = 0;
+    private   Zoner[] zoners;
 
     public MSMOTController(InstrumentAddress address) throws IOException {
+
         super(address);
+
+        zoners = new Zoner[getNumOutputs()];
+
+        for (int i = 0; i < zoners.length; i++) {
+            zoners[i] = null;
+        }
+
     }
 
     /**
@@ -432,55 +441,6 @@ public abstract class MSMOTController extends MSTController {
     }
 
     /**
-     * Sets whether the controller should use automatic PID control on the specified output/control-loop.
-     *
-     * @param output Output number
-     * @param auto   Should it be automatic?
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    public abstract void useAutoPID(int output, boolean auto) throws IOException, DeviceException;
-
-    /**
-     * Sets whether the controller should use automatic PID control on all outputs/control-loops.
-     *
-     * @param auto Should it be automatic?
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    public void useAutoPID(boolean auto) throws IOException, DeviceException {
-        for (int onum = 0; onum < getNumOutputs(); onum++) {
-            useAutoPID(onum, auto);
-        }
-    }
-
-    /**
-     * Returns whether the controller is automatically selecting PID values on the specified output/control-loop.
-     *
-     * @param output Output number
-     *
-     * @return Is it automatic?
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    public abstract boolean isPIDAuto(int output) throws IOException, DeviceException;
-
-    /**
-     * Returns whether the controller is automatically selecting PID values on the default output/control-loop.
-     *
-     * @return Is it automatic?
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    public boolean isPIDAuto() throws IOException, DeviceException {
-        return isPIDAuto(defaultOutput);
-    }
-
-    /**
      * Checks whether the specified output number is valid, throws a DeviceException if not.
      *
      * @param output Output number
@@ -555,6 +515,105 @@ public abstract class MSMOTController extends MSTController {
     public void waitForStableTemperature(int output) throws IOException, DeviceException {
         checkOutput(output);
         waitForStableTemperature(getUsedSensor(output), getTargetTemperature(output));
+    }
+
+    public void setAutoPIDZones(int output, PIDZone... zones) throws IOException, DeviceException {
+
+        checkOutput(output);
+
+        if (zoners[output] != null && zoners[output].isRunning()) {
+            zoners[output].stop();
+            zoners[output] = new Zoner(output, zones);
+            zoners[output].start();
+        } else {
+            zoners[output] = new Zoner(output, zones);
+        }
+
+    }
+
+    public void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+        for (int onum = 0; onum < getNumOutputs(); onum++) {
+            setAutoPIDZones(onum, zones);
+        }
+    }
+
+    public PIDZone[] getAutoPIDZones(int output) throws IOException, DeviceException {
+
+        if (zoners[output] == null) {
+            return new PIDZone[0];
+        } else {
+            return zoners[output].getZones();
+        }
+
+    }
+
+    public PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
+        return getAutoPIDZones(defaultOutput);
+    }
+
+    /**
+     * Sets whether the controller should use automatic PID control on the specified output/control-loop.
+     *
+     * @param output Output number
+     * @param auto   Should it be automatic?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public void useAutoPID(int output, boolean auto) throws IOException, DeviceException {
+
+        checkOutput(output);
+
+        if (auto && zoners[output] == null) {
+            throw new DeviceException("You must set PID zones before using this feature.");
+        }
+
+        if (auto && !zoners[output].isRunning()) {
+            zoners[output].start();
+        } else if (zoners[output] != null && zoners[output].isRunning()) {
+            zoners[output].stop();
+        }
+
+    }
+
+    /**
+     * Sets whether the controller should use automatic PID control on all outputs/control-loops.
+     *
+     * @param auto Should it be automatic?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public void useAutoPID(boolean auto) throws IOException, DeviceException {
+        for (int onum = 0; onum < getNumOutputs(); onum++) {
+            useAutoPID(onum, auto);
+        }
+    }
+
+    /**
+     * Returns whether the controller is automatically selecting PID values on the specified output/control-loop.
+     *
+     * @param output Output number
+     *
+     * @return Is it automatic?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public boolean isPIDAuto(int output) throws IOException, DeviceException {
+        return zoners[output] != null && zoners[output].isRunning();
+    }
+
+    /**
+     * Returns whether the controller is automatically selecting PID values on the default output/control-loop.
+     *
+     * @return Is it automatic?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    public boolean isPIDAuto() throws IOException, DeviceException {
+        return isPIDAuto(defaultOutput);
     }
 
     /**
@@ -685,6 +744,108 @@ public abstract class MSMOTController extends MSTController {
         public double getDValue() throws IOException, DeviceException {
             return MSMOTController.this.getDValue(output);
         }
+    }
+
+    protected class Zoner implements Runnable {
+
+        private final PIDZone[] zones;
+        private final int       output;
+        private       PIDZone   currentZone;
+        private       boolean   running = false;
+        private       PIDZone   minZone;
+        private       PIDZone   maxZone;
+        private       Thread    thread;
+
+        public Zoner(int output, PIDZone[] zones) {
+
+            this.zones = zones;
+            this.output = output;
+            currentZone = zones[0];
+            minZone = zones[0];
+            maxZone = zones[0];
+
+            for (PIDZone zone : zones) {
+
+                if (zone.getMinT() < minZone.getMinT()) {
+                    minZone = zone;
+                }
+
+                if (zone.getMaxT() > maxZone.getMaxT()) {
+                    maxZone = zone;
+                }
+
+            }
+
+        }
+
+        public PIDZone[] getZones() {
+            return zones.clone();
+        }
+
+        @Override
+        public void run() {
+
+            while (running) {
+
+                try {
+
+                    double T = getTemperature(getUsedSensor(output));
+
+                    if (!currentZone.matches(T)) {
+
+                        boolean found = false;
+                        for (PIDZone zone : zones) {
+                            if (zone.matches(T)) {
+                                currentZone = zone;
+                                found = true;
+                                break;
+                            }
+                        }
+
+                        if (!found) {
+
+                            if (T <= minZone.getMinT()) {
+                                currentZone = minZone;
+                            } else {
+                                currentZone = maxZone;
+                            }
+
+                        }
+
+                        setPValue(output, currentZone.getP());
+                        setIValue(output, currentZone.getI());
+                        setDValue(output, currentZone.getD());
+
+                    }
+
+                } catch (Exception e) {
+                    System.err.printf("Error in auto-PID control: \"%s\"\n", e.getMessage());
+                }
+
+                if (!running) {
+                    break;
+                }
+
+                Util.sleep(1000);
+            }
+
+        }
+
+        public void start() {
+            running = true;
+            thread = new Thread(this);
+            thread.start();
+        }
+
+        public void stop() {
+            running = false;
+            thread.interrupt();
+        }
+
+        public boolean isRunning() {
+            return running;
+        }
+
     }
 
 }
