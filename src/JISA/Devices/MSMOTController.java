@@ -648,6 +648,7 @@ public abstract class MSMOTController extends MSTController {
          */
         public VirtualTC(int output) throws IOException {
             super(null);
+            this.output = output;
         }
 
         @Override
@@ -713,6 +714,16 @@ public abstract class MSMOTController extends MSTController {
         @Override
         public boolean isPIDAuto() throws IOException, DeviceException {
             return MSMOTController.this.isPIDAuto(output);
+        }
+
+        @Override
+        public void setAutoPIDZones(PIDZone[] zones) throws IOException, DeviceException {
+            MSMOTController.this.setAutoPIDZones(output, zones);
+        }
+
+        @Override
+        public PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
+            return MSMOTController.this.getAutoPIDZones(output);
         }
 
         @Override

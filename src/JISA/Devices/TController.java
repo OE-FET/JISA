@@ -373,7 +373,7 @@ public abstract class TController extends VISADevice {
 
                             if (T <= minZone.getMinT()) {
                                 currentZone = minZone;
-                            } else {
+                            } else if (T >= maxZone.getMaxT()) {
                                 currentZone = maxZone;
                             }
 
