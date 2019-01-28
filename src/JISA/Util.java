@@ -42,7 +42,8 @@ public class Util {
     public static void sleep(long msec) {
         try {
             Thread.sleep(msec);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
     }
 
     public static boolean isBetween(double value, double min, double max) {
@@ -106,6 +107,16 @@ public class Util {
         }
 
         return values;
+
+    }
+
+    public static String[] makeCountingString(int start, int length, String pattern) {
+
+        String[] result = new String[length];
+        for (int i = 0; i < length; i++) {
+            result[i] = String.format(pattern, i + start);
+        }
+        return result;
 
     }
 

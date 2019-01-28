@@ -1,11 +1,14 @@
 package JISA.GUI;
 
 import JISA.Control.ConfigStore;
+import JISA.Control.SRunnable;
 import JISA.Control.SetGettable;
+import JISA.Util;
 import JISA.VISA.VISADevice;
 import javafx.scene.layout.Pane;
 
 import java.util.ArrayList;
+import java.util.concurrent.Semaphore;
 
 public class ConfigGrid extends Grid {
 
@@ -29,7 +32,7 @@ public class ConfigGrid extends Grid {
     public <T extends VISADevice> InstrumentConfig<T> addInstrument(String name, Class<T> type) {
 
         try {
-            String key = String.format("instrument%d", configs.size());
+            String              key  = String.format("instrument%d", configs.size());
             InstrumentConfig<T> conf = new InstrumentConfig<>(name, key, type, config);
             addPane(conf.getPane());
             configs.add(conf);
@@ -42,9 +45,27 @@ public class ConfigGrid extends Grid {
     }
 
     public void connectAll() {
+        for (InstrumentConfig config : configs) {
+            (new Thread(() -> config.connect(false))).start();
+        }
+    }
+
+    public void connectAll(SRunnable onComplete) {
+
+        Semaphore s = new Semaphore(0);
 
         for (InstrumentConfig config : configs) {
-            (new Thread(()-> config.connect(false))).start();
+            (new Thread(() -> {
+                config.connect(false);
+                s.release();
+            })).start();
+        }
+
+        try {
+            s.acquire(configs.size());
+            onComplete.run();
+        } catch (Exception e) {
+            Util.exceptionHandler(e);
         }
 
     }
