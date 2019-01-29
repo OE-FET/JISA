@@ -55,7 +55,7 @@
                         <Button fx:id="remove" layoutX="10.0" layoutY="11.0" minWidth="100.0" mnemonicParsing="false" onAction="#removeRow" text="Remove" />
                     </items>
                 </ToolBar>
-                <TableView fx:id="table" editable="true">
+                <TableView fx:id="table" editable="true" minHeight="250.0">
                     <columns>
                         <TableColumn fx:id="minCol" prefWidth="75.0" text="Min [K]">
                             <cellValueFactory>

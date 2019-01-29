@@ -8,7 +8,7 @@
 
 
     <center>
-        <LineChart fx:id="chart" legendSide="RIGHT" minHeight="600.0" BorderPane.alignment="CENTER">
+        <LineChart fx:id="chart" legendSide="RIGHT" minHeight="400.0" BorderPane.alignment="CENTER">
             <xAxis>
                 <NumberAxis side="BOTTOM" fx:id="xAxis" />
             </xAxis>

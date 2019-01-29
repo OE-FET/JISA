@@ -4,6 +4,7 @@ import JISA.Control.Field;
 import JISA.Devices.DeviceException;
 import JISA.Devices.MCSMU;
 import JISA.Devices.SMU;
+import JISA.Devices.TController;
 
 import java.io.IOException;
 
@@ -18,12 +19,9 @@ public class SMUConfig extends Fields {
     public SMUConfig(String title, InstrumentConfig<SMU>... instruments) {
         super(title);
         this.instruments = instruments;
-        smu.set(0);
         chn.set(0);
         trm.set(0);
         lim.set(0.02);
-
-        smu.setOnChange(this::update);
 
         String[] names = new String[instruments.length];
 
@@ -32,15 +30,40 @@ public class SMUConfig extends Fields {
         }
 
         smu.editValues(names);
+        smu.set(0);
+
+        for (InstrumentConfig<SMU> config : instruments) {
+            config.setOnConnect(() -> update(true));
+        }
+        update(true);
+
+        smu.setOnChange(() -> update(false));
 
     }
 
-    public void update() {
+    public void update(boolean connect) {
 
-        int c = getChannel();
-        int t = trm.get();
+        int c    = getChannel();
+        int t    = trm.get();
+        int smuI = smu.get();
 
-        SMU smu = instruments[this.smu.get()].get();
+        if (connect) {
+            String[] names = new String[instruments.length];
+
+            for (int i = 0; i < instruments.length; i++) {
+                names[i] = String.format("%s (%s)", instruments[i].getTitle(), instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED");
+            }
+
+            smu.editValues(names);
+            smu.set(smuI);
+        }
+
+        SMU smu;
+        if (smuI < 0 || smuI >= instruments.length) {
+            smu = null;
+        } else {
+            smu = instruments[smuI].get();
+        }
 
         if (smu == null) {
             chn.editValues("Channel 0", "Channel 1", "Channel 2", "Channel 3");
@@ -89,7 +112,14 @@ public class SMUConfig extends Fields {
 
     public SMU getSMU() {
 
-        SMU smu = instruments[this.smu.get()].get();
+
+        int smuI = this.smu.get();
+
+        if (smuI < 0 || smuI >= instruments.length) {
+            return null;
+        }
+
+        SMU smu = instruments[smuI].get();
 
         if (smu == null) {
             return null;

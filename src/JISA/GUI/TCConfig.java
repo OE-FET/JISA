@@ -65,7 +65,10 @@ public class TCConfig extends JFXWindow {
         table.getSelectionModel().setCellSelectionEnabled(true);
 
         pidType.getSelectionModel().selectedIndexProperty().addListener(ae -> typeChange());
-        pidType.getSelectionModel().select(CHOICE_ZONING);
+        pidType.getSelectionModel().select(CHOICE_SINGLE);
+        pValue.setText("20.0");
+        iValue.setText("10.0");
+        dValue.setText("0.0");
 
         minCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
         minCol.setOnEditCommit(event -> event.getRowValue().setMin(event.getNewValue()));
@@ -89,15 +92,37 @@ public class TCConfig extends JFXWindow {
         heatCol.setOnEditCommit(event -> event.getRowValue().setHeat(event.getNewValue()));
 
         for (InstrumentConfig<TController> config : instruments) {
-            config.setOnConnect(this::update);
+            config.setOnConnect(() -> update(true));
         }
-        update();
+        update(true);
+
+        controller.getSelectionModel().selectedIndexProperty().addListener(event -> update(false));
 
     }
 
-    private void update() {
+    private void update(boolean connect) {
 
-        TController controller = instruments[this.controller.getSelectionModel().getSelectedIndex()].get();
+        int index = controller.getSelectionModel().getSelectedIndex();
+
+        if (connect) {
+            String[] names = new String[instruments.length];
+
+            for (int i = 0; i < instruments.length; i++) {
+                names[i] = String.format("%s (%s)", instruments[i].getTitle(), instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED");
+            }
+
+            controller.getItems().clear();
+            controller.getItems().addAll(names);
+            controller.getSelectionModel().select(index);
+        }
+
+        TController controller;
+        if (index < 0 || index >= instruments.length) {
+            controller = null;
+        } else {
+            controller = instruments[index].get();
+        }
+
 
         int o = Math.max(0, output.getSelectionModel().getSelectedIndex());
         int s = Math.max(0, sensor.getSelectionModel().getSelectedIndex());
@@ -229,8 +254,16 @@ public class TCConfig extends JFXWindow {
 
     public TController getTController() throws IOException, DeviceException {
 
-        TController controller = instruments[this.controller.getSelectionModel().getSelectedIndex()].get();
-        TController toReturn   = null;
+        int index = this.controller.getSelectionModel().getSelectedIndex();
+
+        TController controller;
+        if (index < 0 || index >= instruments.length) {
+            controller = null;
+        } else {
+            controller = instruments[index].get();
+        }
+
+        TController toReturn = null;
 
         if (controller == null) {
             return null;

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Set;
 
 public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements Gridable {
@@ -61,8 +62,7 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
     public  StackPane                   pane;
     private ConfigStore                 config          = null;
     private String                      key;
-    private Runnable                    onApply         = () -> {
-    };
+    private LinkedList<Runnable>        onApply         = new LinkedList<>();
 
     public InstrumentConfig(String title, String key, Class<T> type, ConfigStore c) throws IOException {
         super(title, "FXML/InstrumentConfig.fxml");
@@ -185,12 +185,15 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
             }
             makeRed();
         }
-        onApply.run();
+
+        for (Runnable r : onApply) {
+            r.run();
+        }
 
     }
 
     public void setOnConnect(Runnable onConnect) {
-        onApply = onConnect;
+        onApply.add(onConnect);
     }
 
     private void makeRed() {
