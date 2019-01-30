@@ -4,7 +4,6 @@ import JISA.Control.Field;
 import JISA.Devices.DeviceException;
 import JISA.Devices.MCSMU;
 import JISA.Devices.SMU;
-import JISA.Devices.TController;
 
 import java.io.IOException;
 

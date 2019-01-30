@@ -2,13 +2,9 @@ package JISA.Devices;
 
 import JISA.*;
 import JISA.Addresses.InstrumentAddress;
-import JISA.Control.Asynch;
-import JISA.Control.ERunnable;
-import JISA.Control.SRunnable;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,7 +13,7 @@ import java.util.regex.Pattern;
  * <p>
  * GPIBDevice class for controlling mercury ITC503 temperature controllers via GPIB.
  */
-public class ITC503 extends MSTController {
+public class ITC503 extends MSTC {
 
     private static final String TERMINATOR         = "\r";
     private static final String C_SET_COMM_MODE    = "Q2";

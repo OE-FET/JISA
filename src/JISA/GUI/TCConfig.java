@@ -1,18 +1,15 @@
 package JISA.GUI;
 
 import JISA.Devices.DeviceException;
-import JISA.Devices.MSMOTController;
-import JISA.Devices.MSTController;
-import JISA.Devices.TController;
+import JISA.Devices.MSMOTC;
+import JISA.Devices.MSTC;
+import JISA.Devices.TC;
 import JISA.Util;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.converter.DoubleStringConverter;
-import javafx.util.converter.FloatStringConverter;
 
 import java.io.IOException;
 
@@ -39,14 +36,14 @@ public class TCConfig extends JFXWindow {
     public TextField                    iValue;
     public TextField                    dValue;
 
-    private final InstrumentConfig<TController>[] instruments;
+    private final InstrumentConfig<TC>[] instruments;
 
     private final static int CHOICE_SINGLE = 0;
     private final static int CHOICE_ZONING = 1;
 
-    private TController.PIDZone[] zones;
+    private TC.PIDZone[] zones;
 
-    public TCConfig(String title, InstrumentConfig<TController>... instruments) {
+    public TCConfig(String title, InstrumentConfig<TC>... instruments) {
 
         super(title, TCConfig.class.getResource("FXML/TCConfigWindow.fxml"));
 
@@ -91,7 +88,7 @@ public class TCConfig extends JFXWindow {
         heatCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
         heatCol.setOnEditCommit(event -> event.getRowValue().setHeat(event.getNewValue()));
 
-        for (InstrumentConfig<TController> config : instruments) {
+        for (InstrumentConfig<TC> config : instruments) {
             config.setOnConnect(() -> update(true));
         }
         update(true);
@@ -116,7 +113,7 @@ public class TCConfig extends JFXWindow {
             controller.getSelectionModel().select(index);
         }
 
-        TController controller;
+        TC controller;
         if (index < 0 || index >= instruments.length) {
             controller = null;
         } else {
@@ -136,10 +133,10 @@ public class TCConfig extends JFXWindow {
             output.getSelectionModel().select(o);
             sensor.getSelectionModel().select(s);
 
-        } else if (controller instanceof MSMOTController) {
+        } else if (controller instanceof MSMOTC) {
 
-            int nO = ((MSMOTController) controller).getNumOutputs();
-            int nS = ((MSMOTController) controller).getNumSensors();
+            int nO = ((MSMOTC) controller).getNumOutputs();
+            int nS = ((MSMOTC) controller).getNumSensors();
             output.getItems().clear();
             output.getItems().addAll(Util.makeCountingString(0, nO, "Output %d"));
             sensor.getItems().clear();
@@ -147,9 +144,9 @@ public class TCConfig extends JFXWindow {
             output.getSelectionModel().select(o);
             sensor.getSelectionModel().select(s);
 
-        } else if (controller instanceof MSTController) {
+        } else if (controller instanceof MSTC) {
 
-            int nS = ((MSTController) controller).getNumSensors();
+            int nS = ((MSTC) controller).getNumSensors();
             output.getItems().clear();
             output.getItems().add("N/A");
             sensor.getItems().clear();
@@ -220,22 +217,22 @@ public class TCConfig extends JFXWindow {
 
     private void updateZones() {
 
-        zones = new TController.PIDZone[table.getItems().size()];
+        zones = new TC.PIDZone[table.getItems().size()];
 
         for (int i = 0; i < zones.length; i++) {
 
             ZoneRow row = table.getItems().get(i);
 
             if (row.getHeat() < 0) {
-                zones[i] = new TController.PIDZone(row.getMin(), row.getMax(), row.getP(), row.getI(), row.getD(), row.getRange());
+                zones[i] = new TC.PIDZone(row.getMin(), row.getMax(), row.getP(), row.getI(), row.getD(), row.getRange());
             } else {
-                zones[i] = new TController.PIDZone(row.getMin(), row.getMax(), row.getHeat(), row.getRange());
+                zones[i] = new TC.PIDZone(row.getMin(), row.getMax(), row.getHeat(), row.getRange());
             }
 
         }
 
 
-        for (TController.PIDZone zone : zones) {
+        for (TC.PIDZone zone : zones) {
 
             System.out.printf(
                     "Min: %s K, Max: %s K, P: %s, I: %s, D: %s, R: %s %%, W: %s %%\n",
@@ -252,29 +249,29 @@ public class TCConfig extends JFXWindow {
 
     }
 
-    public TController getTController() throws IOException, DeviceException {
+    public TC getTController() throws IOException, DeviceException {
 
         int index = this.controller.getSelectionModel().getSelectedIndex();
 
-        TController controller;
+        TC controller;
         if (index < 0 || index >= instruments.length) {
             controller = null;
         } else {
             controller = instruments[index].get();
         }
 
-        TController toReturn = null;
+        TC toReturn = null;
 
         if (controller == null) {
             return null;
-        } else if (controller instanceof MSMOTController) {
+        } else if (controller instanceof MSMOTC) {
             int o = output.getSelectionModel().getSelectedIndex();
             int s = sensor.getSelectionModel().getSelectedIndex();
-            ((MSMOTController) controller).useSensor(o, s);
-            toReturn = ((MSMOTController) controller).getOutput(o);
-        } else if (controller instanceof MSTController) {
+            ((MSMOTC) controller).useSensor(o, s);
+            toReturn = ((MSMOTC) controller).getOutput(o);
+        } else if (controller instanceof MSTC) {
             int s = sensor.getSelectionModel().getSelectedIndex();
-            ((MSTController) controller).useSensor(s);
+            ((MSTC) controller).useSensor(s);
             toReturn = controller;
         } else {
             toReturn = controller;

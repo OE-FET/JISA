@@ -3,10 +3,8 @@ package JISA.Devices;
 import JISA.Addresses.InstrumentAddress;
 import JISA.Util;
 import JISA.VISA.Connection;
-import JISA.VISA.VISA;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -16,7 +14,7 @@ import java.util.concurrent.Semaphore;
  * <p>
  * They are generally annoying with a shoddy communications implementation. Hooray!
  */
-public class LS336 extends MSMOTController {
+public class LS336 extends MSMOTC {
 
     private static final String[]        CHANNELS             = {"A", "B", "C", "D"};
     private static final String          C_QUERY_SENSOR       = "KRDG? %s";

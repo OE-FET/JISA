@@ -6,9 +6,9 @@ import JISA.Util;
 
 import java.io.IOException;
 
-public abstract class MSTController extends TController {
+public abstract class MSTC extends TC {
 
-    public MSTController(InstrumentAddress address) throws IOException {
+    public MSTC(InstrumentAddress address) throws IOException {
         super(address);
     }
 

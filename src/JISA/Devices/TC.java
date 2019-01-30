@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  * Abstract class to define the standard functionality of temperature controllers
  */
-public abstract class TController extends VISADevice {
+public abstract class TC extends VISADevice {
 
     private Zoner zoner = null;
 
@@ -23,7 +23,7 @@ public abstract class TController extends VISADevice {
      *
      * @throws IOException Upon communications error
      */
-    public TController(InstrumentAddress address) throws IOException {
+    public TC(InstrumentAddress address) throws IOException {
         super(address);
     }
 

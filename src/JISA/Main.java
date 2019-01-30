@@ -1,11 +1,6 @@
 package JISA;
 
-import JISA.Addresses.GPIBAddress;
 import JISA.Addresses.InstrumentAddress;
-import JISA.Devices.K2450;
-import JISA.Devices.LockIn;
-import JISA.Devices.SMU;
-import JISA.Devices.TController;
 import JISA.GUI.*;
 import JISA.VISA.VISA;
 import javafx.application.Platform;

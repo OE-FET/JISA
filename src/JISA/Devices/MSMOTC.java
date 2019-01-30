@@ -5,12 +5,12 @@ import JISA.Util;
 
 import java.io.IOException;
 
-public abstract class MSMOTController extends MSTController {
+public abstract class MSMOTC extends MSTC {
 
     protected int     defaultOutput = 0;
     private   Zoner[] zoners;
 
-    public MSMOTController(InstrumentAddress address) throws IOException {
+    public MSMOTC(InstrumentAddress address) throws IOException {
 
         super(address);
 
@@ -641,7 +641,7 @@ public abstract class MSMOTController extends MSTController {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public TController getOutput(int output) throws DeviceException, IOException {
+    public TC getOutput(int output) throws DeviceException, IOException {
         checkOutput(output);
         return new VirtualTC(output);
     }
@@ -649,7 +649,7 @@ public abstract class MSMOTController extends MSTController {
     /**
      * Class for representing an output/control-loop as its own temperature controller.
      */
-    public class VirtualTC extends TController {
+    public class VirtualTC extends TC {
 
         private int output;
 
@@ -667,117 +667,117 @@ public abstract class MSMOTController extends MSTController {
 
         @Override
         public void setTargetTemperature(double temperature) throws IOException, DeviceException {
-            MSMOTController.this.setTargetTemperature(output, temperature);
+            MSMOTC.this.setTargetTemperature(output, temperature);
         }
 
         @Override
         public double getTemperature() throws IOException, DeviceException {
-            return MSMOTController.this.getTemperature(getUsedSensor(output));
+            return MSMOTC.this.getTemperature(getUsedSensor(output));
         }
 
         @Override
         public double getTargetTemperature() throws IOException, DeviceException {
-            return MSMOTController.this.getTargetTemperature(output);
+            return MSMOTC.this.getTargetTemperature(output);
         }
 
         @Override
         public double getHeaterPower() throws IOException, DeviceException {
-            return MSMOTController.this.getHeaterPower(output);
+            return MSMOTC.this.getHeaterPower(output);
         }
 
         @Override
         public double getGasFlow() throws IOException, DeviceException {
-            return MSMOTController.this.getGasFlow(output);
+            return MSMOTC.this.getGasFlow(output);
         }
 
         @Override
         public void useAutoHeater() throws IOException, DeviceException {
-            MSMOTController.this.useAutoHeater(output);
+            MSMOTC.this.useAutoHeater(output);
         }
 
         @Override
         public void setManualHeater(double powerPCT) throws IOException, DeviceException {
-            MSMOTController.this.setManualHeater(output, powerPCT);
+            MSMOTC.this.setManualHeater(output, powerPCT);
         }
 
         @Override
         public boolean isHeaterAuto() throws IOException, DeviceException {
-            return MSMOTController.this.isHeaterAuto(output);
+            return MSMOTC.this.isHeaterAuto(output);
         }
 
         @Override
         public void useAutoFlow() throws IOException, DeviceException {
-            MSMOTController.this.useAutoFlow(output);
+            MSMOTC.this.useAutoFlow(output);
         }
 
         @Override
         public void setManualFlow(double outputPCT) throws IOException, DeviceException {
-            MSMOTController.this.setManualFlow(output, outputPCT);
+            MSMOTC.this.setManualFlow(output, outputPCT);
         }
 
         @Override
         public boolean isFlowAuto() throws IOException, DeviceException {
-            return MSMOTController.this.isFlowAuto(output);
+            return MSMOTC.this.isFlowAuto(output);
         }
 
         @Override
         public void useAutoPID(boolean auto) throws IOException, DeviceException {
-            MSMOTController.this.useAutoPID(output, auto);
+            MSMOTC.this.useAutoPID(output, auto);
         }
 
         @Override
         public boolean isPIDAuto() throws IOException, DeviceException {
-            return MSMOTController.this.isPIDAuto(output);
+            return MSMOTC.this.isPIDAuto(output);
         }
 
         @Override
         public void setAutoPIDZones(PIDZone[] zones) throws IOException, DeviceException {
-            MSMOTController.this.setAutoPIDZones(output, zones);
+            MSMOTC.this.setAutoPIDZones(output, zones);
         }
 
         @Override
         public PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
-            return MSMOTController.this.getAutoPIDZones(output);
+            return MSMOTC.this.getAutoPIDZones(output);
         }
 
         @Override
         public void setPValue(double value) throws IOException, DeviceException {
-            MSMOTController.this.setPValue(output, value);
+            MSMOTC.this.setPValue(output, value);
         }
 
         @Override
         public void setIValue(double value) throws IOException, DeviceException {
-            MSMOTController.this.setIValue(output, value);
+            MSMOTC.this.setIValue(output, value);
         }
 
         @Override
         public void setDValue(double value) throws IOException, DeviceException {
-            MSMOTController.this.setDValue(output, value);
+            MSMOTC.this.setDValue(output, value);
         }
 
         @Override
         public double getPValue() throws IOException, DeviceException {
-            return MSMOTController.this.getPValue(output);
+            return MSMOTC.this.getPValue(output);
         }
 
         @Override
         public double getIValue() throws IOException, DeviceException {
-            return MSMOTController.this.getIValue(output);
+            return MSMOTC.this.getIValue(output);
         }
 
         @Override
         public double getDValue() throws IOException, DeviceException {
-            return MSMOTController.this.getDValue(output);
+            return MSMOTC.this.getDValue(output);
         }
 
         @Override
         public void setHeaterRange(double range) throws IOException, DeviceException {
-            MSMOTController.this.setHeaterRange(output, range);
+            MSMOTC.this.setHeaterRange(output, range);
         }
 
         @Override
         public double getHeaterRange() throws IOException, DeviceException {
-            return MSMOTController.this.getHeaterRange(output);
+            return MSMOTC.this.getHeaterRange(output);
         }
     }
 
