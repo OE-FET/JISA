@@ -5,17 +5,18 @@ import JISA.Util;
 import JISA.VISA.VISADevice;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class IPS120 extends VISADevice {
 
-    private static final String TERMINATOR           = "\r";
-    private static final String C_SET_COMM_MODE      = "Q2";
-    private static final String C_READ_CHANNEL       = "R%d";
+    private static final String TERMINATOR       = "\r";
+    private static final String C_SET_COMM_MODE  = "Q2";
+    private static final String C_READ_CHANNEL   = "R%d";
     //private static final String C_SET_LOC_REM_STATUS            = "C%d";
-    private static final String C_SET_LOC_REM_STATUS = "C3";
+    private static final String C_SET_REM_STATUS = "C%d";
 
     private static final String C_SET_ACTIVITY           = "A%d";
     private static final String C_SET_MODE               = "M%d";
@@ -123,10 +124,12 @@ public class IPS120 extends VISADevice {
 
         clearRead();
 
+        setMode(Mode.REMOTE_UNLOCKED);
+
         try {
             String idn = query("V");
             if (!idn.split(" ")[0].trim().equals("IPS120-10")) {
-                throw new DeviceException("Device at address %s is not an ITC503", address.getVISAAddress());
+                throw new DeviceException("Device at address %s is not an IPS120!", address.getVISAAddress());
             }
         } catch (IOException e) {
             throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
@@ -244,6 +247,41 @@ public class IPS120 extends VISADevice {
 
     public boolean isStable() throws IOException {
         return examineStatus().status2 == 0;
+    }
+
+    public void setMode(Mode mode) throws IOException {
+        query(C_SET_REM_STATUS, mode.toInt());
+    }
+
+
+    public enum Mode {
+
+        LOCAL_LOCKED(0),
+        REMOTE_LOCKED(1),
+        LOCAL_UNLOCKED(2),
+        REMOTE_UNLOCKED(3);
+
+        private        int                           c;
+        private static HashMap<Integer, ITC503.Mode> lookup = new HashMap<>();
+
+        static ITC503.Mode fromInt(int i) {
+            return lookup.getOrDefault(i, null);
+        }
+
+        static {
+            for (ITC503.Mode mode : ITC503.Mode.values()) {
+                lookup.put(mode.toInt(), mode);
+            }
+        }
+
+        Mode(int code) {
+            c = code;
+        }
+
+        int toInt() {
+            return c;
+        }
+
     }
 
     private static class Status {

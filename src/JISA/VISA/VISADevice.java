@@ -53,7 +53,7 @@ public class VISADevice {
     public void clearRead() throws IOException {
 
         try {
-            connection.setTMO(50);
+            connection.setTMO(250);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
