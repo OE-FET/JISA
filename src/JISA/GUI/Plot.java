@@ -190,7 +190,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
      * @param seriesName Name of the data series
      * @param colour     Colour of the series (eg try: Color.RED or Color.GREEN, etc)
      */
-    public void watchList(final ResultTable list, final int xData, final int yData, String seriesName, Color colour) {
+    public synchronized void watchList(final ResultTable list, final int xData, final int yData, String seriesName, Color colour) {
 
         final int series = createSeries(seriesName, colour);
 
@@ -213,7 +213,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
      * @param yData Column number to plot on the y-axis
      * @param sData Column number to use for series sorting
      */
-    public void watchList(final ResultTable list, final int xData, final int yData, final int sData) {
+    public synchronized void watchList(final ResultTable list, final int xData, final int yData, final int sData) {
 
         final HashMap<Double, Integer> map = new HashMap<>();
         maps.add(map);
@@ -249,7 +249,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
 
     }
 
-    public void watchList(final ResultTable list, final int xData, final int yData, final int fData, final double fValue, String seriesName, Color colour) {
+    public synchronized void watchList(final ResultTable list, final int xData, final int yData, final int fData, final double fValue, String seriesName, Color colour) {
 
         final int series = createSeries(seriesName, colour);
 
@@ -269,7 +269,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
 
     }
 
-    public void watchList(final ResultTable list, final int xData, final int yData, final int sData, final int fData, final double fValue) {
+    public synchronized void watchList(final ResultTable list, final int xData, final int yData, final int sData, final int fData, final double fValue) {
 
         final HashMap<Double, Integer> map = new HashMap<>();
         maps.add(map);
@@ -385,14 +385,12 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
             minY = Math.min(minY, y);
 
             if (maxRange > 0) {
-                xAxis.setAutoRanging(false);
+                xAxis.setAutoRanging(true);
                 xAxis.setAnimated(false);
                 yAxis.setAnimated(false);
 
                 data.get(series).getData().removeIf(data -> data.getXValue() < (maxX - maxRange));
 
-                xAxis.setLowerBound(Math.max(minX, maxX - maxRange));
-                xAxis.setUpperBound(maxX);
             }
 
         });
@@ -405,7 +403,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
     }
 
     @Override
-    public void clear() {
+    public synchronized void clear() {
 
 
         for (HashMap<Double, Integer> map : maps) {
@@ -416,7 +414,8 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
 
             chart.getData().removeAll(chart.getData());
 
-            for (Integer i : data.keySet()) {
+            Integer[] keys = data.keySet().toArray(new Integer[0]);
+            for (Integer i : keys) {
 
                 if (!auto.get(i)) {
                     data.get(i).getData().clear();

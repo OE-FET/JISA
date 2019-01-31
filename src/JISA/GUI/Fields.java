@@ -251,6 +251,7 @@ public class Fields extends JFXWindow implements Gridable {
             @Override
             public void setDisabled(boolean disabled) {
                 field.setDisable(disabled);
+                button.setDisable(disabled);
             }
 
             @Override
@@ -330,6 +331,7 @@ public class Fields extends JFXWindow implements Gridable {
             @Override
             public void setDisabled(boolean disabled) {
                 field.setDisable(disabled);
+                button.setDisable(disabled);
             }
 
             @Override

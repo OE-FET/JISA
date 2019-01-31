@@ -48,7 +48,7 @@ public class Table extends JFXWindow implements Gridable, Clearable {
      *
      * @param list ResultTable to watch
      */
-    public void watchList(ResultTable list) {
+    public synchronized void watchList(ResultTable list) {
 
         list.addOnUpdate((r) -> update(r));
         setUp(list);
@@ -56,7 +56,7 @@ public class Table extends JFXWindow implements Gridable, Clearable {
 
     }
 
-    private void setUp(ResultTable list) {
+    private synchronized void setUp(ResultTable list) {
 
         Platform.runLater(() -> {
 
@@ -86,7 +86,7 @@ public class Table extends JFXWindow implements Gridable, Clearable {
 
     }
 
-    public void update(Result row) {
+    public synchronized void update(Result row) {
 
         Platform.runLater(() -> {
             table.getItems().add(FXCollections.observableArrayList(Arrays.asList(row.getData())));
@@ -101,7 +101,7 @@ public class Table extends JFXWindow implements Gridable, Clearable {
     }
 
     @Override
-    public void clear() {
+    public synchronized void clear() {
         GUI.runNow(() -> {
             table.getItems().clear();
         });

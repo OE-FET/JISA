@@ -20,8 +20,8 @@ public class LS336 extends MSMOTC {
     private static final String          C_QUERY_SENSOR       = "KRDG? %s";
     private static final String          C_SET_SET_POINT      = "SETP %d,%f";
     private static final String          C_QUERY_SET_POINT    = "SETP? %d";
-    private static final String          C_QUERY_PID          = "PID?";
-    private static final String          C_SET_PID            = "PID %f,%f,%f";
+    private static final String          C_QUERY_PID          = "PID? %d";
+    private static final String          C_SET_PID            = "PID %d,%f,%f,%f";
     private static final String          C_SET_OUT_MODE       = "OUTMODE %d,%d,%d,%d";
     private static final String          C_QUERY_OUT_MODE     = "OUTMODE? %d";
     private static final String          C_QUERY_HEATER       = "HTR? %d";
@@ -100,11 +100,11 @@ public class LS336 extends MSMOTC {
     }
 
     private OutMode getOutMode(int output) throws IOException {
-        return new OutMode(query(C_QUERY_OUT_MODE, output));
+        return new OutMode(query(C_QUERY_OUT_MODE, output+1));
     }
 
     private PID getPID(int output) throws IOException {
-        return new PID(query(C_QUERY_PID, output));
+        return new PID(query(C_QUERY_PID, output+1));
     }
 
     @Override
@@ -113,7 +113,7 @@ public class LS336 extends MSMOTC {
         checkSensor(sensor);
         OutMode mode = getOutMode(output);
         mode.input = sensor + 1;
-        write(C_SET_OUT_MODE, output, mode.mode, mode.input, mode.powerUp ? 1 : 0);
+        write(C_SET_OUT_MODE, output+1, mode.mode, mode.input, mode.powerUp ? 1 : 0);
     }
 
     @Override
@@ -126,21 +126,25 @@ public class LS336 extends MSMOTC {
     public void setPValue(int output, double value) throws IOException, DeviceException {
         checkOutput(output);
         PID pid = getPID(output);
-        write(C_SET_PID, value, pid.I, pid.D);
+        setPID(output, value, pid.I, pid.D);
     }
 
     @Override
     public void setIValue(int output, double value) throws IOException, DeviceException {
         checkOutput(output);
         PID pid = getPID(output);
-        write(C_SET_PID, pid.P, value, pid.D);
+        setPID(output, pid.P, value, pid.D);
     }
 
     @Override
     public void setDValue(int output, double value) throws IOException, DeviceException {
         checkOutput(output);
         PID pid = getPID(output);
-        write(C_SET_PID, pid.P, pid.I, value);
+        setPID(output, pid.P, pid.I, value);
+    }
+
+    private void setPID(int output, double P, double I, double D) throws IOException {
+        write(C_SET_PID,output+1, P, I, D);
     }
 
     @Override
@@ -164,13 +168,13 @@ public class LS336 extends MSMOTC {
     @Override
     public void setHeaterRange(int output, double range) throws IOException, DeviceException {
         checkOutput(output);
-        write(C_SET_HEATER_RANGE, output, HRange.fromDouble(range).ordinal());
+        write(C_SET_HEATER_RANGE, output+1, HRange.fromDouble(range).ordinal());
     }
 
     @Override
     public double getHeaterRange(int output) throws IOException, DeviceException {
         checkOutput(output);
-        return HRange.values()[queryInt(C_QUERY_HEATER_RANGE, output)].getPCT();
+        return HRange.values()[queryInt(C_QUERY_HEATER_RANGE, output + 1)].getPCT();
     }
 
     @Override
@@ -182,13 +186,13 @@ public class LS336 extends MSMOTC {
     @Override
     public double getTargetTemperature(int output) throws IOException, DeviceException {
         checkOutput(output);
-        return queryDouble(C_QUERY_SET_POINT, output);
+        return queryDouble(C_QUERY_SET_POINT, output + 1);
     }
 
     @Override
     public double getHeaterPower(int output) throws IOException, DeviceException {
         checkOutput(output);
-        return queryDouble(C_QUERY_HEATER, output);
+        return queryDouble(C_QUERY_HEATER, output + 1);
     }
 
     @Override
@@ -200,13 +204,13 @@ public class LS336 extends MSMOTC {
     @Override
     public void useAutoHeater(int output) throws IOException, DeviceException {
         checkOutput(output);
-        write(C_SET_HEATER, output, 0.0);
+        write(C_SET_HEATER, output + 1, 0.0);
     }
 
     @Override
     public boolean isHeaterAuto(int output) throws IOException, DeviceException {
         checkOutput(output);
-        return queryDouble(C_QUERY_M_HEATER, output) == 0;
+        return queryDouble(C_QUERY_M_HEATER, output + 1) == 0;
     }
 
     @Override
@@ -228,7 +232,7 @@ public class LS336 extends MSMOTC {
         if (nativeAPID[output]) {
             OutMode mode = getOutMode(output);
             mode.mode = auto ? 2 : 1;
-            write(C_SET_OUT_MODE, output, mode.mode, mode.input, mode.powerUp ? 1 : 0);
+            write(C_SET_OUT_MODE, output + 1, mode.mode, mode.input, mode.powerUp ? 1 : 0);
         } else {
             super.useAutoPID(output, auto);
         }
@@ -254,7 +258,7 @@ public class LS336 extends MSMOTC {
 
             for (int i = 0; i < zones.length; i++) {
                 PIDZone z = zones[i];
-                write(C_SET_ZONE, output, i + 1, z.getMaxT(), z.getP(), z.getI(), z.getD(), z.getPower(), HRange.fromDouble(z.getRange()).ordinal());
+                write(C_SET_ZONE, output + 1, i + 1, z.getMaxT(), z.getP(), z.getI(), z.getD(), z.getPower(), HRange.fromDouble(z.getRange()).ordinal());
             }
 
         } else {
@@ -280,7 +284,7 @@ public class LS336 extends MSMOTC {
     @Override
     public void setManualHeater(int output, double powerPCT) throws IOException, DeviceException {
         checkOutput(output);
-        write(C_SET_HEATER, output, powerPCT);
+        write(C_SET_HEATER, output + 1, powerPCT);
     }
 
     @Override

@@ -7,7 +7,7 @@
 
     <center>
 
-        <TableView fx:id="table" tableMenuButtonVisible="true">
+        <TableView fx:id="table" tableMenuButtonVisible="true" minHeight="400.0">
          <columnResizePolicy>
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
          </columnResizePolicy></TableView>
