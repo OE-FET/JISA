@@ -44,7 +44,7 @@ public class TCConfig extends JFXWindow {
     private final static int CHOICE_SINGLE = 0;
     private final static int CHOICE_ZONING = 1;
 
-    private TC.PIDZone[] zones;
+    private TC.PIDZone[] zones  = new TC.PIDZone[0];
     private ConfigStore  config = null;
     private String       key    = null;
     private JSONObject   data   = null;
@@ -96,25 +96,46 @@ public class TCConfig extends JFXWindow {
         dValue.setText("0.0");
 
         minCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
-        minCol.setOnEditCommit(event -> event.getRowValue().setMin(event.getNewValue()));
+        minCol.setOnEditCommit(event -> {
+            event.getRowValue().setMin(event.getNewValue());
+            updateZones();
+        });
 
         maxCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
-        maxCol.setOnEditCommit(event -> event.getRowValue().setMax(event.getNewValue()));
+        maxCol.setOnEditCommit(event -> {
+            event.getRowValue().setMax(event.getNewValue());
+            updateZones();
+        });
 
         pCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
-        pCol.setOnEditCommit(event -> event.getRowValue().setP(event.getNewValue()));
+        pCol.setOnEditCommit(event -> {
+            event.getRowValue().setP(event.getNewValue());
+            updateZones();
+        });
 
         iCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
-        iCol.setOnEditCommit(event -> event.getRowValue().setI(event.getNewValue()));
+        iCol.setOnEditCommit(event -> {
+            event.getRowValue().setI(event.getNewValue());
+            updateZones();
+        });
 
         dCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
-        dCol.setOnEditCommit(event -> event.getRowValue().setD(event.getNewValue()));
+        dCol.setOnEditCommit(event -> {
+            event.getRowValue().setD(event.getNewValue());
+            updateZones();
+        });
 
         rangeCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
-        rangeCol.setOnEditCommit(event -> event.getRowValue().setRange(event.getNewValue()));
+        rangeCol.setOnEditCommit(event -> {
+            event.getRowValue().setRange(event.getNewValue());
+            updateZones();
+        });
 
         heatCol.setCellFactory(TextFieldTableCell.forTableColumn(new DoubleStringConverter()));
-        heatCol.setOnEditCommit(event -> event.getRowValue().setHeat(event.getNewValue()));
+        heatCol.setOnEditCommit(event -> {
+            event.getRowValue().setHeat(event.getNewValue());
+            updateZones();
+        });
 
         for (InstrumentConfig<TC> config : instruments) {
             config.setOnConnect(() -> update(true));
@@ -259,6 +280,8 @@ public class TCConfig extends JFXWindow {
 
         }
 
+        save();
+
     }
 
     public TC getTController() throws IOException, DeviceException {
@@ -315,7 +338,9 @@ public class TCConfig extends JFXWindow {
 
             if (config != null && key != null) {
 
-                data = config.getInstConfig(key);
+                if (data == null) {
+                    data = config.getInstConfig(key);
+                }
 
                 if (data == null) {
                     data = new JSONObject();
@@ -350,7 +375,9 @@ public class TCConfig extends JFXWindow {
 
     private void load() {
 
-        data = config.getInstConfig(key);
+        if (data == null) {
+            data = config.getInstConfig(key);
+        }
 
         if (data == null) {
             save();
@@ -377,6 +404,17 @@ public class TCConfig extends JFXWindow {
         }
 
         updateZones();
+
+        output.getSelectionModel().selectedIndexProperty().addListener(event -> save());
+        sensor.getSelectionModel().selectedIndexProperty().addListener(event -> save());
+        pidType.getSelectionModel().selectedIndexProperty().addListener(event -> save());
+        pValue.textProperty().addListener(event -> save());
+        iValue.textProperty().addListener(event -> save());
+        dValue.textProperty().addListener(event -> save());
+        controller.getSelectionModel().selectedIndexProperty().addListener(event -> {
+            update(false);
+            save();
+        });
 
     }
 

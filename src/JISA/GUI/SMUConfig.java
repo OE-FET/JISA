@@ -24,12 +24,14 @@ public class SMUConfig extends Fields {
         this(title, configGrid);
         this.config = config;
         this.key = key;
+        load();
     }
 
     public SMUConfig(String title, String key, ConfigStore config, InstrumentConfig<SMU>... instruments) {
         this(title, instruments);
         this.config = config;
         this.key = key;
+        load();
     }
 
     public SMUConfig(String title, ConfigGrid configGrid) {
@@ -57,8 +59,6 @@ public class SMUConfig extends Fields {
         }
         update(true);
 
-        smu.setOnChange(() -> update(false));
-
     }
 
     public synchronized void update(boolean connect) {
@@ -76,6 +76,7 @@ public class SMUConfig extends Fields {
 
             smu.editValues(names);
             smu.set(smuI);
+            return;
         }
 
         SMU smu;
@@ -188,7 +189,9 @@ public class SMUConfig extends Fields {
 
             if (config != null && key != null) {
 
-                data = config.getInstConfig(key);
+                if (data == null) {
+                    data = config.getInstConfig(key);
+                }
 
                 if (data == null) {
                     data = new JSONObject();
@@ -208,18 +211,73 @@ public class SMUConfig extends Fields {
         }
     }
 
+    private void saveSMU() {
+        if (config != null && key != null && data != null) {
+            data.put("smu", smu.get());
+            try {
+                config.save();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void saveCHN() {
+        if (config != null && key != null && data != null) {
+            data.put("channel", chn.get());
+            try {
+                config.save();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void saveTRM() {
+        if (config != null && key != null && data != null) {
+            data.put("terminals", trm.get());
+            try {
+                config.save();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void saveLIM() {
+        if (config != null && key != null && data != null) {
+            data.put("limit", lim.get());
+            try {
+                config.save();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void load() {
 
-        data = config.getInstConfig(key);
+        if (data == null) {
+            data = config.getInstConfig(key);
+        }
 
         if (data == null) {
             save();
         }
 
-        smu.set(data.getInt("smu"));
         chn.set(data.getInt("channel"));
         trm.set(data.getInt("terminals"));
         lim.set(data.getDouble("limit"));
+        smu.set(data.getInt("smu"));
+
+        chn.setOnChange(this::saveCHN);
+        trm.setOnChange(this::saveTRM);
+        lim.setOnChange(this::saveLIM);
+
+        smu.setOnChange(() -> {
+            update(false);
+            save();
+        });
 
     }
 
