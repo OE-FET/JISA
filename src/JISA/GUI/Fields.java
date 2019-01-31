@@ -7,6 +7,7 @@ import JISA.Devices.DeviceException;
 import JISA.Util;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
@@ -541,9 +542,19 @@ public class Fields extends JFXWindow implements Gridable {
             }
 
             @Override
-            public void editValues(String... values) {
-                field.getItems().clear();
-                field.getItems().addAll(values);
+            public synchronized void editValues(String... values) {
+
+                int selected = field.getSelectionModel().getSelectedIndex();
+
+                if (list != null) {
+                    field.getSelectionModel().selectedIndexProperty().removeListener(list);
+                    field.setItems(FXCollections.observableArrayList(values));
+                    field.getSelectionModel().select(Math.min(values.length-1, Math.max(0,selected)));
+                    field.getSelectionModel().selectedIndexProperty().addListener(list);
+                } else {
+                    field.setItems(FXCollections.observableArrayList(values));
+                    field.getSelectionModel().select(Math.min(values.length-1, Math.max(0,selected)));
+                }
             }
 
             @Override

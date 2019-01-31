@@ -55,6 +55,8 @@ public class LS336 extends MSMOTC {
             throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
         }
 
+        write("MODE 1");
+
     }
 
     public synchronized void write(String command, Object... args) throws IOException {

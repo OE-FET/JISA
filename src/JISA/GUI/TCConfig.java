@@ -6,6 +6,7 @@ import JISA.Devices.MSMOTC;
 import JISA.Devices.MSTC;
 import JISA.Devices.TC;
 import JISA.Util;
+import javafx.collections.FXCollections;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
@@ -146,7 +147,7 @@ public class TCConfig extends JFXWindow {
 
     }
 
-    private void update(boolean connect) {
+    private synchronized void update(boolean connect) {
 
         int index = controller.getSelectionModel().getSelectedIndex();
 
@@ -175,41 +176,32 @@ public class TCConfig extends JFXWindow {
 
         if (controller == null) {
 
-            output.getItems().clear();
-            output.getItems().addAll(Util.makeCountingString(0, 4, "Output %d"));
-            sensor.getItems().clear();
-            sensor.getItems().addAll(Util.makeCountingString(0, 4, "Sensor %d"));
-            output.getSelectionModel().select(o);
-            sensor.getSelectionModel().select(s);
+            output.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, 4, "Output %d")));
+            sensor.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, 4, "Sensor %d")));
+            output.getSelectionModel().select(Math.min(o, 3));
+            sensor.getSelectionModel().select(Math.min(s, 3));
 
         } else if (controller instanceof MSMOTC) {
 
             int nO = ((MSMOTC) controller).getNumOutputs();
             int nS = ((MSMOTC) controller).getNumSensors();
-            output.getItems().clear();
-            output.getItems().addAll(Util.makeCountingString(0, nO, "Output %d"));
-            sensor.getItems().clear();
-            sensor.getItems().addAll(Util.makeCountingString(0, nS, "Sensor %d"));
-            output.getSelectionModel().select(o);
-            sensor.getSelectionModel().select(s);
+            output.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nO, "Output %d")));
+            sensor.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nS, "Sensor %d")));
+            output.getSelectionModel().select(Math.min(o, nO-1));
+            sensor.getSelectionModel().select(Math.min(s, nS-1));
 
         } else if (controller instanceof MSTC) {
 
             int nS = ((MSTC) controller).getNumSensors();
-            output.getItems().clear();
-            output.getItems().add("N/A");
-            sensor.getItems().clear();
-            sensor.getItems().addAll(Util.makeCountingString(0, nS, "Sensor %d"));
+            output.setItems(FXCollections.observableArrayList("N/A"));
+            sensor.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nS, "Sensor %d")));
             output.getSelectionModel().select(0);
-            sensor.getSelectionModel().select(s);
+            sensor.getSelectionModel().select(Math.min(s, nS-1));
 
         } else {
 
-            output.getItems().clear();
-            sensor.getItems().clear();
-
-            output.getItems().add("N/A");
-            sensor.getItems().add("N/A");
+            output.setItems(FXCollections.observableArrayList("N/A"));
+            sensor.setItems(FXCollections.observableArrayList("N/A"));
 
             output.getSelectionModel().select(0);
             sensor.getSelectionModel().select(0);

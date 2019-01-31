@@ -74,28 +74,35 @@ public class Grid extends JFXWindow implements Gridable {
 
     public void add(Gridable toAdd) {
 
-        BorderPane bPane     = new BorderPane();
-        StackPane  stack     = new StackPane();
-        StackPane  container = new StackPane();
-        Label      t         = new Label();
+        Pane bPane;
 
-        stack.setPadding(new Insets(10, 10, 10, 10));
-        stack.setAlignment(Pos.CENTER_LEFT);
-        stack.setStyle("-fx-background-color: #4c4c4c; -fx-background-radius: 5px 5px 0 0;");
-        bPane.setStyle("-fx-background-color: white; -fx-background-radius: 5px;");
-        bPane.setEffect(new DropShadow(10, new Color(0, 0, 0, 0.25)));
-        t.setFont(new Font("System Bold", 14));
-        t.setTextFill(Color.WHITE);
-        t.setText(toAdd.getTitle());
-        stack.getChildren().add(t);
-        container.setPadding(new Insets(15, 15, 15, 15));
-        toAdd.getPane().setStyle("-fx-background-color: transparent;");
-        container.getChildren().add(toAdd.getPane());
-        bPane.setTop(stack);
-        bPane.setCenter(container);
+        if (toAdd instanceof Grid && toAdd.getTitle().equals("")) {
+            bPane = toAdd.getPane();
+        } else {
+
+            bPane     = new BorderPane();
+            StackPane  stack     = new StackPane();
+            StackPane  container = new StackPane();
+            Label      t         = new Label();
+
+            stack.setPadding(new Insets(10, 10, 10, 10));
+            stack.setAlignment(Pos.CENTER_LEFT);
+            stack.setStyle("-fx-background-color: #4c4c4c; -fx-background-radius: 5px 5px 0 0;");
+            bPane.setStyle("-fx-background-color: white; -fx-background-radius: 5px;");
+            bPane.setEffect(new DropShadow(10, new Color(0, 0, 0, 0.25)));
+            t.setFont(new Font("System Bold", 14));
+            t.setTextFill(Color.WHITE);
+            t.setText(toAdd.getTitle());
+            stack.getChildren().add(t);
+            container.setPadding(new Insets(15, 15, 15, 15));
+            toAdd.getPane().setStyle("-fx-background-color: transparent;");
+            container.getChildren().add(toAdd.getPane());
+            ((BorderPane) bPane).setTop(stack);
+            ((BorderPane) bPane).setCenter(container);
+
+        }
 
         added.add(toAdd);
-
         addPane(bPane);
     }
 

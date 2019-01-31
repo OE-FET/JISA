@@ -57,15 +57,14 @@ public class SMUConfig extends Fields {
         for (InstrumentConfig<SMU> config : instruments) {
             config.setOnConnect(() -> update(true));
         }
+
         update(true);
+
+        smu.setOnChange(() -> update(false));
 
     }
 
     public synchronized void update(boolean connect) {
-
-        int c    = getChannel();
-        int t    = trm.get();
-        int smuI = smu.get();
 
         if (connect) {
             String[] names = new String[instruments.length];
@@ -75,9 +74,9 @@ public class SMUConfig extends Fields {
             }
 
             smu.editValues(names);
-            smu.set(smuI);
-            return;
         }
+
+        int smuI = smu.get();
 
         SMU smu;
         if (smuI < 0 || smuI >= instruments.length) {
@@ -88,17 +87,14 @@ public class SMUConfig extends Fields {
 
         if (smu == null) {
             chn.editValues("Channel 0", "Channel 1", "Channel 2", "Channel 3");
-            chn.set(c);
         } else if (smu instanceof MCSMU) {
             String[] channels = new String[((MCSMU) smu).getNumChannels()];
             for (int i = 0; i < channels.length; i++) {
                 channels[i] = String.format("Channel %d", i);
             }
             chn.editValues(channels);
-            chn.set(c);
         } else {
             chn.editValues("N/A");
-            chn.set(0);
         }
 
         try {
@@ -120,7 +116,6 @@ public class SMUConfig extends Fields {
             );
         }
 
-        trm.set(t);
 
     }
 
