@@ -31,9 +31,9 @@ You can also use it in python by using the Jython interpreter.
 |`SMU`|Source-Measure Unit|[Source](./src/JISA/Devices/SMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SMU.html)|
 |`MCSMU`|Multi-Channel Source-Measure Unit|[Source](./src/JISA/Devices/MCSMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MCSMU.html)|
 |`DCPower`|DC Power Supply|[Source](./src/JISA/Devices/DCPower.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DCPower.html)|
-|`TController`|Temperature Controller|[Source](./src/JISA/Devices/TController.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/TController.html)|
-|`MSTController`|Multi-Sensor Temperature Controller|[Source](./src/JISA/Devices/MSTController.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSTController.html)|
-|`MSMOTController`|Multi-Sensor, Multi-Output Temperature Controller|[Source](./src/JISA/Devices/MSMOTController.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSMOTController.html)|
+|`TC`|Temperature Controller|[Source](./src/JISA/Devices/TC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/TC.html)|
+|`MSTC`|Multi-Sensor Temperature Controller|[Source](./src/JISA/Devices/MSTC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSTC.html)|
+|`MSMOTC`|Multi-Sensor, Multi-Output Temperature Controller|[Source](./src/JISA/Devices/MSMOTC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSMOTC.html)|
 |`LockIn`|Lock-In Amplifier|[Source](./src/JISA/Devices/LockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/LockIn.html)|
 |`DPLockIn`|Dual-Phase Lock-In Amplifier|[Source](./src/JISA/Devices/DPLockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DPLockIn.html)|
 |`VPreAmp`|Voltage Pre-Amplifier|[Source](./src/JISA/Devices/VPreAmp.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/VPreAmp.html)|
