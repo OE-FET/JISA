@@ -348,4 +348,8 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
         return driver;
     }
 
+    public Class<T> getDeviceType() {
+        return deviceType;
+    }
+
 }

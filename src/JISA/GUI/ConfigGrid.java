@@ -8,6 +8,7 @@ import JISA.VISA.VISADevice;
 import javafx.scene.layout.Pane;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.concurrent.Semaphore;
 
 public class ConfigGrid extends Grid {
@@ -41,6 +42,23 @@ public class ConfigGrid extends Grid {
             System.err.println(e.getMessage());
             return null;
         }
+
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends VISADevice> InstrumentConfig<T>[] getInstrumentsByType(Class<T> type) {
+
+        LinkedList<InstrumentConfig<T>> list = new LinkedList<>();
+
+        for (InstrumentConfig c : configs) {
+
+            if (type.isAssignableFrom(c.getDeviceType())) {
+                list.add(c);
+            }
+
+        }
+
+        return list.toArray(new InstrumentConfig[0]);
 
     }
 

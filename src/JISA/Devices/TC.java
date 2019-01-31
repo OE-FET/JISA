@@ -6,6 +6,7 @@ import JISA.Control.SetGettable;
 import JISA.Control.Synch;
 import JISA.Util;
 import JISA.VISA.VISADevice;
+import org.json.JSONObject;
 
 import java.io.IOException;
 
@@ -449,6 +450,19 @@ public abstract class TC extends VISADevice {
         private final boolean auto;
         private final double  power;
 
+        public PIDZone(JSONObject data) {
+
+            minT = data.getDouble("minT");
+            maxT = data.getDouble("maxT");
+            P = data.getDouble("P");
+            I = data.getDouble("I");
+            D = data.getDouble("D");
+            range = data.getDouble("minT");
+            auto = data.getBoolean("auto");
+            power = data.getDouble("power");
+
+        }
+
         public PIDZone(double minT, double maxT, double P, double I, double D, double range) {
             this.minT = minT;
             this.maxT = maxT;
@@ -505,6 +519,23 @@ public abstract class TC extends VISADevice {
 
         public boolean matches(double temperature) {
             return (temperature >= minT && temperature <= maxT);
+        }
+
+        public JSONObject toJSON() {
+
+            JSONObject json = new JSONObject();
+
+            json.put("minT", minT);
+            json.put("maxT", maxT);
+            json.put("P", P);
+            json.put("I", I);
+            json.put("D", D);
+            json.put("range", range);
+            json.put("auto", auto);
+            json.put("power", power);
+
+            return json;
+
         }
 
     }

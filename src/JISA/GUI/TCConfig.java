@@ -1,5 +1,6 @@
 package JISA.GUI;
 
+import JISA.Control.ConfigStore;
 import JISA.Devices.DeviceException;
 import JISA.Devices.MSMOTC;
 import JISA.Devices.MSTC;
@@ -10,6 +11,8 @@ import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.converter.DoubleStringConverter;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.IOException;
 
@@ -42,6 +45,31 @@ public class TCConfig extends JFXWindow {
     private final static int CHOICE_ZONING = 1;
 
     private TC.PIDZone[] zones;
+    private ConfigStore  config = null;
+    private String       key    = null;
+    private JSONObject   data   = null;
+
+    public TCConfig(String title, String key, ConfigStore config, ConfigGrid configGrid) {
+
+        this(title, configGrid);
+        this.config = config;
+        this.key = key;
+        load();
+
+    }
+
+    public TCConfig(String title, String key, ConfigStore config, InstrumentConfig<TC>... instruments) {
+
+        this(title, instruments);
+        this.config = config;
+        this.key = key;
+        load();
+
+    }
+
+    public TCConfig(String title, ConfigGrid configGrid) {
+        this(title, configGrid.getInstrumentsByType(TC.class));
+    }
 
     public TCConfig(String title, InstrumentConfig<TC>... instruments) {
 
@@ -215,7 +243,7 @@ public class TCConfig extends JFXWindow {
         }
     }
 
-    private void updateZones() {
+    private synchronized void updateZones() {
 
         zones = new TC.PIDZone[table.getItems().size()];
 
@@ -228,22 +256,6 @@ public class TCConfig extends JFXWindow {
             } else {
                 zones[i] = new TC.PIDZone(row.getMin(), row.getMax(), row.getHeat(), row.getRange());
             }
-
-        }
-
-
-        for (TC.PIDZone zone : zones) {
-
-            System.out.printf(
-                    "Min: %s K, Max: %s K, P: %s, I: %s, D: %s, R: %s %%, W: %s %%\n",
-                    zone.getMinT(),
-                    zone.getMaxT(),
-                    zone.getP(),
-                    zone.getI(),
-                    zone.getD(),
-                    zone.getRange(),
-                    zone.getPower()
-            );
 
         }
 
@@ -297,6 +309,77 @@ public class TCConfig extends JFXWindow {
 
     }
 
+    private void save() {
+
+        try {
+
+            if (config != null && key != null) {
+
+                data = config.getInstConfig(key);
+
+                if (data == null) {
+                    data = new JSONObject();
+                    config.saveInstConfig(key, data);
+                }
+
+                data.put("controller", controller.getSelectionModel().getSelectedIndex());
+                data.put("output", output.getSelectionModel().getSelectedIndex());
+                data.put("sensor", sensor.getSelectionModel().getSelectedIndex());
+                data.put("pidType", pidType.getSelectionModel().getSelectedIndex());
+                data.put("P", pValue.getText());
+                data.put("I", iValue.getText());
+                data.put("D", dValue.getText());
+
+                JSONArray zoneRows = new JSONArray();
+
+                for (TC.PIDZone zone : zones) {
+                    zoneRows.put(zone.toJSON());
+                }
+
+                data.put("zones", zoneRows);
+
+                config.save();
+
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private void load() {
+
+        data = config.getInstConfig(key);
+
+        if (data == null) {
+            save();
+        }
+
+        controller.getSelectionModel().select(data.getInt("controller"));
+        output.getSelectionModel().select(data.getInt("output"));
+        sensor.getSelectionModel().select(data.getInt("sensor"));
+        pidType.getSelectionModel().select(data.getInt("pidType"));
+        pValue.setText(data.getString("P"));
+        iValue.setText(data.getString("I"));
+        dValue.setText(data.getString("D"));
+
+        table.getItems().clear();
+
+        JSONArray zoneRows = data.getJSONArray("zones");
+
+        for (int i = 0; i < zoneRows.length(); i++) {
+
+            table.getItems().add(
+                    new ZoneRow(new TC.PIDZone(zoneRows.getJSONObject(i)))
+            );
+
+        }
+
+        updateZones();
+
+    }
+
     public static class ZoneRow {
 
         private double min   = 0;
@@ -306,6 +389,22 @@ public class TCConfig extends JFXWindow {
         private double d     = 0;
         private double range = 100;
         private double heat  = -1;
+
+        public ZoneRow() {
+
+        }
+
+        public ZoneRow(TC.PIDZone zone) {
+
+            min = zone.getMinT();
+            max = zone.getMaxT();
+            p = zone.getP();
+            i = zone.getI();
+            d = zone.getD();
+            range = zone.getRange();
+            heat = zone.isAuto() ? -1 : zone.getPower();
+
+        }
 
         public Double getMin() {
             return min;

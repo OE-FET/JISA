@@ -1,19 +1,40 @@
 package JISA.GUI;
 
+import JISA.Control.ConfigStore;
 import JISA.Control.Field;
 import JISA.Devices.DeviceException;
 import JISA.Devices.MCSMU;
 import JISA.Devices.SMU;
+import org.json.JSONObject;
 
 import java.io.IOException;
 
 public class SMUConfig extends Fields {
 
-    private Field<Integer>          smu = addChoice("SMU", "SMU 1", "SMU 2");
-    private Field<Integer>          chn = addChoice("Channel", "Channel 0", "Channel 1", "Channel 2", "Channel 3");
-    private Field<Integer>          trm = addChoice("Terminals", "Front (NONE)", "Rear (NONE)");
-    private Field<Double>           lim = addDoubleField("Current Limit [A]");
+    private Field<Integer>          smu    = addChoice("SMU", "SMU 1", "SMU 2");
+    private Field<Integer>          chn    = addChoice("Channel", "Channel 0", "Channel 1", "Channel 2", "Channel 3");
+    private Field<Integer>          trm    = addChoice("Terminals", "Front (NONE)", "Rear (NONE)");
+    private Field<Double>           lim    = addDoubleField("Current Limit [A]");
     private InstrumentConfig<SMU>[] instruments;
+    private ConfigStore             config = null;
+    private String                  key    = null;
+    private JSONObject              data   = null;
+
+    public SMUConfig(String title, String key, ConfigStore config, ConfigGrid configGrid) {
+        this(title, configGrid);
+        this.config = config;
+        this.key = key;
+    }
+
+    public SMUConfig(String title, String key, ConfigStore config, InstrumentConfig<SMU>... instruments) {
+        this(title, instruments);
+        this.config = config;
+        this.key = key;
+    }
+
+    public SMUConfig(String title, ConfigGrid configGrid) {
+        this(title, configGrid.getInstrumentsByType(SMU.class));
+    }
 
     public SMUConfig(String title, InstrumentConfig<SMU>... instruments) {
         super(title);
@@ -40,7 +61,7 @@ public class SMUConfig extends Fields {
 
     }
 
-    public void update(boolean connect) {
+    public synchronized void update(boolean connect) {
 
         int c    = getChannel();
         int t    = trm.get();
@@ -160,5 +181,47 @@ public class SMUConfig extends Fields {
     public double getLimit() {
         return lim.get();
     }
+
+    private void save() {
+
+        try {
+
+            if (config != null && key != null) {
+
+                data = config.getInstConfig(key);
+
+                if (data == null) {
+                    data = new JSONObject();
+                    config.saveInstConfig(key, data);
+                }
+
+                data.put("smu", smu.get());
+                data.put("channel", chn.get());
+                data.put("terminals", trm.get());
+                data.put("limit", lim.get());
+
+                config.save();
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void load() {
+
+        data = config.getInstConfig(key);
+
+        if (data == null) {
+            save();
+        }
+
+        smu.set(data.getInt("smu"));
+        chn.set(data.getInt("channel"));
+        trm.set(data.getInt("terminals"));
+        lim.set(data.getDouble("limit"));
+
+    }
+
 
 }

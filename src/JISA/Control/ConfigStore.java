@@ -18,6 +18,7 @@ public class ConfigStore {
     private JSONObject json        = null;
     private JSONObject data        = null;
     private JSONObject instruments = null;
+    private JSONObject instConfigs = null;
     private String     path;
 
     public ConfigStore(String name) throws IOException {
@@ -34,6 +35,7 @@ public class ConfigStore {
                 json = new JSONObject(raw);
                 data = json.getJSONObject("data");
                 instruments = json.getJSONObject("instruments");
+                instConfigs = json.getJSONObject("instConfigs");
             } catch (Exception e) {
                 if (json == null) {
                     json = new JSONObject();
@@ -46,15 +48,21 @@ public class ConfigStore {
                     instruments = new JSONObject();
                     json.put("instruments", instruments);
                 }
+                if (instConfigs == null) {
+                    instConfigs = new JSONObject();
+                    json.put("instConfigs", instruments);
+                }
             }
         } else {
             json = new JSONObject();
             data = new JSONObject();
             instruments = new JSONObject();
+            instConfigs = new JSONObject();
             json.put("name", name);
             json.put("lastSave", System.currentTimeMillis());
             json.put("data", data);
             json.put("instruments", instruments);
+            json.put("instConfigs", instConfigs);
         }
 
     }
@@ -117,6 +125,25 @@ public class ConfigStore {
             System.err.println(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
         }
 
+    }
+
+    public void saveInstConfig(String key, JSONObject data) throws IOException {
+        instConfigs.put(key, data);
+        save();
+    }
+
+    public JSONObject getInstConfig(String key) {
+
+        if (instConfigs.has(key)) {
+            return instConfigs.getJSONObject(key);
+        } else {
+            return null;
+        }
+
+    }
+
+    public boolean hasInstConfig(String key) {
+        return instConfigs.has(key);
     }
 
 }
