@@ -106,7 +106,7 @@ public class ITC503 extends MSTC {
 
     @Override
     public double getHeaterPower() throws IOException, DeviceException {
-        return Math.sqrt(readChannel(HEATER_OP_PERC) / 100.0) * 100.0;
+        return Math.pow(readChannel(HEATER_OP_PERC) / 100.0, 2) * 100.0;
     }
 
     @Override
