@@ -2,20 +2,34 @@
 
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 
 <BorderPane fx:id="pane" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
 
 
     <center>
-        <LineChart fx:id="chart" legendSide="RIGHT" minHeight="400.0" BorderPane.alignment="CENTER">
-            <xAxis>
-                <NumberAxis side="BOTTOM" fx:id="xAxis" />
-            </xAxis>
-            <yAxis>
-                <NumberAxis fx:id="yAxis" side="LEFT" />
-            </yAxis>
-        </LineChart>
+        <AnchorPane fx:id="stack" style="-fx-background-color: transparent;">
+            <LineChart fx:id="chart" legendSide="RIGHT" minHeight="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" BorderPane.alignment="CENTER">
+                <xAxis>
+                    <NumberAxis side="BOTTOM" fx:id="xAxis" />
+                </xAxis>
+                <yAxis>
+                    <NumberAxis fx:id="yAxis" side="LEFT" />
+                </yAxis>
+            </LineChart>
+        </AnchorPane>
     </center>
+   <top>
+      <ToolBar fx:id="toolbar" prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <items>
+            <ToggleButton fx:id="autoButton" layoutX="64.0" layoutY="11.0" minWidth="75.0" mnemonicParsing="false" onMouseClicked="#setAutoMode" text="Full" />
+            <ToggleButton fx:id="dragButton" minWidth="75.0" mnemonicParsing="false" onMouseClicked="#setDragMode" text="Drag" />
+            <ToggleButton fx:id="zoomButton" layoutX="10.0" layoutY="11.0" minWidth="75.0" mnemonicParsing="false" onMouseClicked="#setZoomMode" text="Zoom" />
+         </items>
+      </ToolBar>
+   </top>
 
 </BorderPane>

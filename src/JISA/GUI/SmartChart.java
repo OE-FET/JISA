@@ -1,33 +1,42 @@
 package JISA.GUI;
 
+import JISA.Util;
 import javafx.application.Platform;
-import javafx.scene.chart.Chart;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.util.Pair;
+import javafx.scene.paint.Color;
 
-import java.awt.*;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 
 public class SmartChart {
 
-    private final LineChart<Double, Double>                              chart;
-    private final NumberAxis                                             xAxis;
-    private final NumberAxis                                             yAxis;
-    private       LinkedHashMap<Integer, XYChart.Series<Double, Double>> fullData;
-    private       LinkedHashMap<Integer, XYChart.Series<Double, Double>> showData;
-    private       Double                                                 minX      = null;
-    private       Double                                                 maxX      = null;
-    private       Double                                                 minY      = null;
-    private       Double                                                 maxY      = null;
-    private       XMode                                                  xMode     = XMode.SHOW_ALL;
-    private       YMode                                                  yMode     = YMode.AUTO_LIMIT;
-    private       int                                                    counter   = 0;
-    private       HashMap<Integer, String>                               styles    = new HashMap<>();
-    private       String                                                 baseStyle = "";
+    private final LineChart<Double, Double>      chart;
+    private final NumberAxis                     xAxis;
+    private final NumberAxis                     yAxis;
+    private       LinkedHashMap<Integer, Series> data         = new LinkedHashMap<>();
+    private       double                         minX         = Double.POSITIVE_INFINITY;
+    private       double                         maxX         = Double.NEGATIVE_INFINITY;
+    private       double                         minY         = Double.POSITIVE_INFINITY;
+    private       double                         maxY         = Double.NEGATIVE_INFINITY;
+    private       double                         limMaxX;
+    private       double                         limMaxY;
+    private       double                         limMinX;
+    private       double                         limMinY;
+    private       AMode                          xMode        = AMode.SHOW_ALL;
+    private       AMode                          yMode        = AMode.SHOW_ALL;
+    private       double                         autoXRange   = 0;
+    private       double                         autoYRange   = 0;
+    private       boolean                        autoRemoveX  = false;
+    private       boolean                        autoRemoveY  = false;
+    private       double                         removeXRange = -1.0;
+    private       double                         removeYRange = -1.0;
+    private       int                            nTicksX      = 10;
+    private       int                            nTicksY      = 10;
+    private       int                            counter      = 0;
+    private       HashMap<Integer, String>       styles       = new HashMap<>();
+    private       String                         baseStyle    = "";
 
     public SmartChart(LineChart<Double, Double> chart, NumberAxis xAxis, NumberAxis yAxis) {
 
@@ -37,21 +46,38 @@ public class SmartChart {
 
     }
 
-    public int createSeries(String name, Color colour) {
+    public synchronized int createSeries(String name, Color colour) {
 
-        XYChart.Series<Double, Double> series = new XYChart.Series<>();
-        chart.getData().add(series);
-        fullData.put(counter++, series);
+        int key = counter++;
 
-        Platform.runLater(() -> {
-            chart.getData().add(series);
-        });
+        XYChart.Series<Double, Double> show = new XYChart.Series<>();
+
+        show.setName(name);
+
+        data.put(key, new Series(key, name, false, colour, show));
+
+        Platform.runLater(() -> chart.getData().add(show));
 
         if (colour != null) {
-            setSeriesColour(counter, colour);
+            setSeriesColour(key, colour);
         }
 
-        return counter;
+        return key;
+    }
+
+    public synchronized int createSeriesAuto(String name) {
+
+        int key = counter++;
+
+        XYChart.Series<Double, Double> show = new XYChart.Series<>();
+
+        show.setName(name);
+
+        data.put(key, new Series(key, name, true, null, show));
+
+        Platform.runLater(() -> chart.getData().add(show));
+
+        return key;
     }
 
     public void setSeriesColour(int series, Color colour) {
@@ -67,19 +93,240 @@ public class SmartChart {
 
     }
 
-    public enum XMode {
+    public void addPoint(final int series, final double x, final double y) {
+
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+
+        Platform.runLater(() -> {
+
+            Series s = data.get(series);
+
+            XYChart.Data<Double, Double> data = new XYChart.Data<>(x, y);
+
+            s.show.getData().add(data);
+
+            update();
+
+            if (autoRemoveX || autoRemoveY) {
+                updateRemove();
+            }
+
+        });
+
+    }
+
+    public void addPoint(final double x, final double y) {
+
+        if (data.isEmpty()) {
+            createSeries("Data", Color.RED);
+        }
+
+        int key = counter;
+        if (!data.containsKey(key)) {
+            key = data.keySet().iterator().next();
+        }
+
+        addPoint(key, x, y);
+    }
+
+    public void setXLimits(double minX, double maxX) {
+
+        xMode = AMode.MANUAL;
+        limMinX = minX;
+        limMaxX = maxX;
+        GUI.runNow(this::update);
+
+    }
+
+    public void setYLimits(double minY, double maxY) {
+
+        yMode = AMode.MANUAL;
+        limMinY = minY;
+        limMaxY = maxY;
+        GUI.runNow(this::update);
+
+    }
+
+    public synchronized void setLimits(double minX, double maxX, double minY, double maxY) {
+
+        xMode = AMode.MANUAL;
+        yMode = AMode.MANUAL;
+
+        limMinX = minX;
+        limMinY = minY;
+        limMaxX = maxX;
+        limMaxY = maxY;
+
+        GUI.runNow(this::update);
+
+    }
+
+    public void setTrackingX(double range) {
+        autoXRange = range;
+        xMode = AMode.TRACK;
+        GUI.runNow(this::update);
+    }
+
+    public void setTrackingY(double range) {
+        autoYRange = range;
+        yMode = AMode.TRACK;
+        GUI.runNow(this::update);
+    }
+
+    public void autoXLimits() {
+        xMode = AMode.SHOW_ALL;
+        GUI.runNow(this::update);
+    }
+
+    public void autoYLimits() {
+        yMode = AMode.SHOW_ALL;
+        GUI.runNow(this::update);
+    }
+
+    public void autoLimits() {
+        xMode = AMode.SHOW_ALL;
+        yMode = AMode.SHOW_ALL;
+        GUI.runNow(this::update);
+    }
+
+    public void setXAutoRemove(double range) {
+        autoRemoveX = true;
+        removeXRange = range;
+    }
+
+    public void setYAutoRemove(double range) {
+        autoRemoveY = true;
+        removeYRange = range;
+    }
+
+    public void stopXAutoRemove() {
+        autoRemoveX = false;
+    }
+
+    public void stopYAutoRemove() {
+        autoRemoveY = false;
+    }
+
+    private synchronized void update() {
+
+        switch (xMode) {
+
+            case SHOW_ALL:
+                limMinX = minX - 0.05 * (maxX - minX);
+                limMaxX = maxX + 0.05 * (maxX - minX);
+                break;
+
+            case TRACK:
+                limMaxX = maxX;
+                limMinX = maxX - autoXRange;
+                break;
+
+        }
+
+        switch (yMode) {
+
+            case SHOW_ALL:
+                limMinY = minY - 0.05 * (maxY - minY);
+                limMaxY = maxY + 0.05 * (maxY - minY);
+                ;
+                break;
+
+            case TRACK:
+                limMaxY = maxY;
+                limMinY = maxY - autoYRange;
+                break;
+
+        }
+
+        double xUnit = Util.roundSigFig((limMaxX - limMinX) / nTicksX, 1, 0);
+        double yUnit = Util.roundSigFig((limMaxY - limMinY) / nTicksY, 1, 0);
+
+        xAxis.setTickUnit(xUnit);
+        yAxis.setTickUnit(yUnit);
+
+        xAxis.setAutoRanging(false);
+        xAxis.setLowerBound(limMinX);
+        xAxis.setUpperBound(limMaxX);
+        yAxis.setAutoRanging(false);
+        yAxis.setLowerBound(limMinY);
+        yAxis.setUpperBound(limMaxY);
+
+
+    }
+
+    private synchronized void updateRemove() {
+        for (Series s : data.values()) {
+            s.show.getData().removeIf(this::removePoint);
+        }
+    }
+
+    private boolean removePoint(XYChart.Data<Double, Double> data) {
+
+        if (autoRemoveX && (data.getXValue() < (maxX - removeXRange))) {
+            return true;
+        }
+
+        if (autoRemoveY && (data.getYValue() < (maxY - removeYRange))) {
+            return true;
+        }
+
+        return false;
+
+    }
+
+    private boolean showPoint(XYChart.Data<Double, Double> data) {
+
+        if (xMode == AMode.SHOW_ALL && yMode == AMode.SHOW_ALL) {
+            return true;
+        } else {
+            return Util.isBetween(data.getXValue(), limMinX, limMaxX)
+                    && Util.isBetween(data.getYValue(), limMinY, limMaxY);
+        }
+
+
+    }
+
+    public void clear() {
+
+        Integer[] keys = data.keySet().toArray(new Integer[0]);
+
+        for (Integer i : keys) {
+
+            if (data.get(i).auto) {
+                chart.getData().remove(data.get(i).show);
+                data.remove(i);
+            } else {
+                data.get(i).show.getData().clear();
+            }
+
+        }
+
+    }
+
+    public enum AMode {
         SHOW_ALL,
-        TRACK_LATEST,
-        TRACK_LATEST_DISCARD,
-        MANUAL_LIMIT
+        TRACK,
+        MANUAL;
     }
 
-    public enum YMode {
-        AUTO_LIMIT,
-        MANUAL_LIMIT
-    }
+    private static class Series {
 
-    private void onUpdate() {
+        final int                            key;
+        final String                         name;
+        final boolean                        auto;
+        final Color                          colour;
+        final XYChart.Series<Double, Double> show;
+
+        public Series(int key, String name, boolean auto, Color colour, XYChart.Series<Double, Double> show) {
+            this.name = name;
+            this.key = key;
+            this.auto = auto;
+            this.colour = colour;
+            this.show = show;
+        }
 
     }
 

@@ -3,35 +3,45 @@ package JISA.GUI;
 import JISA.Experiment.Result;
 import JISA.Experiment.ResultTable;
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.geometry.Point2D;
+import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
-import javafx.stage.Stage;
+import javafx.scene.shape.Rectangle;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class Plot extends JFXWindow implements Gridable, Clearable {
 
     public  BorderPane                                             pane;
+    public  ToolBar                                                toolbar;
+    public  Pane                                                   stack;
+    public  LineChart<Double, Double>                              chart;
+    public  NumberAxis                                             xAxis;
+    public  NumberAxis                                             yAxis;
+    public  ToggleButton                                           autoButton;
+    public  ToggleButton                                           zoomButton;
+    public  ToggleButton                                           dragButton;
     private LinkedHashMap<Integer, XYChart.Series<Double, Double>> data     = new LinkedHashMap<>();
     private HashMap<Integer, Boolean>                              auto     = new HashMap<>();
     private ArrayList<HashMap<Double, Integer>>                    maps     = new ArrayList<>();
-    public  LineChart                                              chart;
-    public  NumberAxis                                             xAxis;
-    public  NumberAxis                                             yAxis;
+    private SmartChart                                             controller;
     private double                                                 xRange   = 0;
     private double                                                 maxX     = Double.NEGATIVE_INFINITY;
     private double                                                 minX     = Double.POSITIVE_INFINITY;
     private double                                                 maxY     = Double.NEGATIVE_INFINITY;
     private double                                                 minY     = Double.POSITIVE_INFINITY;
     private double                                                 maxRange = -1;
+    private Rectangle                                              rect;
 
 
     /**
@@ -54,8 +64,26 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
             yAxis.setForceZeroInRange(false);
             xAxis.setAnimated(false);
             yAxis.setAnimated(false);
+            xAxis.setAutoRanging(true);
+            yAxis.setAutoRanging(true);
+
+            rect = new Rectangle();
+            rect.setFill(Color.CORNFLOWERBLUE.deriveColor(0, 1, 1, 0.5));
+
+            rect.setVisible(false);
+            rect.setManaged(false);
+
+            stack.getChildren().add(rect);
+            toolbar.setVisible(false);
+            toolbar.setManaged(false);
         });
 
+        controller = new SmartChart(chart, xAxis, yAxis);
+    }
+
+    public void showToolbar(boolean flag) {
+        toolbar.setManaged(flag);
+        toolbar.setVisible(flag);
     }
 
     /**
@@ -113,19 +141,121 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
         this(title, list, 0, 1);
     }
 
+    public void setZoomMode() {
+
+        zoomButton.setSelected(true);
+        autoButton.setSelected(false);
+        dragButton.setSelected(false);
+
+        final Node                          background = chart.lookup(".chart-plot-background");
+        final SimpleObjectProperty<Point2D> start      = new SimpleObjectProperty<>();
+        final SimpleObjectProperty<Point2D> first      = new SimpleObjectProperty<>();
+
+        chart.setOnMousePressed(event -> {
+            Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+            Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+            start.set(new Point2D(event.getX(), event.getY()));
+            first.set(new Point2D(pointX.getX(), pointY.getY()));
+            rect.setVisible(true);
+            rect.setManaged(true);
+        });
+
+        chart.setOnMouseDragged(event -> {
+
+            final double x = event.getX();
+            final double y = event.getY();
+            rect.setX(Math.min(x, start.get().getX()));
+            rect.setY(Math.min(y, start.get().getY()));
+            rect.setWidth(Math.abs(x - start.get().getX()));
+            rect.setHeight(Math.abs(y - start.get().getY()));
+
+        });
+
+        chart.setOnMouseReleased(event -> {
+
+            final Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+            final Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+
+            final double minX = xAxis.getValueForDisplay(Math.min(first.get().getX(), pointX.getX())).doubleValue();
+            final double maxX = xAxis.getValueForDisplay(Math.max(first.get().getX(), pointX.getX())).doubleValue();
+            final double minY = yAxis.getValueForDisplay(Math.min(first.get().getY(), pointY.getY())).doubleValue();
+            final double maxY = yAxis.getValueForDisplay(Math.max(first.get().getY(), pointY.getY())).doubleValue();
+
+            controller.setLimits(Math.min(minX, maxX), Math.max(minX, maxX), Math.min(minY, maxY), Math.max(minY, maxY));
+
+            rect.setWidth(0);
+            rect.setHeight(0);
+            rect.setVisible(false);
+            rect.setManaged(false);
+
+        });
+
+    }
+
+    public void setDragMode() {
+
+        zoomButton.setSelected(false);
+        autoButton.setSelected(false);
+        dragButton.setSelected(true);
+
+        final Node                          background = chart.lookup(".chart-plot-background");
+        final SimpleObjectProperty<Point2D> start      = new SimpleObjectProperty<>();
+        final SimpleObjectProperty<Point2D> startMax   = new SimpleObjectProperty<>();
+        final SimpleObjectProperty<Point2D> startMin   = new SimpleObjectProperty<>();
+
+
+        chart.setOnMousePressed(event -> {
+            Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+            Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+            startMin.set(new Point2D(xAxis.getLowerBound(), yAxis.getLowerBound()));
+            startMax.set(new Point2D(xAxis.getUpperBound(), yAxis.getUpperBound()));
+            start.set(new Point2D(pointX.getX(), pointY.getY()));
+        });
+
+        chart.setOnMouseDragged(event -> {
+
+            Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+            Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+
+            final double diffX = xAxis.getValueForDisplay(pointX.getX()).doubleValue() - xAxis.getValueForDisplay(start.get().getX()).doubleValue();
+            final double diffY = yAxis.getValueForDisplay(pointY.getY()).doubleValue() - yAxis.getValueForDisplay(start.get().getY()).doubleValue();
+
+            final double minX = startMin.get().getX() - diffX;
+            final double minY = startMin.get().getY() - diffY;
+
+            final double maxX = startMax.get().getX() - diffX;
+            final double maxY = startMax.get().getY() - diffY;
+
+            controller.setLimits(Math.min(minX, maxX), Math.max(minX, maxX), Math.min(minY, maxY), Math.max(minY, maxY));
+
+        });
+
+        chart.setOnMouseReleased(null);
+
+    }
+
+    public void setAutoMode() {
+
+        zoomButton.setSelected(false);
+        autoButton.setSelected(true);
+        dragButton.setSelected(false);
+
+        chart.setOnMousePressed(null);
+        chart.setOnMouseDragged(null);
+        chart.setOnMouseReleased(null);
+
+        controller.autoLimits();
+
+    }
+
     /**
      * Sets the bounds on the x-axis.
      *
      * @param min Minimum value to show on x-axis
      * @param max Maximum value to show on x-axis
      */
-    public void setXLimit(final double min, final double max) {
-        GUI.runNow(() -> {
-            xAxis.setAutoRanging(false);
-            xAxis.setForceZeroInRange(false);
-            xAxis.setLowerBound(min);
-            xAxis.setUpperBound(max);
-        });
+    public void setXLimits(final double min, final double max) {
+        controller.setXLimits(min, max);
     }
 
     /**
@@ -134,13 +264,8 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
      * @param min Minimum value to show on y-axis
      * @param max Maximum value to show on y-axis
      */
-    public void setYLimit(final double min, final double max) {
-        GUI.runNow(() -> {
-            yAxis.setAutoRanging(false);
-            yAxis.setForceZeroInRange(false);
-            yAxis.setLowerBound(min);
-            yAxis.setUpperBound(max);
-        });
+    public void setYLimits(final double min, final double max) {
+        controller.setYLimits(min, max);
     }
 
     /**
@@ -159,25 +284,32 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
     /**
      * Sets the x-axis to automatically choose its bounds.
      */
-    public void autoXLimit() {
-        Platform.runLater(() -> xAxis.setAutoRanging(true));
+    public void autoXLimits() {
+        controller.autoXLimits();
     }
 
     /**
      * Sets the y-axis to automatically choose its bounds.
      */
-    public void autoYLimit() {
+    public void autoYLimits() {
         Platform.runLater(() -> yAxis.setAutoRanging(true));
+        controller.autoYLimits();
     }
 
-    /**
-     * Sets the max x-axis range to show on the plot. Points that are outside this range from the maximum x-axis value
-     * will be removed from the plot automatically.
-     *
-     * @param range The range, set to -1 to disable
-     */
-    public void setMaxRange(double range) {
-        maxRange = range;
+    public void setXAutoRemove(double range) {
+        controller.setXAutoRemove(range);
+    }
+
+    public void setYAutoRemove(double range) {
+        controller.setYAutoRemove(range);
+    }
+
+    public void stopXAutoRemove() {
+        controller.stopXAutoRemove();
+    }
+
+    public void stopYAutoRemove() {
+        controller.stopYAutoRemove();
     }
 
     /**
@@ -223,7 +355,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
             if (map.containsKey(row.get(sData))) {
                 series = map.get(row.get(sData));
             } else {
-                series = createSeries(String.format("%s %s", row.get(sData), list.getUnits(sData)), null, true);
+                series = controller.createSeriesAuto(String.format("%s %s", row.get(sData), list.getUnits(sData)));
             }
 
             map.put(row.get(sData), series);
@@ -237,7 +369,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
             if (map.containsKey(row.get(sData))) {
                 series = map.get(row.get(sData));
             } else {
-                series = createSeries(String.format("%s %s", row.get(sData), list.getUnits(sData)), null, true);
+                series = controller.createSeriesAuto(String.format("%s %s", row.get(sData), list.getUnits(sData)));
             }
 
             map.put(row.get(sData), series);
@@ -283,7 +415,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
             if (map.containsKey(row.get(sData))) {
                 series = map.get(row.get(sData));
             } else {
-                series = createSeries(String.format("%s %s", row.get(sData), list.getUnits(sData)), null, true);
+                series = controller.createSeriesAuto(String.format("%s %s", row.get(sData), list.getUnits(sData)));
             }
 
             map.put(row.get(sData), series);
@@ -301,7 +433,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
             if (map.containsKey(row.get(sData))) {
                 series = map.get(row.get(sData));
             } else {
-                series = createSeries(String.format("%s %s", row.get(sData), list.getUnits(sData)), null, true);
+                series = controller.createSeriesAuto(String.format("%s %s", row.get(sData), list.getUnits(sData)));
             }
 
             map.put(row.get(sData), series);
@@ -322,31 +454,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
      * @return The id of the new series
      */
     public int createSeries(String name, Color colour) {
-        return createSeries(name, colour, false);
-    }
-
-    public int createSeries(String name, Color colour, boolean a) {
-
-        XYChart.Series<Double, Double> series = new XYChart.Series<>();
-
-        series.setName(name);
-
-        int index = data.size();
-        data.put(index, series);
-        auto.put(index, a);
-        Platform.runLater(() -> {
-            chart.getData().add(series);
-
-            if (colour != null) {
-                chart.setStyle(chart.getStyle().concat(
-                        String.format("CHART_COLOR_%d: rgba(%f, %f, %f);", index + 1, colour.getRed() * 255, colour.getGreen() * 255, colour.getBlue() * 255)
-
-                ));
-            }
-        });
-
-        return index;
-
+        return controller.createSeries(name, colour);
     }
 
     /**
@@ -356,13 +464,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
      * @param y Y-Value
      */
     public void addPoint(double x, double y) {
-
-        if (data.size() == 0) {
-            createSeries("Data", Color.RED);
-        }
-
-        addPoint(data.size() - 1, x, y);
-
+        controller.addPoint(x, y);
     }
 
     /**
@@ -373,28 +475,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
      * @param y      Y-Value
      */
     public void addPoint(int series, double x, double y) {
-
-        Platform.runLater(() -> {
-            data.get(series).getData().add(
-                    new XYChart.Data<>(x, y)
-            );
-
-            maxX = Math.max(maxX, x);
-            maxY = Math.max(maxY, y);
-            minX = Math.min(minX, x);
-            minY = Math.min(minY, y);
-
-            if (maxRange > 0) {
-                xAxis.setAutoRanging(true);
-                xAxis.setAnimated(false);
-                yAxis.setAnimated(false);
-
-                data.get(series).getData().removeIf(data -> data.getXValue() < (maxX - maxRange));
-
-            }
-
-        });
-
+        controller.addPoint(series, x, y);
     }
 
     @Override
@@ -404,36 +485,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
 
     @Override
     public synchronized void clear() {
-
-
-        for (HashMap<Double, Integer> map : maps) {
-            map.clear();
-        }
-
-        GUI.runNow(() -> {
-
-            chart.getData().removeAll(chart.getData());
-
-            Integer[] keys = data.keySet().toArray(new Integer[0]);
-            for (Integer i : keys) {
-
-                if (!auto.get(i)) {
-                    data.get(i).getData().clear();
-                    XYChart.Series<Double, Double> series = new XYChart.Series<>();
-                    series.setName(data.get(i).getName());
-                    chart.getData().add(series);
-                    data.put(i, series);
-                } else {
-                    data.get(i).getData().clear();
-                    data.remove(i);
-                    auto.remove(i);
-                }
-
-            }
-
-
-        });
-
+        controller.clear();
     }
 
 }

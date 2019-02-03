@@ -120,6 +120,18 @@ public class Util {
 
     }
 
+    public static double roundSigFig(double value, int nSigDig, int dir) {
+
+        double intermediate = value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))) - (nSigDig - 1));
+
+        if (dir > 0) intermediate = Math.ceil(intermediate);
+        else if (dir < 0) intermediate = Math.floor(intermediate);
+        else intermediate = Math.round(intermediate);
+
+        return (intermediate * Math.pow(10, Math.floor(Math.log10(Math.abs(value))) - (nSigDig - 1)));
+
+    }
+
     enum ExType {
 
         IO_EXCEPTION(IOException.class),
@@ -136,14 +148,14 @@ public class Util {
             }
         }
 
-        static ExType fromClass(Class c) {
-            return lookup.getOrDefault(c, UNKNOWN_EXCEPTION);
-        }
-
         private Class clazz;
 
         ExType(Class c) {
             clazz = c;
+        }
+
+        static ExType fromClass(Class c) {
+            return lookup.getOrDefault(c, UNKNOWN_EXCEPTION);
         }
 
         Class getClazz() {
