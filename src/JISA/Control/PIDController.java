@@ -6,8 +6,8 @@ import java.io.IOException;
 
 public class PIDController {
 
-    private final static int    INTERVAL = 100;
-    private final static double INT_SEC  = INTERVAL / 1000D;
+    private final int    INTERVAL;
+    private final double INT_SEC;
 
     public interface Input<T> {
         T read() throws IOException, DeviceException;
@@ -27,14 +27,17 @@ public class PIDController {
     private double         last;
     private RTask          control;
 
-    public PIDController(Input<Double> input, Output<Double> output) {
+    public PIDController(int interval, Input<Double> input, Output<Double> output) {
+        INTERVAL = interval;
+        INT_SEC = INTERVAL / 1000D;
         this.input = input;
         this.output = output;
 
         control = new RTask(INTERVAL, () -> {
 
-            double error = input.read() - setPoint;
+            double error = setPoint - input.read();
             double diff  = (error - last) / INT_SEC;
+            last = error;
             sum += error * INT_SEC;
 
             output.write(P * error + I * sum + D * diff);
@@ -44,7 +47,7 @@ public class PIDController {
     }
 
     public void start() {
-        sum  = 0;
+        sum = 0;
         last = 0;
         control.start();
     }
