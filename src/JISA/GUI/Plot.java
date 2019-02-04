@@ -488,4 +488,8 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
         controller.clear();
     }
 
+    public synchronized void fullClear() {
+        controller.fullClear();
+    }
+
 }

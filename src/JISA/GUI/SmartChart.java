@@ -87,10 +87,12 @@ public class SmartChart {
                 String.format("CHART_COLOR_%d: rgba(%f, %f, %f);", series, colour.getRed() * 255D, colour.getGreen() * 255D, colour.getBlue() * 255D)
         );
 
-        Platform.runLater(() -> {
-            chart.setStyle(baseStyle + " " + String.join(" ", styles.values()));
-        });
+        GUI.runNow(this::updateStyle);
 
+    }
+
+    private void updateStyle() {
+        chart.setStyle(baseStyle + " " + String.join(" ", styles.values()));
     }
 
     public void addPoint(final int series, final double x, final double y) {
@@ -241,6 +243,16 @@ public class SmartChart {
 
         }
 
+        if (limMinX == Double.POSITIVE_INFINITY) {
+            limMinX = -100;
+            limMaxX = +100;
+        }
+
+        if (limMinY == Double.POSITIVE_INFINITY) {
+            limMinY = -100;
+            limMaxY = +100;
+        }
+
         double xUnit = Util.roundSigFig((limMaxX - limMinX) / nTicksX, 1, 0);
         double yUnit = Util.roundSigFig((limMaxY - limMinY) / nTicksY, 1, 0);
 
@@ -291,19 +303,30 @@ public class SmartChart {
 
     public void clear() {
 
-        Integer[] keys = data.keySet().toArray(new Integer[0]);
+        GUI.runNow(() -> {
+            Integer[] keys = data.keySet().toArray(new Integer[0]);
 
-        for (Integer i : keys) {
+            for (Integer i : keys) {
 
-            if (data.get(i).auto) {
-                chart.getData().remove(data.get(i).show);
-                data.remove(i);
-            } else {
-                data.get(i).show.getData().clear();
+                if (data.get(i).auto) {
+                    chart.getData().remove(data.get(i).show);
+                    data.remove(i);
+                } else {
+                    data.get(i).show.getData().clear();
+                }
+
             }
+        });
 
-        }
+    }
 
+    public void fullClear() {
+        GUI.runNow(() -> {
+            chart.getData().clear();
+            data.clear();
+            styles.clear();
+            updateStyle();
+        });
     }
 
     public enum AMode {
