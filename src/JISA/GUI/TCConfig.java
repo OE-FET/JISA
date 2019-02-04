@@ -276,51 +276,57 @@ public class TCConfig extends JFXWindow {
 
     }
 
-    public TC getTController() throws IOException, DeviceException {
+    public TC getTController() {
 
-        int index = this.controller.getSelectionModel().getSelectedIndex();
+        try {
 
-        TC controller;
-        if (index < 0 || index >= instruments.length) {
-            controller = null;
-        } else {
-            controller = instruments[index].get();
-        }
+            int index = this.controller.getSelectionModel().getSelectedIndex();
 
-        TC toReturn = null;
+            TC controller;
+            if (index < 0 || index >= instruments.length) {
+                controller = null;
+            } else {
+                controller = instruments[index].get();
+            }
 
-        if (controller == null) {
+            TC toReturn = null;
+
+            if (controller == null) {
+                return null;
+            } else if (controller instanceof MSMOTC) {
+                int o = output.getSelectionModel().getSelectedIndex();
+                int s = sensor.getSelectionModel().getSelectedIndex();
+                ((MSMOTC) controller).useSensor(o, s);
+                toReturn = ((MSMOTC) controller).getOutput(o);
+            } else if (controller instanceof MSTC) {
+                int s = sensor.getSelectionModel().getSelectedIndex();
+                ((MSTC) controller).useSensor(s);
+                toReturn = controller;
+            } else {
+                toReturn = controller;
+            }
+
+            switch (pidType.getSelectionModel().getSelectedIndex()) {
+
+                case CHOICE_SINGLE:
+                    toReturn.useAutoPID(false);
+                    toReturn.setPValue(Double.valueOf(pValue.getText()));
+                    toReturn.setIValue(Double.valueOf(iValue.getText()));
+                    toReturn.setDValue(Double.valueOf(dValue.getText()));
+                    break;
+
+                case CHOICE_ZONING:
+                    toReturn.setAutoPIDZones(zones);
+                    toReturn.useAutoPID(true);
+                    break;
+
+            }
+
+            return toReturn;
+        } catch (IOException | DeviceException e) {
+            e.printStackTrace();
             return null;
-        } else if (controller instanceof MSMOTC) {
-            int o = output.getSelectionModel().getSelectedIndex();
-            int s = sensor.getSelectionModel().getSelectedIndex();
-            ((MSMOTC) controller).useSensor(o, s);
-            toReturn = ((MSMOTC) controller).getOutput(o);
-        } else if (controller instanceof MSTC) {
-            int s = sensor.getSelectionModel().getSelectedIndex();
-            ((MSTC) controller).useSensor(s);
-            toReturn = controller;
-        } else {
-            toReturn = controller;
         }
-
-        switch (pidType.getSelectionModel().getSelectedIndex()) {
-
-            case CHOICE_SINGLE:
-                toReturn.useAutoPID(false);
-                toReturn.setPValue(Double.valueOf(pValue.getText()));
-                toReturn.setIValue(Double.valueOf(iValue.getText()));
-                toReturn.setDValue(Double.valueOf(dValue.getText()));
-                break;
-
-            case CHOICE_ZONING:
-                toReturn.setAutoPIDZones(zones);
-                toReturn.useAutoPID(true);
-                break;
-
-        }
-
-        return toReturn;
 
     }
 
