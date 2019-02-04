@@ -56,10 +56,10 @@ public class SmartChart {
 
         data.put(key, new Series(key, name, false, colour, show));
 
-        Platform.runLater(() -> chart.getData().add(show));
+        GUI.runNow(() -> chart.getData().add(show));
 
         if (colour != null) {
-            setSeriesColour(key, colour);
+            setSeriesColour(chart.getData().indexOf(show) + 1, colour);
         }
 
         return key;
@@ -93,6 +93,7 @@ public class SmartChart {
 
     private void updateStyle() {
         chart.setStyle(baseStyle + " " + String.join(" ", styles.values()));
+        System.out.println(chart.getStyle());
     }
 
     public void addPoint(final int series, final double x, final double y) {
