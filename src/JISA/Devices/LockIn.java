@@ -204,6 +204,22 @@ public abstract class LockIn extends VISADevice {
 
     public abstract LineFilter getLineFilter() throws IOException, DeviceException;
 
+    public abstract void setOffsetExpansion(double offset, double expand) throws IOException, DeviceException;
+
+    public abstract void setOffset(double offset) throws IOException, DeviceException;
+
+    public abstract void setExpansion(double expand) throws IOException, DeviceException;
+
+    public abstract double getOffset() throws IOException, DeviceException;
+
+    public abstract double getExpansion() throws IOException, DeviceException;
+
+    public abstract void autoOffset() throws IOException, DeviceException;
+
+    public abstract void setExternalTriggerMode(TrigMode mode) throws IOException, DeviceException;
+
+    public abstract TrigMode getExternalTriggerMode() throws IOException, DeviceException;
+
     /**
      * Halts the current thread (ie pauses the program) until the lock-in has a stable lock
      * (ie the locked-on amplitude has remained within the given percentage margin for at least
@@ -260,6 +276,12 @@ public abstract class LockIn extends VISADevice {
         X1,
         X2,
         X1_X2;
+    }
+
+    public enum TrigMode {
+        SINE,
+        POS_TTL,
+        NEG_TTL
     }
 
 }

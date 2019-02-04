@@ -2,6 +2,7 @@ package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
 import JISA.Control.*;
+import JISA.Util;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -177,7 +178,7 @@ public class SR830 extends DPLockIn {
     }
 
     /**
-     * Returns the voltage reported by the Y channel (pi out of phase with reference)
+     * Returns the voltage reported by the Y channel (pi/2 out of phase with reference)
      *
      * @return Y channel voltage
      *
@@ -280,7 +281,7 @@ public class SR830 extends DPLockIn {
     }
 
     @Override
-    public Coupling getCoupling() throws IOException, DeviceException {
+    public Coupling getCoupling() throws IOException {
 
         switch (queryInt(C_QUERY_COUPLING)) {
 
@@ -298,7 +299,7 @@ public class SR830 extends DPLockIn {
     }
 
     @Override
-    public void setGround(Ground mode) throws IOException, DeviceException {
+    public void setGround(Ground mode) throws IOException {
 
         switch (mode) {
 
@@ -316,7 +317,7 @@ public class SR830 extends DPLockIn {
     }
 
     @Override
-    public Ground getGround() throws IOException, DeviceException {
+    public Ground getGround() throws IOException {
 
         switch (queryInt(C_QUERY_GROUND)) {
 
@@ -334,7 +335,7 @@ public class SR830 extends DPLockIn {
     }
 
     @Override
-    public void setLineFilter(LineFilter mode) throws IOException, DeviceException {
+    public void setLineFilter(LineFilter mode) throws IOException {
 
         switch (mode) {
 
@@ -359,7 +360,7 @@ public class SR830 extends DPLockIn {
     }
 
     @Override
-    public LineFilter getLineFilter() throws IOException, DeviceException {
+    public LineFilter getLineFilter() throws IOException {
 
         switch (queryInt(C_QUERY_LINE)) {
 
@@ -380,6 +381,83 @@ public class SR830 extends DPLockIn {
 
         }
 
+    }
+
+    @Override
+    public void setOffsetExpansion(double offset, double expansion) throws IOException {
+
+        int key = 0;
+
+        if (expansion > 1) {
+            key = 1;
+        }
+
+        if (expansion > 10) {
+            key = 2;
+        }
+
+        write("OEXP 3,%f,%d", offset, key);
+    }
+
+    @Override
+    public void setOffset(double offset) throws IOException {
+        setOffsetExpansion(offset, getExpansion());
+    }
+
+    @Override
+    public void setExpansion(double expand) throws IOException {
+        setOffsetExpansion(getOffset(), expand);
+    }
+
+    @Override
+    public double getOffset() throws IOException {
+        return Double.valueOf(query("OEXP? 3").split(",")[0]);
+    }
+
+    public double getExpansion() throws IOException {
+        double[] values = {1, 10, 100};
+        return values[Integer.valueOf(query("OEXP? 3").split(",")[1])];
+    }
+
+    @Override
+    public void autoOffset() throws IOException {
+
+        write("AOFF 3");
+
+        while (isWorking()) {
+            Util.sleep(500);
+        }
+
+    }
+
+    private boolean isWorking() throws IOException {
+        return queryInt("*SRE? 1") == 0;
+    }
+
+    @Override
+    public void setExternalTriggerMode(TrigMode mode) throws IOException, DeviceException {
+
+        switch(mode) {
+
+            case SINE:
+                write("RSLP 0");
+                break;
+
+            case POS_TTL:
+                write("RSLP 1");
+                break;
+
+            case NEG_TTL:
+                write("RSLP 2");
+                break;
+
+        }
+
+    }
+
+    @Override
+    public TrigMode getExternalTriggerMode() throws IOException, DeviceException {
+        return TrigMode.values()[queryInt("RSLP?")];
     }
 
     public TimeConst getTimeConst() throws IOException {
