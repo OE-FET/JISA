@@ -6,6 +6,7 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
+import javafx.util.StringConverter;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -15,6 +16,8 @@ public class SmartChart {
     private final LineChart<Double, Double>      chart;
     private final NumberAxis                     xAxis;
     private final NumberAxis                     yAxis;
+    private       String                         xLabel;
+    private       String                         yLabel;
     private       LinkedHashMap<Integer, Series> data         = new LinkedHashMap<>();
     private       double                         minX         = Double.POSITIVE_INFINITY;
     private       double                         maxX         = Double.NEGATIVE_INFINITY;
@@ -43,6 +46,8 @@ public class SmartChart {
         this.chart = chart;
         this.xAxis = xAxis;
         this.yAxis = yAxis;
+        xLabel = xAxis.getLabel();
+        yLabel = yAxis.getLabel();
 
     }
 
@@ -257,8 +262,50 @@ public class SmartChart {
         double xUnit = Util.roundSigFig((limMaxX - limMinX) / nTicksX, 1, 0);
         double yUnit = Util.roundSigFig((limMaxY - limMinY) / nTicksY, 1, 0);
 
+        int xMag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(limMaxX), Math.abs(limMinX))))/3) * 3;
+        int yMag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(limMaxY), Math.abs(limMinY))))/3) * 3;
+
+        double xMagnitude = Math.pow(10.0, xMag);
+        double yMagnitude = Math.pow(10.0, yMag);
+
         xAxis.setTickUnit(xUnit);
         yAxis.setTickUnit(yUnit);
+
+        xAxis.setTickLabelFormatter(new StringConverter<Number>() {
+            @Override
+            public String toString(Number number) {
+                return String.format("%.02f", Util.roundSigFig(number.doubleValue() / xMagnitude, 3, 0));
+            }
+
+            @Override
+            public Number fromString(String s) {
+                return Double.valueOf(s) * xMagnitude;
+            }
+        });
+
+        yAxis.setTickLabelFormatter(new StringConverter<Number>() {
+            @Override
+            public String toString(Number number) {
+                return String.format("%.02f", Util.roundSigFig(number.doubleValue() / yMagnitude, 3, 0));
+            }
+
+            @Override
+            public Number fromString(String s) {
+                return Double.valueOf(s) * yMagnitude;
+            }
+        });
+
+        if (xMag != 0) {
+            xAxis.setLabel(String.format("%s (E%+d)", xLabel, xMag));
+        } else {
+            xAxis.setLabel(xLabel);
+        }
+
+        if (yMag != 0) {
+            yAxis.setLabel(String.format("%s (E%+d)", yLabel, yMag));
+        } else {
+            yAxis.setLabel(yLabel);
+        }
 
         xAxis.setAutoRanging(false);
         xAxis.setLowerBound(limMinX);
