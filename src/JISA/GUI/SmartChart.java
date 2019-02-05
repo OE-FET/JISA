@@ -98,7 +98,6 @@ public class SmartChart {
 
     private void updateStyle() {
         chart.setStyle(baseStyle + " " + String.join(" ", styles.values()));
-        System.out.println(chart.getStyle());
     }
 
     public void addPoint(final int series, final double x, final double y) {
@@ -262,11 +261,27 @@ public class SmartChart {
         double xUnit = Util.roundSigFig((limMaxX - limMinX) / nTicksX, 1, 0);
         double yUnit = Util.roundSigFig((limMaxY - limMinY) / nTicksY, 1, 0);
 
-        int xMag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(limMaxX), Math.abs(limMinX))))/3) * 3;
-        int yMag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(limMaxY), Math.abs(limMinY))))/3) * 3;
+        int xMag = 0;
+        if (Math.max(Math.abs(limMaxX), Math.abs(limMinX)) != 0) {
+            xMag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(limMaxX), Math.abs(limMinX))))/3) * 3;
+        }
+        int yMag = 0;
+        if (Math.max(Math.abs(limMaxY), Math.abs(limMinY)) != 0) {
+            yMag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(limMaxY), Math.abs(limMinY))))/3) * 3;
+        }
 
         double xMagnitude = Math.pow(10.0, xMag);
         double yMagnitude = Math.pow(10.0, yMag);
+
+        if (limMinX == limMaxX) {
+            limMinX -= xMagnitude;
+            limMaxX += xMagnitude;
+        }
+
+        if (limMinY == limMaxY) {
+            limMinY -= yMagnitude;
+            limMaxY += yMagnitude;
+        }
 
         xAxis.setTickUnit(xUnit);
         yAxis.setTickUnit(yUnit);
@@ -274,7 +289,7 @@ public class SmartChart {
         xAxis.setTickLabelFormatter(new StringConverter<Number>() {
             @Override
             public String toString(Number number) {
-                return String.format("%.02f", Util.roundSigFig(number.doubleValue() / xMagnitude, 3, 0));
+                return String.format("%.02f", number.doubleValue() / xMagnitude);
             }
 
             @Override
@@ -286,7 +301,7 @@ public class SmartChart {
         yAxis.setTickLabelFormatter(new StringConverter<Number>() {
             @Override
             public String toString(Number number) {
-                return String.format("%.02f", Util.roundSigFig(number.doubleValue() / yMagnitude, 3, 0));
+                return String.format("%.02f", number.doubleValue() / yMagnitude);
             }
 
             @Override
