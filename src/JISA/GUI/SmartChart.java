@@ -222,8 +222,8 @@ public class SmartChart {
         switch (xMode) {
 
             case SHOW_ALL:
-                limMinX = minX - 0.05 * (maxX - minX);
-                limMaxX = maxX + 0.05 * (maxX - minX);
+                limMinX = minX - 0.025 * (maxX - minX);
+                limMaxX = maxX + 0.025 * (maxX - minX);
                 break;
 
             case TRACK:
@@ -236,8 +236,8 @@ public class SmartChart {
         switch (yMode) {
 
             case SHOW_ALL:
-                limMinY = minY - 0.05 * (maxY - minY);
-                limMaxY = maxY + 0.05 * (maxY - minY);
+                limMinY = minY - 0.025 * (maxY - minY);
+                limMaxY = maxY + 0.025 * (maxY - minY);
                 ;
                 break;
 
@@ -379,6 +379,18 @@ public class SmartChart {
                 }
 
             }
+
+            maxX = Double.NEGATIVE_INFINITY;
+            minX = Double.POSITIVE_INFINITY;
+            maxY = Double.NEGATIVE_INFINITY;
+            minY = Double.POSITIVE_INFINITY;
+
+            limMaxX = 0;
+            limMinX = 0;
+            limMaxY = 0;
+            limMinY = 0;
+            update();
+
         });
 
     }
@@ -389,6 +401,17 @@ public class SmartChart {
             data.clear();
             styles.clear();
             updateStyle();
+
+            maxX = Double.NEGATIVE_INFINITY;
+            minX = Double.POSITIVE_INFINITY;
+            maxY = Double.NEGATIVE_INFINITY;
+            minY = Double.POSITIVE_INFINITY;
+
+            limMaxX = 0;
+            limMinX = 0;
+            limMaxY = 0;
+            limMinY = 0;
+            update();
         });
     }
 
