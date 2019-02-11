@@ -1,7 +1,9 @@
 # JISA - VISA-based experiment toolkit implemented in Java
-Welcome to the JISA project!
+Welcome to the JISA project! The LabView replacement library written in Java.
 
-![](controlshadow.png)
+[![GUI Example](https://i.imgur.com/j93Jttm.png)](https://i.imgur.com/j93Jttm.png)*A program written to perform FET characterisation measurements, running on Linux.*
+
+![](controlshadow.png)*A program written for performing AC Hall effect measurements, running on Windows.*
 
 For more info, visit the [wiki](https://github.com/OE-FET/JISA/wiki)
 
