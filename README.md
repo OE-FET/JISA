@@ -1,6 +1,8 @@
 # JISA - VISA-based experiment toolkit implemented in Java
 Welcome to the JISA project!
 
+![](controlshadow.png)
+
 For more info, visit the [wiki](https://github.com/OE-FET/JISA/wiki)
 
 ## What is JISA?
