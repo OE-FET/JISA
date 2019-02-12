@@ -3,11 +3,11 @@ Welcome to the JISA project! The LabView replacement library written in Java.
 
 Providing a unified means of controlling instrumentation, handling raw data and creating simple but functional user interfaces, using either Java or Python (Jython).
 
-[![GUI Example](https://i.imgur.com/j93Jttm.png)](https://i.imgur.com/j93Jttm.png)*
->A JISA-based program written to perform FET characterisation measurements, running on Linux.*
+[![GUI Example](https://i.imgur.com/j93Jttm.png)](https://i.imgur.com/j93Jttm.png)
+>A JISA-based program written to perform FET characterisation measurements, running on Linux.
 
-![](controlshadow.png)*
->Another JISA-based program written for performing AC Hall effect measurements, running on Windows.*
+![](controlshadow.png)
+>Another JISA-based program written for performing AC Hall effect measurements, running on Windows.
 
 For more info, visit the [wiki](https://github.com/OE-FET/JISA/wiki)
 
