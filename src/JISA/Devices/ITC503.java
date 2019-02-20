@@ -76,6 +76,8 @@ public class ITC503 extends MSTC {
         setMode(Mode.REMOTE_UNLOCKED);
         write(C_SET_AUTO_PID, 0);
 
+        clearRead();
+
     }
 
     public void setTimeout(long value) throws IOException {
@@ -364,6 +366,7 @@ public class ITC503 extends MSTC {
             Matcher match = PATTERN.matcher(response);
 
             if (!match.find()) {
+                System.out.println(response);
                 throw new IOException("Improperly formatted response from ITC503");
             }
 

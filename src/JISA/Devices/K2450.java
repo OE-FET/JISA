@@ -146,7 +146,6 @@ public class K2450 extends SMU {
 
         super(address);
 
-        clearRead();
         write(":SYSTEM:CLEAR");
 
         try {

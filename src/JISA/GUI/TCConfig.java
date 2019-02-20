@@ -318,6 +318,11 @@ public class TCConfig extends JFXWindow {
                 case CHOICE_ZONING:
                     toReturn.setAutoPIDZones(zones);
                     toReturn.useAutoPID(true);
+
+                    for (TC.PIDZone zone : toReturn.getAutoPIDZones()) {
+                        System.out.printf("MinT: %s K, MaxT: %s K, P: %s, I: %s, D: %s, R: %s, H: %s\n", zone.getMinT(), zone.getMaxT(), zone.getP(), zone.getI(), zone.getD(), zone.getRange(), zone.getPower());
+                    }
+
                     break;
 
             }

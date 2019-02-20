@@ -105,7 +105,7 @@ public class IPS120 extends VISADevice {
             new Ramp(0, 98.8, 9.88)
     );
 
-    private RampRates rampRates = null;
+    private RampRates rampRates = SUPER_CON_SLOW;
 
     /**
      * Opens the device at the specified address
@@ -141,7 +141,7 @@ public class IPS120 extends VISADevice {
 
     }
 
-    public void setRampRates(RampRates rates) {
+    private void setRampRates(RampRates rates) {
         rampRates = rates;
     }
 
@@ -195,10 +195,16 @@ public class IPS120 extends VISADevice {
         Ramp[] legs = rampRates.getLegs(getMagnetCurrent(), current);
 
         for (Ramp leg : legs) {
+            System.out.printf("Will Do: From: %s A, To: %s A, Rate: %s A/min\n", leg.minI, leg.maxI, leg.rate);
+        }
 
+        for (Ramp leg : legs) {
+
+            System.out.printf("Now: From: %s A, To: %s A, Rate: %s A/min\n", leg.minI, leg.maxI, leg.rate);
             setTargetCurrent(leg.maxI);
             setCurrentRamp(leg.rate);
             setActivity(Activity.GO_SETPOINT);
+            Util.sleep(1000);
             waitUntilStable();
             setActivity(Activity.HOLD);
 
@@ -350,14 +356,14 @@ public class IPS120 extends VISADevice {
             int              d    = to > from ? +1 : -1;
             LinkedList<Ramp> legs = new LinkedList<>();
 
-
-            if (i == getRampIndex(to)) {
-                return new Ramp[]{new Ramp(from, to, rows[i].rate)};
-            }
-
             double last = from;
 
             while (true) {
+
+                if (i == getRampIndex(to)) {
+                    legs.add(new Ramp(last, to, rows[i].rate));
+                    break;
+                }
 
                 int next = i + d;
                 if (next < 0 || next >= rows.length) {

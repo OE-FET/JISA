@@ -305,7 +305,7 @@ public abstract class TC extends VISADevice {
 
         if (auto && !zoner.isRunning()) {
             zoner.start();
-        } else if (zoner != null && zoner.isRunning()) {
+        } else if (zoner != null && zoner.isRunning() && !auto) {
             zoner.stop();
         }
 
@@ -457,7 +457,7 @@ public abstract class TC extends VISADevice {
             P = data.getDouble("P");
             I = data.getDouble("I");
             D = data.getDouble("D");
-            range = data.getDouble("minT");
+            range = data.getDouble("range");
             auto = data.getBoolean("auto");
             power = data.getDouble("power");
 
