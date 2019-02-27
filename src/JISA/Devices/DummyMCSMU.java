@@ -285,4 +285,34 @@ public class DummyMCSMU extends MCSMU {
         return Terminals.FRONT;
     }
 
+    @Override
+    public void setOffMode(int channel, OffMode mode) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public OffMode getOffMode(int channel) throws DeviceException, IOException {
+        return null;
+    }
+
+    @Override
+    public void setOffVoltageLimit(int channel, double limit) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public void setOffCurrentLimit(int channel, double limit) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public double getOffVoltageLimit(int channel) throws DeviceException, IOException {
+        return 0;
+    }
+
+    @Override
+    public double getOffCurrentLimit(int channel) throws DeviceException, IOException {
+        return 0;
+    }
+
 }

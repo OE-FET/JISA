@@ -17,8 +17,8 @@ public class K2600B extends MCSMU {
     private static final String   C_QUERY_OUTPUT             = "print(%s.source.output)";
     private static final String   C_QUERY_SENSE              = "print(%s.sense)";
     private static final String   C_SET_SOURCE               = "%s.source.func = %s";
-    private static final String   C_SET_VOLT                 = "%s.source.levelv = %f";
-    private static final String   C_SET_CURR                 = "%s.source.leveli = %f";
+    private static final String   C_SET_VOLT                 = "%s.source.levelv = %e";
+    private static final String   C_SET_CURR                 = "%s.source.leveli = %e";
     private static final String   C_SET_OUTPUT               = "%s.source.output = %s";
     private static final String   C_SET_SENSE                = "%s.sense = %s";
     private static final String   C_SET_AVG_COUNT            = "%s.measure.filter.count = %d";
@@ -27,11 +27,11 @@ public class K2600B extends MCSMU {
     private static final String   C_QUERY_AVG_MODE           = "print(%s.measure.filter.type)";
     private static final String   C_SET_AVG_STATE            = "%s.measure.filter.enable = %s";
     private static final String   C_QUERY_AVG_STATE          = "print(%s.measure.filter.enable)";
-    private static final String   C_SET_LIMIT                = "%s.source.limit%s = %f";
+    private static final String   C_SET_LIMIT                = "%s.source.limit%s = %e";
     private static final String   C_QUERY_LIMIT              = "print(%s.source.limit%s)";
-    private static final String   C_SET_SOURCE_RANGE         = "%s.source.range%s = %f";
+    private static final String   C_SET_SOURCE_RANGE         = "%s.source.range%s = %e";
     private static final String   C_QUERY_SOURCE_RANGE       = "print(%s.source.range%s)";
-    private static final String   C_SET_MEASURE_RANGE        = "%s.measure.range%s = %f";
+    private static final String   C_SET_MEASURE_RANGE        = "%s.measure.range%s = %e";
     private static final String   C_QUERY_MEASURE_RANGE      = "print(%s.measure.range%s)";
     private static final String   C_SET_SOURCE_AUTO_RANGE    = "%s.source.autorange%s = %s";
     private static final String   C_QUERY_SOURCE_AUTO_RANGE  = "print(%s.source.autorange%s)";
@@ -40,6 +40,12 @@ public class K2600B extends MCSMU {
     private static final String   C_SET_NPLC                 = "%s.measure.nplc = %f";
     private static final String   C_QUERY_NPLC               = "print(%s.measure.nplc)";
     private static final String   C_QUERY_LFR                = "print(localnode.linefreq)";
+    private static final String   C_SET_OFF_MODE             = "%s.source.offmode = %d";
+    private static final String   C_QUERY_OFF_MODE           = "print(%s.source.offmode)";
+    private static final String   C_SET_OFF_FUNC             = "%s.source.offfunc = %d";
+    private static final String   C_QUERY_OFF_FUNC           = "print(%s.source.offfunc)";
+    private static final String   C_SET_OFF_LIMIT            = "%s.source.offlimit%s = %e";
+    private static final String   C_QUERY_OFF_LIMIT          = "print(%s.source.offlimit%s)";
     private static final String   SENSE_LOCAL                = "0";
     private static final String   SENSE_REMOTE               = "1";
     private static final String   OUTPUT_ON                  = "1";
@@ -47,6 +53,11 @@ public class K2600B extends MCSMU {
     private static final String   FILTER_MOVING_MEAN         = "0";
     private static final String   FILTER_REPEAT_MEAN         = "1";
     private static final String   FILTER_MOVING_MEDIAN       = "2";
+    private static final int      OFF_MODE_NORMAL            = 0;
+    private static final int      OFF_MODE_ZERO              = 1;
+    private static final int      OFF_MODE_HIGH_Z            = 2;
+    private static final int      OFF_SOURCE_CURR            = 0;
+    private static final int      OFF_SOURCE_VOLT            = 1;
     private final        double   LINE_FREQUENCY;
 
     private AMode[]      filterMode  = {AMode.NONE, AMode.NONE};
@@ -674,6 +685,88 @@ public class K2600B extends MCSMU {
     public Terminals getTerminals(int channel) throws DeviceException, IOException {
         checkChannel(channel);
         return Terminals.REAR;
+    }
+
+    @Override
+    public void setOffMode(int channel, OffMode mode) throws DeviceException, IOException {
+
+        switch (mode) {
+
+            case ZERO_V:
+                write(C_SET_OFF_MODE, CHANNELS[channel], OFF_MODE_NORMAL);
+                write(C_SET_OFF_FUNC, CHANNELS[channel], OFF_SOURCE_VOLT);
+                break;
+
+            case ZERO_I:
+                write(C_SET_OFF_MODE, CHANNELS[channel], OFF_MODE_NORMAL);
+                write(C_SET_OFF_FUNC, CHANNELS[channel], OFF_SOURCE_CURR);
+                break;
+
+            case ZERO_AUTO:
+                write(C_SET_OFF_MODE, CHANNELS[channel], OFF_MODE_ZERO);
+                break;
+
+            case HIGH_IMPEDANCE:
+                write(C_SET_OFF_MODE, CHANNELS[channel], OFF_MODE_HIGH_Z);
+                break;
+
+        }
+
+    }
+
+    @Override
+    public OffMode getOffMode(int channel) throws DeviceException, IOException {
+
+        int mode = queryInt(C_QUERY_OFF_MODE);
+
+        switch (mode) {
+
+            case OFF_MODE_NORMAL:
+                int type = queryInt(C_QUERY_OFF_FUNC);
+
+                switch (type) {
+
+                    case OFF_SOURCE_VOLT:
+                        return OffMode.ZERO_V;
+
+                    case OFF_SOURCE_CURR:
+                        return OffMode.ZERO_I;
+
+                    default:
+                        return OffMode.ZERO_V;
+
+                }
+
+            case OFF_MODE_ZERO:
+                return OffMode.ZERO_AUTO;
+
+            case OFF_MODE_HIGH_Z:
+                return OffMode.HIGH_IMPEDANCE;
+
+            default:
+                return OffMode.ZERO_V;
+
+        }
+    }
+
+    @Override
+    public void setOffVoltageLimit(int channel, double limit) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public void setOffCurrentLimit(int channel, double limit) throws DeviceException, IOException {
+
+    }
+
+    @Override
+    public double getOffVoltageLimit(int channel) throws DeviceException, IOException {
+        return 0;
+    }
+
+    @Override
+    public double getOffCurrentLimit(int channel) throws DeviceException, IOException {
+        return 0;
     }
 
     private enum SFunc {
