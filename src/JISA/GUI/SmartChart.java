@@ -4,6 +4,7 @@ import JISA.Util;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Point2D;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -448,28 +449,37 @@ public class SmartChart {
         }
 
         public void reduce() {
+            data.setShowCondition((d) -> {
+                return this.show(d);
+            });
+        }
 
-            HashMap<String, List<XYChart.Data<Double, Double>>> map = new HashMap<>();
+        public boolean show(XYChart.Data<Double, Double> point) {
+
+            Point2D opnt = new Point2D(xAxis.getDisplayPosition(point.getXValue()), yAxis.getDisplayPosition(point.getYValue()));
+            double x = xAxis.sceneToLocal(opnt).getX();
+            double y = yAxis.sceneToLocal(opnt).getY();
 
             for (XYChart.Data<Double, Double> d : data.fullList()) {
 
-                int    x   = 500 * (int) (xAxis.getDisplayPosition(d.getXValue()) / 500);
-                int    y   = 500 * (int) (yAxis.getDisplayPosition(d.getYValue()) / 500);
-                String key = String.format("%d-%d", x, y);
+                if (d == point) {
+                    return true;
+                } else {
 
-                if (!map.containsKey(key)) {
-                    map.put(key, new ArrayList<>());
+                    Point2D pnt = new Point2D(xAxis.getDisplayPosition(d.getXValue()), yAxis.getDisplayPosition(d.getYValue()));
+
+                    double dx = xAxis.sceneToLocal(pnt).getX();
+                    double dy = yAxis.sceneToLocal(pnt).getY();
+
+                    if (Math.sqrt(Math.pow(x - dx, 2) + Math.pow(y - dy, 2)) < 2.0) {
+                        return false;
+                    }
+
                 }
 
-                map.get(key).add(d);
-
             }
 
-            for (List<XYChart.Data<Double, Double>> pixel : map.values()) {
-                reduced.add(pixel.get(0));
-            }
-
-            data.setShowCondition(reduced::contains);
+            return true;
 
         }
 
