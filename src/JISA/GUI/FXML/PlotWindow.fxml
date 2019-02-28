@@ -11,7 +11,7 @@
 
 
     <center>
-        <AnchorPane fx:id="stack" style="-fx-background-color: transparent;">
+        <AnchorPane fx:id="stack" style="-fx-background-color: transparent;" BorderPane.alignment="CENTER">
             <LineChart fx:id="chart" legendSide="RIGHT" minHeight="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" BorderPane.alignment="CENTER">
                 <xAxis>
                     <NumberAxis side="BOTTOM" fx:id="xAxis" />
@@ -23,7 +23,7 @@
         </AnchorPane>
     </center>
    <top>
-      <ToolBar fx:id="toolbar" prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <ToolBar fx:id="toolbar" BorderPane.alignment="CENTER">
          <items>
             <ToggleButton fx:id="autoButton" layoutX="64.0" layoutY="11.0" minWidth="75.0" mnemonicParsing="false" onMouseClicked="#setAutoMode" text="Full" />
             <ToggleButton fx:id="dragButton" minWidth="75.0" mnemonicParsing="false" onMouseClicked="#setDragMode" text="Drag" />

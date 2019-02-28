@@ -2,44 +2,47 @@ package JISA.GUI;
 
 import JISA.Util;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.io.Serializable;
+import java.util.*;
 
 public class SmartChart {
 
-    private final LineChart<Double, Double>      chart;
-    private final NumberAxis                     xAxis;
-    private final NumberAxis                     yAxis;
-    private       String                         xLabel;
-    private       String                         yLabel;
-    private       LinkedHashMap<Integer, Series> data         = new LinkedHashMap<>();
-    private       double                         minX         = Double.POSITIVE_INFINITY;
-    private       double                         maxX         = Double.NEGATIVE_INFINITY;
-    private       double                         minY         = Double.POSITIVE_INFINITY;
-    private       double                         maxY         = Double.NEGATIVE_INFINITY;
-    private       double                         limMaxX;
-    private       double                         limMaxY;
-    private       double                         limMinX;
-    private       double                         limMinY;
-    private       AMode                          xMode        = AMode.SHOW_ALL;
-    private       AMode                          yMode        = AMode.SHOW_ALL;
-    private       double                         autoXRange   = 0;
-    private       double                         autoYRange   = 0;
-    private       boolean                        autoRemoveX  = false;
-    private       boolean                        autoRemoveY  = false;
-    private       double                         removeXRange = -1.0;
-    private       double                         removeYRange = -1.0;
-    private       int                            nTicksX      = 10;
-    private       int                            nTicksY      = 10;
-    private       int                            counter      = 0;
-    private       HashMap<Integer, String>       styles       = new HashMap<>();
-    private       String                         baseStyle    = "";
+    private final LineChart<Double, Double>          chart;
+    private final NumberAxis                         xAxis;
+    private final NumberAxis                         yAxis;
+    private       String                             xLabel;
+    private       String                             yLabel;
+    private       LinkedHashMap<Integer, Series>     data         = new LinkedHashMap<>();
+    private       double                             minX         = Double.POSITIVE_INFINITY;
+    private       double                             maxX         = Double.NEGATIVE_INFINITY;
+    private       double                             minY         = Double.POSITIVE_INFINITY;
+    private       double                             maxY         = Double.NEGATIVE_INFINITY;
+    private       double                             limMaxX;
+    private       double                             limMaxY;
+    private       double                             limMinX;
+    private       double                             limMinY;
+    private       AMode                              xMode        = AMode.SHOW_ALL;
+    private       AMode                              yMode        = AMode.SHOW_ALL;
+    private       double                             autoXRange   = 0;
+    private       double                             autoYRange   = 0;
+    private       boolean                            autoRemoveX  = false;
+    private       boolean                            autoRemoveY  = false;
+    private       double                             removeXRange = -1.0;
+    private       double                             removeYRange = -1.0;
+    private       int                                nTicksX      = 10;
+    private       int                                nTicksY      = 10;
+    private       int                                counter      = 0;
+    private       HashMap<Integer, String>           styles       = new HashMap<>();
+    private       String                             baseStyle    = "";
+    private       List<XYChart.Data<Double, Double>> reduced      = new ArrayList<>();
 
     public SmartChart(LineChart<Double, Double> chart, NumberAxis xAxis, NumberAxis yAxis) {
 
@@ -55,7 +58,7 @@ public class SmartChart {
 
         int key = counter++;
 
-        XYChart.Series<Double, Double> show = new XYChart.Series<>();
+        XYChart.Series<Double, Double> show = new XYChart.Series<Double, Double>(new HidingList<>());
 
         show.setName(name);
 
@@ -74,7 +77,7 @@ public class SmartChart {
 
         int key = counter++;
 
-        XYChart.Series<Double, Double> show = new XYChart.Series<>();
+        XYChart.Series<Double, Double> show = new XYChart.Series<Double, Double>(new HidingList<>());
 
         show.setName(name);
 
@@ -113,7 +116,7 @@ public class SmartChart {
 
             XYChart.Data<Double, Double> data = new XYChart.Data<>(x, y);
 
-            s.show.getData().add(data);
+            s.data.add(data);
 
             update();
 
@@ -263,11 +266,11 @@ public class SmartChart {
 
         int xMag = 0;
         if (Math.max(Math.abs(limMaxX), Math.abs(limMinX)) != 0) {
-            xMag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(limMaxX), Math.abs(limMinX))))/3) * 3;
+            xMag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(limMaxX), Math.abs(limMinX)))) / 3) * 3;
         }
         int yMag = 0;
         if (Math.max(Math.abs(limMaxY), Math.abs(limMinY)) != 0) {
-            yMag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(limMaxY), Math.abs(limMinY))))/3) * 3;
+            yMag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(limMaxY), Math.abs(limMinY)))) / 3) * 3;
         }
 
         double xMagnitude = Math.pow(10.0, xMag);
@@ -329,12 +332,17 @@ public class SmartChart {
         yAxis.setLowerBound(limMinY);
         yAxis.setUpperBound(limMaxY);
 
+    }
 
+    public void reduce() {
+        data.forEach((i, s) -> {
+            s.reduce();
+        });
     }
 
     private synchronized void updateRemove() {
         for (Series s : data.values()) {
-            s.show.getData().removeIf(this::removePoint);
+            s.data.removeIf(this::removePoint);
         }
     }
 
@@ -372,10 +380,10 @@ public class SmartChart {
             for (Integer i : keys) {
 
                 if (data.get(i).auto) {
-                    chart.getData().remove(data.get(i).show);
+                    chart.getData().remove(data.get(i).series);
                     data.remove(i);
                 } else {
-                    data.get(i).show.getData().clear();
+                    data.get(i).data.clear();
                 }
 
             }
@@ -421,20 +429,48 @@ public class SmartChart {
         MANUAL;
     }
 
-    private static class Series {
+    private class Series {
 
-        final int                            key;
-        final String                         name;
-        final boolean                        auto;
-        final Color                          colour;
-        final XYChart.Series<Double, Double> show;
+        final int                                      key;
+        final String                                   name;
+        final boolean                                  auto;
+        final Color                                    colour;
+        final XYChart.Series<Double, Double>           series;
+        final HidingList<XYChart.Data<Double, Double>> data;
 
-        public Series(int key, String name, boolean auto, Color colour, XYChart.Series<Double, Double> show) {
+        public Series(int key, String name, boolean auto, Color colour, XYChart.Series<Double, Double> data) {
             this.name = name;
             this.key = key;
             this.auto = auto;
             this.colour = colour;
-            this.show = show;
+            this.series = data;
+            this.data = (HidingList<XYChart.Data<Double, Double>>) this.series.getData();
+        }
+
+        public void reduce() {
+
+            HashMap<String, List<XYChart.Data<Double, Double>>> map = new HashMap<>();
+
+            for (XYChart.Data<Double, Double> d : data.fullList()) {
+
+                int    x   = 500 * (int) (xAxis.getDisplayPosition(d.getXValue()) / 500);
+                int    y   = 500 * (int) (yAxis.getDisplayPosition(d.getYValue()) / 500);
+                String key = String.format("%d-%d", x, y);
+
+                if (!map.containsKey(key)) {
+                    map.put(key, new ArrayList<>());
+                }
+
+                map.get(key).add(d);
+
+            }
+
+            for (List<XYChart.Data<Double, Double>> pixel : map.values()) {
+                reduced.add(pixel.get(0));
+            }
+
+            data.setShowCondition(reduced::contains);
+
         }
 
     }

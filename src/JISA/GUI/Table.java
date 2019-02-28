@@ -89,8 +89,9 @@ public class Table extends JFXWindow implements Gridable, Clearable {
     public synchronized void update(Result row) {
 
         Platform.runLater(() -> {
+            int index = table.getItems().size();
             table.getItems().add(FXCollections.observableArrayList(Arrays.asList(row.getData())));
-            table.scrollTo(table.getItems().size() - 1);
+            table.scrollTo(index);
         });
 
 

@@ -76,6 +76,7 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
             stack.getChildren().add(rect);
             toolbar.setVisible(false);
             toolbar.setManaged(false);
+
         });
 
         controller = new SmartChart(chart, xAxis, yAxis);
@@ -141,6 +142,10 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
         this(title, list, 0, 1);
     }
 
+    public void reduce() {
+        GUI.runNow(controller::reduce);
+    }
+
     public void setZoomMode() {
 
         zoomButton.setSelected(true);
@@ -162,8 +167,8 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
 
         chart.setOnMouseDragged(event -> {
 
-            final double x = event.getX();
-            final double y = event.getY();
+            final double x = Math.max(0, Math.min(stack.getWidth(), event.getX()));
+            final double y = Math.max(0, Math.min(stack.getHeight(), event.getY()));
             rect.setX(Math.min(x, start.get().getX()));
             rect.setY(Math.min(y, start.get().getY()));
             rect.setWidth(Math.abs(x - start.get().getX()));

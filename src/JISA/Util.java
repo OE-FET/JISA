@@ -3,9 +3,12 @@ package JISA;
 import JISA.Control.ERunnable;
 import JISA.Devices.DeviceException;
 import JISA.VISA.VISAException;
+import javafx.collections.ObservableList;
+import javafx.scene.chart.XYChart.Data;
+import javafx.util.Pair;
 
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.*;
 
 public class Util {
 
@@ -129,6 +132,51 @@ public class Util {
         else intermediate = Math.round(intermediate);
 
         return (intermediate * Math.pow(10, Math.floor(Math.log10(Math.abs(value))) - (nSigDig - 1)));
+
+    }
+
+    public static void reduceData(ObservableList<Data<Double, Double>> points, int n) {
+
+        ArrayList<Data<Double,Double>> list = new ArrayList<>();
+
+        list.add(points.get(0));
+        list.add(points.get(points.size()-1));
+
+        while (list.size() < n) {
+
+            Pair<Integer, Integer> dev = mostDeviant(list);
+
+
+        }
+
+    }
+
+    private static Pair<Integer, Integer> mostDeviant(List<Data<Double, Double>> line) {
+
+        double maxD = 0;
+        int    maxI = 0;
+        int    maxJ = line.size() - 1;
+
+        for (int i = 0; i < line.size() - 1; i++) {
+
+            for (int j = i + 1; j < line.size(); j++) {
+
+                Data<Double, Double> point1 = line.get(i);
+                Data<Double, Double> point2 = line.get(j);
+
+                double distance = Math.sqrt(Math.pow(point1.getXValue() - point2.getXValue(), 2) + Math.pow(point1.getYValue() - point2.getYValue(), 2));
+
+                if (distance > maxD) {
+                    maxD = distance;
+                    maxI = i;
+                    maxJ = j;
+                }
+
+            }
+
+        }
+
+        return new Pair<>(maxI, maxJ);
 
     }
 
