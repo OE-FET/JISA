@@ -1,10 +1,9 @@
 package JISA.Devices;
 
 import JISA.Addresses.InstrumentAddress;
-import com.sun.javafx.UnmodifiableArrayList;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
 
 public class K2450 extends SMU {
 
@@ -16,7 +15,7 @@ public class K2450 extends SMU {
     private static final String C_SET_OUTPUT_STATE      = ":OUTP:STATE %s";
     private static final String C_QUERY_SOURCE_FUNCTION = ":SOUR:FUNC?";
     private static final String C_QUERY_OUTPUT_STATE    = ":OUTP:STATE?";
-    private static final String C_SET_SOURCE_VALUE      = ":SOUR:%s %f";
+    private static final String C_SET_SOURCE_VALUE      = ":SOUR:%s %e";
     private static final String C_SET_TERMINALS         = ":ROUT:TERM %s";
     private static final String C_QUERY_TERMINALS       = ":ROUT:TERM?";
     private static final String C_SET_PROBE_MODE        = ":SENS:RSEN %s";
@@ -27,18 +26,23 @@ public class K2450 extends SMU {
     private static final String C_QUERY_AVG_MODE        = "VOLT:AVER:TCON?";
     private static final String C_SET_AVG_STATE         = "AVER %s";
     private static final String C_QUERY_AVG_STATE       = "VOLT:AVER?";
-    private static final String C_SET_SRC_RANGE         = ":SOUR:%s:RANG %f";
+    private static final String C_SET_SRC_RANGE         = ":SOUR:%s:RANG %e";
     private static final String C_QUERY_SRC_RANGE       = ":SOUR:%s:RANG?";
     private static final String C_SET_SRC_AUTO_RANGE    = ":SOUR:%s:RANG:AUTO %s";
     private static final String C_QUERY_SRC_AUTO_RANGE  = ":SOUR:%s:RANG:AUTO?";
-    private static final String C_SET_MEAS_RANGE        = ":SENS:%s:RANG %f";
+    private static final String C_SET_MEAS_RANGE        = ":SENS:%s:RANG %e";
     private static final String C_QUERY_MEAS_RANGE      = ":SENS:%s:RANG?";
     private static final String C_SET_MEAS_AUTO_RANGE   = ":SENS:%s:RANG:AUTO %s";
     private static final String C_QUERY_MEAS_AUTO_RANGE = ":SENS:%s:RANG:AUTO?";
-    private static final String C_SET_LIMIT             = ":SOUR:%s:%sLIM %f";
+    private static final String C_SET_LIMIT             = ":SOUR:%s:%sLIM %e";
     private static final String C_QUERY_LIMIT           = ":SOUR:%s:%sLIM?";
     private static final String C_SET_NPLC              = ":SENS:NPLC %f";
     private static final String C_QUERY_NPLC            = ":SENS:%s:NPLC?";
+    private static final String C_SET_OFF_STATE         = ":OUTP:SMOD %s";
+    private static final String C_QUERY_OFF_STATE       = ":OUTP:SMOD?";
+    private static final String OFF_NORMAL              = "NORM";
+    private static final String OFF_ZERO                = "ZERO";
+    private static final String OFF_HIGH_Z              = "HIMP";
     private static final String OUTPUT_ON               = "1";
     private static final String OUTPUT_OFF              = "0";
     private static final String TERMS_FRONT             = "FRON";
@@ -175,6 +179,24 @@ public class K2450 extends SMU {
         return query(C_QUERY_PROBE_MODE).trim().equals(OUTPUT_ON);
     }
 
+    private void resetFilters() throws IOException, DeviceException {
+
+        filterV.setCount(filterCount);
+        filterI.setCount(filterCount);
+
+        filterV.setUp();
+        filterI.setUp();
+
+        filterV.clear();
+        filterI.clear();
+    }
+
+    @Override
+    public AMode getAverageMode() {
+        return filterMode;
+
+    }
+
     @Override
     public void setAverageMode(AMode mode) throws IOException, DeviceException {
 
@@ -212,48 +234,15 @@ public class K2450 extends SMU {
 
     }
 
-    private void resetFilters() throws IOException, DeviceException {
-
-        filterV.setCount(filterCount);
-        filterI.setCount(filterCount);
-
-        filterV.setUp();
-        filterI.setUp();
-
-        filterV.clear();
-        filterI.clear();
-    }
-
-    @Override
-    public void setAverageCount(int count) throws IOException, DeviceException {
-        filterCount = count;
-        resetFilters();
-    }
-
-    @Override
-    public AMode getAverageMode() {
-        return filterMode;
-
-    }
-
     @Override
     public int getAverageCount() {
         return filterCount;
     }
 
     @Override
-    public void setSourceRange(double value) throws IOException {
-
-        switch (getSourceMode()) {
-
-            case VOLTAGE:
-                setVoltageRange(value);
-                break;
-
-            case CURRENT:
-                setCurrentRange(value);
-        }
-
+    public void setAverageCount(int count) throws IOException, DeviceException {
+        filterCount = count;
+        resetFilters();
     }
 
     @Override
@@ -270,6 +259,21 @@ public class K2450 extends SMU {
             default:
                 return getVoltageRange();
 
+        }
+
+    }
+
+    @Override
+    public void setSourceRange(double value) throws IOException {
+
+        switch (getSourceMode()) {
+
+            case VOLTAGE:
+                setVoltageRange(value);
+                break;
+
+            case CURRENT:
+                setCurrentRange(value);
         }
 
     }
@@ -310,21 +314,6 @@ public class K2450 extends SMU {
     }
 
     @Override
-    public void setMeasureRange(double value) throws IOException {
-
-        switch (getMeasureMode()) {
-
-            case VOLTAGE:
-                setVoltageRange(value);
-                break;
-
-            case CURRENT:
-                setCurrentRange(value);
-        }
-
-    }
-
-    @Override
     public double getMeasureRange() throws IOException {
 
         switch (getMeasureMode()) {
@@ -338,6 +327,21 @@ public class K2450 extends SMU {
             default:
                 return getCurrentRange();
 
+        }
+
+    }
+
+    @Override
+    public void setMeasureRange(double value) throws IOException {
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                setVoltageRange(value);
+                break;
+
+            case CURRENT:
+                setCurrentRange(value);
         }
 
     }
@@ -378,6 +382,11 @@ public class K2450 extends SMU {
     }
 
     @Override
+    public double getVoltageRange() throws IOException {
+        return queryDouble(C_QUERY_SRC_RANGE, Source.VOLTAGE.getTag());
+    }
+
+    @Override
     public void setVoltageRange(double value) throws IOException {
 
         switch (getSourceMode()) {
@@ -397,11 +406,6 @@ public class K2450 extends SMU {
     }
 
     @Override
-    public double getVoltageRange() throws IOException {
-        return queryDouble(C_QUERY_SRC_RANGE, Source.VOLTAGE.getTag());
-    }
-
-    @Override
     public void useAutoVoltageRange() throws IOException {
         write(C_SET_SRC_AUTO_RANGE, Source.VOLTAGE.getTag(), OUTPUT_ON);
     }
@@ -409,6 +413,11 @@ public class K2450 extends SMU {
     @Override
     public boolean isVoltageRangeAuto() throws IOException {
         return query(C_QUERY_SRC_AUTO_RANGE, Source.VOLTAGE.getTag()).trim().equals(OUTPUT_ON);
+    }
+
+    @Override
+    public double getCurrentRange() throws IOException {
+        return queryDouble(C_QUERY_SRC_RANGE, Source.CURRENT.getTag());
     }
 
     @Override
@@ -429,11 +438,6 @@ public class K2450 extends SMU {
     }
 
     @Override
-    public double getCurrentRange() throws IOException {
-        return queryDouble(C_QUERY_SRC_RANGE, Source.CURRENT.getTag());
-    }
-
-    @Override
     public void useAutoCurrentRange() throws IOException {
         write(C_SET_SRC_AUTO_RANGE, Source.CURRENT.getTag(), OUTPUT_ON);
     }
@@ -441,23 +445,6 @@ public class K2450 extends SMU {
     @Override
     public boolean isCurrentRangeAuto() throws IOException {
         return query(C_QUERY_SRC_AUTO_RANGE, Source.CURRENT.getTag()).trim().equals(OUTPUT_ON);
-    }
-
-    @Override
-    public void setOutputLimit(double value) throws IOException {
-
-        switch (getMeasureMode()) {
-
-            case VOLTAGE:
-                setVoltageLimit(value);
-                break;
-
-            case CURRENT:
-                setCurrentLimit(value);
-                break;
-
-        }
-
     }
 
     @Override
@@ -479,8 +466,20 @@ public class K2450 extends SMU {
     }
 
     @Override
-    public void setVoltageLimit(double voltage) throws IOException {
-        write(C_SET_LIMIT, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol(), voltage);
+    public void setOutputLimit(double value) throws IOException {
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                setVoltageLimit(value);
+                break;
+
+            case CURRENT:
+                setCurrentLimit(value);
+                break;
+
+        }
+
     }
 
     @Override
@@ -489,8 +488,8 @@ public class K2450 extends SMU {
     }
 
     @Override
-    public void setCurrentLimit(double current) throws IOException {
-        write(C_SET_LIMIT, Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol(), current);
+    public void setVoltageLimit(double voltage) throws IOException {
+        write(C_SET_LIMIT, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol(), voltage);
     }
 
     @Override
@@ -499,13 +498,18 @@ public class K2450 extends SMU {
     }
 
     @Override
-    public void setIntegrationTime(double time) throws IOException {
-        write(C_SET_NPLC, LINE_FREQUENCY * time);
+    public void setCurrentLimit(double current) throws IOException {
+        write(C_SET_LIMIT, Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol(), current);
     }
 
     @Override
     public double getIntegrationTime() throws IOException {
         return queryDouble(C_QUERY_NPLC, getMeasureMode().getTag()) / LINE_FREQUENCY;
+    }
+
+    @Override
+    public void setIntegrationTime(double time) throws IOException {
+        write(C_SET_NPLC, LINE_FREQUENCY * time);
     }
 
     @Override
@@ -530,8 +534,16 @@ public class K2450 extends SMU {
         return filterV.getValue();
     }
 
+    public void setVoltage(double voltage) throws IOException {
+        setSourceValue(Source.VOLTAGE, voltage);
+    }
+
     public double getCurrent() throws IOException, DeviceException {
         return filterI.getValue();
+    }
+
+    public void setCurrent(double current) throws IOException {
+        setSourceValue(Source.CURRENT, current);
     }
 
     public void turnOn() throws IOException {
@@ -546,12 +558,16 @@ public class K2450 extends SMU {
         write(C_SET_OUTPUT_STATE, on ? OUTPUT_ON : OUTPUT_OFF);
     }
 
+    public SMU.Source getSource() throws IOException {
+        return Source.fromTag(query(C_QUERY_SOURCE_FUNCTION)).getSMU();
+    }
+
     public void setSource(Source mode) throws IOException {
         write(C_SET_SOURCE_FUNCTION, mode.getTag());
     }
 
-    public SMU.Source getSource() throws IOException {
-        return Source.fromTag(query(C_QUERY_SOURCE_FUNCTION)).getSMU();
+    public void setSource(SMU.Source source) throws IOException {
+        write(C_SET_SOURCE_FUNCTION, Source.fromSMU(source).getTag());
     }
 
     public Source getSourceMode() throws IOException {
@@ -572,20 +588,8 @@ public class K2450 extends SMU {
 
     }
 
-    public void setSource(SMU.Source source) throws IOException {
-        write(C_SET_SOURCE_FUNCTION, Source.fromSMU(source).getTag());
-    }
-
     public boolean isOn() throws IOException {
         return query(C_QUERY_OUTPUT_STATE).equals(OUTPUT_ON);
-    }
-
-    public void setVoltage(double voltage) throws IOException {
-        setSourceValue(Source.VOLTAGE, voltage);
-    }
-
-    public void setCurrent(double current) throws IOException {
-        setSourceValue(Source.CURRENT, current);
     }
 
     public void setBias(double value) throws IOException {
@@ -645,6 +649,20 @@ public class K2450 extends SMU {
         setSource(type);
     }
 
+    public Terminals getTerminals() throws IOException {
+
+        String response = query(C_QUERY_TERMINALS);
+
+        if (response.contains(TERMS_FRONT)) {
+            return Terminals.FRONT;
+        } else if (response.contains(TERMS_REAR)) {
+            return Terminals.REAR;
+        } else {
+            throw new IOException("Invalid response from Keithley 2450");
+        }
+
+    }
+
     public void setTerminals(Terminals terminals) throws IOException, DeviceException {
 
         switch (terminals) {
@@ -664,37 +682,13 @@ public class K2450 extends SMU {
 
     }
 
-    public Terminals getTerminals() throws IOException {
-
-        String response = query(C_QUERY_TERMINALS);
-
-        if (response.contains(TERMS_FRONT)) {
-            return Terminals.FRONT;
-        } else if (response.contains(TERMS_REAR)) {
-            return Terminals.REAR;
-        } else {
-            throw new IOException("Invalid response from Keithley 2450");
-        }
-
-    }
-
-    @Override
-    public void setOffMode(OffMode mode) throws DeviceException, IOException {
-
-    }
-
     @Override
     public OffMode getOffMode() throws DeviceException, IOException {
         return null;
     }
 
     @Override
-    public void setOffVoltageLimit(double limit) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public void setOffCurrentLimit(double limit) throws DeviceException, IOException {
+    public void setOffMode(OffMode mode) throws DeviceException, IOException {
 
     }
 
@@ -704,8 +698,18 @@ public class K2450 extends SMU {
     }
 
     @Override
+    public void setOffVoltageLimit(double limit) throws DeviceException, IOException {
+
+    }
+
+    @Override
     public double getOffCurrentLimit() throws DeviceException, IOException {
         return 0;
+    }
+
+    @Override
+    public void setOffCurrentLimit(double limit) throws DeviceException, IOException {
+
     }
 
     public enum Source {
@@ -723,14 +727,6 @@ public class K2450 extends SMU {
             }
         }
 
-        public static Source fromTag(String tag) {
-            return lookup.getOrDefault(tag.trim(), null);
-        }
-
-        public static Source fromSMU(SMU.Source orig) {
-            return convert.getOrDefault(orig, null);
-        }
-
         private String     tag;
         private String     symbol;
         private SMU.Source orig;
@@ -739,6 +735,14 @@ public class K2450 extends SMU {
             this.tag = tag;
             this.symbol = symbol;
             this.orig = orig;
+        }
+
+        public static Source fromTag(String tag) {
+            return lookup.getOrDefault(tag.trim(), null);
+        }
+
+        public static Source fromSMU(SMU.Source orig) {
+            return convert.getOrDefault(orig, null);
         }
 
         String getTag() {

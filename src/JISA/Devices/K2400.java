@@ -159,13 +159,13 @@ public class K2400 extends SMU {
 
     @Override
     public void setVoltage(double voltage) throws DeviceException, IOException {
-        write(":SOUR:VOLT %f", voltage);
+        write(":SOUR:VOLT %e", voltage);
         write(":SOUR:FUNC VOLT");
     }
 
     @Override
     public void setCurrent(double current) throws DeviceException, IOException {
-        write(":SOUR:CURR %f", current);
+        write(":SOUR:CURR %e", current);
         write(":SOUR:FUNC CURR");
     }
 

@@ -350,10 +350,12 @@ public class SmartChart {
     private boolean removePoint(XYChart.Data<Double, Double> data) {
 
         if (autoRemoveX && (data.getXValue() < (maxX - removeXRange))) {
+            minX = maxX - removeXRange;
             return true;
         }
 
         if (autoRemoveY && (data.getYValue() < (maxY - removeYRange))) {
+            minY = maxY - removeYRange;
             return true;
         }
 

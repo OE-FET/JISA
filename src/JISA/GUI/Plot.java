@@ -317,6 +317,14 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
         controller.stopYAutoRemove();
     }
 
+    public void setXAutoTrack(double range) {
+        controller.setTrackingX(range);
+    }
+
+    public void setYAutoTrack(double range) {
+        controller.setTrackingY(range);
+    }
+
     /**
      * Set the plot to automatically track and plot a ResultTable object, specifying which columns to plot, the name of
      * the series and its colour.
