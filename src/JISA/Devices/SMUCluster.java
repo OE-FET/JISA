@@ -387,26 +387,6 @@ public class SMUCluster extends MCSMU {
         return null;
     }
 
-    @Override
-    public void setOffVoltageLimit(int channel, double limit) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public void setOffCurrentLimit(int channel, double limit) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public double getOffVoltageLimit(int channel) throws DeviceException, IOException {
-        return 0;
-    }
-
-    @Override
-    public double getOffCurrentLimit(int channel) throws DeviceException, IOException {
-        return 0;
-    }
-
     public IVPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
         return devices.get(channel).doSweep(source, values, delay, symmetric, onUpdate);
     }

@@ -485,19 +485,6 @@ public abstract class SMU extends VISADevice {
 
     public abstract OffMode getOffMode() throws DeviceException, IOException;
 
-    public abstract void setOffVoltageLimit(double limit) throws DeviceException, IOException;
-
-    public abstract void setOffCurrentLimit(double limit) throws DeviceException, IOException;
-
-    public void setOffLimits(double voltage, double current) throws DeviceException, IOException {
-        setOffVoltageLimit(voltage);
-        setOffCurrentLimit(current);
-    }
-
-    public abstract double getOffVoltageLimit() throws DeviceException, IOException;
-
-    public abstract double getOffCurrentLimit() throws DeviceException, IOException;
-
     /**
      * Returns a combined voltage and current measurement.
      *
@@ -959,9 +946,8 @@ public abstract class SMU extends VISADevice {
     }
 
     public enum OffMode {
-        ZERO_V,
-        ZERO_I,
-        ZERO_AUTO,
+        NORMAL,
+        ZERO,
         HIGH_IMPEDANCE
     }
 

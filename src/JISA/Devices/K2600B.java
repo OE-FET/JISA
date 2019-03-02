@@ -692,17 +692,11 @@ public class K2600B extends MCSMU {
 
         switch (mode) {
 
-            case ZERO_V:
+            case NORMAL:
                 write(C_SET_OFF_MODE, CHANNELS[channel], OFF_MODE_NORMAL);
-                write(C_SET_OFF_FUNC, CHANNELS[channel], OFF_SOURCE_VOLT);
                 break;
 
-            case ZERO_I:
-                write(C_SET_OFF_MODE, CHANNELS[channel], OFF_MODE_NORMAL);
-                write(C_SET_OFF_FUNC, CHANNELS[channel], OFF_SOURCE_CURR);
-                break;
-
-            case ZERO_AUTO:
+            case ZERO:
                 write(C_SET_OFF_MODE, CHANNELS[channel], OFF_MODE_ZERO);
                 break;
 
@@ -722,51 +716,18 @@ public class K2600B extends MCSMU {
         switch (mode) {
 
             case OFF_MODE_NORMAL:
-                int type = queryInt(C_QUERY_OFF_FUNC);
-
-                switch (type) {
-
-                    case OFF_SOURCE_VOLT:
-                        return OffMode.ZERO_V;
-
-                    case OFF_SOURCE_CURR:
-                        return OffMode.ZERO_I;
-
-                    default:
-                        return OffMode.ZERO_V;
-
-                }
+                return OffMode.NORMAL;
 
             case OFF_MODE_ZERO:
-                return OffMode.ZERO_AUTO;
+                return OffMode.ZERO;
 
             case OFF_MODE_HIGH_Z:
                 return OffMode.HIGH_IMPEDANCE;
 
             default:
-                return OffMode.ZERO_V;
+                return OffMode.NORMAL;
 
         }
-    }
-
-    @Override
-    public void setOffVoltageLimit(int channel, double limit) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public void setOffCurrentLimit(int channel, double limit) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public double getOffVoltageLimit(int channel) throws DeviceException, IOException {
-        return 0;
-    }
-
-    @Override
-    public double getOffCurrentLimit(int channel) throws DeviceException, IOException {
-        return 0;
     }
 
     private enum SFunc {

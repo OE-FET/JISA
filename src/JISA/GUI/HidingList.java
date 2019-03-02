@@ -1,6 +1,5 @@
 package JISA.GUI;
 
-import JISA.Collections.FileList;
 import JISA.Control.Returnable;
 import com.sun.javafx.collections.NonIterableChange;
 import javafx.beans.InvalidationListener;

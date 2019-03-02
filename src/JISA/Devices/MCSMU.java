@@ -1141,46 +1141,6 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         return getOffMode(defaultChannel);
     }
 
-    public abstract void setOffVoltageLimit(int channel, double limit) throws DeviceException, IOException;
-
-    public void setOffVoltageLimit(double limit) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setOffVoltageLimit(cn, limit);
-        }
-    }
-
-    public abstract void setOffCurrentLimit(int channel, double limit) throws DeviceException, IOException;
-
-    public void setOffCurrentLimit(double limit) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setOffCurrentLimit(cn, limit);
-        }
-    }
-
-    public void setOffLimits(int channel, double voltage, double current) throws DeviceException, IOException {
-        setOffVoltageLimit(channel, voltage);
-        setOffCurrentLimit(channel, current);
-    }
-
-    public void setOffLimits(double voltage, double current) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setOffVoltageLimit(cn, voltage);
-            setOffCurrentLimit(cn, current);
-        }
-    }
-
-    public abstract double getOffVoltageLimit(int channel) throws DeviceException, IOException;
-
-    public double getOffVoltageLimit() throws DeviceException, IOException {
-        return getOffVoltageLimit(defaultChannel);
-    }
-
-    public abstract double getOffCurrentLimit(int channel) throws DeviceException, IOException;
-
-    public double getOffCurrentLimit() throws DeviceException, IOException {
-        return getOffCurrentLimit(defaultChannel);
-    }
-
     /**
      * Returns a combined voltage and current measurement from the specified channel.
      *
@@ -1897,26 +1857,6 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         @Override
         public OffMode getOffMode() throws DeviceException, IOException {
             return MCSMU.this.getOffMode(channel);
-        }
-
-        @Override
-        public void setOffVoltageLimit(double limit) throws DeviceException, IOException {
-            MCSMU.this.setOffVoltageLimit(channel, limit);
-        }
-
-        @Override
-        public void setOffCurrentLimit(double limit) throws DeviceException, IOException {
-            MCSMU.this.setOffCurrentLimit(channel, limit);
-        }
-
-        @Override
-        public double getOffVoltageLimit() throws DeviceException, IOException {
-            return MCSMU.this.getOffVoltageLimit(channel);
-        }
-
-        @Override
-        public double getOffCurrentLimit() throws DeviceException, IOException {
-            return MCSMU.this.getOffCurrentLimit(channel);
         }
 
     }

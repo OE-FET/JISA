@@ -426,7 +426,7 @@ public class Fields extends JFXWindow implements Gridable {
         box.setSpacing(15);
         box.setAlignment(Pos.CENTER_LEFT);
 
-        DoubleField field = new DoubleField();
+        DoubleInput field = new DoubleInput();
         field.setMaxWidth(Integer.MAX_VALUE);
         Label label = new Label(name);
         label.setMinWidth(150);
@@ -441,31 +441,23 @@ public class Fields extends JFXWindow implements Gridable {
 
             @Override
             public void set(Double value) {
-                field.setText(value.toString());
+                field.setValue(value);
             }
 
             @Override
             public Double get() {
-                return field.getDoubleValue();
+                return field.getValue();
             }
 
             @Override
             public void setOnChange(SRunnable onChange) {
-
-                if (list != null) {
-                    field.textProperty().removeListener(list);
-                }
-
-                list = (observable, oldValue, newValue) -> {
+                field.setOnChange((v) -> {
                     try {
                         onChange.run();
                     } catch (Exception e) {
                         Util.exceptionHandler(e);
                     }
-                };
-
-                field.textProperty().addListener(list);
-
+                });
             }
 
             @Override
@@ -475,12 +467,12 @@ public class Fields extends JFXWindow implements Gridable {
 
             @Override
             public void setDisabled(boolean disabled) {
-                field.setDisable(disabled);
+                field.disabled(disabled);
             }
 
             @Override
             public boolean isDisabled() {
-                return field.isDisabled();
+                return field.disabled();
             }
         };
 

@@ -634,32 +634,12 @@ public class K236 extends SMU {
 
     @Override
     public void setOffMode(OffMode mode) throws DeviceException, IOException {
-
+        System.err.println("WARNING: Keithley 236 SMUs do not have configurable off states.");
     }
 
     @Override
     public OffMode getOffMode() throws DeviceException, IOException {
-        return null;
-    }
-
-    @Override
-    public void setOffVoltageLimit(double limit) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public void setOffCurrentLimit(double limit) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public double getOffVoltageLimit() throws DeviceException, IOException {
-        return 0;
-    }
-
-    @Override
-    public double getOffCurrentLimit() throws DeviceException, IOException {
-        return 0;
+        return OffMode.NORMAL;
     }
 
     public double getVoltage() throws IOException, DeviceException {

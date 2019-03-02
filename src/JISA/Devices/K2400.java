@@ -10,16 +10,26 @@ import java.util.regex.Pattern;
 
 public class K2400 extends SMU {
 
-    private static final String C_MEASURE_VOLTAGE = ":MEAS:VOLT?";
-    private static final String C_MEASURE_CURRENT = ":MEAS:CURR?";
-    private static final String C_SET_AVG_COUNT   = "AVER:COUNT %d";
-    private static final String C_QUERY_AVG_COUNT = "VOLT:AVER:COUNT?";
-    private static final String C_SET_AVG_MODE    = "AVER:TCON %s";
-    private static final String C_QUERY_AVG_MODE  = "VOLT:AVER:TCON?";
-    private static final String C_SET_AVG_STATE   = "AVER %s";
-    private static final String C_QUERY_AVG_STATE = "VOLT:AVER?";
-    private static final String OUTPUT_ON         = "1";
-    private static final String OUTPUT_OFF        = "0";
+    private static final String C_MEASURE_VOLTAGE       = ":MEAS:VOLT?";
+    private static final String C_MEASURE_CURRENT       = ":MEAS:CURR?";
+    private static final String C_SET_AVG_COUNT         = "AVER:COUNT %d";
+    private static final String C_QUERY_AVG_COUNT       = "VOLT:AVER:COUNT?";
+    private static final String C_SET_AVG_MODE          = "AVER:TCON %s";
+    private static final String C_QUERY_AVG_MODE        = "VOLT:AVER:TCON?";
+    private static final String C_SET_AVG_STATE         = "AVER %s";
+    private static final String C_QUERY_AVG_STATE       = "VOLT:AVER?";
+    private static final String OUTPUT_ON               = "1";
+    private static final String OUTPUT_OFF              = "0";
+    private static final String C_SET_SRC_RANGE         = ":SOUR:%s:RANG %f";
+    private static final String C_QUERY_SRC_RANGE       = ":SOUR:%s:RANG?";
+    private static final String C_SET_SRC_AUTO_RANGE    = ":SOUR:%s:RANG:AUTO %s";
+    private static final String C_QUERY_SRC_AUTO_RANGE  = ":SOUR:%s:RANG:AUTO?";
+    private static final String C_SET_MEAS_RANGE        = ":SENS:%s:RANG %f";
+    private static final String C_QUERY_MEAS_RANGE      = ":SENS:%s:RANG?";
+    private static final String C_SET_MEAS_AUTO_RANGE   = ":SENS:%s:RANG:AUTO %s";
+    private static final String C_QUERY_MEAS_AUTO_RANGE = ":SENS:%s:RANG:AUTO?";
+    private static final String C_SET_LIMIT             = ":SOUR:%s:%sLIM %f";
+    private static final String C_QUERY_LIMIT           = ":SOUR:%s:%sLIM?";
     private final        Model  MODEL;
 
     private enum Model {
@@ -181,7 +191,7 @@ public class K2400 extends SMU {
 
     @Override
     public boolean isOn() throws IOException {
-        return query(":OUTP:STATE?").trim().equals(OUTPUT_ON);
+        return query(":OUTP:STATE?").equals(OUTPUT_ON);
     }
 
     @Override
@@ -346,93 +356,204 @@ public class K2400 extends SMU {
         return filterCount;
     }
 
-    @Override
-    public void setSourceRange(double value) throws DeviceException, IOException {
+
+    public Source getMeasureMode() throws IOException {
+
+        switch (getSource()) {
+            case VOLTAGE:
+                return Source.CURRENT;
+
+            case CURRENT:
+                return Source.VOLTAGE;
+        }
+
+        return Source.CURRENT;
 
     }
 
     @Override
-    public double getSourceRange() throws DeviceException, IOException {
+    public void setSourceRange(double value) throws IOException {
+
+        switch (getSource()) {
+
+            case VOLTAGE:
+                setVoltageRange(value);
+                break;
+
+            case CURRENT:
+                setCurrentRange(value);
+        }
+
+    }
+
+    @Override
+    public double getSourceRange() throws IOException {
+
+        switch (getSource()) {
+
+            case VOLTAGE:
+                return getVoltageRange();
+
+            case CURRENT:
+                return getCurrentRange();
+
+            default:
+                return getVoltageRange();
+
+        }
+
+    }
+
+    @Override
+    public void useAutoSourceRange() throws IOException {
+
+        switch (getSource()) {
+
+            case VOLTAGE:
+                useAutoVoltageRange();
+                break;
+
+            case CURRENT:
+                useAutoSourceRange();
+                break;
+
+        }
+
+    }
+
+    @Override
+    public boolean isSourceRangeAuto() throws IOException {
+
+        switch (getSource()) {
+
+            case VOLTAGE:
+                return isVoltageRangeAuto();
+
+            case CURRENT:
+                return isCurrentRangeAuto();
+
+            default:
+                return isVoltageRangeAuto();
+
+        }
+
+    }
+
+    @Override
+    public void setMeasureRange(double value) throws IOException {
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                setVoltageRange(value);
+                break;
+
+            case CURRENT:
+                setCurrentRange(value);
+        }
+
+    }
+
+    @Override
+    public double getMeasureRange() throws IOException {
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                return getVoltageRange();
+
+            case CURRENT:
+                return getCurrentRange();
+
+            default:
+                return getCurrentRange();
+
+        }
+
+    }
+
+    @Override
+    public void useAutoMeasureRange() throws IOException {
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                useAutoVoltageRange();
+                break;
+
+            case CURRENT:
+                useAutoSourceRange();
+                break;
+
+        }
+
+    }
+
+    @Override
+    public boolean isMeasureRangeAuto() throws IOException {
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                return isVoltageRangeAuto();
+
+            case CURRENT:
+                return isCurrentRangeAuto();
+
+            default:
+                return isCurrentRangeAuto();
+
+        }
+
+    }
+
+    @Override
+    public void setVoltageRange(double value) throws IOException {
+
+    }
+
+    @Override
+    public double getVoltageRange() throws IOException {
         return 0;
     }
 
     @Override
-    public void useAutoSourceRange() throws DeviceException, IOException {
+    public void useAutoVoltageRange() throws IOException {
 
     }
 
     @Override
-    public boolean isSourceRangeAuto() throws DeviceException, IOException {
+    public boolean isVoltageRangeAuto() throws IOException {
         return false;
     }
 
     @Override
-    public void setMeasureRange(double value) throws DeviceException, IOException {
+    public void setCurrentRange(double value) throws IOException {
 
     }
 
     @Override
-    public double getMeasureRange() throws DeviceException, IOException {
+    public double getCurrentRange() throws IOException {
         return 0;
     }
 
     @Override
-    public void useAutoMeasureRange() throws DeviceException, IOException {
+    public void useAutoCurrentRange() throws IOException {
 
     }
 
     @Override
-    public boolean isMeasureRangeAuto() throws DeviceException, IOException {
+    public boolean isCurrentRangeAuto() throws IOException {
         return false;
     }
 
     @Override
-    public void setVoltageRange(double value) throws DeviceException, IOException {
+    public void setOutputLimit(double value) throws IOException {
 
     }
 
     @Override
-    public double getVoltageRange() throws DeviceException, IOException {
-        return 0;
-    }
-
-    @Override
-    public void useAutoVoltageRange() throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public boolean isVoltageRangeAuto() throws DeviceException, IOException {
-        return false;
-    }
-
-    @Override
-    public void setCurrentRange(double value) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public double getCurrentRange() throws DeviceException, IOException {
-        return 0;
-    }
-
-    @Override
-    public void useAutoCurrentRange() throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public boolean isCurrentRangeAuto() throws DeviceException, IOException {
-        return false;
-    }
-
-    @Override
-    public void setOutputLimit(double value) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public double getOutputLimit() throws DeviceException, IOException {
+    public double getOutputLimit() throws IOException {
         return 0;
     }
 
@@ -512,23 +633,4 @@ public class K2400 extends SMU {
         return null;
     }
 
-    @Override
-    public void setOffVoltageLimit(double limit) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public void setOffCurrentLimit(double limit) throws DeviceException, IOException {
-
-    }
-
-    @Override
-    public double getOffVoltageLimit() throws DeviceException, IOException {
-        return 0;
-    }
-
-    @Override
-    public double getOffCurrentLimit() throws DeviceException, IOException {
-        return 0;
-    }
 }
