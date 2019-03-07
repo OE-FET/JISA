@@ -8,7 +8,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.net.URL;
 
-public class JFXWindow implements Gridable {
+public class JFXWindow implements Element {
 
     protected Stage stage;
 

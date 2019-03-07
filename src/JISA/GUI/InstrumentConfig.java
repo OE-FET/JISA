@@ -2,9 +2,6 @@ package JISA.GUI;
 
 import JISA.Addresses.*;
 import JISA.Control.ConfigStore;
-import JISA.Control.SetGettable;
-import JISA.Devices.DeviceException;
-import JISA.Devices.MCSMU;
 import JISA.Devices.SMUCluster;
 import JISA.VISA.VISADevice;
 import javafx.scene.control.Button;
@@ -25,7 +22,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Set;
 
-public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements Gridable {
+public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements Element {
 
     public  ChoiceBox                   driverChoice;
     public  ChoiceBox                   protChoice;

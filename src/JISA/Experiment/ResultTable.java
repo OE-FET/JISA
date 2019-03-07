@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.List;
 
 public abstract class ResultTable implements Iterable<Result> {
 
@@ -49,7 +50,7 @@ public abstract class ResultTable implements Iterable<Result> {
         Result row = new Result(data);
         addRow(row);
 
-        for (OnUpdate r : onUpdate) {
+        for (OnUpdate r : (List<OnUpdate>) onUpdate.clone()) {
             r.run(row);
         }
 

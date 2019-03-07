@@ -6,19 +6,14 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
-import javafx.stage.Stage;
 
 import java.util.Arrays;
-import java.util.concurrent.Semaphore;
 
-public class Table extends JFXWindow implements Gridable, Clearable {
+public class Table extends JFXWindow implements Element, Clearable {
 
     public TableView  table;
     public BorderPane pane;

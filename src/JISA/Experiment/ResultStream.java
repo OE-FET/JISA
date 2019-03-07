@@ -5,11 +5,11 @@ import java.util.Iterator;
 
 public class ResultStream extends ResultTable {
 
-    private String           path;
-    private RandomAccessFile file;
-    private String[]         names;
-    private String[]         units = null;
-    private int              cols;
+    private   String           path;
+    protected RandomAccessFile file;
+    private   String[]         names;
+    private   String[]         units = null;
+    private   int              cols;
 
     public ResultStream(String path, String... names) throws IOException {
 
@@ -50,7 +50,7 @@ public class ResultStream extends ResultTable {
 
     }
 
-    private void replaceLine(int lineNo, String newLine) {
+    protected void replaceLine(int lineNo, String newLine) {
 
         StringBuilder newFile = new StringBuilder();
 
@@ -66,6 +66,39 @@ public class ResultStream extends ResultTable {
                     newFile.append(line);
                 } else {
                     newFile.append(newLine);
+                }
+                newFile.append("\n");
+                i++;
+
+                line = file.readLine();
+            } while (line != null);
+
+            file.setLength(0);
+            file.writeBytes(newFile.toString());
+
+        } catch (IOException ignored) {
+        }
+
+    }
+
+    protected void addBefore(int lineNo, String newLine) {
+
+        StringBuilder newFile = new StringBuilder();
+
+        try {
+            int i = 0;
+            file.seek(0);
+            String line;
+
+            line = file.readLine();
+            do {
+
+                if (i != lineNo) {
+                    newFile.append(line);
+                } else {
+                    newFile.append(newLine);
+                    newFile.append("\n");
+                    newFile.append(line);
                 }
                 newFile.append("\n");
                 i++;

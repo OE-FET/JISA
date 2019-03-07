@@ -43,6 +43,7 @@ public class RTask {
                     toRun.run();
                 } catch (Throwable e) {
                     System.err.printf("Exception encountered running repeat task: \"%s\"\n", e.getMessage());
+                    e.printStackTrace();
                 }
                 iteration++;
             }

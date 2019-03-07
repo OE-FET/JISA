@@ -1,12 +1,9 @@
 package JISA.GUI;
 
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToolBar;
@@ -17,28 +14,28 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 import java.util.ArrayList;
-import java.util.concurrent.Semaphore;
+import java.util.List;
 
-public class Grid extends JFXWindow implements Gridable {
+public class Grid extends JFXWindow implements Element, Container {
 
-    public  GridPane            pane;
-    public  BorderPane          border;
-    private ToolBar             toolBar = null;
-    private Stage               stage;
-    private int                 nCols   = 3;
-    private int                 r       = 0;
-    private int                 c       = 0;
-    private boolean             hGrow   = true;
-    private boolean             vGrow   = true;
-    private ArrayList<Gridable> added   = new ArrayList<>();
+    public  GridPane           pane;
+    public  BorderPane         border;
+    private ToolBar            toolBar = null;
+    private Stage              stage;
+    private int                nCols   = 3;
+    private int                r       = 0;
+    private int                c       = 0;
+    private boolean            hGrow   = true;
+    private boolean            vGrow   = true;
+    private ArrayList<Element> added   = new ArrayList<>();
 
     public Grid(String title) {
         super(title, Grid.class.getResource("FXML/GridWindow.fxml"));
     }
 
-    public Grid(String title, Gridable... panels) {
+    public Grid(String title, Element... panels) {
         this(title);
-        for (Gridable g : panels) {
+        for (Element g : panels) {
             add(g);
         }
     }
@@ -72,7 +69,7 @@ public class Grid extends JFXWindow implements Gridable {
 
     }
 
-    public void add(Gridable toAdd) {
+    public void add(Element toAdd) {
 
         Pane bPane;
 
@@ -131,7 +128,7 @@ public class Grid extends JFXWindow implements Gridable {
 
     }
 
-    public void remove(Gridable toRemove) {
+    public void remove(Element toRemove) {
 
         GUI.runNow(() -> {
             int index = added.indexOf(toRemove);
@@ -150,6 +147,11 @@ public class Grid extends JFXWindow implements Gridable {
             pane.getChildren().clear();
         });
 
+    }
+
+    @Override
+    public List<Element> getElements() {
+        return new ArrayList<>(added);
     }
 
     public int getNumColumns() {

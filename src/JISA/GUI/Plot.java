@@ -16,32 +16,21 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.function.Predicate;
 
-public class Plot extends JFXWindow implements Gridable, Clearable {
+public class Plot extends JFXWindow implements Element, Clearable {
 
-    public  BorderPane                                             pane;
-    public  ToolBar                                                toolbar;
-    public  Pane                                                   stack;
-    public  LineChart<Double, Double>                              chart;
-    public  NumberAxis                                             xAxis;
-    public  NumberAxis                                             yAxis;
-    public  ToggleButton                                           autoButton;
-    public  ToggleButton                                           zoomButton;
-    public  ToggleButton                                           dragButton;
-    private LinkedHashMap<Integer, XYChart.Series<Double, Double>> data     = new LinkedHashMap<>();
-    private HashMap<Integer, Boolean>                              auto     = new HashMap<>();
-    private ArrayList<HashMap<Double, Integer>>                    maps     = new ArrayList<>();
-    private SmartChart                                             controller;
-    private double                                                 xRange   = 0;
-    private double                                                 maxX     = Double.NEGATIVE_INFINITY;
-    private double                                                 minX     = Double.POSITIVE_INFINITY;
-    private double                                                 maxY     = Double.NEGATIVE_INFINITY;
-    private double                                                 minY     = Double.POSITIVE_INFINITY;
-    private double                                                 maxRange = -1;
-    private Rectangle                                              rect;
+    public  BorderPane                pane;
+    public  ToolBar                   toolbar;
+    public  Pane                      stack;
+    public  LineChart<Double, Double> chart;
+    public  NumberAxis                xAxis;
+    public  NumberAxis                yAxis;
+    public  ToggleButton              autoButton;
+    public  ToggleButton              zoomButton;
+    public  ToggleButton              dragButton;
+    private SmartChart                controller;
+    private Rectangle                 rect;
 
 
     /**
@@ -82,11 +71,6 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
         controller = new SmartChart(chart, xAxis, yAxis);
     }
 
-    public void showToolbar(boolean flag) {
-        toolbar.setManaged(flag);
-        toolbar.setVisible(flag);
-    }
-
     /**
      * Creates a plot that automatically tracks and plots a ResultTable (ResultList or ResultStream) object, specifying
      * which columns to plot, the name of the data series and its colour.
@@ -101,21 +85,6 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
     public Plot(String title, ResultTable list, int xData, int yData, String seriesName, Color colour) {
         this(title, list.getTitle(xData), list.getTitle(yData));
         watchList(list, xData, yData, seriesName, colour);
-    }
-
-    /**
-     * Creates a plot that automatically tracks and plots a ResultTable (ResultList or ResultStream) object, specifying
-     * which columns to plot but also specifying which column to use to sort the data into separate series.
-     *
-     * @param title Title for the plot
-     * @param list  The ResultTable to track
-     * @param xData Column number to plot on the x-axis
-     * @param yData Column number to plot on the y-axis
-     * @param sData Column number to use for sorting into series
-     */
-    public Plot(String title, ResultTable list, int xData, int yData, int sData) {
-        this(title, list.getTitle(xData), list.getTitle(yData));
-        watchList(list, xData, yData, sData);
     }
 
     /**
@@ -142,8 +111,45 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
         this(title, list, 0, 1);
     }
 
-    public void reduce() {
-        GUI.runNow(controller::reduce);
+    public Series createSeries(String name, Color colour) {
+        return controller.createSeries(name, colour);
+    }
+
+    public Series watchList(ResultTable list, int xData, int yData, Predicate<Result> filter, String name, Color colour) {
+        return controller.createWatchSeries(name, colour, list, xData, yData, filter);
+    }
+
+    public Series watchList(ResultTable list, int xData, int yData, String name, Color colour) {
+        return watchList(list, xData, yData, null, name, colour);
+    }
+
+    public SeriesGroup watchList(ResultTable list, int xData, int yData, int sData, Predicate<Result> filter) {
+        return controller.createAutoSeries(list, xData, yData, sData, filter);
+    }
+
+    public SeriesGroup watchList(ResultTable list, int xData, int yData, int sData) {
+        return watchList(list, xData, yData, sData, null);
+    }
+
+    public void showToolbar(boolean flag) {
+        toolbar.setManaged(flag);
+        toolbar.setVisible(flag);
+    }
+
+    public String getXLabel() {
+        return xAxis.getLabel();
+    }
+
+    public void setXLabel(String label) {
+        GUI.runNow(() -> xAxis.setLabel(label));
+    }
+
+    public String getYLabel() {
+        return yAxis.getLabel();
+    }
+
+    public void setYLabel(String label) {
+        GUI.runNow(() -> yAxis.setLabel(label));
     }
 
     public void setZoomMode() {
@@ -151,6 +157,8 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
         zoomButton.setSelected(true);
         autoButton.setSelected(false);
         dragButton.setSelected(false);
+
+        XYChart.Series<Double, Double> series = new XYChart.Series<>();
 
         final Node                          background = chart.lookup(".chart-plot-background");
         final SimpleObjectProperty<Point2D> start      = new SimpleObjectProperty<>();
@@ -325,171 +333,6 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
         controller.setTrackingY(range);
     }
 
-    /**
-     * Set the plot to automatically track and plot a ResultTable object, specifying which columns to plot, the name of
-     * the series and its colour.
-     *
-     * @param list       The ResultTable to track
-     * @param xData      Column number to plot on the x-axis
-     * @param yData      Column number to plot on the y-axis
-     * @param seriesName Name of the data series
-     * @param colour     Colour of the series (eg try: Color.RED or Color.GREEN, etc)
-     */
-    public synchronized void watchList(final ResultTable list, final int xData, final int yData, String seriesName, Color colour) {
-
-        final int series = createSeries(seriesName, colour);
-
-        for (Result row : list) {
-            addPoint(series, row.get(xData), row.get(yData));
-        }
-
-        list.addOnUpdate((r) -> addPoint(series, r.get(xData), r.get(yData)));
-
-        list.addClearable(this);
-
-    }
-
-    /**
-     * Set the plot to automatically track and plot a ResultTable object, split into multiple data series, specifying
-     * which columns to plot and which column to use to sort into series.
-     *
-     * @param list  The ResultTable to track
-     * @param xData Column number to plot on the x-axis
-     * @param yData Column number to plot on the y-axis
-     * @param sData Column number to use for series sorting
-     */
-    public synchronized void watchList(final ResultTable list, final int xData, final int yData, final int sData) {
-
-        final HashMap<Double, Integer> map = new HashMap<>();
-        maps.add(map);
-        for (Result row : list) {
-
-            int series;
-            if (map.containsKey(row.get(sData))) {
-                series = map.get(row.get(sData));
-            } else {
-                series = controller.createSeriesAuto(String.format("%s %s", row.get(sData), list.getUnits(sData)));
-            }
-
-            map.put(row.get(sData), series);
-            addPoint(series, row.get(xData), row.get(yData));
-
-        }
-
-        list.addOnUpdate((row) -> {
-
-            int series;
-            if (map.containsKey(row.get(sData))) {
-                series = map.get(row.get(sData));
-            } else {
-                series = controller.createSeriesAuto(String.format("%s %s", row.get(sData), list.getUnits(sData)));
-            }
-
-            map.put(row.get(sData), series);
-            addPoint(series, row.get(xData), row.get(yData));
-
-        });
-
-        list.addClearable(this);
-
-    }
-
-    public synchronized void watchList(final ResultTable list, final int xData, final int yData, final int fData, final double fValue, String seriesName, Color colour) {
-
-        final int series = createSeries(seriesName, colour);
-
-        for (Result row : list) {
-            if (row.get(fData) == fValue) {
-                addPoint(series, row.get(xData), row.get(yData));
-            }
-        }
-
-        list.addOnUpdate((r) -> {
-            if (r.get(fData) == fValue) {
-                addPoint(series, r.get(xData), r.get(yData));
-            }
-        });
-
-        list.addClearable(this);
-
-    }
-
-    public synchronized void watchList(final ResultTable list, final int xData, final int yData, final int sData, final int fData, final double fValue) {
-
-        final HashMap<Double, Integer> map = new HashMap<>();
-        maps.add(map);
-        for (Result row : list) {
-
-            if (row.get(fData) != fValue) {
-                continue;
-            }
-
-            int series;
-            if (map.containsKey(row.get(sData))) {
-                series = map.get(row.get(sData));
-            } else {
-                series = controller.createSeriesAuto(String.format("%s %s", row.get(sData), list.getUnits(sData)));
-            }
-
-            map.put(row.get(sData), series);
-            addPoint(series, row.get(xData), row.get(yData));
-
-        }
-
-        list.addOnUpdate((row) -> {
-
-            if (row.get(fData) != fValue) {
-                return;
-            }
-
-            int series;
-            if (map.containsKey(row.get(sData))) {
-                series = map.get(row.get(sData));
-            } else {
-                series = controller.createSeriesAuto(String.format("%s %s", row.get(sData), list.getUnits(sData)));
-            }
-
-            map.put(row.get(sData), series);
-            addPoint(series, row.get(xData), row.get(yData));
-
-        });
-
-        list.addClearable(this);
-
-    }
-
-    /**
-     * Creates a new data series, returning its number.
-     *
-     * @param name   The series name
-     * @param colour The series colour (eg Color.RED, Color.GREEN, Color.BLUE etc)
-     *
-     * @return The id of the new series
-     */
-    public int createSeries(String name, Color colour) {
-        return controller.createSeries(name, colour);
-    }
-
-    /**
-     * Add a point to the plot (in the last series created).
-     *
-     * @param x X-Value
-     * @param y Y-Value
-     */
-    public void addPoint(double x, double y) {
-        controller.addPoint(x, y);
-    }
-
-    /**
-     * Add a point to the plot in the specified series.
-     *
-     * @param series The series id number, returned by createSeries(...)
-     * @param x      X-Value
-     * @param y      Y-Value
-     */
-    public void addPoint(int series, double x, double y) {
-        controller.addPoint(series, x, y);
-    }
 
     @Override
     public Pane getPane() {
@@ -499,10 +342,6 @@ public class Plot extends JFXWindow implements Gridable, Clearable {
     @Override
     public synchronized void clear() {
         controller.clear();
-    }
-
-    public synchronized void fullClear() {
-        controller.fullClear();
     }
 
 }

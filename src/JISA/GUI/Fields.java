@@ -2,25 +2,16 @@ package JISA.GUI;
 
 import JISA.Control.Field;
 import JISA.Control.SRunnable;
-import JISA.Control.SetGettable;
-import JISA.Devices.DeviceException;
 import JISA.Util;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.LinkedHashMap;
-import java.util.List;
 
-public class Fields extends JFXWindow implements Gridable {
+public class Fields extends JFXWindow implements Element {
 
     private LinkedHashMap<String, TextField> map = new LinkedHashMap<>();
     public  BorderPane                       pane;
@@ -56,7 +47,7 @@ public class Fields extends JFXWindow implements Gridable {
         HBox.setHgrow(field, Priority.ALWAYS);
 
         box.getChildren().addAll(label, field);
-        list.getChildren().add(box);
+        GUI.runNow(() -> list.getChildren().add(box));
 
 
         return new Field<String>() {
@@ -128,7 +119,7 @@ public class Fields extends JFXWindow implements Gridable {
         HBox.setHgrow(field, Priority.ALWAYS);
 
         box.getChildren().addAll(label, field);
-        list.getChildren().add(box);
+        GUI.runNow(() -> list.getChildren().add(box));
 
 
         return new Field<Boolean>() {
@@ -208,7 +199,7 @@ public class Fields extends JFXWindow implements Gridable {
         HBox.setHgrow(field, Priority.ALWAYS);
 
         box.getChildren().addAll(label, field, button);
-        list.getChildren().add(box);
+        GUI.runNow(() -> list.getChildren().add(box));
 
 
         return new Field<String>() {
@@ -289,7 +280,7 @@ public class Fields extends JFXWindow implements Gridable {
         HBox.setHgrow(field, Priority.ALWAYS);
 
         box.getChildren().addAll(label, field, button);
-        list.getChildren().add(box);
+        GUI.runNow(() -> list.getChildren().add(box));
 
         return new Field<String>() {
 
@@ -362,7 +353,7 @@ public class Fields extends JFXWindow implements Gridable {
         HBox.setHgrow(field, Priority.ALWAYS);
 
         box.getChildren().addAll(label, field);
-        list.getChildren().add(box);
+        GUI.runNow(() -> list.getChildren().add(box));
 
         return new Field<Integer>() {
 
@@ -433,7 +424,7 @@ public class Fields extends JFXWindow implements Gridable {
         HBox.setHgrow(field, Priority.ALWAYS);
 
         box.getChildren().addAll(label, field);
-        list.getChildren().add(box);
+        GUI.runNow(() -> list.getChildren().add(box));
 
         return new Field<Double>() {
 
@@ -499,7 +490,7 @@ public class Fields extends JFXWindow implements Gridable {
         HBox.setHgrow(field, Priority.ALWAYS);
 
         box.getChildren().addAll(label, field);
-        list.getChildren().add(box);
+        GUI.runNow(() -> list.getChildren().add(box));
 
         field.getItems().addAll(options);
 
@@ -543,11 +534,11 @@ public class Fields extends JFXWindow implements Gridable {
                 if (list != null) {
                     field.getSelectionModel().selectedIndexProperty().removeListener(list);
                     field.setItems(FXCollections.observableArrayList(values));
-                    field.getSelectionModel().select(Math.min(values.length-1, Math.max(0,selected)));
+                    field.getSelectionModel().select(Math.min(values.length - 1, Math.max(0, selected)));
                     field.getSelectionModel().selectedIndexProperty().addListener(list);
                 } else {
                     field.setItems(FXCollections.observableArrayList(values));
-                    field.getSelectionModel().select(Math.min(values.length-1, Math.max(0,selected)));
+                    field.getSelectionModel().select(Math.min(values.length - 1, Math.max(0, selected)));
                 }
             }
 
@@ -572,7 +563,7 @@ public class Fields extends JFXWindow implements Gridable {
     public void addSeparator() {
 
         Separator separator = new Separator();
-        list.getChildren().add(separator);
+        GUI.runNow(() -> list.getChildren().add(separator));
         VBox.setVgrow(separator, Priority.ALWAYS);
 
     }

@@ -1,10 +1,8 @@
 package JISA.GUI;
 
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -13,14 +11,16 @@ import javafx.scene.paint.Color;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
-public class Tabs extends JFXWindow implements Gridable {
+public class Tabs extends JFXWindow implements Element, Container {
 
     public  BorderPane          pane;
     public  VBox                sidebar;
     public  ScrollPane          scrollPane;
     private String              title;
     private ArrayList<HBox>     tabs      = new ArrayList<>();
+    private ArrayList<Element>  added     = new ArrayList<>();
     private ArrayList<Runnable> switchers = new ArrayList<>();
 
     /**
@@ -31,14 +31,10 @@ public class Tabs extends JFXWindow implements Gridable {
      *
      * @throws IOException
      */
-    public Tabs(String title, Gridable... toAdd) {
+    public Tabs(String title, Element... toAdd) {
         super(title, Tabs.class.getResource("FXML/TabWindow.fxml"));
         this.title = title;
-
-        for (Gridable g : toAdd) {
-            addTab(g);
-        }
-
+        addAll(toAdd);
     }
 
     /**
@@ -46,7 +42,7 @@ public class Tabs extends JFXWindow implements Gridable {
      *
      * @param element Element to add
      */
-    public void addTab(Gridable element) {
+    public void add(Element element) {
 
         HBox tab = new HBox();
         tab.setPadding(new Insets(15, 15, 15, 15));
@@ -81,12 +77,41 @@ public class Tabs extends JFXWindow implements Gridable {
 
     }
 
+    @Override
+    public void remove(Element element) {
+
+        int index = added.indexOf(element);
+
+        if (index > -1) {
+
+            sidebar.getChildren().remove(tabs.get(index));
+            tabs.remove(index);
+            switchers.remove(index);
+            added.remove(index);
+
+        }
+
+    }
+
+    @Override
+    public void clear() {
+        sidebar.getChildren().clear();
+        tabs.clear();
+        switchers.clear();
+        added.clear();
+    }
+
+    @Override
+    public List<Element> getElements() {
+        return new ArrayList<>(added);
+    }
+
     /**
      * Selects the specified tab.
      *
      * @param pane Pane to select
      */
-    public void changeTab(int pane) {
+    public void select(int pane) {
 
         GUI.runNow(() -> {
             switchers.get(pane).run();
