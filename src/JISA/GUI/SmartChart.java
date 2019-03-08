@@ -335,7 +335,7 @@ public class SmartChart {
 
             case TRACK:
                 limMaxX = maxX;
-                limMinX = maxX - autoXRange;
+                limMinX = Math.max(maxX - autoXRange, minX);
                 break;
 
         }
@@ -349,7 +349,7 @@ public class SmartChart {
 
             case TRACK:
                 limMaxY = maxY;
-                limMinY = maxY - autoYRange;
+                limMinY = Math.max(maxY - autoYRange, minY);
                 break;
 
         }
