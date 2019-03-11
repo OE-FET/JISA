@@ -1,7 +1,6 @@
 package JISA.GUI;
 
 import JISA.Addresses.InstrumentAddress;
-import JISA.Util;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -10,21 +9,18 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Optional;
-import java.util.concurrent.*;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class GUI extends Application {
@@ -264,6 +260,60 @@ public class GUI extends Application {
 
     }
 
+    public static int choiceWindow(String title, String header, String message, String... options) {
+
+        // Reference to take in returned value from the dialog.
+        AtomicReference<Integer> toReturn = new AtomicReference<>();
+
+        // All GUI stuff must be done on the GUI thread.
+        GUI.runNow(() -> {
+
+            Dialog<Integer> dialog = new Dialog<>();
+            Label           img    = new Label();
+            img.getStyleClass().addAll("choice-dialog", "dialog-pane");
+            dialog.setGraphic(img);
+            dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+            dialog.getDialogPane().setMinWidth(400);
+            dialog.setTitle(title);
+            dialog.setHeaderText(header);
+
+            VBox list = new VBox();
+            list.setSpacing(15);
+            list.setPadding(new Insets(15, 15, 15, 15));
+            list.getChildren().add(new Label(message));
+
+            int i = 0;
+            for (String option : options) {
+
+                final int index = i;
+
+                Button button = new Button(option);
+                button.setMaxWidth(Integer.MAX_VALUE);
+                button.setAlignment(Pos.CENTER_LEFT);
+                list.getChildren().add(button);
+
+                button.setOnAction(ae -> {
+
+                    dialog.setResult(index);
+                    dialog.hide();
+                    dialog.close();
+
+                });
+
+                i++;
+
+            }
+
+            dialog.getDialogPane().setContent(list);
+
+            toReturn.set(dialog.showAndWait().orElse(-1));
+
+        });
+
+        return toReturn.get();
+
+    }
+
     public static Object create(String fxmlFile) throws IOException {
 
         FXMLLoader loader     = new FXMLLoader(GUI.class.getResource(fxmlFile));
@@ -304,21 +354,6 @@ public class GUI extends Application {
         return ref.get();
 
     }
-
-    @Override
-    public void start(Stage primaryStage) throws Exception {
-
-    }
-
-    public static class App extends Application {
-
-        @Override
-        public void start(Stage primaryStage) throws Exception {
-            s.release();
-        }
-
-    }
-
 
     /**
      * Starts the GUI thread so that GUI elements can be used.
@@ -366,6 +401,20 @@ public class GUI extends Application {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+
+    }
+
+    @Override
+    public void start(Stage primaryStage) throws Exception {
+
+    }
+
+    public static class App extends Application {
+
+        @Override
+        public void start(Stage primaryStage) throws Exception {
+            s.release();
         }
 
     }
