@@ -74,6 +74,7 @@ public class Grid extends JFXWindow implements Element, Container {
         Pane bPane;
 
         if (toAdd instanceof Grid && toAdd.getTitle().equals("")) {
+            ((Grid) toAdd).pane.setPadding(new Insets(0,0,0,0));
             bPane = toAdd.getPane();
         } else {
 
