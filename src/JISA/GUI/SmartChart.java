@@ -637,8 +637,7 @@ public class SmartChart {
         public NormalSeries(ResultTable results, int xData, int yData, Predicate<Result> filter, String name, Color colour) {
 
             list = results;
-            data = new DataList(list, xData, yData);
-            data.setFilter(filter == null ? (r) -> true : filter);
+            data = new DataList(list, xData, yData, filter == null ? (r) -> true : filter);
             series = new XYChart.Series<>(data);
 
             GUI.runNow(() -> chart.getData().add(series));
