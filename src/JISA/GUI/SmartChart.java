@@ -992,8 +992,10 @@ public class SmartChart {
                         GUI.runNow(() -> {
                             list.add(d);
                             shown.add(index);
-                            d.getNode().setVisible(showMarkers);
-                            d.getNode().lookup(".chart-line-symbol").setStyle(markerStyle);
+                            if (d.getNode() != null) {
+                                d.getNode().setVisible(showMarkers);
+                                d.getNode().lookup(".chart-line-symbol").setStyle(markerStyle);
+                            }
                             onChange.run();
                             minX = Math.min(minX, d.getXValue());
                             maxX = Math.max(maxX, d.getXValue());
@@ -1070,7 +1072,9 @@ public class SmartChart {
 
             GUI.runNow(() -> {
                 for (XYChart.Data<Double, Double> point : list) {
-                    point.getNode().setVisible(showMarkers);
+                    if (point.getNode() != null) {
+                        point.getNode().setVisible(showMarkers);
+                    }
                 }
             });
 
@@ -1082,7 +1086,9 @@ public class SmartChart {
 
             GUI.runNow(() -> {
                 for (XYChart.Data<Double, Double> point : list) {
-                    point.getNode().lookup(".chart-line-symbol").setStyle(markerStyle);
+                    if (point.getNode() != null) {
+                        point.getNode().lookup(".chart-line-symbol").setStyle(markerStyle);
+                    }
                 }
             });
 
@@ -1156,7 +1162,9 @@ public class SmartChart {
                 list.addAll(toAdd);
 
                 for (XYChart.Data d : toAdd) {
-                    d.getNode().setVisible(showMarkers);
+                    if (d.getNode() != null) {
+                        d.getNode().setVisible(showMarkers);
+                    }
                 }
 
             });
