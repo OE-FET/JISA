@@ -95,11 +95,11 @@ public class DoubleInput extends HBox {
 
     public void setValue(double value) {
 
-        int    exponent = value == 0 ? 0 : (int) Math.floor(Math.log10(value));
+        int    exponent = value == 0 ? 0 : (int) (3 * Math.floor(Math.log10(Math.abs(value)) / 3));
         double mantissa = value / Math.pow(10, exponent);
 
-        this.mantissa.setText(String.valueOf(mantissa));
-        this.exponent.setText(String.valueOf(exponent));
+        this.mantissa.setText(String.format("%f", mantissa));
+        this.exponent.setText(String.format("%d", exponent));
 
     }
 
