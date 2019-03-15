@@ -156,6 +156,8 @@ public class K2450 extends SMU {
 
         try {
 
+            clearRead();
+
             String[] iden = query("*IDN?").split(",");
 
             if (!iden[1].trim().equals("MODEL 2450")) {
@@ -317,7 +319,7 @@ public class K2450 extends SMU {
     @Override
     public void useAutoVoltageRange() throws IOException {
         write(
-                isSourcing(Source.VOLTAGE) ? C_QUERY_SRC_AUTO_RANGE : C_QUERY_MEAS_AUTO_RANGE,
+                isSourcing(Source.VOLTAGE) ? C_SET_SRC_AUTO_RANGE : C_SET_MEAS_AUTO_RANGE,
                 Source.VOLTAGE.getTag(),
                 OUTPUT_ON
         );
@@ -349,7 +351,7 @@ public class K2450 extends SMU {
     @Override
     public void useAutoCurrentRange() throws IOException {
         write(
-                isSourcing(Source.CURRENT) ? C_QUERY_SRC_AUTO_RANGE : C_QUERY_MEAS_AUTO_RANGE,
+                isSourcing(Source.CURRENT) ? C_SET_SRC_AUTO_RANGE : C_SET_MEAS_AUTO_RANGE,
                 Source.CURRENT.getTag(),
                 OUTPUT_ON
         );
