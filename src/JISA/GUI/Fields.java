@@ -10,13 +10,16 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Fields extends JFXWindow implements Element {
 
-    private LinkedHashMap<String, TextField> map = new LinkedHashMap<>();
     public  BorderPane                       pane;
     public  VBox                             list;
     public  ButtonBar                        buttonBar;
+    private LinkedHashMap<String, TextField> map    = new LinkedHashMap<>();
+    private List<Field>                      fields = new LinkedList<>();
 
     /**
      * Creates a input fields group for user-input.
@@ -50,7 +53,7 @@ public class Fields extends JFXWindow implements Element {
         GUI.runNow(() -> list.getChildren().add(box));
 
 
-        return new Field<String>() {
+        Field<String> f =  new Field<String>() {
 
             private ChangeListener<String> list = null;
 
@@ -87,15 +90,20 @@ public class Fields extends JFXWindow implements Element {
             }
 
             @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
+            }
+
+            @Override
             public void setDisabled(boolean disabled) {
                 field.setDisable(disabled);
             }
 
-            @Override
-            public boolean isDisabled() {
-                return field.isDisabled();
-            }
+
         };
+
+        fields.add(f);
+        return f;
 
     }
 
@@ -122,7 +130,7 @@ public class Fields extends JFXWindow implements Element {
         GUI.runNow(() -> list.getChildren().add(box));
 
 
-        return new Field<Boolean>() {
+        Field<Boolean> f = new Field<Boolean>() {
 
             private ChangeListener<Boolean> list = null;
 
@@ -160,15 +168,20 @@ public class Fields extends JFXWindow implements Element {
             }
 
             @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
+            }
+
+            @Override
             public void setDisabled(boolean disabled) {
                 field.setDisable(disabled);
             }
 
-            @Override
-            public boolean isDisabled() {
-                return field.isDisabled();
-            }
+
         };
+
+        fields.add(f);
+        return f;
 
     }
 
@@ -202,7 +215,7 @@ public class Fields extends JFXWindow implements Element {
         GUI.runNow(() -> list.getChildren().add(box));
 
 
-        return new Field<String>() {
+        Field<String> f = new Field<String>() {
 
             private ChangeListener<String> list = null;
 
@@ -240,16 +253,21 @@ public class Fields extends JFXWindow implements Element {
             }
 
             @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
+            }
+
+            @Override
             public void setDisabled(boolean disabled) {
                 field.setDisable(disabled);
                 button.setDisable(disabled);
             }
 
-            @Override
-            public boolean isDisabled() {
-                return field.isDisabled();
-            }
+
         };
+
+        fields.add(f);
+        return f;
 
     }
 
@@ -282,7 +300,7 @@ public class Fields extends JFXWindow implements Element {
         box.getChildren().addAll(label, field, button);
         GUI.runNow(() -> list.getChildren().add(box));
 
-        return new Field<String>() {
+        Field<String> f = new Field<String>() {
 
             private ChangeListener<String> list = null;
 
@@ -320,16 +338,21 @@ public class Fields extends JFXWindow implements Element {
             }
 
             @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
+            }
+
+            @Override
             public void setDisabled(boolean disabled) {
                 field.setDisable(disabled);
                 button.setDisable(disabled);
             }
 
-            @Override
-            public boolean isDisabled() {
-                return field.isDisabled();
-            }
+
         };
+
+        fields.add(f);
+        return f;
 
     }
 
@@ -355,7 +378,7 @@ public class Fields extends JFXWindow implements Element {
         box.getChildren().addAll(label, field);
         GUI.runNow(() -> list.getChildren().add(box));
 
-        return new Field<Integer>() {
+        Field<Integer> f = new Field<Integer>() {
 
             private ChangeListener<String> list = null;
 
@@ -392,15 +415,20 @@ public class Fields extends JFXWindow implements Element {
             }
 
             @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
+            }
+
+            @Override
             public void setDisabled(boolean disabled) {
                 field.setDisable(disabled);
             }
 
-            @Override
-            public boolean isDisabled() {
-                return field.isDisabled();
-            }
+
         };
+
+        fields.add(f);
+        return f;
 
     }
 
@@ -426,7 +454,7 @@ public class Fields extends JFXWindow implements Element {
         box.getChildren().addAll(label, field);
         GUI.runNow(() -> list.getChildren().add(box));
 
-        return new Field<Double>() {
+        Field<Double> f = new Field<Double>() {
 
             private ChangeListener<String> list = null;
 
@@ -457,15 +485,20 @@ public class Fields extends JFXWindow implements Element {
             }
 
             @Override
+            public boolean isDisabled() {
+                return field.disabled();
+            }
+
+            @Override
             public void setDisabled(boolean disabled) {
                 field.disabled(disabled);
             }
 
-            @Override
-            public boolean isDisabled() {
-                return field.disabled();
-            }
+
         };
+
+        fields.add(f);
+        return f;
 
     }
 
@@ -494,7 +527,7 @@ public class Fields extends JFXWindow implements Element {
 
         field.getItems().addAll(options);
 
-        return new Field<Integer>() {
+        Field<Integer> f = new Field<Integer>() {
 
             private ChangeListener<Number> list = null;
 
@@ -543,15 +576,21 @@ public class Fields extends JFXWindow implements Element {
             }
 
             @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
+            }
+
+            @Override
             public void setDisabled(boolean disabled) {
                 field.setDisable(disabled);
             }
 
-            @Override
-            public boolean isDisabled() {
-                return field.isDisabled();
-            }
+
         };
+
+        fields.add(f);
+        return f;
+
     }
 
     @Override
@@ -588,6 +627,14 @@ public class Fields extends JFXWindow implements Element {
             })).start();
         });
         buttonBar.getButtons().add(button);
+
+    }
+
+    public void setFieldsDisabled(boolean flag) {
+
+        for (Field f : fields) {
+            f.setDisabled(flag);
+        }
 
     }
 
