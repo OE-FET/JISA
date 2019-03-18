@@ -3,28 +3,19 @@ package JISA.Addresses;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public interface InstrumentAddress {
+public interface Address {
 
-    String getVISAAddress();
+    String toString();
 
-    enum Type {
-        GPIB,
-        USB,
-        TCPIP,
-        TCPIP_SOCKET,
-        SERIAL,
-        UNKOWN
+    default StrAddress toStrAddress() {
+        return new StrAddress(toString());
     }
 
-    public default StrAddress toStrAddress() {
-        return new StrAddress(getVISAAddress());
-    }
-
-    public default Type getType() {
+    default Type getType() {
 
         Type type = Type.UNKOWN;
 
-        String[] parts = getVISAAddress().split("::");
+        String[] parts = toString().split("::");
 
         if (parts[0].contains("GPIB")) {
             type = Type.GPIB;
@@ -32,9 +23,9 @@ public interface InstrumentAddress {
             type = Type.USB;
         } else if (parts[0].contains("ASRL")) {
             type = Type.SERIAL;
-        } else if (parts[0].contains("TCPIP") && parts[parts.length-1 ].contains("INSTR")) {
+        } else if (parts[0].contains("TCPIP") && parts[parts.length - 1].contains("INSTR")) {
             type = Type.TCPIP;
-        } else if (parts[0].contains("TCPIP") && parts[parts.length-1 ].contains("SOCKET")) {
+        } else if (parts[0].contains("TCPIP") && parts[parts.length - 1].contains("SOCKET")) {
             type = Type.TCPIP_SOCKET;
         }
 
@@ -42,10 +33,10 @@ public interface InstrumentAddress {
 
     }
 
-    public default GPIBAddress toGPIBAddress() {
+    default GPIBAddress toGPIBAddress() {
 
         Pattern pattern = Pattern.compile("GPIB([0-9]*?)::([0-9]+)::INSTR");
-        Matcher matcher = pattern.matcher(getVISAAddress().trim());
+        Matcher matcher = pattern.matcher(toString().trim());
 
         if (matcher.matches()) {
             int board   = Integer.valueOf(matcher.group(1));
@@ -57,10 +48,10 @@ public interface InstrumentAddress {
 
     }
 
-    public default SerialAddress toSerialAddress() {
+    default SerialAddress toSerialAddress() {
 
         Pattern pattern = Pattern.compile("ASRL([0-9]+)::INSTR");
-        Matcher matcher = pattern.matcher(getVISAAddress().trim());
+        Matcher matcher = pattern.matcher(toString().trim());
 
         if (matcher.matches()) {
             int board = Integer.valueOf(matcher.group(1));
@@ -71,10 +62,10 @@ public interface InstrumentAddress {
 
     }
 
-    public default TCPIPAddress toTCPIPAddress() {
+    default TCPIPAddress toTCPIPAddress() {
 
         Pattern pattern = Pattern.compile("TCPIP([0-9]*?)::(.*?)::INSTR");
-        Matcher matcher = pattern.matcher(getVISAAddress().trim());
+        Matcher matcher = pattern.matcher(toString().trim());
 
         if (matcher.matches()) {
             int    board = matcher.group(1).equals("") ? -1 : Integer.valueOf(matcher.group(1));
@@ -87,13 +78,13 @@ public interface InstrumentAddress {
 
     }
 
-    public default TCPIPSocketAddress toTCPIPSocketAddress() {
+    default TCPIPSocketAddress toTCPIPSocketAddress() {
 
         Pattern pattern = Pattern.compile("TCPIP([0-9]*?)::(.*?)::([0-9]*?)::SOCKET");
-        Matcher matcher = pattern.matcher(getVISAAddress().trim());
+        Matcher matcher = pattern.matcher(toString().trim());
 
         if (matcher.matches()) {
-            int    board = matcher.group(1).equals("") ? -1 :Integer.valueOf(matcher.group(1));
+            int    board = matcher.group(1).equals("") ? -1 : Integer.valueOf(matcher.group(1));
             String host  = matcher.group(2);
             int    port  = Integer.valueOf(matcher.group(3));
             return new TCPIPSocketAddress(board, host, port);
@@ -104,15 +95,15 @@ public interface InstrumentAddress {
 
     }
 
-    public default USBAddress toUSBAddress() {
+    default USBAddress toUSBAddress() {
 
         Pattern pattern = Pattern.compile("USB([0-9]*?)::(.*?)::(.*?)::(.*?)(?:::([0-9]+))?::INSTR");
-        Matcher matcher = pattern.matcher(getVISAAddress().trim());
+        Matcher matcher = pattern.matcher(toString().trim());
 
         if (matcher.matches()) {
             int    board   = matcher.group(1).equals("") ? -1 : Integer.valueOf(matcher.group(1));
-            String vendor  = matcher.group(2);
-            String product = matcher.group(3);
+            int    vendor  = Integer.decode(matcher.group(2));
+            int    product = Integer.decode(matcher.group(3));
             String serial  = matcher.group(4);
             int    intfce  = matcher.groupCount() <= 5 ? -1 : Integer.valueOf(matcher.group(5));
             return new USBAddress(board, vendor, product, serial, intfce);
@@ -121,6 +112,15 @@ public interface InstrumentAddress {
         }
 
 
+    }
+
+    enum Type {
+        GPIB,
+        USB,
+        TCPIP,
+        TCPIP_SOCKET,
+        SERIAL,
+        UNKOWN
     }
 
 }

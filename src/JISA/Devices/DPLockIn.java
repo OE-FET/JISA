@@ -1,6 +1,6 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 
 import java.io.IOException;
 
@@ -9,7 +9,7 @@ import java.io.IOException;
  */
 public abstract class DPLockIn extends LockIn {
 
-    public DPLockIn(InstrumentAddress address) throws IOException {
+    public DPLockIn(Address address) throws IOException {
         super(address);
     }
 

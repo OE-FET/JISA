@@ -1,6 +1,6 @@
 package JISA.GUI;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -335,11 +335,11 @@ public class GUI extends Application {
      *
      * @return Address object of the selected instrument
      */
-    public static InstrumentAddress browseVISA() {
+    public static Address browseVISA() {
 
-        AtomicReference<InstrumentAddress> ref       = new AtomicReference<>();
-        BrowseVISA                         browse    = new BrowseVISA("Find Instrument");
-        Semaphore                          semaphore = new Semaphore(0);
+        AtomicReference<Address> ref       = new AtomicReference<>();
+        BrowseVISA               browse    = new BrowseVISA("Find Instrument");
+        Semaphore                semaphore = new Semaphore(0);
 
         GUI.runNow(() -> browse.search((a) -> {
             ref.set(a);
@@ -372,6 +372,11 @@ public class GUI extends Application {
 
         }
 
+    }
+
+    public static void startGUIMATLAB() {
+        Thread t = new Thread(() -> Application.launch(App.class));
+        t.start();
     }
 
     /**

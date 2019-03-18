@@ -86,7 +86,7 @@ public class OrderedStream extends ResultStream {
                     try {
                         String[] values = file.readLine().split(",");
                         row++;
-                        Double[] dVals  = new Double[values.length];
+                        double[] dVals  = new double[values.length];
                         for (int j = 0; j < values.length; j++) {
                             dVals[j] = Double.valueOf(values[j]);
                         }

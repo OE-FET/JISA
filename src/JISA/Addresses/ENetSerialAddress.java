@@ -1,6 +1,6 @@
 package JISA.Addresses;
 
-public class ENetSerialAddress implements InstrumentAddress {
+public class ENetSerialAddress implements Address {
 
     private String ip;
     private int    port;
@@ -11,7 +11,12 @@ public class ENetSerialAddress implements InstrumentAddress {
     }
 
     @Override
-    public String getVISAAddress() {
+    public String toString() {
         return String.format("ASRL::%s::%d::INSTR", ip, port);
     }
+
+    public ENetSerialAddress toENetSerialAddress() {
+        return this;
+    }
+
 }

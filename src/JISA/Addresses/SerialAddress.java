@@ -1,6 +1,6 @@
 package JISA.Addresses;
 
-public class SerialAddress implements InstrumentAddress {
+public class SerialAddress implements Address {
 
     private int board;
 
@@ -13,7 +13,12 @@ public class SerialAddress implements InstrumentAddress {
     }
 
     @Override
-    public String getVISAAddress() {
+    public String toString() {
         return String.format("ASRL%d::INSTR", board);
     }
+
+    public SerialAddress toSerialAddress() {
+        return this;
+    }
+
 }

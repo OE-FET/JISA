@@ -137,19 +137,19 @@ public class Plot extends JFXWindow implements Element, Clearable {
     }
 
     public String getXLabel() {
-        return xAxis.getLabel();
+        return controller.getXLabel();
     }
 
     public void setXLabel(String label) {
-        GUI.runNow(() -> xAxis.setLabel(label));
+        controller.setXLabel(label);
     }
 
     public String getYLabel() {
-        return yAxis.getLabel();
+        return controller.getYLabel();
     }
 
     public void setYLabel(String label) {
-        GUI.runNow(() -> yAxis.setLabel(label));
+        controller.setYLabel(label);
     }
 
     public void setZoomMode() {

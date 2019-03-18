@@ -1,8 +1,7 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.VISA.Connection;
-import JISA.VISA.VISA;
 
 import java.io.IOException;
 
@@ -181,7 +180,7 @@ public class SR560 extends VPreAmp {
     private Freq     highFreq     = null;
     private Freq     lowFreq      = null;
 
-    public SR560(InstrumentAddress address) throws IOException {
+    public SR560(Address address) throws IOException {
 
         super(address);
 

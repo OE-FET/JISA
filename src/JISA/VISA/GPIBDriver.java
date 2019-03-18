@@ -1,11 +1,9 @@
 package JISA.VISA;
 
+import JISA.Addresses.Address;
 import JISA.Addresses.GPIBAddress;
-import JISA.Addresses.InstrumentAddress;
 import JISA.Addresses.StrAddress;
 import com.sun.jna.*;
-import com.sun.jna.ptr.NativeLongByReference;
-import com.sun.jna.ptr.PointerByReference;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -150,9 +148,9 @@ public class GPIBDriver implements Driver {
     }
 
     @Override
-    public Connection open(InstrumentAddress address) throws VISAException {
+    public Connection open(Address address) throws VISAException {
 
-        GPIBAddress addr = (new StrAddress(address.getVISAAddress())).toGPIBAddress();
+        GPIBAddress addr = address.toGPIBAddress();
 
         if (addr == null) {
             throw new VISAException("Can only open GPIB devices using GPIB driver!");
@@ -163,13 +161,13 @@ public class GPIBDriver implements Driver {
         int ud = lib.ibdev(addr.getBus(), addr.getAddress(), 0, GPIBNativeInterface.T3s, 1, 0);
 
         if (wasError()) {
-            throw new VISAException("Could not open %s using GPIB.", addr.getVISAAddress());
+            throw new VISAException("Could not open %s using GPIB.", addr.toString());
         }
 
         lib.EnableRemote(addr.getBus(), new short[]{(short) addr.getAddress(), -1});
 
         if (wasError()) {
-            throw new VISAException("Error putting %s into remote mode using GPIB.", addr.getVISAAddress());
+            throw new VISAException("Error putting %s into remote mode using GPIB.", addr.toString());
         }
 
         return new GPIBConnection(ud);
@@ -323,7 +321,7 @@ public class GPIBDriver implements Driver {
         for (short n : listList) {
 
             if (n > 0) {
-                list.add(new StrAddress((new GPIBAddress(board, (int) n)).getVISAAddress()));
+                list.add(new StrAddress((new GPIBAddress(board, (int) n)).toString()));
             }
 
         }

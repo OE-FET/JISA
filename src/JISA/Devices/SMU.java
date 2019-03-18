@@ -1,6 +1,6 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Control.Returnable;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.ResultList;
@@ -10,12 +10,11 @@ import org.apache.commons.math.stat.descriptive.rank.Median;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Semaphore;
 
 public abstract class SMU extends VISADevice {
 
-    public SMU(InstrumentAddress address) throws IOException {
+    public SMU(Address address) throws IOException {
         super(address);
     }
 

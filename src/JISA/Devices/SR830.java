@@ -1,6 +1,6 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Control.Nameable;
 import JISA.Util;
 
@@ -56,7 +56,7 @@ public class SR830 extends DPLockIn {
     private static final int LINE_X2     = 2;
     private static final int LINE_X1_X2  = 3;
 
-    public SR830(InstrumentAddress address) throws IOException, DeviceException {
+    public SR830(Address address) throws IOException, DeviceException {
 
         super(address);
 
@@ -66,11 +66,11 @@ public class SR830 extends DPLockIn {
 
             String[] idn = query("*IDN?").split(",");
             if (!idn[1].trim().equals("SR830")) {
-                throw new DeviceException("Device at address %s is not an SR830!", address.getVISAAddress());
+                throw new DeviceException("Device at address %s is not an SR830!", address.toString());
             }
 
         } catch (IOException e) {
-            throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
+            throw new DeviceException("Device at address %s is not responding!", address.toString());
         }
 
 

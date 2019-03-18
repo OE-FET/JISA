@@ -1,8 +1,6 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
-import JISA.Control.Returnable;
-import JISA.Control.SetGettable;
+import JISA.Addresses.Address;
 import JISA.Control.Synch;
 import JISA.Util;
 import JISA.VISA.VISADevice;
@@ -24,7 +22,7 @@ public abstract class TC extends VISADevice {
      *
      * @throws IOException Upon communications error
      */
-    public TC(InstrumentAddress address) throws IOException {
+    public TC(Address address) throws IOException {
         super(address);
     }
 

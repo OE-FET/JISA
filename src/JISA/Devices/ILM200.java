@@ -1,13 +1,11 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.VISA.Connection;
 import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ILM200 extends VISADevice {
 
@@ -20,7 +18,7 @@ public class ILM200 extends VISADevice {
 
     private static final int CHANNEL_1_LEVEL = 1;
 
-    public ILM200(InstrumentAddress address) throws IOException {
+    public ILM200(Address address) throws IOException {
 
         super(address);
         setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);

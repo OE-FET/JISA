@@ -1,6 +1,6 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Util;
 import JISA.VISA.VISADevice;
 
@@ -114,7 +114,7 @@ public class IPS120 extends VISADevice {
      *
      * @throws IOException Upon communications error
      */
-    public IPS120(InstrumentAddress address) throws IOException, DeviceException {
+    public IPS120(Address address) throws IOException, DeviceException {
 
         super(address);
         setEOI(false);
@@ -129,10 +129,10 @@ public class IPS120 extends VISADevice {
         try {
             String idn = query("V");
             if (!idn.split(" ")[0].trim().equals("IPS120-10")) {
-                throw new DeviceException("Device at address %s is not an IPS120!", address.getVISAAddress());
+                throw new DeviceException("Device at address %s is not an IPS120!", address.toString());
             }
         } catch (IOException e) {
-            throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
+            throw new DeviceException("Device at address %s is not responding!", address.toString());
         }
 
         if (examineStatus().activity == Activity.CLAMP) {

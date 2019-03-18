@@ -1,10 +1,8 @@
 package JISA.VISA;
 
-import JISA.Addresses.InstrumentAddress;
-import sun.misc.CRC16;
+import JISA.Addresses.Address;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 public class ModbusDevice extends VISADevice {
 
@@ -20,7 +18,7 @@ public class ModbusDevice extends VISADevice {
      *
      * @throws IOException Upon communications error
      */
-    public ModbusDevice(InstrumentAddress address) throws IOException {
+    public ModbusDevice(Address address) throws IOException {
         super(address);
     }
 

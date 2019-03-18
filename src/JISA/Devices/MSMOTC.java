@@ -1,6 +1,6 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Util;
 
 import java.io.IOException;
@@ -10,7 +10,7 @@ public abstract class MSMOTC extends MSTC {
     protected int     defaultOutput = 0;
     private   Zoner[] zoners;
 
-    public MSMOTC(InstrumentAddress address) throws IOException {
+    public MSMOTC(Address address) throws IOException {
 
         super(address);
 

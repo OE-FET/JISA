@@ -1,6 +1,6 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Control.Synch;
 import JISA.VISA.VISADevice;
 
@@ -11,7 +11,7 @@ import java.io.IOException;
  */
 public abstract class LockIn extends VISADevice {
 
-    public LockIn(InstrumentAddress address) throws IOException {
+    public LockIn(Address address) throws IOException {
         super(address);
     }
 

@@ -1,6 +1,6 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 
 import java.io.IOException;
 
@@ -16,7 +16,7 @@ public class K2200 extends DCPower {
     private static final String OUTPUT_ON       = "1";
     private static final String OUTPUT_OFF      = "0";
 
-    public K2200(InstrumentAddress address) throws IOException, DeviceException {
+    public K2200(Address address) throws IOException, DeviceException {
 
         super(address);
 
@@ -27,14 +27,14 @@ public class K2200 extends DCPower {
             String[] idn = query("*IDN?").split(",");
 
             if (!idn[1].trim().equals("2200-30-5")) {
-                throw new DeviceException("Device at address %s is not a Keithley 2200-30-5!", address.getVISAAddress());
+                throw new DeviceException("Device at address %s is not a Keithley 2200-30-5!", address.toString());
             }
 
             write(C_SET_REMOTE);
 
         } catch (IOException e) {
 
-            throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
+            throw new DeviceException("Device at address %s is not responding!", address.toString());
 
         }
 

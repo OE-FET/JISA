@@ -1,6 +1,6 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Control.Synch;
 import JISA.Util;
 
@@ -8,7 +8,7 @@ import java.io.IOException;
 
 public abstract class MSTC extends TC {
 
-    public MSTC(InstrumentAddress address) throws IOException {
+    public MSTC(Address address) throws IOException {
         super(address);
     }
 

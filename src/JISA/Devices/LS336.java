@@ -1,6 +1,6 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Util;
 import JISA.VISA.Connection;
 
@@ -36,7 +36,7 @@ public class LS336 extends MSMOTC {
     private              ExecutorService timingService        = Executors.newFixedThreadPool(1);
     private              boolean[]       nativeAPID           = {false, false};
 
-    public LS336(InstrumentAddress address) throws IOException, DeviceException {
+    public LS336(Address address) throws IOException, DeviceException {
 
         super(address);
         setSerialParameters(57600, 7, Connection.Parity.ODD, Connection.StopBits.ONE, Connection.Flow.NONE);
@@ -48,11 +48,11 @@ public class LS336 extends MSMOTC {
         try {
 
             if (!getIDN().trim().split(",")[1].trim().equals("MODEL336")) {
-                throw new DeviceException("Device at address %s is not a LakeShore 336!", address.getVISAAddress());
+                throw new DeviceException("Device at address %s is not a LakeShore 336!", address.toString());
             }
 
         } catch (IOException e) {
-            throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
+            throw new DeviceException("Device at address %s is not responding!", address.toString());
         }
 
         write("MODE 1");

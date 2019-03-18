@@ -209,6 +209,24 @@ public class SmartChart {
 
     }
 
+    public void setXLabel(String label) {
+        xLabel = label;
+        GUI.runNow(() -> xAxis.setLabel(label));
+    }
+
+    public void setYLabel(String label) {
+        yLabel = label;
+        GUI.runNow(() -> yAxis.setLabel(label));
+    }
+
+    public String getXLabel() {
+        return xLabel;
+    }
+
+    public String getYLabel() {
+        return yLabel;
+    }
+
     public void setStyle(String key, String value) {
         styles.put(key, value);
         GUI.runNow(this::updateStyle);
@@ -1256,7 +1274,7 @@ public class SmartChart {
         @Override
         public boolean add(XYChart.Data<Double, Double> doubleDoubleData) {
 
-            Double[] d = new Double[data.getNumCols()];
+            double[] d = new double[data.getNumCols()];
 
             for (int i = 0; i < d.length; i++) {
                 d[i] = 0.0;

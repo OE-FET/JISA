@@ -1,7 +1,7 @@
 package JISA.Devices;
 
 import JISA.*;
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -54,7 +54,7 @@ public class ITC503 extends MSTC {
      * @throws IOException     Upon communication error
      * @throws DeviceException If the specified device does not identify as an ITC503
      */
-    public ITC503(InstrumentAddress address) throws IOException, DeviceException {
+    public ITC503(Address address) throws IOException, DeviceException {
 
         super(address);
         setEOI(false);
@@ -67,10 +67,10 @@ public class ITC503 extends MSTC {
         try {
             String idn = query("V");
             if (!idn.split(" ")[0].trim().equals("ITC503")) {
-                throw new DeviceException("Device at address %s is not an ITC503!", address.getVISAAddress());
+                throw new DeviceException("Device at address %s is not an ITC503!", address.toString());
             }
         } catch (IOException e) {
-            throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
+            throw new DeviceException("Device at address %s is not responding!", address.toString());
         }
 
         setMode(Mode.REMOTE_UNLOCKED);

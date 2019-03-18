@@ -1,6 +1,6 @@
 package JISA.Addresses;
 
-public class TCPIPAddress implements InstrumentAddress {
+public class TCPIPAddress implements Address {
 
     private int    board;
     private String host;
@@ -23,7 +23,7 @@ public class TCPIPAddress implements InstrumentAddress {
     }
 
     @Override
-    public String getVISAAddress() {
+    public String toString() {
 
         if (board == -1) {
 
@@ -34,6 +34,10 @@ public class TCPIPAddress implements InstrumentAddress {
             return String.format("TCPIP%d::%s::INSTR", board, host);
 
         }
+    }
+
+    public TCPIPAddress toTCPIPAddress() {
+        return this;
     }
 
 }

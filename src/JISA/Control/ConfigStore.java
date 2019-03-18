@@ -2,8 +2,6 @@ package JISA.Control;
 
 import JISA.Addresses.StrAddress;
 import JISA.GUI.InstrumentConfig;
-import JISA.VISA.VISADevice;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -105,7 +103,7 @@ public class ConfigStore {
 
     public void saveInstrument(String key, InstrumentConfig config) {
         JSONObject output = new JSONObject();
-        output.put("address", config.getAddress() == null ? "null" : config.getAddress().getVISAAddress());
+        output.put("address", config.getAddress() == null ? "null" : config.getAddress().toString());
         output.put("driver", config.getDriver() == null ? "null" : config.getDriver().getName());
         instruments.put(key, output);
         try {

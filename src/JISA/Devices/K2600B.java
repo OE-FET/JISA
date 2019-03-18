@@ -1,12 +1,9 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
-import JISA.Control.Returnable;
-import com.sun.javafx.UnmodifiableArrayList;
+import JISA.Addresses.Address;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 
 public class K2600B extends MCSMU {
 
@@ -137,7 +134,7 @@ public class K2600B extends MCSMU {
         }
     }
 
-    public K2600B(InstrumentAddress address) throws IOException, DeviceException {
+    public K2600B(Address address) throws IOException, DeviceException {
 
         super(address);
 
@@ -145,10 +142,10 @@ public class K2600B extends MCSMU {
         try {
             String[] idn = getIDN().split(", ");
             if (!idn[1].trim().substring(0, 8).equals("Model 26")) {
-                throw new DeviceException("The instrument at address %s is not a Keithley 2600 series!", address.getVISAAddress());
+                throw new DeviceException("The instrument at address %s is not a Keithley 2600 series!", address.toString());
             }
         } catch (IOException e) {
-            throw new DeviceException("The instrument at address %s is not responding!", address.getVISAAddress());
+            throw new DeviceException("The instrument at address %s is not responding!", address.toString());
         }
 
         for (int i = 0; i < getNumChannels(); i++) {

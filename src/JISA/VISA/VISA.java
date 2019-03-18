@@ -1,15 +1,10 @@
 package JISA.VISA;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Addresses.StrAddress;
 import JISA.GUI.GUI;
 import JISA.Util;
-import com.sun.jna.*;
-import com.sun.jna.ptr.NativeLongByReference;
-import javafx.application.Platform;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -102,12 +97,12 @@ public class VISA {
             for (StrAddress a : driver.search()) {
                 boolean found = false;
                 for (String s : addresses.keySet()) {
-                    if (s.trim().equals(a.getVISAAddress().trim())) {
+                    if (s.trim().equals(a.toString().trim())) {
                         found = true;
                     }
                 }
                 if (!found) {
-                    addresses.put(a.getVISAAddress(), a);
+                    addresses.put(a.toString(), a);
                 }
             }
         }
@@ -115,7 +110,7 @@ public class VISA {
         StrAddress[] toReturn = new StrAddress[addresses.size()];
         int          count    = 0;
 
-        for (InstrumentAddress.Type t : InstrumentAddress.Type.values()) {
+        for (Address.Type t : Address.Type.values()) {
 
             for (StrAddress a : addresses.values()) {
 
@@ -141,7 +136,7 @@ public class VISA {
      *
      * @throws VISAException Upon error with VISA interface
      */
-    public static Connection openInstrument(InstrumentAddress address) throws VISAException {
+    public static Connection openInstrument(Address address) throws VISAException {
 
         Connection        connection = null;
         ArrayList<String> errors     = new ArrayList<>();
@@ -161,7 +156,7 @@ public class VISA {
         // If no drivers worked
         if (connection == null) {
             System.err.println(String.join("Driver Errors:\n", errors));
-            throw new VISAException("Could not open %s using any driver!", address.getVISAAddress());
+            throw new VISAException("Could not open %s using any driver!", address.toString());
         }
 
         return connection;

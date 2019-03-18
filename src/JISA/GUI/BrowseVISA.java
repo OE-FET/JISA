@@ -83,7 +83,7 @@ public class BrowseVISA {
             int count = 0;
             try {
                 for (StrAddress a : VISA.getInstruments()) {
-                    String[] addr   = a.getVISAAddress().trim().split("::");
+                    String[] addr   = a.toString().trim().split("::");
                     String   ending = addr[addr.length - 1].trim();
                     if (ending.equals("INTFC")) {
                         continue;
@@ -173,7 +173,7 @@ public class BrowseVISA {
             Label location = new Label();
 
             String prot = "Unknown";
-            String uri  = address.getVISAAddress();
+            String uri  = address.toString();
 
             switch (address.getType()) {
 
@@ -209,7 +209,7 @@ public class BrowseVISA {
                     prot = "USB-TMC";
                     USBAddress u = address.toUSBAddress();
                     if (u == null) {
-                        u = new USBAddress("0", "0", "0");
+                        u = new USBAddress(0, 0, "0");
                     }
                     uri = String.format("VendorID: %s, ProductID: %s", u.getManufacturer(), u.getModel());
                     image.setImage(new Image(getClass().getResource("Images/usb.png").toString()));
@@ -225,7 +225,7 @@ public class BrowseVISA {
                     break;
                 default:
                     prot = "Unknown";
-                    uri = address.getVISAAddress();
+                    uri = address.toString();
                     image.setImage(new Image(getClass().getResource("Images/serial.png").toString()));
                     break;
 
@@ -235,7 +235,7 @@ public class BrowseVISA {
             vBox.getChildren().addAll(name, location);
             HBox.setHgrow(image, Priority.NEVER);
             HBox.setHgrow(vBox, Priority.ALWAYS);
-            title.setText(address.getVISAAddress());
+            title.setText(address.toString());
 
             name.setText(idn);
             location.setText(String.format("%s: %s", prot, uri));

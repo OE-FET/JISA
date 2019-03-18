@@ -1,9 +1,6 @@
 package JISA.Addresses;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-public class StrAddress implements InstrumentAddress {
+public class StrAddress implements Address {
 
     private String value;
 
@@ -12,8 +9,12 @@ public class StrAddress implements InstrumentAddress {
     }
 
     @Override
-    public String getVISAAddress() {
+    public String toString() {
         return value;
+    }
+
+    public StrAddress toStrAddress() {
+        return this;
     }
 
 }

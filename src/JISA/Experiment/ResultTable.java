@@ -45,7 +45,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
-    public void addData(Double... data) {
+    public void addData(double... data) {
 
         Result row = new Result(data);
         addRow(row);

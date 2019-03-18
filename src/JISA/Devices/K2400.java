@@ -1,10 +1,8 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
-import com.sun.javafx.UnmodifiableArrayList;
+import JISA.Addresses.Address;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -136,7 +134,7 @@ public class K2400 extends SMU {
     private AMode      filterMode  = AMode.NONE;
     private int        filterCount = 1;
 
-    public K2400(InstrumentAddress address) throws IOException, DeviceException {
+    public K2400(Address address) throws IOException, DeviceException {
 
         super(address);
 
@@ -148,7 +146,7 @@ public class K2400 extends SMU {
                     "The device at address \"%s\" is not a Keithley 2400 series SMU." +
                             "\nThe K2400 driver only works with models 2400, 2410, 2420, 2425, 2430, 2440." +
                             "\nFor model 2450, please use the K2450 driver.",
-                    address.getVISAAddress()
+                    address.toString()
             );
         } else {
             MODEL = Model.valueOf("K" + matcher.group(1).trim());

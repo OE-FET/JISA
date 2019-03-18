@@ -2,15 +2,15 @@ package JISA.Addresses;
 
 import java.util.ArrayList;
 
-public class USBAddress implements InstrumentAddress {
+public class USBAddress implements Address {
 
     private int    board;
-    private String manufacturer;
-    private String model;
+    private int    manufacturer;
+    private int    model;
     private String serialNumber;
     private int    interfaceNumber;
 
-    public USBAddress(int board, String manufacturer, String model, String serialNumber, int interfaceNumber) {
+    public USBAddress(int board, int manufacturer, int model, String serialNumber, int interfaceNumber) {
         this.board = board;
         this.manufacturer = manufacturer;
         this.model = model;
@@ -18,19 +18,19 @@ public class USBAddress implements InstrumentAddress {
         this.interfaceNumber = interfaceNumber;
     }
 
-    public USBAddress(int board, String manufacturer, String model, String serialNumber) {
+    public USBAddress(int board, int manufacturer, int model, String serialNumber) {
         this(board, manufacturer, model, serialNumber, -1);
     }
 
-    public USBAddress(String manufacturer, String model, String serialNumber, int interfaceNumber) {
+    public USBAddress(int manufacturer, int model, String serialNumber, int interfaceNumber) {
         this(-1, manufacturer, model, serialNumber, interfaceNumber);
     }
 
-    public USBAddress(String manufacturer, String model, String serialNumber) {
+    public USBAddress(int manufacturer, int model, String serialNumber) {
         this(-1, manufacturer, model, serialNumber, -1);
     }
 
-    public USBAddress(String manufacturer, String model) {
+    public USBAddress(int manufacturer, int model) {
         this(-1, manufacturer, model, null);
     }
 
@@ -38,11 +38,11 @@ public class USBAddress implements InstrumentAddress {
         return board;
     }
 
-    public String getManufacturer() {
+    public int getManufacturer() {
         return manufacturer;
     }
 
-    public String getModel() {
+    public int getModel() {
         return model;
     }
 
@@ -54,7 +54,7 @@ public class USBAddress implements InstrumentAddress {
         return interfaceNumber;
     }
 
-    public String getVISAAddress() {
+    public String toString() {
 
         ArrayList<String> parts = new ArrayList<>();
 
@@ -64,8 +64,8 @@ public class USBAddress implements InstrumentAddress {
             parts.add(String.format("USB%d", board));
         }
 
-        parts.add(manufacturer);
-        parts.add(model);
+        parts.add(String.format("0x%04X", manufacturer));
+        parts.add(String.format("0x%04X", model));
 
         if (serialNumber != null) {
             parts.add(serialNumber);
@@ -79,6 +79,10 @@ public class USBAddress implements InstrumentAddress {
 
         return String.join("::", parts);
 
+    }
+
+    public USBAddress toUSBAddress() {
+        return this;
     }
 
 }

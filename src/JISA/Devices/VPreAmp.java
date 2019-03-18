@@ -1,13 +1,13 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 
 public abstract class VPreAmp extends VISADevice {
 
-    public VPreAmp(InstrumentAddress address) throws IOException {
+    public VPreAmp(Address address) throws IOException {
         super(address);
     }
 

@@ -192,7 +192,7 @@ public class ResultStream extends ResultTable {
                 file.readLine();
             }
             String[] values = file.readLine().split(",");
-            Double[] dVals  = new Double[values.length];
+            double[] dVals  = new double[values.length];
             for (int j = 0; j < values.length; j++) {
                 dVals[j] = Double.valueOf(values[j]);
             }

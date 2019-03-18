@@ -1,6 +1,6 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.MCIVPoint;
 import JISA.Experiment.ResultList;
@@ -9,7 +9,6 @@ import JISA.Util;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.Semaphore;
 
 /**
@@ -29,7 +28,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      *
      * @throws IOException Upon communications error
      */
-    public MCSMU(InstrumentAddress address) throws IOException {
+    public MCSMU(Address address) throws IOException {
         super(address);
     }
 
@@ -1921,7 +1920,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
 
         public MCIVPoint[] run(ResultList list) throws IOException, DeviceException {
             return run((n, p) -> {
-                Double[] data = new Double[2 * getNumChannels()];
+                double[] data = new double[2 * getNumChannels()];
                 for (int i = 0; i < getNumChannels(); i++) {
                     data[i * 2] = p.getChannel(i).voltage;
                     data[i * 2 + 1] = p.getChannel(i).current;

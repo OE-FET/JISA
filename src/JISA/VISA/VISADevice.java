@@ -1,6 +1,6 @@
 package JISA.VISA;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 
 import java.io.IOException;
 
@@ -9,14 +9,14 @@ import java.io.IOException;
  */
 public class VISADevice {
 
-    private Connection        connection;
-    private InstrumentAddress address;
-    private String            terminator     = "";
-    private String            lastCommand    = null;
-    private String            lastRead       = null;
-    private int               readBufferSize = 1024;
-    private int               retryCount     = 3;
-    private long              timeout        = 2000;
+    private Connection connection;
+    private Address    address;
+    private String     terminator     = "";
+    private String     lastCommand    = null;
+    private String     lastRead       = null;
+    private int        readBufferSize = 1024;
+    private int        retryCount     = 3;
+    private long       timeout        = 2000;
 
     public final static int    DEFAULT_TIMEOUT = 13;
     public final static int    DEFAULT_EOI     = 1;
@@ -34,7 +34,7 @@ public class VISADevice {
      *
      * @throws IOException Upon communications error
      */
-    public VISADevice(InstrumentAddress address) throws IOException {
+    public VISADevice(Address address) throws IOException {
 
         if (address == null) {
             return;
@@ -153,7 +153,7 @@ public class VISADevice {
      *
      * @return Address object
      */
-    public InstrumentAddress getAddress() {
+    public Address getAddress() {
         return address;
     }
 

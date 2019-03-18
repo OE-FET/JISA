@@ -1,6 +1,6 @@
 package JISA.GUI;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.VISA.VISADevice;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -17,13 +17,13 @@ import java.io.IOException;
 
 public class DeviceShell {
 
-    public  ListView          terminal;
-    public  TextField         input;
-    private Stage             stage;
-    private InstrumentAddress address;
-    private VISADevice        device = null;
+    public  ListView   terminal;
+    public  TextField  input;
+    private Stage      stage;
+    private Address    address;
+    private VISADevice device = null;
 
-    public DeviceShell(InstrumentAddress address) {
+    public DeviceShell(Address address) {
 
         this.address = address;
 
@@ -35,7 +35,7 @@ public class DeviceShell {
             Scene  scene = new Scene(root);
             GUI.runNow(() -> {
                 Stage stage = new Stage();
-                stage.setTitle(String.format("Device Shell: %s", address.getVISAAddress()));
+                stage.setTitle(String.format("Device Shell: %s", address.toString()));
                 stage.setScene(scene);
                 this.stage = stage;
                 input.setDisable(true);

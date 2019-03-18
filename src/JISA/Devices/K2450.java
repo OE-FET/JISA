@@ -1,8 +1,7 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Util;
-import com.sun.javafx.UnmodifiableArrayList;
 
 import java.io.IOException;
 import java.util.*;
@@ -148,7 +147,7 @@ public class K2450 extends SMU {
     private int        filterCount = 1;
 
     // == CONSTRUCTORS =================================================================================================
-    public K2450(InstrumentAddress address) throws IOException, DeviceException {
+    public K2450(Address address) throws IOException, DeviceException {
 
         super(address);
 
@@ -161,13 +160,13 @@ public class K2450 extends SMU {
             String[] iden = query("*IDN?").split(",");
 
             if (!iden[1].trim().equals("MODEL 2450")) {
-                throw new DeviceException("Device at address %s is not a Keithley 2450!", address.getVISAAddress());
+                throw new DeviceException("Device at address %s is not a Keithley 2450!", address.toString());
             }
 
             setAverageMode(AMode.NONE);
 
         } catch (IOException e) {
-            throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
+            throw new DeviceException("Device at address %s is not responding!", address.toString());
         }
 
         LINE_FREQUENCY = queryDouble(C_QUERY_LFR);

@@ -1,12 +1,10 @@
 package JISA.Devices;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Util;
-import com.sun.javafx.UnmodifiableArrayList;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -114,7 +112,7 @@ public class K236 extends SMU {
     private double     vLimit      = 110;
     private double     mLimit      = 0.1;
 
-    public K236(InstrumentAddress address) throws IOException, DeviceException {
+    public K236(Address address) throws IOException, DeviceException {
 
         super(address);
         setTerminator(C_TRIGGER + C_EXECUTE);
@@ -135,11 +133,11 @@ public class K236 extends SMU {
         try {
 
             if (!getIDN().trim().substring(0, 3).equals("236")) {
-                throw new DeviceException("Device at address %s is not a Keithley 236!", address.getVISAAddress());
+                throw new DeviceException("Device at address %s is not a Keithley 236!", address.toString());
             }
 
         } catch (IOException e) {
-            throw new DeviceException("Device at address %s is not responding!", address.getVISAAddress());
+            throw new DeviceException("Device at address %s is not responding!", address.toString());
         }
 
     }

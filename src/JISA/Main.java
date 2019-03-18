@@ -1,6 +1,6 @@
 package JISA;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Addresses.StrAddress;
 import JISA.GUI.DeviceShell;
 import JISA.GUI.GUI;
@@ -33,7 +33,7 @@ public class Main {
                 switch (result) {
 
                     case CHOICE_SCAN:
-                        InstrumentAddress address = GUI.browseVISA();
+                        Address address = GUI.browseVISA();
 
                         if (address == null) {
                             break;

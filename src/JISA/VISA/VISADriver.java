@@ -1,6 +1,6 @@
 package JISA.VISA;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Addresses.StrAddress;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
@@ -9,7 +9,6 @@ import com.sun.jna.ptr.NativeLongByReference;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import static JISA.VISA.VISANativeInterface.*;
 
@@ -94,11 +93,11 @@ public class VISADriver implements Driver {
     }
 
     @Override
-    public Connection open(InstrumentAddress address) throws VISAException {
+    public Connection open(Address address) throws VISAException {
 
         NativeLongByReference pViInstrument = new NativeLongByReference();
 
-        ByteBuffer pViString = stringToByteBuffer(address.getVISAAddress());
+        ByteBuffer pViString = stringToByteBuffer(address.toString());
         if (pViString == null) {
             throw new VISAException("Error encoding address to ByteBuffer.");
         }
@@ -117,16 +116,16 @@ public class VISADriver implements Driver {
             switch (status.intValue()) {
 
                 case VI_ERROR_INV_OBJECT:
-                    throw new VISAException("No resource manager is open to open \"%s\".", address.getVISAAddress());
+                    throw new VISAException("No resource manager is open to open \"%s\".", address.toString());
 
                 case VI_ERROR_INV_RSRC_NAME:
-                    throw new VISAException("Invalid address: \"%s\".", address.getVISAAddress());
+                    throw new VISAException("Invalid address: \"%s\".", address.toString());
 
                 case VI_ERROR_RSRC_NFOUND:
-                    throw new VISAException("No resource found at \"%s\".", address.getVISAAddress());
+                    throw new VISAException("No resource found at \"%s\".", address.toString());
 
                 case VI_ERROR_RSRC_BUSY:
-                    throw new VISAException("Resource busy at \"%s\".", address.getVISAAddress());
+                    throw new VISAException("Resource busy at \"%s\".", address.toString());
 
                 case VI_ERROR_TMO:
                     throw new VISAException("Open operation timed out.");

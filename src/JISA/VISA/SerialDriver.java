@@ -1,20 +1,12 @@
 package JISA.VISA;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Addresses.SerialAddress;
 import JISA.Addresses.StrAddress;
 import jssc.*;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 
 public class SerialDriver implements Driver {
 
@@ -36,9 +28,9 @@ public class SerialDriver implements Driver {
     }
 
     @Override
-    public Connection open(InstrumentAddress address) throws VISAException {
+    public Connection open(Address address) throws VISAException {
 
-        SerialAddress addr = (new StrAddress(address.getVISAAddress())).toSerialAddress();
+        SerialAddress addr = (new StrAddress(address.toString())).toSerialAddress();
 
         if (addr == null) {
             throw new VISAException("Can only open serial connections with the serial driver!");

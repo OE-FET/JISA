@@ -8,14 +8,14 @@ import java.util.Arrays;
  */
 public class Result {
 
-    private Double[] data;
+    private double[] data;
 
     /**
      * Create a data row with the given data.
      *
      * @param data The data to add
      */
-    public Result(Double... data) {
+    public Result(double... data) {
         this.data = data;
     }
 
@@ -29,11 +29,17 @@ public class Result {
     public String getOutput(String delim) {
 
         String[] formats = new String[data.length];
+        Double[] dataD   = new Double[data.length];
+
+        for (int i = 0; i < dataD.length; i ++) {
+            dataD[i] = data[i];
+        }
+
         Arrays.fill(formats, "%e");
 
         String format = String.join(delim, formats).concat("\n");
 
-        return String.format(format, data);
+        return String.format(format, dataD);
 
     }
 
@@ -63,7 +69,7 @@ public class Result {
      *
      * @return Array of data
      */
-    public Double[] getData() {
+    public double[] getData() {
         return data.clone();
     }
 

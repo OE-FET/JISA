@@ -50,13 +50,13 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
     public  Label                       title;
     public  ImageView                   image;
     public  StackPane                   topPanel;
+    public  StackPane                   pane;
     private Class<T>                    deviceType;
     private ArrayList<Class>            possibleDrivers = new ArrayList<>();
     private Class<? extends VISADevice> driver;
-    private InstrumentAddress           address         = null;
+    private Address                     address         = null;
     private T                           instrument      = null;
     private String                      realTitle;
-    public  StackPane                   pane;
     private ConfigStore                 config          = null;
     private String                      key;
     private LinkedList<Runnable>        onApply         = new LinkedList<>();
@@ -133,8 +133,8 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
             address = new GPIBAddress(board, addr);
         } else if (selected.equals(CHOICE_USB)) {
             int    board   = Integer.valueOf(USBBoard.getText().trim());
-            String vendor  = USBVendor.getText().trim();
-            String product = USBProduct.getText().trim();
+            int    vendor  = Integer.decode(USBVendor.getText().trim());
+            int    product = Integer.decode(USBProduct.getText().trim());
             String SN      = USBSN.getText().trim();
             address = new USBAddress(board, vendor, product, SN);
         } else if (selected.equals(CHOICE_TCPIP)) {
@@ -170,7 +170,7 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
 
         makeAmber();
         try {
-            Constructor constructor = driver.getConstructor(InstrumentAddress.class);
+            Constructor constructor = driver.getConstructor(Address.class);
             instrument = (T) constructor.newInstance(address);
             makeGreen();
         } catch (Throwable e) {
@@ -230,8 +230,8 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
                     protChoice.setValue(CHOICE_USB);
                     USBAddress usb = address.toUSBAddress();
                     USBBoard.setText(Integer.toString(usb.getBoard()));
-                    USBVendor.setText(usb.getManufacturer());
-                    USBProduct.setText(usb.getModel());
+                    USBVendor.setText(String.format("0x%04X", usb.getManufacturer()));
+                    USBProduct.setText(String.format("0x%04X", usb.getModel()));
                     USBSN.setText(usb.getSerialNumber());
                     break;
 
@@ -327,22 +327,22 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
         updateAddress();
     }
 
-    public void setAddress(InstrumentAddress a) {
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address a) {
         address = a;
         updateAddress();
     }
 
-    public InstrumentAddress getAddress() {
-        return address;
+    public Class<? extends VISADevice> getDriver() {
+        return driver;
     }
 
     public void setDriver(Class<? extends VISADevice> d) {
         driver = d;
         driverChoice.setValue(driver.getSimpleName());
-    }
-
-    public Class<? extends VISADevice> getDriver() {
-        return driver;
     }
 
     public Class<T> getDeviceType() {

@@ -1,21 +1,19 @@
 package JISA.VISA;
 
-import JISA.Addresses.InstrumentAddress;
+import JISA.Addresses.Address;
 import JISA.Addresses.StrAddress;
-import JISA.Addresses.TCPIPAddress;
 import JISA.Addresses.TCPIPSocketAddress;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Scanner;
 
 public class RawTCPIPDriver implements Driver {
     @Override
-    public Connection open(InstrumentAddress address) throws VISAException {
+    public Connection open(Address address) throws VISAException {
 
         TCPIPSocketAddress addr = address.toStrAddress().toTCPIPSocketAddress();
 
