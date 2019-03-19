@@ -1,12 +1,15 @@
 package JISA.Experiment;
 
 import JISA.GUI.Clearable;
+import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public abstract class ResultTable implements Iterable<Result> {
 
@@ -78,12 +81,6 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public Result getLastResult() {
         return getRow(getNumRows() - 1);
-    }
-
-    public interface OnUpdate {
-
-        void run(Result row);
-
     }
 
     public void addClearable(Clearable c) {
@@ -285,6 +282,50 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public void output() {
         output(",", System.out);
+    }
+
+    public List<XYPoint> getXYPoints(int xData, int yData, Predicate<Result> filter) {
+
+        List<XYPoint> points = new LinkedList<>();
+
+        for (Result r : this) {
+            if (filter.test(r)) {
+                points.add(new XYPoint(r.get(xData), r.get(yData)));
+            }
+        }
+
+        return points;
+
+    }
+
+    public Function polyFit(int xData, int yData, Predicate<Result> filter, int degree) {
+        return Maths.polyFit(getXYPoints(xData, yData, filter), degree);
+    }
+
+    public Function polyFit(int xData, int yData, int degree) {
+        return polyFit(xData, yData, (r) -> true, degree);
+    }
+
+    public Function fit(int xData, int yData, Predicate<Result> filter, Maths.PFunction toFit, double... initialGuess) {
+        return Maths.fit(getXYPoints(xData, yData, filter), toFit, initialGuess);
+    }
+
+    public Function fit(int xData, int yData, Maths.PFunction toFit, double... initialGuess) {
+        return fit(xData, yData, (r) -> true, toFit, initialGuess);
+    }
+
+    public Function asFunction(int xData, int yData, Predicate<Result> filter) {
+        return new DataFunction(getXYPoints(xData, yData, filter));
+    }
+
+    public Function asFunction(int xData, int yData) {
+        return asFunction(xData, yData, (r) -> true);
+    }
+
+    public interface OnUpdate {
+
+        void run(Result row);
+
     }
 
 }

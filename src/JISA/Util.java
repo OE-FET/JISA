@@ -8,6 +8,7 @@ import javafx.scene.chart.XYChart.Data;
 import javafx.util.Pair;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.*;
 
 public class Util {
@@ -19,28 +20,30 @@ public class Util {
         switch (exceptionType) {
 
             case IO_EXCEPTION:
-                System.err.printf("\nCommunication error: \"%s\"\n", e.getMessage());
+                Util.errLog.printf("\nCommunication error: \"%s\"\n", e.getMessage());
                 break;
             case DEVICE_EXCEPTION:
-                System.err.printf("\nDevice error: \"%s\"\n", e.getMessage());
+                Util.errLog.printf("\nDevice error: \"%s\"\n", e.getMessage());
                 break;
             case INTERRUPTED_EXCEPTION:
-                System.err.printf("\nWaiting error: \"%s\"\n", e.getMessage());
+                Util.errLog.printf("\nWaiting error: \"%s\"\n", e.getMessage());
                 break;
             case VISA_EXCEPTION:
-                System.err.printf("\nVISA error: \"%s\"\n", e.getMessage());
+                Util.errLog.printf("\nVISA error: \"%s\"\n", e.getMessage());
                 break;
             default:
-                System.err.printf("\nUnknown error: \"%s\"\n", e.getMessage());
+                Util.errLog.printf("\nUnknown error: \"%s\"\n", e.getMessage());
                 break;
         }
 
-        System.err.println("\nStack Trace:");
+        Util.errLog.println("\nStack Trace:");
         e.printStackTrace();
 
         System.exit(1);
 
     };
+
+    public static PrintStream errLog = System.err;
 
     public static void sleep(long msec) {
         try {

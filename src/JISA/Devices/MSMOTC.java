@@ -823,7 +823,7 @@ public abstract class MSMOTC extends MSTC {
             try {
                 applyZone(currentZone);
             } catch (Exception e) {
-                System.err.printf("Error in starting auto-PID control: \"%s\"\n", e.getMessage());
+                Util.errLog.printf("Error in starting auto-PID control: \"%s\"\n", e.getMessage());
             }
 
             while (running) {
@@ -858,7 +858,7 @@ public abstract class MSMOTC extends MSTC {
                     }
 
                 } catch (Exception e) {
-                    System.err.printf("Error in auto-PID control: \"%s\"\n", e.getMessage());
+                    Util.errLog.printf("Error in auto-PID control: \"%s\"\n", e.getMessage());
                 }
 
                 if (!running) {

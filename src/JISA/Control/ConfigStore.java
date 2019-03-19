@@ -2,6 +2,7 @@ package JISA.Control;
 
 import JISA.Addresses.StrAddress;
 import JISA.GUI.InstrumentConfig;
+import JISA.Util;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -109,7 +110,7 @@ public class ConfigStore {
         try {
             save();
         } catch (IOException e) {
-            System.err.println(e.getMessage());
+            Util.errLog.println(e.getMessage());
         }
     }
 
@@ -120,7 +121,7 @@ public class ConfigStore {
             config.setAddress(new StrAddress(input.getString("address")));
             config.setDriver(Class.forName(input.getString("driver")));
         } catch (Exception e) {
-            System.err.println(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
+            Util.errLog.println(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
         }
 
     }

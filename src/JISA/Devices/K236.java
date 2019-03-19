@@ -207,13 +207,13 @@ public class K236 extends SMU {
     }
 
     @Override
-    public void useFourProbe(boolean fourProbes) throws DeviceException, IOException {
+    public void useFourProbe(boolean fourProbes) throws IOException {
         write(C_SET_SENSE, fourProbes ? SENSE_REMOTE : SENSE_LOCAL);
         remote = fourProbes;
     }
 
     @Override
-    public boolean isUsingFourProbe() throws DeviceException, IOException {
+    public boolean isUsingFourProbe() throws IOException {
         return getMeasureParams().fourProbe;
     }
 
@@ -274,12 +274,12 @@ public class K236 extends SMU {
     }
 
     @Override
-    public AMode getAverageMode() throws DeviceException, IOException {
+    public AMode getAverageMode() {
         return filterMode;
     }
 
     @Override
-    public int getAverageCount() throws DeviceException, IOException {
+    public int getAverageCount() {
         return filterCount;
     }
 
@@ -338,7 +338,7 @@ public class K236 extends SMU {
     }
 
     @Override
-    public void setMeasureRange(double value) throws DeviceException, IOException {
+    public void setMeasureRange(double value) throws IOException {
         SRange range;
 
         switch (source) {
@@ -378,7 +378,7 @@ public class K236 extends SMU {
     }
 
     @Override
-    public void useAutoMeasureRange() throws DeviceException, IOException {
+    public void useAutoMeasureRange() throws IOException {
         mRange = SRange.AUTO;
         setCompliance();
     }
@@ -441,7 +441,7 @@ public class K236 extends SMU {
     }
 
     @Override
-    public boolean isVoltageRangeAuto() throws DeviceException, IOException {
+    public boolean isVoltageRangeAuto() {
 
         switch (source) {
 
@@ -511,7 +511,7 @@ public class K236 extends SMU {
     }
 
     @Override
-    public boolean isCurrentRangeAuto() throws DeviceException, IOException {
+    public boolean isCurrentRangeAuto() {
 
         switch (source) {
 
@@ -559,7 +559,7 @@ public class K236 extends SMU {
     }
 
     @Override
-    public void setVoltageLimit(double voltage) throws DeviceException, IOException {
+    public void setVoltageLimit(double voltage) throws IOException {
         vLimit = voltage;
         updateLimit();
         setCompliance();
@@ -576,14 +576,14 @@ public class K236 extends SMU {
     }
 
     @Override
-    public void setCurrentLimit(double current) throws DeviceException, IOException {
+    public void setCurrentLimit(double current) throws IOException {
         iLimit = current;
         updateLimit();
         setCompliance();
     }
 
     @Override
-    public double getCurrentLimit() throws DeviceException, IOException {
+    public double getCurrentLimit() throws IOException {
 
         if (source.equals(Source.VOLTAGE)) {
             iLimit = getOutputLimit();
@@ -603,7 +603,7 @@ public class K236 extends SMU {
         return getMeasureParams().intTime.toDouble();
     }
 
-    public TType getTerminalType(Terminals terminals) throws DeviceException, IOException {
+    public TType getTerminalType(Terminals terminals) {
 
         switch (terminals) {
 
@@ -626,17 +626,17 @@ public class K236 extends SMU {
     }
 
     @Override
-    public Terminals getTerminals() throws DeviceException, IOException {
+    public Terminals getTerminals() {
         return Terminals.REAR;
     }
 
     @Override
-    public void setOffMode(OffMode mode) throws DeviceException, IOException {
-        System.err.println("WARNING: Keithley 236 SMUs do not have configurable off states.");
+    public void setOffMode(OffMode mode) {
+        Util.errLog.println("WARNING: Keithley 236 SMUs do not have configurable off states.");
     }
 
     @Override
-    public OffMode getOffMode() throws DeviceException, IOException {
+    public OffMode getOffMode() {
         return OffMode.NORMAL;
     }
 

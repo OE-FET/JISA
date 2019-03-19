@@ -65,7 +65,7 @@ public class VISA {
 
         if (drivers.isEmpty()) {
             Util.sleep(500);
-            System.err.println("ERROR: Could not load any drivers!");
+            Util.errLog.println("ERROR: Could not load any drivers!");
 
             try {
                 GUI.errorAlert("JISA Library", "No Drivers", "Could not load any drivers for instrument control!\n\nCheck your driver installation(s).");
@@ -155,7 +155,7 @@ public class VISA {
 
         // If no drivers worked
         if (connection == null) {
-            System.err.println(String.join("Driver Errors:\n", errors));
+            Util.errLog.println(String.join("Driver Errors:\n", errors));
             throw new VISAException("Could not open %s using any driver!", address.toString());
         }
 

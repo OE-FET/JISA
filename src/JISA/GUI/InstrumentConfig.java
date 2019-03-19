@@ -3,6 +3,7 @@ package JISA.GUI;
 import JISA.Addresses.*;
 import JISA.Control.ConfigStore;
 import JISA.Devices.SMUCluster;
+import JISA.Util;
 import JISA.VISA.VISADevice;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
@@ -178,7 +179,7 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
             if (message) {
                 GUI.errorAlert("Connection Error", "Connection Error", e.getCause() == null ? e.getMessage() : e.getCause().getMessage(), 600);
             } else {
-                System.err.println(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
+                Util.errLog.println(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
             }
             makeRed();
         }

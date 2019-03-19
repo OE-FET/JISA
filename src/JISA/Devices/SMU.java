@@ -947,7 +947,8 @@ public abstract class SMU extends VISADevice {
     public enum OffMode {
         NORMAL,
         ZERO,
-        HIGH_IMPEDANCE
+        HIGH_IMPEDANCE,
+        GUARD
     }
 
 

@@ -1,5 +1,7 @@
 package JISA.Control;
 
+import JISA.Util;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -42,7 +44,7 @@ public class RTask {
                 try {
                     toRun.run();
                 } catch (Throwable e) {
-                    System.err.printf("Exception encountered running repeat task: \"%s\"\n", e.getMessage());
+                    Util.errLog.printf("Exception encountered running repeat task: \"%s\"\n", e.getMessage());
                     e.printStackTrace();
                 }
                 iteration++;

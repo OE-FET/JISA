@@ -28,7 +28,15 @@ public class Main {
             while (true) {
 
                 // Ask the user if they want to perform a test
-                int result = GUI.choiceWindow("JISA", "JISA Library - William Wood - 2018", "What would you like to do?", "Scan for Instruments", "Enter Address Manually", "Help", "Exit");
+                int result = GUI.choiceWindow(
+                        "JISA",
+                        "JISA Library - William Wood - 2018",
+                        "What would you like to do?",
+                        "Scan for Instruments",
+                        "Enter Address Manually",
+                        "Help",
+                        "Exit"
+                );
 
                 switch (result) {
 

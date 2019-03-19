@@ -1,7 +1,9 @@
 package JISA.GUI;
 
+import JISA.Experiment.Function;
 import JISA.Experiment.Result;
 import JISA.Experiment.ResultTable;
+import JISA.Util;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Point2D;
@@ -129,6 +131,19 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     public SeriesGroup watchList(ResultTable list, int xData, int yData, int sData) {
         return watchList(list, xData, yData, sData, null);
+    }
+
+    public Series plotFunction(Function toPlot, double minX, double maxX, int numSteps, String name, Color colour) {
+
+        Series s = createSeries(name, colour);
+        s.showMarkers(false);
+
+        for (double x : Util.makeLinearArray(minX, maxX, numSteps)) {
+            s.addPoint(x, toPlot.value(x));
+        }
+
+        return s;
+
     }
 
     public void showToolbar(boolean flag) {

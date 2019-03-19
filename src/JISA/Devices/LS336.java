@@ -197,7 +197,7 @@ public class LS336 extends MSMOTC {
 
     @Override
     public double getGasFlow(int output) throws IOException, DeviceException {
-        System.err.println("LakeShore 336 does not control gas flow.");
+        Util.errLog.println("LakeShore 336 does not control gas flow.");
         return 0;
     }
 
@@ -215,12 +215,12 @@ public class LS336 extends MSMOTC {
 
     @Override
     public void useAutoFlow(int output) {
-        System.err.println("WARNING: LakeShore 336 does not control gas flow.");
+        Util.errLog.println("WARNING: LakeShore 336 does not control gas flow.");
     }
 
     @Override
     public boolean isFlowAuto(int output) {
-        System.err.println("WARNING: LakeShore 336 does not control gas flow.");
+        Util.errLog.println("WARNING: LakeShore 336 does not control gas flow.");
         return false;
     }
 
