@@ -526,7 +526,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature(int output) throws IOException, DeviceException {
+    public void waitForStableTemperature(int output) throws IOException, DeviceException, InterruptedException {
         checkOutput(output);
         waitForStableTemperature(getUsedSensor(output), getTargetTemperature(output));
     }

@@ -162,52 +162,59 @@ public class IPS120 extends VISADevice {
         return examineStatus().activity;
     }
 
-    public void turnOff() throws IOException, DeviceException {
+    public void turnOff() throws IOException, DeviceException, InterruptedException {
         rampToCurrent(0.0);
         setHeater(false);
     }
 
-    public void rampToField(double field) throws IOException, DeviceException {
+    public void rampToField(double field) throws IOException, DeviceException, InterruptedException {
         rampToCurrent(AMPS_PER_TESLA * field);
     }
 
-    public void rampToCurrent(double current) throws IOException, DeviceException {
+    public void rampToCurrent(double current) throws IOException, DeviceException, InterruptedException {
 
-        switch (examineStatus().heaterState) {
+        try {
 
-            case OFF_ZERO:
-                setActivity(Activity.GO_ZERO);
-                waitUntilStable();
-                setHeater(true);
-                break;
+            switch (examineStatus().heaterState) {
 
-            case OFF_NOT_ZERO:
-                setTargetCurrent(getPersistentCurrent());
-                setActivity(Activity.GO_SETPOINT);
-                waitUntilStable();
-                setHeater(true);
-                break;
+                case OFF_ZERO:
+                    setActivity(Activity.GO_ZERO);
+                    waitUntilStable();
+                    setHeater(true);
+                    break;
 
-        }
+                case OFF_NOT_ZERO:
+                    setTargetCurrent(getPersistentCurrent());
+                    setActivity(Activity.GO_SETPOINT);
+                    waitUntilStable();
+                    setHeater(true);
+                    break;
 
-        setActivity(Activity.HOLD);
+            }
 
-        Ramp[] legs = rampRates.getLegs(getMagnetCurrent(), current);
-
-        for (Ramp leg : legs) {
-            System.out.printf("Will Do: From: %s A, To: %s A, Rate: %s A/min\n", leg.minI, leg.maxI, leg.rate);
-        }
-
-        for (Ramp leg : legs) {
-
-            System.out.printf("Now: From: %s A, To: %s A, Rate: %s A/min\n", leg.minI, leg.maxI, leg.rate);
-            setTargetCurrent(leg.maxI);
-            setCurrentRamp(leg.rate);
-            setActivity(Activity.GO_SETPOINT);
-            Util.sleep(1000);
-            waitUntilStable();
             setActivity(Activity.HOLD);
 
+            Ramp[] legs = rampRates.getLegs(getMagnetCurrent(), current);
+
+            for (Ramp leg : legs) {
+                System.out.printf("Will Do: From: %s A, To: %s A, Rate: %s A/min\n", leg.minI, leg.maxI, leg.rate);
+            }
+
+            for (Ramp leg : legs) {
+
+                System.out.printf("Now: From: %s A, To: %s A, Rate: %s A/min\n", leg.minI, leg.maxI, leg.rate);
+                setTargetCurrent(leg.maxI);
+                setCurrentRamp(leg.rate);
+                setActivity(Activity.GO_SETPOINT);
+                Util.sleep(1000);
+                waitUntilStable();
+                setActivity(Activity.HOLD);
+
+            }
+
+        } catch (InterruptedException e) {
+            setActivity(Activity.HOLD);
+            throw e;
         }
 
     }
@@ -220,9 +227,9 @@ public class IPS120 extends VISADevice {
         query(C_SET_CURRENT_SWEEP_RATE, rate);
     }
 
-    public void setHeater(boolean on) throws IOException {
+    public void setHeater(boolean on) throws IOException, InterruptedException {
         query(C_SET_SWITCH_HEATER, on ? 1 : 0);
-        Util.sleep(30000);
+        Thread.sleep(30000);
     }
 
     public double getMagnetCurrent() throws IOException {
@@ -237,7 +244,7 @@ public class IPS120 extends VISADevice {
         return new Status(query(C_QUERY_STATUS));
     }
 
-    public void waitUntilStable() throws IOException {
+    public void waitUntilStable() throws IOException, InterruptedException {
 
         while (true) {
 
@@ -245,7 +252,7 @@ public class IPS120 extends VISADevice {
                 break;
             }
 
-            Util.sleep(1000);
+            Thread.sleep(1000);
 
         }
 

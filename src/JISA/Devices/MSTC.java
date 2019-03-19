@@ -88,7 +88,7 @@ public abstract class MSTC extends TC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature(int sensor, double temperature, double pctMargin, long time) throws IOException, DeviceException {
+    public void waitForStableTemperature(int sensor, double temperature, double pctMargin, long time) throws IOException, DeviceException, InterruptedException {
 
         checkSensor(sensor);
 
@@ -112,7 +112,7 @@ public abstract class MSTC extends TC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature(int sensor, double temperature) throws IOException, DeviceException {
+    public void waitForStableTemperature(int sensor, double temperature) throws IOException, DeviceException, InterruptedException {
         waitForStableTemperature(sensor, temperature, 1.0, 60000);
     }
 
@@ -123,7 +123,7 @@ public abstract class MSTC extends TC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature() throws IOException, DeviceException {
+    public void waitForStableTemperature() throws IOException, DeviceException, InterruptedException {
         waitForStableTemperature(getUsedSensor(), getTargetTemperature());
     }
 
@@ -136,7 +136,7 @@ public abstract class MSTC extends TC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void setTargetAndWait(double temperature) throws IOException, DeviceException {
+    public void setTargetAndWait(double temperature) throws IOException, DeviceException, InterruptedException {
         setTargetTemperature(temperature);
         waitForStableTemperature();
     }

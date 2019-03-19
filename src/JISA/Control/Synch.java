@@ -78,7 +78,7 @@ public class Synch {
 
     }
 
-    public static void waitForStableTarget(Returnable<Double> valueToCheck, double target, double pctMargin, int interval, long duration) throws IOException, DeviceException {
+    public static void waitForStableTarget(Returnable<Double> valueToCheck, double target, double pctMargin, int interval, long duration) throws IOException, DeviceException, InterruptedException {
 
         long   time = 0;
         double min  = target * (1 - (pctMargin / 100D));
@@ -94,11 +94,7 @@ public class Synch {
                 time = 0;
             }
 
-            try {
-                Thread.sleep(duration);
-            } catch (Exception e) {
-                throw new DeviceException("Could not sleep!");
-            }
+            Thread.sleep(duration);
 
         }
 

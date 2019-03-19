@@ -204,7 +204,7 @@ public abstract class TC extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void setTargetAndWait(double temperature) throws IOException, DeviceException {
+    public void setTargetAndWait(double temperature) throws IOException, DeviceException, InterruptedException {
         setTargetTemperature(temperature);
         waitForStableTemperature(temperature);
     }
@@ -220,7 +220,7 @@ public abstract class TC extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature(double temperature, double pctMargin, long time) throws IOException, DeviceException {
+    public void waitForStableTemperature(double temperature, double pctMargin, long time) throws IOException, DeviceException, InterruptedException {
 
         Synch.waitForStableTarget(
                 this::getTemperature,
@@ -241,7 +241,7 @@ public abstract class TC extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature(double temperature) throws IOException, DeviceException {
+    public void waitForStableTemperature(double temperature) throws IOException, DeviceException, InterruptedException {
         waitForStableTemperature(temperature, 1.0, 60000);
     }
 
@@ -252,7 +252,7 @@ public abstract class TC extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature() throws IOException, DeviceException {
+    public void waitForStableTemperature() throws IOException, DeviceException, InterruptedException {
         waitForStableTemperature(getTargetTemperature());
     }
 
