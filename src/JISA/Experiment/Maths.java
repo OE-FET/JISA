@@ -75,22 +75,21 @@ public class Maths {
 
         try {
             double[] params = fitter.fit(func, initial);
-            return new Function(params) {
+            return new Function() {
                 @Override
                 public double value(double x) {
                     return toFit.calculate(x, params);
+                }
+
+                @Override
+                public double[] getCoefficients() {
+                    return params;
                 }
             };
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
-
-    }
-
-    public interface PFunction {
-
-        double calculate(double x, double... parameters);
 
     }
 

@@ -5,70 +5,38 @@ import org.apache.commons.math.analysis.DifferentiableUnivariateRealFunction;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
 
-public abstract class Function implements DifferentiableUnivariateRealFunction {
+public interface Function extends DifferentiableUnivariateRealFunction {
 
-    protected double[] params;
 
-    public Function(double... params) {
-        this.params = params;
+    @Override
+    default Function derivative() {
+        return x -> (Function.this.value(x + Float.MIN_VALUE) - Function.this.value(x)) / Float.MIN_VALUE;
     }
 
     @Override
-    public Function derivative() {
+     double value(double x);
 
-        return new Function() {
-            @Override
-            public double value(double x) {
-                return (Function.this.value(x + Float.MIN_VALUE) - Function.this.value(x)) / Float.MIN_VALUE;
-            }
-        };
-
+    default double[] getCoefficients() {
+        return new double[]{};
     }
 
-    @Override
-    public abstract double value(double x);
-
-    public double[] getCoefficients() {
-        return params;
+    default Function add(Function toAdd) {
+        return x -> Function.this.value(x) + toAdd.value(x);
     }
 
-    public Function add(Function toAdd) {
-        return new Function() {
-            @Override
-            public double value(double x) {
-                return Function.this.value(x) + toAdd.value(x);
-            }
-        };
+    default Function subtract(Function toAdd) {
+        return x -> Function.this.value(x) - toAdd.value(x);
     }
 
-    public Function subtract(Function toAdd) {
-        return new Function() {
-            @Override
-            public double value(double x) {
-                return Function.this.value(x) - toAdd.value(x);
-            }
-        };
+    default Function multiply(Function toAdd) {
+        return x -> Function.this.value(x) * toAdd.value(x);
     }
 
-    public Function multiply(Function toAdd) {
-        return new Function() {
-            @Override
-            public double value(double x) {
-                return Function.this.value(x) * toAdd.value(x);
-            }
-        };
+    default Function divide(Function toAdd) {
+        return x -> Function.this.value(x) / toAdd.value(x);
     }
 
-    public Function divide(Function toAdd) {
-        return new Function() {
-            @Override
-            public double value(double x) {
-                return Function.this.value(x) / toAdd.value(x);
-            }
-        };
-    }
-
-    public static class PolyFunction extends Function {
+    class PolyFunction implements Function {
 
         PolynomialFunction func;
 

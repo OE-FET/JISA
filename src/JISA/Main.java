@@ -2,11 +2,19 @@ package JISA;
 
 import JISA.Addresses.Address;
 import JISA.Addresses.StrAddress;
+import JISA.Devices.DeviceException;
+import JISA.Devices.DummyMCSMU;
+import JISA.Devices.SMU;
+import JISA.Experiment.*;
 import JISA.GUI.DeviceShell;
 import JISA.GUI.GUI;
+import JISA.GUI.Plot;
+import JISA.GUI.Series;
 import JISA.VISA.VISA;
 import javafx.application.Platform;
+import javafx.scene.paint.Color;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -17,10 +25,33 @@ public class Main {
     private final static int CHOICE_HELP = 2;
     private final static int CHOICE_EXIT = 3;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, DeviceException {
 
         // Start the GUI thread
         GUI.startGUI();
+
+        ResultTable results = new ResultList("Time", "Voltage", "Current");
+        Plot        plot    = new Plot("Results", "Time [s]", "Voltage [V]");
+        Series      data    = plot.watchList(results, 0, 1, "Data", Color.BLACK);
+
+        data.setLineWidth(0.0); // Hide the line, only show markers for raw data
+
+        plot.show();
+
+        // Take a measurement every second for 10 seconds
+        for (double t = 0; t <= 10.0; t += 1.0) {
+            results.addData(t, 4.3*Math.sin(t*0.8), 1);
+        }
+
+        PFunction toFit  = (x, p) -> p[0]*Math.sin(p[1]*x);
+        Function  fitted = results.fit(0,1,toFit,0.5,0.5);
+        Series    fit    = plot.plotFunction(fitted, 0, 10, 1000, "Fit", Color.RED);
+
+        double[] coeffs   = fitted.getCoefficients();
+        double   a = coeffs[0];
+        double   b = coeffs[1];
+        System.out.printf("a = %e, b = %e\n", a, b);
+        System.in.read();
 
         try {
             VISA.init();

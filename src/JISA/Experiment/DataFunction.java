@@ -3,7 +3,7 @@ package JISA.Experiment;
 import java.util.Comparator;
 import java.util.List;
 
-public class DataFunction extends Function {
+public class DataFunction implements Function {
 
     private List<XYPoint>  points;
 

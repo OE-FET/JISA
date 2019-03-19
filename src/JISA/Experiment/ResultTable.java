@@ -306,11 +306,11 @@ public abstract class ResultTable implements Iterable<Result> {
         return polyFit(xData, yData, (r) -> true, degree);
     }
 
-    public Function fit(int xData, int yData, Predicate<Result> filter, Maths.PFunction toFit, double... initialGuess) {
+    public Function fit(int xData, int yData, Predicate<Result> filter, PFunction toFit, double... initialGuess) {
         return Maths.fit(getXYPoints(xData, yData, filter), toFit, initialGuess);
     }
 
-    public Function fit(int xData, int yData, Maths.PFunction toFit, double... initialGuess) {
+    public Function fit(int xData, int yData, PFunction toFit, double... initialGuess) {
         return fit(xData, yData, (r) -> true, toFit, initialGuess);
     }
 
