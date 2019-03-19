@@ -1,8 +1,6 @@
 package JISA.Experiment;
 
-import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.DifferentiableUnivariateRealFunction;
-import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
 
 public interface Function extends DifferentiableUnivariateRealFunction {
@@ -34,6 +32,10 @@ public interface Function extends DifferentiableUnivariateRealFunction {
 
     default Function divide(Function toAdd) {
         return x -> Function.this.value(x) / toAdd.value(x);
+    }
+
+    default double[] getCoefficients() {
+        return new double[0];
     }
 
     class PolyFunction implements Function {
