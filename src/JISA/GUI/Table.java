@@ -69,9 +69,17 @@ public class Table extends JFXWindow implements Element, Clearable {
                 table.getColumns().add(col);
             }
 
-            Platform.runLater(() -> {
+            GUI.runNow(() -> {
                 for (Result row : list) {
-                    table.getItems().add(FXCollections.observableArrayList(Arrays.asList(row.getData())));
+
+                    double[] data = row.getData();
+                    Double[] oData = new Double[data.length];
+
+                    for (int j = 0; j < data.length; j++) {
+                        oData[j] = data[j];
+                    }
+
+                    table.getItems().add(FXCollections.observableArrayList(Arrays.asList(oData)));
                     table.scrollTo(table.getItems().size() - 1);
                 }
             });
@@ -84,8 +92,15 @@ public class Table extends JFXWindow implements Element, Clearable {
     public synchronized void update(Result row) {
 
         Platform.runLater(() -> {
+
+            double[] data = row.getData();
+            Double[] oData = new Double[data.length];
+
+            for (int j = 0; j < data.length; j++) {
+                oData[j] = data[j];
+            }
             int index = table.getItems().size();
-            table.getItems().add(FXCollections.observableArrayList(Arrays.asList(row.getData())));
+            table.getItems().add(FXCollections.observableArrayList(Arrays.asList(oData)));
             table.scrollTo(index);
         });
 
