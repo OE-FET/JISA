@@ -805,6 +805,11 @@ public class SmartChart {
         }
 
         @Override
+        public XYChart.Series<Double, Double> getXYChartSeries() {
+            return series;
+        }
+
+        @Override
         public Iterator<XYChart.Data<Double, Double>> iterator() {
             return data.iterator();
         }
@@ -939,6 +944,11 @@ public class SmartChart {
         }
 
         @Override
+        public XYChart.Series<Double, Double> getXYChartSeries() {
+            return series;
+        }
+
+        @Override
         public Iterator<XYChart.Data<Double, Double>> iterator() {
             return series.getData().iterator();
         }
@@ -1016,9 +1026,13 @@ public class SmartChart {
 
         @Override
         public void clear() {
-            for (Series s : map.values()) {
-                s.clear();
-            }
+            GUI.runNow(() -> {
+                for (Series s : map.values()) {
+                    s.clear();
+                    chart.getData().remove(s.getXYChartSeries());
+                }
+                map.clear();
+            });
         }
 
         @Override
@@ -1121,6 +1135,11 @@ public class SmartChart {
             for (Series s : map.values()) {
                 s.restore();
             }
+        }
+
+        @Override
+        public XYChart.Series<Double, Double> getXYChartSeries() {
+            return null;
         }
 
         @Override

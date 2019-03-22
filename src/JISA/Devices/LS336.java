@@ -42,6 +42,7 @@ public class LS336 extends MSMOTC {
         setSerialParameters(57600, 7, Connection.Parity.ODD, Connection.StopBits.ONE, Connection.Flow.NONE);
         setReadTerminationCharacter(CRLF_TERMINATOR);
         setTerminator(TERMINATOR);
+        setRemoveTerminator(TERMINATOR);
 
         clearRead();
 

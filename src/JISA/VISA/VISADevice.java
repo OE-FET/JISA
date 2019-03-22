@@ -12,6 +12,7 @@ public class VISADevice {
     private Connection connection;
     private Address    address;
     private String     terminator     = "";
+    private String     remTerminator  = null;
     private String     lastCommand    = null;
     private String     lastRead       = null;
     private int        readBufferSize = 1024;
@@ -128,6 +129,10 @@ public class VISADevice {
 
     }
 
+    public void setRemoveTerminator(String terminator) {
+        remTerminator = terminator;
+    }
+
     /**
      * Sets the timeout, in milliseconds, for operations with the device
      *
@@ -212,6 +217,11 @@ public class VISADevice {
         while (true) {
             try {
                 lastRead = connection.read(readBufferSize);
+
+                if (remTerminator != null) {
+                    lastRead = lastRead.replace(remTerminator, "");
+                }
+
                 break;
             } catch (VISAException e) {
                 count++;

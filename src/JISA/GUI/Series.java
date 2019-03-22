@@ -57,6 +57,8 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
     void restore();
 
+    XYChart.Series<Double, Double> getXYChartSeries();
+
     enum Shape {
         CIRCLE,
         DOT,

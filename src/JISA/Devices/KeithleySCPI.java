@@ -157,6 +157,7 @@ public abstract class KeithleySCPI extends SMU {
             setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
             setTerminator("\r");
             setReadTerminationCharacter(CR_TERMINATOR);
+            setRemoveTerminator("\r");
         }
 
         write(":SYSTEM:CLEAR");

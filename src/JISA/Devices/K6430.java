@@ -15,6 +15,8 @@ public class K6430 extends KeithleySCPI {
             throw new DeviceException("Instrument at \"%s\" is not a Keithley 6430", address.toString());
         }
 
+        write(":SENS:FUNC:CONC OFF");
+
     }
 
     @Override
@@ -68,5 +70,26 @@ public class K6430 extends KeithleySCPI {
 
     }
 
+    public void setIntegrationTime(double seconds) throws IOException {
+        write(":NPLC %e", seconds * LINE_FREQUENCY);
+    }
+
+    public double getVoltage() throws IOException, DeviceException {
+        write(":FORMAT:ELEMENTS VOLT");
+        return super.getVoltage();
+    }
+
+    public double getCurrent() throws IOException, DeviceException {
+        write(":FORMAT:ELEMENTS CURRENT");
+        return super.getCurrent();
+    }
+
+    public void useFourProbe(boolean flag) throws IOException {
+        write(":SYST:RSENSE %s", flag ? OUTPUT_ON : OUTPUT_OFF);
+    }
+
+    public boolean isUsingFourProbe() throws IOException {
+        return query(":SYST:RSENSE?").equals(OUTPUT_ON);
+    }
 
 }
