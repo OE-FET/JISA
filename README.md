@@ -23,14 +23,18 @@ You can also use it in python by using the Jython interpreter.
 
 |Class|Type|Model|Source|JavaDoc|
 |-----|----|-----|------|-------|
+|`K2400`|SMU|Keithley 2400 Series|[Source](./src/JISA/Devices/K2400.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2400.html)|
 |`K2450`|SMU|Keithley 2450|[Source](./src/JISA/Devices/K2450.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2450.html)|
 |`K236`|SMU|Keithley 236|[Source](./src/JISA/Devices/K236.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K236.html)|
 |`K2600B`|SMU|Keithley 2600B Series|[Source](./src/JISA/Devices/K2600B.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2600B.html)|
+|`K6430`|SMU|Keithley 6430|[Source](./src/JISA/Devices/K6430.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K6430.html)|
 |`K2200`|DC Power Supply|Keithley 2200 Series|[Source](./src/JISA/Devices/K2200.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2200.html)|
 |`ITC503`|Temperature Controller|Mercury ITC 503|[Source](./src/JISA/Devices/ITC503.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/ITC503.html)|
 |`LS336`|Temperature Controller|LakeShore 336|[Source](./src/JISA/Devices/LS336.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/LS336.html)|
 |`SR830`|Lock-In Amplifier|Stanford Research Systems SR830|[Source](./src/JISA/Devices/SR830.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SR830.html)|
 |`SR560`|Voltage Pre-Amp|Stanford Research Systems SR560|[Source](./src/JISA/Devices/SR560.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SR560.html)|
+|`IPS120`|Magnet Power Supply|OI Superconducting Magnet Power Supply|[Source](./src/JISA/Devices/IPS120.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/IPS120.html)|
+|`ILM200`|Helium Level Meter|OI He Level Meter|[Source](./src/JISA/Devices/ILM200.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/ILM200.html)|
 
 **Currently Implemented Device Types:**
 
@@ -38,12 +42,16 @@ You can also use it in python by using the Jython interpreter.
 |--------------|----|------|-------|
 |`SMU`|Source-Measure Unit|[Source](./src/JISA/Devices/SMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SMU.html)|
 |`MCSMU`|Multi-Channel Source-Measure Unit|[Source](./src/JISA/Devices/MCSMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MCSMU.html)|
+|  |  |  |  |
 |`DCPower`|DC Power Supply|[Source](./src/JISA/Devices/DCPower.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DCPower.html)|
+|  |  |  |  |
 |`TC`|Temperature Controller|[Source](./src/JISA/Devices/TC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/TC.html)|
 |`MSTC`|Multi-Sensor Temperature Controller|[Source](./src/JISA/Devices/MSTC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSTC.html)|
 |`MSMOTC`|Multi-Sensor, Multi-Output Temperature Controller|[Source](./src/JISA/Devices/MSMOTC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSMOTC.html)|
+|  |  |  |  |
 |`LockIn`|Lock-In Amplifier|[Source](./src/JISA/Devices/LockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/LockIn.html)|
 |`DPLockIn`|Dual-Phase Lock-In Amplifier|[Source](./src/JISA/Devices/DPLockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DPLockIn.html)|
+|  |  |  |  |
 |`VPreAmp`|Voltage Pre-Amplifier|[Source](./src/JISA/Devices/VPreAmp.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/VPreAmp.html)|
 
 ## Instrument Control
