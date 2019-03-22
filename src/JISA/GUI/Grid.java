@@ -6,6 +6,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToolBar;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
@@ -19,6 +20,7 @@ import java.util.List;
 public class Grid extends JFXWindow implements Element, Container {
 
     public  GridPane           pane;
+    public ScrollPane          scroll;
     public  BorderPane         border;
     private ToolBar            toolBar = null;
     private Stage              stage;
@@ -73,9 +75,9 @@ public class Grid extends JFXWindow implements Element, Container {
 
         Pane bPane;
 
-        if (toAdd instanceof Grid && toAdd.getTitle().equals("")) {
+        if (toAdd instanceof Grid) {
             ((Grid) toAdd).pane.setPadding(new Insets(0,0,0,0));
-            bPane = toAdd.getPane();
+            bPane = ((Grid) toAdd).pane;
         } else {
 
             bPane     = new BorderPane();

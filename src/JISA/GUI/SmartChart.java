@@ -511,6 +511,7 @@ public class SmartChart {
         GUI.runNow(() -> {
             chart.getData().clear();
             data.clear();
+            map.clear();
             styles.clear();
             updateStyle();
 

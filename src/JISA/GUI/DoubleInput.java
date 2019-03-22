@@ -117,6 +117,7 @@ public class DoubleInput extends HBox {
 
         mantissa.setDisable(disable);
         exponent.setDisable(disable);
+        root.setDisable(disable);
 
     }
 

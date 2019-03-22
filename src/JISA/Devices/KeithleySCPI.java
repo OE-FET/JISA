@@ -4,6 +4,7 @@ import JISA.Addresses.Address;
 import JISA.Util;
 import JISA.VISA.Connection;
 
+import java.io.IOError;
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -55,91 +56,53 @@ public abstract class KeithleySCPI extends SMU {
 
     // == FILTERS ======================================================================================================
     private final MedianRepeatFilter MEDIAN_REPEAT_V = new MedianRepeatFilter(
-            () -> queryDouble(C_MEASURE_VOLTAGE),
-            (c) -> {
-                write(C_SET_AVG_MODE, "REPEAT");
-                write(C_SET_AVG_COUNT, 1);
-                write(C_SET_AVG_STATE, OUTPUT_OFF);
-            }
+            this::measureVoltage,
+            (c) -> disableAveraging()
     );
 
     private final MedianRepeatFilter MEDIAN_REPEAT_I = new MedianRepeatFilter(
-            () -> queryDouble(C_MEASURE_CURRENT),
-            (c) -> {
-                write(C_SET_AVG_MODE, "REPEAT");
-                write(C_SET_AVG_COUNT, 1);
-                write(C_SET_AVG_STATE, OUTPUT_OFF);
-            });
+            this::measureCurrent,
+            (c) -> disableAveraging()
+    );
 
     private final MedianMovingFilter MEDIAN_MOVING_V = new MedianMovingFilter(
-            () -> queryDouble(C_MEASURE_VOLTAGE),
-            (c) -> {
-                write(C_SET_AVG_MODE, "REPEAT");
-                write(C_SET_AVG_COUNT, 1);
-                write(C_SET_AVG_STATE, OUTPUT_OFF);
-            }
+            this::measureVoltage,
+            (c) -> disableAveraging()
     );
 
     private final MedianMovingFilter MEDIAN_MOVING_I = new MedianMovingFilter(
-            () -> queryDouble(C_MEASURE_CURRENT),
-            (c) -> {
-                write(C_SET_AVG_MODE, "REPEAT");
-                write(C_SET_AVG_COUNT, 1);
-                write(C_SET_AVG_STATE, OUTPUT_OFF);
-            });
-
-    private final BypassFilter MEAN_REPEAT_V = new BypassFilter(
-            () -> queryDouble(C_MEASURE_VOLTAGE),
-            (c) -> {
-                write(C_SET_AVG_MODE, "REPEAT");
-                write(C_SET_AVG_COUNT, c);
-                write(C_SET_AVG_STATE, OUTPUT_ON);
-            }
+            this::measureCurrent,
+            (c) -> disableAveraging()
     );
 
-    private final BypassFilter MEAN_REPEAT_I = new BypassFilter(
-            () -> queryDouble(C_MEASURE_CURRENT),
-            (c) -> {
-                write(C_SET_AVG_MODE, "REPEAT");
-                write(C_SET_AVG_COUNT, c);
-                write(C_SET_AVG_STATE, OUTPUT_ON);
-            }
+    private final MeanRepeatFilter MEAN_REPEAT_V = new MeanRepeatFilter(
+            this::measureVoltage,
+            (c) -> disableAveraging()
     );
 
-    private final BypassFilter MEAN_MOVING_V = new BypassFilter(
-            () -> queryDouble(C_MEASURE_VOLTAGE),
-            (c) -> {
-                write(C_SET_AVG_MODE, "MOVING");
-                write(C_SET_AVG_COUNT, c);
-                write(C_SET_AVG_STATE, OUTPUT_ON);
-            }
+    private final MeanRepeatFilter MEAN_REPEAT_I = new MeanRepeatFilter(
+            this::measureCurrent,
+            (c) -> disableAveraging()
     );
 
-    private final BypassFilter MEAN_MOVING_I = new BypassFilter(
-            () -> queryDouble(C_MEASURE_CURRENT),
-            (c) -> {
-                write(C_SET_AVG_MODE, "MOVING");
-                write(C_SET_AVG_COUNT, c);
-                write(C_SET_AVG_STATE, OUTPUT_ON);
-            }
+    private final MeanMovingFilter MEAN_MOVING_V = new MeanMovingFilter(
+            this::measureVoltage,
+            (c) -> disableAveraging()
+    );
+
+    private final MeanMovingFilter MEAN_MOVING_I = new MeanMovingFilter(
+            this::measureCurrent,
+            (c) -> disableAveraging()
     );
 
     private final BypassFilter NONE_V = new BypassFilter(
-            () -> queryDouble(C_MEASURE_VOLTAGE),
-            (c) -> {
-                write(C_SET_AVG_MODE, "REPEAT");
-                write(C_SET_AVG_COUNT, 1);
-                write(C_SET_AVG_STATE, OUTPUT_OFF);
-            }
+            this::measureVoltage,
+            (c) -> disableAveraging()
     );
 
     private final BypassFilter NONE_I = new BypassFilter(
-            () -> queryDouble(C_MEASURE_CURRENT),
-            (c) -> {
-                write(C_SET_AVG_MODE, "REPEAT");
-                write(C_SET_AVG_COUNT, 1);
-                write(C_SET_AVG_STATE, OUTPUT_OFF);
-            }
+            this::measureCurrent,
+            (c) -> disableAveraging()
     );
 
     // == INTERNAL VARIABLES ===========================================================================================
@@ -416,6 +379,20 @@ public abstract class KeithleySCPI extends SMU {
     @Override
     public void setIntegrationTime(double time) throws IOException {
         write(C_SET_NPLC, LINE_FREQUENCY * time);
+    }
+
+    protected double measureVoltage() throws IOException {
+        return queryDouble(C_MEASURE_VOLTAGE);
+    }
+
+    protected double measureCurrent() throws IOException {
+        return queryDouble(C_MEASURE_CURRENT);
+    }
+
+    protected void disableAveraging() throws IOException {
+        write(C_SET_AVG_MODE, "REPEAT");
+        write(C_SET_AVG_COUNT, 1);
+        write(C_SET_AVG_STATE, OUTPUT_OFF);
     }
 
     public double getVoltage() throws DeviceException, IOException {

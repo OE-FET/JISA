@@ -4,10 +4,10 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 
-<HBox alignment="CENTER" styleClass="double-input" stylesheets="@DoubleInput.css" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+<HBox fx:id="box" alignment="CENTER" styleClass="double-input" stylesheets="@DoubleInput.css" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
 
         <TextField fx:id="mantissa" style="-fx-background-color: transparent; -fx-padding: 5 0 5 7.5;" HBox.hgrow="ALWAYS" />
-        <Label alignment="CENTER" maxWidth="36.0" minWidth="36.0" text="x10^" HBox.hgrow="NEVER" />
+        <Label alignment="CENTER" maxWidth="-Infinity" minWidth="-Infinity" text="x10^" HBox.hgrow="NEVER" />
         <TextField fx:id="exponent" maxWidth="36.0" minWidth="36.0" style="-fx-background-color: transparent; -fx-padding: 5 5 5 0;" text="0" HBox.hgrow="NEVER" />
 
 </HBox>

@@ -70,18 +70,30 @@ public class K6430 extends KeithleySCPI {
 
     }
 
+    protected double measureVoltage() throws IOException {
+        write(":SENS:FUNC \"VOLT\"");
+        write(":FORMAT:ELEMENTS VOLT");
+        return isOn() ? queryDouble(":READ?") : queryDouble(":FETCH?");
+    }
+
+    protected double measureCurrent() throws IOException {
+        write(":SENS:FUNC \"CURR\"");
+        write(":FORMAT:ELEMENTS CURR");
+        return isOn() ? queryDouble(":READ?") : queryDouble(":FETCH?");
+    }
+
+    protected void disableAveraging() throws IOException {
+
+        write(":AVER:AUTO OFF");
+        write(":AVER:REPEAT OFF");
+        write(":AVER OFF");
+        write(":AVER:ADV OFF");
+        write(":MED OFF");
+
+    }
+
     public void setIntegrationTime(double seconds) throws IOException {
         write(":NPLC %e", seconds * LINE_FREQUENCY);
-    }
-
-    public double getVoltage() throws IOException, DeviceException {
-        write(":FORMAT:ELEMENTS VOLT");
-        return super.getVoltage();
-    }
-
-    public double getCurrent() throws IOException, DeviceException {
-        write(":FORMAT:ELEMENTS CURRENT");
-        return super.getCurrent();
     }
 
     public void useFourProbe(boolean flag) throws IOException {
