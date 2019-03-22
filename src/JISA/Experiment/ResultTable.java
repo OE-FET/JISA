@@ -1,7 +1,6 @@
 package JISA.Experiment;
 
 import JISA.GUI.Clearable;
-import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -15,6 +14,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
     protected ArrayList<OnUpdate>  onUpdate = new ArrayList<>();
     protected ArrayList<Clearable> toClear  = new ArrayList<>();
+    protected boolean              open     = true;
 
     /**
      * Sets the units for each column in the result table
@@ -50,6 +50,10 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public void addData(double... data) {
 
+        if (!open) {
+            throw new IllegalStateException("You cannot add data to a finalised ResultTable");
+        }
+
         Result row = new Result(data);
         addRow(row);
 
@@ -63,6 +67,10 @@ public abstract class ResultTable implements Iterable<Result> {
 
 
     public void clear() {
+
+        if (!open) {
+            throw new IllegalStateException("You cannot remove data from a finalised ResultTable");
+        }
 
         clearData();
         for (Clearable c : toClear) {
@@ -321,6 +329,12 @@ public abstract class ResultTable implements Iterable<Result> {
     public Function asFunction(int xData, int yData) {
         return asFunction(xData, yData, (r) -> true);
     }
+
+    public void finalise() {
+        open = false;
+    }
+
+    public abstract void close();
 
     public interface OnUpdate {
 

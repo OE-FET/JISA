@@ -1,9 +1,6 @@
 package JISA.GUI;
 
-import JISA.Experiment.Result;
-import JISA.Experiment.ResultList;
-import JISA.Experiment.ResultStream;
-import JISA.Experiment.ResultTable;
+import JISA.Experiment.*;
 import JISA.Util;
 import javafx.beans.InvalidationListener;
 import javafx.collections.FXCollections;
@@ -29,6 +26,7 @@ public class SmartChart {
     private       String                             xLabel;
     private       String                             yLabel;
     private       LinkedList<Series>                 data          = new LinkedList<>();
+    private       Map<Series, Integer>               map           = new HashMap<>();
     private       double                             minX          = Double.POSITIVE_INFINITY;
     private       double                             maxX          = Double.NEGATIVE_INFINITY;
     private       double                             minY          = Double.POSITIVE_INFINITY;
@@ -133,6 +131,10 @@ public class SmartChart {
         return new AutoSeries(results, xData, yData, sData, filter);
     }
 
+    public synchronized Series createFunctionSeries(String name, Color colour, Function f) {
+        return new FunctionSeries(f, name, colour);
+    }
+
     public void setSeriesColour(int series, Color colour) {
 
         setStyle(
@@ -209,22 +211,22 @@ public class SmartChart {
 
     }
 
+    public String getXLabel() {
+        return xLabel;
+    }
+
     public void setXLabel(String label) {
         xLabel = label;
         GUI.runNow(() -> xAxis.setLabel(label));
     }
 
+    public String getYLabel() {
+        return yLabel;
+    }
+
     public void setYLabel(String label) {
         yLabel = label;
         GUI.runNow(() -> yAxis.setLabel(label));
-    }
-
-    public String getXLabel() {
-        return xLabel;
-    }
-
-    public String getYLabel() {
-        return yLabel;
     }
 
     public void setStyle(String key, String value) {
@@ -463,6 +465,14 @@ public class SmartChart {
             zoomFactor = 1;
         }
 
+        for (Series s : data) {
+
+            if (s instanceof FunctionSeries) {
+                ((FunctionSeries) s).update();
+            }
+
+        }
+
     }
 
     private boolean removePoint(XYChart.Data<Double, Double> data) {
@@ -606,20 +616,29 @@ public class SmartChart {
 
     private class NormalSeries implements Series {
 
-        private Color                          colour;
-        private XYChart.Series<Double, Double> series;
-        private DataList                       data;
-        private int                            reduceLimit = Integer.MAX_VALUE;
-        private int                            reduceValue = Integer.MAX_VALUE;
-        private ResultTable                    list;
-        private double                         xRange      = Double.POSITIVE_INFINITY;
-        private double                         yRange      = Double.POSITIVE_INFINITY;
-        private double                         minX        = Double.POSITIVE_INFINITY;
-        private double                         maxX        = Double.NEGATIVE_INFINITY;
-        private double                         minY        = Double.POSITIVE_INFINITY;
-        private double                         maxY        = Double.NEGATIVE_INFINITY;
+        protected Color                          colour;
+        protected XYChart.Series<Double, Double> series;
+        protected DataList                       data;
+        protected int                            reduceLimit = Integer.MAX_VALUE;
+        protected int                            reduceValue = Integer.MAX_VALUE;
+        protected ResultTable                    list;
+        protected double                         xRange      = Double.POSITIVE_INFINITY;
+        protected double                         yRange      = Double.POSITIVE_INFINITY;
+        protected double                         minX        = Double.POSITIVE_INFINITY;
+        protected double                         maxX        = Double.NEGATIVE_INFINITY;
+        protected double                         minY        = Double.POSITIVE_INFINITY;
+        protected double                         maxY        = Double.NEGATIVE_INFINITY;
 
         public NormalSeries(String name, Color colour) {
+
+            SmartChart.this.data.add(this);
+
+            for (int i = 0; i < map.size() + 1; i++) {
+                if (!map.containsValue(i)) {
+                    map.put(this, i);
+                    break;
+                }
+            }
 
             try {
                 list = new ResultStream(File.createTempFile("JISA-TEMP", ".tmp").getAbsolutePath(), "X", "Y");
@@ -648,11 +667,18 @@ public class SmartChart {
 
             data.setShowCondition((d) -> d.getXValue() >= (maxX - xRange) && d.getYValue() >= (maxY - yRange));
 
-            SmartChart.this.data.add(this);
-
         }
 
         public NormalSeries(ResultTable results, int xData, int yData, Predicate<Result> filter, String name, Color colour) {
+
+            SmartChart.this.data.add(this);
+
+            for (int i = 0; i < map.size() + 1; i++) {
+                if (!map.containsValue(i)) {
+                    map.put(this, i);
+                    break;
+                }
+            }
 
             list = results;
             data = new DataList(list, xData, yData, filter == null ? (r) -> true : filter);
@@ -681,8 +707,6 @@ public class SmartChart {
 
             data.setShowCondition((d) -> d.getXValue() >= (maxX - xRange) && d.getYValue() >= (maxY - yRange));
 
-            SmartChart.this.data.add(this);
-
         }
 
         @Override
@@ -709,7 +733,7 @@ public class SmartChart {
 
         @Override
         public void setMarkerShape(Shape shape, double size) {
-            data.setMarkerStyle(SmartChart.this.setSymbol(chart.getData().indexOf(series), shape, size));
+            data.setMarkerStyle(SmartChart.this.setSymbol(map.get(this), shape, size));
         }
 
         @Override
@@ -730,12 +754,12 @@ public class SmartChart {
         @Override
         public void setColour(Color colour) {
             this.colour = colour;
-            setSeriesColour(chart.getData().indexOf(series), colour);
+            setSeriesColour(map.get(this), colour);
         }
 
         @Override
         public void setLineWidth(double width) {
-            SmartChart.this.setLineWidth(chart.getData().indexOf(series), width);
+            SmartChart.this.setLineWidth(map.get(this), width);
         }
 
         @Override
@@ -761,6 +785,13 @@ public class SmartChart {
         }
 
         @Override
+        public void remove() {
+            GUI.runNow(() -> chart.getData().remove(series));
+            SmartChart.this.data.remove(this);
+            map.remove(this);
+        }
+
+        @Override
         public void updateLimits() {
             data.updateLimits();
         }
@@ -776,6 +807,140 @@ public class SmartChart {
         @Override
         public Iterator<XYChart.Data<Double, Double>> iterator() {
             return data.iterator();
+        }
+    }
+
+    private class FunctionSeries implements Series {
+
+        private Function                                     function;
+        private ObservableList<XYChart.Data<Double, Double>> data;
+        private XYChart.Series<Double, Double>               series;
+        private Color                                        colour;
+
+        public FunctionSeries(Function f, String name, Color colour) {
+            function = f;
+            series = new XYChart.Series<>();
+            data = series.getData();
+            SmartChart.this.data.add(this);
+
+            for (int i = 0; i < map.size() + 1; i++) {
+                if (!map.containsValue(i)) {
+                    map.put(this, i);
+                    break;
+                }
+            }
+
+            GUI.runNow(() -> chart.getData().add(series));
+            setName(name);
+            setColour(colour);
+            update();
+        }
+
+        @Override
+        public void addPoint(double x, double y) {
+
+        }
+
+        @Override
+        public List<XYChart.Data<Double, Double>> getPoints() {
+            return null;
+        }
+
+        @Override
+        public void clear() {
+
+        }
+
+        @Override
+        public void showMarkers(boolean show) {
+
+        }
+
+        @Override
+        public void setMarkerShape(Shape shape, double size) {
+
+        }
+
+        @Override
+        public String getName() {
+            return series.getName();
+        }
+
+        @Override
+        public void setName(String name) {
+            GUI.runNow(() -> series.setName(name));
+        }
+
+        @Override
+        public Color getColour() {
+            return colour;
+        }
+
+        @Override
+        public void setColour(Color colour) {
+            this.colour = colour;
+            setSeriesColour(map.get(this), colour);
+        }
+
+        @Override
+        public void setLineWidth(double width) {
+            SmartChart.this.setLineWidth(map.get(this), width);
+        }
+
+        @Override
+        public void setAutoReduction(int reduceTo, int limit) {
+
+        }
+
+        @Override
+        public void reduceNow() {
+
+        }
+
+        @Override
+        public void setXAutoRemove(double range) {
+
+        }
+
+        @Override
+        public void setYAutoRemove(double range) {
+
+        }
+
+        @Override
+        public void remove() {
+            GUI.runNow(() -> chart.getData().remove(series));
+            SmartChart.this.data.remove(this);
+            map.remove(this);
+        }
+
+        public void update() {
+            GUI.runNow(() -> {
+                series.getData().clear();
+
+                for (double x : Util.makeLinearArray(limMinX, limMaxX, (int) chart.getWidth())) {
+                    XYChart.Data<Double, Double> d = new XYChart.Data<>(x, function.value(x));
+                    series.getData().add(d);
+                    if (d.getNode() != null) {
+                        d.getNode().setVisible(false);
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void updateLimits() {
+
+        }
+
+        @Override
+        public void restore() {
+
+        }
+
+        @Override
+        public Iterator<XYChart.Data<Double, Double>> iterator() {
+            return series.getData().iterator();
         }
     }
 
@@ -931,6 +1096,14 @@ public class SmartChart {
             for (Series s : map.values()) {
                 s.setYAutoRemove(range);
             }
+        }
+
+        @Override
+        public void remove() {
+            for (Series s : map.values()) {
+                s.remove();
+            }
+            map.clear();
         }
 
         @Override

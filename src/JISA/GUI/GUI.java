@@ -1,6 +1,7 @@
 package JISA.GUI;
 
 import JISA.Addresses.Address;
+import JISA.Experiment.Measurement;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -361,14 +362,18 @@ public class GUI extends Application {
     public static void startGUI() {
 
         s = new Semaphore(0);
-
-        Thread t = new Thread(() -> Application.launch(App.class));
-
-        t.start();
         try {
+            Thread t = new Thread(() -> {
+                try {
+                    Application.launch(App.class);
+                } catch (Exception e) {
+                    s.release();
+                }
+            });
+            t.start();
             s.acquire();
             Platform.setImplicitExit(false);
-        } catch (InterruptedException ignored) {
+        } catch (Exception ignored) {
 
         }
 
@@ -412,6 +417,30 @@ public class GUI extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+
+    }
+
+    public void runMeasurement(Measurement measurement) {
+
+        try {
+
+            measurement.performMeasurement();
+
+            if (measurement.wasStopped()) {
+
+                warningAlert("Stopped", "Measurement Stopped", "The measurement was stopped before completion.");
+
+            } else {
+
+                infoAlert("Complete", "Measurement Complete", "The measurement completed without error.");
+
+            }
+
+        } catch (Exception e) {
+
+            errorAlert("Error", "Exception Encountered", String.format("There was an error with the measurement:\n%s", e.getMessage()), 600);
+
+        }
 
     }
 

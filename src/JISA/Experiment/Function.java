@@ -8,15 +8,14 @@ public interface Function extends DifferentiableUnivariateRealFunction {
 
     @Override
     default Function derivative() {
-        return x -> (Function.this.value(x + Float.MIN_VALUE) - Function.this.value(x)) / Float.MIN_VALUE;
+        return x -> {
+            return (Function.this.value(x*1.01) - Function.this.value(x)) / (0.01*x);
+        };
     }
 
     @Override
-     double value(double x);
+    double value(double x);
 
-    default double[] getCoefficients() {
-        return new double[]{};
-    }
 
     default Function add(Function toAdd) {
         return x -> Function.this.value(x) + toAdd.value(x);

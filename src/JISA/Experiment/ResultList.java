@@ -27,6 +27,10 @@ public class ResultList extends ResultTable {
     @Override
     public void setUnits(String... units) {
 
+        if (!open) {
+            throw new IllegalStateException("You cannot alter a finalised ResultTable");
+        }
+
         if (units.length != cols) {
             return;
         }
@@ -77,6 +81,11 @@ public class ResultList extends ResultTable {
     @Override
     public Result getRow(int i) {
         return rows.get(i);
+    }
+
+    @Override
+    public void close() {
+
     }
 
     @Override

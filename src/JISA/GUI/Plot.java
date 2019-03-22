@@ -133,12 +133,15 @@ public class Plot extends JFXWindow implements Element, Clearable {
         return watchList(list, xData, yData, sData, null);
     }
 
-    public Series plotFunction(Function toPlot, double minX, double maxX, int numSteps, String name, Color colour) {
+    public Series plotFunction(Function toPlot, String name, Color colour) {
+        return controller.createFunctionSeries(name, colour, toPlot);
+    }
 
+    public Series plotFunction(Function toPlot, double minX, double maxX, int steps, String name, Color colour) {
         Series s = createSeries(name, colour);
         s.showMarkers(false);
 
-        for (double x : Util.makeLinearArray(minX, maxX, numSteps)) {
+        for (double x : Util.makeLinearArray(minX, maxX, steps)) {
             s.addPoint(x, toPlot.value(x));
         }
 

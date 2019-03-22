@@ -51,6 +51,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
         setYAutoRemove(Double.POSITIVE_INFINITY);
     }
 
+    void remove();
 
     void updateLimits();
 

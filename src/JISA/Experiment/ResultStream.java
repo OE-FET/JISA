@@ -1,5 +1,7 @@
 package JISA.Experiment;
 
+import JISA.Util;
+
 import java.io.*;
 import java.util.Iterator;
 
@@ -33,6 +35,10 @@ public class ResultStream extends ResultTable {
 
     @Override
     public void setUnits(String... units) {
+
+        if (!open) {
+            throw new IllegalStateException("You cannot alter a finalised ResultTable");
+        }
 
         if (units.length != cols) {
             return;
@@ -199,6 +205,15 @@ public class ResultStream extends ResultTable {
             return new Result(dVals);
         } catch (IOException e) {
             return null;
+        }
+    }
+
+    @Override
+    public void close() {
+        try {
+            file.close();
+        } catch (IOException e) {
+            Util.exceptionHandler(e);
         }
     }
 
