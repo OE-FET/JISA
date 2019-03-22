@@ -16,10 +16,11 @@ import java.util.List;
 public class Fields extends JFXWindow implements Element {
 
     public  BorderPane                       pane;
-    public  VBox                             list;
+    public  GridPane                         list;
     public  ButtonBar                        buttonBar;
     private LinkedHashMap<String, TextField> map    = new LinkedHashMap<>();
     private List<Field>                      fields = new LinkedList<>();
+    private int                              rows   = 0;
 
     /**
      * Creates a input fields group for user-input.
@@ -39,21 +40,19 @@ public class Fields extends JFXWindow implements Element {
      */
     public Field<String> addTextField(String name) {
 
-        HBox box = new HBox();
-        box.setSpacing(15);
-        box.setAlignment(Pos.CENTER_LEFT);
 
-        javafx.scene.control.TextField field = new javafx.scene.control.TextField();
+        TextField field = new TextField();
         field.setMaxWidth(Integer.MAX_VALUE);
         Label label = new Label(name);
-        label.setMinWidth(150);
-        HBox.setHgrow(field, Priority.ALWAYS);
+        label.setMinWidth(Region.USE_PREF_SIZE);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(field, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(field, Priority.ALWAYS);
 
-        box.getChildren().addAll(label, field);
-        GUI.runNow(() -> list.getChildren().add(box));
+        GUI.runNow(() -> list.addRow(rows++, label, field));
 
-
-        Field<String> f =  new Field<String>() {
+        Field<String> f = new Field<String>() {
 
             private ChangeListener<String> list = null;
 
@@ -123,11 +122,13 @@ public class Fields extends JFXWindow implements Element {
         CheckBox field = new CheckBox();
         field.setMaxWidth(Integer.MAX_VALUE);
         Label label = new Label(name);
-        label.setMinWidth(150);
-        HBox.setHgrow(field, Priority.ALWAYS);
+        label.setMinWidth(Region.USE_PREF_SIZE);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(field, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(field, Priority.ALWAYS);
 
-        box.getChildren().addAll(label, field);
-        GUI.runNow(() -> list.getChildren().add(box));
+        GUI.runNow(() -> list.addRow(rows++, label, field));
 
 
         Field<Boolean> f = new Field<Boolean>() {
@@ -200,7 +201,9 @@ public class Fields extends JFXWindow implements Element {
 
         TextField field  = new TextField();
         Label     label  = new Label(name);
+        label.setMinWidth(Region.USE_PREF_SIZE);
         Button    button = new Button("Browse...");
+        button.setMinWidth(Region.USE_PREF_SIZE);
         button.setOnAction(actionEvent -> {
             String file = GUI.saveFileSelect();
             if (file != null) {
@@ -208,11 +211,17 @@ public class Fields extends JFXWindow implements Element {
             }
         });
         field.setMaxWidth(Integer.MAX_VALUE);
-        label.setMinWidth(150);
-        HBox.setHgrow(field, Priority.ALWAYS);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(field, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(field, Priority.ALWAYS);
 
-        box.getChildren().addAll(label, field, button);
-        GUI.runNow(() -> list.getChildren().add(box));
+        HBox inner = new HBox(field, button);
+        HBox.setHgrow(field, Priority.ALWAYS);
+        HBox.setHgrow(button, Priority.NEVER);
+        inner.setSpacing(15);
+
+        GUI.runNow(() -> list.addRow(rows++, label, inner));
 
 
         Field<String> f = new Field<String>() {
@@ -286,7 +295,9 @@ public class Fields extends JFXWindow implements Element {
 
         TextField field  = new TextField();
         Label     label  = new Label(name);
+        label.setMinWidth(Region.USE_PREF_SIZE);
         Button    button = new Button("Browse...");
+        button.setMinWidth(Region.USE_PREF_SIZE);
         button.setOnAction(actionEvent -> {
             String file = GUI.openFileSelect();
             if (file != null) {
@@ -294,11 +305,17 @@ public class Fields extends JFXWindow implements Element {
             }
         });
         field.setMaxWidth(Integer.MAX_VALUE);
-        label.setMinWidth(150);
-        HBox.setHgrow(field, Priority.ALWAYS);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(field, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(field, Priority.ALWAYS);
 
-        box.getChildren().addAll(label, field, button);
-        GUI.runNow(() -> list.getChildren().add(box));
+        HBox inner = new HBox(field, button);
+        HBox.setHgrow(field, Priority.ALWAYS);
+        HBox.setHgrow(button, Priority.NEVER);
+        inner.setSpacing(15);
+
+        GUI.runNow(() -> list.addRow(rows++, label, inner));
 
         Field<String> f = new Field<String>() {
 
@@ -372,11 +389,13 @@ public class Fields extends JFXWindow implements Element {
         IntegerField field = new IntegerField();
         field.setMaxWidth(Integer.MAX_VALUE);
         Label label = new Label(name);
-        label.setMinWidth(150);
-        HBox.setHgrow(field, Priority.ALWAYS);
+        label.setMinWidth(Region.USE_PREF_SIZE);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(field, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(field, Priority.ALWAYS);
 
-        box.getChildren().addAll(label, field);
-        GUI.runNow(() -> list.getChildren().add(box));
+        GUI.runNow(() -> list.addRow(rows++, label, field));
 
         Field<Integer> f = new Field<Integer>() {
 
@@ -448,11 +467,13 @@ public class Fields extends JFXWindow implements Element {
         DoubleInput field = new DoubleInput();
         field.setMaxWidth(Integer.MAX_VALUE);
         Label label = new Label(name);
-        label.setMinWidth(150);
-        HBox.setHgrow(field, Priority.ALWAYS);
+        label.setMinWidth(Region.USE_PREF_SIZE);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(field, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(field, Priority.ALWAYS);
 
-        box.getChildren().addAll(label, field);
-        GUI.runNow(() -> list.getChildren().add(box));
+        GUI.runNow(() -> list.addRow(rows++, label, field));
 
         Field<Double> f = new Field<Double>() {
 
@@ -519,11 +540,13 @@ public class Fields extends JFXWindow implements Element {
         ChoiceBox<String> field = new ChoiceBox<>();
         field.setMaxWidth(Integer.MAX_VALUE);
         Label label = new Label(name);
-        label.setMinWidth(150);
-        HBox.setHgrow(field, Priority.ALWAYS);
+        label.setMinWidth(Region.USE_PREF_SIZE);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(field, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(field, Priority.ALWAYS);
 
-        box.getChildren().addAll(label, field);
-        GUI.runNow(() -> list.getChildren().add(box));
+        GUI.runNow(() -> list.addRow(rows++, label, field));
 
         field.getItems().addAll(options);
 
@@ -602,7 +625,8 @@ public class Fields extends JFXWindow implements Element {
     public void addSeparator() {
 
         Separator separator = new Separator();
-        GUI.runNow(() -> list.getChildren().add(separator));
+        GUI.runNow(() -> list.addRow(rows++, separator));
+        GridPane.setColumnSpan(separator, 2);
         VBox.setVgrow(separator, Priority.ALWAYS);
 
     }

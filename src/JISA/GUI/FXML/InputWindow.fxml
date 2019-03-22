@@ -5,14 +5,15 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="pane"  xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+<?import javafx.scene.layout.GridPane?>
+<BorderPane fx:id="pane" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
 
     <center>
-        <VBox fx:id="list" spacing="15.0" BorderPane.alignment="TOP_LEFT">
+        <GridPane fx:id="list" vgap="15.0" hgap="15.0" BorderPane.alignment="TOP_LEFT">
             <padding>
                 <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
             </padding>
-        </VBox>
+        </GridPane>
     </center>
 
     <bottom>
