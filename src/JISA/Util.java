@@ -101,6 +101,20 @@ public class Util {
 
     }
 
+    public static double[] reverseArray(double[] arr) {
+
+        double[] array = arr.clone();
+
+        for (int i = 0; i < array.length / 2; i++) {
+            double temp = array[i];
+            array[i] = array[array.length - i - 1];
+            array[array.length - i - 1] = temp;
+        }
+
+        return array;
+
+    }
+
     public static double[] makeLogarithmicArray(double min, double max, int numSteps) {
 
         double[] values = new double[numSteps];
