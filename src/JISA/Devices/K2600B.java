@@ -62,78 +62,6 @@ public class K2600B extends MCSMU {
     private ReadFilter[] filterV     = {null, null};
     private ReadFilter[] filterI     = {null, null};
 
-    // == FILTERS ======================================================================================================
-    private class BlankFilter extends BypassFilter {
-
-        public BlankFilter(int channel, String command, Object... args) {
-            super(
-                    () -> K2600B.this.queryDouble(command, args),
-                    (c) -> {
-                        K2600B.this.write(C_SET_AVG_COUNT, CHANNELS[channel], 1);
-                        K2600B.this.write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_REPEAT_MEAN);
-                        K2600B.this.write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_OFF);
-                    }
-            );
-        }
-    }
-
-    private class MeanRFilter extends BypassFilter {
-
-        public MeanRFilter(int channel, String command, Object... args) {
-            super(
-                    () -> K2600B.this.queryDouble(command, args),
-                    (c) -> {
-                        K2600B.this.write(C_SET_AVG_COUNT, CHANNELS[channel], c);
-                        K2600B.this.write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_REPEAT_MEAN);
-                        K2600B.this.write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_ON);
-                    }
-            );
-        }
-    }
-
-    private class MeanMFilter extends BypassFilter {
-
-        public MeanMFilter(int channel, String command, Object... args) {
-            super(
-                    () -> K2600B.this.queryDouble(command, args),
-                    (c) -> {
-                        K2600B.this.write(C_SET_AVG_COUNT, CHANNELS[channel], c);
-                        K2600B.this.write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_MOVING_MEAN);
-                        K2600B.this.write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_ON);
-                    }
-            );
-        }
-    }
-
-    private class MedRFilter extends MedianRepeatFilter {
-
-        public MedRFilter(int channel, String command, Object... args) {
-            super(
-                    () -> K2600B.this.queryDouble(command, args),
-                    (c) -> {
-                        K2600B.this.write(C_SET_AVG_COUNT, CHANNELS[channel], 1);
-                        K2600B.this.write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_REPEAT_MEAN);
-                        K2600B.this.write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_OFF);
-                    }
-            );
-        }
-    }
-
-
-    private class MedMFilter extends BypassFilter {
-
-        public MedMFilter(int channel, String command, Object... args) {
-            super(
-                    () -> K2600B.this.queryDouble(command, args),
-                    (c) -> {
-                        K2600B.this.write(C_SET_AVG_COUNT, CHANNELS[channel], c);
-                        K2600B.this.write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_MOVING_MEDIAN);
-                        K2600B.this.write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_ON);
-                    }
-            );
-        }
-    }
-
     public K2600B(Address address) throws IOException, DeviceException {
 
         super(address);
@@ -188,6 +116,12 @@ public class K2600B extends MCSMU {
         write(C_SET_VOLT, CHANNELS[channel], voltage);
         setSource(channel, Source.VOLTAGE);
 
+    }
+
+    private void disableAveraging(int channel) throws IOException {
+        write(C_SET_AVG_COUNT, CHANNELS[channel], 1);
+        write(C_SET_AVG_MODE, CHANNELS[channel], FILTER_REPEAT_MEAN);
+        write(C_SET_AVG_STATE, CHANNELS[channel], OUTPUT_OFF);
     }
 
     @Override
@@ -377,28 +311,28 @@ public class K2600B extends MCSMU {
         switch (mode) {
 
             case NONE:
-                filterV[channel] = new BlankFilter(channel, C_QUERY_VOLT, CHANNELS[channel]);
-                filterI[channel] = new BlankFilter(channel, C_QUERY_CURR, CHANNELS[channel]);
+                filterV[channel] = new BypassFilter(() -> measureVoltage(channel), (c) -> disableAveraging(channel));
+                filterI[channel] = new BypassFilter(() -> measureCurrent(channel), (c) -> disableAveraging(channel));
                 break;
 
             case MEAN_REPEAT:
-                filterV[channel] = new MeanRFilter(channel, C_QUERY_VOLT, CHANNELS[channel]);
-                filterI[channel] = new MeanRFilter(channel, C_QUERY_CURR, CHANNELS[channel]);
+                filterV[channel] = new MeanRepeatFilter(() -> measureVoltage(channel), (c) -> disableAveraging(channel));
+                filterI[channel] = new MeanRepeatFilter(() -> measureCurrent(channel), (c) -> disableAveraging(channel));
                 break;
 
             case MEAN_MOVING:
-                filterV[channel] = new MeanMFilter(channel, C_QUERY_VOLT, CHANNELS[channel]);
-                filterI[channel] = new MeanMFilter(channel, C_QUERY_CURR, CHANNELS[channel]);
+                filterV[channel] = new MeanMovingFilter(() -> measureVoltage(channel), (c) -> disableAveraging(channel));
+                filterI[channel] = new MeanMovingFilter(() -> measureCurrent(channel), (c) -> disableAveraging(channel));
                 break;
 
             case MEDIAN_REPEAT:
-                filterV[channel] = new MedRFilter(channel, C_QUERY_VOLT, CHANNELS[channel]);
-                filterI[channel] = new MedRFilter(channel, C_QUERY_CURR, CHANNELS[channel]);
+                filterV[channel] = new MedianRepeatFilter(() -> measureVoltage(channel), (c) -> disableAveraging(channel));
+                filterI[channel] = new MedianRepeatFilter(() -> measureCurrent(channel), (c) -> disableAveraging(channel));
                 break;
 
             case MEDIAN_MOVING:
-                filterV[channel] = new MedMFilter(channel, C_QUERY_VOLT, CHANNELS[channel]);
-                filterI[channel] = new MedMFilter(channel, C_QUERY_CURR, CHANNELS[channel]);
+                filterV[channel] = new MedianMovingFilter(() -> measureVoltage(channel), (c) -> disableAveraging(channel));
+                filterI[channel] = new MedianMovingFilter(() -> measureCurrent(channel), (c) -> disableAveraging(channel));
                 break;
 
         }
@@ -406,6 +340,14 @@ public class K2600B extends MCSMU {
         filterMode[channel] = mode;
         resetFilters(channel);
 
+    }
+
+    protected double measureVoltage(int channel) throws IOException {
+        return queryDouble(C_QUERY_VOLT, CHANNELS[channel]);
+    }
+
+    protected double measureCurrent(int channel) throws IOException {
+        return queryDouble(C_QUERY_CURR, CHANNELS[channel]);
     }
 
     private void resetFilters(int channel) throws IOException, DeviceException {
@@ -746,18 +688,18 @@ public class K2600B extends MCSMU {
         private String     symbol;
         private SMU.Source smu;
 
+        SFunc(String tag, String symbol, SMU.Source smu) {
+            this.tag = tag;
+            this.symbol = symbol;
+            this.smu = smu;
+        }
+
         public static SFunc fromString(String tag) {
             return fMap.getOrDefault(tag, null);
         }
 
         public static SFunc fromSMU(SMU.Source s) {
             return sMap.getOrDefault(s, null);
-        }
-
-        SFunc(String tag, String symbol, SMU.Source smu) {
-            this.tag = tag;
-            this.symbol = symbol;
-            this.smu = smu;
         }
 
         public String toString() {
