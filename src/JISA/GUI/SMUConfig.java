@@ -14,7 +14,8 @@ public class SMUConfig extends Fields {
     private Field<Integer>          smu    = addChoice("SMU", "SMU 1", "SMU 2");
     private Field<Integer>          chn    = addChoice("Channel", "Channel 0", "Channel 1", "Channel 2", "Channel 3");
     private Field<Integer>          trm    = addChoice("Terminals", "Front (NONE)", "Rear (NONE)");
-    private Field<Double>           lim    = addDoubleField("Current Limit [A]");
+    private Field<Double>           vlm    = addDoubleField("Voltage Limit [V]");
+    private Field<Double>           ilm    = addDoubleField("Current Limit [A]");
     private InstrumentConfig<SMU>[] instruments;
     private ConfigStore             config = null;
     private String                  key    = null;
@@ -43,7 +44,8 @@ public class SMUConfig extends Fields {
         this.instruments = instruments;
         chn.set(0);
         trm.set(0);
-        lim.set(0.02);
+        vlm.set(200.0);
+        ilm.set(0.02);
 
         String[] names = new String[instruments.length];
 
@@ -119,11 +121,12 @@ public class SMUConfig extends Fields {
 
     }
 
-    public void setValues(int smu, int chn, int trm, double lim) {
+    public void setValues(int smu, int chn, int trm, double vLim, double iLim) {
         this.smu.set(smu);
         this.chn.set(chn);
         this.trm.set(trm);
-        this.lim.set(lim);
+        this.vlm.set(vLim);
+        this.ilm.set(iLim);
     }
 
     public SMU getSMU() {
@@ -156,7 +159,7 @@ public class SMUConfig extends Fields {
         }
 
         try {
-            toReturn.setCurrentLimit(getLimit());
+            toReturn.setLimits(getVoltageLimit(), getCurrentLimit());
             toReturn.setTerminals(getTerminals());
         } catch (DeviceException | IOException e) {
             return null;
@@ -174,8 +177,12 @@ public class SMUConfig extends Fields {
         return SMU.Terminals.values()[trm.get()];
     }
 
-    public double getLimit() {
-        return lim.get();
+    public double getVoltageLimit() {
+        return vlm.get();
+    }
+
+    public double getCurrentLimit() {
+        return ilm.get();
     }
 
     private void save() {
@@ -196,7 +203,8 @@ public class SMUConfig extends Fields {
                 data.put("smu", smu.get());
                 data.put("channel", chn.get());
                 data.put("terminals", trm.get());
-                data.put("limit", lim.get());
+                data.put("vimit", vlm.get());
+                data.put("limit", ilm.get());
 
                 config.save();
 
@@ -241,7 +249,18 @@ public class SMUConfig extends Fields {
 
     private void saveLIM() {
         if (config != null && key != null && data != null) {
-            data.put("limit", lim.get());
+            data.put("limit", ilm.get());
+            try {
+                config.save();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void saveVLM() {
+        if (config != null && key != null && data != null) {
+            data.put("vimit", vlm.get());
             try {
                 config.save();
             } catch (IOException e) {
@@ -262,12 +281,14 @@ public class SMUConfig extends Fields {
 
         chn.set(data.getInt("channel"));
         trm.set(data.getInt("terminals"));
-        lim.set(data.getDouble("limit"));
+        vlm.set(data.has("vimit") ? data.getDouble("vimit") : 200.0);
+        ilm.set(data.has("limit") ? data.getDouble("limit") : 0.02);
         smu.set(data.getInt("smu"));
 
         chn.setOnChange(this::saveCHN);
         trm.setOnChange(this::saveTRM);
-        lim.setOnChange(this::saveLIM);
+        vlm.setOnChange(this::saveVLM);
+        ilm.setOnChange(this::saveLIM);
 
         smu.setOnChange(() -> {
             update(false);

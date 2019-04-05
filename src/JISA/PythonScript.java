@@ -2,21 +2,16 @@ package JISA;
 
 import org.python.util.PythonInterpreter;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 
 public class PythonScript {
 
     private InputStream       stream;
     private PythonInterpreter interpreter;
 
-    public PythonScript(URL file) throws IOException {
-
+    public PythonScript(String fileName) {
         interpreter = new PythonInterpreter();
-        stream = new FileInputStream(file.getPath());
-
+        stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName);
     }
 
     public void run() {

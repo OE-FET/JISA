@@ -12,8 +12,6 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/guava-20.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/javassist-3.21.0-GA.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/json-20180813.jar" path-in-jar="/" />
-      <element id="dir-copy" path="$PROJECT_DIR$/src/JISA" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jython-standalone-2.7.0.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
