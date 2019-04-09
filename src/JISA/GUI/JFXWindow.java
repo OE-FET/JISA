@@ -71,17 +71,18 @@ public class JFXWindow implements Element {
         loader.setController(this);
 
         // Load our layout from our FXML file as a "Scene":
-        try {
-            Scene scene = new Scene(loader.load());
-            // Create the stage (window) and add the layout to it in GUI thread.
-            GUI.runNow(() -> {
-                stage = new Stage();
-                stage.setScene(scene);
-                stage.setTitle(title);
-            });
-        } catch (IOException ignored) {
-
-        }
+        // Create the stage (window) and add the layout to it in GUI thread.
+        GUI.runNow(() -> {
+            Scene scene = null;
+            try {
+                scene = new Scene(loader.load());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            stage = new Stage();
+            stage.setScene(scene);
+            stage.setTitle(title);
+        });
     }
 
     /**

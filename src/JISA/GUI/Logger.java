@@ -72,4 +72,8 @@ public class Logger extends JFXWindow {
 
     }
 
+    public synchronized void clear() {
+        GUI.runNow(list.getItems()::clear);
+    }
+
 }

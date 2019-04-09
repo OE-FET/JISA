@@ -16,5 +16,7 @@
     <orderEntry type="library" name="json-20180813" level="project" />
     <orderEntry type="library" name="snappy-java-1.1.2.1" level="project" />
     <orderEntry type="library" name="jython-standalone-2.7.0" level="project" />
+    <orderEntry type="library" name="swt-3.3.0-v3346" level="project" />
+    <orderEntry type="library" name="commonmark-0.12.1" level="project" />
   </component>
 </module>
