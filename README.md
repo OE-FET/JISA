@@ -53,7 +53,7 @@ grid.show();
 
 
 ## JISA the Polyglot
-`JISA`  is written in Java, but because Java is all about magic beans, you can actually use it in almost any language. More specifically, any language that can either be compiled to java-byte code or interpreted by a Java program (so basically anything) can use the library.
+`JISA`  is written in Java, but because Java is all about magic beans, you can actually use it in almost any language. More specifically, any language that can either be compiled to java byte-code or interpreted by a Java program (so basically anything) can use the library.
 
 For example, here's the same program written in Java, Kotlin, Python and even gosh-darn MATLAB:
 
