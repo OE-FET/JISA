@@ -34,14 +34,15 @@ public class Fields extends JFXWindow implements Element {
     /**
      * Add a simple text box to the fields group. Accepts any string.
      *
-     * @param name Name of the field
+     * @param name         Name of the field
+     * @param initialValue Initial value to show in the text-box
      *
      * @return Reference object (SetGettable) to set and get the value of the text-box
      */
-    public Field<String> addTextField(String name) {
+    public Field<String> addTextField(String name, String initialValue) {
 
 
-        TextField field = new TextField();
+        TextField field = new TextField(initialValue);
         field.setMaxWidth(Integer.MAX_VALUE);
         Label label = new Label(name);
         label.setMinWidth(Region.USE_PREF_SIZE);
@@ -106,20 +107,35 @@ public class Fields extends JFXWindow implements Element {
 
     }
 
+
     /**
-     * Adds a check-box to the fields group. Provides boolean user input.
+     * Add a simple text box to the fields group. Accepts any string.
      *
      * @param name Name of the field
      *
+     * @return Reference object (SetGettable) to set and get the value of the text-box
+     */
+    public Field<String> addTextField(String name) {
+        return addTextField(name, "");
+    }
+
+
+    /**
+     * Adds a check-box to the fields group. Provides boolean user input.
+     *
+     * @param name         Name of the field
+     * @param initialValue Initial state of the check-box
+     *
      * @return Reference object to set and get the value (true or false) of the check-box
      */
-    public Field<Boolean> addCheckBox(String name) {
+    public Field<Boolean> addCheckBox(String name, boolean initialValue) {
 
         HBox box = new HBox();
         box.setSpacing(15);
         box.setAlignment(Pos.CENTER_LEFT);
 
         CheckBox field = new CheckBox();
+        field.setSelected(initialValue);
         field.setMaxWidth(Integer.MAX_VALUE);
         Label label = new Label(name);
         label.setMinWidth(Region.USE_PREF_SIZE);
@@ -187,22 +203,34 @@ public class Fields extends JFXWindow implements Element {
     }
 
     /**
-     * Adds a text-box with a "browse" button for selecting a file save location.
+     * Adds a check-box to the fields group. Provides boolean user input.
      *
      * @param name Name of the field
      *
+     * @return Reference object to set and get the value (true or false) of the check-box
+     */
+    public Field<Boolean> addCheckBox(String name) {
+        return addCheckBox(name, false);
+    }
+
+    /**
+     * Adds a text-box with a "browse" button for selecting a file save location.
+     *
+     * @param name         Name of the field
+     * @param initialValue Initial value to display
+     *
      * @return SetGettable object that can set or get the selected file path as a String
      */
-    public Field<String> addFileSave(String name) {
+    public Field<String> addFileSave(String name, String initialValue) {
 
         HBox box = new HBox();
         box.setSpacing(15);
         box.setAlignment(Pos.CENTER_LEFT);
 
-        TextField field  = new TextField();
-        Label     label  = new Label(name);
+        TextField field = new TextField(initialValue);
+        Label     label = new Label(name);
         label.setMinWidth(Region.USE_PREF_SIZE);
-        Button    button = new Button("Browse...");
+        Button button = new Button("Browse...");
         button.setMinWidth(Region.USE_PREF_SIZE);
         button.setOnAction(actionEvent -> {
             String file = GUI.saveFileSelect();
@@ -281,22 +309,33 @@ public class Fields extends JFXWindow implements Element {
     }
 
     /**
+     * Adds a text-box with a "browse" button for selecting a file save location.
+     *
+     * @param name Name of the field
+     *
+     * @return SetGettable object that can set or get the selected file path as a String
+     */
+    public Field<String> addFileSave(String name) {
+        return addFileSave(name, "");
+    }
+
+    /**
      * Adds a text-box with a "browse" button for selecting a file for opening.
      *
      * @param name Name of the field
      *
      * @return SetGettable object that can set or get the selected file path as a String
      */
-    public Field<String> addFileOpen(String name) {
+    public Field<String> addFileOpen(String name, String initialValue) {
 
         HBox box = new HBox();
         box.setSpacing(15);
         box.setAlignment(Pos.CENTER_LEFT);
 
-        TextField field  = new TextField();
-        Label     label  = new Label(name);
+        TextField field = new TextField(initialValue);
+        Label     label = new Label(name);
         label.setMinWidth(Region.USE_PREF_SIZE);
-        Button    button = new Button("Browse...");
+        Button button = new Button("Browse...");
         button.setMinWidth(Region.USE_PREF_SIZE);
         button.setOnAction(actionEvent -> {
             String file = GUI.openFileSelect();
@@ -374,19 +413,32 @@ public class Fields extends JFXWindow implements Element {
     }
 
     /**
-     * Adds a text box that only accepts integer values.
+     * Adds a text-box with a "browse" button for selecting a file for opening.
      *
      * @param name Name of the field
      *
+     * @return SetGettable object that can set or get the selected file path as a String
+     */
+    public Field<String> addFileOpen(String name) {
+        return addFileOpen(name, "");
+    }
+
+    /**
+     * Adds a text box that only accepts integer values.
+     *
+     * @param name         Name of the field
+     * @param initialValue Initial value to display
+     *
      * @return SetGettable to set or get the value as an integer
      */
-    public Field<Integer> addIntegerField(String name) {
+    public Field<Integer> addIntegerField(String name, int initialValue) {
 
         HBox box = new HBox();
         box.setSpacing(15);
         box.setAlignment(Pos.CENTER_LEFT);
 
         IntegerField field = new IntegerField();
+        field.setText(String.valueOf(initialValue));
         field.setMaxWidth(Integer.MAX_VALUE);
         Label label = new Label(name);
         label.setMinWidth(Region.USE_PREF_SIZE);
@@ -452,19 +504,32 @@ public class Fields extends JFXWindow implements Element {
     }
 
     /**
-     * Adds a text box that only accepts numerical (decimal, floating point) values.
+     * Adds a text box that only accepts integer values.
      *
      * @param name Name of the field
      *
+     * @return SetGettable to set or get the value as an integer
+     */
+    public Field<Integer> addIntegerField(String name) {
+        return addIntegerField(name, 0);
+    }
+
+    /**
+     * Adds a text box that only accepts numerical (decimal, floating point) values.
+     *
+     * @param name         Name of the field
+     * @param initialValue Initial value to display
+     *
      * @return SetGettable to set or get the value as a double
      */
-    public Field<Double> addDoubleField(String name) {
+    public Field<Double> addDoubleField(String name, double initialValue) {
 
         HBox box = new HBox();
         box.setSpacing(15);
         box.setAlignment(Pos.CENTER_LEFT);
 
         DoubleInput field = new DoubleInput();
+        field.setValue(initialValue);
         field.setMaxWidth(Integer.MAX_VALUE);
         Label label = new Label(name);
         label.setMinWidth(Region.USE_PREF_SIZE);
@@ -524,14 +589,26 @@ public class Fields extends JFXWindow implements Element {
     }
 
     /**
+     * Adds a text box that only accepts numerical (decimal, floating point) values.
+     *
+     * @param name Name of the field
+     *
+     * @return SetGettable to set or get the value as a double
+     */
+    public Field<Double> addDoubleField(String name) {
+        return addDoubleField(name, 0.0);
+    }
+
+    /**
      * Adds a drop-down box with the specified choices.
      *
-     * @param name    Name of the field
-     * @param options Array of names for the options
+     * @param name         Name of the field
+     * @param initialValue Index of option to initially have selected
+     * @param options      Array of names for the options
      *
      * @return SetGettable to set and get the selected value, represented as an integer (0 = first option, 1 = second option etc)
      */
-    public Field<Integer> addChoice(String name, String... options) {
+    public Field<Integer> addChoice(String name, int initialValue, String... options) {
 
         HBox box = new HBox();
         box.setSpacing(15);
@@ -549,6 +626,7 @@ public class Fields extends JFXWindow implements Element {
         GUI.runNow(() -> list.addRow(rows++, label, field));
 
         field.getItems().addAll(options);
+        field.getSelectionModel().select(initialValue);
 
         Field<Integer> f = new Field<Integer>() {
 
@@ -614,6 +692,18 @@ public class Fields extends JFXWindow implements Element {
         fields.add(f);
         return f;
 
+    }
+
+    /**
+     * Adds a drop-down box with the specified choices.
+     *
+     * @param name    Name of the field
+     * @param options Array of names for the options
+     *
+     * @return SetGettable to set and get the selected value, represented as an integer (0 = first option, 1 = second option etc)
+     */
+    public Field<Integer> addChoice(String name, String... options) {
+        return addChoice(name, 0, options);
     }
 
     @Override
