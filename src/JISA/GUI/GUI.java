@@ -26,9 +26,18 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class GUI extends Application {
 
-    private static boolean   done = false;
+    private static boolean   done   = false;
     private static File      file;
     private static Semaphore s;
+    private static boolean   loaded = false;
+
+    static {
+        (new Thread(GUI::startGUI)).start();
+    }
+
+    public static void touch() {
+
+    }
 
     /**
      * Displays an error dialogue box, halting the thread until the user closes it.
@@ -361,6 +370,10 @@ public class GUI extends Application {
      */
     public static void startGUI() {
 
+        if (loaded) {
+            return;
+        }
+
         s = new Semaphore(0);
         try {
             Thread t = new Thread(() -> {
@@ -373,6 +386,7 @@ public class GUI extends Application {
             t.start();
             s.acquire();
             Platform.setImplicitExit(false);
+            loaded = true;
         } catch (Exception ignored) {
 
         }

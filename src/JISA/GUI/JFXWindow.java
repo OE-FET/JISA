@@ -22,6 +22,8 @@ public class JFXWindow implements Element {
      */
     public JFXWindow(String title, String fxmlPath) throws IOException {
 
+        GUI.touch();
+
         // Create a loader for our FXML file
         FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
 
@@ -41,6 +43,9 @@ public class JFXWindow implements Element {
     }
 
     protected JFXWindow(String title, String fxmlPath, boolean ignore) {
+
+        GUI.touch();
+
         // Create a loader for our FXML file
         FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
 
@@ -63,6 +68,8 @@ public class JFXWindow implements Element {
     }
 
     protected JFXWindow(String title, URL resource) {
+
+        GUI.touch();
 
         // Create a loader for our FXML file
         FXMLLoader loader = new FXMLLoader(resource);
