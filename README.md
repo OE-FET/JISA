@@ -1,23 +1,194 @@
-# JISA - VISA-based experiment toolkit implemented in Java
-Welcome to the JISA project! The LabView replacement library written in Java. For more details, please visit the [wiki](https://github.com/OE-FET/JISA/wiki)
+# JISA - Because f**k LabView (in Java, Python, Kotlin or whatever you want)
+`JISA` is a library that I created because I really (really really really) do not like LabView. Not to mention they named their language "G" as if it's somehow comparable to C. This hubris cannot and will not stand.
 
-Providing a unified means of controlling instrumentation, handling raw data and creating simple but functional user interfaces, using either Java or Python (Jython).
+In essence then, the purpose of `JISA` is to act as an alternative (and actually decent) means of creating experimental control systems. It comprises, largely, of three sections:
+### 1. Standardised Instrument Control
+```java
+SMU smu1 = new K2560(new TCPIPAddress("192.168.0.2")); // Keithley 2450
+SMU smu2 = new K236(new GPIBAdrress(0,17));            // Keithley 236
 
-[![GUI Example](https://i.imgur.com/j93Jttm.png)](https://i.imgur.com/j93Jttm.png)
->A JISA-based program written to perform FET characterisation measurements, running on Linux.
+smu1.setVoltage(5.0);
+smu1.turnOn();
 
-![](controlshadow.png)
->Another JISA-based program written for performing AC Hall effect measurements, running on Windows.
+smu2.setVoltage(5.0); // Same code, despite different SMU
+smu2.turnOn();
+```
+### 2. Data Handling
+```java
+ResultList results = new ResultList("Voltage", "Current", "Temperature");
 
-For more info, visit the [wiki](https://github.com/OE-FET/JISA/wiki)
+for (int i = 0; i < 10; i++) {
+    results.addData(smu.getVoltage(), smu.getCurrent(), tc.getTemperature());
+}
 
-## What is JISA?
-JISA is a Java libary that I originally designed because I really really really did not want to use LabView. It is largely comprised of three parts:
-1. Instrument control via VISA
-2. Dealing with experimental data
-3. Creating simple GUIs to control and observe experiments
+results.output("data.csv"); // Easy output as CSV file
+```
+### 3. GUI Building Blocks
+```java
+Fields params = new Fields("Parameters");
 
-You can also use it in python by using the Jython interpreter.
+Field<Double>  minV = params.addDoubleField("Min V [V]", 0.0);
+Field<Double>  maxV = params.addDoubleField("Max V [V]", 60.0);
+Field<Integer> numV = params.addIntegerField("No. Steps", 61);
+
+Plot plot = new Plot("Results", "Voltage", "Current");
+
+Grid grid = new Grid("Main Window", params, plot);
+
+grid.addToolbarButton("Start Sweep", () -> {
+
+    double[] voltages = Util.makeLinearArray(
+        minV.get(),
+        maxV.get(),
+        numV.get()
+    ); // Makes array starting at minV, ending at maxV in numV steps
+    
+    // Code to run sweep
+    
+});
+
+grid.show();
+```
+![](https://i.imgur.com/afQsknr.png)
+
+
+## JISA the Polyglot
+`JISA`  is written in Java, but because Java is all about magic beans, you can actually use it in almost any language. More specifically, any language that can either be compiled to java-byte code or interpreted by a Java program (so basically anything) can use the library.
+
+For example, here's the same program written in Java, Kotlin, Python and even gosh-darn MATLAB:
+
+**Java - Classic style, fast, robust but strict**
+```java
+public static void main(String[] args) throws Exception {
+
+    SMU         smu     = new K2450(new GPIBAddress(0, 20));
+    ResultTable results = new ResultList("Voltage", "Current");
+
+    results.setUnits("V", "A");
+
+    smu.setVoltage(0.0);
+    smu.turnOn();
+    
+    for (double v : Util.makeLinearArray(0,60,61)) {
+    
+        smu.setVoltage(v);
+        Util.sleep(500);
+        results.addData(smu.getVoltage(), smu.getCurrent());
+        
+    }
+    
+    smu.turnOff();
+    results.output("data.csv");
+    
+}
+```
+**Kotlin - Simple, concise and fast - great for beginners**
+```kotlin
+fun main() {
+
+    val smu     = K2450(GPIBAddress(0,20))
+    val results = ResultList("Voltage", "Current")
+
+    results.setUnits("V", "A")
+
+    smu.setVoltage(0.0)
+    smu.turnOn()
+
+    for (v in Util.makeLinearArray(0.0,60.0,61)) {
+    
+        smu.setVoltage(v)
+        Util.sleep(500)
+        results.addData(smu.getVoltage(), smu.getCurrent())
+        
+    }
+    
+    smu.turnOff()
+    results.output("data.csv")
+
+}
+```
+**Python (Jython) - Simple like Kotlin, but slooooow and less robust**
+```python
+def main():
+    
+    smu     = K2450(GPIBAddress(0,20))
+    results = ResultList(["Voltage", "Current"])
+    
+    results.setUnits(["V", "A"])   
+
+    smu.setVoltage(0.0)
+    smu.turnOn()
+    
+    for v in Util.makeLinearArray(0.0,60.0,61):
+    
+        smu.setVoltage(v)
+        Util.sleep(500)
+        results.addData([smu.getVoltage(), smu.getCurrent()])
+    
+    
+    smu.turnOff()
+    results.output("data.csv")
+
+```
+**MATLAB - Why?**
+```matlab
+function main()
+    
+    smu     = JISA.Devices.K2450(JISA.Addresses.GPIBAddress(0,20));
+    results = JISA.Experiment.ResultList({'Voltage', 'Current'});
+
+    results.setUnits({'V', 'A'});    
+
+    smu.setVoltage(0.0);
+    smu.turnOn();
+    
+    for v=JISA.Util.makeLinearArray(0.0,60.0,61)
+    
+        smu.setVoltage(v);
+        JISA.Util.sleep(500);
+        results.addData([smu.getVoltage(), smu.getCurrent()]);
+        
+    end
+    
+    smu.turnOff();
+    results.output('data.csv');
+    
+end
+```
+We can then extend this program easily, with only two lines, to display a plot of the results as they come in. Taking the example in Kotlin:
+```kotlin
+fun main() {
+
+    val smu     = K2450(GPIBAddress(0,20))
+    val results = ResultList("Voltage", "Current")
+
+    results.setUnits("V", "A")    
+
+    // Make a plot that watches our results
+    val plot = Plot("Results", results)
+    plot.show()
+
+    smu.setVoltage(0.0)
+    smu.turnOn()
+
+    for (v in Util.makeLinearArray(0,60,61)) {
+    
+        smu.setVoltage(v)
+        Util.sleep(500)
+        results.addData(smu.getVoltage(), smu.getCurrent())
+        
+    }
+    
+    smu.turnOff()
+    results.output("data.csv")
+
+}
+```
+Resulting in:
+
+![](https://i.imgur.com/Rqs9n3R.png)
+
+## Supported Instruments 
 
 **Currently Implemented Devices:**
 
@@ -53,164 +224,3 @@ You can also use it in python by using the Jython interpreter.
 |`DPLockIn`|Dual-Phase Lock-In Amplifier|[Source](./src/JISA/Devices/DPLockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DPLockIn.html)|
 |  |  |  |  |
 |`VPreAmp`|Voltage Pre-Amplifier|[Source](./src/JISA/Devices/VPreAmp.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/VPreAmp.html)|
-
-## Instrument Control
-The guiding principle behind the instrument control is to provide a common interface for each type of device, with the code underneath bridging the gap between what the user sees and what the instrument itself requires.
-
-As an example, despite Keithley 236 and 2450 SMUs being wildly different from each other in how they are remotely controlled, JISA presents them to the user in a standard manner, effectively "translating" standard function calls by the user into the different underlying command structure used by the different devices.
-
-```Java
-SMU smu1 = new K2450(new GPIBAddress(0, 15));
-SMU smu2 = new K236(new GPIBAddress(0, 16));
-
-smu1.setVoltage(5.0);
-smu2.setVoltage(5.0);
-
-smu1.turnOn();
-smu2.turnOn();
-
-double current1 = smu1.getCurrent();
-double current2 = smu2.getCurrent();
-
-// Sweep voltage from 0 V to 10 V in 5 steps with a 500 ms delay each time
-IVPoint[] points1 = smu1.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500, true);
-IVPoint[] points2 = smu2.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500, true);
-```
-or, in python:
-```python
-smu1 = K2450(GPIBAddress(0, 15))
-smu2 = K236(GPIBAddress(0, 16))
-
-smu1.setVoltage(5.0)
-smu2.setVoltage(5.0)
-
-smu1.turnOn()
-smu2.turnOn()
-
-current1 = smu1.getCurrent()
-current2 = smu2.getCurrent()
-
-# Sweep voltage from 0 V to 10 V in 5 steps with a 500 ms delay each time
-points1 = smu1.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500, True)
-points2 = smu2.performLinearSweep(SMU.Source.VOLTAGE, 0, 10, 5, 500, True)
-```
-
-In the example above, we have told both the K2450 and K236 to source 5 V and measure the resulting current. This is done using identical method calls on both despite the fact that the K236 and K2450 will implement these actions using fundamentally different approaches.
-
-The same applies for all other types of device implemented so far, including lock-in amplifiers and DC power supplies.
-
-## Handling Results
-JISA provides a class called ``ResultList`` designed to encapsulate experimental data generated using the instrument control structures. This provides a quick way to record data and then export it as a CSV file, MATLAB script or even an ASCII table.
-
-```Java
-ResultList results = new ResultList("Voltage", "Current");
-results.setUnits("V", "A");
-
-SMU smu = new K2450(new SerialAddress(5));
-
-smu.turnOn();
-
-for (double v = 0; v <= 20; v += 2) {
-
-    smu.setVoltage(v);
-    results.addData(smu.getVoltage(), smu.getCurrent());
-
-}
-
-results.output("/path/to/file.csv");
-results.outputMATLAB("/path/to/file.m", "V", "I");
-results.outputTable();
-```
-or in python:
-```python
-results = ResultList(["Voltage", "Current"])
-results.setUnits(["V", "A"])
-
-smu = K2450(SerialAddress(5))
-
-smu.turnOn()
-
-for v in range(0, 21, 2):
-    smu.setVoltage(v)
-    results.addData([smu.getVoltage(), smu.getCurrent()])
-
-results.output("/path/to/file.csv")
-results.outputMATLAB("/path/to/file.m", ["V", "I"])
-results.outputTable()
-```
-```
-+=============+=============+
-| Voltage [V] | Current [A] |
-+=============+=============+
-| 0.000000    | 0.000000    |
-+-------------+-------------+
-| 2.000000    | 10.000000   |
-+-------------+-------------+
-| 4.000000    | 20.000000   |
-+-------------+-------------+
-| 6.000000    | 30.000000   |
-+-------------+-------------+
-| 8.000000    | 40.000000   |
-+-------------+-------------+
-| 10.000000   | 50.000000   |
-+-------------+-------------+
-| 12.000000   | 60.000000   |
-+-------------+-------------+
-| 14.000000   | 70.000000   |
-+-------------+-------------+
-| 16.000000   | 80.000000   |
-+-------------+-------------+
-| 18.000000   | 90.000000   |
-+-------------+-------------+
-| 20.000000   | 100.000000  |
-+-------------+-------------+
-```
-
-## GUI Elements
-JISA provides some basic GUI components, allowing you to piece them together to create a user-friendly front-end to control and/or observe your experiment. Most significantly including elements that will display the contents of a ``ResultList`` object in real-time to the user.
-
-```Java
-ResultList results = new ResultList("Voltage", "Current");
-results.setUnits("V", "A");
-
-// Creates a plot and tells it to watch our ResultList "results"
-Plot plot = new Plot("I-V plot", results);
-plot.show();
-
-SMU smu = new K2450(new SerialAddress(5));
-
-smu.turnOn();
-
-for (double v = 0; v <= 20; v += 2) {
-
-    smu.setVoltage(v);
-    results.addData(smu.getVoltage(), smu.getCurrent());
-
-}
-```
-likewise, in python:
-```python
-results = ResultList(["Voltage", "Current"])
-results.setUnits(["V", "A"])
-
-# Creates a plot and tells it to watch our ResultList "results"
-plot = Plot("I-V plot", results)
-plot.show()
-
-smu = K2450(SerialAddress(5))
-
-smu.turnOn()
-
-for v in range(0, 21, 2):
-    smu.setVoltage(v)
-    results.addData([smu.getVoltage(), smu.getCurrent()])
-    
-```
-
-![Plot Window](https://i.imgur.com/PPgdyCa.png)
-
-As mentioned, these GUI elements work in real-time, so every time a new data point gets added to ``results``, the plot will update (with a nifty animation too!)
-
-By putting together these individual elements you can build up a fully-functional GUI to control your experiment like so:
-
-[![GUI Example](https://i.imgur.com/j93Jttm.png)](https://i.imgur.com/j93Jttm.png)
