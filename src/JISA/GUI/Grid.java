@@ -19,27 +19,38 @@ import java.util.List;
 
 public class Grid extends JFXWindow implements Element, Container {
 
+    private static final int DEFAULT_NUM_COLS = 3;
+
     public  GridPane           pane;
-    public ScrollPane          scroll;
+    public  ScrollPane         scroll;
     public  BorderPane         border;
     private ToolBar            toolBar = null;
     private Stage              stage;
-    private int                nCols   = 3;
+    private int                nCols;
     private int                r       = 0;
     private int                c       = 0;
     private boolean            hGrow   = true;
     private boolean            vGrow   = true;
     private ArrayList<Element> added   = new ArrayList<>();
 
-    public Grid(String title) {
+    public Grid(String title, int numColumns) {
         super(title, Grid.class.getResource("FXML/GridWindow.fxml"));
+        nCols = numColumns;
     }
 
-    public Grid(String title, Element... panels) {
-        this(title);
+    public Grid(String title) {
+        this(title, DEFAULT_NUM_COLS);
+    }
+
+    public Grid(String title, int numCols, Element... panels) {
+        this(title, numCols);
         for (Element g : panels) {
             add(g);
         }
+    }
+
+    public Grid(String title, Element... panels) {
+        this(title, DEFAULT_NUM_COLS, panels);
     }
 
     public void addToolbarButton(String text, ClickHandler onClick) {
@@ -76,14 +87,14 @@ public class Grid extends JFXWindow implements Element, Container {
         Pane bPane;
 
         if (toAdd instanceof Grid) {
-            ((Grid) toAdd).pane.setPadding(new Insets(0,0,0,0));
+            ((Grid) toAdd).pane.setPadding(new Insets(0, 0, 0, 0));
             bPane = ((Grid) toAdd).pane;
         } else {
 
-            bPane     = new BorderPane();
-            StackPane  stack     = new StackPane();
-            StackPane  container = new StackPane();
-            Label      t         = new Label();
+            bPane = new BorderPane();
+            StackPane stack     = new StackPane();
+            StackPane container = new StackPane();
+            Label     t         = new Label();
 
             stack.setPadding(new Insets(10, 10, 10, 10));
             stack.setAlignment(Pos.CENTER_LEFT);

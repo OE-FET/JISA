@@ -3,6 +3,7 @@ package JISA.GUI;
 import JISA.Control.ConfigStore;
 import JISA.Control.SRunnable;
 import JISA.Control.SetGettable;
+import JISA.Devices.*;
 import JISA.Util;
 import JISA.VISA.VISADevice;
 import javafx.scene.layout.Pane;
@@ -43,6 +44,30 @@ public class ConfigGrid extends Grid {
             return null;
         }
 
+    }
+
+    public InstrumentConfig<SMU> addSMU(String name) {
+        return addInstrument(name, SMU.class);
+    }
+
+    public InstrumentConfig<TC> addTC(String name) {
+        return addInstrument(name, TC.class);
+    }
+
+    public InstrumentConfig<LockIn> addLockIn(String name) {
+        return addInstrument(name, LockIn.class);
+    }
+
+    public InstrumentConfig<DPLockIn> addDPLockIn(String name) {
+        return addInstrument(name, DPLockIn.class);
+    }
+
+    public InstrumentConfig<DCPower> addDCPower(String name) {
+        return addInstrument(name, DCPower.class);
+    }
+
+    public InstrumentConfig<VPreAmp> addVPreAmp(String name) {
+        return addInstrument(name, VPreAmp.class);
     }
 
     @SuppressWarnings("unchecked")

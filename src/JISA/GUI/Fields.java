@@ -12,6 +12,8 @@ import javafx.scene.layout.*;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Fields extends JFXWindow implements Element {
 
@@ -740,7 +742,7 @@ public class Fields extends JFXWindow implements Element {
                 }
             })).start();
         });
-        buttonBar.getButtons().add(button);
+        GUI.runNow(() -> buttonBar.getButtons().add(button));
 
     }
 
@@ -749,6 +751,40 @@ public class Fields extends JFXWindow implements Element {
         for (Field f : fields) {
             f.setDisabled(flag);
         }
+
+    }
+
+    public boolean showAndWait() {
+
+        final Semaphore     semaphore = new Semaphore(0);
+        final AtomicBoolean result    = new AtomicBoolean(false);
+
+        Button okay   = new Button("OK");
+        Button cancel = new Button("Cancel");
+
+        okay.setOnAction(ae -> {
+            result.set(true);
+            semaphore.release();
+        });
+
+        cancel.setOnAction(ae -> {
+            result.set(false);
+            semaphore.release();
+        });
+
+        GUI.runNow(() -> buttonBar.getButtons().addAll(cancel, okay));
+
+        show();
+
+        try {
+            semaphore.acquire();
+        } catch (Exception ignored) {}
+
+        close();
+
+        GUI.runNow(() -> buttonBar.getButtons().removeAll(cancel, okay));
+
+        return result.get();
 
     }
 
