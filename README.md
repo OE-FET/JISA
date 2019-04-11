@@ -7,10 +7,14 @@ In essence then, the purpose of `JISA` is to act as an alternative (and actually
 SMU smu1 = new K2560(new TCPIPAddress("192.168.0.2")); // Keithley 2450
 SMU smu2 = new K236(new GPIBAdrress(0,17));            // Keithley 236
 
+smu1.useAutoRanging();
+smu1.setCurrentLimit(10e-3);
 smu1.setVoltage(5.0);
 smu1.turnOn();
 
-smu2.setVoltage(5.0); // Same code, despite different SMU
+smu2.useAutoRanging();       // Same code, despite different SMU
+smu2.setCurrentLimit(10e-3);
+smu2.setVoltage(5.0); 
 smu2.turnOn();
 ```
 ### 2. Data Handling
@@ -69,7 +73,7 @@ public static void main(String[] args) throws Exception {
     smu.setVoltage(0.0);
     smu.turnOn();
     
-    for (double v : Util.makeLinearArray(0,60,61)) {
+    for (double v : Util.makeLinearArray(0, 60, 61)) {
     
         smu.setVoltage(v);
         Util.sleep(500);
@@ -94,7 +98,7 @@ fun main() {
     smu.setVoltage(0.0)
     smu.turnOn()
 
-    for (v in Util.makeLinearArray(0.0,60.0,61)) {
+    for (v in Util.makeLinearArray(0.0, 60.0, 61)) {
     
         smu.setVoltage(v)
         Util.sleep(500)
@@ -119,7 +123,7 @@ def main():
     smu.setVoltage(0.0)
     smu.turnOn()
     
-    for v in Util.makeLinearArray(0.0,60.0,61):
+    for v in Util.makeLinearArray(0.0, 60.0, 61):
     
         smu.setVoltage(v)
         Util.sleep(500)
@@ -142,7 +146,7 @@ function main()
     smu.setVoltage(0.0);
     smu.turnOn();
     
-    for v=JISA.Util.makeLinearArray(0.0,60.0,61)
+    for v=JISA.Util.makeLinearArray(0.0, 60.0, 61)
     
         smu.setVoltage(v);
         JISA.Util.sleep(500);
@@ -171,7 +175,7 @@ fun main() {
     smu.setVoltage(0.0)
     smu.turnOn()
 
-    for (v in Util.makeLinearArray(0,60,61)) {
+    for (v in Util.makeLinearArray(0.0, 60.0, 61)) {
     
         smu.setVoltage(v)
         Util.sleep(500)
