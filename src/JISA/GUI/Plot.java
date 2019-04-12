@@ -117,16 +117,32 @@ public class Plot extends JFXWindow implements Element, Clearable {
         return controller.createSeries(name, colour);
     }
 
-    public Series watchList(ResultTable list, int xData, int yData, Predicate<Result> filter, String name, Color colour) {
+    public Series watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, Predicate<Result> filter, String name, Color colour) {
         return controller.createWatchSeries(name, colour, list, xData, yData, filter);
+    }
+
+    public Series watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, String name, Color colour) {
+        return watchList(list, xData, yData, null, name, colour);
+    }
+
+    public Series watchList(ResultTable list, int xData, int yData, Predicate<Result> filter, String name, Color colour) {
+        return watchList(list, (r) -> r.get(xData), (r) -> r.get(yData), filter, name, colour);
     }
 
     public Series watchList(ResultTable list, int xData, int yData, String name, Color colour) {
         return watchList(list, xData, yData, null, name, colour);
     }
 
+    public SeriesGroup watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, SmartChart.Evaluable sData, String pattern, Predicate<Result> filter) {
+        return controller.createAutoSeries(list, xData, yData, sData, pattern, filter);
+    }
+
+    public SeriesGroup watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, SmartChart.Evaluable sData, String pattern) {
+        return watchList(list, xData, yData, sData, pattern, null);
+    }
+
     public SeriesGroup watchList(ResultTable list, int xData, int yData, int sData, Predicate<Result> filter) {
-        return controller.createAutoSeries(list, xData, yData, sData, filter);
+        return watchList(list, (r) -> r.get(xData), (r) -> r.get(yData), (r) -> r.get(sData), list.hasUnits() ? "%s " + list.getUnits(sData) : "%s", filter);
     }
 
     public SeriesGroup watchList(ResultTable list, int xData, int yData, int sData) {

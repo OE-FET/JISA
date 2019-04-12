@@ -23,11 +23,6 @@ public class K2450 extends KeithleySCPI {
     }
 
     @Override
-    public void setOutputLimit(double value) throws IOException {
-        write(C_SET_LIMIT_2450, getSourceMode().getTag(), getMeasureMode().getSymbol(), value);
-    }
-
-    @Override
     public double getOutputLimit() throws IOException {
         return queryDouble(C_QUERY_LIMIT_2450, getSourceMode().getTag(), getMeasureMode().getSymbol());
     }
@@ -35,6 +30,7 @@ public class K2450 extends KeithleySCPI {
     @Override
     public void setVoltageLimit(double voltage) throws IOException {
         write(C_SET_LIMIT_2450, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol(), voltage);
+        vLimit = voltage;
     }
 
     @Override
@@ -45,6 +41,7 @@ public class K2450 extends KeithleySCPI {
     @Override
     public void setCurrentLimit(double current) throws IOException {
         write(C_SET_LIMIT_2450, Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol(), current);
+        iLimit = current;
     }
 
     @Override

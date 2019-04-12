@@ -54,6 +54,9 @@ public abstract class KeithleySCPI extends SMU {
     protected static final String C_QUERY_LFR             = ":SYST:LFR?";
     protected final        double LINE_FREQUENCY;
 
+    protected double vLimit;
+    protected double iLimit;
+
     // == FILTERS ======================================================================================================
     private final MedianRepeatFilter MEDIAN_REPEAT_V = new MedianRepeatFilter(
             this::measureVoltage,
@@ -128,6 +131,8 @@ public abstract class KeithleySCPI extends SMU {
         setAverageMode(AMode.NONE);
 
         LINE_FREQUENCY = queryDouble(C_QUERY_LFR);
+        vLimit = getVoltageLimit();
+        iLimit = getCurrentLimit();
 
     }
 
@@ -328,6 +333,7 @@ public abstract class KeithleySCPI extends SMU {
 
     public void setVoltageLimit(double limit) throws IOException {
         write(C_SET_LIMIT, Source.VOLTAGE.getTag(), limit);
+        vLimit = limit;
     }
 
     public double getCurrentLimit() throws IOException {
@@ -336,6 +342,7 @@ public abstract class KeithleySCPI extends SMU {
 
     public void setCurrentLimit(double limit) throws IOException {
         write(C_SET_LIMIT, Source.CURRENT.getTag(), limit);
+        iLimit = limit;
     }
 
     public double getOutputLimit() throws IOException {
@@ -428,11 +435,27 @@ public abstract class KeithleySCPI extends SMU {
     }
 
     public void setSource(Source mode) throws IOException {
-        write(C_SET_SOURCE_FUNCTION, mode.getTag());
+
+        if (getSourceMode() != mode) {
+            write(C_SET_SOURCE_FUNCTION, mode.getTag());
+
+            switch (mode) {
+
+                case VOLTAGE:
+                    setCurrentLimit(iLimit);
+                    break;
+
+                case CURRENT:
+                    setVoltageLimit(vLimit);
+                    break;
+
+            }
+
+        }
     }
 
     public void setSource(SMU.Source source) throws IOException {
-        write(C_SET_SOURCE_FUNCTION, Source.fromSMU(source).getTag());
+        setSource(Source.fromSMU(source));
     }
 
     public Source getSourceMode() throws IOException {
