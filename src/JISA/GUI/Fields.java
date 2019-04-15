@@ -774,6 +774,11 @@ public class Fields extends JFXWindow implements Element {
 
         GUI.runNow(() -> buttonBar.getButtons().addAll(cancel, okay));
 
+        stage.setOnCloseRequest(we -> {
+            result.set(false);
+            semaphore.release();
+        });
+
         show();
 
         try {
