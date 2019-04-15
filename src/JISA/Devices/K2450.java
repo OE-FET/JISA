@@ -24,6 +24,34 @@ public class K2450 extends KeithleySCPI {
 
     }
 
+    protected double measureVoltage() throws IOException, DeviceException {
+
+        double val = super.measureVoltage();
+
+        if (isLimitTripped() && isVoltageRangeAuto()) {
+            setVoltageLimit(getVoltageLimit()/2);
+            setVoltageLimit(getVoltageLimit()*2);
+            val = super.measureVoltage();
+        }
+
+        return val;
+
+    }
+
+    protected double measureCurrent() throws IOException, DeviceException {
+
+        double val = super.measureCurrent();
+
+        if (isLimitTripped() && isCurrentRangeAuto()) {
+            setCurrentLimit(getCurrentLimit()/2);
+            setCurrentLimit(getCurrentLimit()*2);
+            val = super.measureCurrent();
+        }
+
+        return val;
+
+    }
+
     @Override
     public double getOutputLimit() throws IOException {
         return queryDouble(C_QUERY_LIMIT_2450, getSourceMode().getTag(), getMeasureMode().getSymbol());
@@ -95,23 +123,31 @@ public class K2450 extends KeithleySCPI {
 
     }
 
+    public boolean isLimitTripped() throws IOException {
+        boolean iTrip = query(":SOUR:VOLT:iLIM:TRIP?").equals(OUTPUT_ON);
+        boolean vTrip = query(":SOUR:CURR:vLIM:TRIP?").equals(OUTPUT_ON);
+        return iTrip || vTrip;
+    }
+
     public void setSourceValue(Source type, double value) throws IOException, DeviceException {
         super.setSourceValue(type, value);
+
+    }
+
+    public void fixLimits() throws IOException, DeviceException {
 
         if (isMeasureRangeAuto()) {
 
             getMeasureValue();
 
-            boolean iTrip = query(":SOUR:VOLT:iLIM:TRIP?").equals(OUTPUT_ON);
-            boolean vTrip = query(":SOUR:CURR:vLIM:TRIP?").equals(OUTPUT_ON);
-
-            if (iTrip || vTrip) {
+            if (isLimitTripped()) {
                 setOutputLimit(getOutputLimit() / 2);
                 setOutputLimit(getOutputLimit() * 2);
                 getMeasureValue();
             }
 
         }
+
     }
 
 }

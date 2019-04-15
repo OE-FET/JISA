@@ -387,11 +387,11 @@ public abstract class KeithleySCPI extends SMU {
         write(C_SET_NPLC, LINE_FREQUENCY * time);
     }
 
-    protected double measureVoltage() throws IOException {
+    protected double measureVoltage() throws IOException, DeviceException {
         return queryDouble(C_MEASURE_VOLTAGE);
     }
 
-    protected double measureCurrent() throws IOException {
+    protected double measureCurrent() throws IOException, DeviceException {
         return queryDouble(C_MEASURE_CURRENT);
     }
 
