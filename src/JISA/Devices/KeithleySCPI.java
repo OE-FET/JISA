@@ -54,6 +54,9 @@ public abstract class KeithleySCPI extends SMU {
     protected static final String C_QUERY_LFR             = ":SYST:LFR?";
     protected final        double LINE_FREQUENCY;
 
+    protected double vLimit;
+    protected double iLimit;
+
     // == FILTERS ======================================================================================================
     private final MedianRepeatFilter MEDIAN_REPEAT_V = new MedianRepeatFilter(
             this::measureVoltage,
@@ -120,7 +123,6 @@ public abstract class KeithleySCPI extends SMU {
             setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
             setTerminator("\r");
             setReadTerminationCharacter(CR_TERMINATOR);
-            setRemoveTerminator("\r");
         }
 
         write(":SYSTEM:CLEAR");
@@ -128,6 +130,8 @@ public abstract class KeithleySCPI extends SMU {
         setAverageMode(AMode.NONE);
 
         LINE_FREQUENCY = queryDouble(C_QUERY_LFR);
+        vLimit = getVoltageLimit();
+        iLimit = getCurrentLimit();
 
     }
 
@@ -328,6 +332,7 @@ public abstract class KeithleySCPI extends SMU {
 
     public void setVoltageLimit(double limit) throws IOException {
         write(C_SET_LIMIT, Source.VOLTAGE.getTag(), limit);
+        vLimit = limit;
     }
 
     public double getCurrentLimit() throws IOException {
@@ -336,6 +341,7 @@ public abstract class KeithleySCPI extends SMU {
 
     public void setCurrentLimit(double limit) throws IOException {
         write(C_SET_LIMIT, Source.CURRENT.getTag(), limit);
+        iLimit = limit;
     }
 
     public double getOutputLimit() throws IOException {
@@ -399,7 +405,7 @@ public abstract class KeithleySCPI extends SMU {
         return filterV.getValue();
     }
 
-    public void setVoltage(double voltage) throws IOException {
+    public void setVoltage(double voltage) throws IOException, DeviceException {
         setSourceValue(Source.VOLTAGE, voltage);
     }
 
@@ -407,7 +413,7 @@ public abstract class KeithleySCPI extends SMU {
         return filterI.getValue();
     }
 
-    public void setCurrent(double current) throws IOException {
+    public void setCurrent(double current) throws IOException, DeviceException {
         setSourceValue(Source.CURRENT, current);
     }
 
@@ -428,11 +434,18 @@ public abstract class KeithleySCPI extends SMU {
     }
 
     public void setSource(Source mode) throws IOException {
-        write(C_SET_SOURCE_FUNCTION, mode.getTag());
+
+        if (getSourceMode() != mode) {
+            write(C_SET_SOURCE_FUNCTION, mode.getTag());
+        }
+
+        setVoltageLimit(vLimit);
+        setCurrentLimit(iLimit);
+
     }
 
     public void setSource(SMU.Source source) throws IOException {
-        write(C_SET_SOURCE_FUNCTION, Source.fromSMU(source).getTag());
+        setSource(Source.fromSMU(source));
     }
 
     public Source getSourceMode() throws IOException {
@@ -457,7 +470,7 @@ public abstract class KeithleySCPI extends SMU {
         return query(C_QUERY_OUTPUT_STATE).equals(OUTPUT_ON);
     }
 
-    public void setBias(double value) throws IOException {
+    public void setBias(double value) throws IOException, DeviceException {
 
         switch (getSourceMode()) {
 
@@ -510,7 +523,7 @@ public abstract class KeithleySCPI extends SMU {
 
     }
 
-    public void setSourceValue(Source type, double value) throws IOException {
+    public void setSourceValue(Source type, double value) throws IOException, DeviceException {
         write(C_SET_SOURCE_VALUE, type.getTag(), value);
         setSource(type);
     }

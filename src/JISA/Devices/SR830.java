@@ -351,6 +351,25 @@ public class SR830 extends DPLockIn {
 
     }
 
+    @Override
+    public void autoRange() throws IOException {
+
+        write("AGAN");
+        write("FREQ?");
+
+        while (true) {
+
+            try {
+                read();
+                break;
+            } catch (Exception ignored) {
+
+            }
+
+        }
+
+    }
+
     private boolean isWorking() throws IOException {
         return queryInt("*SRE? 1") == 0;
     }

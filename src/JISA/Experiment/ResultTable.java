@@ -332,6 +332,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public void finalise() {
         open = false;
+        close();
     }
 
     public abstract void close();
@@ -340,6 +341,10 @@ public abstract class ResultTable implements Iterable<Result> {
 
         void run(Result row);
 
+    }
+
+    public ResultTable getColumns(int... columns) {
+        return new SubTable(this, columns);
     }
 
 }

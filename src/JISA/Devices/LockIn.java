@@ -216,6 +216,8 @@ public abstract class LockIn extends VISADevice {
 
     public abstract void autoOffset() throws IOException, DeviceException;
 
+    public abstract void autoRange() throws IOException, DeviceException;
+
     public abstract TrigMode getExternalTriggerMode() throws IOException, DeviceException;
 
     public abstract void setExternalTriggerMode(TrigMode mode) throws IOException, DeviceException;

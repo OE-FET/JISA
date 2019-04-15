@@ -7,8 +7,8 @@ import java.security.Guard;
 
 public class K2450 extends KeithleySCPI {
 
-    protected static final String C_SET_LIMIT_2450        = ":SOUR:%s:%sLIM %e";
-    protected static final String C_QUERY_LIMIT_2450      = ":SOUR:%s:%sLIM?";
+    protected static final String C_SET_LIMIT_2450   = ":SOUR:%s:%sLIM %e";
+    protected static final String C_QUERY_LIMIT_2450 = ":SOUR:%s:%sLIM?";
 
     public K2450(Address address) throws IOException, DeviceException {
 
@@ -20,11 +20,8 @@ public class K2450 extends KeithleySCPI {
             throw new DeviceException("Instrument at address \"%s\" is not a Keithley 2450.", address.toString());
         }
 
-    }
+        setRemoveTerminator("\n");
 
-    @Override
-    public void setOutputLimit(double value) throws IOException {
-        write(C_SET_LIMIT_2450, getSourceMode().getTag(), getMeasureMode().getSymbol(), value);
     }
 
     @Override
@@ -35,6 +32,7 @@ public class K2450 extends KeithleySCPI {
     @Override
     public void setVoltageLimit(double voltage) throws IOException {
         write(C_SET_LIMIT_2450, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol(), voltage);
+        vLimit = voltage;
     }
 
     @Override
@@ -45,6 +43,7 @@ public class K2450 extends KeithleySCPI {
     @Override
     public void setCurrentLimit(double current) throws IOException {
         write(C_SET_LIMIT_2450, Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol(), current);
+        iLimit = current;
     }
 
     @Override
@@ -94,6 +93,25 @@ public class K2450 extends KeithleySCPI {
 
         }
 
+    }
+
+    public void setSourceValue(Source type, double value) throws IOException, DeviceException {
+        super.setSourceValue(type, value);
+
+        if (isMeasureRangeAuto()) {
+
+            getMeasureValue();
+
+            boolean iTrip = query(":SOUR:VOLT:iLIM:TRIP?").equals(OUTPUT_ON);
+            boolean vTrip = query(":SOUR:CURR:vLIM:TRIP?").equals(OUTPUT_ON);
+
+            if (iTrip || vTrip) {
+                setOutputLimit(getOutputLimit() / 2);
+                setOutputLimit(getOutputLimit() * 2);
+                getMeasureValue();
+            }
+
+        }
     }
 
 }

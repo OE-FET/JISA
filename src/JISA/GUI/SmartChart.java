@@ -1,5 +1,6 @@
 package JISA.GUI;
 
+import JISA.Control.Returnable;
 import JISA.Experiment.*;
 import JISA.Util;
 import javafx.beans.InvalidationListener;
@@ -123,12 +124,12 @@ public class SmartChart {
         return new NormalSeries(name, colour);
     }
 
-    public synchronized Series createWatchSeries(String name, Color colour, ResultTable results, int xData, int yData, Predicate<Result> filter) {
+    public synchronized Series createWatchSeries(String name, Color colour, ResultTable results, Evaluable xData, Evaluable yData, Predicate<Result> filter) {
         return new NormalSeries(results, xData, yData, filter, name, colour);
     }
 
-    public synchronized SeriesGroup createAutoSeries(ResultTable results, int xData, int yData, int sData, Predicate<Result> filter) {
-        return new AutoSeries(results, xData, yData, sData, filter);
+    public synchronized SeriesGroup createAutoSeries(ResultTable results, Evaluable xData, Evaluable yData, Evaluable sData, String pattern, Predicate<Result> filter) {
+        return new AutoSeries(results, xData, yData, sData, pattern, filter);
     }
 
     public synchronized Series createFunctionSeries(String name, Color colour, Function f) {
@@ -646,7 +647,7 @@ public class SmartChart {
             } catch (IOException e) {
                 list = new ResultList("X", "Y");
             }
-            data = new DataList(list, 0, 1);
+            data = new DataList(list, (r) -> r.get(0), (r) -> r.get(1));
             series = new XYChart.Series<>(data);
             GUI.runNow(() -> chart.getData().add(series));
             setName(name);
@@ -670,7 +671,7 @@ public class SmartChart {
 
         }
 
-        public NormalSeries(ResultTable results, int xData, int yData, Predicate<Result> filter, String name, Color colour) {
+        public NormalSeries(ResultTable results, Evaluable xData, Evaluable yData, Predicate<Result> filter, String name, Color colour) {
 
             SmartChart.this.data.add(this);
 
@@ -814,6 +815,12 @@ public class SmartChart {
         public Iterator<XYChart.Data<Double, Double>> iterator() {
             return data.iterator();
         }
+    }
+
+    public interface Evaluable {
+
+        double evaluate(Result r);
+
     }
 
     private class FunctionSeries implements Series {
@@ -967,7 +974,7 @@ public class SmartChart {
         private double              xRange      = Double.POSITIVE_INFINITY;
         private double              yRange      = Double.POSITIVE_INFINITY;
 
-        public AutoSeries(ResultTable results, int xData, int yData, int sData, Predicate<Result> filter) {
+        public AutoSeries(ResultTable results, Evaluable xData, Evaluable yData, Evaluable sData, String pattern, Predicate<Result> filter) {
 
             if (filter == null) {
                 filter = (r) -> true;
@@ -979,13 +986,13 @@ public class SmartChart {
 
                 if (finalFilter.test(r)) {
 
-                    final double key = r.get(sData);
+                    final double key = sData.evaluate(r);
 
                     if (!map.containsKey(key)) {
                         Series s = new NormalSeries(
                                 results, xData, yData,
-                                (v) -> ((v.get(sData) == key) && finalFilter.test(v)),
-                                results.hasUnits() ? String.format("%s %s", key, results.getUnits(sData)) : String.valueOf(key),
+                                (v) -> ((sData.evaluate(v) == key) && finalFilter.test(v)),
+                                String.format(pattern, key),
                                 null
                         );
 
@@ -1169,8 +1176,8 @@ public class SmartChart {
         private BiPredicate<Integer, XYChart.Data<Double, Double>> show        = (i, r) -> true;
         private Runnable                                           onChange    = () -> {
         };
-        private int                                                xData;
-        private int                                                yData;
+        private Evaluable                                          xData;
+        private Evaluable                                          yData;
         private boolean                                            showMarkers = true;
         private String                                             markerStyle = "";
         private LimitChange                                        limitChange = (a, b, c, d) -> {
@@ -1181,11 +1188,11 @@ public class SmartChart {
         private double                                             maxY        = Double.NEGATIVE_INFINITY;
 
 
-        public DataList(ResultTable results, int xData, int yData) {
+        public DataList(ResultTable results, Evaluable xData, Evaluable yData) {
             this(results, xData, yData, null);
         }
 
-        public DataList(ResultTable results, int xData, int yData, Predicate<Result> filter) {
+        public DataList(ResultTable results, Evaluable xData, Evaluable yData, Predicate<Result> filter) {
 
 
             this.data = results;
@@ -1197,7 +1204,7 @@ public class SmartChart {
 
                 if (this.filter.test(r)) {
                     int                          index = data.getNumRows() - 1;
-                    XYChart.Data<Double, Double> d     = new XYChart.Data<>(r.get(xData), r.get(yData), index);
+                    XYChart.Data<Double, Double> d     = new XYChart.Data<>(xData.evaluate(r), yData.evaluate(r), index);
                     if (show.test(index, d)) {
                         GUI.runNow(() -> {
                             list.add(d);
@@ -1315,8 +1322,8 @@ public class SmartChart {
             for (Result r : data) {
 
                 if (filter.test(r)) {
-                    point.setXValue(r.get(xData));
-                    point.setYValue(r.get(yData));
+                    point.setXValue(xData.evaluate(r));
+                    point.setYValue(yData.evaluate(r));
                     forEach.accept(i, r, point);
                     i++;
                 }
@@ -1466,17 +1473,6 @@ public class SmartChart {
 
         @Override
         public boolean add(XYChart.Data<Double, Double> doubleDoubleData) {
-
-            double[] d = new double[data.getNumCols()];
-
-            for (int i = 0; i < d.length; i++) {
-                d[i] = 0.0;
-            }
-
-            d[xData] = doubleDoubleData.getXValue();
-            d[yData] = doubleDoubleData.getYValue();
-
-            data.addData(d);
 
             return true;
         }
