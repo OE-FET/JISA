@@ -1473,7 +1473,7 @@ public class SmartChart {
 
         @Override
         public boolean add(XYChart.Data<Double, Double> doubleDoubleData) {
-
+            data.addData(doubleDoubleData.getXValue(), doubleDoubleData.getYValue());
             return true;
         }
 

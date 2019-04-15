@@ -27,9 +27,6 @@ public class Main {
 
     public static void main(String[] args) throws IOException, DeviceException {
 
-        // Start the GUI thread
-        GUI.startGUI();
-
         try {
             VISA.init();
 

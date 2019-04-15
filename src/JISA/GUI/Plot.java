@@ -73,6 +73,32 @@ public class Plot extends JFXWindow implements Element, Clearable {
         controller = new SmartChart(chart, xAxis, yAxis);
     }
 
+    public enum Sort {
+        X_AXIS,
+        Y_AXIS,
+        ORDER_ADDED
+    }
+
+    public void setPointOrdering(Sort ordering) {
+
+        switch(ordering) {
+
+            case X_AXIS:
+                chart.setAxisSortingPolicy(LineChart.SortingPolicy.X_AXIS);
+                break;
+
+            case Y_AXIS:
+                chart.setAxisSortingPolicy(LineChart.SortingPolicy.Y_AXIS);
+                break;
+
+            case ORDER_ADDED:
+                chart.setAxisSortingPolicy(LineChart.SortingPolicy.NONE);
+                break;
+
+        }
+
+    }
+
     /**
      * Creates a plot that automatically tracks and plots a ResultTable (ResultList or ResultStream) object, specifying
      * which columns to plot, the name of the data series and its colour.
