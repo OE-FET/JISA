@@ -338,6 +338,11 @@ public final class SmartAxis extends ValueAxis<Double> {
             mag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(min), Math.abs(max)))) / 3) * 3;
         }
 
+        if (data.isEmpty()) {
+            mag = 0;
+        }
+
+
         defaultFormatter.magnitude = Math.pow(10, mag);
 
         switch (mode) {
@@ -357,6 +362,7 @@ public final class SmartAxis extends ValueAxis<Double> {
         }
 
         super.invalidateRange(data);
+
     }
 
     /**

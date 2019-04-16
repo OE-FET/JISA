@@ -83,6 +83,10 @@ public class Util {
 
     }
 
+    public static double[] makeSymLinearArray(double min, double max, int stepsEachWay) {
+        return symArray(makeLinearArray(min, max, stepsEachWay));
+    }
+
     public static double[] symArray(double[] array) {
 
         double[] results = new double[2 * array.length - 1];
