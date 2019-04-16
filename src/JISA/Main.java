@@ -6,10 +6,7 @@ import JISA.Devices.DeviceException;
 import JISA.Devices.DummyMCSMU;
 import JISA.Devices.SMU;
 import JISA.Experiment.*;
-import JISA.GUI.DeviceShell;
-import JISA.GUI.GUI;
-import JISA.GUI.Plot;
-import JISA.GUI.Series;
+import JISA.GUI.*;
 import JISA.VISA.VISA;
 import javafx.application.Platform;
 import javafx.scene.paint.Color;
@@ -25,9 +22,10 @@ public class Main {
     private final static int CHOICE_HELP = 2;
     private final static int CHOICE_EXIT = 3;
 
-    public static void main(String[] args) throws IOException, DeviceException {
+    public static void main(String[] args) {
 
         try {
+
             VISA.init();
 
             while (true) {
@@ -71,9 +69,25 @@ public class Main {
                         break;
 
                     case CHOICE_HELP:
-                        GUI.infoAlert("JISA", "Help", "You can use this built-in utility to test that JISA works.\n\n" +
-                                "Use \"Scan for Instruments\" to see what instruments are visible to JISA.\n\n" +
-                                "Use \"Enter Address Manually\" if you know the VISA address to connect to.", 650);
+
+                        MarkDown md = new MarkDown("Help");
+
+                        md.addLine("## JISA Testing Utility");
+                        md.addLine("");
+                        md.addLine("This is the built-in testing utility for JISA.");
+                        md.addLine("");
+                        md.addLine("Using this utility, you can:");
+                        md.addLine("");
+                        md.addLine("* `\"Scan for Instruments\"` to see what instruments JISA can detect");
+                        md.addLine("");
+                        md.addLine("* `\"Enter Address Manually\"` if you want to connect to an instrument with a known address");
+                        md.addLine("");
+                        md.addLine("* `\"Exit\"` to exit this utility");
+                        md.addLine("");
+                        md.addLine("_Close this window to return to menu_");
+
+                        md.showAndWait();
+
                         break;
 
                     case CHOICE_EXIT:

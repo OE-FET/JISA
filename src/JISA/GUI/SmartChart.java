@@ -9,7 +9,6 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
 import javafx.util.StringConverter;
@@ -22,16 +21,12 @@ import java.util.function.Predicate;
 public class SmartChart {
 
     private final LineChart<Double, Double>          chart;
-    private final NumberAxis                         xAxis;
-    private final NumberAxis                         yAxis;
+    private final SmartAxis                         xAxis;
+    private final SmartAxis                         yAxis;
     private       String                             xLabel;
     private       String                             yLabel;
     private       LinkedList<Series>                 data          = new LinkedList<>();
     private       Map<Series, Integer>               map           = new HashMap<>();
-    private       double                             minX          = Double.POSITIVE_INFINITY;
-    private       double                             maxX          = Double.NEGATIVE_INFINITY;
-    private       double                             minY          = Double.POSITIVE_INFINITY;
-    private       double                             maxY          = Double.NEGATIVE_INFINITY;
     private       double                             limMaxX;
     private       double                             limMaxY;
     private       double                             limMinX;
@@ -53,13 +48,16 @@ public class SmartChart {
     private       List<Runnable>                     onLimitChange = new LinkedList<>();
     private       double                             zoomFactor    = 1;
 
-    public SmartChart(LineChart<Double, Double> chart, NumberAxis xAxis, NumberAxis yAxis) {
+    public SmartChart(LineChart<Double, Double> chart, SmartAxis xAxis, SmartAxis yAxis) {
 
         this.chart = chart;
         this.xAxis = xAxis;
         this.yAxis = yAxis;
         xLabel = xAxis.getLabel();
         yLabel = yAxis.getLabel();
+
+        xAxis.setAutoRanging(true);
+        yAxis.setAutoRanging(true);
 
         xAxis.setAnimated(false);
         yAxis.setAnimated(false);
@@ -218,7 +216,7 @@ public class SmartChart {
 
     public void setXLabel(String label) {
         xLabel = label;
-        GUI.runNow(() -> xAxis.setLabel(label));
+        GUI.runNow(() -> xAxis.setLabelText(label));
     }
 
     public String getYLabel() {
@@ -227,7 +225,7 @@ public class SmartChart {
 
     public void setYLabel(String label) {
         yLabel = label;
-        GUI.runNow(() -> yAxis.setLabel(label));
+        GUI.runNow(() -> yAxis.setLabelText(label));
     }
 
     public void setStyle(String key, String value) {
@@ -332,31 +330,24 @@ public class SmartChart {
         autoRemoveY = false;
     }
 
-    private void refreshLimits() {
-
-        minX = Double.POSITIVE_INFINITY;
-        maxX = Double.NEGATIVE_INFINITY;
-        minY = Double.POSITIVE_INFINITY;
-        maxY = Double.NEGATIVE_INFINITY;
-
-        for (Series s : data) {
-            s.updateLimits();
-        }
-
-    }
-
     private synchronized void update() {
 
         switch (xMode) {
 
             case SHOW_ALL:
-                limMinX = minX - 0.025 * (maxX - minX);
-                limMaxX = maxX + 0.025 * (maxX - minX);
+                xAxis.setMaxRange(Double.POSITIVE_INFINITY);
+                xAxis.setAutoRanging(true);
                 break;
 
             case TRACK:
-                limMaxX = maxX;
-                limMinX = Math.max(maxX - autoXRange, minX);
+                xAxis.setMaxRange(autoXRange);
+                xAxis.setAutoRanging(true);
+                break;
+
+            case MANUAL:
+                xAxis.setAutoRanging(false);
+                xAxis.setLowerBound(limMinX);
+                xAxis.setUpperBound(limMaxX);
                 break;
 
         }
@@ -364,102 +355,21 @@ public class SmartChart {
         switch (yMode) {
 
             case SHOW_ALL:
-                limMinY = minY - 0.025 * (maxY - minY);
-                limMaxY = maxY + 0.025 * (maxY - minY);
+                yAxis.setMaxRange(Double.POSITIVE_INFINITY);
+                yAxis.setAutoRanging(true);
                 break;
 
             case TRACK:
-                limMaxY = maxY;
-                limMinY = Math.max(maxY - autoYRange, minY);
+                yAxis.setMaxRange(autoYRange);
+                yAxis.setAutoRanging(true);
                 break;
 
-        }
+            case MANUAL:
+                yAxis.setAutoRanging(false);
+                yAxis.setLowerBound(limMinY);
+                yAxis.setUpperBound(limMaxY);
+                break;
 
-        if (limMinX == Double.POSITIVE_INFINITY) {
-            limMinX = -100;
-            limMaxX = +100;
-        }
-
-        if (limMinY == Double.POSITIVE_INFINITY) {
-            limMinY = -100;
-            limMaxY = +100;
-        }
-
-        double xUnit = Util.roundSigFig((limMaxX - limMinX) / nTicksX, 1, 0);
-        double yUnit = Util.roundSigFig((limMaxY - limMinY) / nTicksY, 1, 0);
-
-        int xMag = 0;
-        if (Math.max(Math.abs(limMaxX), Math.abs(limMinX)) != 0) {
-            xMag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(limMaxX), Math.abs(limMinX)))) / 3) * 3;
-        }
-        int yMag = 0;
-        if (Math.max(Math.abs(limMaxY), Math.abs(limMinY)) != 0) {
-            yMag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(limMaxY), Math.abs(limMinY)))) / 3) * 3;
-        }
-
-        double xMagnitude = Math.pow(10.0, xMag);
-        double yMagnitude = Math.pow(10.0, yMag);
-
-        if (limMinX == limMaxX) {
-            limMinX -= xMagnitude;
-            limMaxX += xMagnitude;
-        }
-
-        if (limMinY == limMaxY) {
-            limMinY -= yMagnitude;
-            limMaxY += yMagnitude;
-        }
-
-        xAxis.setTickUnit(xUnit);
-        yAxis.setTickUnit(yUnit);
-
-        xAxis.setTickLabelFormatter(new StringConverter<Number>() {
-            @Override
-            public String toString(Number number) {
-                return String.format("%.02f", number.doubleValue() / xMagnitude);
-            }
-
-            @Override
-            public Number fromString(String s) {
-                return Double.valueOf(s) * xMagnitude;
-            }
-        });
-
-        yAxis.setTickLabelFormatter(new StringConverter<Number>() {
-            @Override
-            public String toString(Number number) {
-                return String.format("%.02f", number.doubleValue() / yMagnitude);
-            }
-
-            @Override
-            public Number fromString(String s) {
-                return Double.valueOf(s) * yMagnitude;
-            }
-        });
-
-        if (xMag != 0) {
-            xAxis.setLabel(String.format("%s (E%+d)", xLabel, xMag));
-        } else {
-            xAxis.setLabel(xLabel);
-        }
-
-        if (yMag != 0) {
-            yAxis.setLabel(String.format("%s (E%+d)", yLabel, yMag));
-        } else {
-            yAxis.setLabel(yLabel);
-        }
-
-        xAxis.setAutoRanging(false);
-        xAxis.setLowerBound(limMinX);
-        xAxis.setUpperBound(limMaxX);
-        yAxis.setAutoRanging(false);
-        yAxis.setLowerBound(limMinY);
-        yAxis.setUpperBound(limMaxY);
-
-        if ((Math.abs(maxX - minX) * Math.abs(maxY - minY)) == 0) {
-            zoomFactor = 1;
-        } else {
-            zoomFactor = Math.min(1, (Math.abs(limMaxX - limMinX) * Math.abs(limMaxY - limMinY)) / (Math.abs(maxX - minX) * Math.abs(maxY - minY)));
         }
 
         if (zoomFactor == 0) {
@@ -473,22 +383,6 @@ public class SmartChart {
             }
 
         }
-
-    }
-
-    private boolean removePoint(XYChart.Data<Double, Double> data) {
-
-        if (autoRemoveX && (data.getXValue() < (maxX - removeXRange))) {
-            minX = maxX - removeXRange;
-            return true;
-        }
-
-        if (autoRemoveY && (data.getYValue() < (maxY - removeYRange))) {
-            minY = maxY - removeYRange;
-            return true;
-        }
-
-        return false;
 
     }
 
@@ -516,27 +410,12 @@ public class SmartChart {
             styles.clear();
             updateStyle();
 
-            maxX = Double.NEGATIVE_INFINITY;
-            minX = Double.POSITIVE_INFINITY;
-            maxY = Double.NEGATIVE_INFINITY;
-            minY = Double.POSITIVE_INFINITY;
-
             limMaxX = 0;
             limMinX = 0;
             limMaxY = 0;
             limMinY = 0;
             update();
         });
-    }
-
-    private void updateLimits(double newMinX, double newMaxX, double newMinY, double newMaxY) {
-
-        minX = Math.min(minX, newMinX);
-        maxX = Math.max(maxX, newMaxX);
-        minY = Math.min(minY, newMinY);
-        maxY = Math.max(maxY, newMaxY);
-        update();
-
     }
 
     public enum AMode {
@@ -664,7 +543,6 @@ public class SmartChart {
                 maxX = xMax;
                 minY = yMin;
                 maxY = yMax;
-                SmartChart.this.updateLimits(minX, maxX, minY, maxY);
             };
 
             data.setShowCondition((d) -> d.getXValue() >= (maxX - xRange) && d.getYValue() >= (maxY - yRange));
@@ -704,7 +582,6 @@ public class SmartChart {
                 maxX = xMax;
                 minY = yMin;
                 maxY = yMax;
-                SmartChart.this.updateLimits(minX, maxX, minY, maxY);
             };
 
             data.setShowCondition((d) -> d.getXValue() >= (maxX - xRange) && d.getYValue() >= (maxY - yRange));
@@ -725,7 +602,6 @@ public class SmartChart {
         public void clear() {
             list.clear();
             data.clear();
-            refreshLimits();
         }
 
         @Override
@@ -1349,9 +1225,6 @@ public class SmartChart {
 
             GUI.runNow(() -> list.removeAll(toRemoveData));
             shown.removeAll(toRemoveResult);
-            if (removed) {
-                refreshLimits();
-            }
 
         }
 

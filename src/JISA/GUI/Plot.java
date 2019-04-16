@@ -7,17 +7,21 @@ import JISA.Util;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
+import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
+import java.util.ArrayList;
 import java.util.function.Predicate;
 
 public class Plot extends JFXWindow implements Element, Clearable {
@@ -26,14 +30,18 @@ public class Plot extends JFXWindow implements Element, Clearable {
     public  ToolBar                   toolbar;
     public  Pane                      stack;
     public  LineChart<Double, Double> chart;
-    public  NumberAxis                xAxis;
-    public  NumberAxis                yAxis;
+    public  SmartAxis                 xAxis;
+    public  SmartAxis                 yAxis;
     public  ToggleButton              autoButton;
     public  ToggleButton              zoomButton;
     public  ToggleButton              dragButton;
     private SmartChart                controller;
     private Rectangle                 rect;
 
+    public enum AxisType {
+        LINEAR,
+        LOGARITHMIC
+    }
 
     /**
      * Creates an empty plot from the given title, x-axis label, and y-axis label.
@@ -46,10 +54,28 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         super(title, Plot.class.getResource("FXML/PlotWindow.fxml"));
 
+        xAxis = new SmartAxis();
+        xAxis.setSide(Side.BOTTOM);
+
+        yAxis = new SmartAxis();
+        yAxis.setSide(Side.LEFT);
+
+        chart = new LineChart<>(xAxis, yAxis);
+
+        AnchorPane.setBottomAnchor(chart, 0.0);
+        AnchorPane.setTopAnchor(chart, 0.0);
+        AnchorPane.setLeftAnchor(chart, 0.0);
+        AnchorPane.setRightAnchor(chart, 0.0);
+        BorderPane.setAlignment(chart, Pos.CENTER);
+
+        chart.setLegendSide(Side.RIGHT);
+
+        stack.getChildren().add(chart);
+
         GUI.runNow(() -> {
             chart.setStyle("-fx-background-color: white;");
-            xAxis.setLabel(xLabel);
-            yAxis.setLabel(yLabel);
+            xAxis.setLabelText(xLabel);
+            yAxis.setLabelText(yLabel);
             chart.setTitle(title);
             xAxis.setForceZeroInRange(false);
             yAxis.setForceZeroInRange(false);
@@ -57,7 +83,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
             yAxis.setAnimated(false);
             xAxis.setAutoRanging(true);
             yAxis.setAutoRanging(true);
-
             rect = new Rectangle();
             rect.setFill(Color.CORNFLOWERBLUE.deriveColor(0, 1, 1, 0.5));
 
@@ -71,32 +96,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
         });
 
         controller = new SmartChart(chart, xAxis, yAxis);
-    }
-
-    public enum Sort {
-        X_AXIS,
-        Y_AXIS,
-        ORDER_ADDED
-    }
-
-    public void setPointOrdering(Sort ordering) {
-
-        switch(ordering) {
-
-            case X_AXIS:
-                chart.setAxisSortingPolicy(LineChart.SortingPolicy.X_AXIS);
-                break;
-
-            case Y_AXIS:
-                chart.setAxisSortingPolicy(LineChart.SortingPolicy.Y_AXIS);
-                break;
-
-            case ORDER_ADDED:
-                chart.setAxisSortingPolicy(LineChart.SortingPolicy.NONE);
-                break;
-
-        }
-
     }
 
     /**
@@ -113,6 +112,40 @@ public class Plot extends JFXWindow implements Element, Clearable {
     public Plot(String title, ResultTable list, int xData, int yData, String seriesName, Color colour) {
         this(title, list.getTitle(xData), list.getTitle(yData));
         watchList(list, xData, yData, seriesName, colour);
+    }
+
+
+    public void setYAxisType(AxisType type) {
+
+        switch (type) {
+
+            case LINEAR:
+                yAxis.setMode(SmartAxis.Mode.LINEAR);
+                break;
+
+            case LOGARITHMIC:
+                yAxis.setMode(SmartAxis.Mode.LOGARITHMIC);
+                break;
+
+        }
+
+    }
+
+
+    public void setXAxisType(AxisType type) {
+
+        switch (type) {
+
+            case LINEAR:
+                xAxis.setMode(SmartAxis.Mode.LINEAR);
+                break;
+
+            case LOGARITHMIC:
+                xAxis.setMode(SmartAxis.Mode.LOGARITHMIC);
+                break;
+
+        }
+
     }
 
     /**
@@ -137,6 +170,26 @@ public class Plot extends JFXWindow implements Element, Clearable {
      */
     public Plot(String title, ResultTable list) {
         this(title, list, 0, 1);
+    }
+
+    public void setPointOrdering(Sort ordering) {
+
+        switch (ordering) {
+
+            case X_AXIS:
+                chart.setAxisSortingPolicy(LineChart.SortingPolicy.X_AXIS);
+                break;
+
+            case Y_AXIS:
+                chart.setAxisSortingPolicy(LineChart.SortingPolicy.Y_AXIS);
+                break;
+
+            case ORDER_ADDED:
+                chart.setAxisSortingPolicy(LineChart.SortingPolicy.NONE);
+                break;
+
+        }
+
     }
 
     public Series createSeries(String name, Color colour) {
@@ -341,15 +394,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
         controller.setYLimits(min, max);
     }
 
-    /**
-     * Sets whether or not to show markers on the plot.
-     *
-     * @param show Show markers?
-     */
-    public void showMarkers(boolean show) {
-        GUI.runNow(() -> chart.setCreateSymbols(show));
-    }
-
     public void showLegend(boolean show) {
         GUI.runNow(() -> chart.setLegendVisible(show));
     }
@@ -369,22 +413,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
         controller.autoYLimits();
     }
 
-    public void setXAutoRemove(double range) {
-        controller.setXAutoRemove(range);
-    }
-
-    public void setYAutoRemove(double range) {
-        controller.setYAutoRemove(range);
-    }
-
-    public void stopXAutoRemove() {
-        controller.stopXAutoRemove();
-    }
-
-    public void stopYAutoRemove() {
-        controller.stopYAutoRemove();
-    }
-
     public void setXAutoTrack(double range) {
         controller.setTrackingX(range);
     }
@@ -392,7 +420,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
     public void setYAutoTrack(double range) {
         controller.setTrackingY(range);
     }
-
 
     @Override
     public Pane getPane() {
@@ -402,6 +429,12 @@ public class Plot extends JFXWindow implements Element, Clearable {
     @Override
     public synchronized void clear() {
         controller.clear();
+    }
+
+    public enum Sort {
+        X_AXIS,
+        Y_AXIS,
+        ORDER_ADDED
     }
 
 }

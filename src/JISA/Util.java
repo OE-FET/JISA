@@ -140,6 +140,14 @@ public class Util {
 
     }
 
+    public static double oneSigFigFloor(double value) {
+        return Math.floor(value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))))) * Math.pow(10, Math.floor(Math.log10(Math.abs(value))));
+    }
+
+    public static double oneSigFigCeil(double value) {
+        return Math.ceil(value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))))) * Math.pow(10, Math.floor(Math.log10(Math.abs(value))));
+    }
+
     public static double roundSigFig(double value, int nSigDig, int dir) {
 
         double intermediate = value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))) - (nSigDig - 1));

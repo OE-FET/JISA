@@ -11,11 +11,13 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.concurrent.Semaphore;
 
 public class MarkDown extends JFXWindow {
 
     public WebView web;
     public HBox    pane;
+    String content = "";
 
     public MarkDown(String title) {
         super(title, MarkDown.class.getResource("FXML/MDWindow.fxml"));
@@ -28,12 +30,14 @@ public class MarkDown extends JFXWindow {
 
     public void setContent(String text) {
 
+        content = text;
+
         Parser       parser   = Parser.builder().build();
-        Node         node     = parser.parse(text);
+        Node         node     = parser.parse(content);
         HtmlRenderer renderer = HtmlRenderer.builder().build();
         String       output   = renderer.render(node);
         WebEngine    engine   = web.getEngine();
-        GUI.runNow(() -> engine.loadContent("<style> img { max-width: 100%; } </style><html style='width: 90%; font-family: sans-serif;'>" + output + "</html>"));
+        GUI.runNow(() -> engine.loadContent("<style> img { max-width: 100%; } </style><html style='width: 95%; font-family: sans-serif;'>" + output + "</html>"));
 
     }
 
@@ -51,6 +55,32 @@ public class MarkDown extends JFXWindow {
         }
 
         setContent(builder.toString());
+
+    }
+
+    public void addLine(String text) {
+        add(text + "\n");
+    }
+
+    public void add(String text) {
+        setContent(content + text);
+    }
+
+    public void showAndWait() {
+
+        final Semaphore s = new Semaphore(0);
+
+        stage.setOnCloseRequest(we -> {
+            s.release();
+        });
+
+        show();
+
+        try {
+            s.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
     }
 

@@ -12,14 +12,7 @@
 
     <center>
         <AnchorPane fx:id="stack" style="-fx-background-color: transparent;" BorderPane.alignment="CENTER">
-            <LineChart fx:id="chart" legendSide="RIGHT" minHeight="400.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" BorderPane.alignment="CENTER">
-                <xAxis>
-                    <NumberAxis side="BOTTOM" fx:id="xAxis" />
-                </xAxis>
-                <yAxis>
-                    <NumberAxis fx:id="yAxis" side="LEFT" />
-                </yAxis>
-            </LineChart>
+
         </AnchorPane>
     </center>
    <top>
