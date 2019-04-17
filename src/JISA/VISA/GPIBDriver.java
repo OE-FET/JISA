@@ -201,20 +201,21 @@ public class GPIBDriver implements Driver {
 
         @Override
         public String read(int bufferSize) throws VISAException {
+            return new String(readBytes(bufferSize));
+        }
+
+        @Override
+        public byte[] readBytes(int bufferSize) throws VISAException {
 
             Pointer ptr = new Memory(bufferSize);
 
-            lib.ibrd(
-                    handle,
-                    ptr,
-                    bufferSize
-            );
+            lib.ibrd(handle, ptr, bufferSize);
 
             if (wasError()) {
                 throw new VISAException("Error reading from instrument.");
             }
 
-            return ptr.getString(0).substring(0, Ibcnt()).replace("\n", "").replace("\r", "");
+            return ptr.getByteArray(0, Ibcnt());
 
         }
 

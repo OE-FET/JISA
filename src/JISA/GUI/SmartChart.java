@@ -21,8 +21,8 @@ import java.util.function.Predicate;
 public class SmartChart {
 
     private final LineChart<Double, Double>          chart;
-    private final SmartAxis                         xAxis;
-    private final SmartAxis                         yAxis;
+    private final SmartAxis                          xAxis;
+    private final SmartAxis                          yAxis;
     private       String                             xLabel;
     private       String                             yLabel;
     private       LinkedList<Series>                 data          = new LinkedList<>();
@@ -414,7 +414,18 @@ public class SmartChart {
             limMinX = 0;
             limMaxY = 0;
             limMinY = 0;
-            update();
+
+
+            if (xAxis.isAutoRanging()) {
+                setXLimits(xAxis.getMode() != SmartAxis.Mode.LOGARITHMIC ? 0 : 1, 100);
+                autoXLimits();
+            }
+
+            if (yAxis.isAutoRanging() && yAxis.getMode() != SmartAxis.Mode.LOGARITHMIC) {
+                setYLimits(yAxis.getMode() != SmartAxis.Mode.LOGARITHMIC ? 0 : 1, 100);
+                autoYLimits();
+            }
+
         });
     }
 
@@ -500,15 +511,16 @@ public class SmartChart {
         protected Color                          colour;
         protected XYChart.Series<Double, Double> series;
         protected DataList                       data;
-        protected int                            reduceLimit = Integer.MAX_VALUE;
-        protected int                            reduceValue = Integer.MAX_VALUE;
+        protected int                            reduceLimit  = Integer.MAX_VALUE;
+        protected int                            reduceValue  = Integer.MAX_VALUE;
         protected ResultTable                    list;
-        protected double                         xRange      = Double.POSITIVE_INFINITY;
-        protected double                         yRange      = Double.POSITIVE_INFINITY;
-        protected double                         minX        = Double.POSITIVE_INFINITY;
-        protected double                         maxX        = Double.NEGATIVE_INFINITY;
-        protected double                         minY        = Double.POSITIVE_INFINITY;
-        protected double                         maxY        = Double.NEGATIVE_INFINITY;
+        protected double                         xRange       = Double.POSITIVE_INFINITY;
+        protected double                         yRange       = Double.POSITIVE_INFINITY;
+        protected double                         minX         = Double.POSITIVE_INFINITY;
+        protected double                         maxX         = Double.NEGATIVE_INFINITY;
+        protected double                         minY         = Double.POSITIVE_INFINITY;
+        protected double                         maxY         = Double.NEGATIVE_INFINITY;
+        protected boolean                        externalList = false;
 
         public NormalSeries(String name, Color colour) {
 
@@ -521,11 +533,7 @@ public class SmartChart {
                 }
             }
 
-            try {
-                list = new ResultStream(File.createTempFile("JISA-TEMP", ".tmp").getAbsolutePath(), "X", "Y");
-            } catch (IOException e) {
-                list = new ResultList("X", "Y");
-            }
+            list = new ResultList("X", "Y");
             data = new DataList(list, (r) -> r.get(0), (r) -> r.get(1));
             series = new XYChart.Series<>(data);
             GUI.runNow(() -> chart.getData().add(series));
@@ -550,6 +558,8 @@ public class SmartChart {
         }
 
         public NormalSeries(ResultTable results, Evaluable xData, Evaluable yData, Predicate<Result> filter, String name, Color colour) {
+
+            externalList = true;
 
             SmartChart.this.data.add(this);
 
@@ -600,8 +610,17 @@ public class SmartChart {
 
         @Override
         public void clear() {
-            list.clear();
-            data.clear();
+            GUI.runNow(() -> {
+
+                data.clear();
+
+                if (!externalList) {
+                    list.clear();
+                }
+
+                chart.getData().set(chart.getData().indexOf(series), series);
+
+            });
         }
 
         @Override

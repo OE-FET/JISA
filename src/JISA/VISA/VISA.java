@@ -148,15 +148,14 @@ public class VISA {
                 connection = d.open(address);
                 break;                      // If it worked, then let's use it!
             } catch (VISAException e) {
-                errors.add(e.getMessage());
+                errors.add(String.format("* %s: %s", d.getClass().getSimpleName(), e.getMessage()));
             }
 
         }
 
         // If no drivers worked
         if (connection == null) {
-            Util.errLog.println(String.join("Driver Errors:\n", errors));
-            throw new VISAException("Could not open %s using any driver!", address.toString());
+            throw new VISAException("Could not open %s using any driver:\n%s", address.toString(), String.join("\n", errors));
         }
 
         return connection;

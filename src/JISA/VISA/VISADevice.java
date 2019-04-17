@@ -51,6 +51,12 @@ public class VISADevice {
     }
 
 
+    /**
+     * Continuously reads from the read buffer until there's nothing left to read. (Clears the read buffer for the more
+     * stubborn of instruments)
+     *
+     * @throws IOException Upon communications error
+     */
     public void clearRead() throws IOException {
 
         try {
@@ -141,12 +147,15 @@ public class VISADevice {
      * @throws IOException Upon communications error
      */
     public void setTimeout(long timeoutMSec) throws IOException {
+
         try {
             connection.setTMO(timeoutMSec);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
+
         timeout = timeoutMSec;
+
     }
 
     public void setRetryCount(int count) {
@@ -180,13 +189,17 @@ public class VISADevice {
      * @throws IOException Upon communications error
      */
     public synchronized void write(String command, Object... args) throws IOException {
+
         String commandParsed = String.format(command, args).concat(terminator);
+
         lastCommand = commandParsed;
+
         try {
             connection.write(commandParsed);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
+
     }
 
     /**
@@ -215,7 +228,9 @@ public class VISADevice {
 
         // Try n times
         while (true) {
+
             try {
+
                 lastRead = connection.read(readBufferSize);
 
                 if (remTerminator != null) {
@@ -223,12 +238,16 @@ public class VISADevice {
                 }
 
                 break;
+
             } catch (VISAException e) {
+
                 count++;
                 if (count >= attempts) {
                     throw new IOException(e.getMessage());
                 }
+
             }
+
         }
         return lastRead;
     }
@@ -317,11 +336,13 @@ public class VISADevice {
      * @throws IOException Upon communications error
      */
     public synchronized void close() throws IOException {
+
         try {
             connection.close();
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
+
     }
 
 }

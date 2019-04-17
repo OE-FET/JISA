@@ -120,7 +120,7 @@ public class DeviceShell {
 
 
         Label l = new Label(text);
-        l.setFont(new Font("System Bold", 12));
+        l.setFont(new Font("Monospaced Bold", 12));
         l.setTextFill(Color.BLUE);
 
         terminal.getItems().add(l);
@@ -130,7 +130,7 @@ public class DeviceShell {
     private void addSuccessLine(String text) {
 
         Label l = new Label(text);
-        l.setFont(new Font("System Bold", 12));
+        l.setFont(new Font("Monospaced Bold", 12));
         l.setTextFill(Color.GREEN);
 
         terminal.getItems().add(l);
@@ -139,7 +139,7 @@ public class DeviceShell {
     private void addErrorLine(String text) {
 
         Label l = new Label(text);
-        l.setFont(new Font("System Bold", 12));
+        l.setFont(new Font("Monospaced Bold", 12));
         l.setTextFill(Color.RED);
 
         terminal.getItems().add(l);
@@ -149,7 +149,7 @@ public class DeviceShell {
     private void addInputLine(String text) {
 
         Label l = new Label(text);
-        l.setFont(new Font("System Italic", 12));
+        l.setFont(new Font("Monospaced Italic", 12));
         l.setTextFill(Color.TEAL);
 
         terminal.getItems().add(l);
@@ -159,7 +159,7 @@ public class DeviceShell {
     private void addReturnLine(String text) {
 
         Label l = new Label(text);
-        l.setFont(new Font("System", 12));
+        l.setFont(new Font("Monospaced", 12));
         l.setTextFill(Color.BLACK);
 
         terminal.getItems().add(l);

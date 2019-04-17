@@ -3,10 +3,18 @@ package JISA.VISA;
 import JISA.Addresses.Address;
 import JISA.Addresses.SerialAddress;
 import JISA.Addresses.StrAddress;
+import JISA.Util;
+import com.sun.security.ntlm.Server;
 import jssc.*;
 
+import java.io.IOException;
+import java.io.PrintStream;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Scanner;
 
 public class SerialDriver implements Driver {
 
@@ -53,12 +61,12 @@ public class SerialDriver implements Driver {
 
     }
 
-
     public class SerialConnection implements Connection {
 
         private SerialPort port;
         private int        tmo;
         private String     terms;
+        private byte[]     terminationSequence;
 
         public SerialConnection(SerialPort comPort) {
             port = comPort;
@@ -83,18 +91,40 @@ public class SerialDriver implements Driver {
 
         @Override
         public String read(int bufferSize) throws VISAException {
+            return new String(readBytes(bufferSize));
+        }
 
-            StringBuilder read = new StringBuilder();
+        @Override
+        public byte[] readBytes(int bufferSize) throws VISAException {
 
-            while (!read.toString().contains(terms)) {
-                try {
-                    read.append(port.readString(1, tmo));
-                } catch (SerialPortException | SerialPortTimeoutException e) {
-                    throw new VISAException(e.getMessage());
-                }
+            ByteBuffer buffer    = ByteBuffer.allocate(bufferSize);
+            byte[]     lastBytes = new byte[terminationSequence.length];
+            byte[]     single;
+
+            try {
+
+                do {
+
+                    single = port.readBytes(1, tmo);
+
+                    if (single.length != 1) {
+                        throw new VISAException("Error reading from input stream!");
+                    }
+
+                    if (terminationSequence.length > 0) {
+                        System.arraycopy(lastBytes, 1, lastBytes, 0, lastBytes.length - 1);
+                        lastBytes[lastBytes.length - 1] = single[0];
+                    }
+
+                    buffer.put(single[0]);
+
+                } while (terminationSequence.length == 0 || !Arrays.equals(lastBytes, terminationSequence));
+
+                return Util.trimArray(buffer.array());
+
+            } catch (Exception e) {
+                throw new VISAException(e.getMessage());
             }
-
-            return read.toString();
 
         }
 
@@ -106,25 +136,20 @@ public class SerialDriver implements Driver {
         @Override
         public void setEOS(long character) throws VISAException {
 
-            byte[] bytes = ByteBuffer.allocate(Long.BYTES).putLong(character).array();
+            ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+            buffer.putLong(character);
 
-            int offset = 0;
-            for (int i = 0; i < bytes.length; i++) {
+            int pos = 0;
 
-                if (bytes[i] > (byte) 0) {
-                    offset = i;
+            for (int i = 0; i < Long.BYTES; i++) {
+                if (buffer.get(i) > 0) {
+                    pos = i;
                     break;
                 }
-
             }
 
-            ByteBuffer buffer = ByteBuffer.allocate(bytes.length - offset);
-
-            for (int i = offset; i < bytes.length; i++) {
-                buffer.put(bytes[i]);
-            }
-
-            terms = new String(buffer.array());
+            terminationSequence = new byte[Long.BYTES - pos];
+            System.arraycopy(buffer.array(), pos, terminationSequence, 0, terminationSequence.length);
 
         }
 

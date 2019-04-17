@@ -145,6 +145,11 @@ public class Util {
     }
 
     public static double oneSigFigFloor(double value) {
+
+        if (value == 0) {
+            return 0;
+        }
+
         return Math.floor(value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))))) * Math.pow(10, Math.floor(Math.log10(Math.abs(value))));
     }
 
@@ -177,6 +182,27 @@ public class Util {
 
 
         }
+
+    }
+
+    public static byte[] trimArray(byte[] toTrim) {
+
+        int pos = toTrim.length - 1;
+
+        for (int i = toTrim.length - 1; i >= 0; i--) {
+
+            if (toTrim[i] > 0) {
+                pos = i;
+                break;
+            }
+
+        }
+
+        byte[] trimmed = new byte[pos + 1];
+
+        System.arraycopy(toTrim, 0, trimmed, 0, trimmed.length);
+
+        return trimmed;
 
     }
 

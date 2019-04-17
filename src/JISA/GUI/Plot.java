@@ -69,6 +69,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
         BorderPane.setAlignment(chart, Pos.CENTER);
 
         chart.setLegendSide(Side.RIGHT);
+        chart.setAnimated(true);
 
         stack.getChildren().add(chart);
 

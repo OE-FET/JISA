@@ -754,6 +754,13 @@ public class Fields extends JFXWindow implements Element {
 
     }
 
+    /**
+     * Shows the fields as its own window, with an "OK" and "Cancel" button. Does not return until the window has been
+     * closed either by clicking "OK" or "Cancel" or closing the window. Returns a boolean indicating whether "OK" was
+     * clicked or not.
+     *
+     * @return Was "OK" clicked?
+     */
     public boolean showAndWait() {
 
         final Semaphore     semaphore = new Semaphore(0);
@@ -783,7 +790,8 @@ public class Fields extends JFXWindow implements Element {
 
         try {
             semaphore.acquire();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         close();
 

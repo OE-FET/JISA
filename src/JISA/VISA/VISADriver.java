@@ -2,6 +2,7 @@ package JISA.VISA;
 
 import JISA.Addresses.Address;
 import JISA.Addresses.StrAddress;
+import JISA.Util;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.NativeLongByReference;
@@ -190,7 +191,11 @@ public class VISADriver implements Driver {
 
         @Override
         public String read(int bufferSize) throws VISAException {
+            return new String(readBytes(bufferSize));
+        }
 
+        @Override
+        public byte[] readBytes(int bufferSize) throws VISAException {
 
             ByteBuffer            response    = ByteBuffer.allocate(bufferSize);
             NativeLongByReference returnCount = new NativeLongByReference();
@@ -218,11 +223,8 @@ public class VISADriver implements Driver {
                 }
             }
 
-            try {
-                return new String(response.array(), 0, returnCount.getValue().intValue(), responseEncoding);
-            } catch (UnsupportedEncodingException e) {
-                throw new VISAException("Could not encode returned string!");
-            }
+            return Util.trimArray(response.array());
+
         }
 
         @Override

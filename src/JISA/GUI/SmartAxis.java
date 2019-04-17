@@ -26,20 +26,14 @@
 package JISA.GUI;
 
 import JISA.Util;
-import com.sun.javafx.charts.ChartLayoutAnimator;
-import com.sun.javafx.css.converters.SizeConverter;
 import javafx.beans.property.*;
-import javafx.beans.value.WritableValue;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
-import javafx.css.StyleableDoubleProperty;
-import javafx.css.StyleableProperty;
 import javafx.scene.chart.ValueAxis;
 import javafx.util.StringConverter;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -50,22 +44,22 @@ import java.util.List;
  */
 public final class SmartAxis extends ValueAxis<Double> {
 
-    private final ChartLayoutAnimator animator                 = new ChartLayoutAnimator(this);
-    private final StringProperty      currentFormatterProperty = new SimpleStringProperty(this, "currentFormatter", "");
-    private final DefaultFormatter    defaultFormatter         = new DefaultFormatter(this);
-    private final LogFormatter        logFormatter             = new LogFormatter();
-    private       Object              currentAnimationID;
-    private       int                 numTicks                 = 10;
-    private       String              label                    = "";
-    private       String              labelSuffix              = "";
-    private       double              minValue                 = 1.0;
-    private       double              maxValue                 = 1.0;
-    private       Mode                mode                     = Mode.LINEAR;
-    private       double              range                    = Double.POSITIVE_INFINITY;
+    private final StringProperty   currentFormatterProperty = new SimpleStringProperty(this, "currentFormatter", "");
+    private final DefaultFormatter defaultFormatter         = new DefaultFormatter(this);
+    private final LogFormatter     logFormatter             = new LogFormatter();
+    private       Object           currentAnimationID;
+    private       int              numTicks                 = 10;
+    private       String           label                    = "";
+    private       String           labelSuffix              = "";
+    private       double           minValue                 = 1.0;
+    private       double           maxValue                 = 1.0;
+    private       Mode             mode                     = Mode.LINEAR;
+    private       double           range                    = Double.POSITIVE_INFINITY;
+    private       boolean          empty                    = true;
     /**
      * When true zero is always included in the visible range. This only has effect if auto-ranging is on.
      */
-    private       BooleanProperty     forceZeroInRange         = new BooleanPropertyBase(true) {
+    private       BooleanProperty  forceZeroInRange         = new BooleanPropertyBase(true) {
         @Override
         protected void invalidated() {
             // This will effect layout if we are auto ranging
@@ -90,30 +84,7 @@ public final class SmartAxis extends ValueAxis<Double> {
     /**
      * The value between each major tick mark in data units. This is automatically set if we are auto-ranging.
      */
-    private DoubleProperty tickUnit = new StyleableDoubleProperty(5) {
-        @Override
-        protected void invalidated() {
-            if (!isAutoRanging()) {
-                invalidateRange();
-                requestAxisLayout();
-            }
-        }
 
-        @Override
-        public CssMetaData<SmartAxis, Number> getCssMetaData() {
-            return StyleableProperties.TICK_UNIT;
-        }
-
-        @Override
-        public Object getBean() {
-            return SmartAxis.this;
-        }
-
-        @Override
-        public String getName() {
-            return "tickUnit";
-        }
-    };
 
     /**
      * Create a auto-ranging SmartAxis
@@ -121,16 +92,6 @@ public final class SmartAxis extends ValueAxis<Double> {
     public SmartAxis() {
         super();
         setMode(Mode.LINEAR);
-    }
-
-    /**
-     * @return The CssMetaData associated with this class, which may include the
-     * CssMetaData of its super classes.
-     *
-     * @since JavaFX 8.0
-     */
-    public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
-        return StyleableProperties.STYLEABLES;
     }
 
     public Mode getMode() {
@@ -251,15 +212,15 @@ public final class SmartAxis extends ValueAxis<Double> {
     // -------------- CONSTRUCTORS -------------------------------------------------------------------------------------
 
     public final double getTickUnit() {
-        return tickUnit.get();
+        return 10;
     }
 
     public final void setTickUnit(double value) {
-        tickUnit.set(value);
+
     }
 
     public final DoubleProperty tickUnitProperty() {
-        return tickUnit;
+        return null;
     }
 
     // -------------- PROTECTED METHODS --------------------------------------------------------------------------------
@@ -322,24 +283,34 @@ public final class SmartAxis extends ValueAxis<Double> {
 
     public void invalidateRange(List<Double> data) {
 
-        double min = Double.POSITIVE_INFINITY;
-        double max = Double.NEGATIVE_INFINITY;
-
-        for (Number n : data) {
-            min = Math.min(min, n.doubleValue());
-            max = Math.max(max, n.doubleValue());
-        }
-
-        minValue = min;
-        maxValue = max;
 
         int mag = 0;
-        if (Math.max(Math.abs(min), Math.abs(max)) > 0) {
-            mag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(min), Math.abs(max)))) / 3) * 3;
-        }
+        if (!data.isEmpty()) {
 
-        if (data.isEmpty()) {
+            double min = Double.POSITIVE_INFINITY;
+            double max = Double.NEGATIVE_INFINITY;
+
+            for (Number n : data) {
+                min = Math.min(min, n.doubleValue());
+                max = Math.max(max, n.doubleValue());
+            }
+
+            minValue = min;
+            maxValue = max;
+            if (Math.max(Math.abs(min), Math.abs(max)) > 0) {
+                mag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(min), Math.abs(max)))) / 3) * 3;
+            }
+
+            empty = false;
+
+        } else {
+
+            minValue = 0;
+            maxValue = 100;
             mag = 0;
+
+            empty = true;
+
         }
 
 
@@ -405,7 +376,7 @@ public final class SmartAxis extends ValueAxis<Double> {
             case LOGARITHMIC:
 
                 int logStart = (int) Math.floor(Math.log10(lowerBound));
-                int logStop =  (int) Math.ceil(Math.log10(upperBound));
+                int logStop = (int) Math.ceil(Math.log10(upperBound));
 
                 for (int i = logStart; i <= logStop; i++) {
 
@@ -429,7 +400,7 @@ public final class SmartAxis extends ValueAxis<Double> {
 
         final double       lowerBound = getLowerBound();
         final double       upperBound = getUpperBound();
-        final double       tickUnit   = Util.roundSigFig((upperBound - lowerBound) / numTicks, 1, 0);
+        final double       tickUnit   = Util.oneSigFigFloor((upperBound - lowerBound) / numTicks);
         final double       minUnit    = tickUnit / 5;
         final List<Double> ticks      = new ArrayList<>();
 
@@ -437,8 +408,8 @@ public final class SmartAxis extends ValueAxis<Double> {
 
             case LINEAR:
 
-                double linStart = Util.roundSigFig(lowerBound, 2, +1);
-                double linStop = Util.roundSigFig(upperBound, 2, -1);
+                double linStart = Util.oneSigFigFloor(lowerBound);
+                double linStop = Util.oneSigFigCeil(upperBound);
 
                 for (double v = linStart; v <= linStop; v += minUnit) {
                     ticks.add(v);
@@ -503,9 +474,14 @@ public final class SmartAxis extends ValueAxis<Double> {
 
                 case LOGARITHMIC:
 
+                    if (empty) {
+                        minValue = 1;
+                        maxValue = 100;
+                    }
+
                     return new Object[]{
-                            minValue - Math.pow(10, Math.floor(Math.log10(minValue/5))),
-                            maxValue + Math.pow(10, Math.floor(Math.log10(maxValue/5))),
+                            minValue - Math.pow(10, Math.floor(Math.log10(minValue / 5))),
+                            maxValue + Math.pow(10, Math.floor(Math.log10(maxValue / 5))),
                             getTickUnit(),
                             getScale(),
                             currentFormatterProperty.get()
@@ -514,6 +490,11 @@ public final class SmartAxis extends ValueAxis<Double> {
 
                 default:
                 case LINEAR:
+
+                    if (empty) {
+                        minValue = 0;
+                        maxValue = 100;
+                    }
 
                     double range = maxValue - minValue;
                     if (range == 0) {
@@ -554,34 +535,6 @@ public final class SmartAxis extends ValueAxis<Double> {
         LOGARITHMIC
     }
 
-    /**
-     * @treatAsPrivate implementation detail
-     */
-    private static class StyleableProperties {
-        private static final CssMetaData<SmartAxis, Number> TICK_UNIT =
-                new CssMetaData<SmartAxis, Number>("-fx-tick-unit",
-                        SizeConverter.getInstance(), 5.0) {
-
-                    @Override
-                    public boolean isSettable(SmartAxis n) {
-                        return n.tickUnit == null || !n.tickUnit.isBound();
-                    }
-
-                    @Override
-                    public StyleableProperty<Number> getStyleableProperty(SmartAxis n) {
-                        return (StyleableProperty<Number>) (WritableValue<Number>) n.tickUnitProperty();
-                    }
-                };
-
-        private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
-
-        static {
-            final List<CssMetaData<? extends Styleable, ?>> styleables =
-                    new ArrayList<CssMetaData<? extends Styleable, ?>>(ValueAxis.getClassCssMetaData());
-            styleables.add(TICK_UNIT);
-            STYLEABLES = Collections.unmodifiableList(styleables);
-        }
-    }
 
     // -------------- INNER CLASSES ------------------------------------------------------------------------------------
 
