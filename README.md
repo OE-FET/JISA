@@ -137,6 +137,8 @@ def main():
     smu.turnOff()
     results.output("data.csv")
 
+
+main()
 ```
 **MATLAB - Why?**
 ```matlab
