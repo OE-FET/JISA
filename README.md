@@ -63,27 +63,31 @@ For example, here's the same program written in Java, Kotlin, Python and even go
 
 **Java - Classic style, fast, robust but strict**
 ```java
-public static void main(String[] args) throws Exception {
+public class Main {
 
-    SMU         smu     = new K2450(new GPIBAddress(0, 20));
-    ResultTable results = new ResultList("Voltage", "Current");
+    public static void main(String[] args) throws Exception {
 
-    results.setUnits("V", "A");
+        SMU         smu     = new K2450(new GPIBAddress(0, 20));
+        ResultTable results = new ResultList("Voltage", "Current");
 
-    smu.setVoltage(0.0);
-    smu.turnOn();
-    
-    for (double v : Util.makeLinearArray(0, 60, 61)) {
-    
-        smu.setVoltage(v);
-        Util.sleep(500);
-        results.addData(smu.getVoltage(), smu.getCurrent());
-        
+        results.setUnits("V", "A");
+
+        smu.setVoltage(0.0);
+        smu.turnOn();
+
+        for (double v : Util.makeLinearArray(0, 60, 61)) {
+
+            smu.setVoltage(v);
+            Util.sleep(500);
+            results.addData(smu.getVoltage(), smu.getCurrent());
+
+        }
+
+        smu.turnOff();
+        results.output("data.csv");
+
     }
-    
-    smu.turnOff();
-    results.output("data.csv");
-    
+
 }
 ```
 **Kotlin - Simple, concise and fast - great for beginners**
