@@ -33,7 +33,7 @@ public final class SmartAxis extends ValueAxis<Double> {
     private BooleanProperty forceZeroInRange = new BooleanPropertyBase(true) {
         @Override
         protected void invalidated() {
-            // This will effect layout if we are auto ranging
+            // This will affect layout if we are auto ranging
             if (isAutoRanging()) {
                 requestAxisLayout();
                 invalidateRange();
