@@ -55,6 +55,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
         yAxis.setSide(Side.LEFT);
 
         chart = new LineChart<>(xAxis, yAxis);
+        chart.setMinHeight(400);
 
         AnchorPane.setBottomAnchor(chart, 0.0);
         AnchorPane.setTopAnchor(chart, 0.0);

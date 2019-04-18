@@ -26,9 +26,9 @@ public class ITC503 extends MSTC {
     private static final String C_SET_P            = "P%f";
     private static final String C_SET_I            = "I%f";
     private static final String C_SET_D            = "D%f";
-    private static final String C_SET_HEATER       = "O%f";
+    private static final String C_SET_HEATER       = "O%.01f";
     private static final String C_SET_FLOW         = "G%f";
-    private static final String C_SET_HEATER_LIM   = "M%f";
+    private static final String C_SET_HEATER_LIM   = "M%.01f";
     private static final String C_QUERY_STATUS     = "X";
     private static final int    SET_TEMP_CHANNEL   = 0;
     private static final int    TEMP_ERROR_CHANNEL = 4;
@@ -124,7 +124,7 @@ public class ITC503 extends MSTC {
 
     @Override
     public void setManualHeater(double powerPCT) throws IOException, DeviceException {
-        query(C_SET_HEATER, Math.pow(powerPCT / 100.0, 2) * 100.0);
+        query(C_SET_HEATER, Math.sqrt(powerPCT / 100.0) * 100.0);
         AutoMode mode = AutoMode.fromMode(false, isFlowAuto());
         query(C_SET_AUTO, mode.toInt());
     }
@@ -188,6 +188,8 @@ public class ITC503 extends MSTC {
     public void setHeaterRange(double range) throws IOException, DeviceException {
 
         double voltage = MAX_HEATER_VOLTAGE * Math.sqrt(range / 100.0);
+
+
 
         query(C_SET_HEATER_LIM, voltage);
 

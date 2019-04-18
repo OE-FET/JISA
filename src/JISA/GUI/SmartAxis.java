@@ -285,7 +285,7 @@ public final class SmartAxis extends ValueAxis<Double> {
 
         final double       lowerBound = getLowerBound();
         final double       upperBound = getUpperBound();
-        final double       tickUnit   = Util.oneSigFigFloor((upperBound - lowerBound) / numTicks);
+        final double       tickUnit   = Util.oneSigFigCeil((upperBound - lowerBound) / numTicks);
         final List<Double> tickValues = new ArrayList<>();
 
         double minInRange = Double.POSITIVE_INFINITY;
@@ -335,7 +335,6 @@ public final class SmartAxis extends ValueAxis<Double> {
                 int logStop = (int) Math.ceil(Math.log10(upperBound));
 
                 for (int i = logStart; i <= logStop; i++) {
-
                     tickValues.add(Math.pow(10, i));
                 }
 
@@ -353,7 +352,7 @@ public final class SmartAxis extends ValueAxis<Double> {
 
         final double       lowerBound = getLowerBound();
         final double       upperBound = getUpperBound();
-        final double       tickUnit   = Util.oneSigFigFloor((upperBound - lowerBound) / numTicks);
+        final double       tickUnit   = Util.oneSigFigCeil((upperBound - lowerBound) / numTicks);
         final double       minUnit    = tickUnit / 5;
         final List<Double> ticks      = new ArrayList<>();
 
@@ -387,6 +386,7 @@ public final class SmartAxis extends ValueAxis<Double> {
                 double[] endTicks = Util.makeLinearArray(majorTicks.get(majorTicks.size() - 1), majorTicks.get(majorTicks.size() - 1) + tickUnit, 6);
 
                 for (int i = 1; i < endTicks.length - 1; i++) {
+
                     double v = endTicks[i];
                     if (Util.isBetween(v, lowerBound, upperBound)) {
                         ticks.add(v);
