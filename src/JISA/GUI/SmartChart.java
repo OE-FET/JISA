@@ -538,7 +538,10 @@ public class SmartChart {
             series = new XYChart.Series<>(data);
             GUI.runNow(() -> chart.getData().add(series));
             setName(name);
-            setColour(colour);
+
+            if (colour != null) {
+                setColour(colour);
+            }
 
             data.onChange = () -> {
                 if (data.size() > reduceLimit) {

@@ -23,7 +23,7 @@ public class DummyMCSMU extends MCSMU {
 
     @Override
     public double getCurrent(int channel) throws DeviceException, IOException {
-        return current[channel] == null ? getVoltage(channel) / (R[channel] + (1 - 2 * random.nextDouble()) * 0.5 * R[channel]) : current[channel];
+        return current[channel] == null ? getVoltage(channel) / (R[channel] + (1 - 2 * random.nextDouble()) * 0.05 * R[channel]) : current[channel];
     }
 
     @Override

@@ -15,13 +15,11 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
-import java.util.ArrayList;
 import java.util.function.Predicate;
 
 public class Plot extends JFXWindow implements Element, Clearable {
@@ -37,11 +35,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
     public  ToggleButton              dragButton;
     private SmartChart                controller;
     private Rectangle                 rect;
-
-    public enum AxisType {
-        LINEAR,
-        LOGARITHMIC
-    }
+    private Series                    autoSeries = null;
 
     /**
      * Creates an empty plot from the given title, x-axis label, and y-axis label.
@@ -112,9 +106,37 @@ public class Plot extends JFXWindow implements Element, Clearable {
      */
     public Plot(String title, ResultTable list, int xData, int yData, String seriesName, Color colour) {
         this(title, list.getTitle(xData), list.getTitle(yData));
-        watchList(list, xData, yData, seriesName, colour);
+        autoSeries = watchList(list, xData, yData, seriesName, colour);
     }
 
+    /**
+     * Creates a plot that automatically tracks and plots a ResultTable (ResultList or ResultStream) object, specifying
+     * which two columns to plot. Colour and series name automatically chosen.
+     *
+     * @param title Title for the plot
+     * @param list  The ResultTable to track
+     * @param xData Column number to plot on the x-axis
+     * @param yData Column number to plot on the y-axis
+     */
+    public Plot(String title, ResultTable list, int xData, int yData) {
+        this(title, list, xData, yData, list.getTitle(yData), null);
+    }
+
+    public Plot(String title, ResultTable list, int xData, int yData, int sData) {
+        this(title, list.getTitle(xData), list.getTitle(yData));
+        autoSeries = watchListSplit(list, xData, yData, sData);
+    }
+
+    /**
+     * Creates a plot that automatically tracks and plots the first two columns of a ResultTable. Column 0 on the x-axis
+     * and column 1 on the y-axis. Series name and colour automatically chosen.
+     *
+     * @param title The title of the plot
+     * @param list  The ResultTable to track
+     */
+    public Plot(String title, ResultTable list) {
+        this(title, list, 0, 1);
+    }
 
     public void setYAxisType(AxisType type) {
 
@@ -132,7 +154,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
-
     public void setXAxisType(AxisType type) {
 
         switch (type) {
@@ -147,30 +168,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         }
 
-    }
-
-    /**
-     * Creates a plot that automatically tracks and plots a ResultTable (ResultList or ResultStream) object, specifying
-     * which two columns to plot. Colour and series name automatically chosen.
-     *
-     * @param title Title for the plot
-     * @param list  The ResultTable to track
-     * @param xData Column number to plot on the x-axis
-     * @param yData Column number to plot on the y-axis
-     */
-    public Plot(String title, ResultTable list, int xData, int yData) {
-        this(title, list, xData, yData, "Data", Color.RED);
-    }
-
-    /**
-     * Creates a plot that automatically tracks and plots the first two columns of a ResultTable. Column 0 on the x-axis
-     * and column 1 on the y-axis. Series name and colour automatically chosen.
-     *
-     * @param title The title of the plot
-     * @param list  The ResultTable to track
-     */
-    public Plot(String title, ResultTable list) {
-        this(title, list, 0, 1);
     }
 
     public void setPointOrdering(Sort ordering) {
@@ -193,8 +190,25 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
+    /**
+     * Returns the series object of any automatically generated series from the Plot constructor
+     *
+     * @return Automatically generated series, null if there is none
+     */
+    public Series getAutoSeries() {
+        return autoSeries;
+    }
+
     public Series createSeries(String name, Color colour) {
         return controller.createSeries(name, colour);
+    }
+
+    public Series createSeries(String name) {
+        return createSeries(name, null);
+    }
+
+    public Series createSeries() {
+        return createSeries(String.format("Series %d", chart.getData().size() + 1));
     }
 
     public Series watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, Predicate<Result> filter, String name, Color colour) {
@@ -205,6 +219,18 @@ public class Plot extends JFXWindow implements Element, Clearable {
         return watchList(list, xData, yData, null, name, colour);
     }
 
+    public Series watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, String name) {
+        return watchList(list, xData, yData, null, name, null);
+    }
+
+    public Series watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, Predicate<Result> filter) {
+        return watchList(list, xData, yData, filter, String.format("Series %d", chart.getData().size() + 1), null);
+    }
+
+    public Series watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData) {
+        return watchList(list, xData, yData, (Predicate<Result>) null);
+    }
+
     public Series watchList(ResultTable list, int xData, int yData, Predicate<Result> filter, String name, Color colour) {
         return watchList(list, (r) -> r.get(xData), (r) -> r.get(yData), filter, name, colour);
     }
@@ -213,20 +239,60 @@ public class Plot extends JFXWindow implements Element, Clearable {
         return watchList(list, xData, yData, null, name, colour);
     }
 
-    public SeriesGroup watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, SmartChart.Evaluable sData, String pattern, Predicate<Result> filter) {
+    public Series watchList(ResultTable list, int xData, int yData, String name) {
+        return watchList(list, xData, yData, name, null);
+    }
+
+    public Series watchList(ResultTable list, int xData, int yData, Predicate<Result> filter, String name) {
+        return watchList(list, xData, yData, filter, name, null);
+    }
+
+    public Series watchList(ResultTable list, int xData, int yData, Predicate<Result> filter) {
+        return watchList(list, xData, yData, filter, list.getTitle(yData));
+    }
+
+    public Series watchList(ResultTable list, int xData, int yData) {
+        return watchList(list, xData, yData, (Predicate<Result>) null);
+    }
+
+    public Series watchList(ResultTable list, String name, Color colour) {
+        return watchList(list, 0, 1, name, colour);
+    }
+
+    public Series watchList(ResultTable list, String name) {
+        return watchList(list, name, null);
+    }
+
+    public Series watchList(ResultTable list) {
+        return watchList(list, list.getTitle(1), null);
+    }
+
+    public SeriesGroup watchListSplit(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, SmartChart.Evaluable sData, Predicate<Result> filter, String pattern) {
         return controller.createAutoSeries(list, xData, yData, sData, pattern, filter);
     }
 
-    public SeriesGroup watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, SmartChart.Evaluable sData, String pattern) {
-        return watchList(list, xData, yData, sData, pattern, null);
+    public SeriesGroup watchListSplit(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, SmartChart.Evaluable sData, String pattern) {
+        return watchListSplit(list, xData, yData, sData, null, pattern);
     }
 
-    public SeriesGroup watchList(ResultTable list, int xData, int yData, int sData, Predicate<Result> filter) {
-        return watchList(list, (r) -> r.get(xData), (r) -> r.get(yData), (r) -> r.get(sData), list.hasUnits() ? "%s " + list.getUnits(sData) : "%s", filter);
+    public SeriesGroup watchListSplit(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, SmartChart.Evaluable sData) {
+        return watchListSplit(list, xData, yData, sData, null, "%s");
     }
 
-    public SeriesGroup watchList(ResultTable list, int xData, int yData, int sData) {
-        return watchList(list, xData, yData, sData, null);
+    public SeriesGroup watchListSplit(ResultTable list, int xData, int yData, int sData, Predicate<Result> filter, String pattern) {
+        return watchListSplit(list, (r) -> r.get(xData), (r) -> r.get(yData), (r) -> r.get(sData), filter, pattern);
+    }
+
+    public SeriesGroup watchListSplit(ResultTable list, int xData, int yData, int sData, Predicate<Result> filter) {
+        return watchListSplit(list, xData, yData, sData, filter, list.hasUnits() ? "%s " + list.getUnits(sData) : "%s");
+    }
+
+    public SeriesGroup watchListSplit(ResultTable list, int xData, int yData, int sData, String pattern) {
+        return watchListSplit(list, xData, yData, sData, null, pattern);
+    }
+
+    public SeriesGroup watchListSplit(ResultTable list, int xData, int yData, int sData) {
+        return watchListSplit(list, xData, yData, sData, (Predicate<Result>) null);
     }
 
     public Series plotFunction(Function toPlot, String name, Color colour) {
@@ -248,6 +314,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
     public void showToolbar(boolean flag) {
         toolbar.setManaged(flag);
         toolbar.setVisible(flag);
+        adjustSize();
     }
 
     public String getXLabel() {
@@ -422,6 +489,31 @@ public class Plot extends JFXWindow implements Element, Clearable {
         controller.setTrackingY(range);
     }
 
+    public void show() {
+        super.show();
+        adjustSize();
+    }
+
+    private void adjustSize() {
+
+        GUI.runNow(() -> {
+
+            double width  = stage.getWidth();
+            double height = stage.getHeight();
+
+            stage.setMinWidth(0.0);
+            stage.setMinHeight(0.0);
+
+            stage.sizeToScene();
+            stage.setMinHeight(stage.getHeight());
+            stage.setMinWidth(stage.getWidth());
+            stage.setHeight(height);
+            stage.setWidth(width);
+
+        });
+
+    }
+
     @Override
     public Pane getPane() {
         return pane;
@@ -430,6 +522,11 @@ public class Plot extends JFXWindow implements Element, Clearable {
     @Override
     public synchronized void clear() {
         controller.clear();
+    }
+
+    public enum AxisType {
+        LINEAR,
+        LOGARITHMIC
     }
 
     public enum Sort {

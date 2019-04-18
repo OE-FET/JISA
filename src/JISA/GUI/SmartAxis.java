@@ -34,6 +34,7 @@ import javafx.util.StringConverter;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -53,9 +54,12 @@ public final class SmartAxis extends ValueAxis<Double> {
     private       String           labelSuffix              = "";
     private       double           minValue                 = 1.0;
     private       double           maxValue                 = 1.0;
+    private       double           minValueInRange          = 0.0;
     private       Mode             mode                     = Mode.LINEAR;
     private       double           range                    = Double.POSITIVE_INFINITY;
+    private       List<Double>     data                     = new LinkedList<>();
     private       boolean          empty                    = true;
+    private       List<Double>     majorTicks               = new LinkedList<>();
     /**
      * When true zero is always included in the visible range. This only has effect if auto-ranging is on.
      */
@@ -134,7 +138,7 @@ public final class SmartAxis extends ValueAxis<Double> {
                 double logLowerBound = Math.log10(getLowerBound());
 
                 double delta = logUpperBound - logLowerBound;
-                double deltaV = Math.log10(value.doubleValue()) - logLowerBound;
+                double deltaV = Math.log10(value) - logLowerBound;
 
                 if (getSide().isVertical()) {
                     return (1. - ((deltaV) / delta)) * getHeight();
@@ -283,6 +287,7 @@ public final class SmartAxis extends ValueAxis<Double> {
 
     public void invalidateRange(List<Double> data) {
 
+        this.data = data;
 
         int mag = 0;
         if (!data.isEmpty()) {
@@ -347,11 +352,24 @@ public final class SmartAxis extends ValueAxis<Double> {
     @Override
     protected List<Double> calculateTickValues(double length, Object range) {
 
-        final Object[]     rangeProps = (Object[]) range;
-        final double       lowerBound = (Double) rangeProps[0];
-        final double       upperBound = (Double) rangeProps[1];
+        final double       lowerBound = getLowerBound();
+        final double       upperBound = getUpperBound();
         final double       tickUnit   = Util.oneSigFigFloor((upperBound - lowerBound) / numTicks);
         final List<Double> tickValues = new ArrayList<>();
+
+        double minInRange = Double.POSITIVE_INFINITY;
+
+        for (Double d : data) {
+
+            if (Util.isBetween(d, lowerBound, upperBound)) {
+                minInRange = Math.min(minInRange, d);
+            }
+
+        }
+
+        if (minInRange == Double.POSITIVE_INFINITY) {
+            minInRange = 0;
+        }
 
         switch (mode) {
 
@@ -363,13 +381,20 @@ public final class SmartAxis extends ValueAxis<Double> {
                 double distance = Double.POSITIVE_INFINITY;
 
                 for (double v = linStart; v <= linStop; v += tickUnit) {
+
                     tickValues.add(v);
 
-                    if (Math.abs(v - minValue) < distance) {
-                        distance = v - minValue;
+                    if (Math.abs(v - minInRange) < Math.abs(distance)) {
+                        distance = v - minInRange;
                     }
 
                 }
+
+
+                for (int i = 0; i < tickValues.size(); i++) {
+                    tickValues.set(i, tickValues.get(i) - distance);
+                }
+
 
                 break;
 
@@ -386,6 +411,8 @@ public final class SmartAxis extends ValueAxis<Double> {
                 break;
 
         }
+
+        majorTicks = tickValues;
 
         return tickValues;
 
@@ -404,15 +431,40 @@ public final class SmartAxis extends ValueAxis<Double> {
         final double       minUnit    = tickUnit / 5;
         final List<Double> ticks      = new ArrayList<>();
 
+        if (majorTicks.isEmpty()) {
+            return ticks;
+        }
+
         switch (mode) {
 
             case LINEAR:
 
-                double linStart = Util.oneSigFigFloor(lowerBound);
-                double linStop = Util.oneSigFigCeil(upperBound);
+                double[] startTicks = Util.makeLinearArray(majorTicks.get(0) - tickUnit, majorTicks.get(0), 6);
 
-                for (double v = linStart; v <= linStop; v += minUnit) {
-                    ticks.add(v);
+                for (int i = 1; i < startTicks.length - 1; i++) {
+                    double v = startTicks[i];
+                    if (Util.isBetween(v, lowerBound, upperBound)) {
+                        ticks.add(v);
+                    }
+                }
+
+                for (int i = 0; i < majorTicks.size() - 1; i++) {
+
+                    double[] newTicks = Util.makeLinearArray(majorTicks.get(i), majorTicks.get(i + 1), 6);
+
+                    for (int j = 1; j < newTicks.length - 1; j++) {
+                        ticks.add(newTicks[j]);
+                    }
+
+                }
+
+                double[] endTicks = Util.makeLinearArray(majorTicks.get(majorTicks.size() - 1), majorTicks.get(majorTicks.size() - 1) + tickUnit, 6);
+
+                for (int i = 1; i < endTicks.length - 1; i++) {
+                    double v = endTicks[i];
+                    if (Util.isBetween(v, lowerBound, upperBound)) {
+                        ticks.add(v);
+                    }
                 }
 
                 break;
@@ -479,9 +531,13 @@ public final class SmartAxis extends ValueAxis<Double> {
                         maxValue = 100;
                     }
 
+                    double minExp = Math.log10(minValue);
+                    double maxExp = Math.log10(maxValue);
+                    double expRange = maxExp - minExp;
+
                     return new Object[]{
-                            minValue - Math.pow(10, Math.floor(Math.log10(minValue / 5))),
-                            maxValue + Math.pow(10, Math.floor(Math.log10(maxValue / 5))),
+                            Math.pow(10, minExp - (0.05 * expRange)),
+                            Math.pow(10, maxExp + (0.05 * expRange)),
                             getTickUnit(),
                             getScale(),
                             currentFormatterProperty.get()
@@ -492,7 +548,7 @@ public final class SmartAxis extends ValueAxis<Double> {
                 case LINEAR:
 
                     if (empty) {
-                        minValue = 0;
+                        minValue = -100;
                         maxValue = 100;
                     }
 
@@ -502,8 +558,8 @@ public final class SmartAxis extends ValueAxis<Double> {
                     }
 
                     return new Object[]{
-                            Math.max(maxValue - this.range, minValue - (range / numTicks)),
-                            maxValue + (range / numTicks),
+                            Math.max(maxValue - this.range, minValue - 0.5 * (range / numTicks)),
+                            maxValue + 0.5 * (range / numTicks),
                             getTickUnit(),
                             getScale(),
                             currentFormatterProperty.get()

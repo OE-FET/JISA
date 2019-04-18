@@ -12,9 +12,10 @@ import java.util.function.Predicate;
 
 public abstract class ResultTable implements Iterable<Result> {
 
-    protected ArrayList<OnUpdate>  onUpdate = new ArrayList<>();
-    protected ArrayList<Clearable> toClear  = new ArrayList<>();
-    protected boolean              open     = true;
+    protected ArrayList<OnUpdate>  onUpdate     = new ArrayList<>();
+    protected ArrayList<Clearable> toClear      = new ArrayList<>();
+    protected ArrayList<Evaluable> extraColumns = new ArrayList<>();
+    protected boolean              open         = true;
 
     /**
      * Sets the units for each column in the result table
@@ -337,14 +338,20 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public abstract void close();
 
+    public ResultTable getColumns(int... columns) {
+        return new SubTable(this, columns);
+    }
+
     public interface OnUpdate {
 
         void run(Result row);
 
     }
 
-    public ResultTable getColumns(int... columns) {
-        return new SubTable(this, columns);
+    public interface Evaluable {
+
+        double evaluate(Result r);
+
     }
 
 }
