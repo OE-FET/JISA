@@ -284,7 +284,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
     }
 
     public SeriesGroup watchListSplit(ResultTable list, int xData, int yData, int sData, Predicate<Result> filter) {
-        return watchListSplit(list, xData, yData, sData, filter, list.hasUnits() ? "%s " + list.getUnits(sData) : "%s");
+        return watchListSplit(list, xData, yData, sData, filter, list.getColumn(yData).hasUnit() ? "%s " + list.getUnits(sData) : "%s");
     }
 
     public SeriesGroup watchListSplit(ResultTable list, int xData, int yData, int sData, String pattern) {

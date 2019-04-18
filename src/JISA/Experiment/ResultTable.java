@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -16,13 +17,37 @@ public abstract class ResultTable implements Iterable<Result> {
     protected ArrayList<Clearable> toClear      = new ArrayList<>();
     protected ArrayList<Evaluable> extraColumns = new ArrayList<>();
     protected boolean              open         = true;
+    protected ArrayList<Col>       columns      = new ArrayList<>();
+
+    public ResultTable(Col... columns) {
+        this.columns.addAll(Arrays.asList(columns));
+    }
+
+    public ResultTable(String... names) {
+
+        for (String name : names) {
+            columns.add(new Col(name));
+        }
+
+    }
+
 
     /**
      * Sets the units for each column in the result table
      *
      * @param units Units
      */
-    public abstract void setUnits(String... units);
+    public void setUnits(String... units) {
+
+        for (int i = 0; i < Math.min(columns.size(), units.length); i++) {
+            columns.get(i).setUnit(units[i]);
+        }
+
+        updateColumns();
+
+    }
+
+    public abstract void updateColumns();
 
     /**
      * Returns the name of the column with the given number.
@@ -31,20 +56,38 @@ public abstract class ResultTable implements Iterable<Result> {
      *
      * @return Name of the column
      */
-    public abstract String getName(int i);
+    public String getName(int i) {
+        return columns.get(i).getName();
+    }
 
-    public abstract String getUnits(int i);
+    public String getUnits(int i) {
+        return columns.get(i).getUnit();
+    }
 
-    public abstract String[] getNames();
+    public Col getColumn(int i) {
+        return columns.get(i);
+    }
 
-    public abstract boolean hasUnits();
+    public String[] getNames() {
+
+        String[] names = new String[columns.size()];
+
+        for (int i = 0; i < names.length; i++) {
+            names[i] = getTitle(i);
+        }
+
+        return names;
+
+    }
 
     public String getTitle(int i) {
 
-        if (hasUnits()) {
-            return String.format("%s [%s]", getName(i), getUnits(i));
+        Col column = columns.get(i);
+
+        if (column.hasUnit()) {
+            return String.format("%s [%s]", column.getName(), column.getUnit());
         } else {
-            return getName(i);
+            return column.getName();
         }
 
     }
@@ -55,7 +98,34 @@ public abstract class ResultTable implements Iterable<Result> {
             throw new IllegalStateException("You cannot add data to a finalised ResultTable");
         }
 
-        Result row = new Result(data);
+        int i = 0;
+
+        double[] fullData = new double[columns.size()];
+
+        for (int j = 0; j < fullData.length; j++) {
+
+            if (columns.get(j).isFunction()) {
+                fullData[j] = 0.0;
+            } else {
+                fullData[j] = data[i];
+                i++;
+            }
+
+        }
+        Result row = new Result(fullData);
+
+        for (int j = 0; j < fullData.length; j++) {
+
+            if (columns.get(j).isFunction()) {
+                try {
+                    fullData[j] = columns.get(j).getFunction().evaluate(row);
+                } catch (Throwable e) {
+                    fullData[j] = Double.NaN;
+                }
+            }
+
+        }
+
         addRow(row);
 
         for (OnUpdate r : (List<OnUpdate>) onUpdate.clone()) {
@@ -84,7 +154,9 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public abstract int getNumRows();
 
-    public abstract int getNumCols();
+    public int getNumCols() {
+        return columns.size();
+    }
 
     public abstract Result getRow(int i);
 
@@ -251,20 +323,9 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public void output(String delim, PrintStream stream) {
 
-        if (hasUnits()) {
-            String[] titles = new String[getNumCols()];
 
-            for (int i = 0; i < getNumCols(); i++) {
-                titles[i] = getTitle(i);
-            }
-
-            stream.print(String.join(delim, titles));
-
-        } else {
-            stream.print(String.join(delim, getNames()));
-        }
-
-
+        String[] titles = getNames();
+        stream.print(String.join(delim, titles));
         stream.print("\n");
 
         for (Result r : this) {
@@ -337,10 +398,6 @@ public abstract class ResultTable implements Iterable<Result> {
     }
 
     public abstract void close();
-
-    public ResultTable getColumns(int... columns) {
-        return new SubTable(this, columns);
-    }
 
     public interface OnUpdate {
 

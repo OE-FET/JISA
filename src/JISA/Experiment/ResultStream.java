@@ -13,46 +13,35 @@ public class ResultStream extends ResultTable {
     private   String[]         units = null;
     private   int              cols;
 
+    public ResultStream(String path, Col... columns) throws IOException {
+        super(columns);
+        init(path);
+    }
+
     public ResultStream(String path, String... names) throws IOException {
+        super(names);
+        init(path);
+    }
+
+    private void init(String path) throws IOException {
 
         this.path = path;
-        this.names = names;
-        cols = this.names.length;
         file = new RandomAccessFile(path, "rw");
         file.setLength(0);
         file.seek(0);
-
-        String[] titles = new String[getNumCols()];
-
-        for (int i = 0; i < getNumCols(); i++) {
-            titles[i] = getTitle(i);
-        }
-
-        file.writeBytes(String.join(",", titles));
+        file.writeBytes(String.join(",", getNames()));
         file.writeBytes("\n");
 
     }
 
     @Override
-    public void setUnits(String... units) {
+    public void updateColumns() {
 
         if (!open) {
             throw new IllegalStateException("You cannot alter a finalised ResultTable");
         }
 
-        if (units.length != cols) {
-            return;
-        }
-
-        this.units = units;
-
-        String[] titles = new String[getNumCols()];
-
-        for (int i = 0; i < getNumCols(); i++) {
-            titles[i] = getTitle(i);
-        }
-
-        replaceLine(0, String.join(",", titles));
+        replaceLine(0, String.join(",", String.join(",", getNames())));
 
     }
 
@@ -121,26 +110,6 @@ public class ResultStream extends ResultTable {
     }
 
     @Override
-    public String getName(int i) {
-        return names[i];
-    }
-
-    @Override
-    public String getUnits(int i) {
-        return units[i];
-    }
-
-    @Override
-    public String[] getNames() {
-        return names.clone();
-    }
-
-    @Override
-    public boolean hasUnits() {
-        return units != null;
-    }
-
-    @Override
     protected void addRow(Result row) {
         try {
             file.seek(file.length());
@@ -182,11 +151,6 @@ public class ResultStream extends ResultTable {
 
         return count - 1;
 
-    }
-
-    @Override
-    public int getNumCols() {
-        return cols;
     }
 
     @Override
