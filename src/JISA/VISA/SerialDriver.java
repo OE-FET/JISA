@@ -73,6 +73,23 @@ public class SerialDriver implements Driver {
         }
 
         @Override
+        public void writeBytes(byte[] bytes) throws VISAException {
+
+            boolean result;
+
+            try {
+                result = port.writeBytes(bytes);
+            } catch (SerialPortException e) {
+                throw new VISAException(e.getMessage());
+            }
+
+            if (!result) {
+                throw new VISAException("Error writing to port!");
+            }
+
+        }
+
+        @Override
         public void write(String toWrite) throws VISAException {
 
             boolean result = false;
@@ -90,11 +107,6 @@ public class SerialDriver implements Driver {
         }
 
         @Override
-        public String read(int bufferSize) throws VISAException {
-            return new String(readBytes(bufferSize));
-        }
-
-        @Override
         public byte[] readBytes(int bufferSize) throws VISAException {
 
             ByteBuffer buffer    = ByteBuffer.allocate(bufferSize);
@@ -103,7 +115,7 @@ public class SerialDriver implements Driver {
 
             try {
 
-                do {
+                for (int i = 0; i < bufferSize; i++) {
 
                     single = port.readBytes(1, tmo);
 
@@ -111,14 +123,21 @@ public class SerialDriver implements Driver {
                         throw new VISAException("Error reading from input stream!");
                     }
 
-                    if (terminationSequence.length > 0) {
-                        System.arraycopy(lastBytes, 1, lastBytes, 0, lastBytes.length - 1);
-                        lastBytes[lastBytes.length - 1] = single[0];
-                    }
-
                     buffer.put(single[0]);
 
-                } while (terminationSequence.length == 0 || !Arrays.equals(lastBytes, terminationSequence));
+                    if (terminationSequence.length > 0) {
+
+                        System.arraycopy(lastBytes, 1, lastBytes, 0, lastBytes.length - 1);
+
+                        lastBytes[lastBytes.length - 1] = single[0];
+
+                        if (Arrays.equals(lastBytes, terminationSequence)) {
+                            break;
+                        }
+
+                    }
+
+                }
 
                 return Util.trimArray(buffer.array());
 
@@ -129,12 +148,12 @@ public class SerialDriver implements Driver {
         }
 
         @Override
-        public void setEOI(boolean set) throws VISAException {
-
+        public void setEOI(boolean set) {
+            // Nothing to do here
         }
 
         @Override
-        public void setEOS(long character) throws VISAException {
+        public void setEOS(long character) {
 
             ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
             buffer.putLong(character);
@@ -180,7 +199,26 @@ public class SerialDriver implements Driver {
             }
 
             try {
+
                 port.setParams(baud, data, stopBits, parity.toInt(), false, false);
+
+                switch (flow) {
+
+                    case RTS_CTS:
+                        port.setFlowControlMode(SerialPort.FLOWCONTROL_RTSCTS_IN | SerialPort.FLOWCONTROL_RTSCTS_OUT);
+                        break;
+
+                    case XON_XOFF:
+                        port.setFlowControlMode(SerialPort.FLOWCONTROL_XONXOFF_IN | SerialPort.FLOWCONTROL_XONXOFF_OUT);
+                        break;
+
+                    default:
+                    case NONE:
+                        port.setFlowControlMode(SerialPort.FLOWCONTROL_NONE);
+                        break;
+
+                }
+
             } catch (SerialPortException e) {
                 throw new VISAException(e.getMessage());
             }
@@ -190,7 +228,7 @@ public class SerialDriver implements Driver {
         @Override
         public void close() throws VISAException {
 
-            boolean result = false;
+            boolean result;
 
             try {
                 port.purgePort(1);
@@ -208,7 +246,7 @@ public class SerialDriver implements Driver {
     }
 
     @Override
-    public StrAddress[] search() throws VISAException {
+    public StrAddress[] search() {
 
         String[] names = SerialPortList.getPortNames();
 

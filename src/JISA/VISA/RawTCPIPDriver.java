@@ -49,17 +49,14 @@ public class RawTCPIPDriver implements Driver {
         }
 
         @Override
-        public void write(String toWrite) throws VISAException {
+        public void writeBytes(byte[] bytes) throws VISAException {
+
             try {
-                out.write(toWrite.getBytes());
+                out.write(bytes);
             } catch (Exception e) {
                 throw new VISAException(e.getMessage());
             }
-        }
 
-        @Override
-        public String read(int bufferSize) throws VISAException {
-            return new String(readBytes(bufferSize));
         }
 
         @Override
@@ -71,7 +68,7 @@ public class RawTCPIPDriver implements Driver {
 
             try {
 
-                do {
+                for (int i = 0; i < bufferSize; i ++) {
 
                     int readCount = in.read(single);
 
@@ -79,14 +76,21 @@ public class RawTCPIPDriver implements Driver {
                         throw new VISAException("Error reading from input stream!");
                     }
 
-                    if (terminationSequence.length > 0) {
-                        System.arraycopy(lastBytes, 1, lastBytes, 0, lastBytes.length - 1);
-                        lastBytes[lastBytes.length - 1] = single[0];
-                    }
-
                     buffer.put(single[0]);
 
-                } while (terminationSequence.length == 0 || !Arrays.equals(lastBytes, terminationSequence));
+                    if (terminationSequence.length > 0) {
+
+                        System.arraycopy(lastBytes, 1, lastBytes, 0, lastBytes.length - 1);
+
+                        lastBytes[lastBytes.length - 1] = single[0];
+
+                        if (Arrays.equals(lastBytes, terminationSequence)) {
+                            break;
+                        }
+
+                    }
+
+                }
 
                 return Util.trimArray(buffer.array());
 
@@ -131,8 +135,8 @@ public class RawTCPIPDriver implements Driver {
         }
 
         @Override
-        public void setSerial(int baud, int data, Parity parity, StopBits stop, Flow flow) throws VISAException {
-
+        public void setSerial(int baud, int data, Parity parity, StopBits stop, Flow flow) {
+            // Nothing to do here
         }
 
         @Override

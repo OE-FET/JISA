@@ -148,6 +148,44 @@ public class VISADriver implements Driver {
         }
 
         @Override
+        public void writeBytes(byte[] bytes) throws VISAException {
+
+            ByteBuffer pBuffer = ByteBuffer.wrap(bytes);
+
+            long writeLength = bytes.length;
+
+            NativeLongByReference returnCount = new NativeLongByReference();
+
+            NativeLong status = lib.viWrite(
+                    handle,
+                    pBuffer,
+                    new NativeLong(writeLength),
+                    returnCount
+            );
+
+            if (status.longValue() != VI_SUCCESS) {
+
+                switch (status.intValue()) {
+
+                    case VI_ERROR_INV_OBJECT:
+                        throw new VISAException("That connection is not open.");
+
+                    case VI_ERROR_TMO:
+                        throw new VISAException("Write operation timed out.");
+
+                    default:
+                        throw new VISAException("Error writing to instrument.");
+
+                }
+            }
+
+            if (returnCount.getValue().longValue() != writeLength) {
+                throw new VISAException("Command was not fully sent!");
+            }
+
+        }
+
+        @Override
         public void write(String toWrite) throws VISAException {
 
             // Convert string to bytes to send
@@ -187,11 +225,6 @@ public class VISADriver implements Driver {
                 throw new VISAException("Command was not fully sent!");
             }
 
-        }
-
-        @Override
-        public String read(int bufferSize) throws VISAException {
-            return new String(readBytes(bufferSize));
         }
 
         @Override
@@ -283,6 +316,7 @@ public class VISADriver implements Driver {
 
     @Override
     public StrAddress[] search() throws VISAException {
+
         // VISA RegEx for "Anything" (should be .* but they seem to use their own standard)
         ByteBuffer            expr       = stringToByteBuffer("?*");
         ByteBuffer            desc       = ByteBuffer.allocate(1024);

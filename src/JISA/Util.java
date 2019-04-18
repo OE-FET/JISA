@@ -206,6 +206,27 @@ public class Util {
 
     }
 
+    public static byte[] padArray(byte[] toTrim) {
+
+        int pos = toTrim.length - 1;
+
+        for (int i = toTrim.length - 1; i >= 0; i--) {
+
+            if (toTrim[i] > 0) {
+                pos = i;
+                break;
+            }
+
+        }
+
+        byte[] trimmed = new byte[pos + 1];
+
+        System.arraycopy(toTrim, 0, trimmed, 0, trimmed.length);
+
+        return trimmed;
+
+    }
+
     private static Pair<Integer, Integer> mostDeviant(List<Data<Double, Double>> line) {
 
         double maxD = 0;

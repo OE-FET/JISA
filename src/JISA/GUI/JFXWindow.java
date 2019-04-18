@@ -22,6 +22,7 @@ public class JFXWindow implements Element {
      */
     public JFXWindow(String title, String fxmlPath) throws IOException {
 
+        // Make sure the GUI thread has started
         GUI.touch();
 
         // Create a loader for our FXML file
@@ -44,6 +45,7 @@ public class JFXWindow implements Element {
 
     protected JFXWindow(String title, String fxmlPath, boolean ignore) {
 
+        // Make sure the GUI thread has started
         GUI.touch();
 
         // Create a loader for our FXML file
@@ -69,6 +71,7 @@ public class JFXWindow implements Element {
 
     protected JFXWindow(String title, URL resource) {
 
+        // Make sure the GUI thread has started
         GUI.touch();
 
         // Create a loader for our FXML file

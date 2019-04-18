@@ -252,6 +252,16 @@ public class VISADevice {
         return lastRead;
     }
 
+    public synchronized byte[] readBytes(int numBytes) throws IOException {
+
+        try {
+            return connection.readBytes(numBytes);
+        } catch (VISAException e) {
+            throw new IOException(e.getMessage());
+        }
+
+    }
+
     /**
      * Read a double from the device
      *

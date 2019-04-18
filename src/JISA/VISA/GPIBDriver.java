@@ -174,12 +174,20 @@ public class GPIBDriver implements Driver {
 
     }
 
+    /**
+     * Implementation of Connection for GPIB-based connections
+     */
     public class GPIBConnection implements Connection {
 
         private int handle;
 
         public GPIBConnection(int ibHandle) {
             handle = ibHandle;
+        }
+
+        @Override
+        public void writeBytes(byte[] bytes) throws VISAException {
+            write(new String(bytes));
         }
 
         @Override
@@ -197,11 +205,6 @@ public class GPIBDriver implements Driver {
                 throw new VISAException("Could not write to instrument.");
             }
 
-        }
-
-        @Override
-        public String read(int bufferSize) throws VISAException {
-            return new String(readBytes(bufferSize));
         }
 
         @Override
@@ -265,8 +268,8 @@ public class GPIBDriver implements Driver {
         }
 
         @Override
-        public void setSerial(int baud, int data, Parity parity, StopBits stop, Flow flow) throws VISAException {
-
+        public void setSerial(int baud, int data, Parity parity, StopBits stop, Flow flow) {
+            // Nothing to do here
         }
 
         @Override
@@ -280,7 +283,7 @@ public class GPIBDriver implements Driver {
     }
 
     @Override
-    public StrAddress[] search() throws VISAException {
+    public StrAddress[] search() {
 
         ArrayList<StrAddress> addresses = new ArrayList<>();
 
