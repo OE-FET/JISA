@@ -1,28 +1,3 @@
-/*
- * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
- * ORACLE PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- *
- */
-
 package JISA.GUI;
 
 import JISA.Util;
@@ -37,12 +12,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * A axis class that plots a range of numbers with major tick marks every "tickUnit". You can use any Number type with
- * this axis, Long, Double, BigDecimal etc.
- *
- * @since JavaFX 2.0
- */
 public final class SmartAxis extends ValueAxis<Double> {
 
     private final StringProperty   currentFormatterProperty = new SimpleStringProperty(this, "currentFormatter", "");
@@ -60,10 +29,8 @@ public final class SmartAxis extends ValueAxis<Double> {
     private       List<Double>     data                     = new LinkedList<>();
     private       boolean          empty                    = true;
     private       List<Double>     majorTicks               = new LinkedList<>();
-    /**
-     * When true zero is always included in the visible range. This only has effect if auto-ranging is on.
-     */
-    private       BooleanProperty  forceZeroInRange         = new BooleanPropertyBase(true) {
+
+    private BooleanProperty forceZeroInRange = new BooleanPropertyBase(true) {
         @Override
         protected void invalidated() {
             // This will effect layout if we are auto ranging
@@ -84,15 +51,7 @@ public final class SmartAxis extends ValueAxis<Double> {
         }
     };
 
-    // -------------- PUBLIC PROPERTIES --------------------------------------------------------------------------------
-    /**
-     * The value between each major tick mark in data units. This is automatically set if we are auto-ranging.
-     */
 
-
-    /**
-     * Create a auto-ranging SmartAxis
-     */
     public SmartAxis() {
         super();
         setMode(Mode.LINEAR);
@@ -213,8 +172,6 @@ public final class SmartAxis extends ValueAxis<Double> {
         return forceZeroInRange;
     }
 
-    // -------------- CONSTRUCTORS -------------------------------------------------------------------------------------
-
     public final double getTickUnit() {
         return 10;
     }
@@ -227,15 +184,7 @@ public final class SmartAxis extends ValueAxis<Double> {
         return null;
     }
 
-    // -------------- PROTECTED METHODS --------------------------------------------------------------------------------
 
-    /**
-     * Get the string label name for a tick mark with the given value
-     *
-     * @param value The value to format into a tick label string
-     *
-     * @return A formatted string for the given value
-     */
     @Override
     protected String getTickMarkLabel(Double value) {
         StringConverter<Double> formatter = getTickLabelFormatter();
@@ -245,11 +194,7 @@ public final class SmartAxis extends ValueAxis<Double> {
         return formatter.toString(value);
     }
 
-    /**
-     * Called to get the current axis range.
-     *
-     * @return A range object that can be passed to setRange() and calculateTickValues()
-     */
+
     @Override
     protected Object getRange() {
         return new Object[]{
@@ -261,13 +206,7 @@ public final class SmartAxis extends ValueAxis<Double> {
         };
     }
 
-    /**
-     * Called to set the current axis range to the given range. If isAnimating() is true then this method should
-     * animate the range to the new range.
-     *
-     * @param range   A range object returned from autoRange()
-     * @param animate If true animate the change in range
-     */
+
     @Override
     protected void setRange(Object range, boolean animate) {
         final Object[] rangeProps = (Object[]) range;
@@ -341,14 +280,6 @@ public final class SmartAxis extends ValueAxis<Double> {
 
     }
 
-    /**
-     * Calculate a list of all the data values for each tick mark in range
-     *
-     * @param length The length of the axis in display units
-     * @param range  A range object returned from autoRange()
-     *
-     * @return A list of tick marks that fit along the axis if it was the given length
-     */
     @Override
     protected List<Double> calculateTickValues(double length, Object range) {
 
@@ -418,11 +349,6 @@ public final class SmartAxis extends ValueAxis<Double> {
 
     }
 
-    /**
-     * Calculate a list of the data values for every minor tick mark
-     *
-     * @return List of data values where to draw minor tick marks
-     */
     protected List<Double> calculateMinorTickMarks() {
 
         final double       lowerBound = getLowerBound();
@@ -507,16 +433,6 @@ public final class SmartAxis extends ValueAxis<Double> {
         this.range = range;
     }
 
-    /**
-     * Called to set the upper and lower bound and anything else that needs to be auto-ranged
-     *
-     * @param minValue  The min data value that needs to be plotted on this axis
-     * @param maxValue  The max data value that needs to be plotted on this axis
-     * @param length    The length of the axis in display coordinates
-     * @param labelSize The approximate average size a label takes along the axis
-     *
-     * @return The calculated range
-     */
     @Override
     protected Object autoRange(double minValue, double maxValue, double length, double labelSize) {
 
@@ -574,13 +490,6 @@ public final class SmartAxis extends ValueAxis<Double> {
 
     }
 
-    // -------------- STYLESHEET HANDLING ------------------------------------------------------------------------------
-
-    /**
-     * {@inheritDoc}
-     *
-     * @since JavaFX 8.0
-     */
     @Override
     public List<CssMetaData<? extends Styleable, ?>> getCssMetaData() {
         return getClassCssMetaData();
@@ -590,9 +499,6 @@ public final class SmartAxis extends ValueAxis<Double> {
         LINEAR,
         LOGARITHMIC
     }
-
-
-    // -------------- INNER CLASSES ------------------------------------------------------------------------------------
 
     public static class LogFormatter extends StringConverter<Double> {
 
@@ -609,48 +515,22 @@ public final class SmartAxis extends ValueAxis<Double> {
         }
     }
 
-    /**
-     * Default number formatter for SmartAxis, this stays in sync with auto-ranging and formats values appropriately.
-     * You can wrap this formatter to add prefixes or suffixes;
-     *
-     * @since JavaFX 2.0
-     */
     public static class DefaultFormatter extends StringConverter<Double> {
         private String    prefix    = null;
         private String    suffix    = null;
         private double    magnitude = 1;
         private SmartAxis axis;
 
-        /**
-         * Construct a DefaultFormatter for the given SmartAxis
-         *
-         * @param axis The axis to format tick marks for
-         */
         public DefaultFormatter(final SmartAxis axis) {
             this.axis = axis;
         }
 
-        /**
-         * Construct a DefaultFormatter for the given SmartAxis with a prefix and/or suffix.
-         *
-         * @param axis   The axis to format tick marks for
-         * @param prefix The prefix to append to the start of formatted number, can be null if not needed
-         * @param suffix The suffix to append to the end of formatted number, can be null if not needed
-         */
         public DefaultFormatter(SmartAxis axis, String prefix, String suffix) {
             this(axis);
             this.prefix = prefix;
             this.suffix = suffix;
         }
 
-        /**
-         * Converts the object provided into its string form.
-         * Format of the returned string is defined by this converter.
-         *
-         * @return a string representation of the object passed in.
-         *
-         * @see StringConverter#toString
-         */
         @Override
         public String toString(Double number) {
             return String.format("%.02f", number / magnitude);
@@ -664,14 +544,6 @@ public final class SmartAxis extends ValueAxis<Double> {
             return toString(number);
         }
 
-        /**
-         * Converts the string provided into a Number defined by the this converter.
-         * Format of the string and type of the resulting object is defined by this converter.
-         *
-         * @return a Number representation of the string passed in.
-         *
-         * @see StringConverter#toString
-         */
         @Override
         public Double fromString(String string) {
             return Double.valueOf(string) * magnitude;
