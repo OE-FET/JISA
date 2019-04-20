@@ -128,6 +128,14 @@ public class Plot extends JFXWindow implements Element, Clearable {
         autoSeries = watchListSplit(list, xData, yData, sData);
     }
 
+    public Plot(String title, String xLabel) {
+        this(title, xLabel, "");
+    }
+
+    public Plot(String title) {
+        this(title, "", "");
+    }
+
     /**
      * Creates a plot that automatically tracks and plots the first two columns of a ResultTable. Column 0 on the x-axis
      * and column 1 on the y-axis. Series name and colour automatically chosen.
@@ -233,6 +241,15 @@ public class Plot extends JFXWindow implements Element, Clearable {
     }
 
     public Series watchList(ResultTable list, int xData, int yData, Predicate<Result> filter, String name, Color colour) {
+
+        if (getXLabel().equals("")) {
+            setXLabel(list.getTitle(xData));
+        }
+
+        if (getYLabel().equals("")) {
+            setYLabel(list.getTitle(yData));
+        }
+
         return watchList(list, (r) -> r.get(xData), (r) -> r.get(yData), filter, name, colour);
     }
 
