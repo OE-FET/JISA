@@ -1,7 +1,9 @@
 package JISA.GUI;
 
-import JISA.Control.Returnable;
-import JISA.Experiment.*;
+import JISA.Experiment.Function;
+import JISA.Experiment.Result;
+import JISA.Experiment.ResultList;
+import JISA.Experiment.ResultTable;
 import JISA.Util;
 import javafx.beans.InvalidationListener;
 import javafx.collections.FXCollections;
@@ -11,10 +13,7 @@ import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
-import javafx.util.StringConverter;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -451,6 +450,12 @@ public class SmartChart {
 
     }
 
+    public interface Evaluable {
+
+        double evaluate(Result r);
+
+    }
+
     private static class Limits {
 
         private double min;
@@ -715,12 +720,6 @@ public class SmartChart {
         }
     }
 
-    public interface Evaluable {
-
-        double evaluate(Result r);
-
-    }
-
     private class FunctionSeries implements Series {
 
         private Function                                     function;
@@ -880,7 +879,7 @@ public class SmartChart {
 
             final Predicate<Result> finalFilter = filter;
 
-            results.addOnUpdate((r) -> {
+            ResultTable.OnUpdate onUpdate = (r) -> {
 
                 if (finalFilter.test(r)) {
 
@@ -904,7 +903,13 @@ public class SmartChart {
 
                 }
 
-            });
+            };
+
+            for (Result r : results) {
+                onUpdate.run(r);
+            }
+
+            results.addOnUpdate(onUpdate);
 
         }
 
@@ -1124,6 +1129,8 @@ public class SmartChart {
 
             });
 
+            data.addClearable(() -> GUI.runNow(() -> list.clear()));
+
             update();
 
         }
@@ -1254,11 +1261,9 @@ public class SmartChart {
             updateRemove();
 
             final List<XYChart.Data<Double, Double>> toAdd = new LinkedList<>();
-
-
             forEach((i, r, d) -> {
 
-                if (filter.test(r) && !shown.contains(i) && show.test(i, d)) {
+                if (!shown.contains(i) && show.test(i, d)) {
                     toAdd.add(new XYChart.Data<>(d.getXValue(), d.getYValue()));
                     shown.add(i);
                     minX = Math.min(minX, d.getXValue());

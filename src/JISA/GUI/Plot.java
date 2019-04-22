@@ -6,20 +6,26 @@ import JISA.Experiment.ResultTable;
 import JISA.Util;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.util.function.Predicate;
 
 public class Plot extends JFXWindow implements Element, Clearable {
@@ -298,6 +304,15 @@ public class Plot extends JFXWindow implements Element, Clearable {
     }
 
     public SeriesGroup watchListSplit(ResultTable list, int xData, int yData, int sData, Predicate<Result> filter, String pattern) {
+
+        if (getXLabel().equals("")) {
+            setXLabel(list.getTitle(xData));
+        }
+
+        if (getYLabel().equals("")) {
+            setYLabel(list.getTitle(yData));
+        }
+
         return watchListSplit(list, (r) -> r.get(xData), (r) -> r.get(yData), (r) -> r.get(sData), filter, pattern);
     }
 
@@ -480,6 +495,30 @@ public class Plot extends JFXWindow implements Element, Clearable {
         controller.setYLimits(min, max);
     }
 
+    public void setLegendPosition(Legend position) {
+
+        switch (position) {
+
+            case TOP:
+                chart.setLegendSide(Side.TOP);
+                break;
+
+            case RIGHT:
+                chart.setLegendSide(Side.RIGHT);
+                break;
+
+            case BOTTOM:
+                chart.setLegendSide(Side.BOTTOM);
+                break;
+
+            case LEFT:
+                chart.setLegendSide(Side.LEFT);
+                break;
+
+        }
+
+    }
+
     public void showLegend(boolean show) {
         GUI.runNow(() -> chart.setLegendVisible(show));
     }
@@ -512,6 +551,42 @@ public class Plot extends JFXWindow implements Element, Clearable {
         adjustSize();
     }
 
+    public void saveAsImage(String path, double w, double h) {
+
+        Util.sleep(500);
+
+        double height = stage.getHeight();
+        double width  = stage.getWidth();
+
+        GUI.runNow(() -> {
+
+            stage.setWidth(w);
+            stage.setHeight(h);
+
+        });
+
+        Util.sleep(100);
+
+        GUI.runNow(() -> {
+
+            WritableImage image = chart.snapshot(new SnapshotParameters(), null);
+            try {
+                ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", new File(path));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        });
+
+        Util.sleep(100);
+
+        GUI.runNow(() -> {
+            stage.setWidth(width);
+            stage.setHeight(height);
+        });
+
+    }
+
     private void adjustSize() {
 
         GUI.runNow(() -> {
@@ -529,6 +604,12 @@ public class Plot extends JFXWindow implements Element, Clearable {
             stage.setWidth(width);
 
         });
+
+    }
+
+    public void saveAsSVG(String path){
+
+
 
     }
 
@@ -551,6 +632,13 @@ public class Plot extends JFXWindow implements Element, Clearable {
         X_AXIS,
         Y_AXIS,
         ORDER_ADDED
+    }
+
+    public enum Legend {
+        TOP,
+        RIGHT,
+        BOTTOM,
+        LEFT
     }
 
 }

@@ -52,12 +52,8 @@ public class Util {
         }
     }
 
-    public static boolean isBetween(double value, double min, double max) {
-        return value >= min && value <= max;
-    }
-
-    public static boolean isBetween(int value, int min, int max) {
-        return value >= min && value <= max;
+    public static boolean isBetween(Number value, Number min, Number max) {
+        return value.doubleValue() >= min.doubleValue() && value.doubleValue() <= max.doubleValue();
     }
 
     public static void setExceptionHandler(ERunnable handler) {
@@ -68,12 +64,12 @@ public class Util {
         exHandler.run(e);
     }
 
-    public static double[] makeLinearArray(double min, double max, int numSteps) {
+    public static double[] makeLinearArray(Number min, Number max, int numSteps) {
 
         double[] values = new double[numSteps];
-        double   step   = (max - min) / (numSteps - 1D);
+        double   step   = (max.doubleValue() - min.doubleValue()) / (numSteps - 1D);
 
-        values[0] = min;
+        values[0] = min.doubleValue();
 
         for (int i = 1; i < values.length; i++) {
             values[i] = values[i - 1] + step;
@@ -83,7 +79,7 @@ public class Util {
 
     }
 
-    public static double[] makeSymLinearArray(double min, double max, int stepsEachWay) {
+    public static double[] makeSymLinearArray(Number min, Number max, int stepsEachWay) {
         return symArray(makeLinearArray(min, max, stepsEachWay));
     }
 
@@ -119,12 +115,12 @@ public class Util {
 
     }
 
-    public static double[] makeLogarithmicArray(double min, double max, int numSteps) {
+    public static double[] makeLogarithmicArray(Number min, Number max, int numSteps) {
 
         double[] values = new double[numSteps];
-        double   step   = Math.pow(max / min, 1D / numSteps);
+        double   step   = Math.pow(max.doubleValue() / min.doubleValue(), 1D / numSteps);
 
-        values[0] = min;
+        values[0] = min.doubleValue();
 
         for (int i = 1; i < values.length; i++) {
             values[i] = values[i - 1] * step;
@@ -144,13 +140,13 @@ public class Util {
 
     }
 
-    public static double oneSigFigFloor(double value) {
+    public static double oneSigFigFloor(Number value) {
 
-        if (value == 0) {
+        if (value.doubleValue() == 0) {
             return 0;
         }
 
-        return Math.floor(value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))))) * Math.pow(10, Math.floor(Math.log10(Math.abs(value))));
+        return Math.floor(value.doubleValue() / Math.pow(10, Math.floor(Math.log10(Math.abs(value.doubleValue()))))) * Math.pow(10, Math.floor(Math.log10(Math.abs(value.doubleValue()))));
     }
 
     public static double oneSigFigCeil(double value) {

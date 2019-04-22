@@ -62,6 +62,20 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
     private String                      key;
     private LinkedList<Runnable>        onApply         = new LinkedList<>();
 
+    public static class SMU extends InstrumentConfig<JISA.Devices.SMU> {
+
+        public SMU(String title) throws IOException {
+            super(title, null, JISA.Devices.SMU.class, null);
+        }
+    }
+
+    public static class TC extends InstrumentConfig<JISA.Devices.TC> {
+
+        public TC(String title) throws IOException {
+            super(title, null, JISA.Devices.TC.class, null);
+        }
+    }
+
     public InstrumentConfig(String title, String key, Class<T> type, ConfigStore c) throws IOException {
         super(title, "FXML/InstrumentConfig.fxml");
         realTitle = title;

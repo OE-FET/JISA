@@ -4,8 +4,6 @@
       <root url="jar://$PROJECT_DIR$/lib/commons-math-2.2.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../.ideaLibSources/commons-math-2.2-sources.jar!/" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>
