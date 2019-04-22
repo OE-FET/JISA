@@ -1,3 +1,4 @@
+
 <p align="center"><img src="https://i.imgur.com/MUXiBqM.png"/></p>
 
 # JISA - "Because no-one likes LabView"
@@ -9,12 +10,12 @@ In essence then, the purpose of `JISA` is to act as an alternative (and actually
 SMU smu1 = new K2560(new TCPIPAddress("192.168.0.2")); // Keithley 2450
 SMU smu2 = new K236(new GPIBAdrress(0,17));            // Keithley 236
 
-smu1.useAutoRanging();
+smu1.useAutoRanges();
 smu1.setCurrentLimit(10e-3);
 smu1.setVoltage(5.0);
 smu1.turnOn();
 
-smu2.useAutoRanging();       // Same code, despite different SMU
+smu2.useAutoRanges();          // Same code, despite different SMU
 smu2.setCurrentLimit(10e-3);
 smu2.setVoltage(5.0); 
 smu2.turnOn();
