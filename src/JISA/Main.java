@@ -2,16 +2,9 @@ package JISA;
 
 import JISA.Addresses.Address;
 import JISA.Addresses.StrAddress;
-import JISA.Devices.DeviceException;
-import JISA.Devices.DummyMCSMU;
-import JISA.Devices.SMU;
-import JISA.Experiment.*;
 import JISA.GUI.*;
 import JISA.VISA.VISA;
 import javafx.application.Platform;
-import javafx.scene.paint.Color;
-
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -84,7 +77,11 @@ public class Main {
                         md.addLine("");
                         md.addLine("* `\"Exit\"` to exit this utility");
                         md.addLine("");
-                        md.addLine("_Close this window to return to menu_");
+                        md.addLine("For more information regarding how to include and use this library in your project, take a look at the `JISA` wiki at:");
+                        md.addLine("");
+                        md.addLine("https://github.com/OE-FET/JISA/wiki");
+                        md.addLine("");
+                        md.addLine("_Close this window or press `OK` to return to menu_");
 
                         md.showAndWait();
 
