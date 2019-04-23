@@ -150,6 +150,11 @@ public class Util {
     }
 
     public static double oneSigFigCeil(double value) {
+
+        if (value == 0) {
+            return 0;
+        }
+
         return Math.ceil(value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))))) * Math.pow(10, Math.floor(Math.log10(Math.abs(value))));
     }
 

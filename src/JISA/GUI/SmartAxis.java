@@ -283,8 +283,19 @@ public final class SmartAxis extends ValueAxis<Double> {
     @Override
     protected List<Double> calculateTickValues(double length, Object range) {
 
-        final double       lowerBound = getLowerBound();
-        final double       upperBound = getUpperBound();
+        double       lowerBound = getLowerBound();
+        double       upperBound = getUpperBound();
+
+        if (upperBound == lowerBound) {
+            double amount = Math.abs(0.1 * lowerBound);
+            lowerBound = lowerBound - amount;
+            upperBound = lowerBound + amount;
+        }
+
+        if (upperBound == lowerBound) {
+            upperBound = lowerBound + 100;
+        }
+
         final double       tickUnit   = Util.oneSigFigCeil((upperBound - lowerBound) / numTicks);
         final List<Double> tickValues = new ArrayList<>();
 
@@ -312,6 +323,8 @@ public final class SmartAxis extends ValueAxis<Double> {
                 double distance = Double.POSITIVE_INFINITY;
 
                 for (double v = linStart; v <= linStop; v += tickUnit) {
+
+                    System.out.println(tickUnit);
 
                     tickValues.add(v);
 
@@ -463,7 +476,7 @@ public final class SmartAxis extends ValueAxis<Double> {
                 default:
                 case LINEAR:
 
-                    if (empty) {
+                    if (empty || (minValue == 0 && maxValue == 0)) {
                         minValue = -100;
                         maxValue = 100;
                     }

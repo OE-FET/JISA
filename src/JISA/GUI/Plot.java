@@ -71,6 +71,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         chart.setLegendSide(Side.RIGHT);
         chart.setAnimated(true);
+        chart.setMinHeight(400.0);
 
         stack.getChildren().add(chart);
 
