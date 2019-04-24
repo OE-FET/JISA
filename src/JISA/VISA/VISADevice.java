@@ -359,4 +359,14 @@ public class VISADevice {
 
     }
 
+    public void finalize() {
+
+        try {
+            close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
 }
