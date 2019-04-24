@@ -18,7 +18,7 @@ public final class SmartAxis extends ValueAxis<Double> {
     private final DefaultFormatter defaultFormatter         = new DefaultFormatter(this);
     private final LogFormatter     logFormatter             = new LogFormatter();
     private       Object           currentAnimationID;
-    private       int              numTicks                 = 10;
+    private       int              numTicks                 = 11;
     private       String           label                    = "";
     private       String           labelSuffix              = "";
     private       double           minValue                 = 1.0;
@@ -286,14 +286,15 @@ public final class SmartAxis extends ValueAxis<Double> {
         double       lowerBound = getLowerBound();
         double       upperBound = getUpperBound();
 
-        if (upperBound == lowerBound) {
+        if (upperBound == lowerBound || data.size() == 1) {
             double amount = Math.abs(0.1 * lowerBound);
-            lowerBound = lowerBound - amount;
-            upperBound = lowerBound + amount;
+            lowerBound -= amount;
+            upperBound += amount;
         }
 
         if (upperBound == lowerBound) {
-            upperBound = lowerBound + 100;
+            lowerBound -= 50;
+            upperBound += 50;
         }
 
         final double       tickUnit   = Math.abs(Util.oneSigFigCeil((upperBound - lowerBound) / numTicks));

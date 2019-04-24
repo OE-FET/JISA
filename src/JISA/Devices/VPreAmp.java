@@ -12,6 +12,9 @@ public abstract class VPreAmp extends VISADevice {
         super(address, prefDriver);
     }
 
+    public VPreAmp(Address address) throws IOException {
+        this(address, null);
+    }
     /**
      * Sets the gain to the given value, or as close to it as possible.
      *

@@ -1181,7 +1181,7 @@ public class SmartChart {
                 List<XYChart.Data<Double, Double>> toKeep   = reducePoints(list, epsilon);
                 List<XYChart.Data<Double, Double>> toRemove = this.list.filtered((p) -> list.contains(p) && !toKeep.contains(p));
                 for (XYChart.Data<Double, Double> d : toRemove) {
-                    shown.remove((Integer) d.getExtraValue());
+                    shown.remove(d.getExtraValue());
                 }
                 this.list.removeAll(toRemove);
                 epsilon += step;

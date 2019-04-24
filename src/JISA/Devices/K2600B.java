@@ -64,7 +64,7 @@ public class K2600B extends MCSMU {
 
     public K2600B(Address address) throws IOException, DeviceException {
 
-        super(address, null);
+        super(address);
 
         // TODO: Check that this IDN check actually works
         try {

@@ -28,7 +28,7 @@ public class TaskListWindow {
             FXMLLoader     loader     = new FXMLLoader(TaskListWindow.class.getResource("TaskListWindow.fxml"));
             Parent         root       = loader.load();
             Scene          scene      = new Scene(root);
-            TaskListWindow controller = (TaskListWindow) loader.getController();
+            TaskListWindow controller = loader.getController();
             Platform.runLater(() -> {
                 Stage stage = new Stage();
                 controller.stage = stage;

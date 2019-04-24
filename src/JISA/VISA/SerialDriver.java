@@ -4,17 +4,13 @@ import JISA.Addresses.Address;
 import JISA.Addresses.SerialAddress;
 import JISA.Addresses.StrAddress;
 import JISA.Util;
-import com.sun.security.ntlm.Server;
-import jssc.*;
+import jssc.SerialPort;
+import jssc.SerialPortException;
+import jssc.SerialPortList;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Scanner;
 
 public class SerialDriver implements Driver {
 

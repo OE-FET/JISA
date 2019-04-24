@@ -16,6 +16,10 @@ public abstract class LockIn extends VISADevice {
         super(address, prefDriver);
     }
 
+    public LockIn(Address address) throws IOException {
+        this(address, null);
+    }
+
     /**
      * Sets whether the lock-in amplifier is to use an internal or external reference signal
      *
@@ -282,19 +286,19 @@ public abstract class LockIn extends VISADevice {
 
     public enum Coupling {
         AC,
-        DC;
+        DC
     }
 
     public enum Ground {
         GROUND,
-        FLOAT;
+        FLOAT
     }
 
     public enum LineFilter {
         NONE,
         X1,
         X2,
-        X1_X2;
+        X1_X2
     }
 
     public enum TrigMode {

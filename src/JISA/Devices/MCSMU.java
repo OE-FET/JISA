@@ -33,6 +33,10 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         super(address, prefDriver);
     }
 
+    public MCSMU(Address address) throws IOException {
+        this(address, null);
+    }
+
     /**
      * Sets the default channel to use when no channel number is specified in a method call.
      *
@@ -1953,7 +1957,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
     }
 
     public interface MCUpdateHandler {
-        public void onUpdate(int count, MCIVPoint point) throws IOException, DeviceException;
+        void onUpdate(int count, MCIVPoint point) throws IOException, DeviceException;
 
     }
 

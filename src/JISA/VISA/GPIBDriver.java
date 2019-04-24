@@ -87,10 +87,10 @@ public class GPIBDriver implements Driver {
         try {
             if (OS_NAME.contains("win")) {
                 libName = "ni4882";
-                lib = (GPIBNativeInterface) Native.loadLibrary(libName, GPIBNativeInterface.class);
+                lib = Native.loadLibrary(libName, GPIBNativeInterface.class);
             } else if (OS_NAME.contains("linux")) {
                 libName = "gpib";
-                lib = (GPIBNativeInterface) Native.loadLibrary(libName, GPIBNativeInterface.class);
+                lib = Native.loadLibrary(libName, GPIBNativeInterface.class);
             } else {
                 throw new VISAException("Platform not yet supported!");
             }

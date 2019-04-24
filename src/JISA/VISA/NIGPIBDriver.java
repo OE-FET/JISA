@@ -12,10 +12,10 @@ public class NIGPIBDriver extends GPIBDriver {
         try {
             if (OS_NAME.contains("win")) {
                 libName = "ni4882";
-                lib = (NIGPIBNativeInterface) Native.loadLibrary(libName, NIGPIBNativeInterface.class);
+                lib = Native.loadLibrary(libName, NIGPIBNativeInterface.class);
             } else if (OS_NAME.contains("linux")) {
                 libName = "gpib";
-                lib = (NIGPIBNativeInterface) Native.loadLibrary(libName, NIGPIBNativeInterface.class);
+                lib = Native.loadLibrary(libName, NIGPIBNativeInterface.class);
             } else {
                 throw new VISAException("Platform not yet supported!");
             }

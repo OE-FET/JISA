@@ -19,12 +19,24 @@ public abstract class TC extends VISADevice {
     /**
      * Connects to the temperature controller at the given address, returning an instrument object to control it.
      *
-     * @param address Address of instrument
+     * @param address    Address of instrument
+     * @param prefDriver Driver class to attempt to use before all others
      *
      * @throws IOException Upon communications error
      */
     public TC(Address address, Class<? extends Driver> prefDriver) throws IOException {
         super(address, prefDriver);
+    }
+
+    /**
+     * Connects to the temperature controller at the given address, returning an instrument object to control it.
+     *
+     * @param address Address of instrument
+     *
+     * @throws IOException Upon communications error
+     */
+    public TC(Address address) throws IOException {
+        this(address, null);
     }
 
     /**

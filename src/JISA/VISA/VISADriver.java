@@ -32,10 +32,10 @@ public class VISADriver implements Driver {
         try {
             if (OS_NAME.contains("win")) {
                 libName = "nivisa64";
-                lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
+                lib = Native.loadLibrary(libName, VISANativeInterface.class);
             } else if (OS_NAME.contains("linux") || OS_NAME.contains("mac")) {
                 libName = "visa";
-                lib = (VISANativeInterface) Native.loadLibrary(libName, VISANativeInterface.class);
+                lib = Native.loadLibrary(libName, VISANativeInterface.class);
             } else {
                 throw new VISAException("Platform not yet supported!");
             }

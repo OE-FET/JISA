@@ -4,6 +4,7 @@ import JISA.Addresses.Address;
 import JISA.Control.Synch;
 import JISA.VISA.Driver;
 import JISA.VISA.VISADevice;
+import org.python.antlr.op.Add;
 
 import java.io.IOException;
 
@@ -11,6 +12,10 @@ public abstract class DCPower extends VISADevice {
 
     public DCPower(Address address, Class<? extends Driver> prefDriver) throws IOException {
         super(address, prefDriver);
+    }
+
+    public DCPower(Address address) throws IOException {
+        this(address, null);
     }
 
     /**

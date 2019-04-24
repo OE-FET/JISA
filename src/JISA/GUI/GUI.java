@@ -113,15 +113,17 @@ public class GUI extends Application {
     }
 
     private static void alert(final Alert.AlertType type, final String title, final String header, final String text, final double width) {
-        final Semaphore semaphore = new Semaphore(0);
+
         GUI.runNow(() -> {
             Alert alert = new Alert(type);
             alert.setTitle(title);
             alert.setHeaderText(header);
             alert.setContentText(text);
             alert.getDialogPane().setMinWidth(width);
+            alert.setResizable(true);
             alert.showAndWait();
         });
+
     }
 
     /**
@@ -177,6 +179,7 @@ public class GUI extends Application {
             alert.setTitle(title);
             alert.setHeaderText(header);
             alert.setContentText(text);
+            alert.setResizable(true);
             response.set(alert.showAndWait());
         });
 
@@ -210,6 +213,7 @@ public class GUI extends Application {
             dialog.getDialogPane().setMinWidth(400);
             dialog.setTitle(title);
             dialog.setHeaderText(header);
+            dialog.setResizable(true);
 
             dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
@@ -286,6 +290,7 @@ public class GUI extends Application {
             dialog.getDialogPane().setMinWidth(400);
             dialog.setTitle(title);
             dialog.setHeaderText(header);
+            dialog.setResizable(true);
 
             VBox list = new VBox();
             list.setSpacing(15);

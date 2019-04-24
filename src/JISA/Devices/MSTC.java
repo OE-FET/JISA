@@ -13,6 +13,10 @@ public abstract class MSTC extends TC {
         super(address, prefDriver);
     }
 
+    public MSTC(Address address) throws IOException {
+        this(address, null);
+    }
+
     /**
      * Returns the temperature reported by the specified sensor
      *

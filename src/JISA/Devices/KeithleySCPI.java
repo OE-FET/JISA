@@ -136,6 +136,10 @@ public abstract class KeithleySCPI extends SMU {
 
     }
 
+    public KeithleySCPI(Address address) throws IOException, DeviceException {
+        this(address, null);
+    }
+
     // == METHODS ======================================================================================================
     public void useFourProbe(boolean fourProbe) throws IOException {
         write(C_SET_PROBE_MODE, fourProbe ? OUTPUT_ON : OUTPUT_OFF);

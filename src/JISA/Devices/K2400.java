@@ -10,7 +10,7 @@ public class K2400 extends KeithleySCPI {
 
     public K2400(Address address) throws IOException, DeviceException {
 
-        super(address, null);
+        super(address);
 
         String  idn     = getIDN();
         Matcher matcher = Pattern.compile("MODEL (2400|2410|2420|2425|2430|2440)").matcher(idn.toUpperCase());

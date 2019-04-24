@@ -14,6 +14,10 @@ public abstract class DPLockIn extends LockIn {
         super(address, prefDriver);
     }
 
+    public DPLockIn(Address address) throws IOException {
+        this(address, null);
+    }
+
     /**
      * Returns the amplitude of the component of the signal in-phase with the reference signal
      *

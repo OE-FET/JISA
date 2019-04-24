@@ -23,6 +23,10 @@ public abstract class MSMOTC extends MSTC {
 
     }
 
+    public MSMOTC(Address address) throws IOException {
+        this(address, null);
+    }
+
     /**
      * Sets which heater/flow output to assume when not specified in a method call
      *

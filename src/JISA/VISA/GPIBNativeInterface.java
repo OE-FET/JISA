@@ -16,159 +16,159 @@ import java.nio.ShortBuffer;
  */
 public interface GPIBNativeInterface extends Library {
 
-    public static final int                   T1000s            = (int) 17;
-    public static final int                   IbcAUTOPOLL       = (int) 7;
-    public static final int                   EADR              = (int) 3;
-    public static final int                   IbaHSCableLength  = (int) 31;
-    public static final int                   IbaBNA            = (int) 512;
-    public static final int                   SDC               = (int) 4;
-    public static final int                   ECIC              = (int) 1;
-    public static final short                 ValidNRFD         = (short) 4;
-    public static final int                   IbaSerialNumber   = (int) 35;
-    public static final int                   IbaREADDR         = (int) 6;
-    public static final int                   IbcSC             = (int) 10;
-    public static final int                   NLend             = (int) 1;
-    public static final short                 BusSRQ            = (short) 8192;
-    public static final short                 ValidATN          = (short) 64;
-    public static final short                 ValidREN          = (short) 16;
-    public static final int                   T100s             = (int) 15;
-    public static final int                   PPC               = (int) 5;
-    public static final int                   PPE               = (int) 96;
-    public static final int                   IbcEOT            = (int) 4;
-    public static final int                   PPD               = (int) 112;
-    public static final int                   IbcTMO            = (int) 3;
-    public static final short                 ValidIFC          = (short) 8;
-    public static final int                   IbaSAD            = (int) 2;
-    public static final int                   EHDL              = (int) 23;
-    public static final int                   EDMA              = (int) 8;
-    public static final int                   PPU               = (int) 21;
-    public static final int                   IbaSRE            = (int) 11;
-    public static final int                   T100us            = (int) 3;
-    public static final short                 BusDAV            = (short) 256;
-    public static final int                   IbaEndBitIsNormal = (int) 26;
-    public static final int                   T3ms              = (int) 6;
-    public static final int                   ENOL              = (int) 2;
-    public static final int                   IbcDMA            = (int) 18;
-    public static final int                   IbaSendLLO        = (int) 23;
-    public static final int                   NULLend           = (int) 0;
-    public static final int                   IbcEOScmp         = (int) 14;
-    public static final int                   REM               = (int) (1 << 6);
-    public static final int                   ATN               = (int) (1 << 4);
-    public static final int                   IbcEOS            = (int) 37;
-    public static final int                   IbcLON            = (int) 34;
-    public static final int                   LACS              = (int) (1 << 2);
-    public static final int                   IbaEOSwrt         = (int) 13;
-    public static final int                   SRQI              = (int) (1 << 12);
-    public static final int                   IbcHSCableLength  = (int) 31;
-    public static final int                   IbaSPollTime      = (int) 24;
-    public static final short                 BusNRFD           = (short) 1024;
-    public static final int                   CIC               = (int) (1 << 5);
-    public static final int                   EFSO              = (int) 12;
-    public static final short                 ValidEOI          = (short) 128;
-    public static final int                   WCFG              = (int) 24;
-    public static final int                   IbaSC             = (int) 10;
-    public static final int                   T30us             = (int) 2;
-    public static final int                   T300ms            = (int) 10;
-    public static final int                   END               = (int) (1 << 13);
-    public static final int                   IbaUnAddr         = (int) 27;
-    public static final int                   T30s              = (int) 14;
-    public static final int                   IbcEOSwrt         = (int) 13;
-    public static final int                   IbaRsv            = (int) 33;
-    public static final int                   LLO               = (int) 17;
-    public static final int                   IbaPP2            = (int) 16;
-    public static final int                   UNL               = (int) 63;
-    public static final int                   UNT               = (int) 95;
-    public static final int                   IbaPPC            = (int) 5;
-    public static final int                   IbcEOSchar        = (int) 15;
-    public static final int                   IbaTIMING         = (int) 17;
-    public static final int                   DTAS              = (int) (1 << 1);
-    public static final int                   T1ms              = (int) 5;
-    public static final int                   EPWR              = (int) 28;
-    public static final int                   BIN               = (int) (1 << 12);
-    public static final int                   IbcEOSrd          = (int) 12;
-    public static final int                   DABend            = (int) 2;
-    public static final int                   IbcUnAddr         = (int) 27;
-    public static final int                   DCAS              = (int) (1 << 0);
-    public static final int                   IbcSendLLO        = (int) 23;
-    public static final int                   T10ms             = (int) 7;
-    public static final int                   TIMO              = (int) (1 << 14);
-    public static final int                   GTL               = (int) 1;
-    public static final int                   IbaIst            = (int) 32;
-    public static final int                   T300s             = (int) 16;
-    public static final int                   IbcPPollTime      = (int) 25;
-    public static final int                   IbcSAD            = (int) 2;
-    public static final int                   IbaPAD            = (int) 1;
-    public static final int                   IbcSRE            = (int) 11;
-    public static final short                 BusIFC            = (short) 2048;
-    public static final int                   ENEB              = (int) 7;
-    public static final int                   LOK               = (int) (1 << 7);
-    public static final int                   IbcTIMING         = (int) 17;
-    public static final int                   ETAB              = (int) 20;
-    public static final int                   GET               = (int) 8;
-    public static final int                   IbaEOScmp         = (int) 14;
-    public static final short                 BusEOI            = (short) 32768;
-    public static final short                 ValidDAV          = (short) 1;
-    public static final int                   T300us            = (int) 4;
-    public static final int                   IbaEOSrd          = (int) 12;
-    public static final int                   ERR               = (int) (1 << 15);
-    public static final int                   T10s              = (int) 13;
-    public static final int                   TNONE             = (int) 0;
-    public static final int                   ESRQ              = (int) 16;
-    public static final int                   IbcEndBitIsNormal = (int) 26;
-    public static final int                   IbaPPollTime      = (int) 25;
-    public static final short                 ValidSRQ          = (short) 32;
-    public static final short                 BusREN            = (short) 4096;
-    public static final short                 BusATN            = (short) 16384;
-    public static final int                   IbaEOSchar        = (int) 15;
-    public static final int                   ECAP              = (int) 11;
-    public static final int                   ELCK              = (int) 21;
-    public static final int                   ESAC              = (int) 5;
-    public static final int                   EOIP              = (int) 10;
-    public static final int                   REOS              = (int) (1 << 10);
-    public static final short                 ValidNDAC         = (short) 2;
-    public static final int                   ALL_SAD           = (int) -1;
-    public static final int                   EWIP              = (int) 26;
-    public static final int                   IbaAUTOPOLL       = (int) 7;
-    public static final int                   IbaEOT            = (int) 4;
-    public static final int                   IbaEOS            = (int) 37;
-    public static final int                   SPD               = (int) 25;
-    public static final int                   SPE               = (int) 24;
-    public static final int                   IbaTMO            = (int) 3;
-    public static final int                   IbcPP2            = (int) 16;
-    public static final int                   IbcRsv            = (int) 33;
-    public static final int                   IbcPPC            = (int) 5;
-    public static final int                   T30ms             = (int) 8;
-    public static final int                   T100ms            = (int) 9;
-    public static final int                   NO_SAD            = (int) 0;
-    public static final int                   DCL               = (int) 20;
-    public static final int                   IbaDMA            = (int) 18;
-    public static final int                   T1s               = (int) 11;
-    public static final int                   XEOS              = (int) (1 << 11);
-    public static final int                   TACS              = (int) (1 << 3);
-    public static final int                   EDVR              = (int) 0;
-    public static final int                   ESTB              = (int) 15;
-    public static final short                 BusNDAC           = (short) 512;
-    public static final int                   TCT               = (int) 9;
-    public static final int                   IbcIst            = (int) 32;
-    public static final int                   IbaLON            = (int) 34;
-    public static final int                   EABO              = (int) 6;
-    public static final int                   IbcPAD            = (int) 1;
-    public static final int                   EBUS              = (int) 14;
-    public static final int                   STOPend           = (int) 256;
-    public static final int                   T10us             = (int) 1;
-    public static final int                   ERST              = (int) 27;
-    public static final int                   EARG              = (int) 4;
-    public static final int                   RQS               = (int) (1 << 11);
-    public static final int                   T3s               = (int) 12;
-    public static final int                   IbcREADDR         = (int) 6;
-    public static final int                   EARM              = (int) 22;
-    public static final int                   IbcSPollTime      = (int) 24;
-    public static final int                   CMPL              = (int) (1 << 8);
-    public static final int                   ECFG              = (int) 24;
-    public final        IntByReference        ibsta             = new IntByReference();
-    public final        IntByReference        iberr             = new IntByReference();
-    public final        IntByReference        ibcnt             = new IntByReference();
-    public final        NativeLongByReference ibcntl            = new NativeLongByReference();
+    int                   T1000s            = 17;
+    int                   IbcAUTOPOLL       = 7;
+    int                   EADR              = 3;
+    int                   IbaHSCableLength  = 31;
+    int                   IbaBNA            = 512;
+    int                   SDC               = 4;
+    int                   ECIC              = 1;
+    short                 ValidNRFD         = (short) 4;
+    int                   IbaSerialNumber   = 35;
+    int                   IbaREADDR         = 6;
+    int                   IbcSC             = 10;
+    int                   NLend             = 1;
+    short                 BusSRQ            = (short) 8192;
+    short                 ValidATN          = (short) 64;
+    short                 ValidREN          = (short) 16;
+    int                   T100s             = 15;
+    int                   PPC               = 5;
+    int                   PPE               = 96;
+    int                   IbcEOT            = 4;
+    int                   PPD               = 112;
+    int                   IbcTMO            = 3;
+    short                 ValidIFC          = (short) 8;
+    int                   IbaSAD            = 2;
+    int                   EHDL              = 23;
+    int                   EDMA              = 8;
+    int                   PPU               = 21;
+    int                   IbaSRE            = 11;
+    int                   T100us            = 3;
+    short                 BusDAV            = (short) 256;
+    int                   IbaEndBitIsNormal = 26;
+    int                   T3ms              = 6;
+    int                   ENOL              = 2;
+    int                   IbcDMA            = 18;
+    int                   IbaSendLLO        = 23;
+    int                   NULLend           = 0;
+    int                   IbcEOScmp         = 14;
+    int                   REM               = 1 << 6;
+    int                   ATN               = 1 << 4;
+    int                   IbcEOS            = 37;
+    int                   IbcLON            = 34;
+    int                   LACS              = 1 << 2;
+    int                   IbaEOSwrt         = 13;
+    int                   SRQI              = 1 << 12;
+    int                   IbcHSCableLength  = 31;
+    int                   IbaSPollTime      = 24;
+    short                 BusNRFD           = (short) 1024;
+    int                   CIC               = 1 << 5;
+    int                   EFSO              = 12;
+    short                 ValidEOI          = (short) 128;
+    int                   WCFG              = 24;
+    int                   IbaSC             = 10;
+    int                   T30us             = 2;
+    int                   T300ms            = 10;
+    int                   END               = 1 << 13;
+    int                   IbaUnAddr         = 27;
+    int                   T30s              = 14;
+    int                   IbcEOSwrt         = 13;
+    int                   IbaRsv            = 33;
+    int                   LLO               = 17;
+    int                   IbaPP2            = 16;
+    int                   UNL               = 63;
+    int                   UNT               = 95;
+    int                   IbaPPC            = 5;
+    int                   IbcEOSchar        = 15;
+    int                   IbaTIMING         = 17;
+    int                   DTAS              = 1 << 1;
+    int                   T1ms              = 5;
+    int                   EPWR              = 28;
+    int                   BIN               = 1 << 12;
+    int                   IbcEOSrd          = 12;
+    int                   DABend            = 2;
+    int                   IbcUnAddr         = 27;
+    int                   DCAS              = 1 << 0;
+    int                   IbcSendLLO        = 23;
+    int                   T10ms             = 7;
+    int                   TIMO              = 1 << 14;
+    int                   GTL               = 1;
+    int                   IbaIst            = 32;
+    int                   T300s             = 16;
+    int                   IbcPPollTime      = 25;
+    int                   IbcSAD            = 2;
+    int                   IbaPAD            = 1;
+    int                   IbcSRE            = 11;
+    short                 BusIFC            = (short) 2048;
+    int                   ENEB              = 7;
+    int                   LOK               = 1 << 7;
+    int                   IbcTIMING         = 17;
+    int                   ETAB              = 20;
+    int                   GET               = 8;
+    int                   IbaEOScmp         = 14;
+    short                 BusEOI            = (short) 32768;
+    short                 ValidDAV          = (short) 1;
+    int                   T300us            = 4;
+    int                   IbaEOSrd          = 12;
+    int                   ERR               = 1 << 15;
+    int                   T10s              = 13;
+    int                   TNONE             = 0;
+    int                   ESRQ              = 16;
+    int                   IbcEndBitIsNormal = 26;
+    int                   IbaPPollTime      = 25;
+    short                 ValidSRQ          = (short) 32;
+    short                 BusREN            = (short) 4096;
+    short                 BusATN            = (short) 16384;
+    int                   IbaEOSchar        = 15;
+    int                   ECAP              = 11;
+    int                   ELCK              = 21;
+    int                   ESAC              = 5;
+    int                   EOIP              = 10;
+    int                   REOS              = 1 << 10;
+    short                 ValidNDAC         = (short) 2;
+    int                   ALL_SAD           = -1;
+    int                   EWIP              = 26;
+    int                   IbaAUTOPOLL       = 7;
+    int                   IbaEOT            = 4;
+    int                   IbaEOS            = 37;
+    int                   SPD               = 25;
+    int                   SPE               = 24;
+    int                   IbaTMO            = 3;
+    int                   IbcPP2            = 16;
+    int                   IbcRsv            = 33;
+    int                   IbcPPC            = 5;
+    int                   T30ms             = 8;
+    int                   T100ms            = 9;
+    int                   NO_SAD            = 0;
+    int                   DCL               = 20;
+    int                   IbaDMA            = 18;
+    int                   T1s               = 11;
+    int                   XEOS              = 1 << 11;
+    int                   TACS              = 1 << 3;
+    int                   EDVR              = 0;
+    int                   ESTB              = 15;
+    short                 BusNDAC           = (short) 512;
+    int                   TCT               = 9;
+    int                   IbcIst            = 32;
+    int                   IbaLON            = 34;
+    int                   EABO              = 6;
+    int                   IbcPAD            = 1;
+    int                   EBUS              = 14;
+    int                   STOPend           = 256;
+    int                   T10us             = 1;
+    int                   ERST              = 27;
+    int                   EARG              = 4;
+    int                   RQS               = 1 << 11;
+    int                   T3s               = 12;
+    int                   IbcREADDR         = 6;
+    int                   EARM              = 22;
+    int                   IbcSPollTime      = 24;
+    int                   CMPL              = 1 << 8;
+    int                   ECFG              = 24;
+    IntByReference        ibsta             = new IntByReference();
+    IntByReference        iberr             = new IntByReference();
+    IntByReference        ibcnt             = new IntByReference();
+    NativeLongByReference ibcntl            = new NativeLongByReference();
 
     @Deprecated
     int ibfindA(Pointer udname);
@@ -263,34 +263,34 @@ public interface GPIBNativeInterface extends Library {
     @Deprecated
     void AllSpoll(int boardID, ShortByReference addrlist, ShortByReference results);
 
-    void AllSpoll(int boardID, short addrlist[], ShortBuffer results);
+    void AllSpoll(int boardID, short[] addrlist, ShortBuffer results);
 
     void DevClear(int boardID, short addr);
 
     @Deprecated
     void DevClearList(int boardID, ShortByReference addrlist);
 
-    void DevClearList(int boardID, short addrlist[]);
+    void DevClearList(int boardID, short[] addrlist);
 
     @Deprecated
     void EnableLocal(int boardID, ShortByReference addrlist);
 
-    void EnableLocal(int boardID, short addrlist[]);
+    void EnableLocal(int boardID, short[] addrlist);
 
     @Deprecated
     void EnableRemote(int boardID, ShortByReference addrlist);
 
-    void EnableRemote(int boardID, short addrlist[]);
+    void EnableRemote(int boardID, short[] addrlist);
 
     @Deprecated
     void FindLstn(int boardID, ShortByReference addrlist, ShortByReference results, int limit);
 
-    void FindLstn(int boardID, short addrlist[], ShortBuffer results, int limit);
+    void FindLstn(int boardID, short[] addrlist, ShortBuffer results, int limit);
 
     @Deprecated
     void FindRQS(int boardID, ShortByReference addrlist, ShortByReference dev_stat);
 
-    void FindRQS(int boardID, short addrlist[], ShortBuffer dev_stat);
+    void FindRQS(int boardID, short[] addrlist, ShortBuffer dev_stat);
 
     @Deprecated
     void PPoll(int boardID, ShortByReference result);
@@ -302,7 +302,7 @@ public interface GPIBNativeInterface extends Library {
     @Deprecated
     void PPollUnconfig(int boardID, ShortByReference addrlist);
 
-    void PPollUnconfig(int boardID, short addrlist[]);
+    void PPollUnconfig(int boardID, short[] addrlist);
 
     void PassControl(int boardID, short addr);
 
@@ -320,7 +320,7 @@ public interface GPIBNativeInterface extends Library {
     @Deprecated
     void ResetSys(int boardID, ShortByReference addrlist);
 
-    void ResetSys(int boardID, short addrlist[]);
+    void ResetSys(int boardID, short[] addrlist);
 
     void Send(int boardID, short addr, Pointer databuf, int datacnt, int eotMode);
 
@@ -335,17 +335,17 @@ public interface GPIBNativeInterface extends Library {
     @Deprecated
     void SendList(int boardID, ShortByReference addrlist, Pointer databuf, int datacnt, int eotMode);
 
-    void SendList(int boardID, short addrlist[], Pointer databuf, int datacnt, int eotMode);
+    void SendList(int boardID, short[] addrlist, Pointer databuf, int datacnt, int eotMode);
 
     @Deprecated
     void SendSetup(int boardID, ShortByReference addrlist);
 
-    void SendSetup(int boardID, short addrlist[]);
+    void SendSetup(int boardID, short[] addrlist);
 
     @Deprecated
     void SetRWLS(int boardID, ShortByReference addrlist);
 
-    void SetRWLS(int boardID, short addrlist[]);
+    void SetRWLS(int boardID, short[] addrlist);
 
     @Deprecated
     void TestSRQ(int boardID, ShortByReference result);
@@ -355,14 +355,14 @@ public interface GPIBNativeInterface extends Library {
     @Deprecated
     void TestSys(int boardID, ShortByReference addrlist, ShortByReference results);
 
-    void TestSys(int boardID, short addrlist[], ShortBuffer results);
+    void TestSys(int boardID, short[] addrlist, ShortBuffer results);
 
     void Trigger(int boardID, short addr);
 
     @Deprecated
     void TriggerList(int boardID, ShortByReference addrlist);
 
-    void TriggerList(int boardID, short addrlist[]);
+    void TriggerList(int boardID, short[] addrlist);
 
     @Deprecated
     void WaitSRQ(int boardID, ShortByReference result);

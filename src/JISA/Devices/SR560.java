@@ -182,7 +182,7 @@ public class SR560 extends VPreAmp {
 
     public SR560(Address address) throws IOException {
 
-        super(address, null);
+        super(address);
 
         setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.TWO, Connection.Flow.NONE);
 

@@ -56,7 +56,7 @@ public class ITC503 extends MSTC {
      */
     public ITC503(Address address) throws IOException, DeviceException {
 
-        super(address, null);
+        super(address);
         setEOI(false);
         setTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);
