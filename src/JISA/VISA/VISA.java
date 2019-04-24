@@ -13,7 +13,8 @@ import java.util.HashMap;
  */
 public class VISA {
 
-    private static ArrayList<Driver> drivers = new ArrayList<>();
+    private static ArrayList<Driver>      drivers = new ArrayList<>();
+    private static HashMap<Class, Driver> lookup  = new HashMap<>();
     private static long              counter = 0;
 
     static {
@@ -61,6 +62,10 @@ public class VISA {
             System.out.println("Success.");
         } catch (Exception | Error ignored) {
             System.out.println("Nope.");
+        }
+
+        for (Driver d : drivers) {
+            lookup.put(d.getClass(), d);
         }
 
         if (drivers.isEmpty()) {
@@ -127,6 +132,10 @@ public class VISA {
 
     }
 
+    public static Connection openInstrument(Address address) throws VISAException {
+        return openInstrument(address, null);
+    }
+
     /**
      * Open the instrument with the given VISA resource address
      *
@@ -136,10 +145,19 @@ public class VISA {
      *
      * @throws VISAException Upon error with VISA interface
      */
-    public static Connection openInstrument(Address address) throws VISAException {
+    public static Connection openInstrument(Address address, Class<? extends Driver> preferredDriver) throws VISAException {
 
         Connection        connection = null;
         ArrayList<String> errors     = new ArrayList<>();
+
+        if (preferredDriver != null && lookup.containsKey(preferredDriver)) {
+
+            try {
+                connection = lookup.get(preferredDriver).open(address);
+                return connection;
+            } catch (VISAException ignored) { }
+
+        }
 
         // Try each driver in order
         for (Driver d : drivers) {

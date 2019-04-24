@@ -2,6 +2,7 @@ package JISA.Devices;
 
 import JISA.Addresses.Address;
 import JISA.Util;
+import JISA.VISA.Driver;
 
 import java.io.IOException;
 
@@ -10,9 +11,9 @@ public abstract class MSMOTC extends MSTC {
     protected int     defaultOutput = 0;
     private   Zoner[] zoners;
 
-    public MSMOTC(Address address) throws IOException {
+    public MSMOTC(Address address, Class<? extends Driver> prefDriver) throws IOException {
 
-        super(address);
+        super(address, prefDriver);
 
         zoners = new Zoner[getNumOutputs()];
 
@@ -661,7 +662,7 @@ public abstract class MSMOTC extends MSTC {
          * @throws IOException Upon communications error
          */
         public VirtualTC(int output) throws IOException {
-            super(null);
+            super(null, null);
             this.output = output;
         }
 

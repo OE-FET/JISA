@@ -19,7 +19,7 @@ public class ModbusDevice extends VISADevice {
      * @throws IOException Upon communications error
      */
     public ModbusDevice(Address address) throws IOException {
-        super(address);
+        super(address, SerialDriver.class);
     }
 
     public void modbusWrite(ModbusFrame frame) throws IOException {

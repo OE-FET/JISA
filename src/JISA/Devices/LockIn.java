@@ -2,6 +2,7 @@ package JISA.Devices;
 
 import JISA.Addresses.Address;
 import JISA.Control.Synch;
+import JISA.VISA.Driver;
 import JISA.VISA.VISADevice;
 
 import java.io.IOException;
@@ -11,8 +12,8 @@ import java.io.IOException;
  */
 public abstract class LockIn extends VISADevice {
 
-    public LockIn(Address address) throws IOException {
-        super(address);
+    public LockIn(Address address, Class<? extends Driver> prefDriver) throws IOException {
+        super(address, prefDriver);
     }
 
     /**

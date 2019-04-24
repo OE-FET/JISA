@@ -3,6 +3,7 @@ package JISA.Devices;
 import JISA.Addresses.Address;
 import JISA.Util;
 import JISA.VISA.Connection;
+import JISA.VISA.RawTCPIPDriver;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -38,9 +39,13 @@ public class LS336 extends MSMOTC {
 
     public LS336(Address address) throws IOException, DeviceException {
 
-        super(address);
-        setSerialParameters(57600, 7, Connection.Parity.ODD, Connection.StopBits.ONE, Connection.Flow.NONE);
-        setReadTerminationCharacter(CRLF_TERMINATOR);
+        super(address, RawTCPIPDriver.class);
+
+        if (address.getType() == Address.Type.SERIAL) {
+            setSerialParameters(57600, 7, Connection.Parity.ODD, Connection.StopBits.ONE, Connection.Flow.NONE);
+        }
+
+        setReadTerminationCharacter(LF_TERMINATOR);
         setTerminator(TERMINATOR);
         setRemoveTerminator(TERMINATOR);
 

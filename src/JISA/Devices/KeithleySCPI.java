@@ -3,6 +3,7 @@ package JISA.Devices;
 import JISA.Addresses.Address;
 import JISA.Util;
 import JISA.VISA.Connection;
+import JISA.VISA.Driver;
 
 import java.io.IOError;
 import java.io.IOException;
@@ -115,9 +116,9 @@ public abstract class KeithleySCPI extends SMU {
     private int        filterCount = 1;
 
     // == CONSTRUCTORS =================================================================================================
-    public KeithleySCPI(Address address) throws IOException, DeviceException {
+    public KeithleySCPI(Address address, Class<? extends Driver> prefDriver) throws IOException, DeviceException {
 
-        super(address);
+        super(address, prefDriver);
 
         if (address.getType() == Address.Type.SERIAL) {
             setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);

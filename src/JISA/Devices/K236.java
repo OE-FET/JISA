@@ -114,7 +114,7 @@ public class K236 extends SMU {
 
     public K236(Address address) throws IOException, DeviceException {
 
-        super(address);
+        super(address, null);
         setTerminator(C_TRIGGER + C_EXECUTE);
         write(C_RESET);
         write(C_NO_TERM);

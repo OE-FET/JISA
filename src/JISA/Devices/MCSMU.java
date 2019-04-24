@@ -5,6 +5,7 @@ import JISA.Experiment.IVPoint;
 import JISA.Experiment.MCIVPoint;
 import JISA.Experiment.ResultList;
 import JISA.Util;
+import JISA.VISA.Driver;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,8 +29,8 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
      *
      * @throws IOException Upon communications error
      */
-    public MCSMU(Address address) throws IOException {
-        super(address);
+    public MCSMU(Address address, Class<? extends Driver> prefDriver) throws IOException {
+        super(address, prefDriver);
     }
 
     /**
@@ -1620,7 +1621,7 @@ public abstract class MCSMU extends SMU implements Iterable<SMU> {
         private int channel;
 
         public VirtualSMU(int channel) throws IOException {
-            super(null);
+            super(null, null);
             this.channel = channel;
         }
 

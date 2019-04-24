@@ -18,7 +18,7 @@ public class K2200 extends DCPower {
 
     public K2200(Address address) throws IOException, DeviceException {
 
-        super(address);
+        super(address, null);
 
         clearRead();
 

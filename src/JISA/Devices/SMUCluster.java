@@ -22,7 +22,7 @@ public class SMUCluster extends MCSMU {
      * @throws IOException Upon communications error
      */
     public SMUCluster(SMU... smus) throws IOException {
-        super(null);
+        super(null, null);
         for (SMU s : smus) {
 
             if (s instanceof MCSMU) {

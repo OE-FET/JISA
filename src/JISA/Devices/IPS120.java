@@ -116,7 +116,7 @@ public class IPS120 extends VISADevice {
      */
     public IPS120(Address address) throws IOException, DeviceException {
 
-        super(address);
+        super(address, null);
         setEOI(false);
         setTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);

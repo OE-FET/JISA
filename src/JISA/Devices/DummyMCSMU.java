@@ -13,7 +13,7 @@ public class DummyMCSMU extends MCSMU {
     private double[]  R       = {random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500};
 
     public DummyMCSMU() throws IOException {
-        super(null);
+        super(null, null);
     }
 
     @Override

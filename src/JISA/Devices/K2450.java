@@ -12,7 +12,7 @@ public class K2450 extends KeithleySCPI {
 
     public K2450(Address address) throws IOException, DeviceException {
 
-        super(address);
+        super(address, null);
 
         String idn = getIDN();
 

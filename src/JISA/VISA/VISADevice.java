@@ -28,6 +28,10 @@ public class VISADevice {
     public final static int    CRLF_TERMINATOR = 0x0D0A;
     public final static String C_IDN           = "*IDN?";
 
+    public VISADevice(Address address) throws IOException {
+        this(address, null);
+    }
+
     /**
      * Opens the device at the specified address
      *
@@ -35,14 +39,14 @@ public class VISADevice {
      *
      * @throws IOException Upon communications error
      */
-    public VISADevice(Address address) throws IOException {
+    public VISADevice(Address address, Class<? extends Driver> prefDriver) throws IOException {
 
         if (address == null) {
             return;
         }
 
         try {
-            this.connection = VISA.openInstrument(address);
+            this.connection = VISA.openInstrument(address, prefDriver);
             this.address = address;
         } catch (VISAException e) {
             throw new IOException(e.getMessage());

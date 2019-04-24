@@ -1,6 +1,7 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import JISA.VISA.Driver;
 
 import java.io.IOException;
 
@@ -9,8 +10,8 @@ import java.io.IOException;
  */
 public abstract class DPLockIn extends LockIn {
 
-    public DPLockIn(Address address) throws IOException {
-        super(address);
+    public DPLockIn(Address address, Class<? extends Driver> prefDriver) throws IOException {
+        super(address, prefDriver);
     }
 
     /**

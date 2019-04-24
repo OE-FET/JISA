@@ -3,6 +3,7 @@ package JISA.Devices;
 import JISA.Addresses.Address;
 import JISA.Control.Synch;
 import JISA.Util;
+import JISA.VISA.Driver;
 import JISA.VISA.VISADevice;
 import org.json.JSONObject;
 
@@ -22,8 +23,8 @@ public abstract class TC extends VISADevice {
      *
      * @throws IOException Upon communications error
      */
-    public TC(Address address) throws IOException {
-        super(address);
+    public TC(Address address, Class<? extends Driver> prefDriver) throws IOException {
+        super(address, prefDriver);
     }
 
     /**

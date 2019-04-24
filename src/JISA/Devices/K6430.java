@@ -9,7 +9,7 @@ public class K6430 extends KeithleySCPI {
 
     public K6430(Address address) throws IOException, DeviceException {
 
-        super(address);
+        super(address, null);
 
         if (!getIDN().contains("MODEL 6430")) {
             throw new DeviceException("Instrument at \"%s\" is not a Keithley 6430", address.toString());

@@ -1,14 +1,15 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import JISA.VISA.Driver;
 import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 
 public abstract class VPreAmp extends VISADevice {
 
-    public VPreAmp(Address address) throws IOException {
-        super(address);
+    public VPreAmp(Address address, Class<? extends Driver> prefDriver) throws IOException {
+        super(address, prefDriver);
     }
 
     /**

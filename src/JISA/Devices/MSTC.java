@@ -3,13 +3,14 @@ package JISA.Devices;
 import JISA.Addresses.Address;
 import JISA.Control.Synch;
 import JISA.Util;
+import JISA.VISA.Driver;
 
 import java.io.IOException;
 
 public abstract class MSTC extends TC {
 
-    public MSTC(Address address) throws IOException {
-        super(address);
+    public MSTC(Address address, Class<? extends Driver> prefDriver) throws IOException {
+        super(address, prefDriver);
     }
 
     /**

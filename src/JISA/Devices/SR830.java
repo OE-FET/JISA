@@ -58,7 +58,7 @@ public class SR830 extends DPLockIn {
 
     public SR830(Address address) throws IOException, DeviceException {
 
-        super(address);
+        super(address, null);
 
         clearRead();
 

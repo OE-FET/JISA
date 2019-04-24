@@ -20,7 +20,7 @@ public class ILM200 extends VISADevice {
 
     public ILM200(Address address) throws IOException {
 
-        super(address);
+        super(address, null);
         setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
         setEOI(false);
         setTerminator(TERMINATOR);

@@ -5,6 +5,7 @@ import JISA.Control.Returnable;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.ResultList;
 import JISA.Util;
+import JISA.VISA.Driver;
 import JISA.VISA.VISADevice;
 import org.apache.commons.math.stat.descriptive.rank.Median;
 
@@ -14,8 +15,8 @@ import java.util.concurrent.Semaphore;
 
 public abstract class SMU extends VISADevice {
 
-    public SMU(Address address) throws IOException {
-        super(address);
+    public SMU(Address address, Class<? extends Driver> prefDriver) throws IOException {
+        super(address, prefDriver);
     }
 
     /**
