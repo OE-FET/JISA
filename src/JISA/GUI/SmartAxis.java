@@ -296,7 +296,7 @@ public final class SmartAxis extends ValueAxis<Double> {
             upperBound = lowerBound + 100;
         }
 
-        final double       tickUnit   = Util.oneSigFigCeil((upperBound - lowerBound) / numTicks);
+        final double       tickUnit   = Math.abs(Util.oneSigFigCeil((upperBound - lowerBound) / numTicks));
         final List<Double> tickValues = new ArrayList<>();
 
         double minInRange = Double.POSITIVE_INFINITY;
