@@ -29,10 +29,8 @@ public class K6430 extends KeithleySCPI {
             case FRONT:
                 return TType.NONE;
 
-            case REAR:
-                return TType.BANANA;
-
             default:
+            case REAR:
                 return TType.BANANA;
 
         }

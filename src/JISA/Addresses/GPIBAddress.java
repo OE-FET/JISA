@@ -10,6 +10,10 @@ public class GPIBAddress implements Address {
         this.address = address;
     }
 
+    public GPIBAddress(int address) {
+        this(0, address);
+    }
+
     public int getBus() {
         return bus;
     }

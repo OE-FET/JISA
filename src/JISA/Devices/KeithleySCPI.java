@@ -1,11 +1,11 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import JISA.Control.*;
 import JISA.Util;
 import JISA.VISA.Connection;
 import JISA.VISA.Driver;
 
-import java.io.IOError;
 import java.io.IOException;
 import java.util.HashMap;
 

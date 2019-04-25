@@ -134,7 +134,6 @@ public abstract class DCPower extends VISADevice {
                 time
         );
 
-
     }
 
     /**
@@ -181,7 +180,7 @@ public abstract class DCPower extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon device compatibility error
      */
-    public void setVoltageAndnWait(double voltage) throws IOException, DeviceException {
+    public void setVoltageAndWait(double voltage) throws IOException, DeviceException {
         setVoltageAndWait(voltage, 0.1);
     }
 

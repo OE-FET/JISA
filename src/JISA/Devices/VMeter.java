@@ -1,0 +1,144 @@
+package JISA.Devices;
+
+import JISA.Devices.SMU.AMode;
+
+import java.io.IOException;
+
+public interface VMeter extends Instrument {
+
+    /**
+     * Takes a voltage measurement and returns the value.
+     *
+     * @return Voltage measurement value, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    double getVoltage() throws IOException, DeviceException;
+
+    /**
+     * Sets the integration time for each measurement.
+     *
+     * @param time Integration time, in seconds.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setIntegrationTime(double time) throws IOException, DeviceException;
+
+    /**
+     * Returns the integration time being used for measurements.
+     *
+     * @return Integration time, in seconds.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    double getIntegrationTime() throws IOException, DeviceException;
+
+    /**
+     * Sets the measurement range to use for voltage measurements. If only discrete options are available, the smallest
+     * range that contains the supplied value is used. A range of n indicates -n to +n.
+     *
+     * @param range Range to use, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setVoltageRange(double range) throws IOException, DeviceException;
+
+    /**
+     * Returns the measurement range being used for voltage measurements. A range of n indicates -n to +n.
+     *
+     * @return Range being used, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    double getVoltageRange() throws IOException, DeviceException;
+
+    /**
+     * Tells the voltmeter to use auto-ranging for voltage measurements.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void useAutoVoltageRange() throws IOException, DeviceException;
+
+    /**
+     * Returns whether the voltmeter is using auto-ranging for voltage measurements.
+     *
+     * @return Is it auto-ranging?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    boolean isVoltageRangeAuto() throws IOException, DeviceException;
+
+    /**
+     * Sets the averaging mode used for taking each measurement.
+     *
+     * @param mode Averaging mode to use
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setAverageMode(AMode mode) throws IOException, DeviceException;
+
+    /**
+     * Sets the number of measurements to use for averaging.
+     *
+     * @param count Number of measurements
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setAverageCount(int count) throws IOException, DeviceException;
+
+    /**
+     * Returns the averaging mode being used for measurements by the voltmeter.
+     *
+     * @return Averaging mode
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    AMode getAverageMode() throws IOException, DeviceException;
+
+    /**
+     * Returns the number of measurements used for averaging by the voltmeter.
+     *
+     * @return Number of measurements
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    int getAverageCount() throws IOException, DeviceException;
+
+    /**
+     * Turns on the voltmeter.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void turnOn() throws IOException, DeviceException;
+
+    /**
+     * Turns off the voltmeter.
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void turnOff() throws IOException, DeviceException;
+
+    /**
+     * Returns whether the voltmeter is on or not.
+     *
+     * @return Is it on?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    boolean isOn() throws IOException, DeviceException;
+
+}

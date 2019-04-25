@@ -86,6 +86,25 @@ public class GUI extends Application {
     }
 
     /**
+     * Displays an error dialogue box, halting the thread until the user closes it.
+     *
+     * @param title Window title and header text
+     * @param text  Message text
+     */
+    public static void errorAlert(String title, String text) {
+        infoAlert(title, title, text);
+    }
+
+    /**
+     * Displays an error dialogue box, halting the thread until the user closes it.
+     *
+     * @param text Message text
+     */
+    public static void errorAlert(String text) {
+        infoAlert("Error", "Error", text);
+    }
+
+    /**
      * Displays an information dialogue box, halting the thread until the user closes it.
      *
      * @param title  Window title
@@ -94,6 +113,26 @@ public class GUI extends Application {
      */
     public static void infoAlert(String title, String header, String text) {
         alert(Alert.AlertType.INFORMATION, title, header, text);
+    }
+
+    /**
+     * Displays an information dialogue box, halting the thread until the user closes it.
+     *
+     * @param title Window title and header text
+     * @param text  Message text
+     */
+    public static void infoAlert(String title, String text) {
+        infoAlert(title, title, text);
+    }
+
+
+    /**
+     * Displays an information dialogue box, halting the thread until the user closes it.
+     *
+     * @param text Message text
+     */
+    public static void infoAlert(String text) {
+        infoAlert("Information", "Information", text);
     }
 
     /**
@@ -106,6 +145,25 @@ public class GUI extends Application {
      */
     public static void warningAlert(String title, String header, String text, double width) {
         alert(Alert.AlertType.WARNING, title, header, text, width);
+    }
+
+    /**
+     * Displays a warning dialogue box, halting the thread until the user closes it.
+     *
+     * @param title Window title and header text
+     * @param text  Message text
+     */
+    public static void warningAlert(String title, String text) {
+        warningAlert(title, title, text);
+    }
+
+    /**
+     * Displays a warning dialogue box, halting the thread until the user closes it.
+     *
+     * @param text Message text
+     */
+    public static void warningAlert(String text) {
+        warningAlert("Warning", "Warning", text);
     }
 
     private static void alert(final Alert.AlertType type, final String title, final String header, final String text) {
@@ -329,22 +387,6 @@ public class GUI extends Application {
 
     }
 
-    public static Object create(String fxmlFile) throws IOException {
-
-        FXMLLoader loader     = new FXMLLoader(GUI.class.getResource(fxmlFile));
-        Parent     root       = loader.load();
-        Object     controller = loader.getController();
-        Scene      scene      = new Scene(root);
-
-        GUI.runNow(() -> {
-            Stage stage = new Stage();
-            stage.setScene(scene);
-        });
-
-        return controller;
-
-    }
-
     /**
      * Opens a window listing all instruments detected by VISA etc, allowing the user to select one.
      *
@@ -396,11 +438,6 @@ public class GUI extends Application {
 
         }
 
-    }
-
-    public static void startGUIMATLAB() {
-        Thread t = new Thread(() -> Application.launch(App.class));
-        t.start();
     }
 
     /**

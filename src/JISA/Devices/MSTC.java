@@ -68,6 +68,25 @@ public abstract class MSTC extends TC {
      */
     public abstract int getNumSensors();
 
+    public TMeter getSensor(int sensor) throws DeviceException {
+
+        checkSensor(sensor);
+        return new TMeter() {
+
+            @Override
+            public double getTemperature() throws IOException, DeviceException {
+                return MSTC.this.getTemperature(sensor);
+            }
+
+            @Override
+            public String getIDN() throws IOException {
+                return MSTC.this.getIDN();
+            }
+
+        };
+
+    }
+
     /**
      * Checks whether the given sensor number is valid, throws a DeviceException if not.
      *

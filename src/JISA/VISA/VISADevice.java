@@ -1,13 +1,14 @@
 package JISA.VISA;
 
 import JISA.Addresses.Address;
+import JISA.Devices.Instrument;
 
 import java.io.IOException;
 
 /**
  * Generic instrument encapsulation via VISA
  */
-public class VISADevice {
+public class VISADevice implements Instrument {
 
     private Connection connection;
     private Address    address;

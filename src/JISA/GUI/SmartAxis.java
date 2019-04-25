@@ -325,7 +325,12 @@ public final class SmartAxis extends ValueAxis<Double> {
 
                 for (double v = linStart; v <= linStop; v += tickUnit) {
 
-                    System.out.println(tickUnit);
+                    if (tickUnit <= 0) {
+                        System.err.println("Tick value <= 0! Bug!");
+                        tickValues.add(linStart);
+                        tickValues.add(linStop);
+                        break;
+                    }
 
                     tickValues.add(v);
 

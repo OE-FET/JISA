@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  * Abstract class to define the standard functionality of temperature controllers
  */
-public abstract class TC extends VISADevice {
+public abstract class TC extends VISADevice implements TMeter {
 
     private Zoner zoner = null;
 
@@ -208,6 +208,10 @@ public abstract class TC extends VISADevice {
     public abstract void setHeaterRange(double rangePCT) throws IOException, DeviceException;
 
     public abstract double getHeaterRange() throws IOException, DeviceException;
+
+    public TMeter asThermometer() {
+        return this;
+    }
 
     /**
      * Sets the target temperature and waits for it to be stably reached (within 1% for at least 1 minute).

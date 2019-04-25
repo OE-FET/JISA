@@ -1,6 +1,7 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import JISA.Control.*;
 import JISA.Util;
 
 import java.io.IOException;
