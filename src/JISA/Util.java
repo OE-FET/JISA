@@ -9,11 +9,14 @@ import javafx.util.Pair;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class Util {
 
-    private static ERunnable exHandler = (e) -> {
+    public static  PrintStream errLog    = System.err;
+    private static ERunnable   exHandler = (e) -> {
 
         ExType exceptionType = ExType.fromClass(e.getClass());
 
@@ -43,8 +46,11 @@ public class Util {
 
     };
 
-    public static PrintStream errLog = System.err;
-
+    /**
+     * Sleep function that doesn't throw interrupted exceptions. Upon an interrupt it will simply stop sleeping.
+     *
+     * @param msec Number of milliseconds to sleep for
+     */
     public static void sleep(long msec) {
         try {
             Thread.sleep(msec);
@@ -52,18 +58,46 @@ public class Util {
         }
     }
 
+    /**
+     * Checks whether a number is within a range.
+     *
+     * @param value Value to check
+     * @param min   Minimum of range
+     * @param max   Maximum of range
+     *
+     * @return Is it bound by the range?
+     */
     public static boolean isBetween(Number value, Number min, Number max) {
         return value.doubleValue() >= min.doubleValue() && value.doubleValue() <= max.doubleValue();
     }
 
+    /**
+     * Set what the standard exception handler should be.
+     *
+     * @param handler Lambda
+     */
     public static void setExceptionHandler(ERunnable handler) {
         exHandler = handler;
     }
 
+    /**
+     * Pass an exception to the standard exception handler.
+     *
+     * @param e Exception to handle
+     */
     public static void exceptionHandler(Exception e) {
         exHandler.run(e);
     }
 
+    /**
+     * Creates an equally spaced array of numbers, starting at min, ending at max in numSteps steps.
+     *
+     * @param min      Number to start at
+     * @param max      Number to end at
+     * @param numSteps Number of steps to do it in
+     *
+     * @return Array of numbers
+     */
     public static double[] makeLinearArray(Number min, Number max, int numSteps) {
 
         double[] values = new double[numSteps];
@@ -79,10 +113,26 @@ public class Util {
 
     }
 
+    /**
+     * Creates an equally spaced symmetric array of numbers, starting at min, ending at max in numSteps steps, and then back again.
+     *
+     * @param min          Number to start at
+     * @param max          Number to end at
+     * @param stepsEachWay Number of steps each way
+     *
+     * @return Array of numbers
+     */
     public static double[] makeSymLinearArray(Number min, Number max, int stepsEachWay) {
         return symArray(makeLinearArray(min, max, stepsEachWay));
     }
 
+    /**
+     * Takes an array of doubles, reverses it and appends it onto the end of the original whilst avoiding repeating the last element.
+     *
+     * @param array Array to symmetrise
+     *
+     * @return Symmetrised array
+     */
     public static double[] symArray(double[] array) {
 
         double[] results = new double[2 * array.length - 1];
@@ -101,6 +151,13 @@ public class Util {
 
     }
 
+    /**
+     * Reverses an array of doubles.
+     *
+     * @param arr Array to reverse
+     *
+     * @return Reversed array
+     */
     public static double[] reverseArray(double[] arr) {
 
         double[] array = arr.clone();
@@ -115,6 +172,15 @@ public class Util {
 
     }
 
+    /**
+     * Creates an array of logarithmically spaced numbers.
+     *
+     * @param min      Value to start at
+     * @param max      Value to end at
+     * @param numSteps Number of steps
+     *
+     * @return Logarithmic array
+     */
     public static double[] makeLogarithmicArray(Number min, Number max, int numSteps) {
 
         double[] values = new double[numSteps];
@@ -172,10 +238,10 @@ public class Util {
 
     public static void reduceData(ObservableList<Data<Double, Double>> points, int n) {
 
-        ArrayList<Data<Double,Double>> list = new ArrayList<>();
+        ArrayList<Data<Double, Double>> list = new ArrayList<>();
 
         list.add(points.get(0));
-        list.add(points.get(points.size()-1));
+        list.add(points.get(points.size() - 1));
 
         while (list.size() < n) {
 

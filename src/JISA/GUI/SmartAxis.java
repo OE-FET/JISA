@@ -1,5 +1,6 @@
 package JISA.GUI;
 
+import JISA.GUI.SVG.SVG;
 import JISA.Util;
 import javafx.beans.property.*;
 import javafx.css.CssMetaData;
@@ -311,7 +312,7 @@ public final class SmartAxis extends ValueAxis<Double> {
         }
 
         if (minInRange == Double.POSITIVE_INFINITY) {
-            minInRange = 0;
+            minInRange = lowerBound;
         }
 
         switch (mode) {
@@ -325,12 +326,15 @@ public final class SmartAxis extends ValueAxis<Double> {
 
                 for (double v = linStart; v <= linStop; v += tickUnit) {
 
-                    System.out.println(tickUnit);
-
                     tickValues.add(v);
 
                     if (Math.abs(v - minInRange) < Math.abs(distance)) {
                         distance = v - minInRange;
+                    }
+
+                    if (tickUnit <= 0) {
+                        System.err.println("Tick unit <= 0! This is a bug.");
+                        break;
                     }
 
                 }

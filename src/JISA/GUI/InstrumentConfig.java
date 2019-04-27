@@ -231,6 +231,10 @@ public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements
 
     private void updateAddress() {
 
+        if (address == null) {
+            return;
+        }
+
         GUI.runNow(() -> {
             switch (address.getType()) {
 

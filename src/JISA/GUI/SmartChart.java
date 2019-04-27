@@ -4,6 +4,7 @@ import JISA.Experiment.Function;
 import JISA.Experiment.Result;
 import JISA.Experiment.ResultList;
 import JISA.Experiment.ResultTable;
+import JISA.GUI.SVG.SVG;
 import JISA.Util;
 import javafx.beans.InvalidationListener;
 import javafx.collections.FXCollections;
@@ -147,6 +148,21 @@ public class SmartChart {
         for (Node node : chart.lookupAll(String.format(".default-color%d.chart-series-line", series))) {
             node.setStyle(String.format("-fx-stroke-width: %f;", width));
         }
+
+    }
+
+
+
+    public SVG getSVG(double width, double height) {
+
+        SVG svg = new SVG(width, height);
+
+        double scaleW = chart.getWidth();
+        double scaleH = chart.getHeight();
+
+
+
+        return svg;
 
     }
 
