@@ -366,6 +366,14 @@ public final class SmartAxis extends ValueAxis<Double> {
 
     }
 
+    public List<Double> getMajorTicks() {
+        return calculateTickValues(10.0 , null);
+    }
+
+    public List<Double> getMinorTicks() {
+        return calculateMinorTickMarks();
+    }
+
     protected List<Double> calculateMinorTickMarks() {
 
         final double       lowerBound = getLowerBound();

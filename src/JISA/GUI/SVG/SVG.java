@@ -27,7 +27,7 @@ public class SVG {
         FileOutputStream writer = new FileOutputStream(fileName);
         PrintStream      stream = new PrintStream(writer);
 
-        stream.printf("<svg width='%s' height='%s'>", width, height);
+        stream.printf("<svg width='%s' height='%s' xmlns=\"http://www.w3.org/2000/svg\">", width, height);
 
         for (SVGElement element : elements) {
             element.output(stream);

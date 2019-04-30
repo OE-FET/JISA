@@ -19,16 +19,18 @@ public class SVGElement {
         this.tag = tag;
     }
 
-    public void setAttribute(String key, double value){
-        setAttribute(key, String.valueOf(value));
+    public SVGElement setAttribute(String key, double value){
+        return setAttribute(key, String.valueOf(value));
     }
 
-    public void setAttribute(String key, String value) {
+    public SVGElement setAttribute(String key, String value) {
         attributes.put(key, value);
+        return this;
     }
 
-    public void setStyle(String key, String value) {
+    public SVGElement setStyle(String key, String value) {
         style.put(key, value);
+        return this;
     }
 
     public void add(SVGElement element) {
@@ -51,6 +53,17 @@ public class SVGElement {
         setStyle(
                 "stroke-width",
                 String.format("%spx", width)
+        );
+
+        return this;
+
+    }
+
+    public SVGElement setDash(String... dash) {
+
+        setStyle(
+                "stroke-dasharray",
+                String.join(",", dash)
         );
 
         return this;
@@ -94,9 +107,7 @@ public class SVGElement {
 
         stream.print(">");
 
-        for (SVGElement element : elements) {
-            element.output(stream);
-        }
+        elements.forEach(element -> element.output(stream));
 
         stream.printf("</%s>", tag);
 

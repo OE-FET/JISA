@@ -7,6 +7,17 @@ import java.util.List;
 
 public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
+    Color[] defaultColours = {
+            Color.web("#f3622d"),
+            Color.web("#fba71b"),
+            Color.web("#57b757"),
+            Color.web("#41a9c9"),
+            Color.web("#4258c9"),
+            Color.web("#9a42c8"),
+            Color.web("#c84164"),
+            Color.web("#888888")
+    };
+
     void addPoint(double x, double y);
 
     List<XYChart.Data<Double, Double>> getPoints();
@@ -14,6 +25,8 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
     void clear();
 
     void showMarkers(boolean show);
+
+    boolean isShowingMarkers();
 
     void setMarkerShape(Shape shape, double size);
 
@@ -30,6 +43,8 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
     Color getColour();
 
     void setLineWidth(double width);
+
+    double getLineWidth();
 
     void setAutoReduction(int reduceTo, int limit);
 
