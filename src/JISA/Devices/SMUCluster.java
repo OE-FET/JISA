@@ -1,11 +1,13 @@
 package JISA.Devices;
 
+import JISA.Control.AMode;
+import JISA.Control.Source;
+import JISA.Control.TType;
 import JISA.Experiment.IVPoint;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * Class to combine multiple SMUs into a single virtual SMU with multiple channels.

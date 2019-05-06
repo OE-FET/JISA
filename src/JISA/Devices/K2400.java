@@ -1,6 +1,7 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import JISA.Control.TType;
 
 import java.io.IOException;
 import java.util.regex.Matcher;
@@ -27,7 +28,7 @@ public class K2400 extends KeithleySCPI {
     }
 
     @Override
-    public void setOffMode(OffMode mode) throws DeviceException, IOException {
+    public void setOffMode(OffMode mode) throws IOException {
 
         switch (mode) {
 

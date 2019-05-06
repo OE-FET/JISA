@@ -10,7 +10,7 @@ import java.io.IOException;
 public class K2182 extends VISADevice implements VMeter {
 
     private ReadFilter filter      = new BypassFilter(this::measureVoltage, (c) -> disableAveraging());
-    private SMU.AMode  filterMode  = SMU.AMode.NONE;
+    private AMode      filterMode  = AMode.NONE;
     private int        filterCount = 1;
 
     public K2182(Address address) throws IOException, DeviceException {
@@ -28,6 +28,8 @@ public class K2182 extends VISADevice implements VMeter {
         }
 
         resetFilter();
+
+        write(":SENSE:FUNC \"VOLT\"");
 
     }
 
@@ -75,7 +77,7 @@ public class K2182 extends VISADevice implements VMeter {
     }
 
     @Override
-    public void setAverageMode(SMU.AMode mode) throws IOException, DeviceException {
+    public void setAverageMode(AMode mode) throws IOException, DeviceException {
 
         switch (mode) {
 
@@ -122,7 +124,7 @@ public class K2182 extends VISADevice implements VMeter {
     }
 
     @Override
-    public SMU.AMode getAverageMode() {
+    public AMode getAverageMode() {
         return filterMode;
     }
 

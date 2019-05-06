@@ -704,11 +704,11 @@ public class K236 extends SMU {
     }
 
     @Override
-    public void setSource(SMU.Source source) throws IOException {
+    public void setSource(JISA.Control.Source source) throws IOException {
         setSourceFunction(Source.fromSMU(source), getFunction());
     }
 
-    public SMU.Source getSource() throws IOException {
+    public JISA.Control.Source getSource() throws IOException {
         return getMeasureParams().source.getOriginal();
     }
 
@@ -734,19 +734,19 @@ public class K236 extends SMU {
 
     public enum Source {
 
-        CURRENT(1, SMU.Source.CURRENT),
-        VOLTAGE(0, SMU.Source.VOLTAGE);
+        CURRENT(1, JISA.Control.Source.CURRENT),
+        VOLTAGE(0, JISA.Control.Source.VOLTAGE);
 
-        private        int                         c;
-        private        SMU.Source                  src;
-        private static HashMap<Integer, Source>    lookup  = new HashMap<>();
-        private static HashMap<SMU.Source, Source> convert = new HashMap<>();
+        private        int                                  c;
+        private        JISA.Control.Source                  src;
+        private static HashMap<Integer, Source>             lookup  = new HashMap<>();
+        private static HashMap<JISA.Control.Source, Source> convert = new HashMap<>();
 
         static Source fromInt(int i) {
             return lookup.getOrDefault(i, null);
         }
 
-        static Source fromSMU(SMU.Source s) {
+        static Source fromSMU(JISA.Control.Source s) {
             return convert.getOrDefault(s, null);
         }
 
@@ -757,7 +757,7 @@ public class K236 extends SMU {
             }
         }
 
-        Source(int code, SMU.Source s) {
+        Source(int code, JISA.Control.Source s) {
             c = code;
             src = s;
         }
@@ -766,7 +766,7 @@ public class K236 extends SMU {
             return c;
         }
 
-        SMU.Source getOriginal() {
+        JISA.Control.Source getOriginal() {
             return src;
         }
 

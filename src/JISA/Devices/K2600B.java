@@ -675,8 +675,8 @@ public class K2600B extends MCSMU {
         VOLTAGE("1", "v", Source.VOLTAGE),
         CURRENT("0", "i", Source.CURRENT);
 
-        private static HashMap<String, SFunc>     fMap = new HashMap<>();
-        private static HashMap<SMU.Source, SFunc> sMap = new HashMap<>();
+        private static HashMap<String, SFunc> fMap = new HashMap<>();
+        private static HashMap<Source, SFunc> sMap = new HashMap<>();
 
         static {
             for (SFunc f : values()) {
@@ -685,11 +685,11 @@ public class K2600B extends MCSMU {
             }
         }
 
-        private String     tag;
-        private String     symbol;
-        private SMU.Source smu;
+        private String tag;
+        private String symbol;
+        private Source smu;
 
-        SFunc(String tag, String symbol, SMU.Source smu) {
+        SFunc(String tag, String symbol, Source smu) {
             this.tag = tag;
             this.symbol = symbol;
             this.smu = smu;
@@ -699,7 +699,7 @@ public class K2600B extends MCSMU {
             return fMap.getOrDefault(tag, null);
         }
 
-        public static SFunc fromSMU(SMU.Source s) {
+        public static SFunc fromSMU(Source s) {
             return sMap.getOrDefault(s, null);
         }
 
@@ -711,7 +711,7 @@ public class K2600B extends MCSMU {
             return symbol;
         }
 
-        public SMU.Source toSMU() {
+        public Source toSMU() {
             return smu;
         }
 

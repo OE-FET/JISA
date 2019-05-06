@@ -1,6 +1,9 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import JISA.Control.AMode;
+import JISA.Control.Source;
+import JISA.Control.TType;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.MCIVPoint;
 import JISA.Experiment.ResultList;

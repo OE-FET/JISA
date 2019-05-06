@@ -68,9 +68,19 @@ public abstract class MSTC extends TC {
      */
     public abstract int getNumSensors();
 
+    /**
+     * Returns a virtual TMeter object representing the specified temperature sensor.
+     *
+     * @param sensor Sensor number
+     *
+     * @return TMeter representing the sensor
+     *
+     * @throws DeviceException Upon compatibility error
+     */
     public TMeter getSensor(int sensor) throws DeviceException {
 
         checkSensor(sensor);
+
         return new TMeter() {
 
             @Override

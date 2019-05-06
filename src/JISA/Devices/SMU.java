@@ -1,14 +1,14 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
-import JISA.Control.ReadFilter;
-import JISA.Control.Returnable;
+import JISA.Control.AMode;
+import JISA.Control.Source;
+import JISA.Control.TType;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.ResultList;
 import JISA.Util;
 import JISA.VISA.Driver;
 import JISA.VISA.VISADevice;
-import org.apache.commons.math.stat.descriptive.rank.Median;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -929,57 +929,9 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
         return list;
     }
 
-    /**
-     * Enumeration of source modes
-     */
-    public enum Source {
-        VOLTAGE,
-        CURRENT
-    }
-
     public enum Terminals {
         FRONT,
         REAR
-    }
-
-    public enum TType {
-        TRIAX,
-        PHOENIX,
-        BNC,
-        BANANA,
-        NONE
-    }
-
-    /**
-     * Enumeration of averaging modes
-     */
-    public enum AMode {
-
-        /**
-         * No Averaging.
-         */
-        NONE,
-
-        /**
-         * Mean average, taking n data points each time.
-         */
-        MEAN_REPEAT,
-
-        /**
-         * Mean average, only taking one new data point each time and using the previous n-1 points.
-         */
-        MEAN_MOVING,
-
-        /**
-         * Median average, taking n data points each time.
-         */
-        MEDIAN_REPEAT,
-
-        /**
-         * Median average, only taking one new data point each time and using the previous n-1 points.
-         */
-        MEDIAN_MOVING
-
     }
 
     public enum OffMode {

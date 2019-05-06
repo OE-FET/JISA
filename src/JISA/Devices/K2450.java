@@ -1,9 +1,9 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import JISA.Control.TType;
 
 import java.io.IOException;
-import java.security.Guard;
 
 public class K2450 extends KeithleySCPI {
 
@@ -99,7 +99,7 @@ public class K2450 extends KeithleySCPI {
     }
 
     @Override
-    public void setOffMode(OffMode mode) throws DeviceException, IOException {
+    public void setOffMode(OffMode mode) throws IOException {
 
         switch (mode) {
 

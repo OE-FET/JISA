@@ -1,5 +1,9 @@
 package JISA.Devices;
 
+import JISA.Control.AMode;
+import JISA.Control.Source;
+import JISA.Control.TType;
+
 import java.io.IOException;
 import java.util.Random;
 

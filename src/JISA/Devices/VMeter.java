@@ -1,6 +1,6 @@
 package JISA.Devices;
 
-import JISA.Devices.SMU.AMode;
+import JISA.Control.AMode;
 
 import java.io.IOException;
 
