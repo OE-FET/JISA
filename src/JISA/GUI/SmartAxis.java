@@ -1,6 +1,5 @@
 package JISA.GUI;
 
-import JISA.GUI.SVG.SVG;
 import JISA.Util;
 import javafx.beans.property.*;
 import javafx.css.CssMetaData;
@@ -284,8 +283,8 @@ public final class SmartAxis extends ValueAxis<Double> {
     @Override
     protected List<Double> calculateTickValues(double length, Object range) {
 
-        double       lowerBound = getLowerBound();
-        double       upperBound = getUpperBound();
+        double lowerBound = getLowerBound();
+        double upperBound = getUpperBound();
 
         if (upperBound == lowerBound || data.size() == 1) {
             double amount = Math.abs(0.1 * lowerBound);
@@ -312,7 +311,7 @@ public final class SmartAxis extends ValueAxis<Double> {
         }
 
         if (minInRange == Double.POSITIVE_INFINITY) {
-            minInRange = lowerBound;
+            minInRange = Util.oneSigFigCeil(lowerBound);
         }
 
         switch (mode) {
@@ -367,7 +366,7 @@ public final class SmartAxis extends ValueAxis<Double> {
     }
 
     public List<Double> getMajorTicks() {
-        return calculateTickValues(10.0 , null);
+        return calculateTickValues(10.0, null);
     }
 
     public List<Double> getMinorTicks() {
