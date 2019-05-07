@@ -318,22 +318,21 @@ public final class SmartAxis extends ValueAxis<Double> {
 
             case LINEAR:
 
-                double linStart = Util.oneSigFigFloor(lowerBound);
-                double linStop = Util.oneSigFigCeil(upperBound);
-
                 double distance = Double.POSITIVE_INFINITY;
 
-                for (double v = linStart; v <= linStop; v += tickUnit) {
+                for (double v = lowerBound; v <= upperBound; v += tickUnit) {
+
+                    if (tickUnit <= 0) {
+                        System.err.println("Tick unit <= 0! This is a bug.");
+                        tickValues.add(lowerBound);
+                        tickValues.add(upperBound);
+                        break;
+                    }
 
                     tickValues.add(v);
 
                     if (Math.abs(v - minInRange) < Math.abs(distance)) {
                         distance = v - minInRange;
-                    }
-
-                    if (tickUnit <= 0) {
-                        System.err.println("Tick unit <= 0! This is a bug.");
-                        break;
                     }
 
                 }
