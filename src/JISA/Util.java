@@ -100,6 +100,10 @@ public class Util {
      */
     public static double[] makeLinearArray(Number min, Number max, int numSteps) {
 
+        if (numSteps < 1) {
+            throw new IllegalArgumentException("You cannot have fewer than 1 step.");
+        }
+
         double[] values = new double[numSteps];
         double   step   = (max.doubleValue() - min.doubleValue()) / (numSteps - 1D);
 
@@ -182,6 +186,10 @@ public class Util {
      * @return Logarithmic array
      */
     public static double[] makeLogarithmicArray(Number min, Number max, int numSteps) {
+
+        if (numSteps < 1) {
+            throw new IllegalArgumentException("You cannot have fewer than 1 step.");
+        }
 
         double[] values = new double[numSteps];
         double   step   = Math.pow(max.doubleValue() / min.doubleValue(), 1D / numSteps);
