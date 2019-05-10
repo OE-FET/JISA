@@ -118,7 +118,7 @@ public class Util {
     }
 
     /**
-     * Creates an equally spaced symmetric array of numbers, starting at min, ending at max in numSteps steps, and then back again.
+     * Creates an equally spaced symmetric array of numbers, starting at min, ending at max in numSteps steps, and then back again to min in numSteps.
      *
      * @param min          Number to start at
      * @param max          Number to end at
@@ -145,9 +145,7 @@ public class Util {
 
         for (int i = 0; i < array.length - 1; i++) {
 
-            int j = array.length + i;
-            int k = array.length - 2 - i;
-            results[j] = array[k];
+            results[array.length + i] = array[array.length - 2 - i];
 
         }
 
@@ -158,18 +156,16 @@ public class Util {
     /**
      * Reverses an array of doubles.
      *
-     * @param arr Array to reverse
+     * @param toReverse Array to reverse
      *
      * @return Reversed array
      */
-    public static double[] reverseArray(double[] arr) {
+    public static double[] reverseArray(double[] toReverse) {
 
-        double[] array = arr.clone();
+        double[] array = new double[toReverse.length];
 
-        for (int i = 0; i < array.length / 2; i++) {
-            double temp = array[i];
-            array[i] = array[array.length - i - 1];
-            array[array.length - i - 1] = temp;
+        for (int i = 0; i < array.length; i++) {
+            array[i] = toReverse[array.length - i - 1];
         }
 
         return array;
@@ -204,6 +200,15 @@ public class Util {
 
     }
 
+    /**
+     * Returns an array of Strings specified by the pattern and a counting integer.
+     *
+     * @param start   Integer to start at
+     * @param length  How many integers to go through
+     * @param pattern The pattern to use
+     *
+     * @return Array of Strings
+     */
     public static String[] makeCountingString(int start, int length, String pattern) {
 
         String[] result = new String[length];
@@ -214,6 +219,13 @@ public class Util {
 
     }
 
+    /**
+     * Floors the number to 1 significant figure.
+     *
+     * @param value Number to floor.
+     *
+     * @return Floored number
+     */
     public static double oneSigFigFloor(Number value) {
 
         if (value.doubleValue() == 0) {
@@ -223,6 +235,13 @@ public class Util {
         return Math.floor(value.doubleValue() / Math.pow(10, Math.floor(Math.log10(Math.abs(value.doubleValue()))))) * Math.pow(10, Math.floor(Math.log10(Math.abs(value.doubleValue()))));
     }
 
+    /**
+     * Ceilings the number to 1 significant figure.
+     *
+     * @param value Number to floor.
+     *
+     * @return Ceilinged number
+     */
     public static double oneSigFigCeil(double value) {
 
         if (value == 0) {
@@ -241,22 +260,6 @@ public class Util {
         else intermediate = Math.round(intermediate);
 
         return (intermediate * Math.pow(10, Math.floor(Math.log10(Math.abs(value))) - (nSigDig - 1)));
-
-    }
-
-    public static void reduceData(ObservableList<Data<Double, Double>> points, int n) {
-
-        ArrayList<Data<Double, Double>> list = new ArrayList<>();
-
-        list.add(points.get(0));
-        list.add(points.get(points.size() - 1));
-
-        while (list.size() < n) {
-
-            Pair<Integer, Integer> dev = mostDeviant(list);
-
-
-        }
 
     }
 
@@ -299,35 +302,6 @@ public class Util {
         System.arraycopy(toTrim, 0, trimmed, 0, trimmed.length);
 
         return trimmed;
-
-    }
-
-    private static Pair<Integer, Integer> mostDeviant(List<Data<Double, Double>> line) {
-
-        double maxD = 0;
-        int    maxI = 0;
-        int    maxJ = line.size() - 1;
-
-        for (int i = 0; i < line.size() - 1; i++) {
-
-            for (int j = i + 1; j < line.size(); j++) {
-
-                Data<Double, Double> point1 = line.get(i);
-                Data<Double, Double> point2 = line.get(j);
-
-                double distance = Math.sqrt(Math.pow(point1.getXValue() - point2.getXValue(), 2) + Math.pow(point1.getYValue() - point2.getYValue(), 2));
-
-                if (distance > maxD) {
-                    maxD = distance;
-                    maxI = i;
-                    maxJ = j;
-                }
-
-            }
-
-        }
-
-        return new Pair<>(maxI, maxJ);
 
     }
 
