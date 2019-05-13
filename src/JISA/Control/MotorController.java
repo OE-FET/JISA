@@ -35,7 +35,7 @@ public class MotorController {
         voltage.set(v);
     }
 
-    public void calibrate(double minV, double maxV, long maxPeriod) throws IOException, DeviceException {
+    public void calibrate(double minV, double maxV, long maxPeriod) throws IOException, DeviceException, InterruptedException {
 
         double[] values = Util.makeLinearArray(maxV, minV, 5);
         voltage.set(maxV);

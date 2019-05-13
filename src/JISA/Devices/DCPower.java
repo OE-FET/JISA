@@ -93,7 +93,7 @@ public abstract class DCPower extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon device compatibility error
      */
-    public void waitForStableVoltage(double pctError, long time) throws IOException, DeviceException {
+    public void waitForStableVoltage(double pctError, long time) throws IOException, DeviceException, InterruptedException {
 
 
         Synch.waitForParamStable(
@@ -112,7 +112,7 @@ public abstract class DCPower extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon device compatibility error
      */
-    public void waitForStableVoltage() throws IOException, DeviceException {
+    public void waitForStableVoltage() throws IOException, DeviceException, InterruptedException {
         waitForStableVoltage(0.1, 5000);
     }
 
@@ -125,7 +125,7 @@ public abstract class DCPower extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon device compatibility error
      */
-    public void waitForStableCurrent(double pctError, long time) throws IOException, DeviceException {
+    public void waitForStableCurrent(double pctError, long time) throws IOException, DeviceException, InterruptedException {
 
         Synch.waitForParamStable(
                 this::getCurrent,
@@ -142,7 +142,7 @@ public abstract class DCPower extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon device compatibility error
      */
-    public void waitForStableCurrent() throws IOException, DeviceException {
+    public void waitForStableCurrent() throws IOException, DeviceException, InterruptedException {
         waitForStableCurrent(0.1, 5000);
     }
 

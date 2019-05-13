@@ -18,56 +18,72 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     public static final Class<USBTC08.NativeInterface> LIBRARY_CLASS    = USBTC08.NativeInterface.class;
     public static final int                            SENSORS_PER_UNIT = 9;
 
-    private static final short ERROR_OK                     = 0;
-    private static final short ERROR_OS_NOT_SUPPORTED       = 1;
-    private static final short ERROR_NO_CHANNELS_SET        = 2;
-    private static final short ERROR_INVALID_PARAMETER      = 3;
-    private static final short ERROR_VARIANT_NOT_SUPPORTED  = 4;
-    private static final short ERROR_INCORRECT_MODE         = 5;
-    private static final short ERROR_ENUMERATION_INCOMPLETE = 6;
+    private static final short                   ERROR_OK                     = 0;
+    private static final short                   ERROR_OS_NOT_SUPPORTED       = 1;
+    private static final short                   ERROR_NO_CHANNELS_SET        = 2;
+    private static final short                   ERROR_INVALID_PARAMETER      = 3;
+    private static final short                   ERROR_VARIANT_NOT_SUPPORTED  = 4;
+    private static final short                   ERROR_INCORRECT_MODE         = 5;
+    private static final short                   ERROR_ENUMERATION_INCOMPLETE = 6;
+    private static final short                   UNITS_KELVIN                 = 2;
+    private static       USBTC08.NativeInterface INSTANCE                     = null;
 
-    private final Short[]  handles;
-    private final TCType[] types;
+    static {
+        try {
+            INSTANCE = Native.loadLibrary(LIBRARY_NAME, LIBRARY_CLASS);
+        } catch (Throwable e) {
+            INSTANCE = null;
+        }
+    }
+
+    private final short    handle;
+    private final TCType[] types = {
+            TCType.NONE,
+            TCType.NONE,
+            TCType.NONE,
+            TCType.NONE,
+            TCType.NONE,
+            TCType.NONE,
+            TCType.NONE,
+            TCType.NONE,
+            TCType.NONE
+    };
 
     public static USBTC08[] search() {
 
-        try {
-            USBTC08 attempt = new USBTC08();
-            return new USBTC08[]{attempt};
-        } catch (Exception e) {
-            return new USBTC08[0];
+        List<USBTC08> devices = new LinkedList<>();
+
+        while (true) {
+
+            try {
+                devices.add(new USBTC08());
+            } catch (Throwable e) {
+                break;
+            }
+
         }
 
+        return devices.toArray(new USBTC08[0]);
+
     }
 
-    public USBTC08() throws IOException {
-        this(null);
-    }
-
-    public USBTC08(Address address) throws IOException {
+    public USBTC08() throws IOException, DeviceException {
 
         // Load native library
-        super(LIBRARY_NAME, LIBRARY_CLASS);
+        super(LIBRARY_NAME, LIBRARY_CLASS, INSTANCE);
 
-        List<Short> units = new LinkedList<>();
-
-        short found;
-
-        // Look for all USB-TC-08 units connected
-        while ((found = lib.usb_tc08_open_unit()) > 0) {
-            units.add(found);
+        if (INSTANCE == null) {
+            throw new IOException("Error loading usbtc08 library!");
         }
 
-        // If none are found, throw exception
-        if (units.isEmpty()) {
-            throw new IOException("No USB TC-08 units found!");
-        }
+        short handle = lib.usb_tc08_open_unit();
 
-        handles = units.toArray(new Short[0]);
-        types = new TCType[getNumSensors()];
-
-        for (int i = 0; i < types.length; i++) {
-            types[i] = TCType.NONE;
+        if (handle > 0) {
+            this.handle = handle;
+        } else if (handle == 0) {
+            throw new IOException("No USB TC-08 unit found!");
+        } else {
+            throw new DeviceException(getLastError((short) 0));
         }
 
     }
@@ -77,14 +93,10 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         checkSensor(sensor);
 
-        // Figure out which units we're talking about
-        short handle = handles[sensor / SENSORS_PER_UNIT];
-        int   sense  = sensor % SENSORS_PER_UNIT;
-
         // Need a pointer to some memory to store our returned values
         Memory tempPointer = new Memory(9 * Native.getNativeSize(Float.TYPE));
 
-        int result = lib.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), (short) 2);
+        int result = lib.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), UNITS_KELVIN);
 
         // If zero, then something's gone wrong.
         if (result == 0) {
@@ -93,15 +105,13 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         float[] values = tempPointer.getFloatArray(0, SENSORS_PER_UNIT);
 
-        return (double) values[sense];
+        return (double) values[sensor];
 
     }
 
     @Override
     public int getNumSensors() {
-
-        return handles.length * SENSORS_PER_UNIT;
-
+        return SENSORS_PER_UNIT;
     }
 
     @Override
@@ -109,29 +119,21 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         double[] temperatures = new double[getNumSensors()];
 
-        int i = 0;
+        // Pointer to memory reserved for returned temperatures
+        Memory tempPointer = new Memory(9 * Native.getNativeSize(Float.TYPE));
 
-        // Loop over all units
-        for (Short handle : handles) {
+        int result = lib.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), (short) 2);
 
-            // Pointer to memory reserved for returned temperatures
-            Memory tempPointer = new Memory(9 * Native.getNativeSize(Float.TYPE));
+        // If it returned zero, something's gone wrong
+        if (result == 0) {
+            throw new DeviceException(getLastError(handle));
+        }
 
-            int result = lib.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), (short) 2);
+        float[] values = tempPointer.getFloatArray(0, SENSORS_PER_UNIT);
 
-            // If it returned zero, something's gone wrong
-            if (result == 0) {
-                throw new DeviceException(getLastError(handle));
-            }
-
-            float[] values = tempPointer.getFloatArray(0, SENSORS_PER_UNIT);
-
-            // Add to over-all array of doubles
-            for (float v : values) {
-                temperatures[i] = (double) v;
-                i++;
-            }
-
+        // Convert to doubles
+        for (int i = 0; i < values.length; i++) {
+            temperatures[i] = (double) values[i];
         }
 
         return temperatures;
@@ -150,10 +152,10 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         checkSensor(sensor);
 
-        int result = lib.usb_tc08_set_channel(handles[sensor / SENSORS_PER_UNIT], (short) (sensor % SENSORS_PER_UNIT), type.getCode());
+        int result = lib.usb_tc08_set_channel(handle, (short) sensor, type.getCode());
 
         if (result == 0) {
-            throw new DeviceException(getLastError(handles[sensor / SENSORS_PER_UNIT]));
+            throw new DeviceException(getLastError(handle));
         } else {
             types[sensor] = type;
         }
@@ -176,15 +178,13 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      */
     public void setLineFrequency(Frequency frequency) throws DeviceException {
 
-        for (Short handle : handles) {
 
-            int result = lib.usb_tc08_set_mains(handle, (short) frequency.ordinal());
+        int result = lib.usb_tc08_set_mains(handle, (short) frequency.ordinal());
 
-            if (result == 0) {
-                throw new DeviceException(getLastError(handle));
-            }
-
+        if (result == 0) {
+            throw new DeviceException(getLastError(handle));
         }
+
 
     }
 
@@ -196,14 +196,10 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     @Override
     public void close() throws DeviceException {
 
-        for (Short handle : handles) {
+        int result = lib.usb_tc08_close_unit(handle);
 
-            int result = lib.usb_tc08_close_unit(handle);
-
-            if (result == 0) {
-                throw new DeviceException(getLastError(handle));
-            }
-
+        if (result == 0) {
+            throw new DeviceException(getLastError(handle));
         }
 
     }

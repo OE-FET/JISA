@@ -240,7 +240,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableLock(double pctMargin, long duration) throws IOException, DeviceException {
+    public void waitForStableLock(double pctMargin, long duration) throws IOException, DeviceException, InterruptedException {
 
         Synch.waitForParamStable(
                 this::getLockedAmplitude,
@@ -262,7 +262,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableLock() throws IOException, DeviceException {
+    public void waitForStableLock() throws IOException, DeviceException, InterruptedException {
         waitForStableLock(0.1, 5000);
     }
 

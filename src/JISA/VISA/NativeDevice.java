@@ -24,6 +24,11 @@ public abstract class NativeDevice<I extends Library> implements Instrument {
 
     }
 
+    public NativeDevice(String libraryName, Class<I> libraryInterface, I library) {
+        name = libraryName;
+        lib = library;
+    }
+
     public abstract String getIDN() throws IOException;
 
     @Override
