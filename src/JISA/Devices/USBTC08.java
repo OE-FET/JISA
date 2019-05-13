@@ -26,7 +26,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     private static final short ERROR_INCORRECT_MODE         = 5;
     private static final short ERROR_ENUMERATION_INCOMPLETE = 6;
 
-    private final Short[] handles;
+    private final Short[]  handles;
+    private final TCType[] types;
 
     public USBTC08() throws IOException {
         this(null);
@@ -52,6 +53,11 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         }
 
         handles = units.toArray(new Short[0]);
+        types   = new TCType[getNumSensors()];
+
+        for (int i = 0; i < types.length; i ++) {
+            types[i] = TCType.NONE;
+        }
 
     }
 
@@ -129,7 +135,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      *
      * @throws DeviceException Upon device error
      */
-    public void configureSensor(int sensor, TCType type) throws DeviceException {
+    public void setSensorType(int sensor, TCType type) throws DeviceException {
 
         checkSensor(sensor);
 
@@ -137,7 +143,16 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         if (result == 0) {
             throw new DeviceException(getLastError(handles[sensor / SENSORS_PER_UNIT]));
+        } else {
+            types[sensor] = type;
         }
+
+    }
+
+    public TCType getSensorType(int sensor) throws DeviceException {
+
+        checkSensor(sensor);
+        return types[sensor];
 
     }
 
@@ -229,6 +244,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      */
     public enum TCType {
 
+        NONE((char) 0),
         B('B'),
         E('E'),
         J('J'),
