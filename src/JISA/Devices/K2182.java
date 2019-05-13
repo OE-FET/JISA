@@ -2,6 +2,7 @@ package JISA.Devices;
 
 import JISA.Addresses.Address;
 import JISA.Control.*;
+import JISA.Enums.AMode;
 import JISA.VISA.Driver;
 import JISA.VISA.VISADevice;
 

@@ -1,9 +1,10 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
-import JISA.Control.AMode;
-import JISA.Control.Source;
-import JISA.Control.TType;
+import JISA.Enums.AMode;
+import JISA.Enums.Source;
+import JISA.Enums.TType;
+import JISA.Enums.Terminals;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.ResultList;
 import JISA.Util;
@@ -927,11 +928,6 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
         ResultList list = new ResultList("Voltage", "Current");
         list.setUnits("V", "A");
         return list;
-    }
-
-    public enum Terminals {
-        FRONT,
-        REAR
     }
 
     public enum OffMode {

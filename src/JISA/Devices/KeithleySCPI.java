@@ -2,6 +2,8 @@ package JISA.Devices;
 
 import JISA.Addresses.Address;
 import JISA.Control.*;
+import JISA.Enums.AMode;
+import JISA.Enums.Terminals;
 import JISA.Util;
 import JISA.VISA.Connection;
 import JISA.VISA.Driver;
@@ -434,7 +436,7 @@ public abstract class KeithleySCPI extends SMU {
         write(C_SET_OUTPUT_STATE, on ? OUTPUT_ON : OUTPUT_OFF);
     }
 
-    public JISA.Control.Source getSource() throws IOException {
+    public JISA.Enums.Source getSource() throws IOException {
         return Source.fromTag(query(C_QUERY_SOURCE_FUNCTION)).getSMU();
     }
 
@@ -449,7 +451,7 @@ public abstract class KeithleySCPI extends SMU {
 
     }
 
-    public void setSource(JISA.Control.Source source) throws IOException {
+    public void setSource(JISA.Enums.Source source) throws IOException {
         setSource(Source.fromSMU(source));
     }
 
@@ -894,11 +896,11 @@ public abstract class KeithleySCPI extends SMU {
 
     public enum Source {
 
-        VOLTAGE("VOLT", "V", JISA.Control.Source.VOLTAGE),
-        CURRENT("CURR", "I", JISA.Control.Source.CURRENT);
+        VOLTAGE("VOLT", "V", JISA.Enums.Source.VOLTAGE),
+        CURRENT("CURR", "I", JISA.Enums.Source.CURRENT);
 
-        private static HashMap<String, Source>              lookup  = new HashMap<>();
-        private static HashMap<JISA.Control.Source, Source> convert = new HashMap<>();
+        private static HashMap<String, Source>            lookup  = new HashMap<>();
+        private static HashMap<JISA.Enums.Source, Source> convert = new HashMap<>();
 
         static {
             for (Source mode : Source.values()) {
@@ -907,11 +909,11 @@ public abstract class KeithleySCPI extends SMU {
             }
         }
 
-        private String              tag;
-        private String              symbol;
-        private JISA.Control.Source orig;
+        private String            tag;
+        private String            symbol;
+        private JISA.Enums.Source orig;
 
-        Source(String tag, String symbol, JISA.Control.Source orig) {
+        Source(String tag, String symbol, JISA.Enums.Source orig) {
             this.tag = tag;
             this.symbol = symbol;
             this.orig = orig;
@@ -921,7 +923,7 @@ public abstract class KeithleySCPI extends SMU {
             return lookup.getOrDefault(tag.trim(), null);
         }
 
-        public static Source fromSMU(JISA.Control.Source orig) {
+        public static Source fromSMU(JISA.Enums.Source orig) {
             return convert.getOrDefault(orig, null);
         }
 
@@ -933,7 +935,7 @@ public abstract class KeithleySCPI extends SMU {
             return symbol;
         }
 
-        JISA.Control.Source getSMU() {
+        JISA.Enums.Source getSMU() {
             return orig;
         }
 

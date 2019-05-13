@@ -1,8 +1,9 @@
 package JISA.Devices;
 
-import JISA.Control.AMode;
-import JISA.Control.Source;
-import JISA.Control.TType;
+import JISA.Enums.AMode;
+import JISA.Enums.Source;
+import JISA.Enums.TType;
+import JISA.Enums.Terminals;
 import JISA.Experiment.IVPoint;
 
 import java.io.IOException;

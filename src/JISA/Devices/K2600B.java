@@ -2,6 +2,10 @@ package JISA.Devices;
 
 import JISA.Addresses.Address;
 import JISA.Control.*;
+import JISA.Enums.AMode;
+import JISA.Enums.Source;
+import JISA.Enums.TType;
+import JISA.Enums.Terminals;
 
 import java.io.IOException;
 import java.util.HashMap;

@@ -2,6 +2,8 @@ package JISA.Devices;
 
 import JISA.Addresses.Address;
 import JISA.Control.Nameable;
+import JISA.Enums.Coupling;
+import JISA.Enums.Shield;
 import JISA.Util;
 
 import java.io.IOException;
@@ -219,15 +221,15 @@ public class SR830 extends DPLockIn {
     }
 
     @Override
-    public Ground getGround() throws IOException {
+    public Shield getShielding() throws IOException {
 
         switch (queryInt(C_QUERY_GROUND)) {
 
             case GND_FLOAT:
-                return Ground.FLOAT;
+                return Shield.FLOAT;
 
             case GND_GROUND:
-                return Ground.GROUND;
+                return Shield.GROUND;
 
             default:
                 return null;
@@ -237,7 +239,7 @@ public class SR830 extends DPLockIn {
     }
 
     @Override
-    public void setGround(Ground mode) throws IOException {
+    public void setShielding(Shield mode) throws IOException {
 
         switch (mode) {
 

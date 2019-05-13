@@ -1,7 +1,8 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
-import JISA.Control.TType;
+import JISA.Enums.TType;
+import JISA.Enums.Terminals;
 
 import java.io.IOException;
 import java.util.regex.Matcher;

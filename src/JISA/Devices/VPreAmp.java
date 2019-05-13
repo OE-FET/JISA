@@ -1,6 +1,7 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import JISA.Enums.Coupling;
 import JISA.VISA.Driver;
 import JISA.VISA.VISADevice;
 
@@ -33,7 +34,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setSource(Source source) throws IOException, DeviceException;
+    public abstract void setInput(Input source) throws IOException, DeviceException;
 
     /**
      * Sets the coupling mode of the pre-amplifier.
@@ -103,7 +104,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract Source getSource() throws IOException, DeviceException;
+    public abstract Input getInput() throws IOException, DeviceException;
 
     /**
      * Returns the coupling configuration currently being used.
@@ -155,13 +156,7 @@ public abstract class VPreAmp extends VISADevice {
      */
     public abstract double getFilterLowFrequency() throws IOException, DeviceException;
 
-    public enum Coupling {
-        GROUND,
-        DC,
-        AC
-    }
-
-    public enum Source {
+    public enum Input {
         A,
         B,
         DIFF

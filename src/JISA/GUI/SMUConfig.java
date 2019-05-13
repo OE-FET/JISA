@@ -5,6 +5,7 @@ import JISA.Control.Field;
 import JISA.Devices.DeviceException;
 import JISA.Devices.MCSMU;
 import JISA.Devices.SMU;
+import JISA.Enums.Terminals;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -102,8 +103,8 @@ public class SMUConfig extends Fields {
         try {
             if (smu != null) {
                 trm.editValues(
-                        String.format("Front (%s)", smu.getTerminalType(SMU.Terminals.FRONT).name()),
-                        String.format("Rear (%s)", smu.getTerminalType(SMU.Terminals.REAR).name())
+                        String.format("Front (%s)", smu.getTerminalType(Terminals.FRONT).name()),
+                        String.format("Rear (%s)", smu.getTerminalType(Terminals.REAR).name())
                 );
             } else {
                 trm.editValues(
@@ -173,8 +174,8 @@ public class SMUConfig extends Fields {
         return chn.get();
     }
 
-    public SMU.Terminals getTerminals() {
-        return SMU.Terminals.values()[trm.get()];
+    public Terminals getTerminals() {
+        return Terminals.values()[trm.get()];
     }
 
     public double getVoltageLimit() {

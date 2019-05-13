@@ -1,6 +1,7 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import JISA.Enums.Coupling;
 import JISA.VISA.Connection;
 
 import java.io.IOException;
@@ -176,7 +177,7 @@ public class SR560 extends VPreAmp {
     private Coupling couplingMode = null;
     private FMode    filterMode   = FMode.BYPASS;
     private Gain     gainMode     = null;
-    private Source   sourceMode   = null;
+    private Input   sourceMode   = null;
     private Freq     highFreq     = null;
     private Freq     lowFreq      = null;
 
@@ -193,7 +194,7 @@ public class SR560 extends VPreAmp {
 
         // Set default parameters
         setGain(1.0);
-        setSource(Source.A);
+        setInput(Input.A);
         setCoupling(Coupling.GROUND);
         setFilterMode(Filter.NONE);
         setFilterHighFrequency(1.0);
@@ -213,7 +214,7 @@ public class SR560 extends VPreAmp {
     }
 
     @Override
-    public void setSource(Source source) throws IOException {
+    public void setInput(Input source) throws IOException {
 
         switch (source) {
 
@@ -299,7 +300,7 @@ public class SR560 extends VPreAmp {
     }
 
     @Override
-    public Source getSource() {
+    public Input getInput() {
         return sourceMode;
     }
 

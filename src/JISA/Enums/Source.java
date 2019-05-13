@@ -1,4 +1,4 @@
-package JISA.Control;
+package JISA.Enums;
 
 /**
  * Enumeration of source modes

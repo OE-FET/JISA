@@ -1,6 +1,6 @@
 package JISA.Devices;
 
-import JISA.Control.AMode;
+import JISA.Enums.AMode;
 
 import java.io.IOException;
 

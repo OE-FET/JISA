@@ -2,6 +2,8 @@ package JISA.Devices;
 
 import JISA.Addresses.Address;
 import JISA.Control.Synch;
+import JISA.Enums.Coupling;
+import JISA.Enums.Shield;
 import JISA.VISA.Driver;
 import JISA.VISA.VISADevice;
 
@@ -201,9 +203,9 @@ public abstract class LockIn extends VISADevice {
      */
     public abstract void setCoupling(Coupling mode) throws IOException, DeviceException;
 
-    public abstract Ground getGround() throws IOException, DeviceException;
+    public abstract Shield getShielding() throws IOException, DeviceException;
 
-    public abstract void setGround(Ground mode) throws IOException, DeviceException;
+    public abstract void setShielding(Shield mode) throws IOException, DeviceException;
 
     public abstract LineFilter getLineFilter() throws IOException, DeviceException;
 
@@ -271,27 +273,12 @@ public abstract class LockIn extends VISADevice {
         CURRENT_HIGH_IMPEDANCE
     }
 
-    public enum VMode {
-        SINGLE,
-        DIFFERENCE
-    }
-
     /**
      * Enumeration of reference modes
      */
     public enum RefMode {
         INTERNAL,
         EXTERNAL
-    }
-
-    public enum Coupling {
-        AC,
-        DC
-    }
-
-    public enum Ground {
-        GROUND,
-        FLOAT
     }
 
     public enum LineFilter {

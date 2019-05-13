@@ -2,6 +2,9 @@ package JISA.Devices;
 
 import JISA.Addresses.Address;
 import JISA.Control.*;
+import JISA.Enums.AMode;
+import JISA.Enums.TType;
+import JISA.Enums.Terminals;
 import JISA.Util;
 
 import java.io.IOException;
@@ -704,11 +707,11 @@ public class K236 extends SMU {
     }
 
     @Override
-    public void setSource(JISA.Control.Source source) throws IOException {
+    public void setSource(JISA.Enums.Source source) throws IOException {
         setSourceFunction(Source.fromSMU(source), getFunction());
     }
 
-    public JISA.Control.Source getSource() throws IOException {
+    public JISA.Enums.Source getSource() throws IOException {
         return getMeasureParams().source.getOriginal();
     }
 
@@ -734,19 +737,19 @@ public class K236 extends SMU {
 
     public enum Source {
 
-        CURRENT(1, JISA.Control.Source.CURRENT),
-        VOLTAGE(0, JISA.Control.Source.VOLTAGE);
+        CURRENT(1, JISA.Enums.Source.CURRENT),
+        VOLTAGE(0, JISA.Enums.Source.VOLTAGE);
 
-        private        int                                  c;
-        private        JISA.Control.Source                  src;
-        private static HashMap<Integer, Source>             lookup  = new HashMap<>();
-        private static HashMap<JISA.Control.Source, Source> convert = new HashMap<>();
+        private        int                                c;
+        private        JISA.Enums.Source                  src;
+        private static HashMap<Integer, Source>           lookup  = new HashMap<>();
+        private static HashMap<JISA.Enums.Source, Source> convert = new HashMap<>();
 
         static Source fromInt(int i) {
             return lookup.getOrDefault(i, null);
         }
 
-        static Source fromSMU(JISA.Control.Source s) {
+        static Source fromSMU(JISA.Enums.Source s) {
             return convert.getOrDefault(s, null);
         }
 
@@ -757,7 +760,7 @@ public class K236 extends SMU {
             }
         }
 
-        Source(int code, JISA.Control.Source s) {
+        Source(int code, JISA.Enums.Source s) {
             c = code;
             src = s;
         }
@@ -766,7 +769,7 @@ public class K236 extends SMU {
             return c;
         }
 
-        JISA.Control.Source getOriginal() {
+        JISA.Enums.Source getOriginal() {
             return src;
         }
 

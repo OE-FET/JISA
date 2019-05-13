@@ -29,6 +29,17 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     private final Short[]  handles;
     private final TCType[] types;
 
+    public static USBTC08[] search() {
+
+        try {
+            USBTC08 attempt = new USBTC08();
+            return new USBTC08[]{attempt};
+        } catch (Exception e) {
+            return new USBTC08[0];
+        }
+
+    }
+
     public USBTC08() throws IOException {
         this(null);
     }
@@ -53,9 +64,9 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         }
 
         handles = units.toArray(new Short[0]);
-        types   = new TCType[getNumSensors()];
+        types = new TCType[getNumSensors()];
 
-        for (int i = 0; i < types.length; i ++) {
+        for (int i = 0; i < types.length; i++) {
             types[i] = TCType.NONE;
         }
 

@@ -1,6 +1,6 @@
 package JISA.Devices;
 
-import JISA.Control.Source;
+import JISA.Enums.Source;
 
 import java.io.IOException;
 
