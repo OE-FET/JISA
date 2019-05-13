@@ -1,5 +1,8 @@
 package JISA.Devices;
 
+import JISA.Control.Synch;
+import JISA.Util;
+
 import java.io.IOException;
 
 public interface TMeter extends Instrument {
@@ -13,5 +16,9 @@ public interface TMeter extends Instrument {
      * @throws IOException     Upon communications error
      */
     double getTemperature() throws IOException, DeviceException;
+
+    default void waitForStableTemperature(double temperature, double pctMargin, int duration) throws IOException, DeviceException, InterruptedException {
+        Synch.waitForStableTarget(this::getTemperature, temperature, pctMargin, 1000, duration);
+    }
 
 }

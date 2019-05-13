@@ -1,5 +1,8 @@
 package JISA.Devices;
 
+import JISA.Control.Synch;
+import JISA.Util;
+
 import java.io.IOException;
 
 public interface MSTMeter extends TMeter {
@@ -26,6 +29,10 @@ public interface MSTMeter extends TMeter {
 
     default TMeter getSensor(int sensor) throws IOException, DeviceException {
 
+        if (!Util.isBetween(sensor, 0, getNumSensors()-1)) {
+            throw new DeviceException("Sensor %d does not exist.", sensor);
+        }
+
         return new TMeter() {
             @Override
             public double getTemperature() throws IOException, DeviceException {
@@ -43,6 +50,10 @@ public interface MSTMeter extends TMeter {
             }
         };
 
+    }
+
+    default void waitForStableTemperature(int sensor, double temperature, double pctMargin, int duration) throws InterruptedException, DeviceException, IOException {
+        Synch.waitForStableTarget(() -> getTemperature(sensor), temperature, pctMargin, 1000, duration);
     }
 
 }
