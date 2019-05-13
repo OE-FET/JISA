@@ -1,6 +1,5 @@
 package JISA.Devices;
 
-import JISA.Addresses.Address;
 import JISA.Util;
 import JISA.VISA.NativeDevice;
 import com.sun.jna.Library;
@@ -18,22 +17,25 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     public static final Class<USBTC08.NativeInterface> LIBRARY_CLASS    = USBTC08.NativeInterface.class;
     public static final int                            SENSORS_PER_UNIT = 9;
 
-    private static final short                   ERROR_OK                     = 0;
-    private static final short                   ERROR_OS_NOT_SUPPORTED       = 1;
-    private static final short                   ERROR_NO_CHANNELS_SET        = 2;
-    private static final short                   ERROR_INVALID_PARAMETER      = 3;
-    private static final short                   ERROR_VARIANT_NOT_SUPPORTED  = 4;
-    private static final short                   ERROR_INCORRECT_MODE         = 5;
-    private static final short                   ERROR_ENUMERATION_INCOMPLETE = 6;
-    private static final short                   UNITS_KELVIN                 = 2;
-    private static       USBTC08.NativeInterface INSTANCE                     = null;
+    private static final short ERROR_OK                     = 0;
+    private static final short ERROR_OS_NOT_SUPPORTED       = 1;
+    private static final short ERROR_NO_CHANNELS_SET        = 2;
+    private static final short ERROR_INVALID_PARAMETER      = 3;
+    private static final short ERROR_VARIANT_NOT_SUPPORTED  = 4;
+    private static final short ERROR_INCORRECT_MODE         = 5;
+    private static final short ERROR_ENUMERATION_INCOMPLETE = 6;
+    private static final short UNITS_KELVIN                 = 2;
+
+    private static USBTC08.NativeInterface INSTANCE;
 
     static {
+
         try {
             INSTANCE = Native.loadLibrary(LIBRARY_NAME, LIBRARY_CLASS);
         } catch (Throwable e) {
             INSTANCE = null;
         }
+
     }
 
     private final short    handle;
@@ -320,24 +322,24 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         // Constants
         // =========
-        public static final int USBTC08_MAX_CHANNELS = 8;
+        int USBTC08_MAX_CHANNELS = 8;
 
-        public static final byte USB_TC08_THERMOCOUPLE_TYPE_B = (byte) 'B';
-        public static final byte USB_TC08_THERMOCOUPLE_TYPE_E = (byte) 'E';
-        public static final byte USB_TC08_THERMOCOUPLE_TYPE_J = (byte) 'J';
-        public static final byte USB_TC08_THERMOCOUPLE_TYPE_K = (byte) 'K';
-        public static final byte USB_TC08_THERMOCOUPLE_TYPE_N = (byte) 'N';
-        public static final byte USB_TC08_THERMOCOUPLE_TYPE_R = (byte) 'R';
-        public static final byte USB_TC08_THERMOCOUPLE_TYPE_S = (byte) 'S';
-        public static final byte USB_TC08_THERMOCOUPLE_TYPE_T = (byte) 'T';
-        public static final byte USB_TC08_VOLTAGE_READINGS    = (byte) 'X';
-        public static final byte USB_TC08_DISABLE_CHANNEL     = (byte) ' ';
+        byte USB_TC08_THERMOCOUPLE_TYPE_B = (byte) 'B';
+        byte USB_TC08_THERMOCOUPLE_TYPE_E = (byte) 'E';
+        byte USB_TC08_THERMOCOUPLE_TYPE_J = (byte) 'J';
+        byte USB_TC08_THERMOCOUPLE_TYPE_K = (byte) 'K';
+        byte USB_TC08_THERMOCOUPLE_TYPE_N = (byte) 'N';
+        byte USB_TC08_THERMOCOUPLE_TYPE_R = (byte) 'R';
+        byte USB_TC08_THERMOCOUPLE_TYPE_S = (byte) 'S';
+        byte USB_TC08_THERMOCOUPLE_TYPE_T = (byte) 'T';
+        byte USB_TC08_VOLTAGE_READINGS    = (byte) 'X';
+        byte USB_TC08_DISABLE_CHANNEL     = (byte) ' ';
 
 
         // Enumerations
         // ============
 
-        public enum USBTC08Channels {
+        enum USBTC08Channels {
             USBTC08_CHANNEL_CJC,
             USBTC08_CHANNEL_1,
             USBTC08_CHANNEL_2,
@@ -349,14 +351,14 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             USBTC08_CHANNEL_8;
         }
 
-        public enum USBTC08Units {
+        enum USBTC08Units {
             USBTC08_UNITS_CENTIGRADE,
             USBTC08_UNITS_FAHRENHEIT,
             USBTC08_UNITS_KELVIN,
             USBTC08_UNITS_RANKINE;
         }
 
-        public enum USBTC08MainsFrequency {
+        enum USBTC08MainsFrequency {
             USBTC08_FIFTY_HERTZ,
             USBTC08_SIXTY_HERTZ;
         }
