@@ -93,6 +93,11 @@ public abstract class MSTC extends TC {
                 return MSTC.this.getIDN();
             }
 
+            @Override
+            public void close() throws IOException {
+                 MSTC.this.close();
+            }
+
         };
 
     }

@@ -6,4 +6,6 @@ public interface Instrument {
 
     String getIDN() throws IOException;
 
+    void close() throws IOException, DeviceException;
+
 }
