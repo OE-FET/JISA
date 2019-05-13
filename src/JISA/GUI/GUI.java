@@ -92,7 +92,7 @@ public class GUI extends Application {
      * @param text  Message text
      */
     public static void errorAlert(String title, String text) {
-        infoAlert(title, title, text);
+        errorAlert(title, title, text);
     }
 
     /**
@@ -101,7 +101,7 @@ public class GUI extends Application {
      * @param text Message text
      */
     public static void errorAlert(String text) {
-        infoAlert("Error", "Error", text);
+        errorAlert("Error", "Error", text);
     }
 
     /**
