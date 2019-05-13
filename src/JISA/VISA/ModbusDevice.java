@@ -1,15 +1,19 @@
 package JISA.VISA;
 
 import JISA.Addresses.Address;
+import JISA.Addresses.ModbusAddress;
 
 import java.io.IOException;
 
 public class ModbusDevice extends VISADevice {
 
+    public final static byte READ_SINGLE_COIL  = (byte) 0x01;
     public final static byte FORCE_SINGLE_COIL = (byte) 0x05;
     public final static int  COIL_ON           = 0xFF00;
     public final static int  COIL_OFF          = 0x0000;
-    private             byte modbusAddress     = -128;
+
+    private final ModbusManager manager;
+    private       byte          modbusAddress = -128;
 
     /**
      * Opens the device at the specified address
@@ -19,19 +23,40 @@ public class ModbusDevice extends VISADevice {
      * @throws IOException Upon communications error
      */
     public ModbusDevice(Address address) throws IOException {
-        super(address, SerialDriver.class);
+
+        super(null);
+
+        ModbusAddress mba = address.toModbusAddress();
+
+        if (mba == null) {
+            throw new IOException("Modbus RTU requires a MODBUS address.");
+        }
+
+        try {
+            manager = ModbusManager.getManager(mba.getPort());
+            modbusAddress = (byte) mba.getAddress();
+        } catch (VISAException e) {
+            throw new IOException(e.getMessage());
+        }
+
     }
 
     public void modbusWrite(ModbusFrame frame) throws IOException {
-        write(new String(frame.getBytes()));
+        writeBytes(frame.getBytes());
     }
 
     public ModbusFrame modbusRead() throws IOException {
-        return new ModbusFrame(read().getBytes());
+        return manager.getNextFrame(modbusAddress);
     }
 
     public void forceCoil(int coil, boolean value) throws IOException {
         modbusWrite(new ModbusFrame(modbusAddress, FORCE_SINGLE_COIL, coil, value ? COIL_ON : COIL_OFF));
+    }
+
+    public boolean readCoil(int coil) throws IOException {
+        modbusWrite(new ModbusFrame(modbusAddress, READ_SINGLE_COIL, coil, 1));
+        ModbusFrame frame = modbusRead();
+        return frame.getDataBytes()[1] == 1;
     }
 
     public static class ModbusFrame {
@@ -69,12 +94,15 @@ public class ModbusDevice extends VISADevice {
                 this.data[2 * i + 1] = (byte) ((data[i] >> 8) & 0xFF);
             }
 
+            makeRaw();
+
         }
 
         public ModbusFrame(byte address, byte command, byte... data) {
             this.address = address;
             this.command = command;
             this.data = data;
+            makeRaw();
         }
 
         private void makeRaw() {

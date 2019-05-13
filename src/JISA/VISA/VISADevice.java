@@ -207,6 +207,16 @@ public class VISADevice implements Instrument {
 
     }
 
+    public synchronized void writeBytes(byte[] bytes) throws IOException {
+
+        try {
+            connection.writeBytes(bytes);
+        } catch (VISAException e) {
+            throw new IOException(e.getMessage());
+        }
+
+    }
+
     /**
      * Read a string from the device
      *

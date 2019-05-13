@@ -27,6 +27,8 @@ public interface Address {
             type = Type.TCPIP;
         } else if (parts[0].contains("TCPIP") && parts[parts.length - 1].contains("SOCKET")) {
             type = Type.TCPIP_SOCKET;
+        } else if (parts[0].contains("MODBUS")) {
+            type = Type.MODBUS;
         }
 
         return type;
@@ -114,12 +116,28 @@ public interface Address {
 
     }
 
+    default ModbusAddress toModbusAddress() {
+
+        Pattern pattern = Pattern.compile("MODBUS::([0-9]*?)::([0-9]*?)::INSTR");
+        Matcher matcher = pattern.matcher(toString().trim());
+
+        if (matcher.matches()) {
+            int port    = Integer.valueOf(matcher.group(1));
+            int address = Integer.valueOf(matcher.group(2));
+            return new ModbusAddress(port, address);
+        } else {
+            return null;
+        }
+
+    }
+
     enum Type {
         GPIB,
         USB,
         TCPIP,
         TCPIP_SOCKET,
         SERIAL,
+        MODBUS,
         UNKOWN
     }
 
