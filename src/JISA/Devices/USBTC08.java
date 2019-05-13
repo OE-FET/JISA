@@ -51,7 +51,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             TCType.NONE
     };
 
-    private double[] lastValues = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    private float[] lastValues = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     private long     lastTime   = 0;
 
     public static List<USBTC08> find() {
@@ -99,7 +99,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         checkSensor(sensor);
 
         if ((System.currentTimeMillis() - lastTime) < lib.usb_tc08_get_minimum_interval_ms(handle)) {
-            return lastValues[sensor];
+            return (double) lastValues[sensor];
         }
 
         // Need a pointer to some memory to store our returned values
@@ -112,11 +112,11 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             throw new DeviceException(getLastError(handle));
         }
 
-        float[] values = tempPointer.getFloatArray(0, SENSORS_PER_UNIT);
+        lastValues = tempPointer.getFloatArray(0, SENSORS_PER_UNIT);
 
-        lastTime = System.currentTimeMillis();
+        lastTime   = System.currentTimeMillis();
 
-        return (double) values[sensor];
+        return (double) lastValues[sensor];
 
     }
 
