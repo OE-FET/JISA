@@ -38,7 +38,7 @@ public interface MSTMeter extends TMeter {
             }
 
             @Override
-            public void close() throws IOException {
+            public void close() throws IOException, DeviceException {
                 MSTMeter.this.close();
             }
         };
