@@ -8,7 +8,7 @@ import java.util.TimerTask;
 public class RTask {
 
     private long      interval;
-    private SRunnable toRun;
+    private Task      toRun;
     private boolean   running = false;
     private long      started;
     private int       iteration;
@@ -21,9 +21,13 @@ public class RTask {
      * @param interval Interval, in milliseconds
      * @param toRun    Code to run at each interval
      */
-    public RTask(long interval, SRunnable toRun) {
+    public RTask(long interval, Task toRun) {
         this.interval = interval;
         this.toRun = toRun;
+    }
+
+    public RTask(long interval, SRunnable toRun) {
+        this(interval, (task) -> toRun.run());
     }
 
     /**
@@ -35,14 +39,14 @@ public class RTask {
             return;
         }
 
-        started   = System.currentTimeMillis();
+        started = System.currentTimeMillis();
         iteration = 0;
 
         task = new TimerTask() {
 
             public void run() {
                 try {
-                    toRun.run();
+                    toRun.run(RTask.this);
                 } catch (Throwable e) {
                     Util.errLog.printf("Exception encountered running repeat task: \"%s\"\n", e.getMessage());
                     e.printStackTrace();
@@ -105,6 +109,12 @@ public class RTask {
      */
     public int getCount() {
         return iteration;
+    }
+
+    public interface Task {
+
+        void run(RTask task) throws Exception;
+
     }
 
 }

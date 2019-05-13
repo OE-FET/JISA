@@ -143,6 +143,11 @@ public class Plot extends JFXWindow implements Element, Clearable {
         this(title, "", "");
     }
 
+    public Plot(String title, ResultTable list, int xData) {
+        this(title);
+        watchAll(list, xData);
+    }
+
     /**
      * Creates a plot that automatically tracks and plots the first two columns of a ResultTable. Column 0 on the x-axis
      * and column 1 on the y-axis. Series name and colour automatically chosen.
@@ -151,7 +156,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
      * @param list  The ResultTable to track
      */
     public Plot(String title, ResultTable list) {
-        this(title, list, 0, 1);
+        this(title, list, 0);
     }
 
     public void setYAxisType(AxisType type) {
@@ -327,6 +332,34 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     public SeriesGroup watchListSplit(ResultTable list, int xData, int yData, int sData) {
         return watchListSplit(list, xData, yData, sData, (Predicate<Result>) null);
+    }
+
+    public SeriesGroup watchAll(ResultTable list, int xData) {
+
+        Series[] series = new Series[list.getNumCols() - 1];
+
+        if (getYLabel().equals("")) {
+            setYLabel("Values");
+        }
+
+        int j = 0;
+        for (int i = 0; i < list.getNumCols(); i++) {
+
+            if (i == xData) {
+                continue;
+            }
+
+            series[j] = watchList(list, xData, i);
+            j++;
+
+        }
+
+        return new SeriesCluster(series);
+
+    }
+
+    public SeriesGroup watchAll(ResultTable list) {
+        return watchAll(list, 0);
     }
 
     public Series plotFunction(Function toPlot, String name, Color colour) {

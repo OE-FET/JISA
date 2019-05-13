@@ -811,7 +811,6 @@ public class SmartChart {
                 setColour(colour);
             } else {
                 setColour(defaultColours[index % defaultColours.length]);
-                System.out.println(index % defaultColours.length);
             }
 
             data.onChange = () -> {
