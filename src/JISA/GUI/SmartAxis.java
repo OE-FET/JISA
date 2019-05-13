@@ -283,8 +283,8 @@ public final class SmartAxis extends ValueAxis<Double> {
     @Override
     protected List<Double> calculateTickValues(double length, Object range) {
 
-        double       lowerBound = getLowerBound();
-        double       upperBound = getUpperBound();
+        double lowerBound = getLowerBound();
+        double upperBound = getUpperBound();
 
         if (upperBound == lowerBound || data.size() == 1) {
             double amount = Math.abs(0.1 * lowerBound);
@@ -311,24 +311,28 @@ public final class SmartAxis extends ValueAxis<Double> {
         }
 
         if (minInRange == Double.POSITIVE_INFINITY) {
-            minInRange = 0;
+            minInRange = Util.oneSigFigCeil(lowerBound);
         }
 
         switch (mode) {
 
             case LINEAR:
 
-                double linStart = Util.oneSigFigFloor(lowerBound);
-                double linStop = Util.oneSigFigCeil(upperBound);
-
                 double distance = Double.POSITIVE_INFINITY;
 
-                for (double v = linStart; v <= linStop; v += tickUnit) {
+                for (double v = lowerBound; v <= upperBound; v += tickUnit) {
+
+                    if ((Math.abs(upperBound - lowerBound) / numTicks) / tickUnit > 2.0 * numTicks) {
+                        System.err.println("Tick unit too small! This is a bug.");
+                        tickValues.add(lowerBound);
+                        tickValues.add(upperBound);
+                        break;
+                    }
 
                     if (tickUnit <= 0) {
-                        System.err.println("Tick value <= 0! Bug!");
-                        tickValues.add(linStart);
-                        tickValues.add(linStop);
+                        System.err.println("Tick unit <= 0! This is a bug.");
+                        tickValues.add(lowerBound);
+                        tickValues.add(upperBound);
                         break;
                     }
 
@@ -365,6 +369,14 @@ public final class SmartAxis extends ValueAxis<Double> {
 
         return tickValues;
 
+    }
+
+    public List<Double> getMajorTicks() {
+        return calculateTickValues(10.0, null);
+    }
+
+    public List<Double> getMinorTicks() {
+        return calculateMinorTickMarks();
     }
 
     protected List<Double> calculateMinorTickMarks() {

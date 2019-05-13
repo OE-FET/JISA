@@ -4,6 +4,7 @@ import JISA.Experiment.Function;
 import JISA.Experiment.Result;
 import JISA.Experiment.ResultList;
 import JISA.Experiment.ResultTable;
+import JISA.GUI.SVG.*;
 import JISA.Util;
 import javafx.beans.InvalidationListener;
 import javafx.collections.FXCollections;
@@ -13,7 +14,9 @@ import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
+import javafx.util.StringConverter;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -150,6 +153,19 @@ public class SmartChart {
 
     }
 
+
+    public SVG getSVG(double width, double height) {
+
+        SVG svg = new SVG(width, height);
+
+        double scaleW = chart.getWidth();
+        double scaleH = chart.getHeight();
+
+
+        return svg;
+
+    }
+
     private String setSymbol(int series, Series.Shape shape, double size) {
 
         String style;
@@ -206,6 +222,205 @@ public class SmartChart {
         }
 
         return style;
+
+    }
+
+    public void writeSVG(double width, double height, String fileName) throws IOException {
+
+        SVGElement main = new SVGElement("g");
+
+        main.setAttribute("font-family", "sans-serif")
+            .setAttribute("font-size", 12);
+
+        double aStartX = 100.0;
+        double aStartY = height + 65.0;
+        double aEndX   = 100.0 + width;
+        double aEndY   = 65.0;
+
+        SVGLine xAxis = new SVGLine(aStartX - 0.5, aStartY, aEndX, aStartY);
+        SVGLine yAxis = new SVGLine(aStartX, aStartY + 0.5, aStartX, aEndY);
+
+        SVGText title = new SVGText((aStartX + aEndX) / 2, 50.0, "middle", chart.getTitle());
+        title.setAttribute("font-size", "20px");
+        main.add(title);
+
+        xAxis.setStrokeWidth(1)
+             .setStrokeColour(Color.GREY);
+
+        yAxis.setStrokeWidth(1)
+             .setStrokeColour(Color.GREY);
+
+        List<Double> xTicks = this.xAxis.getMajorTicks();
+        List<Double> yTicks = this.yAxis.getMajorTicks();
+
+        double xScale = (aEndX - aStartX) / this.xAxis.getWidth();
+        double yScale = (aEndY - aStartY) / this.yAxis.getHeight();
+
+        StringConverter<Double> formatterX = this.xAxis.getTickLabelFormatter();
+        StringConverter<Double> formatterY = this.yAxis.getTickLabelFormatter();
+
+        for (Double x : xTicks) {
+
+            double pos = xScale * this.xAxis.getDisplayPosition(x) + aStartX;
+
+            if (!Util.isBetween(pos, aStartX, aEndX)) {
+                continue;
+            }
+
+            SVGLine tick = new SVGLine(pos, aStartY, pos, aStartY + 10);
+
+            tick.setStrokeWidth(1)
+                .setStrokeColour(Colour.GREY);
+
+            SVGLine grid = new SVGLine(pos, aStartY, pos, aEndY);
+
+            grid.setStrokeWidth(0.5)
+                .setStrokeColour(Colour.SILVER)
+                .setDash("5", "5");
+
+            main.add(tick);
+            main.add(grid);
+
+            SVGText label = new SVGText(pos, aStartY + 26.0, "middle", formatterX.toString(x));
+            main.add(label);
+
+        }
+
+        SVGText xLabel = new SVGText((aEndX + aStartX) / 2, aStartY + 75.0, "middle", this.xAxis.getLabel());
+        xLabel.setAttribute("font-size", "16px");
+        main.add(xLabel);
+
+        for (Double y : yTicks) {
+
+            double pos = aEndY - yScale * this.yAxis.getDisplayPosition(y);
+
+            if (!Util.isBetween(pos, aEndY, aStartY)) {
+                continue;
+            }
+
+            SVGLine tick = new SVGLine(aStartX, pos, aStartX - 10, pos);
+
+            tick.setStrokeWidth(1)
+                .setStrokeColour(Colour.GREY);
+            SVGLine grid = new SVGLine(aStartX, pos, aEndX, pos);
+
+            grid.setStrokeWidth(0.5)
+                .setStrokeColour(Colour.SILVER)
+                .setDash("5", "5");
+            main.add(tick);
+            main.add(grid);
+
+            SVGText label = new SVGText(aStartX - 12.0, pos + 4.0, "end", formatterY.toString(y));
+            main.add(label);
+
+        }
+
+        SVGText yLabel = new SVGText(aStartX - 75.0, (aEndY + aStartY) / 2, "middle", this.yAxis.getLabel());
+        yLabel.setAttribute("transform", String.format("rotate(-90 %s %s)", aStartX - 75.0, (aEndY + aStartY) / 2))
+              .setAttribute("font-size", "16px");
+        main.add(yLabel);
+
+        main.add(xAxis);
+        main.add(yAxis);
+
+        SVGElement legend = new SVGElement("rect");
+
+        legend.setStrokeWidth(1.0)
+              .setStrokeColour(Color.SILVER)
+              .setFillColour(Color.web("#f5f5f5"));
+
+
+        double legendH = (data.size() * 25) + 5.0;
+        double legendX = aEndX + 25.0;
+        double legendY = ((aEndY + aStartY) / 2) - (legendH/2);
+
+        double legendW = 0.0;
+
+        for (Series s : data) {
+            legendW = Math.max(legendW, (10.0 * s.getName().length()) + 15.0 + 5 + 3 + 20.0);
+        }
+
+        legend.setAttribute("x", legendX)
+              .setAttribute("y", legendY)
+              .setAttribute("width", legendW)
+              .setAttribute("height", legendH)
+              .setAttribute("rx", 5)
+              .setAttribute("ry", 5);
+
+        if (chart.isLegendVisible()) {
+            main.add(legend);
+        } else {
+            legendW = 0;
+        }
+
+        int i = 0;
+        for (Series s : data) {
+
+            Color  c = s.getColour();
+            double w = s.getLineWidth();
+
+            List<String> terms = new LinkedList<>();
+
+            SVGCircle legendCircle = new SVGCircle(legendX + 15.0, legendY + (25 * i) + 15.0, 5);
+
+            legendCircle.setStrokeColour(c)
+                        .setFillColour(Color.WHITE)
+                        .setStrokeWidth(3);
+
+
+            SVGText legendText = new SVGText(legendX + 15.0 + 5 + 3 + 10, legendY + (25 * i) + 15.0 + 5, "beginning", s.getName());
+
+            legendText.setAttribute("font-size", "16px");
+
+            main.add(legendCircle);
+            main.add(legendText);
+
+            boolean first = true;
+
+            List<SVGElement> list = new LinkedList<>();
+
+            for (XYChart.Data<Double, Double> point : s.getXYChartSeries().getData()) {
+
+                double x = aStartX + xScale * this.xAxis.getDisplayPosition(point.getXValue());
+                double y = aEndY - yScale * this.yAxis.getDisplayPosition(point.getYValue());
+
+                terms.add(String.format("%s%s %s", first ? "M" : "L", x, y));
+
+                if (s.isShowingMarkers()) {
+
+                    SVGCircle circle = new SVGCircle(x, y, 5);
+
+                    circle.setStrokeColour(c)
+                          .setFillColour(Color.WHITE)
+                          .setStrokeWidth(3);
+
+                    list.add(circle);
+
+                }
+
+                first = false;
+
+            }
+
+            SVGPath path = new SVGPath(String.join(" ", terms));
+
+            path.setStrokeColour(c)
+                .setStrokeWidth(w)
+                .setStyle("fill", "none");
+
+            main.add(path);
+
+            list.forEach(main::add);
+
+            i++;
+
+        }
+
+
+        SVG svg = new SVG(width + legendW + 50.0 + 100.0, height + 60.0 + 100.0);
+        svg.add(main);
+
+        svg.output(fileName);
 
     }
 
@@ -525,15 +740,19 @@ public class SmartChart {
         protected double                         maxX         = Double.NEGATIVE_INFINITY;
         protected double                         minY         = Double.POSITIVE_INFINITY;
         protected double                         maxY         = Double.NEGATIVE_INFINITY;
+        protected double                         lineWidth    = 3;
         protected boolean                        externalList = false;
 
         public NormalSeries(String name, Color colour) {
 
             SmartChart.this.data.add(this);
 
+            int index = 0;
+
             for (int i = 0; i < map.size() + 1; i++) {
                 if (!map.containsValue(i)) {
                     map.put(this, i);
+                    index = i;
                     break;
                 }
             }
@@ -546,6 +765,8 @@ public class SmartChart {
 
             if (colour != null) {
                 setColour(colour);
+            } else {
+                setColour(defaultColours[index % defaultColours.length]);
             }
 
             data.onChange = () -> {
@@ -570,9 +791,10 @@ public class SmartChart {
             externalList = true;
 
             SmartChart.this.data.add(this);
-
+            int index = 0;
             for (int i = 0; i < map.size() + 1; i++) {
                 if (!map.containsValue(i)) {
+                    index = i;
                     map.put(this, i);
                     break;
                 }
@@ -587,6 +809,9 @@ public class SmartChart {
 
             if (colour != null) {
                 setColour(colour);
+            } else {
+                setColour(defaultColours[index % defaultColours.length]);
+                System.out.println(index % defaultColours.length);
             }
 
             data.onChange = () -> {
@@ -637,6 +862,11 @@ public class SmartChart {
         }
 
         @Override
+        public boolean isShowingMarkers() {
+            return data.showMarkers;
+        }
+
+        @Override
         public void setMarkerShape(Shape shape, double size) {
             data.setMarkerStyle(SmartChart.this.setSymbol(map.get(this), shape, size));
         }
@@ -663,7 +893,13 @@ public class SmartChart {
         }
 
         @Override
+        public double getLineWidth() {
+            return lineWidth;
+        }
+
+        @Override
         public void setLineWidth(double width) {
+            lineWidth = width;
             SmartChart.this.setLineWidth(map.get(this), width);
         }
 
@@ -726,6 +962,7 @@ public class SmartChart {
         private ObservableList<XYChart.Data<Double, Double>> data;
         private XYChart.Series<Double, Double>               series;
         private Color                                        colour;
+        private double                                       lineWidth = 3;
 
         public FunctionSeries(Function f, String name, Color colour) {
             function = f;
@@ -733,8 +970,11 @@ public class SmartChart {
             data = series.getData();
             SmartChart.this.data.add(this);
 
+            int index = 0;
+
             for (int i = 0; i < map.size() + 1; i++) {
                 if (!map.containsValue(i)) {
+                    index = i;
                     map.put(this, i);
                     break;
                 }
@@ -742,7 +982,14 @@ public class SmartChart {
 
             GUI.runNow(() -> chart.getData().add(series));
             setName(name);
-            setColour(colour);
+
+
+            if (colour != null) {
+                setColour(colour);
+            } else {
+                setColour(defaultColours[index % defaultColours.length]);
+            }
+
             update();
         }
 
@@ -764,6 +1011,11 @@ public class SmartChart {
         @Override
         public void showMarkers(boolean show) {
 
+        }
+
+        @Override
+        public boolean isShowingMarkers() {
+            return false;
         }
 
         @Override
@@ -793,7 +1045,13 @@ public class SmartChart {
         }
 
         @Override
+        public double getLineWidth() {
+            return lineWidth;
+        }
+
+        @Override
         public void setLineWidth(double width) {
+            lineWidth = width;
             SmartChart.this.setLineWidth(map.get(this), width);
         }
 
@@ -865,7 +1123,7 @@ public class SmartChart {
         private boolean             showMarkers = true;
         private int                 reduceLimit = 2000;
         private int                 reduceValue = 1000;
-        private double              lineWidth   = 2;
+        private double              lineWidth   = 3;
         private Shape               shape       = Shape.CIRCLE;
         private double              size        = 5;
         private double              xRange      = Double.POSITIVE_INFINITY;
@@ -955,6 +1213,11 @@ public class SmartChart {
         }
 
         @Override
+        public boolean isShowingMarkers() {
+            return showMarkers;
+        }
+
+        @Override
         public void setMarkerShape(Shape shape, double size) {
             this.shape = shape;
             this.size = size;
@@ -981,6 +1244,11 @@ public class SmartChart {
         @Override
         public void setColour(Color colour) {
 
+        }
+
+        @Override
+        public double getLineWidth() {
+            return lineWidth;
         }
 
         @Override

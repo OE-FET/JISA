@@ -352,21 +352,18 @@ public class SR830 extends DPLockIn {
     }
 
     @Override
-    public void autoRange() throws IOException {
+    public void autoRange() throws IOException, DeviceException {
 
-        write("AGAN");
-        write("FREQ?");
+        setOffsetExpansion(0.0, 0.0);
 
-        while (true) {
+        double timeConst = getTimeConstant();
 
-            try {
-                read();
-                break;
-            } catch (Exception ignored) {
-
-            }
-
-        }
+        setTimeConstant(100e-6);
+        setRange(1.0);
+        Util.sleep(1000);
+        double voltage = getLockedAmplitude();
+        setRange(voltage);
+        setTimeConstant(timeConst);
 
     }
 

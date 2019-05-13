@@ -552,7 +552,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
         adjustSize();
     }
 
-    public void saveAsImage(String path, double w, double h) {
+    public void savePNG(String path, double w, double h) {
 
         Util.sleep(500);
 
@@ -588,6 +588,14 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
+    public void saveSVG(String path, double w, double h) throws IOException {
+        controller.writeSVG(w, h, path);
+    }
+
+    public void saveSVG(String path) throws IOException {
+        saveSVG(path, 600, 500);
+    }
+
     private void adjustSize() {
 
         GUI.runNow(() -> {
@@ -605,12 +613,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
             stage.setWidth(width);
 
         });
-
-    }
-
-    public void saveAsSVG(String path){
-
-
 
     }
 

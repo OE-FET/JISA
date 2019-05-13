@@ -9,11 +9,14 @@ import javafx.util.Pair;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public class Util {
 
-    private static ERunnable exHandler = (e) -> {
+    public static  PrintStream errLog    = System.err;
+    private static ERunnable   exHandler = (e) -> {
 
         ExType exceptionType = ExType.fromClass(e.getClass());
 
@@ -43,8 +46,11 @@ public class Util {
 
     };
 
-    public static PrintStream errLog = System.err;
-
+    /**
+     * Sleep function that doesn't throw interrupted exceptions. Upon an interrupt it will simply stop sleeping.
+     *
+     * @param msec Number of milliseconds to sleep for
+     */
     public static void sleep(long msec) {
         try {
             Thread.sleep(msec);
@@ -52,19 +58,51 @@ public class Util {
         }
     }
 
+    /**
+     * Checks whether a number is within a range.
+     *
+     * @param value Value to check
+     * @param min   Minimum of range
+     * @param max   Maximum of range
+     *
+     * @return Is it bound by the range?
+     */
     public static boolean isBetween(Number value, Number min, Number max) {
         return value.doubleValue() >= min.doubleValue() && value.doubleValue() <= max.doubleValue();
     }
 
+    /**
+     * Set what the standard exception handler should be.
+     *
+     * @param handler Lambda
+     */
     public static void setExceptionHandler(ERunnable handler) {
         exHandler = handler;
     }
 
+    /**
+     * Pass an exception to the standard exception handler.
+     *
+     * @param e Exception to handle
+     */
     public static void exceptionHandler(Exception e) {
         exHandler.run(e);
     }
 
+    /**
+     * Creates an equally spaced array of numbers, starting at min, ending at max in numSteps steps.
+     *
+     * @param min      Number to start at
+     * @param max      Number to end at
+     * @param numSteps Number of steps to do it in
+     *
+     * @return Array of numbers
+     */
     public static double[] makeLinearArray(Number min, Number max, int numSteps) {
+
+        if (numSteps < 1) {
+            throw new IllegalArgumentException("You cannot have fewer than 1 step.");
+        }
 
         double[] values = new double[numSteps];
         double   step   = (max.doubleValue() - min.doubleValue()) / (numSteps - 1D);
@@ -79,10 +117,26 @@ public class Util {
 
     }
 
+    /**
+     * Creates an equally spaced symmetric array of numbers, starting at min, ending at max in numSteps steps, and then back again to min in numSteps.
+     *
+     * @param min          Number to start at
+     * @param max          Number to end at
+     * @param stepsEachWay Number of steps each way
+     *
+     * @return Array of numbers
+     */
     public static double[] makeSymLinearArray(Number min, Number max, int stepsEachWay) {
         return symArray(makeLinearArray(min, max, stepsEachWay));
     }
 
+    /**
+     * Takes an array of doubles, reverses it and appends it onto the end of the original whilst avoiding repeating the last element.
+     *
+     * @param array Array to symmetrise
+     *
+     * @return Symmetrised array
+     */
     public static double[] symArray(double[] array) {
 
         double[] results = new double[2 * array.length - 1];
@@ -91,9 +145,7 @@ public class Util {
 
         for (int i = 0; i < array.length - 1; i++) {
 
-            int j = array.length + i;
-            int k = array.length - 2 - i;
-            results[j] = array[k];
+            results[array.length + i] = array[array.length - 2 - i];
 
         }
 
@@ -101,21 +153,39 @@ public class Util {
 
     }
 
-    public static double[] reverseArray(double[] arr) {
+    /**
+     * Reverses an array of doubles.
+     *
+     * @param toReverse Array to reverse
+     *
+     * @return Reversed array
+     */
+    public static double[] reverseArray(double[] toReverse) {
 
-        double[] array = arr.clone();
+        double[] array = new double[toReverse.length];
 
-        for (int i = 0; i < array.length / 2; i++) {
-            double temp = array[i];
-            array[i] = array[array.length - i - 1];
-            array[array.length - i - 1] = temp;
+        for (int i = 0; i < array.length; i++) {
+            array[i] = toReverse[array.length - i - 1];
         }
 
         return array;
 
     }
 
+    /**
+     * Creates an array of logarithmically spaced numbers.
+     *
+     * @param min      Value to start at
+     * @param max      Value to end at
+     * @param numSteps Number of steps
+     *
+     * @return Logarithmic array
+     */
     public static double[] makeLogarithmicArray(Number min, Number max, int numSteps) {
+
+        if (numSteps < 1) {
+            throw new IllegalArgumentException("You cannot have fewer than 1 step.");
+        }
 
         double[] values = new double[numSteps];
         double   step   = Math.pow(max.doubleValue() / min.doubleValue(), 1D / numSteps);
@@ -130,6 +200,15 @@ public class Util {
 
     }
 
+    /**
+     * Returns an array of Strings specified by the pattern and a counting integer.
+     *
+     * @param start   Integer to start at
+     * @param length  How many integers to go through
+     * @param pattern The pattern to use
+     *
+     * @return Array of Strings
+     */
     public static String[] makeCountingString(int start, int length, String pattern) {
 
         String[] result = new String[length];
@@ -140,6 +219,13 @@ public class Util {
 
     }
 
+    /**
+     * Floors the number to 1 significant figure.
+     *
+     * @param value Number to floor.
+     *
+     * @return Floored number
+     */
     public static double oneSigFigFloor(Number value) {
 
         if (value.doubleValue() == 0) {
@@ -149,6 +235,13 @@ public class Util {
         return Math.floor(value.doubleValue() / Math.pow(10, Math.floor(Math.log10(Math.abs(value.doubleValue()))))) * Math.pow(10, Math.floor(Math.log10(Math.abs(value.doubleValue()))));
     }
 
+    /**
+     * Ceilings the number to 1 significant figure.
+     *
+     * @param value Number to floor.
+     *
+     * @return Ceilinged number
+     */
     public static double oneSigFigCeil(double value) {
 
         if (value == 0) {
@@ -167,22 +260,6 @@ public class Util {
         else intermediate = Math.round(intermediate);
 
         return (intermediate * Math.pow(10, Math.floor(Math.log10(Math.abs(value))) - (nSigDig - 1)));
-
-    }
-
-    public static void reduceData(ObservableList<Data<Double, Double>> points, int n) {
-
-        ArrayList<Data<Double,Double>> list = new ArrayList<>();
-
-        list.add(points.get(0));
-        list.add(points.get(points.size()-1));
-
-        while (list.size() < n) {
-
-            Pair<Integer, Integer> dev = mostDeviant(list);
-
-
-        }
 
     }
 
@@ -225,35 +302,6 @@ public class Util {
         System.arraycopy(toTrim, 0, trimmed, 0, trimmed.length);
 
         return trimmed;
-
-    }
-
-    private static Pair<Integer, Integer> mostDeviant(List<Data<Double, Double>> line) {
-
-        double maxD = 0;
-        int    maxI = 0;
-        int    maxJ = line.size() - 1;
-
-        for (int i = 0; i < line.size() - 1; i++) {
-
-            for (int j = i + 1; j < line.size(); j++) {
-
-                Data<Double, Double> point1 = line.get(i);
-                Data<Double, Double> point2 = line.get(j);
-
-                double distance = Math.sqrt(Math.pow(point1.getXValue() - point2.getXValue(), 2) + Math.pow(point1.getYValue() - point2.getYValue(), 2));
-
-                if (distance > maxD) {
-                    maxD = distance;
-                    maxI = i;
-                    maxJ = j;
-                }
-
-            }
-
-        }
-
-        return new Pair<>(maxI, maxJ);
 
     }
 
