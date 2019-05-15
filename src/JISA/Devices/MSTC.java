@@ -7,7 +7,7 @@ import JISA.VISA.Driver;
 
 import java.io.IOException;
 
-public abstract class MSTC extends TC {
+public abstract class MSTC extends VISATC {
 
     public MSTC(Address address, Class<? extends Driver> prefDriver) throws IOException {
         super(address, prefDriver);
@@ -96,6 +96,11 @@ public abstract class MSTC extends TC {
             @Override
             public void close() throws IOException {
                  MSTC.this.close();
+            }
+
+            @Override
+            public Address getAddress() {
+                return null;
             }
 
         };

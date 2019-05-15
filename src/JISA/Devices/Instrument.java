@@ -1,5 +1,7 @@
 package JISA.Devices;
 
+import JISA.Addresses.Address;
+
 import java.io.IOException;
 
 public interface Instrument {
@@ -8,4 +10,5 @@ public interface Instrument {
 
     void close() throws IOException, DeviceException;
 
+    Address getAddress();
 }

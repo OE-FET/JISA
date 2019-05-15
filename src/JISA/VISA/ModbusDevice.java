@@ -2,18 +2,25 @@ package JISA.VISA;
 
 import JISA.Addresses.Address;
 import JISA.Addresses.ModbusAddress;
+import JISA.Devices.DeviceException;
+import JISA.Devices.Instrument;
 
 import java.io.IOException;
 
-public class ModbusDevice extends VISADevice {
+public class ModbusDevice implements Instrument {
 
-    public final static byte READ_SINGLE_COIL  = (byte) 0x01;
-    public final static byte FORCE_SINGLE_COIL = (byte) 0x05;
-    public final static int  COIL_ON           = 0xFF00;
-    public final static int  COIL_OFF          = 0x0000;
+    public final static byte READ_COIL_STATUS       = (byte) 0x01;
+    public final static byte READ_INPUT_STATUS      = (byte) 0x02;
+    public final static byte READ_HOLDING_REGISTER  = (byte) 0x03;
+    public final static byte READ_INPUT_REGISTER    = (byte) 0x04;
+    public final static byte FORCE_SINGLE_COIL      = (byte) 0x05;
+    public final static byte PRESET_SINGLE_REGISTER = (byte) 0x06;
+    public final static int  COIL_ON                = 0xFF00;
+    public final static int  COIL_OFF               = 0x0000;
 
     private final ModbusManager manager;
     private       byte          modbusAddress = -128;
+    private       ModbusAddress address;
 
     /**
      * Opens the device at the specified address
@@ -23,8 +30,6 @@ public class ModbusDevice extends VISADevice {
      * @throws IOException Upon communications error
      */
     public ModbusDevice(Address address) throws IOException {
-
-        super(null);
 
         ModbusAddress mba = address.toModbusAddress();
 
@@ -39,24 +44,40 @@ public class ModbusDevice extends VISADevice {
             throw new IOException(e.getMessage());
         }
 
+        this.address = mba;
+
     }
 
-    public void modbusWrite(ModbusFrame frame) throws IOException {
-        writeBytes(frame.getBytes());
+    public synchronized void modbusWrite(ModbusFrame frame) throws IOException {
+        try {
+            manager.sendFrame(frame);
+        } catch (VISAException e) {
+            throw new IOException(e.getMessage());
+        }
     }
 
-    public ModbusFrame modbusRead() throws IOException {
+    public synchronized ModbusFrame modbusRead() throws IOException {
         return manager.getNextFrame(modbusAddress);
     }
 
-    public void forceCoil(int coil, boolean value) throws IOException {
-        modbusWrite(new ModbusFrame(modbusAddress, FORCE_SINGLE_COIL, coil, value ? COIL_ON : COIL_OFF));
+    public synchronized ModbusFrame modbusQuery(ModbusFrame toSend) throws IOException {
+        modbusWrite(toSend);
+        return modbusRead();
     }
 
-    public boolean readCoil(int coil) throws IOException {
-        modbusWrite(new ModbusFrame(modbusAddress, READ_SINGLE_COIL, coil, 1));
-        ModbusFrame frame = modbusRead();
-        return frame.getDataBytes()[1] == 1;
+    @Override
+    public String getIDN() throws IOException {
+        return "Modbus Device";
+    }
+
+    @Override
+    public void close() throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public Address getAddress() {
+        return address;
     }
 
     public static class ModbusFrame {
@@ -161,6 +182,74 @@ public class ModbusDevice extends VISADevice {
 
             return values;
 
+        }
+
+    }
+
+    public class RWCoil {
+
+        private int register;
+
+        public RWCoil(int register) {
+            this.register = register;
+        }
+
+        public synchronized void set(boolean value) throws IOException {
+            modbusWrite(new ModbusFrame(modbusAddress, FORCE_SINGLE_COIL, register, value ? COIL_ON : COIL_OFF));
+        }
+
+        public synchronized boolean get() throws IOException {
+            ModbusFrame response = modbusQuery(new ModbusFrame(modbusAddress, READ_COIL_STATUS, register, 1));
+            return response.getDataBytes()[1] == 1;
+        }
+
+    }
+
+    public class ROCoil {
+
+        private int register;
+
+        public ROCoil(int register) {
+            this.register = register;
+        }
+
+        public synchronized boolean get() throws IOException {
+            ModbusFrame response = modbusQuery(new ModbusFrame(modbusAddress, READ_INPUT_STATUS, register, 1));
+            return response.getDataBytes()[1] == 1;
+        }
+
+    }
+
+    public class RWRegister {
+
+        private int register;
+
+        public RWRegister(int register) {
+            this.register = register;
+        }
+
+        public synchronized void set(int value) throws IOException {
+            modbusWrite(new ModbusFrame(modbusAddress, PRESET_SINGLE_REGISTER, register, value));
+        }
+
+        public synchronized int get() throws IOException {
+            ModbusFrame response = modbusQuery(new ModbusFrame(modbusAddress, READ_HOLDING_REGISTER, 1));
+            return response.getDataInts()[1];
+        }
+
+    }
+
+    public class RORegister {
+
+        private int register;
+
+        public RORegister(int register) {
+            this.register = register;
+        }
+
+        public synchronized int get() throws IOException {
+            ModbusFrame response = modbusQuery(new ModbusFrame(modbusAddress, READ_INPUT_REGISTER, 1));
+            return response.getDataInts()[1];
         }
 
     }

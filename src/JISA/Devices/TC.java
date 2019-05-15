@@ -12,32 +12,7 @@ import java.io.IOException;
 /**
  * Abstract class to define the standard functionality of temperature controllers
  */
-public abstract class TC extends VISADevice implements TMeter {
-
-    private Zoner zoner = null;
-
-    /**
-     * Connects to the temperature controller at the given address, returning an instrument object to control it.
-     *
-     * @param address    Address of instrument
-     * @param prefDriver Driver class to attempt to use before all others
-     *
-     * @throws IOException Upon communications error
-     */
-    public TC(Address address, Class<? extends Driver> prefDriver) throws IOException {
-        super(address, prefDriver);
-    }
-
-    /**
-     * Connects to the temperature controller at the given address, returning an instrument object to control it.
-     *
-     * @param address Address of instrument
-     *
-     * @throws IOException Upon communications error
-     */
-    public TC(Address address) throws IOException {
-        this(address, null);
-    }
+public interface TC extends TMeter {
 
     /**
      * Sets the target temperature of the temperature controller.
@@ -209,7 +184,7 @@ public abstract class TC extends VISADevice implements TMeter {
 
     public abstract double getHeaterRange() throws IOException, DeviceException;
 
-    public TMeter asThermometer() {
+    public default TMeter asThermometer() {
         return this;
     }
 
@@ -221,7 +196,7 @@ public abstract class TC extends VISADevice implements TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void setTargetAndWait(double temperature) throws IOException, DeviceException, InterruptedException {
+    public default void setTargetAndWait(double temperature) throws IOException, DeviceException, InterruptedException {
         setTargetTemperature(temperature);
         waitForStableTemperature(temperature);
     }
@@ -237,7 +212,7 @@ public abstract class TC extends VISADevice implements TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature(double temperature, double pctMargin, long time) throws IOException, DeviceException, InterruptedException {
+    public default void waitForStableTemperature(double temperature, double pctMargin, long time) throws IOException, DeviceException, InterruptedException {
 
         Synch.waitForStableTarget(
                 this::getTemperature,
@@ -258,7 +233,7 @@ public abstract class TC extends VISADevice implements TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature(double temperature) throws IOException, DeviceException, InterruptedException {
+    public default void waitForStableTemperature(double temperature) throws IOException, DeviceException, InterruptedException {
         waitForStableTemperature(temperature, 1.0, 60000);
     }
 
@@ -269,23 +244,30 @@ public abstract class TC extends VISADevice implements TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature() throws IOException, DeviceException, InterruptedException {
+    public default void waitForStableTemperature() throws IOException, DeviceException, InterruptedException {
         waitForStableTemperature(getTargetTemperature());
     }
+
+    Zoner getZoner();
+
+    void setZoner(Zoner zoner);
 
     /**
      * Sets the zones to use (ie the look-up table) for auto PID control.
      *
      * @param zones Zones to use
      */
-    public void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+    public default void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+
+        Zoner zoner = getZoner();
 
         if (zoner != null && zoner.isRunning()) {
             zoner.stop();
-            zoner = new Zoner(zones);
+            zoner = new Zoner(this, zones);
             zoner.start();
+            setZoner(zoner);
         } else {
-            zoner = new Zoner(zones);
+            setZoner(new Zoner(this, zones));
         }
     }
 
@@ -294,12 +276,12 @@ public abstract class TC extends VISADevice implements TMeter {
      *
      * @return Zones used
      */
-    public PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
+    public default PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
 
-        if (zoner == null) {
+        if (getZoner() == null) {
             return new PIDZone[0];
         } else {
-            return zoner.getZones();
+            return getZoner().getZones();
         }
 
     }
@@ -312,7 +294,9 @@ public abstract class TC extends VISADevice implements TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void useAutoPID(boolean auto) throws IOException, DeviceException {
+    public default void useAutoPID(boolean auto) throws IOException, DeviceException {
+
+        Zoner zoner = getZoner();
 
         if (auto && zoner == null) {
             throw new DeviceException("You must set PID zones before using this feature.");
@@ -331,11 +315,12 @@ public abstract class TC extends VISADevice implements TMeter {
      *
      * @return Is PID control auto?
      */
-    public boolean isPIDAuto() throws IOException, DeviceException {
+    public default boolean isPIDAuto() throws IOException, DeviceException {
+        Zoner zoner = getZoner();
         return zoner != null && zoner.isRunning();
     }
 
-    protected class Zoner implements Runnable {
+    class Zoner implements Runnable {
 
         private final PIDZone[] zones;
         private       PIDZone   currentZone;
@@ -343,9 +328,11 @@ public abstract class TC extends VISADevice implements TMeter {
         private       PIDZone   minZone;
         private       PIDZone   maxZone;
         private       Thread    thread;
+        private       TC        tc;
 
-        public Zoner(PIDZone[] zones) {
+        public Zoner(TC tc, PIDZone[] zones) {
 
+            this.tc = tc;
             this.zones = zones;
             currentZone = zones[0];
             minZone = zones[0];
@@ -382,7 +369,7 @@ public abstract class TC extends VISADevice implements TMeter {
 
                 try {
 
-                    double T = getTemperature();
+                    double T = tc.getTemperature();
 
                     if (!currentZone.matches(T)) {
 
@@ -425,14 +412,14 @@ public abstract class TC extends VISADevice implements TMeter {
         private void applyZone(PIDZone zone) throws IOException, DeviceException {
 
             if (zone.isAuto()) {
-                useAutoHeater();
-                setHeaterRange(zone.getRange());
-                setPValue(currentZone.getP());
-                setIValue(currentZone.getI());
-                setDValue(currentZone.getD());
+                tc.useAutoHeater();
+                tc.setHeaterRange(zone.getRange());
+                tc.setPValue(currentZone.getP());
+                tc.setIValue(currentZone.getI());
+                tc.setDValue(currentZone.getD());
             } else {
-                setHeaterRange(zone.getRange());
-                setManualHeater(currentZone.getPower());
+                tc.setHeaterRange(zone.getRange());
+                tc.setManualHeater(currentZone.getPower());
             }
 
         }
@@ -454,7 +441,7 @@ public abstract class TC extends VISADevice implements TMeter {
 
     }
 
-    public static class PIDZone {
+    class PIDZone {
 
         private final double  minT;
         private final double  maxT;

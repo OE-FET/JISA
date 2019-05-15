@@ -654,7 +654,7 @@ public abstract class MSMOTC extends MSTC {
     /**
      * Class for representing an output/control-loop as its own temperature controller.
      */
-    public class VirtualTC extends TC {
+    public class VirtualTC extends VISATC {
 
         private int output;
 

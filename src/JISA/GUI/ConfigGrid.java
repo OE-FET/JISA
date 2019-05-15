@@ -31,7 +31,7 @@ public class ConfigGrid extends Grid {
         setConfigStore(c);
     }
 
-    public <T extends VISADevice> InstrumentConfig<T> addInstrument(String name, Class<T> type) {
+    public <T extends Instrument> InstrumentConfig<T> addInstrument(String name, Class<T> type) {
 
         try {
             String              key  = String.format("instrument%d", configs.size());
@@ -71,7 +71,7 @@ public class ConfigGrid extends Grid {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends VISADevice> InstrumentConfig<T>[] getInstrumentsByType(Class<T> type) {
+    public <T extends Instrument> InstrumentConfig<T>[] getInstrumentsByType(Class<T> type) {
 
         LinkedList<InstrumentConfig<T>> list = new LinkedList<>();
 

@@ -1,5 +1,7 @@
 package JISA.Devices;
 
+import JISA.Addresses.Address;
+import JISA.Enums.Thermocouple;
 import JISA.Util;
 import JISA.VISA.NativeDevice;
 import com.sun.jna.Library;
@@ -38,17 +40,17 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
-    private final short    handle;
-    private final TCType[] types = {
-            TCType.NONE,
-            TCType.NONE,
-            TCType.NONE,
-            TCType.NONE,
-            TCType.NONE,
-            TCType.NONE,
-            TCType.NONE,
-            TCType.NONE,
-            TCType.NONE
+    private final short          handle;
+    private final Thermocouple[] types = {
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE
     };
 
     private float[] lastValues = {0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -159,7 +161,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      *
      * @throws DeviceException Upon device error
      */
-    public void setSensorType(int sensor, TCType type) throws DeviceException {
+    public void setSensorType(int sensor, Thermocouple type) throws DeviceException {
 
         checkSensor(sensor);
 
@@ -173,7 +175,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
-    public TCType getSensorType(int sensor) throws DeviceException {
+    public Thermocouple getSensorType(int sensor) throws DeviceException {
 
         checkSensor(sensor);
         return types[sensor];
@@ -215,6 +217,11 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
+    @Override
+    public Address getAddress() {
+        return null;
+    }
+
     private void checkSensor(int sensor) throws DeviceException {
 
         if (!Util.isBetween(sensor, 0, getNumSensors() - 1)) {
@@ -253,34 +260,6 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             default:
                 return "Unknown error";
 
-        }
-
-    }
-
-    /**
-     * Enumeration of TC-08 thermocouple types
-     */
-    public enum TCType {
-
-        NONE((char) 0),
-        B('B'),
-        E('E'),
-        J('J'),
-        K('K'),
-        N('N'),
-        R('R'),
-        S('S'),
-        T('T'),
-        X('X');
-
-        private final byte code;
-
-        TCType(char code) {
-            this.code = (byte) code;
-        }
-
-        public byte getCode() {
-            return code;
         }
 
     }

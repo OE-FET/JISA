@@ -1,5 +1,6 @@
 package JISA.Devices;
 
+import JISA.Addresses.Address;
 import JISA.Control.Synch;
 import JISA.Util;
 
@@ -47,6 +48,11 @@ public interface MSTMeter extends TMeter {
             @Override
             public void close() throws IOException, DeviceException {
                 MSTMeter.this.close();
+            }
+
+            @Override
+            public Address getAddress() {
+                return null;
             }
         };
 

@@ -2,6 +2,7 @@ package JISA.GUI;
 
 import JISA.Addresses.*;
 import JISA.Control.ConfigStore;
+import JISA.Devices.Instrument;
 import JISA.Devices.SMUCluster;
 import JISA.Util;
 import JISA.VISA.VISADevice;
@@ -23,7 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Set;
 
-public class InstrumentConfig<T extends VISADevice> extends JFXWindow implements Element {
+public class InstrumentConfig<T extends Instrument> extends JFXWindow implements Element {
 
     public  ChoiceBox                   driverChoice;
     public  ChoiceBox                   protChoice;
