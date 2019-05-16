@@ -63,7 +63,7 @@ public class ET2408 extends ModbusRTUDevice implements TC {
 
     @Override
     public void setTargetTemperature(double temperature) throws IOException {
-        setPoint.set((int) temperature);
+        setPoint.set((int) (temperature * getScale()));
     }
 
     private double getScale() throws IOException {
