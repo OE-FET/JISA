@@ -1,6 +1,7 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import JISA.Util;
 import JISA.VISA.ModbusRTUDevice;
 import com.intelligt.modbus.jlibmodbus.serial.SerialPort;
 
@@ -20,15 +21,16 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     private Zoner zoner = null;
 
     // Registers and Coils
-    private final RORegister sensor   = new RORegister(1);
-    private final RWRegister setPoint = new RWRegister(2);
-    private final RWRegister output   = new RWRegister(3);
-    private final RWRegister P        = new RWRegister(6);
-    private final RWRegister I        = new RWRegister(8);
-    private final RWRegister D        = new RWRegister(9);
-    private final RWRegister mode     = new RWRegister(199);
-    private final RWRegister units    = new RWRegister(516);
-    private final RWCoil     manual   = new RWCoil(273);
+    private final RORegister sensor    = new RORegister(1);
+    private final RWRegister setPoint  = new RWRegister(2);
+    private final RWRegister output    = new RWRegister(3);
+    private final RWRegister P         = new RWRegister(6);
+    private final RWRegister I         = new RWRegister(8);
+    private final RWRegister D         = new RWRegister(9);
+    private final RWRegister mode      = new RWRegister(199);
+    private final RWRegister units     = new RWRegister(516);
+    private final RWCoil     manual    = new RWCoil(273);
+    private final RWRegister decPlaces = new RWRegister(525);
 
     public ET2408(Address address, SerialPort.BaudRate baud, int dataBits, int stopBits, SerialPort.Parity parity) throws IOException, DeviceException {
 
@@ -61,24 +63,44 @@ public class ET2408 extends ModbusRTUDevice implements TC {
         setPoint.set((int) temperature);
     }
 
+    private double getScale() throws IOException {
+
+        switch (decPlaces.get()) {
+
+            case 0:
+                return 1.0;
+
+            case 1:
+                return 10.0;
+
+            case 2:
+                return 100.0;
+
+            default:
+                return 1.0;
+
+        }
+
+    }
+
     @Override
     public double getTemperature() throws IOException {
-        return (double) sensor.get();
+        return (double) sensor.get() / getScale();
     }
 
     @Override
     public double getTargetTemperature() throws IOException {
-        return (double) setPoint.get();
+        return (double) setPoint.get() / getScale();
     }
 
     @Override
     public double getHeaterPower() throws IOException {
-        return (double) output.get();
+        return (double) output.get() / 10.0;
     }
 
     @Override
     public double getGasFlow() {
-        return 0;
+        return 0.0;
     }
 
     @Override
@@ -89,7 +111,7 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     @Override
     public void setManualHeater(double powerPCT) throws IOException {
         manual.set(true);
-        output.set((int) powerPCT);
+        output.set((int) (powerPCT * 10.0));
     }
 
     @Override
@@ -114,32 +136,32 @@ public class ET2408 extends ModbusRTUDevice implements TC {
 
     @Override
     public void setPValue(double value) throws IOException {
-        P.set((int) value);
+        P.set((int) (value * 10.0));
     }
 
     @Override
     public void setIValue(double value) throws IOException {
-        I.set((int) value);
+        I.set((int) (value * 10.0));
     }
 
     @Override
     public void setDValue(double value) throws IOException {
-        D.set((int) value);
+        D.set((int) (value * 10.0));
     }
 
     @Override
     public double getPValue() throws IOException {
-        return (double) P.get();
+        return (double) P.get() / 10.0;
     }
 
     @Override
     public double getIValue() throws IOException {
-        return (double) I.get();
+        return (double) I.get() / 10.0;
     }
 
     @Override
     public double getDValue() throws IOException {
-        return (double) D.get();
+        return (double) D.get() / 10.0;
     }
 
     @Override

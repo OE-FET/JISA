@@ -130,7 +130,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     public String getSerial() throws DeviceException {
 
         byte[] read   = new byte[256];
-        short  result = lib.usb_tc08_get_info2(handle, read, (short) 256, NativeInterface.USBTC08LINE_BATCH_AND_SERIAL);
+        short  result = lib.usb_tc08_get_unit_info2(handle, read, (short) 256, NativeInterface.USBTC08LINE_BATCH_AND_SERIAL);
 
         if (result == 0) {
             throw new DeviceException(getLastError(handle));
@@ -347,7 +347,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         // int16_t (usb_tc08_get_formatted_info) (int16_t  handle, int8_t  *unit_info, int16_t  string_length);
         short usb_tc08_get_formatted_info(short handle, byte[] unitInfo, short stringLength);
 
-        short usb_tc08_get_info2(short handle, byte[] unitInfo, short stringLength, short line);
+        short usb_tc08_get_unit_info2(short handle, byte[] unitInfo, short stringLength, short line);
 
         // C prototype definition :
         // int16_t (usb_tc08_get_single) (int16_t handle, float * temp, int16_t * overflow_flags, int16_t units);
