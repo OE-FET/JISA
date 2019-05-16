@@ -89,7 +89,7 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     @Override
     public void setManualHeater(double powerPCT) throws IOException {
         manual.set(true);
-        output.set((int) (powerPCT));
+        output.set((int) powerPCT);
     }
 
     @Override
@@ -114,17 +114,17 @@ public class ET2408 extends ModbusRTUDevice implements TC {
 
     @Override
     public void setPValue(double value) throws IOException {
-        P.set((int) (value));
+        P.set((int) value);
     }
 
     @Override
     public void setIValue(double value) throws IOException {
-        I.set((int) (value));
+        I.set((int) value);
     }
 
     @Override
     public void setDValue(double value) throws IOException {
-        D.set((int) (value));
+        D.set((int) value);
     }
 
     @Override

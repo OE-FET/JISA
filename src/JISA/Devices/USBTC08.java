@@ -3,6 +3,7 @@ package JISA.Devices;
 import JISA.Addresses.Address;
 import JISA.Enums.Thermocouple;
 import JISA.Util;
+import JISA.VISA.Connection;
 import JISA.VISA.NativeDevice;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
@@ -54,7 +55,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     };
 
     private float[] lastValues = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-    private long     lastTime   = 0;
+    private long    lastTime   = 0;
 
     public static List<USBTC08> find() {
 
@@ -95,6 +96,50 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
+    public USBTC08(String serial) throws IOException, DeviceException {
+
+        // Load native library
+        super(LIBRARY_NAME, LIBRARY_CLASS, INSTANCE);
+
+        List<USBTC08> found = USBTC08.find();
+
+        if (found.isEmpty()) {
+            throw new IOException("No USB TC-08 unit found!");
+        }
+
+        Short value = null;
+
+        for (USBTC08 unit : found) {
+
+            if (unit.getSerial().toLowerCase().equals(serial.toLowerCase().trim())) {
+                value = unit.handle;
+            } else {
+                unit.close();
+            }
+
+        }
+
+        if (value == null) {
+            throw new IOException(String.format("No USB TC-08 unit with serial number \"%s\" was found.", serial));
+        }
+
+        handle = value;
+
+    }
+
+    public String getSerial() throws DeviceException {
+
+        byte[] read   = new byte[256];
+        short  result = lib.usb_tc08_get_info2(handle, read, (short) 256, NativeInterface.USBTC08LINE_BATCH_AND_SERIAL);
+
+        if (result == 0) {
+            throw new DeviceException(getLastError(handle));
+        }
+
+        return new String(read).trim();
+
+    }
+
     @Override
     public double getTemperature(int sensor) throws DeviceException {
 
@@ -116,7 +161,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         lastValues = tempPointer.getFloatArray(0, SENSORS_PER_UNIT);
 
-        lastTime   = System.currentTimeMillis();
+        lastTime = System.currentTimeMillis();
 
         return (double) lastValues[sensor];
 
@@ -302,6 +347,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         // int16_t (usb_tc08_get_formatted_info) (int16_t  handle, int8_t  *unit_info, int16_t  string_length);
         short usb_tc08_get_formatted_info(short handle, byte[] unitInfo, short stringLength);
 
+        short usb_tc08_get_info2(short handle, byte[] unitInfo, short stringLength, short line);
+
         // C prototype definition :
         // int16_t (usb_tc08_get_single) (int16_t handle, float * temp, int16_t * overflow_flags, int16_t units);
         short usb_tc08_get_single(short handle, Memory temp, ShortByReference overflowFlags, short units);
@@ -322,6 +369,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         byte USB_TC08_THERMOCOUPLE_TYPE_T = (byte) 'T';
         byte USB_TC08_VOLTAGE_READINGS    = (byte) 'X';
         byte USB_TC08_DISABLE_CHANNEL     = (byte) ' ';
+
+        short USBTC08LINE_BATCH_AND_SERIAL = 4;
 
 
         // Enumerations
