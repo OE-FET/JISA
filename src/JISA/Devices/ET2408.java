@@ -42,6 +42,9 @@ public class ET2408 extends ModbusRTUDevice implements TC {
             units.set(UNITS_KELVIN);
             mode.set(MODE_NORMAL);
 
+            // Need to wait for the device to re-initialise
+            Util.sleep(5000);
+
         }
 
     }
