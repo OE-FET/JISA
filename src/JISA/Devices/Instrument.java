@@ -11,4 +11,19 @@ public interface Instrument {
     void close() throws IOException, DeviceException;
 
     Address getAddress();
+
+    default void setTimeout(int msec) throws IOException {
+
+    }
+
+    default void finalise() {
+
+        try {
+            close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
 }

@@ -16,5 +16,6 @@
     <orderEntry type="library" name="json-20180813" level="project" />
     <orderEntry type="library" name="jython-standalone-2.7.0" level="project" />
     <orderEntry type="library" name="commonmark-0.12.1" level="project" />
+    <orderEntry type="library" name="jlibmodbus-1.2.9.0" level="project" />
   </component>
 </module>

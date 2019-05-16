@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="jlibmodbus-1.2.9.0">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/jlibmodbus-1.2.9.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

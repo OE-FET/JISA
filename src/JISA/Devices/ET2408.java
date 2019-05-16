@@ -1,11 +1,12 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
-import JISA.VISA.ModbusDevice;
+import JISA.VISA.ModbusRTUDevice;
+import com.intelligt.modbus.jlibmodbus.serial.SerialPort;
 
 import java.io.IOException;
 
-public class ET2408 extends ModbusDevice implements TC {
+public class ET2408 extends ModbusRTUDevice implements TC {
 
     private Zoner zoner = null;
 
@@ -24,8 +25,8 @@ public class ET2408 extends ModbusDevice implements TC {
      *
      * @throws IOException Upon communications error
      */
-    public ET2408(Address address) throws IOException {
-        super(address);
+    public ET2408(Address address) throws IOException, DeviceException {
+        super(address, SerialPort.BaudRate.BAUD_RATE_9600, 7, 1, SerialPort.Parity.EVEN);
     }
 
     @Override
