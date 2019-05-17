@@ -1,5 +1,6 @@
 package JISA.Devices;
 
+import JISA.Control.Synch;
 import JISA.Enums.AMode;
 
 import java.io.IOException;
@@ -140,5 +141,11 @@ public interface VMeter extends Instrument {
      * @throws IOException     Upon communications error
      */
     boolean isOn() throws IOException, DeviceException;
+
+    default void waitForStableVoltage(double pctMargin, int duration) throws IOException, DeviceException, InterruptedException {
+
+        Synch.waitForParamStable(this::getVoltage, pctMargin, (int) (getIntegrationTime() * 4000.0), duration);
+
+    }
 
 }
