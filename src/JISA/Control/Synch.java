@@ -85,12 +85,12 @@ public class Synch {
             double value = valueToCheck.get();
 
             if (Util.isBetween(value, min, max)) {
-                time += duration;
+                time += interval;
             } else {
                 time = 0;
             }
 
-            Thread.sleep(duration);
+            Thread.sleep(interval);
 
         }
 
