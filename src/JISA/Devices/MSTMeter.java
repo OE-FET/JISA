@@ -41,7 +41,7 @@ public interface MSTMeter extends TMeter {
             }
 
             @Override
-            public String getIDN() throws IOException {
+            public String getIDN() throws IOException, DeviceException {
                 return MSTMeter.this.getIDN();
             }
 

@@ -22,7 +22,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setTargetTemperature(double temperature) throws IOException, DeviceException;
+    void setTargetTemperature(double temperature) throws IOException, DeviceException;
 
     /**
      * Returns the temperature measured by the controller.
@@ -32,7 +32,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getTemperature() throws IOException, DeviceException;
+    double getTemperature() throws IOException, DeviceException;
 
     /**
      * Returns the target temperature set on the controller.
@@ -42,7 +42,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getTargetTemperature() throws IOException, DeviceException;
+    double getTargetTemperature() throws IOException, DeviceException;
 
     /**
      * Returns the heater output power percentage.
@@ -52,7 +52,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getHeaterPower() throws IOException, DeviceException;
+    double getHeaterPower() throws IOException, DeviceException;
 
     /**
      * Returns the gas flow in whatever units the controller uses
@@ -62,7 +62,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getGasFlow() throws IOException, DeviceException;
+    double getGasFlow() throws IOException, DeviceException;
 
     /**
      * Sets the heater to be operated automatically
@@ -70,7 +70,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void useAutoHeater() throws IOException, DeviceException;
+    void useAutoHeater() throws IOException, DeviceException;
 
     /**
      * Sets the heater to be operated manually with the specified power output percentage
@@ -80,7 +80,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setManualHeater(double powerPCT) throws IOException, DeviceException;
+    void setManualHeater(double powerPCT) throws IOException, DeviceException;
 
     /**
      * Returns whether the heater is currently operating automatically or manually
@@ -90,7 +90,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract boolean isHeaterAuto() throws IOException, DeviceException;
+    boolean isHeaterAuto() throws IOException, DeviceException;
 
     /**
      * Sets the gas flow to be controlled automatically
@@ -98,7 +98,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void useAutoFlow() throws IOException, DeviceException;
+    void useAutoFlow() throws IOException, DeviceException;
 
     /**
      * Sets the gas flow to be controlled manually with the specified output
@@ -108,7 +108,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setManualFlow(double outputPCT) throws IOException, DeviceException;
+    void setManualFlow(double outputPCT) throws IOException, DeviceException;
 
     /**
      * Returns whether the gas flow is currently controlled automatically or manually
@@ -118,7 +118,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract boolean isFlowAuto() throws IOException, DeviceException;
+    boolean isFlowAuto() throws IOException, DeviceException;
 
     /**
      * Sets the proportional term co-efficient for PID control
@@ -128,7 +128,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setPValue(double value) throws IOException, DeviceException;
+    void setPValue(double value) throws IOException, DeviceException;
 
     /**
      * Sets the integral term co-efficient for PID control
@@ -138,7 +138,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setIValue(double value) throws IOException, DeviceException;
+    void setIValue(double value) throws IOException, DeviceException;
 
     /**
      * Sets the derivative term co-efficient for PID control
@@ -148,7 +148,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setDValue(double value) throws IOException, DeviceException;
+    void setDValue(double value) throws IOException, DeviceException;
 
     /**
      * Returns the proportional term co-efficient used for PID control
@@ -158,7 +158,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getPValue() throws IOException, DeviceException;
+    double getPValue() throws IOException, DeviceException;
 
     /**
      * Returns the integral term co-efficient used for PID control
@@ -168,7 +168,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getIValue() throws IOException, DeviceException;
+    double getIValue() throws IOException, DeviceException;
 
     /**
      * Returns the derivative term co-efficient used for PID control
@@ -178,13 +178,13 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getDValue() throws IOException, DeviceException;
+    double getDValue() throws IOException, DeviceException;
 
-    public abstract void setHeaterRange(double rangePCT) throws IOException, DeviceException;
+    void setHeaterRange(double rangePCT) throws IOException, DeviceException;
 
-    public abstract double getHeaterRange() throws IOException, DeviceException;
+    double getHeaterRange() throws IOException, DeviceException;
 
-    public default TMeter asThermometer() {
+    default TMeter asThermometer() {
         return this;
     }
 
@@ -196,7 +196,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public default void setTargetAndWait(double temperature) throws IOException, DeviceException, InterruptedException {
+    default void setTargetAndWait(double temperature) throws IOException, DeviceException, InterruptedException {
         setTargetTemperature(temperature);
         waitForStableTemperature(temperature);
     }
@@ -212,7 +212,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public default void waitForStableTemperature(double temperature, double pctMargin, long time) throws IOException, DeviceException, InterruptedException {
+    default void waitForStableTemperature(double temperature, double pctMargin, long time) throws IOException, DeviceException, InterruptedException {
 
         Synch.waitForStableTarget(
                 this::getTemperature,
@@ -233,7 +233,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public default void waitForStableTemperature(double temperature) throws IOException, DeviceException, InterruptedException {
+    default void waitForStableTemperature(double temperature) throws IOException, DeviceException, InterruptedException {
         waitForStableTemperature(temperature, 1.0, 60000);
     }
 
@@ -244,7 +244,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public default void waitForStableTemperature() throws IOException, DeviceException, InterruptedException {
+    default void waitForStableTemperature() throws IOException, DeviceException, InterruptedException {
         waitForStableTemperature(getTargetTemperature());
     }
 
@@ -257,7 +257,7 @@ public interface TC extends TMeter {
      *
      * @param zones Zones to use
      */
-    public default void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+    default void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
 
         Zoner zoner = getZoner();
 
@@ -276,7 +276,7 @@ public interface TC extends TMeter {
      *
      * @return Zones used
      */
-    public default PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
+    default PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
 
         if (getZoner() == null) {
             return new PIDZone[0];
@@ -294,7 +294,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public default void useAutoPID(boolean auto) throws IOException, DeviceException {
+    default void useAutoPID(boolean auto) throws IOException, DeviceException {
 
         Zoner zoner = getZoner();
 
@@ -315,7 +315,7 @@ public interface TC extends TMeter {
      *
      * @return Is PID control auto?
      */
-    public default boolean isPIDAuto() throws IOException, DeviceException {
+    default boolean isPIDAuto() throws IOException, DeviceException {
         Zoner zoner = getZoner();
         return zoner != null && zoner.isRunning();
     }

@@ -2,62 +2,17 @@ package JISA.Devices;
 
 import JISA.Addresses.Address;
 import JISA.Util;
-import JISA.VISA.Driver;
 
 import java.io.IOException;
 
-public abstract class MSMOTC extends MSTC {
-
-    protected int     defaultOutput = 0;
-    private   Zoner[] zoners;
-
-    public MSMOTC(Address address, Class<? extends Driver> prefDriver) throws IOException {
-
-        super(address, prefDriver);
-
-        zoners = new Zoner[getNumOutputs()];
-
-        for (int i = 0; i < zoners.length; i++) {
-            zoners[i] = null;
-        }
-
-    }
-
-    public MSMOTC(Address address) throws IOException {
-        this(address, null);
-    }
-
-    /**
-     * Sets which heater/flow output to assume when not specified in a method call
-     *
-     * @param output Output to assume
-     *
-     * @throws DeviceException Upon trying to set an output channel that does not exist
-     */
-    public void setDefaultOutput(int output) throws DeviceException {
-
-        if (!Util.isBetween(output, 0, getNumOutputs())) {
-            throw new DeviceException("That output does not exist!");
-        }
-
-        defaultOutput = output;
-    }
-
-    /**
-     * Returns which heater/flow output is assumed when not specified in a method call
-     *
-     * @return Default output number
-     */
-    public int getDefaultOutput() {
-        return defaultOutput;
-    }
+public interface MSMOTC extends MSTC {
 
     /**
      * Returns the number of outputs the controller has
      *
      * @return Number of outputs
      */
-    public abstract int getNumOutputs();
+    int getNumOutputs();
 
     /**
      * Configures the controller to use the given sensor for the given output/control-loop.
@@ -68,7 +23,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void useSensor(int output, int sensor) throws IOException, DeviceException;
+    void useSensor(int output, int sensor) throws IOException, DeviceException;
 
     /**
      * Configures the controller to use the given sensor for all outputs/control-loops.
@@ -78,7 +33,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void useSensor(int sensor) throws IOException, DeviceException {
+    default void useSensor(int sensor) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
             useSensor(onum, sensor);
         }
@@ -94,7 +49,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract int getUsedSensor(int output) throws IOException, DeviceException;
+    int getUsedSensor(int output) throws IOException, DeviceException;
 
     /**
      * Returns which sensor the default output/control-loop is configured to use.
@@ -104,8 +59,8 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public int getUsedSensor() throws IOException, DeviceException {
-        return getUsedSensor(defaultOutput);
+    default int getUsedSensor() throws IOException, DeviceException {
+        return getUsedSensor(0);
     }
 
     /**
@@ -117,7 +72,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setPValue(int output, double value) throws IOException, DeviceException;
+    void setPValue(int output, double value) throws IOException, DeviceException;
 
     /**
      * Sets the (manual) proportional co-efficient of the default output/control-loop.
@@ -127,7 +82,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void setPValue(double value) throws IOException, DeviceException {
+    default void setPValue(double value) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
             setPValue(onum, value);
         }
@@ -142,7 +97,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setIValue(int output, double value) throws IOException, DeviceException;
+    void setIValue(int output, double value) throws IOException, DeviceException;
 
     /**
      * Sets the (manual) integral co-efficient of the default output/control-loop.
@@ -152,7 +107,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void setIValue(double value) throws IOException, DeviceException {
+    default void setIValue(double value) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
             setPValue(onum, value);
         }
@@ -167,7 +122,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setDValue(int output, double value) throws IOException, DeviceException;
+    void setDValue(int output, double value) throws IOException, DeviceException;
 
     /**
      * Sets the (manual) derivative co-efficient of all outputs/control-loops.
@@ -177,7 +132,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void setDValue(double value) throws IOException, DeviceException {
+    default void setDValue(double value) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
             setPValue(onum, value);
         }
@@ -193,7 +148,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getPValue(int output) throws IOException, DeviceException;
+    double getPValue(int output) throws IOException, DeviceException;
 
     /**
      * Returns the proportional co-efficient being used by the default output/control-loop.
@@ -203,8 +158,8 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public double getPValue() throws IOException, DeviceException {
-        return getPValue(defaultOutput);
+    default double getPValue() throws IOException, DeviceException {
+        return getPValue(0);
     }
 
     /**
@@ -218,7 +173,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws DeviceException Upon compatibility error
      */
 
-    public abstract double getIValue(int output) throws IOException, DeviceException;
+    double getIValue(int output) throws IOException, DeviceException;
 
     /**
      * Returns the integral co-efficient being used by the default output/control-loop.
@@ -228,8 +183,8 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public double getIValue() throws IOException, DeviceException {
-        return getPValue(defaultOutput);
+    default double getIValue() throws IOException, DeviceException {
+        return getPValue(0);
     }
 
     /**
@@ -242,7 +197,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getDValue(int output) throws IOException, DeviceException;
+    double getDValue(int output) throws IOException, DeviceException;
 
     /**
      * Returns the derivative co-efficient being used by the default output/control-loop.
@@ -252,22 +207,22 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public double getDValue() throws IOException, DeviceException {
-        return getPValue(defaultOutput);
+    default double getDValue() throws IOException, DeviceException {
+        return getPValue(0);
     }
 
-    public abstract void setHeaterRange(int output, double range) throws IOException, DeviceException;
+    void setHeaterRange(int output, double range) throws IOException, DeviceException;
 
-    public void setHeaterRange(double range) throws IOException, DeviceException {
+    default void setHeaterRange(double range) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
             setHeaterRange(onum, range);
         }
     }
 
-    public abstract double getHeaterRange(int output) throws IOException, DeviceException;
+    double getHeaterRange(int output) throws IOException, DeviceException;
 
-    public double getHeaterRange() throws IOException, DeviceException {
-        return getHeaterRange(defaultOutput);
+    default double getHeaterRange() throws IOException, DeviceException {
+        return getHeaterRange(0);
     }
 
     /**
@@ -279,7 +234,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setTargetTemperature(int output, double temperature) throws IOException, DeviceException;
+    void setTargetTemperature(int output, double temperature) throws IOException, DeviceException;
 
     /**
      * Sets the target temperature (set-point) for the all outputs/control-loops.
@@ -289,7 +244,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void setTargetTemperature(double temperature) throws IOException, DeviceException {
+    default void setTargetTemperature(double temperature) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
             setTargetTemperature(onum, temperature);
         }
@@ -305,7 +260,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getTargetTemperature(int output) throws IOException, DeviceException;
+    double getTargetTemperature(int output) throws IOException, DeviceException;
 
     /**
      * Returns the target temperature (set-point) for the default output/control-loop.
@@ -315,8 +270,8 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public double getTargetTemperature() throws IOException, DeviceException {
-        return getTargetTemperature(defaultOutput);
+    default double getTargetTemperature() throws IOException, DeviceException {
+        return getTargetTemperature(0);
     }
 
     /**
@@ -329,7 +284,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getHeaterPower(int output) throws IOException, DeviceException;
+    double getHeaterPower(int output) throws IOException, DeviceException;
 
     /**
      * Returns the output heater power for the default output/control-loop.
@@ -339,8 +294,8 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public double getHeaterPower() throws IOException, DeviceException {
-        return getHeaterPower(defaultOutput);
+    default double getHeaterPower() throws IOException, DeviceException {
+        return getHeaterPower(0);
     }
 
     /**
@@ -353,7 +308,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getGasFlow(int output) throws IOException, DeviceException;
+    double getGasFlow(int output) throws IOException, DeviceException;
 
     /**
      * Returns the gas flow rate for the default output/control-loop.
@@ -363,8 +318,8 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public double getGasFlow() throws IOException, DeviceException {
-        return getGasFlow(defaultOutput);
+    default double getGasFlow() throws IOException, DeviceException {
+        return getGasFlow(0);
     }
 
     /**
@@ -375,7 +330,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void useAutoHeater(int output) throws IOException, DeviceException;
+    void useAutoHeater(int output) throws IOException, DeviceException;
 
     /**
      * Tells the controller to automatically control the heater output power on all outputs/control-loops.
@@ -383,7 +338,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void useAutoHeater() throws IOException, DeviceException {
+    default void useAutoHeater() throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
             useAutoHeater(onum);
         }
@@ -399,7 +354,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract boolean isHeaterAuto(int output) throws IOException, DeviceException;
+    boolean isHeaterAuto(int output) throws IOException, DeviceException;
 
     /**
      * Returns whether the controller is automatically controlling the heater output on the default output/control-loop.
@@ -409,8 +364,8 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public boolean isHeaterAuto() throws IOException, DeviceException {
-        return isHeaterAuto(defaultOutput);
+    default boolean isHeaterAuto() throws IOException, DeviceException {
+        return isHeaterAuto(0);
     }
 
     /**
@@ -421,7 +376,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void useAutoFlow(int output) throws IOException, DeviceException;
+    void useAutoFlow(int output) throws IOException, DeviceException;
 
     /**
      * Tells the controller to automatically control the gas flow on all outputs/control-loops.
@@ -429,7 +384,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void useAutoFlow() throws IOException, DeviceException {
+    default void useAutoFlow() throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
             useAutoFlow(onum);
         }
@@ -445,7 +400,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract boolean isFlowAuto(int output) throws IOException, DeviceException;
+    boolean isFlowAuto(int output) throws IOException, DeviceException;
 
     /**
      * Returns whether the controller is automatically controlling the gas flow on the default output/control-loop.
@@ -455,8 +410,8 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public boolean isFlowAuto() throws IOException, DeviceException {
-        return isFlowAuto(defaultOutput);
+    default boolean isFlowAuto() throws IOException, DeviceException {
+        return isFlowAuto(0);
     }
 
     /**
@@ -466,7 +421,7 @@ public abstract class MSMOTC extends MSTC {
      *
      * @throws DeviceException Upon an invalid output number being specified
      */
-    protected void checkOutput(int output) throws DeviceException {
+    default void checkOutput(int output) throws DeviceException {
         if (!Util.isBetween(output, 0, getNumOutputs() - 1)) {
             throw new DeviceException("This temperature controller only has %d outputs.", getNumOutputs());
         }
@@ -481,7 +436,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setManualHeater(int output, double powerPCT) throws IOException, DeviceException;
+    void setManualHeater(int output, double powerPCT) throws IOException, DeviceException;
 
     /**
      * Manually sets the heater output power for all outputs/control-loops.
@@ -491,7 +446,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void setManualHeater(double powerPCT) throws IOException, DeviceException {
+    default void setManualHeater(double powerPCT) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
             setManualHeater(onum, powerPCT);
         }
@@ -506,7 +461,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setManualFlow(int output, double outputPCT) throws IOException, DeviceException;
+    void setManualFlow(int output, double outputPCT) throws IOException, DeviceException;
 
     /**
      * Manually sets the flow rate for all outputs/control-loops.
@@ -516,7 +471,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void setManualFlow(double outputPCT) throws IOException, DeviceException {
+    default void setManualFlow(double outputPCT) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
             setManualFlow(onum, outputPCT);
         }
@@ -531,43 +486,55 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature(int output) throws IOException, DeviceException, InterruptedException {
+    default void waitForStableTemperature(int output) throws IOException, DeviceException, InterruptedException {
         checkOutput(output);
         waitForStableTemperature(getUsedSensor(output), getTargetTemperature(output));
     }
 
-    public void setAutoPIDZones(int output, PIDZone... zones) throws IOException, DeviceException {
+    Zoner getZoner(int output);
+
+    void setZoner(int output, Zoner zoner);
+
+    default void setAutoPIDZones(int output, PIDZone... zones) throws IOException, DeviceException {
 
         checkOutput(output);
 
-        if (zoners[output] != null && zoners[output].isRunning()) {
-            zoners[output].stop();
-            zoners[output] = new Zoner(output, zones);
-            zoners[output].start();
+        Zoner zoner = getZoner(output);
+
+        if (getZoner(output) != null && zoner.isRunning()) {
+            zoner.stop();
+            zoner = new Zoner(this, output, zones);
+            zoner.start();
+            setZoner(output, zoner);
         } else {
-            zoners[output] = new Zoner(output, zones);
+            zoner = new Zoner(this, output, zones);
+            setZoner(output, zoner);
         }
 
     }
 
-    public void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+    default void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
             setAutoPIDZones(onum, zones);
         }
     }
 
-    public PIDZone[] getAutoPIDZones(int output) throws IOException, DeviceException {
+    default PIDZone[] getAutoPIDZones(int output) throws IOException, DeviceException {
 
-        if (zoners[output] == null) {
+        checkOutput(output);
+
+        Zoner zoner = getZoner(output);
+
+        if (zoner == null) {
             return new PIDZone[0];
         } else {
-            return zoners[output].getZones();
+            return zoner.getZones();
         }
 
     }
 
-    public PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
-        return getAutoPIDZones(defaultOutput);
+    default PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
+        return getAutoPIDZones(0);
     }
 
     /**
@@ -579,18 +546,20 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void useAutoPID(int output, boolean auto) throws IOException, DeviceException {
+    default void useAutoPID(int output, boolean auto) throws IOException, DeviceException {
 
         checkOutput(output);
 
-        if (auto && zoners[output] == null) {
+        Zoner zoner = getZoner(output);
+
+        if (auto && zoner == null) {
             throw new DeviceException("You must set PID zones before using this feature.");
         }
 
-        if (auto && !zoners[output].isRunning()) {
-            zoners[output].start();
-        } else if (zoners[output] != null && zoners[output].isRunning()) {
-            zoners[output].stop();
+        if (auto && !zoner.isRunning()) {
+            zoner.start();
+        } else if (zoner != null && zoner.isRunning()) {
+            zoner.stop();
         }
 
     }
@@ -603,7 +572,7 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void useAutoPID(boolean auto) throws IOException, DeviceException {
+    default void useAutoPID(boolean auto) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
             useAutoPID(onum, auto);
         }
@@ -619,8 +588,10 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public boolean isPIDAuto(int output) throws IOException, DeviceException {
-        return zoners[output] != null && zoners[output].isRunning();
+    default boolean isPIDAuto(int output) throws IOException, DeviceException {
+        checkOutput(output);
+        Zoner zoner = getZoner(output);
+        return zoner != null && zoner.isRunning();
     }
 
     /**
@@ -631,8 +602,8 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public boolean isPIDAuto() throws IOException, DeviceException {
-        return isPIDAuto(defaultOutput);
+    default boolean isPIDAuto() throws IOException, DeviceException {
+        return isPIDAuto(0);
     }
 
     /**
@@ -646,147 +617,156 @@ public abstract class MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public TC getOutput(int output) throws DeviceException, IOException {
+    default TC getOutput(int output) throws DeviceException {
+
         checkOutput(output);
-        return new VirtualTC(output);
+
+        return new TC() {
+
+            @Override
+            public void setTargetTemperature(double temperature) throws IOException, DeviceException {
+                MSMOTC.this.setTargetTemperature(output, temperature);
+            }
+
+            @Override
+            public double getTemperature() throws IOException, DeviceException {
+                return MSMOTC.this.getTemperature(getUsedSensor(output));
+            }
+
+            @Override
+            public double getTargetTemperature() throws IOException, DeviceException {
+                return MSMOTC.this.getTargetTemperature(output);
+            }
+
+            @Override
+            public double getHeaterPower() throws IOException, DeviceException {
+                return MSMOTC.this.getHeaterPower(output);
+            }
+
+            @Override
+            public double getGasFlow() throws IOException, DeviceException {
+                return MSMOTC.this.getGasFlow(output);
+            }
+
+            @Override
+            public void useAutoHeater() throws IOException, DeviceException {
+                MSMOTC.this.useAutoHeater(output);
+            }
+
+            @Override
+            public void setManualHeater(double powerPCT) throws IOException, DeviceException {
+                MSMOTC.this.setManualHeater(output, powerPCT);
+            }
+
+            @Override
+            public boolean isHeaterAuto() throws IOException, DeviceException {
+                return MSMOTC.this.isHeaterAuto(output);
+            }
+
+            @Override
+            public void useAutoFlow() throws IOException, DeviceException {
+                MSMOTC.this.useAutoFlow(output);
+            }
+
+            @Override
+            public void setManualFlow(double outputPCT) throws IOException, DeviceException {
+                MSMOTC.this.setManualFlow(output, outputPCT);
+            }
+
+            @Override
+            public boolean isFlowAuto() throws IOException, DeviceException {
+                return MSMOTC.this.isFlowAuto(output);
+            }
+
+            @Override
+            public void setPValue(double value) throws IOException, DeviceException {
+                MSMOTC.this.setPValue(output, value);
+            }
+
+            @Override
+            public void setIValue(double value) throws IOException, DeviceException {
+                MSMOTC.this.setIValue(output, value);
+            }
+
+            @Override
+            public void setDValue(double value) throws IOException, DeviceException {
+                MSMOTC.this.setDValue(output, value);
+            }
+
+            @Override
+            public double getPValue() throws IOException, DeviceException {
+                return MSMOTC.this.getPValue(output);
+            }
+
+            @Override
+            public double getIValue() throws IOException, DeviceException {
+                return MSMOTC.this.getIValue(output);
+            }
+
+            @Override
+            public double getDValue() throws IOException, DeviceException {
+                return MSMOTC.this.getDValue(output);
+            }
+
+            @Override
+            public void setHeaterRange(double rangePCT) throws IOException, DeviceException {
+                MSMOTC.this.setHeaterRange(output, rangePCT);
+            }
+
+            @Override
+            public double getHeaterRange() throws IOException, DeviceException {
+                return MSMOTC.this.getHeaterRange(output);
+            }
+
+            @Override
+            public Zoner getZoner() {
+                return null;
+            }
+
+            @Override
+            public void setZoner(Zoner zoner) {
+
+            }
+
+            @Override
+            public String getIDN() throws IOException, DeviceException {
+                return MSMOTC.this.getIDN();
+            }
+
+            @Override
+            public void close() throws IOException, DeviceException {
+                MSMOTC.this.close();
+            }
+
+            @Override
+            public Address getAddress() {
+                return MSMOTC.this.getAddress();
+            }
+
+            @Override
+            public void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+                MSMOTC.this.setAutoPIDZones(output, zones);
+            }
+
+            @Override
+            public PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
+                return MSMOTC.this.getAutoPIDZones(output);
+            }
+
+            @Override
+            public void useAutoPID(boolean auto) throws IOException, DeviceException {
+                MSMOTC.this.useAutoPID(output, auto);
+            }
+
+            @Override
+            public boolean isPIDAuto() throws IOException, DeviceException {
+                return MSMOTC.this.isPIDAuto(output);
+            }
+
+        };
     }
 
-    /**
-     * Class for representing an output/control-loop as its own temperature controller.
-     */
-    public class VirtualTC extends VISATC {
-
-        private int output;
-
-        /**
-         * Connects to the temperature controller at the given address, returning an instrument object to control it.
-         *
-         * @param output Output number
-         *
-         * @throws IOException Upon communications error
-         */
-        public VirtualTC(int output) throws IOException {
-            super(null, null);
-            this.output = output;
-        }
-
-        @Override
-        public void setTargetTemperature(double temperature) throws IOException, DeviceException {
-            MSMOTC.this.setTargetTemperature(output, temperature);
-        }
-
-        @Override
-        public double getTemperature() throws IOException, DeviceException {
-            return MSMOTC.this.getTemperature(getUsedSensor(output));
-        }
-
-        @Override
-        public double getTargetTemperature() throws IOException, DeviceException {
-            return MSMOTC.this.getTargetTemperature(output);
-        }
-
-        @Override
-        public double getHeaterPower() throws IOException, DeviceException {
-            return MSMOTC.this.getHeaterPower(output);
-        }
-
-        @Override
-        public double getGasFlow() throws IOException, DeviceException {
-            return MSMOTC.this.getGasFlow(output);
-        }
-
-        @Override
-        public void useAutoHeater() throws IOException, DeviceException {
-            MSMOTC.this.useAutoHeater(output);
-        }
-
-        @Override
-        public void setManualHeater(double powerPCT) throws IOException, DeviceException {
-            MSMOTC.this.setManualHeater(output, powerPCT);
-        }
-
-        @Override
-        public boolean isHeaterAuto() throws IOException, DeviceException {
-            return MSMOTC.this.isHeaterAuto(output);
-        }
-
-        @Override
-        public void useAutoFlow() throws IOException, DeviceException {
-            MSMOTC.this.useAutoFlow(output);
-        }
-
-        @Override
-        public void setManualFlow(double outputPCT) throws IOException, DeviceException {
-            MSMOTC.this.setManualFlow(output, outputPCT);
-        }
-
-        @Override
-        public boolean isFlowAuto() throws IOException, DeviceException {
-            return MSMOTC.this.isFlowAuto(output);
-        }
-
-        @Override
-        public void useAutoPID(boolean auto) throws IOException, DeviceException {
-            MSMOTC.this.useAutoPID(output, auto);
-        }
-
-        @Override
-        public boolean isPIDAuto() throws IOException, DeviceException {
-            return MSMOTC.this.isPIDAuto(output);
-        }
-
-        @Override
-        public void setAutoPIDZones(PIDZone[] zones) throws IOException, DeviceException {
-            MSMOTC.this.setAutoPIDZones(output, zones);
-        }
-
-        @Override
-        public PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
-            return MSMOTC.this.getAutoPIDZones(output);
-        }
-
-        @Override
-        public void setPValue(double value) throws IOException, DeviceException {
-            MSMOTC.this.setPValue(output, value);
-        }
-
-        @Override
-        public void setIValue(double value) throws IOException, DeviceException {
-            MSMOTC.this.setIValue(output, value);
-        }
-
-        @Override
-        public void setDValue(double value) throws IOException, DeviceException {
-            MSMOTC.this.setDValue(output, value);
-        }
-
-        @Override
-        public double getPValue() throws IOException, DeviceException {
-            return MSMOTC.this.getPValue(output);
-        }
-
-        @Override
-        public double getIValue() throws IOException, DeviceException {
-            return MSMOTC.this.getIValue(output);
-        }
-
-        @Override
-        public double getDValue() throws IOException, DeviceException {
-            return MSMOTC.this.getDValue(output);
-        }
-
-        @Override
-        public void setHeaterRange(double range) throws IOException, DeviceException {
-            MSMOTC.this.setHeaterRange(output, range);
-        }
-
-        @Override
-        public double getHeaterRange() throws IOException, DeviceException {
-            return MSMOTC.this.getHeaterRange(output);
-        }
-    }
-
-    protected class Zoner implements Runnable {
+    class Zoner implements Runnable {
 
         private final PIDZone[] zones;
         private final int       output;
@@ -795,8 +775,11 @@ public abstract class MSMOTC extends MSTC {
         private       PIDZone   minZone;
         private       PIDZone   maxZone;
         private       Thread    thread;
+        private       MSMOTC    tc;
 
-        public Zoner(int output, PIDZone[] zones) {
+        public Zoner(MSMOTC tc, int output, PIDZone[] zones) {
+
+            this.tc = tc;
 
             this.zones = zones;
             this.output = output;
@@ -835,7 +818,7 @@ public abstract class MSMOTC extends MSTC {
 
                 try {
 
-                    double T = getTemperature(getUsedSensor(output));
+                    double T = tc.getTemperature(tc.getUsedSensor(output));
 
                     if (!currentZone.matches(T)) {
 
@@ -878,13 +861,13 @@ public abstract class MSMOTC extends MSTC {
         private void applyZone(PIDZone zone) throws IOException, DeviceException {
 
             if (zone.isAuto()) {
-                setHeaterRange(output, zone.getRange());
-                setPValue(output, zone.getP());
-                setIValue(output, zone.getI());
-                setDValue(output, zone.getD());
+                tc.setHeaterRange(output, zone.getRange());
+                tc.setPValue(output, zone.getP());
+                tc.setIValue(output, zone.getI());
+                tc.setDValue(output, zone.getD());
             } else {
-                setHeaterRange(output, zone.getRange());
-                setManualHeater(output, zone.getPower());
+                tc.setHeaterRange(output, zone.getRange());
+                tc.setManualHeater(output, zone.getPower());
             }
 
         }

@@ -3,7 +3,6 @@ package JISA.Devices;
 import JISA.Addresses.Address;
 import JISA.Enums.Thermocouple;
 import JISA.Util;
-import JISA.VISA.Connection;
 import JISA.VISA.NativeDevice;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
@@ -101,7 +100,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         // Load native library
         super(LIBRARY_NAME, LIBRARY_CLASS, INSTANCE);
 
-        List<USBTC08> found = USBTC08.find();
+        List<USBTC08> found = find();
 
         if (found.isEmpty()) {
             throw new IOException("No USB TC-08 unit found!");
@@ -247,8 +246,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     @Override
-    public String getIDN() {
-        return "PICO TC-08";
+    public String getIDN() throws DeviceException {
+        return String.format("PICO TC-08, S/N: \"%s\"", getSerial());
     }
 
     @Override
@@ -385,19 +384,19 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             USBTC08_CHANNEL_5,
             USBTC08_CHANNEL_6,
             USBTC08_CHANNEL_7,
-            USBTC08_CHANNEL_8;
+            USBTC08_CHANNEL_8
         }
 
         enum USBTC08Units {
             USBTC08_UNITS_CENTIGRADE,
             USBTC08_UNITS_FAHRENHEIT,
             USBTC08_UNITS_KELVIN,
-            USBTC08_UNITS_RANKINE;
+            USBTC08_UNITS_RANKINE
         }
 
         enum USBTC08MainsFrequency {
             USBTC08_FIFTY_HERTZ,
-            USBTC08_SIXTY_HERTZ;
+            USBTC08_SIXTY_HERTZ
         }
     }
 

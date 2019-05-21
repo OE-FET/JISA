@@ -60,7 +60,7 @@ public abstract class NativeDevice<I extends Library> implements Instrument {
         lib = library;
     }
 
-    public abstract String getIDN() throws IOException;
+    public abstract String getIDN() throws IOException, DeviceException;
 
     @Override
     public abstract void close() throws IOException, DeviceException;

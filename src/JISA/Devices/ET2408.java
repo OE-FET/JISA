@@ -29,7 +29,7 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     private final RWRegister D         = new RWRegister(9);
     private final RWRegister mode      = new RWRegister(199);
     private final RWRegister units     = new RWRegister(516);
-    private final RWCoil     manual    = new RWCoil(273);
+    private final RWRegister manual    = new RWRegister(273);
     private final RWRegister decPlaces = new RWRegister(525);
 
     public ET2408(Address address, SerialPort.BaudRate baud, int dataBits, int stopBits, SerialPort.Parity parity) throws IOException, DeviceException {
@@ -108,18 +108,18 @@ public class ET2408 extends ModbusRTUDevice implements TC {
 
     @Override
     public void useAutoHeater() throws IOException {
-        manual.set(false);
+        manual.set(0);
     }
 
     @Override
     public void setManualHeater(double powerPCT) throws IOException {
-        manual.set(true);
+        manual.set(1);
         output.set((int) (powerPCT * 10.0));
     }
 
     @Override
     public boolean isHeaterAuto() throws IOException {
-        return !manual.get();
+        return manual.get() == 0;
     }
 
     @Override

@@ -7,15 +7,7 @@ import JISA.VISA.Driver;
 
 import java.io.IOException;
 
-public abstract class MSTC extends VISATC {
-
-    public MSTC(Address address, Class<? extends Driver> prefDriver) throws IOException {
-        super(address, prefDriver);
-    }
-
-    public MSTC(Address address) throws IOException {
-        this(address, null);
-    }
+public interface MSTC extends TC {
 
     /**
      * Returns the temperature reported by the specified sensor
@@ -27,7 +19,7 @@ public abstract class MSTC extends VISATC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getTemperature(int sensor) throws IOException, DeviceException;
+    double getTemperature(int sensor) throws IOException, DeviceException;
 
     /**
      * Returns the temperature reported by the control-loop sensor
@@ -37,7 +29,7 @@ public abstract class MSTC extends VISATC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public double getTemperature() throws IOException, DeviceException {
+    default double getTemperature() throws IOException, DeviceException {
         return getTemperature(getUsedSensor());
     }
 
@@ -49,7 +41,7 @@ public abstract class MSTC extends VISATC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void useSensor(int sensor) throws IOException, DeviceException;
+    void useSensor(int sensor) throws IOException, DeviceException;
 
     /**
      * Returns the number of the sensor being used for temperature control
@@ -59,14 +51,14 @@ public abstract class MSTC extends VISATC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract int getUsedSensor() throws IOException, DeviceException;
+    int getUsedSensor() throws IOException, DeviceException;
 
     /**
      * Returns the number of sensors the controller has.
      *
      * @return Number of sensors
      */
-    public abstract int getNumSensors();
+    int getNumSensors();
 
     /**
      * Returns a virtual TMeter object representing the specified temperature sensor.
@@ -77,7 +69,7 @@ public abstract class MSTC extends VISATC {
      *
      * @throws DeviceException Upon compatibility error
      */
-    public TMeter getSensor(int sensor) throws DeviceException {
+    default TMeter getSensor(int sensor) throws DeviceException {
 
         checkSensor(sensor);
 
@@ -89,12 +81,12 @@ public abstract class MSTC extends VISATC {
             }
 
             @Override
-            public String getIDN() throws IOException {
+            public String getIDN() throws IOException, DeviceException {
                 return MSTC.this.getIDN();
             }
 
             @Override
-            public void close() throws IOException {
+            public void close() throws IOException, DeviceException {
                  MSTC.this.close();
             }
 
@@ -114,7 +106,7 @@ public abstract class MSTC extends VISATC {
      *
      * @throws DeviceException Upon invalid sensor number being specified
      */
-    protected void checkSensor(int sensor) throws DeviceException {
+    default void checkSensor(int sensor) throws DeviceException {
         if (!Util.isBetween(sensor, 0, getNumSensors() - 1)) {
             throw new DeviceException("This temperature controller only has %d sensors.", getNumSensors());
         }
@@ -132,7 +124,7 @@ public abstract class MSTC extends VISATC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature(int sensor, double temperature, double pctMargin, long time) throws IOException, DeviceException, InterruptedException {
+    default void waitForStableTemperature(int sensor, double temperature, double pctMargin, long time) throws IOException, DeviceException, InterruptedException {
 
         checkSensor(sensor);
 
@@ -156,7 +148,7 @@ public abstract class MSTC extends VISATC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature(int sensor, double temperature) throws IOException, DeviceException, InterruptedException {
+    default void waitForStableTemperature(int sensor, double temperature) throws IOException, DeviceException, InterruptedException {
         waitForStableTemperature(sensor, temperature, 1.0, 60000);
     }
 
@@ -167,7 +159,7 @@ public abstract class MSTC extends VISATC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableTemperature() throws IOException, DeviceException, InterruptedException {
+    default void waitForStableTemperature() throws IOException, DeviceException, InterruptedException {
         waitForStableTemperature(getUsedSensor(), getTargetTemperature());
     }
 
@@ -180,7 +172,7 @@ public abstract class MSTC extends VISATC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public void setTargetAndWait(double temperature) throws IOException, DeviceException, InterruptedException {
+    default void setTargetAndWait(double temperature) throws IOException, DeviceException, InterruptedException {
         setTargetTemperature(temperature);
         waitForStableTemperature();
     }

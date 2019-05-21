@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public interface Instrument {
 
-    String getIDN() throws IOException;
+    String getIDN() throws IOException, DeviceException;
 
     void close() throws IOException, DeviceException;
 

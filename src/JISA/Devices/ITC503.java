@@ -2,6 +2,7 @@ package JISA.Devices;
 
 import JISA.*;
 import JISA.Addresses.Address;
+import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -13,7 +14,7 @@ import java.util.regex.Pattern;
  * <p>
  * GPIBDevice class for controlling mercury ITC503 temperature controllers via GPIB.
  */
-public class ITC503 extends MSTC {
+public class ITC503 extends VISADevice implements MSTC {
 
     private static final String TERMINATOR         = "\r";
     private static final String C_SET_COMM_MODE    = "Q2";
@@ -45,6 +46,8 @@ public class ITC503 extends MSTC {
     private static final long   STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
     private static final int    STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
     private static final double STANDARD_ERROR_PERC           = 10;
+
+    private Zoner zoner = null;
 
     /**
      * Open the ITC503 device at the given bus and address
@@ -107,12 +110,12 @@ public class ITC503 extends MSTC {
     }
 
     @Override
-    public double getHeaterPower() throws IOException, DeviceException {
+    public double getHeaterPower() throws IOException {
         return Math.pow(readChannel(HEATER_OP_PERC) / 100.0, 2) * 100.0;
     }
 
     @Override
-    public double getGasFlow() throws IOException, DeviceException {
+    public double getGasFlow() throws IOException {
         return readChannel(GAS_OP);
     }
 
@@ -153,42 +156,41 @@ public class ITC503 extends MSTC {
     }
 
     @Override
-    public void setPValue(double value) throws IOException, DeviceException {
+    public void setPValue(double value) throws IOException {
         query(C_SET_P, value);
     }
 
     @Override
-    public void setIValue(double value) throws IOException, DeviceException {
+    public void setIValue(double value) throws IOException {
         query(C_SET_I, value);
 
     }
 
     @Override
-    public void setDValue(double value) throws IOException, DeviceException {
+    public void setDValue(double value) throws IOException {
         query(C_SET_D, value);
 
     }
 
     @Override
-    public double getPValue() throws IOException, DeviceException {
+    public double getPValue() throws IOException {
         return readChannel(PROP_BAND);
     }
 
     @Override
-    public double getIValue() throws IOException, DeviceException {
+    public double getIValue() throws IOException {
         return readChannel(INT_ACTION_TIME);
     }
 
     @Override
-    public double getDValue() throws IOException, DeviceException {
+    public double getDValue() throws IOException {
         return readChannel(DER_ACTION_TIME);
     }
 
     @Override
-    public void setHeaterRange(double range) throws IOException, DeviceException {
+    public void setHeaterRange(double range) throws IOException {
 
         double voltage = MAX_HEATER_VOLTAGE * Math.sqrt(range / 100.0);
-
 
 
         query(C_SET_HEATER_LIM, voltage);
@@ -196,11 +198,21 @@ public class ITC503 extends MSTC {
     }
 
     @Override
-    public double getHeaterRange() throws IOException, DeviceException {
+    public double getHeaterRange() throws IOException {
         return Math.pow(((readChannel(HEATER_OP_VOLTS) / (readChannel(HEATER_OP_PERC) / 100.0)) / MAX_HEATER_VOLTAGE), 2) * 100.0;
     }
 
-    private Status getStatus() throws IOException, DeviceException {
+    @Override
+    public Zoner getZoner() {
+        return zoner;
+    }
+
+    @Override
+    public void setZoner(Zoner zoner) {
+        this.zoner = zoner;
+    }
+
+    private Status getStatus() throws IOException {
         return new Status(query(C_QUERY_STATUS));
     }
 

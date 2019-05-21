@@ -4,6 +4,7 @@ import JISA.Addresses.Address;
 import JISA.Util;
 import JISA.VISA.Connection;
 import JISA.VISA.RawTCPIPDriver;
+import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -15,7 +16,7 @@ import java.util.concurrent.Semaphore;
  * <p>
  * They are generally annoying with a shoddy communications implementation. Hooray!
  */
-public class LS336 extends MSMOTC {
+public class LS336 extends VISADevice implements MSMOTC {
 
     private static final String[]        CHANNELS             = {"A", "B", "C", "D"};
     private static final String          C_QUERY_SENSOR       = "KRDG? %s";
@@ -36,6 +37,7 @@ public class LS336 extends MSMOTC {
     private              Semaphore       timingControl        = new Semaphore(1);
     private              ExecutorService timingService        = Executors.newFixedThreadPool(1);
     private              boolean[]       nativeAPID           = {false, false};
+    private              Zoner[]         zoner                = {null, null};
 
     public LS336(Address address) throws IOException, DeviceException {
 
@@ -106,11 +108,11 @@ public class LS336 extends MSMOTC {
     }
 
     private OutMode getOutMode(int output) throws IOException {
-        return new OutMode(query(C_QUERY_OUT_MODE, output+1));
+        return new OutMode(query(C_QUERY_OUT_MODE, output + 1));
     }
 
     private PID getPID(int output) throws IOException {
-        return new PID(query(C_QUERY_PID, output+1));
+        return new PID(query(C_QUERY_PID, output + 1));
     }
 
     @Override
@@ -119,7 +121,7 @@ public class LS336 extends MSMOTC {
         checkSensor(sensor);
         OutMode mode = getOutMode(output);
         mode.input = sensor + 1;
-        write(C_SET_OUT_MODE, output+1, mode.mode, mode.input, mode.powerUp ? 1 : 0);
+        write(C_SET_OUT_MODE, output + 1, mode.mode, mode.input, mode.powerUp ? 1 : 0);
     }
 
     @Override
@@ -150,7 +152,7 @@ public class LS336 extends MSMOTC {
     }
 
     private void setPID(int output, double P, double I, double D) throws IOException {
-        write(C_SET_PID,output+1, P, I, D);
+        write(C_SET_PID, output + 1, P, I, D);
     }
 
     @Override
@@ -174,7 +176,7 @@ public class LS336 extends MSMOTC {
     @Override
     public void setHeaterRange(int output, double range) throws IOException, DeviceException {
         checkOutput(output);
-        write(C_SET_HEATER_RANGE, output+1, HRange.fromDouble(range).ordinal());
+        write(C_SET_HEATER_RANGE, output + 1, HRange.fromDouble(range).ordinal());
     }
 
     @Override
@@ -202,7 +204,7 @@ public class LS336 extends MSMOTC {
     }
 
     @Override
-    public double getGasFlow(int output) throws IOException, DeviceException {
+    public double getGasFlow(int output) {
         Util.errLog.println("LakeShore 336 does not control gas flow.");
         return 0;
     }
@@ -231,63 +233,6 @@ public class LS336 extends MSMOTC {
     }
 
     @Override
-    public void useAutoPID(int output, boolean auto) throws IOException, DeviceException {
-
-        checkOutput(output);
-
-        if (nativeAPID[output]) {
-            OutMode mode = getOutMode(output);
-            mode.mode = auto ? 2 : 1;
-            write(C_SET_OUT_MODE, output + 1, mode.mode, mode.input, mode.powerUp ? 1 : 0);
-        } else {
-            super.useAutoPID(output, auto);
-        }
-
-    }
-
-    @Override
-    public boolean isPIDAuto(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        if (nativeAPID[output]) {
-            return getOutMode(output).mode == 2;
-        } else {
-            return super.isPIDAuto(output);
-        }
-    }
-
-    public void setAutoPIDZones(int output, PIDZone[] zones) throws IOException, DeviceException {
-
-        checkOutput(output);
-        nativeAPID[output] = false;
-
-        if (nativeAPID[output]) {
-
-            for (int i = 0; i < zones.length; i++) {
-                PIDZone z = zones[i];
-                write(C_SET_ZONE, output + 1, i + 1, z.getMaxT(), z.getP(), z.getI(), z.getD(), z.getPower(), HRange.fromDouble(z.getRange()).ordinal());
-            }
-
-        } else {
-            super.setAutoPIDZones(output, zones);
-        }
-
-    }
-
-    public PIDZone[] getAutoPIDZones(int output) throws IOException, DeviceException {
-
-        checkOutput(output);
-
-        if (nativeAPID[output]) {
-
-            return new PIDZone[10];
-
-        } else {
-            return super.getAutoPIDZones(output);
-        }
-
-    }
-
-    @Override
     public void setManualHeater(int output, double powerPCT) throws IOException, DeviceException {
         checkOutput(output);
         write(C_SET_HEATER, output + 1, powerPCT);
@@ -296,6 +241,26 @@ public class LS336 extends MSMOTC {
     @Override
     public void setManualFlow(int output, double outputPCT) throws DeviceException {
         throw new DeviceException("LS336 does not control gas flow.");
+    }
+
+    @Override
+    public Zoner getZoner(int output) {
+        return zoner[output];
+    }
+
+    @Override
+    public void setZoner(int output, Zoner zoner) {
+        this.zoner[output] = zoner;
+    }
+
+    @Override
+    public TC.Zoner getZoner() {
+        return null;
+    }
+
+    @Override
+    public void setZoner(TC.Zoner zoner) {
+
     }
 
     private static class OutMode {
