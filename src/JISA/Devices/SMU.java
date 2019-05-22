@@ -15,15 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.Semaphore;
 
-public abstract class SMU extends VISADevice implements IVMeter, IVSource {
-
-    public SMU(Address address, Class<? extends Driver> prefDriver) throws IOException {
-        super(address, prefDriver);
-    }
-
-    public SMU(Address address) throws IOException {
-        this(address, null);
-    }
+public interface SMU extends IVMeter, IVSource {
 
     /**
      * Returns the voltage either being applied or measured by the SMU.
@@ -33,7 +25,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract double getVoltage() throws DeviceException, IOException;
+    double getVoltage() throws DeviceException, IOException;
 
     /**
      * Returns the current either being injected or measured by the SMU.
@@ -43,7 +35,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract double getCurrent() throws DeviceException, IOException;
+    double getCurrent() throws DeviceException, IOException;
 
     /**
      * Sets the voltage value to be applied by the SMU (switching to voltage source mode if not already)
@@ -53,7 +45,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setVoltage(double voltage) throws DeviceException, IOException;
+    void setVoltage(double voltage) throws DeviceException, IOException;
 
     /**
      * Sets the current value to be applied by the SMU (switching to current source mode if not already)
@@ -63,7 +55,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setCurrent(double current) throws DeviceException, IOException;
+    void setCurrent(double current) throws DeviceException, IOException;
 
     /**
      * Turns the output of the SMU on
@@ -71,7 +63,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void turnOn() throws DeviceException, IOException;
+    void turnOn() throws DeviceException, IOException;
 
     /**
      * Turns the output of the SMU off
@@ -79,7 +71,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void turnOff() throws DeviceException, IOException;
+    void turnOff() throws DeviceException, IOException;
 
     /**
      * Checks whether the output of the SMU is currently enabled
@@ -89,7 +81,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract boolean isOn() throws DeviceException, IOException;
+    boolean isOn() throws DeviceException, IOException;
 
     /**
      * Sets the source mode of the SMU (VOLTAGE or CURRENT)
@@ -99,7 +91,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setSource(Source source) throws DeviceException, IOException;
+    void setSource(Source source) throws DeviceException, IOException;
 
     /**
      * Returns the current source mode of the SMU (VOLTAGE OR CURRENT)
@@ -109,7 +101,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract Source getSource() throws DeviceException, IOException;
+    Source getSource() throws DeviceException, IOException;
 
     /**
      * Sets the value for whichever parameter is currently being sourced
@@ -119,7 +111,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setBias(double level) throws DeviceException, IOException;
+    void setBias(double level) throws DeviceException, IOException;
 
     /**
      * Returns the value of whichever parameter is set as source currently
@@ -129,7 +121,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract double getSourceValue() throws DeviceException, IOException;
+    double getSourceValue() throws DeviceException, IOException;
 
     /**
      * Returns the value of whichever parameter is set as measure currently
@@ -139,7 +131,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract double getMeasureValue() throws DeviceException, IOException;
+    double getMeasureValue() throws DeviceException, IOException;
 
     /**
      * Sets whether the SMU should apply source using FORCE probes and measure using separate SENSE probes or whether is should
@@ -150,7 +142,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void useFourProbe(boolean fourProbes) throws DeviceException, IOException;
+    void useFourProbe(boolean fourProbes) throws DeviceException, IOException;
 
     /**
      * Returns whether the device is currently configured to use all four probes.
@@ -160,7 +152,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract boolean isUsingFourProbe() throws DeviceException, IOException;
+    boolean isUsingFourProbe() throws DeviceException, IOException;
 
     /**
      * Sets the averaging mode of the SMU.
@@ -170,7 +162,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setAverageMode(AMode mode) throws DeviceException, IOException;
+    void setAverageMode(AMode mode) throws DeviceException, IOException;
 
     /**
      * Sets how many measurements the SMU should average over.
@@ -180,7 +172,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setAverageCount(int count) throws DeviceException, IOException;
+    void setAverageCount(int count) throws DeviceException, IOException;
 
     /**
      * Sets both the averaging mode and count together.
@@ -191,7 +183,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public void setAveraging(AMode mode, int count) throws DeviceException, IOException {
+    default void setAveraging(AMode mode, int count) throws DeviceException, IOException {
         setAverageMode(mode);
         setAverageCount(count);
     }
@@ -204,7 +196,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract AMode getAverageMode() throws DeviceException, IOException;
+    AMode getAverageMode() throws DeviceException, IOException;
 
     /**
      * Returns the number of measurements used for averaging by the SMU.
@@ -214,7 +206,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract int getAverageCount() throws DeviceException, IOException;
+    int getAverageCount() throws DeviceException, IOException;
 
     /**
      * Sets the range of allowed values for the quantity being sourced by the SMU.
@@ -225,7 +217,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setSourceRange(double value) throws DeviceException, IOException;
+    void setSourceRange(double value) throws DeviceException, IOException;
 
     /**
      * Returns the range of allowed values for the quantity being sourced by the SMU.
@@ -236,7 +228,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract double getSourceRange() throws DeviceException, IOException;
+    double getSourceRange() throws DeviceException, IOException;
 
     /**
      * Sets the SMU to automatically determine the source range to use.
@@ -244,7 +236,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void useAutoSourceRange() throws DeviceException, IOException;
+    void useAutoSourceRange() throws DeviceException, IOException;
 
     /**
      * Returns whether the SMU is set to automatically determine the source range to use.
@@ -254,7 +246,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract boolean isSourceRangeAuto() throws DeviceException, IOException;
+    boolean isSourceRangeAuto() throws DeviceException, IOException;
 
     /**
      * Sets the range of allowed values for the quantity being measured by the SMU.
@@ -264,7 +256,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setMeasureRange(double value) throws DeviceException, IOException;
+    void setMeasureRange(double value) throws DeviceException, IOException;
 
 
     /**
@@ -275,7 +267,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract double getMeasureRange() throws DeviceException, IOException;
+    double getMeasureRange() throws DeviceException, IOException;
 
     /**
      * Tells the SMU to automatically determine the range to use for the measured quantity.
@@ -283,7 +275,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void useAutoMeasureRange() throws DeviceException, IOException;
+    void useAutoMeasureRange() throws DeviceException, IOException;
 
     /**
      * Returns whether the SMU is currently determining its measure range automatically.
@@ -293,7 +285,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract boolean isMeasureRangeAuto() throws DeviceException, IOException;
+    boolean isMeasureRangeAuto() throws DeviceException, IOException;
 
     /**
      * Sets the range of allowed values for voltages being sourced or measured by the SMU.
@@ -304,7 +296,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setVoltageRange(double value) throws DeviceException, IOException;
+    void setVoltageRange(double value) throws DeviceException, IOException;
 
     /**
      * Returns the range of allowed values for voltages being sourced or measured by the SMU.
@@ -315,7 +307,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract double getVoltageRange() throws DeviceException, IOException;
+    double getVoltageRange() throws DeviceException, IOException;
 
     /**
      * Tells the SMU to automatically determine the range it uses for voltages.
@@ -323,7 +315,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void useAutoVoltageRange() throws DeviceException, IOException;
+    void useAutoVoltageRange() throws DeviceException, IOException;
 
     /**
      * Returns whether the SMU is automatically determining the range to use for voltages.
@@ -333,7 +325,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract boolean isVoltageRangeAuto() throws DeviceException, IOException;
+    boolean isVoltageRangeAuto() throws DeviceException, IOException;
 
     /**
      * Sets the range of allowed values for currents being sourced or measured by the SMU.
@@ -343,7 +335,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setCurrentRange(double value) throws DeviceException, IOException;
+    void setCurrentRange(double value) throws DeviceException, IOException;
 
 
     /**
@@ -354,7 +346,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract double getCurrentRange() throws DeviceException, IOException;
+    double getCurrentRange() throws DeviceException, IOException;
 
     /**
      * Tells the SMU to automatically determine the range to use for current values.
@@ -362,7 +354,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void useAutoCurrentRange() throws DeviceException, IOException;
+    void useAutoCurrentRange() throws DeviceException, IOException;
 
     /**
      * Returns whether the SMU is currently determining its current range automatically.
@@ -372,7 +364,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract boolean isCurrentRangeAuto() throws DeviceException, IOException;
+    boolean isCurrentRangeAuto() throws DeviceException, IOException;
 
     /**
      * Sets the limit for the measured quantity (ie compliance value).
@@ -382,7 +374,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setOutputLimit(double value) throws DeviceException, IOException;
+    void setOutputLimit(double value) throws DeviceException, IOException;
 
     /**
      * Returns the limit for the measured quantity (compliance value).
@@ -392,7 +384,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract double getOutputLimit() throws DeviceException, IOException;
+    double getOutputLimit() throws DeviceException, IOException;
 
     /**
      * Sets the limit for voltages output when sourcing current (compliance value).
@@ -402,7 +394,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setVoltageLimit(double voltage) throws DeviceException, IOException;
+    void setVoltageLimit(double voltage) throws DeviceException, IOException;
 
     /**
      * Returns the limit on voltages output when sourcing current (compliance value).
@@ -412,7 +404,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract double getVoltageLimit() throws DeviceException, IOException;
+    double getVoltageLimit() throws DeviceException, IOException;
 
     /**
      * Sets the limit for currents output when sourcing voltage (compliance value).
@@ -422,7 +414,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setCurrentLimit(double current) throws DeviceException, IOException;
+    void setCurrentLimit(double current) throws DeviceException, IOException;
 
     /**
      * Returns the limit for currents output when sourcing voltage (compliance value).
@@ -432,7 +424,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract double getCurrentLimit() throws DeviceException, IOException;
+    double getCurrentLimit() throws DeviceException, IOException;
 
     /**
      * Sets the integration time for each individual measurement, or closest over-estimate possible.
@@ -442,7 +434,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setIntegrationTime(double time) throws DeviceException, IOException;
+    void setIntegrationTime(double time) throws DeviceException, IOException;
 
     /**
      * Returns the integration time used for each individual measurement.
@@ -452,7 +444,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract double getIntegrationTime() throws DeviceException, IOException;
+    double getIntegrationTime() throws DeviceException, IOException;
 
 
     /**
@@ -465,7 +457,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException
      * @throws IOException
      */
-    public abstract TType getTerminalType(Terminals terminals) throws DeviceException, IOException;
+    TType getTerminalType(Terminals terminals) throws DeviceException, IOException;
 
     /**
      * Sets which set of terminals should be used on the SMU.
@@ -475,7 +467,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract void setTerminals(Terminals terminals) throws DeviceException, IOException;
+    void setTerminals(Terminals terminals) throws DeviceException, IOException;
 
     /**
      * Returns the type of the set of terminals currently being used on the SMU.
@@ -485,11 +477,11 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public abstract Terminals getTerminals() throws DeviceException, IOException;
+    Terminals getTerminals() throws DeviceException, IOException;
 
-    public abstract void setOffMode(OffMode mode) throws DeviceException, IOException;
+    void setOffMode(OffMode mode) throws DeviceException, IOException;
 
-    public abstract OffMode getOffMode() throws DeviceException, IOException;
+    OffMode getOffMode() throws DeviceException, IOException;
 
     /**
      * Returns a combined voltage and current measurement.
@@ -499,7 +491,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public IVPoint getIVPoint() throws DeviceException, IOException {
+    default IVPoint getIVPoint() throws DeviceException, IOException {
         return new IVPoint(getVoltage(), getCurrent());
     }
 
@@ -511,7 +503,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public VMeter asVoltmeter() throws IOException, DeviceException {
+    default VMeter asVoltmeter() throws IOException, DeviceException {
 
         setSource(Source.CURRENT);
         setCurrent(0.0);
@@ -527,7 +519,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public IMeter asAmmeter() throws IOException, DeviceException {
+    default IMeter asAmmeter() throws IOException, DeviceException {
 
         setSource(Source.VOLTAGE);
         setVoltage(0.0);
@@ -544,7 +536,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public void setRanges(double voltageRange, double currentRange) throws DeviceException, IOException {
+    default void setRanges(double voltageRange, double currentRange) throws DeviceException, IOException {
         setVoltageRange(voltageRange);
         setCurrentRange(currentRange);
     }
@@ -555,7 +547,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public void useAutoRanges() throws DeviceException, IOException {
+    default void useAutoRanges() throws DeviceException, IOException {
         useAutoVoltageRange();
         useAutoCurrentRange();
     }
@@ -569,7 +561,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public void setLimits(double voltageLimit, double currentLimit) throws DeviceException, IOException {
+    default void setLimits(double voltageLimit, double currentLimit) throws DeviceException, IOException {
         setVoltageLimit(voltageLimit);
         setCurrentLimit(currentLimit);
     }
@@ -589,7 +581,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric) throws DeviceException, IOException {
+    default IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric) throws DeviceException, IOException {
         return doLinearSweep(source, min, max, numSteps, delay, symmetric, (i, point) -> {
         });
     }
@@ -611,7 +603,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    default IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         return doSweep(
                 source,
@@ -640,7 +632,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ResultList list) throws DeviceException, IOException {
+    default IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ResultList list) throws DeviceException, IOException {
         return doLinearSweep(source, min, max, numSteps, delay, symmetric, (i, p) -> list.addData(p.voltage, p.current));
     }
 
@@ -659,7 +651,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric) throws DeviceException, IOException {
+    default IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric) throws DeviceException, IOException {
 
         return doLogarithmicSweep(source, min, max, numSteps, delay, symmetric, (i, p) -> {
         });
@@ -683,7 +675,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    default IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         return doSweep(
                 source,
@@ -712,11 +704,11 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ResultList list) throws DeviceException, IOException {
+    default IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ResultList list) throws DeviceException, IOException {
         return doLogarithmicSweep(source, min, max, numSteps, delay, symmetric, (i, p) -> list.addData(p.voltage, p.current));
     }
 
-    private static class Updater implements Runnable {
+    class Updater implements Runnable {
 
         private int                i    = 0;
         private Semaphore          semaphore;
@@ -778,7 +770,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public IVPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    default IVPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         final ArrayList<IVPoint> points  = new ArrayList<>();
         IVPoint                  point;
@@ -820,7 +812,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
 
     }
 
-    public IVPoint[] doPulsedSweep(Source source, double baseLevel, double[] values, long delay, long timeOn, long timeOff, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
+    default IVPoint[] doPulsedSweep(Source source, double baseLevel, double[] values, long delay, long timeOn, long timeOff, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         // The delay time must be smaller than the on and off time.
         if (delay > timeOn || delay > timeOff) {
@@ -901,7 +893,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public IVPoint[] doSweep(Source source, double[] values, boolean symmetric, long delay) throws IOException, DeviceException {
+    default IVPoint[] doSweep(Source source, double[] values, boolean symmetric, long delay) throws IOException, DeviceException {
         return doSweep(source, values, delay, symmetric, (i, p) -> {
         });
     }
@@ -920,17 +912,17 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    public IVPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ResultList list) throws DeviceException, IOException {
+    default IVPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ResultList list) throws DeviceException, IOException {
         return doSweep(source, values, delay, symmetric, (i, p) -> list.addData(p.voltage, p.current));
     }
 
-    public ResultList createSweepList() {
+    default ResultList createSweepList() {
         ResultList list = new ResultList("Voltage", "Current");
         list.setUnits("V", "A");
         return list;
     }
 
-    public enum OffMode {
+    enum OffMode {
         NORMAL,
         ZERO,
         HIGH_IMPEDANCE,
@@ -941,7 +933,7 @@ public abstract class SMU extends VISADevice implements IVMeter, IVSource {
     /**
      * Structure for defining what to do on each update
      */
-    public interface ProgressMonitor {
+    interface ProgressMonitor {
 
         void update(int i, IVPoint point) throws IOException, DeviceException;
 

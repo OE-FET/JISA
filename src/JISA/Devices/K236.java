@@ -6,13 +6,14 @@ import JISA.Enums.AMode;
 import JISA.Enums.TType;
 import JISA.Enums.Terminals;
 import JISA.Util;
+import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class K236 extends SMU {
+public class K236 extends VISADevice implements SMU {
 
     // == CONSTANTS ====================================================================================================
     private static final String C_SET_SRC_FUNC   = "F%d,%d";

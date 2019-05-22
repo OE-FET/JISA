@@ -1,5 +1,6 @@
 package JISA.Devices;
 
+import JISA.Addresses.Address;
 import JISA.Enums.AMode;
 import JISA.Enums.Source;
 import JISA.Enums.TType;
@@ -13,7 +14,7 @@ import java.util.Iterator;
 /**
  * Class to combine multiple SMUs into a single virtual SMU with multiple channels.
  */
-public class SMUCluster extends MCSMU {
+public class SMUCluster implements MCSMU {
 
     private ArrayList<SMU> devices = new ArrayList<>();
 
@@ -24,8 +25,8 @@ public class SMUCluster extends MCSMU {
      *
      * @throws IOException Upon communications error
      */
-    public SMUCluster(SMU... smus) throws IOException {
-        super(null, null);
+    public SMUCluster(SMU... smus) {
+
         for (SMU s : smus) {
 
             if (s instanceof MCSMU) {
@@ -398,4 +399,18 @@ public class SMUCluster extends MCSMU {
         return devices.iterator();
     }
 
+    @Override
+    public String getIDN() throws IOException {
+        return null;
+    }
+
+    @Override
+    public void close() throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public Address getAddress() {
+        return null;
+    }
 }

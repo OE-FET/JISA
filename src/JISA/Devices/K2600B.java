@@ -6,11 +6,12 @@ import JISA.Enums.AMode;
 import JISA.Enums.Source;
 import JISA.Enums.TType;
 import JISA.Enums.Terminals;
+import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 import java.util.HashMap;
 
-public class K2600B extends MCSMU {
+public class K2600B extends VISADevice implements MCSMU {
 
     private static final String[] CHANNELS                   = {"smua", "smub"};
     private static final String   C_QUERY_VOLT               = "print(%s.measure.v())";

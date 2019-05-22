@@ -7,11 +7,12 @@ import JISA.Enums.Terminals;
 import JISA.Util;
 import JISA.VISA.Connection;
 import JISA.VISA.Driver;
+import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 import java.util.HashMap;
 
-public abstract class KeithleySCPI extends SMU {
+public abstract class KeithleySCPI extends VISADevice implements SMU {
 
     // == COMMANDS =====================================================================================================
     protected static final String C_MEASURE_VOLTAGE       = ":MEAS:VOLT?";

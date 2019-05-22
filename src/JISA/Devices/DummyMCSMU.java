@@ -1,5 +1,6 @@
 package JISA.Devices;
 
+import JISA.Addresses.Address;
 import JISA.Enums.AMode;
 import JISA.Enums.Source;
 import JISA.Enums.TType;
@@ -8,7 +9,7 @@ import JISA.Enums.Terminals;
 import java.io.IOException;
 import java.util.Random;
 
-public class DummyMCSMU extends MCSMU {
+public class DummyMCSMU implements MCSMU {
 
     private Random    random  = new Random();
     private Double[]  current = {null, null, null, null};
@@ -16,10 +17,6 @@ public class DummyMCSMU extends MCSMU {
     private Source[]  mode    = {Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE};
     private boolean[] probes  = {true, true, true, true};
     private double[]  R       = {random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500};
-
-    public DummyMCSMU() throws IOException {
-        super(null, null);
-    }
 
     @Override
     public double getVoltage(int channel) throws DeviceException, IOException {
@@ -300,4 +297,18 @@ public class DummyMCSMU extends MCSMU {
         return null;
     }
 
+    @Override
+    public String getIDN() throws IOException {
+        return null;
+    }
+
+    @Override
+    public void close() throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public Address getAddress() {
+        return null;
+    }
 }
