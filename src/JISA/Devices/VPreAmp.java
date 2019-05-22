@@ -1,6 +1,8 @@
 package JISA.Devices;
 
 import JISA.Enums.Coupling;
+import JISA.Enums.Filter;
+import JISA.Enums.Input;
 
 import java.io.IOException;
 
@@ -145,18 +147,5 @@ public interface VPreAmp extends Instrument {
      * @throws DeviceException Upon compatibility error
      */
     double getFilterLowFrequency() throws IOException, DeviceException;
-
-    enum Input {
-        A,
-        B,
-        DIFF
-    }
-
-    enum Filter {
-        NONE,
-        HIGH_PASS,
-        LOW_PASS,
-        BAND_PASS
-    }
 
 }

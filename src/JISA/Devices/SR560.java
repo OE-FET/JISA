@@ -2,6 +2,8 @@ package JISA.Devices;
 
 import JISA.Addresses.Address;
 import JISA.Enums.Coupling;
+import JISA.Enums.Filter;
+import JISA.Enums.Input;
 import JISA.VISA.Connection;
 import JISA.VISA.VISADevice;
 
@@ -178,7 +180,7 @@ public class SR560 extends VISADevice implements VPreAmp {
     private Coupling couplingMode = null;
     private FMode    filterMode   = FMode.BYPASS;
     private Gain     gainMode     = null;
-    private Input   sourceMode   = null;
+    private Input    sourceMode   = null;
     private Freq     highFreq     = null;
     private Freq     lowFreq      = null;
 
