@@ -168,7 +168,7 @@ public class DummyMCSMU implements MCSMU {
     }
 
     @Override
-    public boolean isSourceRangeAuto(int channel) throws DeviceException, IOException {
+    public boolean isAutoRangingSource(int channel) throws DeviceException, IOException {
         return false;
     }
 
@@ -188,7 +188,7 @@ public class DummyMCSMU implements MCSMU {
     }
 
     @Override
-    public boolean isMeasureRangeAuto(int channel) throws DeviceException, IOException {
+    public boolean isAutoRangingMeasure(int channel) throws DeviceException, IOException {
         return false;
     }
 
@@ -208,7 +208,7 @@ public class DummyMCSMU implements MCSMU {
     }
 
     @Override
-    public boolean isVoltageRangeAuto(int channel) throws DeviceException, IOException {
+    public boolean isAutoRangingVoltage(int channel) throws DeviceException, IOException {
         return false;
     }
 
@@ -228,7 +228,7 @@ public class DummyMCSMU implements MCSMU {
     }
 
     @Override
-    public boolean isCurrentRangeAuto(int channel) throws DeviceException, IOException {
+    public boolean isAutoRangingCurrent(int channel) throws DeviceException, IOException {
         return false;
     }
 

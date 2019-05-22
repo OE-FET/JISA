@@ -443,7 +443,7 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
-    public boolean isSourceRangeAuto(int channel) throws DeviceException, IOException {
+    public boolean isAutoRangingSource(int channel) throws DeviceException, IOException {
         checkChannel(channel);
         return query(C_QUERY_SOURCE_AUTO_RANGE, CHANNELS[channel], getSourceMode(channel).getSymbol()).trim().equals(OUTPUT_ON);
     }
@@ -489,7 +489,7 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
-    public boolean isMeasureRangeAuto(int channel) throws DeviceException, IOException {
+    public boolean isAutoRangingMeasure(int channel) throws DeviceException, IOException {
         checkChannel(channel);
         return query(C_QUERY_MEASURE_AUTO_RANGE, CHANNELS[channel], getMeasureMode(channel).getSymbol()).trim().equals(OUTPUT_ON);
     }
@@ -521,7 +521,7 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
-    public boolean isVoltageRangeAuto(int channel) throws DeviceException, IOException {
+    public boolean isAutoRangingVoltage(int channel) throws DeviceException, IOException {
 
         checkChannel(channel);
         return query(C_QUERY_SOURCE_AUTO_RANGE, CHANNELS[channel], SFunc.VOLTAGE.getSymbol()).trim().equals(OUTPUT_ON);
@@ -554,7 +554,7 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
-    public boolean isCurrentRangeAuto(int channel) throws DeviceException, IOException {
+    public boolean isAutoRangingCurrent(int channel) throws DeviceException, IOException {
 
         checkChannel(channel);
         return query(C_QUERY_SOURCE_AUTO_RANGE, CHANNELS[channel], SFunc.CURRENT.getSymbol()).trim().equals(OUTPUT_ON);

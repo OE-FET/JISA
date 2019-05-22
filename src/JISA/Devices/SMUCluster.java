@@ -238,9 +238,9 @@ public class SMUCluster implements MCSMU {
     }
 
     @Override
-    public boolean isSourceRangeAuto(int channel) throws DeviceException, IOException {
+    public boolean isAutoRangingSource(int channel) throws DeviceException, IOException {
         checkChannel(channel);
-        return devices.get(channel).isSourceRangeAuto();
+        return devices.get(channel).isAutoRangingSource();
     }
 
     @Override
@@ -262,9 +262,9 @@ public class SMUCluster implements MCSMU {
     }
 
     @Override
-    public boolean isMeasureRangeAuto(int channel) throws DeviceException, IOException {
+    public boolean isAutoRangingMeasure(int channel) throws DeviceException, IOException {
         checkChannel(channel);
-        return devices.get(channel).isMeasureRangeAuto();
+        return devices.get(channel).isAutoRangingMeasure();
     }
 
     @Override
@@ -286,9 +286,9 @@ public class SMUCluster implements MCSMU {
     }
 
     @Override
-    public boolean isVoltageRangeAuto(int channel) throws DeviceException, IOException {
+    public boolean isAutoRangingVoltage(int channel) throws DeviceException, IOException {
         checkChannel(channel);
-        return devices.get(channel).isVoltageRangeAuto();
+        return devices.get(channel).isAutoRangingVoltage();
     }
 
     @Override
@@ -310,9 +310,9 @@ public class SMUCluster implements MCSMU {
     }
 
     @Override
-    public boolean isCurrentRangeAuto(int channel) throws DeviceException, IOException {
+    public boolean isAutoRangingCurrent(int channel) throws DeviceException, IOException {
         checkChannel(channel);
-        return devices.get(channel).isCurrentRangeAuto();
+        return devices.get(channel).isAutoRangingCurrent();
     }
 
     @Override

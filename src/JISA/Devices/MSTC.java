@@ -7,7 +7,7 @@ import JISA.VISA.Driver;
 
 import java.io.IOException;
 
-public interface MSTC extends TC {
+public interface MSTC extends TC, MSTMeter {
 
     /**
      * Returns the temperature reported by the specified sensor
@@ -81,6 +81,16 @@ public interface MSTC extends TC {
             }
 
             @Override
+            public void setTemperatureRange(double range) throws IOException, DeviceException {
+                MSTC.this.setTemperatureRange(sensor, range);
+            }
+
+            @Override
+            public double getTemperatureRange() throws IOException, DeviceException {
+                return MSTC.this.getTemperatureRange(sensor);
+            }
+
+            @Override
             public String getIDN() throws IOException, DeviceException {
                 return MSTC.this.getIDN();
             }
@@ -136,45 +146,6 @@ public interface MSTC extends TC {
                 time
         );
 
-    }
-
-    /**
-     * Waits until the temperature reported by the specified sensor has remained within 1% of the specified temperature
-     * for at least 1 minute.
-     *
-     * @param sensor      Sensor number
-     * @param temperature Temperature target
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default void waitForStableTemperature(int sensor, double temperature) throws IOException, DeviceException, InterruptedException {
-        waitForStableTemperature(sensor, temperature, 1.0, 60000);
-    }
-
-    /**
-     * Waits until the temperature reported by the control-loop sensor has remained within 1% of the target (set-point)
-     * temperature for at least 1 minute.
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default void waitForStableTemperature() throws IOException, DeviceException, InterruptedException {
-        waitForStableTemperature(getUsedSensor(), getTargetTemperature());
-    }
-
-    /**
-     * Sets the target (set-point) temperature and waits until the control loop sensor has reported a temperature
-     * within 1% of that value for at least 1 minute.
-     *
-     * @param temperature Target temperature, in Kelvin
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default void setTargetAndWait(double temperature) throws IOException, DeviceException, InterruptedException {
-        setTargetTemperature(temperature);
-        waitForStableTemperature();
     }
 
 }

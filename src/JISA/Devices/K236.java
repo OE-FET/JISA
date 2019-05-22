@@ -338,7 +338,7 @@ public class K236 extends VISADevice implements SMU {
     }
 
     @Override
-    public boolean isSourceRangeAuto() {
+    public boolean isAutoRangingSource() {
         return sRange.equals(SRange.AUTO);
     }
 
@@ -389,7 +389,7 @@ public class K236 extends VISADevice implements SMU {
     }
 
     @Override
-    public boolean isMeasureRangeAuto() {
+    public boolean isAutoRangingMeasure() {
         return mRange.equals(SRange.AUTO);
     }
 
@@ -446,18 +446,18 @@ public class K236 extends VISADevice implements SMU {
     }
 
     @Override
-    public boolean isVoltageRangeAuto() {
+    public boolean isAutoRangingVoltage() {
 
         switch (source) {
 
             case VOLTAGE:
-                return isSourceRangeAuto();
+                return isAutoRangingSource();
 
             case CURRENT:
-                return isMeasureRangeAuto();
+                return isAutoRangingMeasure();
 
             default:
-                return isSourceRangeAuto();
+                return isAutoRangingSource();
 
         }
 
@@ -516,18 +516,18 @@ public class K236 extends VISADevice implements SMU {
     }
 
     @Override
-    public boolean isCurrentRangeAuto() {
+    public boolean isAutoRangingCurrent() {
 
         switch (source) {
 
             case VOLTAGE:
-                return isMeasureRangeAuto();
+                return isAutoRangingMeasure();
 
             case CURRENT:
-                return isSourceRangeAuto();
+                return isAutoRangingSource();
 
             default:
-                return isMeasureRangeAuto();
+                return isAutoRangingMeasure();
 
         }
 

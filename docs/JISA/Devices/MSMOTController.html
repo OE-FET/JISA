@@ -346,13 +346,13 @@ extends <a href="../../JISA/Devices/MSTController.html" title="class in JISA.Dev
 </tr>
 <tr id="i22" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../JISA/Devices/MSMOTController.html#isPIDAuto--">isPIDAuto</a></span>()</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../JISA/Devices/MSMOTController.html#isUsingAutoPID--">isUsingAutoPID</a></span>()</code>
 <div class="block">Returns whether the controller is automatically selecting PID values on the default output/control-loop.</div>
 </td>
 </tr>
 <tr id="i23" class="rowColor">
 <td class="colFirst"><code>abstract boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../JISA/Devices/MSMOTController.html#isPIDAuto-int-">isPIDAuto</a></span>(int&nbsp;output)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../JISA/Devices/MSMOTController.html#isUsingAutoPID-int-">isUsingAutoPID</a></span>(int&nbsp;output)</code>
 <div class="block">Returns whether the controller is automatically selecting PID values on the specified output/control-loop.</div>
 </td>
 </tr>
@@ -1330,13 +1330,13 @@ extends <a href="../../JISA/Devices/MSTController.html" title="class in JISA.Dev
 </dl>
 </li>
 </ul>
-<a name="isPIDAuto-int-">
+<a name="isUsingAutoPID-int-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>isPIDAuto</h4>
-<pre>public abstract&nbsp;boolean&nbsp;isPIDAuto(int&nbsp;output)
+<h4>isUsingAutoPID</h4>
+<pre>public abstract&nbsp;boolean&nbsp;isUsingAutoPID(int&nbsp;output)
                            throws java.io.IOException,
                                   <a href="../../JISA/Devices/DeviceException.html" title="class in JISA.Devices">DeviceException</a></pre>
 <div class="block">Returns whether the controller is automatically selecting PID values on the specified output/control-loop.</div>
@@ -1351,19 +1351,19 @@ extends <a href="../../JISA/Devices/MSTController.html" title="class in JISA.Dev
 </dl>
 </li>
 </ul>
-<a name="isPIDAuto--">
+<a name="isUsingAutoPID--">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>isPIDAuto</h4>
-<pre>public&nbsp;boolean&nbsp;isPIDAuto()
+<h4>isUsingAutoPID</h4>
+<pre>public&nbsp;boolean&nbsp;isUsingAutoPID()
                   throws java.io.IOException,
                          <a href="../../JISA/Devices/DeviceException.html" title="class in JISA.Devices">DeviceException</a></pre>
 <div class="block">Returns whether the controller is automatically selecting PID values on the default output/control-loop.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../JISA/Devices/TController.html#isPIDAuto--">isPIDAuto</a></code>&nbsp;in class&nbsp;<code><a href="../../JISA/Devices/TController.html" title="class in JISA.Devices">TController</a></code></dd>
+<dd><code><a href="../../JISA/Devices/TController.html#isUsingAutoPID--">isUsingAutoPID</a></code>&nbsp;in class&nbsp;<code><a href="../../JISA/Devices/TController.html" title="class in JISA.Devices">TController</a></code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>Is it automatic?</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>

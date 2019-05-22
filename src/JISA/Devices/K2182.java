@@ -58,22 +58,22 @@ public class K2182 extends VISADevice implements VMeter {
     }
 
     @Override
-    public void setVoltageRange(double range) throws IOException, DeviceException {
+    public void setVoltageRange(double range) throws IOException {
         write(":SENSE:VOLT:RANGE %e", range);
     }
 
     @Override
-    public double getVoltageRange() throws IOException, DeviceException {
+    public double getVoltageRange() throws IOException {
         return queryDouble(":SENSE:VOLT:RANGE?");
     }
 
     @Override
-    public void useAutoVoltageRange() throws IOException, DeviceException {
+    public void useAutoVoltageRange() throws IOException {
         write(":SENSE:VOLT:RANGE:AUTO 1");
     }
 
     @Override
-    public boolean isVoltageRangeAuto() throws IOException {
+    public boolean isAutoRangingVoltage() throws IOException {
         return queryInt(":SENSE:VOLT:RANGE:AUTO?") == 1;
     }
 

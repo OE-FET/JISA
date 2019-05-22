@@ -74,7 +74,7 @@ public interface IMeter extends Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    boolean isCurrentRangeAuto() throws IOException, DeviceException;
+    boolean isAutoRangingCurrent() throws IOException, DeviceException;
 
     /**
      * Sets the type of averaging to use for each measurement.

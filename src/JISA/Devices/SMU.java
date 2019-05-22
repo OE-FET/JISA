@@ -1,6 +1,5 @@
 package JISA.Devices;
 
-import JISA.Addresses.Address;
 import JISA.Enums.AMode;
 import JISA.Enums.Source;
 import JISA.Enums.TType;
@@ -8,8 +7,6 @@ import JISA.Enums.Terminals;
 import JISA.Experiment.IVPoint;
 import JISA.Experiment.ResultList;
 import JISA.Util;
-import JISA.VISA.Driver;
-import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -246,7 +243,7 @@ public interface SMU extends IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    boolean isSourceRangeAuto() throws DeviceException, IOException;
+    boolean isAutoRangingSource() throws DeviceException, IOException;
 
     /**
      * Sets the range of allowed values for the quantity being measured by the SMU.
@@ -285,7 +282,7 @@ public interface SMU extends IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    boolean isMeasureRangeAuto() throws DeviceException, IOException;
+    boolean isAutoRangingMeasure() throws DeviceException, IOException;
 
     /**
      * Sets the range of allowed values for voltages being sourced or measured by the SMU.
@@ -325,7 +322,7 @@ public interface SMU extends IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    boolean isVoltageRangeAuto() throws DeviceException, IOException;
+    boolean isAutoRangingVoltage() throws DeviceException, IOException;
 
     /**
      * Sets the range of allowed values for currents being sourced or measured by the SMU.
@@ -364,7 +361,7 @@ public interface SMU extends IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    boolean isCurrentRangeAuto() throws DeviceException, IOException;
+    boolean isAutoRangingCurrent() throws DeviceException, IOException;
 
     /**
      * Sets the limit for the measured quantity (ie compliance value).

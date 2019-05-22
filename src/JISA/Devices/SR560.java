@@ -3,10 +3,11 @@ package JISA.Devices;
 import JISA.Addresses.Address;
 import JISA.Enums.Coupling;
 import JISA.VISA.Connection;
+import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 
-public class SR560 extends VPreAmp {
+public class SR560 extends VISADevice implements VPreAmp {
 
     private static final String C_LISTEN      = "LALL";
     private static final String C_COUPLING    = "CPLG %d";

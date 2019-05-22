@@ -103,6 +103,18 @@ public class LS336 extends VISADevice implements MSMOTC {
     }
 
     @Override
+    public void setTemperatureRange(int sensor, double range) throws DeviceException {
+        checkSensor(sensor);
+        // No range options
+    }
+
+    @Override
+    public double getTemperatureRange(int sensor) throws DeviceException {
+        checkSensor(sensor);
+        return 999.999;
+    }
+
+    @Override
     public int getNumOutputs() {
         return 2;
     }

@@ -120,38 +120,38 @@ public class ITC503 extends VISADevice implements MSTC {
     }
 
     @Override
-    public void useAutoHeater() throws IOException, DeviceException {
+    public void useAutoHeater() throws IOException {
         AutoMode mode = AutoMode.fromMode(true, isFlowAuto());
         query(C_SET_AUTO, mode.toInt());
     }
 
     @Override
-    public void setManualHeater(double powerPCT) throws IOException, DeviceException {
+    public void setManualHeater(double powerPCT) throws IOException {
         query(C_SET_HEATER, Math.sqrt(powerPCT / 100.0) * 100.0);
         AutoMode mode = AutoMode.fromMode(false, isFlowAuto());
         query(C_SET_AUTO, mode.toInt());
     }
 
     @Override
-    public boolean isHeaterAuto() throws IOException, DeviceException {
+    public boolean isHeaterAuto() throws IOException {
         return AutoMode.fromInt(getStatus().A).heaterAuto();
     }
 
     @Override
-    public void useAutoFlow() throws IOException, DeviceException {
+    public void useAutoFlow() throws IOException {
         AutoMode mode = AutoMode.fromMode(isHeaterAuto(), true);
         query(C_SET_AUTO, mode.toInt());
     }
 
     @Override
-    public void setManualFlow(double outputPCT) throws IOException, DeviceException {
+    public void setManualFlow(double outputPCT) throws IOException {
         query(C_SET_FLOW, outputPCT);
         AutoMode mode = AutoMode.fromMode(isHeaterAuto(), false);
         query(C_SET_AUTO, mode.toInt());
     }
 
     @Override
-    public boolean isFlowAuto() throws IOException, DeviceException {
+    public boolean isFlowAuto() throws IOException {
         return AutoMode.fromInt(getStatus().A).gasAuto();
     }
 
@@ -248,7 +248,7 @@ public class ITC503 extends VISADevice implements MSTC {
     }
 
     @Override
-    public int getUsedSensor() throws IOException, DeviceException {
+    public int getUsedSensor() throws IOException {
         return getStatus().H - 1;
     }
 
@@ -277,6 +277,18 @@ public class ITC503 extends VISADevice implements MSTC {
 
     public void setMode(Mode mode) throws IOException {
         query(C_SET_MODE, mode.toInt());
+    }
+
+    @Override
+    public void setTemperatureRange(int sensor, double range) throws DeviceException {
+        checkSensor(sensor);
+        // No range options for ITC503
+    }
+
+    @Override
+    public double getTemperatureRange(int sensor) throws DeviceException {
+        checkSensor(sensor);
+        return 999.9;
     }
 
 

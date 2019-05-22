@@ -1,10 +1,12 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import JISA.Enums.Source;
+import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 
-public class K2200 extends DCPower {
+public class K2200 extends VISADevice implements DCPower {
 
     private static final String C_QUERY_VOLTAGE = "MEASURE:VOLTAGE:DC?";
     private static final String C_QUERY_CURRENT = "MEASURE:CURRENT:DC?";

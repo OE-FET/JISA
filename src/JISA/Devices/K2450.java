@@ -29,7 +29,7 @@ public class K2450 extends KeithleySCPI {
 
         double val = super.measureVoltage();
 
-        if (isLimitTripped() && isVoltageRangeAuto()) {
+        if (isLimitTripped() && isAutoRangingVoltage()) {
             setVoltageLimit(getVoltageLimit()/2);
             setVoltageLimit(getVoltageLimit()*2);
             val = super.measureVoltage();
@@ -43,7 +43,7 @@ public class K2450 extends KeithleySCPI {
 
         double val = super.measureCurrent();
 
-        if (isLimitTripped() && isCurrentRangeAuto()) {
+        if (isLimitTripped() && isAutoRangingCurrent()) {
             setCurrentLimit(getCurrentLimit()/2);
             setCurrentLimit(getCurrentLimit()*2);
             val = super.measureCurrent();
@@ -137,7 +137,7 @@ public class K2450 extends KeithleySCPI {
 
     public void fixLimits() throws IOException, DeviceException {
 
-        if (isMeasureRangeAuto()) {
+        if (isAutoRangingMeasure()) {
 
             getMeasureValue();
 

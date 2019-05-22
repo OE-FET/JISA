@@ -577,7 +577,7 @@ public interface MCSMU extends SMU, Iterable<SMU> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    boolean isSourceRangeAuto(int channel) throws DeviceException, IOException;
+    boolean isAutoRangingSource(int channel) throws DeviceException, IOException;
 
     /**
      * Returns whether auto-ranging is being used for the source quantity on the default channel.
@@ -587,8 +587,8 @@ public interface MCSMU extends SMU, Iterable<SMU> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    default boolean isSourceRangeAuto() throws DeviceException, IOException {
-        return isSourceRangeAuto(0);
+    default boolean isAutoRangingSource() throws DeviceException, IOException {
+        return isAutoRangingSource(0);
     }
 
     /**
@@ -672,7 +672,7 @@ public interface MCSMU extends SMU, Iterable<SMU> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    boolean isMeasureRangeAuto(int channel) throws DeviceException, IOException;
+    boolean isAutoRangingMeasure(int channel) throws DeviceException, IOException;
 
     /**
      * Returns whether auto-ranging is being used for the measured quantity on the default channel.
@@ -682,8 +682,8 @@ public interface MCSMU extends SMU, Iterable<SMU> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    default boolean isMeasureRangeAuto() throws DeviceException, IOException {
-        return isMeasureRangeAuto(0);
+    default boolean isAutoRangingMeasure() throws DeviceException, IOException {
+        return isAutoRangingMeasure(0);
     }
 
     /**
@@ -753,7 +753,7 @@ public interface MCSMU extends SMU, Iterable<SMU> {
      */
     default void useAutoVoltageRange() throws DeviceException, IOException {
         for (int cn = 0; cn < getNumChannels(); cn++) {
-            useAutoMeasureRange(cn);
+            useAutoVoltageRange(cn);
         }
     }
 
@@ -767,7 +767,7 @@ public interface MCSMU extends SMU, Iterable<SMU> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    boolean isVoltageRangeAuto(int channel) throws DeviceException, IOException;
+    boolean isAutoRangingVoltage(int channel) throws DeviceException, IOException;
 
     /**
      * Returns whether auto-ranging is being used for voltage values on the default channel.
@@ -777,8 +777,8 @@ public interface MCSMU extends SMU, Iterable<SMU> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    default boolean isVoltageRangeAuto() throws DeviceException, IOException {
-        return isMeasureRangeAuto(0);
+    default boolean isAutoRangingVoltage() throws DeviceException, IOException {
+        return isAutoRangingVoltage(0);
     }
 
     /**
@@ -848,7 +848,7 @@ public interface MCSMU extends SMU, Iterable<SMU> {
      */
     default void useAutoCurrentRange() throws DeviceException, IOException {
         for (int cn = 0; cn < getNumChannels(); cn++) {
-            useAutoMeasureRange(cn);
+            useAutoCurrentRange(cn);
         }
     }
 
@@ -862,7 +862,7 @@ public interface MCSMU extends SMU, Iterable<SMU> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    boolean isCurrentRangeAuto(int channel) throws DeviceException, IOException;
+    boolean isAutoRangingCurrent(int channel) throws DeviceException, IOException;
 
     /**
      * Returns whether auto-ranging is being used for voltage values on the default channel.
@@ -872,8 +872,8 @@ public interface MCSMU extends SMU, Iterable<SMU> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    default boolean isCurrentRangeAuto() throws DeviceException, IOException {
-        return isMeasureRangeAuto(0);
+    default boolean isAutoRangingCurrent() throws DeviceException, IOException {
+        return isAutoRangingCurrent(0);
     }
 
     /**
@@ -1698,8 +1698,8 @@ public interface MCSMU extends SMU, Iterable<SMU> {
         }
 
         @Override
-        public boolean isSourceRangeAuto() throws DeviceException, IOException {
-            return smu.isSourceRangeAuto(channel);
+        public boolean isAutoRangingSource() throws DeviceException, IOException {
+            return smu.isAutoRangingSource(channel);
         }
 
         @Override
@@ -1718,8 +1718,8 @@ public interface MCSMU extends SMU, Iterable<SMU> {
         }
 
         @Override
-        public boolean isMeasureRangeAuto() throws DeviceException, IOException {
-            return smu.isMeasureRangeAuto(channel);
+        public boolean isAutoRangingMeasure() throws DeviceException, IOException {
+            return smu.isAutoRangingMeasure(channel);
         }
 
         @Override
@@ -1738,8 +1738,8 @@ public interface MCSMU extends SMU, Iterable<SMU> {
         }
 
         @Override
-        public boolean isVoltageRangeAuto() throws DeviceException, IOException {
-            return smu.isVoltageRangeAuto(channel);
+        public boolean isAutoRangingVoltage() throws DeviceException, IOException {
+            return smu.isAutoRangingVoltage(channel);
         }
 
         @Override
@@ -1758,8 +1758,8 @@ public interface MCSMU extends SMU, Iterable<SMU> {
         }
 
         @Override
-        public boolean isCurrentRangeAuto() throws DeviceException, IOException {
-            return smu.isCurrentRangeAuto(channel);
+        public boolean isAutoRangingCurrent() throws DeviceException, IOException {
+            return smu.isAutoRangingCurrent(channel);
         }
 
         @Override
@@ -1827,7 +1827,7 @@ public interface MCSMU extends SMU, Iterable<SMU> {
         }
 
         @Override
-        public String getIDN() throws IOException {
+        public String getIDN() throws IOException, DeviceException {
             return smu.getIDN();
         }
 

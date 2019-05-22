@@ -3,13 +3,19 @@ package JISA.Devices;
 import JISA.Addresses.Address;
 import JISA.Control.Nameable;
 import JISA.Enums.Coupling;
+import JISA.Enums.LineFilter;
 import JISA.Enums.Shield;
 import JISA.Util;
+import JISA.VISA.VISADevice;
+import jnr.ffi.annotations.In;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
-public class SR830 extends DPLockIn {
+public class SR830 extends VISADevice implements DPLockIn {
 
     private static final String C_QUERY_FREQ         = "FREQ?";
     private static final String C_SET_FREQ           = "FREQ %f";
@@ -257,50 +263,53 @@ public class SR830 extends DPLockIn {
     }
 
     @Override
-    public LineFilter getLineFilter() throws IOException {
+    public List<Integer> getLineFilterHarmonics() throws IOException {
 
         switch (queryInt(C_QUERY_LINE)) {
 
             case LINE_NONE:
-                return LineFilter.NONE;
+                return Collections.emptyList();
 
             case LINE_X1:
-                return LineFilter.X1;
+                return Collections.singletonList(1);
 
             case LINE_X2:
-                return LineFilter.X2;
+                return Collections.singletonList(2);
 
             case LINE_X1_X2:
-                return LineFilter.X1_X2;
+                return Arrays.asList(1, 2);
 
             default:
-                return null;
+                throw new IOException("Improper response from SR830. How rude!");
 
         }
 
     }
 
     @Override
-    public void setLineFilter(LineFilter mode) throws IOException {
+    public void setLineFilterHarmonics(int... harmonics) throws IOException {
 
-        switch (mode) {
+        boolean sgle = false;
+        boolean dble = false;
 
-            case NONE:
-                write(C_SET_LINE, LINE_NONE);
-                break;
+        for (int harm : harmonics) {
 
-            case X1:
-                write(C_SET_LINE, LINE_X1);
-                break;
+            if (harm == 1) {
+                sgle = true;
+            } else if (harm >= 2) {
+                dble = true;
+            }
 
-            case X2:
-                write(C_SET_LINE, LINE_X2);
-                break;
+        }
 
-            case X1_X2:
-                write(C_SET_LINE, LINE_X1_X2);
-                break;
-
+        if (sgle && dble) {
+            write(C_SET_LINE, LINE_X1_X2);
+        } else if (sgle) {
+            write(C_SET_LINE, LINE_X1);
+        } else if (dble) {
+            write(C_SET_LINE, LINE_X2);
+        } else {
+            write(C_SET_LINE, LINE_NONE);
         }
 
     }

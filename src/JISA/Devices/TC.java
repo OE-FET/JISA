@@ -1,10 +1,7 @@
 package JISA.Devices;
 
-import JISA.Addresses.Address;
 import JISA.Control.Synch;
 import JISA.Util;
-import JISA.VISA.Driver;
-import JISA.VISA.VISADevice;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -189,19 +186,6 @@ public interface TC extends TMeter {
     }
 
     /**
-     * Sets the target temperature and waits for it to be stably reached (within 1% for at least 1 minute).
-     *
-     * @param temperature Target temperature, in Kelvin
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default void setTargetAndWait(double temperature) throws IOException, DeviceException, InterruptedException {
-        setTargetTemperature(temperature);
-        waitForStableTemperature(temperature);
-    }
-
-    /**
      * Halts the current thread until the temperature has stabilised to the specified value within the given percentage
      * margin for at least the given amount of time.
      *
@@ -222,30 +206,6 @@ public interface TC extends TMeter {
                 time
         );
 
-    }
-
-    /**
-     * Halts the current thread until the temperature has stabilised to the specified value within 1% for at least 1
-     * minute.
-     *
-     * @param temperature Target temperature, in Kelvin
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default void waitForStableTemperature(double temperature) throws IOException, DeviceException, InterruptedException {
-        waitForStableTemperature(temperature, 1.0, 60000);
-    }
-
-    /**
-     * Halts the current thread until the temperature has stabilised to the target value within 1% for at least 1
-     * minute.
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default void waitForStableTemperature() throws IOException, DeviceException, InterruptedException {
-        waitForStableTemperature(getTargetTemperature());
     }
 
     Zoner getZoner();
@@ -315,7 +275,7 @@ public interface TC extends TMeter {
      *
      * @return Is PID control auto?
      */
-    default boolean isPIDAuto() throws IOException, DeviceException {
+    default boolean isUsingAutoPID() throws IOException, DeviceException {
         Zoner zoner = getZoner();
         return zoner != null && zoner.isRunning();
     }

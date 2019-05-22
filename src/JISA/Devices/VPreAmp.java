@@ -1,21 +1,11 @@
 package JISA.Devices;
 
-import JISA.Addresses.Address;
 import JISA.Enums.Coupling;
-import JISA.VISA.Driver;
-import JISA.VISA.VISADevice;
 
 import java.io.IOException;
 
-public abstract class VPreAmp extends VISADevice {
+public interface VPreAmp extends Instrument {
 
-    public VPreAmp(Address address, Class<? extends Driver> prefDriver) throws IOException {
-        super(address, prefDriver);
-    }
-
-    public VPreAmp(Address address) throws IOException {
-        this(address, null);
-    }
     /**
      * Sets the gain to the given value, or as close to it as possible.
      *
@@ -24,7 +14,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setGain(double gain) throws IOException, DeviceException;
+    void setGain(double gain) throws IOException, DeviceException;
 
     /**
      * Sets the source terminal to use, either A, B or DIFF (for A - B).
@@ -34,7 +24,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setInput(Input source) throws IOException, DeviceException;
+    void setInput(Input source) throws IOException, DeviceException;
 
     /**
      * Sets the coupling mode of the pre-amplifier.
@@ -44,7 +34,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setCoupling(Coupling mode) throws IOException, DeviceException;
+    void setCoupling(Coupling mode) throws IOException, DeviceException;
 
     /**
      * Sets the filter mode of the pre-amplifier.
@@ -54,7 +44,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setFilterMode(Filter mode) throws IOException, DeviceException;
+    void setFilterMode(Filter mode) throws IOException, DeviceException;
 
     /**
      * Sets the filter roll-off value in db/decade (or as close to it as one can get).
@@ -64,7 +54,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setFilterRollOff(double dbLevel) throws IOException, DeviceException;
+    void setFilterRollOff(double dbLevel) throws IOException, DeviceException;
 
     /**
      * Sets the high frequency value of the filter to the given value or as close as possible.
@@ -74,7 +64,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setFilterHighFrequency(double frequency) throws IOException, DeviceException;
+    void setFilterHighFrequency(double frequency) throws IOException, DeviceException;
 
     /**
      * Sets the low frequency value of the filter to the given value or as close as possible.
@@ -84,7 +74,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setFilterLowFrequency(double frequency) throws IOException, DeviceException;
+    void setFilterLowFrequency(double frequency) throws IOException, DeviceException;
 
     /**
      * Returns the gain value of the amplifier currently.
@@ -94,7 +84,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getGain() throws IOException, DeviceException;
+    double getGain() throws IOException, DeviceException;
 
     /**
      * Returns the source terminal configuration currently being used.
@@ -104,7 +94,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract Input getInput() throws IOException, DeviceException;
+    Input getInput() throws IOException, DeviceException;
 
     /**
      * Returns the coupling configuration currently being used.
@@ -114,7 +104,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract Coupling getCoupling() throws IOException, DeviceException;
+    Coupling getCoupling() throws IOException, DeviceException;
 
     /**
      * Returns the filter mode currently being used.
@@ -124,7 +114,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract Filter getFilterMode() throws IOException, DeviceException;
+    Filter getFilterMode() throws IOException, DeviceException;
 
     /**
      * Returns the filter roll-off value currently being used in db/decade
@@ -134,7 +124,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getFilterRollOff() throws IOException, DeviceException;
+    double getFilterRollOff() throws IOException, DeviceException;
 
     /**
      * Returns the high frequency value currently being used by the filter.
@@ -144,7 +134,7 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getFilterHighFrequency() throws IOException, DeviceException;
+    double getFilterHighFrequency() throws IOException, DeviceException;
 
     /**
      * Returns the low frequency value currently being used by the filter.
@@ -154,15 +144,15 @@ public abstract class VPreAmp extends VISADevice {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getFilterLowFrequency() throws IOException, DeviceException;
+    double getFilterLowFrequency() throws IOException, DeviceException;
 
-    public enum Input {
+    enum Input {
         A,
         B,
         DIFF
     }
 
-    public enum Filter {
+    enum Filter {
         NONE,
         HIGH_PASS,
         LOW_PASS,

@@ -144,9 +144,15 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         checkSensor(sensor);
 
-        if ((System.currentTimeMillis() - lastTime) < lib.usb_tc08_get_minimum_interval_ms(handle)) {
-            return (double) lastValues[sensor];
+        if ((System.currentTimeMillis() - lastTime) > lib.usb_tc08_get_minimum_interval_ms(handle)) {
+            updateReadings();
         }
+
+        return (double) lastValues[sensor];
+
+    }
+
+    private void updateReadings() throws DeviceException {
 
         // Need a pointer to some memory to store our returned values
         Memory tempPointer = new Memory(9 * Native.getNativeSize(Float.TYPE));
@@ -159,10 +165,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         }
 
         lastValues = tempPointer.getFloatArray(0, SENSORS_PER_UNIT);
-
-        lastTime = System.currentTimeMillis();
-
-        return (double) lastValues[sensor];
+        lastTime   = System.currentTimeMillis();
 
     }
 
@@ -172,29 +175,30 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     @Override
-    public double[] getTemperatures() throws DeviceException {
+    public List<Double> getTemperatures() throws DeviceException {
 
-        double[] temperatures = new double[getNumSensors()];
+        List<Double> temperatures = new LinkedList<>();
 
-        // Pointer to memory reserved for returned temperatures
-        Memory tempPointer = new Memory(9 * Native.getNativeSize(Float.TYPE));
-
-        int result = lib.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), (short) 2);
-
-        // If it returned zero, something's gone wrong
-        if (result == 0) {
-            throw new DeviceException(getLastError(handle));
-        }
-
-        float[] values = tempPointer.getFloatArray(0, SENSORS_PER_UNIT);
+        updateReadings();
 
         // Convert to doubles
-        for (int i = 0; i < values.length; i++) {
-            temperatures[i] = (double) values[i];
+        for (float value : lastValues) {
+            temperatures.add((double) value);
         }
 
         return temperatures;
 
+    }
+
+    @Override
+    public void setTemperatureRange(int sensor, double range) throws DeviceException {
+        checkSensor(sensor);
+        // No ranging options
+    }
+
+    @Override
+    public double getTemperatureRange(int sensor) {
+        return 999.999;
     }
 
     /**

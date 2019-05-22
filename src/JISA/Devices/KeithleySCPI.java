@@ -236,7 +236,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     }
 
     @Override
-    public boolean isSourceRangeAuto() throws IOException {
+    public boolean isAutoRangingSource() throws IOException {
         return query(C_QUERY_SRC_AUTO_RANGE, getSourceMode().getTag()).equals(OUTPUT_ON);
     }
 
@@ -258,7 +258,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     }
 
     @Override
-    public boolean isMeasureRangeAuto() throws IOException {
+    public boolean isAutoRangingMeasure() throws IOException {
         return query(C_QUERY_SRC_AUTO_RANGE, getMeasureMode().getTag()).equals(OUTPUT_ON);
     }
 
@@ -295,7 +295,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     }
 
     @Override
-    public boolean isVoltageRangeAuto() throws IOException {
+    public boolean isAutoRangingVoltage() throws IOException {
         return query(
                 isSourcing(Source.VOLTAGE) ? C_QUERY_SRC_AUTO_RANGE : C_QUERY_MEAS_AUTO_RANGE,
                 Source.VOLTAGE.getTag()
@@ -327,7 +327,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     }
 
     @Override
-    public boolean isCurrentRangeAuto() throws IOException {
+    public boolean isAutoRangingCurrent() throws IOException {
         return query(
                 isSourcing(Source.CURRENT) ? C_QUERY_SRC_AUTO_RANGE : C_QUERY_MEAS_AUTO_RANGE,
                 Source.CURRENT.getTag()

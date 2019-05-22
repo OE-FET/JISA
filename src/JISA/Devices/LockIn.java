@@ -1,26 +1,17 @@
 package JISA.Devices;
 
-import JISA.Addresses.Address;
 import JISA.Control.Synch;
 import JISA.Enums.Coupling;
+import JISA.Enums.LineFilter;
 import JISA.Enums.Shield;
-import JISA.VISA.Driver;
-import JISA.VISA.VISADevice;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Abstract class to define the standard functionality of lock-in amplifiers
  */
-public abstract class LockIn extends VISADevice {
-
-    public LockIn(Address address, Class<? extends Driver> prefDriver) throws IOException {
-        super(address, prefDriver);
-    }
-
-    public LockIn(Address address) throws IOException {
-        this(address, null);
-    }
+public interface LockIn extends Instrument {
 
     /**
      * Sets whether the lock-in amplifier is to use an internal or external reference signal
@@ -30,7 +21,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setRefMode(RefMode mode) throws IOException, DeviceException;
+    void setRefMode(RefMode mode) throws IOException, DeviceException;
 
     /**
      * Sets the frequency of the internal oscillator of the amplifier (eg for internal reference)
@@ -40,7 +31,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setOscFrequency(double frequency) throws IOException, DeviceException;
+    void setOscFrequency(double frequency) throws IOException, DeviceException;
 
     /**
      * Sets the phase of the internal oscillator
@@ -50,7 +41,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setOscPhase(double phase) throws IOException, DeviceException;
+    void setOscPhase(double phase) throws IOException, DeviceException;
 
     /**
      * Sets the amplitude of the internal oscillator output.
@@ -60,7 +51,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setOscAmplitude(double level) throws IOException, DeviceException;
+    void setOscAmplitude(double level) throws IOException, DeviceException;
 
     /**
      * Returns the frequency of the reference signal
@@ -70,7 +61,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getFrequency() throws IOException, DeviceException;
+    double getFrequency() throws IOException, DeviceException;
 
     /**
      * Returns the phase of the reference signal
@@ -80,7 +71,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getRefPhase() throws IOException, DeviceException;
+    double getRefPhase() throws IOException, DeviceException;
 
     /**
      * Returns the amplitude of the reference signal
@@ -90,7 +81,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getRefAmplitude() throws IOException, DeviceException;
+    double getRefAmplitude() throws IOException, DeviceException;
 
     /**
      * Returns the amplitude of the signal component locked on to by the amplifier
@@ -100,7 +91,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getLockedAmplitude() throws IOException, DeviceException;
+    double getLockedAmplitude() throws IOException, DeviceException;
 
     /**
      * Returns the set time constant, in seconds
@@ -110,7 +101,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getTimeConstant() throws IOException, DeviceException;
+    double getTimeConstant() throws IOException, DeviceException;
 
     /**
      * Sets the time constant to use for locking onto a signal (or closest over-approximation for devices with discrete
@@ -121,7 +112,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setTimeConstant(double seconds) throws IOException, DeviceException;
+    void setTimeConstant(double seconds) throws IOException, DeviceException;
 
     /**
      * Returns the maximum range, in Volts, that the instrument is measuring.
@@ -131,7 +122,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getRange() throws IOException, DeviceException;
+    double getRange() throws IOException, DeviceException;
 
     /**
      * Sets the sensitivity of the instrument based on the maximum range of values you desire to measure.
@@ -141,7 +132,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error (eg sensitivity greater than can be achieved by instrument)
      */
-    public abstract void setRange(double range) throws IOException, DeviceException;
+    void setRange(double range) throws IOException, DeviceException;
 
     /**
      * Instructs the lock-in to use synchronous filtering (removes higher harmonics of reference frequency from signal).
@@ -151,7 +142,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void useSyncFiltering(boolean flag) throws IOException, DeviceException;
+    void useSyncFiltering(boolean flag) throws IOException, DeviceException;
 
     /**
      * Returns whether the lock-in is currently using synchronous filtering.
@@ -161,7 +152,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract boolean isUsingSyncFiltering() throws IOException, DeviceException;
+    boolean isUsingSyncFiltering() throws IOException, DeviceException;
 
     /**
      * Returns the filter roll-off used by the lock-in.
@@ -171,7 +162,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract double getFilterRollOff() throws IOException, DeviceException;
+    double getFilterRollOff() throws IOException, DeviceException;
 
     /**
      * Sets the filter roll-off for the lock-in's input filter.
@@ -181,7 +172,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setFilterRollOff(double dBperOct) throws IOException, DeviceException;
+    void setFilterRollOff(double dBperOct) throws IOException, DeviceException;
 
     /**
      * Returns the input coupling mode of the lock-in.
@@ -191,7 +182,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract Coupling getCoupling() throws IOException, DeviceException;
+    Coupling getCoupling() throws IOException, DeviceException;
 
     /**
      * Sets the input coupling mode of the lock-in.
@@ -201,33 +192,33 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public abstract void setCoupling(Coupling mode) throws IOException, DeviceException;
+    void setCoupling(Coupling mode) throws IOException, DeviceException;
 
-    public abstract Shield getShielding() throws IOException, DeviceException;
+    Shield getShielding() throws IOException, DeviceException;
 
-    public abstract void setShielding(Shield mode) throws IOException, DeviceException;
+    void setShielding(Shield mode) throws IOException, DeviceException;
 
-    public abstract LineFilter getLineFilter() throws IOException, DeviceException;
+    List<Integer> getLineFilterHarmonics() throws IOException, DeviceException;
 
-    public abstract void setLineFilter(LineFilter mode) throws IOException, DeviceException;
+    void setLineFilterHarmonics(int... harmonics) throws IOException, DeviceException;
 
-    public abstract void setOffsetExpansion(double offset, double expand) throws IOException, DeviceException;
+    void setOffsetExpansion(double offset, double expand) throws IOException, DeviceException;
 
-    public abstract double getOffset() throws IOException, DeviceException;
+    double getOffset() throws IOException, DeviceException;
 
-    public abstract void setOffset(double offset) throws IOException, DeviceException;
+    void setOffset(double offset) throws IOException, DeviceException;
 
-    public abstract double getExpansion() throws IOException, DeviceException;
+    double getExpansion() throws IOException, DeviceException;
 
-    public abstract void setExpansion(double expand) throws IOException, DeviceException;
+    void setExpansion(double expand) throws IOException, DeviceException;
 
-    public abstract void autoOffset() throws IOException, DeviceException;
+    void autoOffset() throws IOException, DeviceException;
 
-    public abstract void autoRange() throws IOException, DeviceException;
+    void autoRange() throws IOException, DeviceException;
 
-    public abstract TrigMode getExternalTriggerMode() throws IOException, DeviceException;
+    TrigMode getExternalTriggerMode() throws IOException, DeviceException;
 
-    public abstract void setExternalTriggerMode(TrigMode mode) throws IOException, DeviceException;
+    void setExternalTriggerMode(TrigMode mode) throws IOException, DeviceException;
 
     /**
      * Halts the current thread (ie pauses the program) until the lock-in has a stable lock
@@ -240,7 +231,7 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableLock(double pctMargin, long duration) throws IOException, DeviceException, InterruptedException {
+    default void waitForStableLock(double pctMargin, long duration) throws IOException, DeviceException, InterruptedException {
 
         Synch.waitForParamStable(
                 this::getLockedAmplitude,
@@ -251,9 +242,9 @@ public abstract class LockIn extends VISADevice {
 
     }
 
-    public abstract void setInput(Input source) throws IOException, DeviceException;
+    void setInput(Input source) throws IOException, DeviceException;
 
-    public abstract Input getInput() throws IOException, DeviceException;
+    Input getInput() throws IOException, DeviceException;
 
     /**
      * Halts the current thread (ie pauses the program) until the lock-in has a stable lock
@@ -262,11 +253,11 @@ public abstract class LockIn extends VISADevice {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    public void waitForStableLock() throws IOException, DeviceException, InterruptedException {
+    default void waitForStableLock() throws IOException, DeviceException, InterruptedException {
         waitForStableLock(0.1, 5000);
     }
 
-    public enum Input {
+    enum Input {
         VOLTAGE_SINGLE,
         VOLTAGE_DIFFERENCE,
         CURRENT_LOW_IMPEDANCE,
@@ -276,19 +267,12 @@ public abstract class LockIn extends VISADevice {
     /**
      * Enumeration of reference modes
      */
-    public enum RefMode {
+    enum RefMode {
         INTERNAL,
         EXTERNAL
     }
 
-    public enum LineFilter {
-        NONE,
-        X1,
-        X2,
-        X1_X2
-    }
-
-    public enum TrigMode {
+    enum TrigMode {
         SINE,
         POS_TTL,
         NEG_TTL

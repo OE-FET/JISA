@@ -16,6 +16,9 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     private static final int UNITS_NONE       = 3;
     private static final int MODE_CONFIG      = 2;
     private static final int MODE_NORMAL      = 0;
+    private static final int DEC_PLACES_0     = 0;
+    private static final int DEC_PLACES_1     = 1;
+    private static final int DEC_PLACES_2     = 2;
 
     // Auto-zoner
     private Zoner zoner = null;
@@ -70,16 +73,14 @@ public class ET2408 extends ModbusRTUDevice implements TC {
 
         switch (decPlaces.get()) {
 
-            case 0:
-                return 1.0;
+            case 2:
+                return 100.0;
 
             case 1:
                 return 10.0;
 
-            case 2:
-                return 100.0;
-
             default:
+            case 0:
                 return 1.0;
 
         }
@@ -89,6 +90,40 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     @Override
     public double getTemperature() throws IOException {
         return (double) sensor.get() / getScale();
+    }
+
+    @Override
+    public void setTemperatureRange(double range) throws IOException {
+
+        if (range < 100) {
+            decPlaces.set(DEC_PLACES_2);
+        } else if (range < 1000) {
+            decPlaces.set(DEC_PLACES_1);
+        } else {
+            decPlaces.set(DEC_PLACES_0);
+        }
+
+    }
+
+    @Override
+    public double getTemperatureRange() throws IOException {
+
+        switch (decPlaces.get()) {
+
+            case DEC_PLACES_0:
+                return 9999;
+
+            case DEC_PLACES_1:
+                return 999.9;
+
+            case DEC_PLACES_2:
+                return 99.9;
+
+            default:
+                return 0;
+
+        }
+
     }
 
     @Override

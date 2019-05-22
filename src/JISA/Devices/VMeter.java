@@ -74,7 +74,7 @@ public interface VMeter extends Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    boolean isVoltageRangeAuto() throws IOException, DeviceException;
+    boolean isAutoRangingVoltage() throws IOException, DeviceException;
 
     /**
      * Sets the averaging mode used for taking each measurement.

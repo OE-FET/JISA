@@ -477,20 +477,6 @@ public interface MSMOTC extends MSTC {
         }
     }
 
-    /**
-     * Waits for the temperature reported by the sensor used by the specified output/control-loop to remain within
-     * 1% of its target (set-point) temperature for at least 1 minute.
-     *
-     * @param output Output number
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default void waitForStableTemperature(int output) throws IOException, DeviceException, InterruptedException {
-        checkOutput(output);
-        waitForStableTemperature(getUsedSensor(output), getTargetTemperature(output));
-    }
-
     Zoner getZoner(int output);
 
     void setZoner(int output, Zoner zoner);
@@ -588,7 +574,7 @@ public interface MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    default boolean isPIDAuto(int output) throws IOException, DeviceException {
+    default boolean isUsingAutoPID(int output) throws IOException, DeviceException {
         checkOutput(output);
         Zoner zoner = getZoner(output);
         return zoner != null && zoner.isRunning();
@@ -602,8 +588,8 @@ public interface MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    default boolean isPIDAuto() throws IOException, DeviceException {
-        return isPIDAuto(0);
+    default boolean isUsingAutoPID() throws IOException, DeviceException {
+        return isUsingAutoPID(0);
     }
 
     /**
@@ -631,6 +617,16 @@ public interface MSMOTC extends MSTC {
             @Override
             public double getTemperature() throws IOException, DeviceException {
                 return MSMOTC.this.getTemperature(getUsedSensor(output));
+            }
+
+            @Override
+            public void setTemperatureRange(double range) throws IOException, DeviceException {
+                MSMOTC.this.setTemperatureRange(getUsedSensor(output), range);
+            }
+
+            @Override
+            public double getTemperatureRange() throws IOException, DeviceException {
+                return MSMOTC.this.getTemperatureRange(getUsedSensor(output));
             }
 
             @Override
@@ -759,8 +755,8 @@ public interface MSMOTC extends MSTC {
             }
 
             @Override
-            public boolean isPIDAuto() throws IOException, DeviceException {
-                return MSMOTC.this.isPIDAuto(output);
+            public boolean isUsingAutoPID() throws IOException, DeviceException {
+                return MSMOTC.this.isUsingAutoPID(output);
             }
 
         };
