@@ -1,6 +1,7 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import JISA.Addresses.IDAddress;
 import JISA.Enums.Thermocouple;
 import JISA.Util;
 import JISA.VISA.NativeDevice;
@@ -95,10 +96,20 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
-    public USBTC08(String serial) throws IOException, DeviceException {
+    public USBTC08(Address address) throws IOException, DeviceException {
 
         // Load native library
         super(LIBRARY_NAME, LIBRARY_CLASS, INSTANCE);
+
+        if (address.toIDAddress() == null) {
+            throw new DeviceException("This driver requires a serial number address.");
+        }
+
+        String serial = address.toIDAddress().getID();
+
+        if (INSTANCE == null) {
+            throw new IOException("Error loading usbtc08 library!");
+        }
 
         List<USBTC08> found = find();
 
@@ -124,6 +135,10 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         handle = value;
 
+    }
+
+    public USBTC08(String serial) throws IOException, DeviceException {
+        this(new IDAddress(serial));
     }
 
     public String getSerial() throws DeviceException {

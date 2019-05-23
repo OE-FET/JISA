@@ -1,20 +1,20 @@
 package JISA.GUI;
 
 import JISA.Addresses.*;
+import JISA.Addresses.Address.AddressParams;
 import JISA.Control.ConfigStore;
 import JISA.Devices.Instrument;
 import JISA.Devices.SMUCluster;
 import JISA.Util;
 import JISA.VISA.VISADevice;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import org.reflections.Reflections;
 
 import java.io.IOException;
@@ -22,6 +22,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 public class InstrumentConfig<T extends Instrument> extends JFXWindow implements Element {
@@ -53,15 +54,18 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
     public  ImageView                   image;
     public  StackPane                   topPanel;
     public  StackPane                   pane;
+    public  GridPane                    parameters;
     private Class<T>                    deviceType;
-    private ArrayList<Class>            possibleDrivers = new ArrayList<>();
+    private List<Class>                 possibleDrivers   = new ArrayList<>();
+    private List<Class>                 possibleAddresses = new ArrayList<>();
     private Class<? extends VISADevice> driver;
-    private Address                     address         = null;
-    private T                           instrument      = null;
+    private Address                     address           = null;
+    private T                           instrument        = null;
     private String                      realTitle;
-    private ConfigStore                 config          = null;
+    private ConfigStore                 config            = null;
     private String                      key;
-    private LinkedList<Runnable>        onApply         = new LinkedList<>();
+    private List<Runnable>              onApply           = new LinkedList<>();
+    private AddressParams               currentParams     = null;
 
     public static class SMU extends InstrumentConfig<JISA.Devices.SMU> {
 
@@ -83,9 +87,7 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
         this.title.setText(title);
         deviceType = type;
         updateDrivers();
-        protChoice.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            chooseProtocol();
-        });
+        updateProtocols();
         makeRed();
         chooseProtocol();
         config = c;
@@ -95,6 +97,10 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
             config.loadInstrument(key, this);
         }
 
+        protChoice.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+            chooseProtocol();
+        });
+
     }
 
     public void updateDrivers() {
@@ -102,7 +108,7 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
         Reflections reflections = new Reflections("JISA");
         Set         drivers     = reflections.getSubTypesOf(deviceType);
 
-        if (!Modifier.isAbstract(deviceType.getModifiers())) {
+        if (!Modifier.isAbstract(deviceType.getModifiers()) && !Modifier.isInterface(driver.getModifiers())) {
             drivers.add(deviceType);
         }
 
@@ -113,7 +119,7 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
 
         for (Class driver : list) {
 
-            if (Modifier.isAbstract(driver.getModifiers()) || driver.equals(SMUCluster.class) || driver.getSimpleName().toLowerCase().contains("virtual") || driver.getSimpleName().toLowerCase().contains("dummy")) {
+            if (Modifier.isAbstract(driver.getModifiers()) || Modifier.isInterface(driver.getModifiers())  || driver.getSimpleName().trim().equals("") || driver.equals(SMUCluster.class) || driver.getSimpleName().toLowerCase().contains("virtual") || driver.getSimpleName().toLowerCase().contains("dummy")) {
                 continue;
             }
 
@@ -123,6 +129,30 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
 
         protChoice.getSelectionModel().select(0);
         driverChoice.getSelectionModel().select(0);
+
+    }
+
+    public void updateProtocols() {
+
+        Reflections      reflections = new Reflections("JISA");
+        Set              drivers     = reflections.getSubTypesOf(AddressParams.class);
+        ArrayList<Class> list        = new ArrayList<Class>(drivers);
+
+        protChoice.getItems().clear();
+        possibleAddresses.clear();
+
+        for (Class address : list) {
+
+            try {
+                AddressParams instance = (AddressParams) address.newInstance();
+                protChoice.getItems().add(instance.getName());
+                possibleAddresses.add(address);
+            } catch (Exception ignored) {
+            }
+
+        }
+
+        protChoice.getSelectionModel().select(0);
 
     }
 
@@ -141,31 +171,7 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
 
     public void apply() {
 
-        String selected = (String) protChoice.getValue();
-
-        if (selected.equals(CHOICE_GPIB)) {
-            int board = Integer.valueOf(GPIBBoard.getText().trim());
-            int addr  = Integer.valueOf(GPIBAddr.getText().trim());
-            address = new GPIBAddress(board, addr);
-        } else if (selected.equals(CHOICE_USB)) {
-            int    board   = Integer.valueOf(USBBoard.getText().trim());
-            int    vendor  = Integer.decode(USBVendor.getText().trim());
-            int    product = Integer.decode(USBProduct.getText().trim());
-            String SN      = USBSN.getText().trim();
-            address = new USBAddress(board, vendor, product, SN);
-        } else if (selected.equals(CHOICE_TCPIP)) {
-            String host = TCPIPHost.getText().trim();
-            address = new TCPIPAddress(host);
-        } else if (selected.equals(CHOICE_TCPIP_RAW)) {
-            String host = TCPIPHost.getText().trim();
-            int    port = Integer.valueOf(TCPIPPort.getText().trim());
-            address = new TCPIPSocketAddress(host, port);
-        } else if (selected.equals(CHOICE_COM)) {
-            int board = Integer.valueOf(COMPort.getText().trim());
-            address = new SerialAddress(board);
-        } else {
-            return;
-        }
+        address = currentParams.createAddress();
 
         int selectedDriver = driverChoice.getSelectionModel().getSelectedIndex();
         driver = possibleDrivers.get(selectedDriver);
@@ -237,82 +243,70 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
         }
 
         GUI.runNow(() -> {
-            switch (address.getType()) {
 
-                case GPIB:
-                    protChoice.setValue(CHOICE_GPIB);
-                    GPIBAddress gpib = address.toGPIBAddress();
-                    GPIBBoard.setText(String.valueOf(gpib.getBus()));
-                    GPIBAddr.setText(String.valueOf(gpib.getAddress()));
-                    break;
-
-                case USB:
-                    protChoice.setValue(CHOICE_USB);
-                    USBAddress usb = address.toUSBAddress();
-                    USBBoard.setText(Integer.toString(usb.getBoard()));
-                    USBVendor.setText(String.format("0x%04X", usb.getManufacturer()));
-                    USBProduct.setText(String.format("0x%04X", usb.getModel()));
-                    USBSN.setText(usb.getSerialNumber());
-                    break;
-
-                case SERIAL:
-                    protChoice.setValue(CHOICE_COM);
-                    COMPort.setText(String.valueOf(address.toSerialAddress().getBoard()));
-                    break;
-
-                case TCPIP:
-                    protChoice.setValue(CHOICE_TCPIP);
-                    TCPIPHost.setText(address.toTCPIPAddress().getHost());
-                    break;
-
-                case TCPIP_SOCKET:
-                    protChoice.setValue(CHOICE_TCPIP_RAW);
-                    TCPIPSocketAddress socket = address.toTCPIPSocketAddress();
-                    TCPIPHost.setText(socket.getHost());
-                    TCPIPPort.setText(String.valueOf(socket.getPort()));
-                    break;
-
-            }
+            currentParams = address.createParams();
+            int index = possibleAddresses.indexOf(currentParams.getClass());
+            protChoice.getSelectionModel().select(index);
+            createAddressParams();
 
         });
     }
 
+    private void createAddressParams() {
+
+        parameters.getChildren().clear();
+
+        currentParams.forEach((i, n, t) -> {
+
+            int row = (int) i / 2;
+            int col = (int) i % 2;
+
+            Label     name  = new Label((String) n);
+            name.setMinWidth(Region.USE_PREF_SIZE);
+            name.setPadding(new Insets(0, 15, 0, 0));
+            name.setAlignment(Pos.CENTER_RIGHT);
+            TextField field = (boolean) t ? new TextField() : new IntegerField();
+
+            if ((boolean) t) {
+
+                field.setText(currentParams.getString((int) i));
+
+                field.textProperty().addListener((observableValue, s, t1) -> {
+                    currentParams.set((int) i, field.getText());
+                });
+
+            } else {
+
+                field.setText(String.valueOf(currentParams.getInt((int) i)));
+
+                field.textProperty().addListener((observableValue, s, t1) -> {
+                    currentParams.set((int) i, ((IntegerField) field).getIntValue());
+                });
+
+            }
+
+            parameters.add(name,  2 * col, row);
+            parameters.add(field,  2 * col + 1, row);
+
+            GridPane.setHgrow(name, Priority.NEVER);
+            GridPane.setHgrow(field, Priority.ALWAYS);
+            GridPane.setVgrow(name, Priority.NEVER);
+            GridPane.setVgrow(field, Priority.NEVER);
+
+        });
+
+    }
+
     public void chooseProtocol() {
 
-        GPIBRow.setVisible(false);
-        GPIBRow.setManaged(false);
-        TCPIPRow.setVisible(false);
-        TCPIPRow.setManaged(false);
-        TCPIPPort.setVisible(false);
-        TCPIPPort.setManaged(false);
-        TCPIPPortLabel.setVisible(false);
-        TCPIPPortLabel.setManaged(false);
-        USBRow.setVisible(false);
-        USBRow.setManaged(false);
-        COMRow.setVisible(false);
-        COMRow.setManaged(false);
-
-        String selected = (String) protChoice.getValue();
-
-        if (selected.equals(CHOICE_GPIB)) {
-            GPIBRow.setVisible(true);
-            GPIBRow.setManaged(true);
-        } else if (selected.equals(CHOICE_USB)) {
-            USBRow.setVisible(true);
-            USBRow.setManaged(true);
-        } else if (selected.equals(CHOICE_TCPIP)) {
-            TCPIPRow.setVisible(true);
-            TCPIPRow.setManaged(true);
-        } else if (selected.equals(CHOICE_TCPIP_RAW)) {
-            TCPIPRow.setVisible(true);
-            TCPIPRow.setManaged(true);
-            TCPIPPort.setVisible(true);
-            TCPIPPort.setManaged(true);
-            TCPIPPortLabel.setVisible(true);
-            TCPIPPortLabel.setManaged(true);
-        } else if (selected.equals(CHOICE_COM)) {
-            COMRow.setVisible(true);
-            COMRow.setManaged(true);
+        int   selected = protChoice.getSelectionModel().getSelectedIndex();
+        Class type     = possibleAddresses.get(selected);
+        try {
+            currentParams = (AddressParams) type.newInstance();
+            createAddressParams();
+        } catch (Exception e) {
+            GUI.errorAlert(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
+            e.printStackTrace();
         }
 
     }

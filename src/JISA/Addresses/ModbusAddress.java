@@ -22,4 +22,38 @@ public class ModbusAddress implements Address {
         return address;
     }
 
+    public ModbusAddress toModbusAddress() {
+        return this;
+    }
+
+    public AddressParams createParams() {
+
+        AddressParams params = new ModbusParams();
+        params.set(0, port);
+        params.set(1, address);
+
+        return params;
+
+    }
+
+    public static class ModbusParams extends AddressParams<ModbusAddress> {
+
+        public ModbusParams() {
+
+            addParam("Port", false);
+            addParam("Unit", false);
+
+        }
+
+        @Override
+        public ModbusAddress createAddress() {
+            return new ModbusAddress(getInt(0), getInt(1));
+        }
+
+        @Override
+        public String getName() {
+            return "MODBUS";
+        }
+    }
+
 }

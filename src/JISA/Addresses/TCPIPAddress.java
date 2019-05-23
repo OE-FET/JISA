@@ -36,8 +36,38 @@ public class TCPIPAddress implements Address {
         }
     }
 
+    public AddressParams createParams() {
+
+        AddressParams params = new TCPIPParams();
+        params.set(0, board);
+        params.set(1, host);
+
+        return params;
+
+    }
+
     public TCPIPAddress toTCPIPAddress() {
         return this;
+    }
+
+    public static class TCPIPParams extends AddressParams<TCPIPAddress> {
+
+        public TCPIPParams() {
+
+            addParam("Board", false);
+            addParam("Host", true);
+
+        }
+
+        @Override
+        public TCPIPAddress createAddress() {
+            return new TCPIPAddress(getInt(0), getString(1));
+        }
+
+        @Override
+        public String getName() {
+            return "TCP-IP (VXI-11)";
+        }
     }
 
 }

@@ -200,6 +200,20 @@ public class Util {
 
     }
 
+    public static boolean areAnyNull(Object... objects) {
+
+        for (Object o : objects) {
+
+            if (o == null) {
+                return true;
+            }
+
+        }
+
+        return false;
+
+    }
+
     /**
      * Returns an array of Strings specified by the pattern and a counting integer.
      *

@@ -85,4 +85,40 @@ public class USBAddress implements Address {
         return this;
     }
 
+
+
+    public AddressParams createParams() {
+
+        AddressParams params = new USBParams();
+        params.set(0, board);
+        params.set(1, String.format("0x%04X", manufacturer));
+        params.set(2, String.format("0x%04X", model));
+        params.set(3, serialNumber);
+
+        return params;
+
+    }
+
+    public static class USBParams extends AddressParams<USBAddress> {
+
+        public USBParams() {
+
+            addParam("Board", false);
+            addParam("Vendor", true);
+            addParam("Product", true);
+            addParam("Serial", true);
+
+        }
+
+        @Override
+        public USBAddress createAddress() {
+            return new USBAddress(getInt(0), Integer.decode(getString(1)), Integer.decode(getString(2)), getString(3));
+        }
+
+        @Override
+        public String getName() {
+            return "USB-TMC";
+        }
+    }
+
 }

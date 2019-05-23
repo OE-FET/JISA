@@ -1,5 +1,10 @@
 package JISA.Addresses;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,6 +34,8 @@ public interface Address {
             type = Type.TCPIP_SOCKET;
         } else if (parts[0].contains("MODBUS")) {
             type = Type.MODBUS;
+        } else if (parts[0].contains("SNID")) {
+            type = Type.ID;
         }
 
         return type;
@@ -131,6 +138,54 @@ public interface Address {
 
     }
 
+    default IDAddress toIDAddress() {
+
+        Pattern pattern = Pattern.compile("SNID::(.*?)::INSTR");
+        Matcher matcher = pattern.matcher(toString().trim());
+
+        if (matcher.matches()) {
+            String sn = matcher.group(1);
+            return new IDAddress(sn);
+        } else {
+            return null;
+        }
+
+    }
+
+    default AddressParams createParams() {
+
+        switch (getType()) {
+
+            case GPIB:
+                return toGPIBAddress().createParams();
+
+            case USB:
+                return toUSBAddress().createParams();
+
+            case TCPIP:
+                return toTCPIPAddress().createParams();
+
+            case TCPIP_SOCKET:
+                return toTCPIPSocketAddress().createParams();
+
+            case SERIAL:
+                return toSerialAddress().createParams();
+
+            case MODBUS:
+                return toModbusAddress().createParams();
+
+            case ID:
+                return toIDAddress().createParams();
+
+            default:
+            case UNKOWN:
+                StrAddress.StrParams p = new StrAddress.StrParams();
+                p.set(0, toString());
+                return p;
+        }
+
+    }
+
     enum Type {
         GPIB,
         USB,
@@ -138,7 +193,51 @@ public interface Address {
         TCPIP_SOCKET,
         SERIAL,
         MODBUS,
+        ID,
         UNKOWN
+    }
+
+    abstract class AddressParams<I extends Address> {
+
+        private List<String>         names  = new LinkedList<>();
+        private List<Boolean>        texts  = new LinkedList<>();
+        private Map<Integer, Object> values = new HashMap<>();
+
+        protected void addParam(String name, boolean text) {
+            names.add(name);
+            texts.add(text);
+        }
+
+        public void forEach(TriConsumer<Integer, String, Boolean> forEach) {
+
+            for (int i = 0; i < names.size(); i++) {
+                forEach.accept(i, names.get(i), texts.get(i));
+            }
+
+        }
+
+        public abstract I createAddress();
+
+        public abstract String getName();
+
+        public void set(int i, Object val) {
+            values.put(i, val);
+        }
+
+        public String getString(int i) {
+            return (String) values.getOrDefault(i, "");
+        }
+
+        public int getInt(int i) {
+            return (int) values.getOrDefault(i, 0);
+        }
+
+    }
+
+    interface TriConsumer<A, B, C> {
+
+        void accept(A a, B b, C c);
+
     }
 
 }

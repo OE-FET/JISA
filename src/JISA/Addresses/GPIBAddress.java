@@ -31,4 +31,34 @@ public class GPIBAddress implements Address {
         return this;
     }
 
+    public AddressParams createParams() {
+
+        AddressParams params = new GPIBParams();
+        params.set(0, bus);
+        params.set(1, address);
+
+        return params;
+
+    }
+
+    public static class GPIBParams extends AddressParams<GPIBAddress> {
+
+        public GPIBParams() {
+
+            addParam("Board", false);
+            addParam("Address", false);
+
+        }
+
+        @Override
+        public GPIBAddress createAddress() {
+            return new GPIBAddress(getInt(0), getInt(1));
+        }
+
+        @Override
+        public String getName() {
+            return "GPIB";
+        }
+    }
+
 }

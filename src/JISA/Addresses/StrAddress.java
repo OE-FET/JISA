@@ -17,4 +17,23 @@ public class StrAddress implements Address {
         return this;
     }
 
+    public static class StrParams extends AddressParams<StrAddress> {
+
+        public StrParams() {
+
+            addParam("VISA ID", true);
+
+        }
+
+        @Override
+        public StrAddress createAddress() {
+            return new StrAddress(getString(0));
+        }
+
+        @Override
+        public String getName() {
+            return "Custom VISA";
+        }
+    }
+
 }

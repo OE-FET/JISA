@@ -1,8 +1,12 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import org.reflections.Reflections;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Interface for defining the base functionality of all instruments.
