@@ -30,9 +30,7 @@
                         <HBox alignment="CENTER_LEFT" spacing="15.0" VBox.vgrow="NEVER">
                             <children>
                                 <Label alignment="TOP_RIGHT" minWidth="75.0" text="Driver:" HBox.hgrow="NEVER">
-                                    <font>
-                                        <Font size="14.0" />
-                                    </font>
+
                                 </Label>
                         <ChoiceBox fx:id="driverChoice" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
                            <items>
@@ -48,9 +46,7 @@
                         <HBox alignment="CENTER_LEFT" spacing="15.0" VBox.vgrow="NEVER">
                             <children>
                                 <Label alignment="TOP_RIGHT" minWidth="75.0" text="Protocol:" HBox.hgrow="NEVER">
-                                    <font>
-                                        <Font size="14.0" />
-                                    </font>
+
                                 </Label>
                                 <ChoiceBox fx:id="protChoice" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
                                     <items>

@@ -1,12 +1,13 @@
 package JISA.GUI;
 
-import JISA.Addresses.*;
+import JISA.Addresses.Address;
 import JISA.Addresses.Address.AddressParams;
 import JISA.Control.ConfigStore;
 import JISA.Devices.Instrument;
 import JISA.Devices.SMUCluster;
 import JISA.Util;
 import JISA.VISA.VISADevice;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -20,41 +21,22 @@ import org.reflections.Reflections;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class InstrumentConfig<T extends Instrument> extends JFXWindow implements Element {
 
-    public  ChoiceBox                   driverChoice;
-    public  ChoiceBox                   protChoice;
-    public  HBox                        GPIBRow;
-    public  TextField                   GPIBBoard;
-    public  TextField                   GPIBAddr;
-    public  HBox                        TCPIPRow;
-    public  TextField                   TCPIPHost;
-    public  TextField                   TCPIPPort;
-    public  Label                       TCPIPPortLabel;
-    public  VBox                        USBRow;
-    public  TextField                   USBBoard;
-    public  TextField                   USBVendor;
-    public  TextField                   USBProduct;
-    public  TextField                   USBSN;
-    public  HBox                        COMRow;
-    public  TextField                   COMPort;
-    public  Button                      browseButton;
-    public  Button                      applyButton;
-    public  String                      CHOICE_GPIB;
-    public  String                      CHOICE_USB;
-    public  String                      CHOICE_TCPIP;
-    public  String                      CHOICE_TCPIP_RAW;
-    public  String                      CHOICE_COM;
-    public  Label                       title;
-    public  ImageView                   image;
-    public  StackPane                   topPanel;
-    public  StackPane                   pane;
-    public  GridPane                    parameters;
+    // Elements
+    public ChoiceBox driverChoice;
+    public ChoiceBox protChoice;
+    public Button    browseButton;
+    public Button    applyButton;
+    public Label     title;
+    public ImageView image;
+    public StackPane topPanel;
+    public StackPane pane;
+    public GridPane  parameters;
+
+    // Properties
     private Class<T>                    deviceType;
     private List<Class>                 possibleDrivers   = new ArrayList<>();
     private List<Class>                 possibleAddresses = new ArrayList<>();
@@ -114,12 +96,14 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
 
         ArrayList<Class> list = new ArrayList<Class>(drivers);
 
+        list.sort(Comparator.comparing(Class::getSimpleName));
+
         driverChoice.getItems().clear();
         possibleDrivers.clear();
 
         for (Class driver : list) {
 
-            if (Modifier.isAbstract(driver.getModifiers()) || Modifier.isInterface(driver.getModifiers())  || driver.getSimpleName().trim().equals("") || driver.equals(SMUCluster.class) || driver.getSimpleName().toLowerCase().contains("virtual") || driver.getSimpleName().toLowerCase().contains("dummy")) {
+            if (Modifier.isAbstract(driver.getModifiers()) || Modifier.isInterface(driver.getModifiers()) || driver.getSimpleName().trim().equals("") || driver.equals(SMUCluster.class) || driver.getSimpleName().toLowerCase().contains("virtual") || driver.getSimpleName().toLowerCase().contains("dummy")) {
                 continue;
             }
 
@@ -137,6 +121,8 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
         Reflections      reflections = new Reflections("JISA");
         Set              drivers     = reflections.getSubTypesOf(AddressParams.class);
         ArrayList<Class> list        = new ArrayList<Class>(drivers);
+
+        list.sort(Comparator.comparing(Class::getSimpleName));
 
         protChoice.getItems().clear();
         possibleAddresses.clear();
@@ -190,19 +176,35 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
 
     public void connect(boolean message) {
 
+        if (isConnected()) {
+            try {
+                instrument.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         makeAmber();
         try {
+
             Constructor constructor = driver.getConstructor(Address.class);
+
             instrument = (T) constructor.newInstance(address);
+
             makeGreen();
+
         } catch (Throwable e) {
+
             instrument = null;
+
             if (message) {
                 GUI.errorAlert("Connection Error", "Connection Error", e.getCause() == null ? e.getMessage() : e.getCause().getMessage(), 600);
             } else {
                 Util.errLog.println(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
             }
+
             makeRed();
+
         }
 
         for (Runnable r : onApply) {
@@ -261,9 +263,8 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
             int row = (int) i / 2;
             int col = (int) i % 2;
 
-            Label     name  = new Label((String) n);
+            Label name = new Label((String) n);
             name.setMinWidth(Region.USE_PREF_SIZE);
-            name.setPadding(new Insets(0, 15, 0, 0));
             name.setAlignment(Pos.CENTER_RIGHT);
             TextField field = (boolean) t ? new TextField() : new IntegerField();
 
@@ -285,13 +286,15 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
 
             }
 
-            parameters.add(name,  2 * col, row);
-            parameters.add(field,  2 * col + 1, row);
+            parameters.add(name, 2 * col, row);
+            parameters.add(field, 2 * col + 1, row);
 
             GridPane.setHgrow(name, Priority.NEVER);
             GridPane.setHgrow(field, Priority.ALWAYS);
             GridPane.setVgrow(name, Priority.NEVER);
             GridPane.setVgrow(field, Priority.NEVER);
+
+            GridPane.setHalignment(name, HPos.RIGHT);
 
         });
 
