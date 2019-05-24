@@ -50,17 +50,4 @@ public interface Instrument {
 
     }
 
-    /**
-     * Makes sure the connection closes when destroyed.
-     */
-    default void finalise() {
-
-        try {
-            close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
 }

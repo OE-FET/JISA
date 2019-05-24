@@ -1,5 +1,6 @@
 package JISA.GUI;
 
+import JISA.Control.SRunnable;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
@@ -145,6 +146,20 @@ public class JFXWindow implements Element {
             stage.setOnCloseRequest((a) -> {
             });
         }
+
+    }
+
+    public void setOnClose(SRunnable toRun) {
+
+        stage.setOnCloseRequest((a) -> {
+
+            try {
+                toRun.run();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        });
 
     }
 

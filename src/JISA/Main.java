@@ -26,7 +26,7 @@ public class Main {
                 // Ask the user if they want to perform a test
                 int result = GUI.choiceWindow(
                         "JISA",
-                        "JISA Library - William Wood - 2018",
+                        "JISA Library - William Wood - 2018-2019",
                         "What would you like to do?",
                         "Scan for Instruments",
                         "Enter Address Manually",
