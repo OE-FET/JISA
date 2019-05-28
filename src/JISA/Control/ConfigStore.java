@@ -74,16 +74,32 @@ public class ConfigStore {
         return data.getInt(key);
     }
 
+    public int getIntOrDefault(String key, int def) {
+        return has(key) ? getInt(key) : def;
+    }
+
     public double getDouble(String key) {
         return data.getDouble(key);
+    }
+
+    public double getDoubleOrDefault(String key, double def) {
+        return has(key) ? getDouble(key) : def;
     }
 
     public boolean getBoolean(String key) {
         return data.getBoolean(key);
     }
 
+    public boolean getBooleanOrDefault(String key, boolean def) {
+        return has(key) ? getBoolean(key) : def;
+    }
+
     public String getString(String key) {
         return data.getString(key);
+    }
+
+    public String getStringOrDefault(String key, String def) {
+        return has(key) ? getString(key) : def;
     }
 
     public void set(String key, Object value) throws IOException {

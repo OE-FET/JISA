@@ -25,7 +25,11 @@ public class DoubleField extends TextField
 
 
     public double getDoubleValue() {
-        return Double.valueOf(getText());
+        try {
+            return Double.valueOf(getText());
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
 }

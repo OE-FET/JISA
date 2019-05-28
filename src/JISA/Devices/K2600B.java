@@ -6,6 +6,7 @@ import JISA.Enums.AMode;
 import JISA.Enums.Source;
 import JISA.Enums.TType;
 import JISA.Enums.Terminals;
+import JISA.VISA.RawTCPIPDriver;
 import JISA.VISA.VISADevice;
 
 import java.io.IOException;
@@ -70,7 +71,10 @@ public class K2600B extends VISADevice implements MCSMU {
 
     public K2600B(Address address) throws IOException, DeviceException {
 
-        super(address);
+        super(address, RawTCPIPDriver.class);
+        setReadTerminationCharacter(LF_TERMINATOR);
+        setTerminator("\n");
+        setRemoveTerminator("\n");
 
         // TODO: Check that this IDN check actually works
         try {

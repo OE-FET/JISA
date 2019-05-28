@@ -322,7 +322,7 @@ public final class SmartAxis extends ValueAxis<Double> {
 
                 for (double v = lowerBound; v <= upperBound; v += tickUnit) {
 
-                    if ((Math.abs(upperBound - lowerBound) / numTicks) / tickUnit > 2.0 * numTicks) {
+                    if ((Math.abs(upperBound - lowerBound) / tickUnit) > 2.0 * numTicks) {
                         System.err.println("Tick unit too small! This is a bug.");
                         tickValues.add(lowerBound);
                         tickValues.add(upperBound);

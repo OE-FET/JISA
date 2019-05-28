@@ -24,7 +24,11 @@ public class IntegerField extends TextField
 
 
     public int getIntValue() {
-        return Integer.valueOf(getText());
+        try {
+            return Integer.valueOf(getText());
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
 }

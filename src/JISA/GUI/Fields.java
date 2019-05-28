@@ -77,11 +77,13 @@ public class Fields extends JFXWindow implements Element {
                 }
 
                 list = (observable, oldValue, newValue) -> {
-                    try {
-                        onChange.run();
-                    } catch (Exception e) {
-                        Util.exceptionHandler(e);
-                    }
+                    (new Thread( () -> {
+                        try {
+                            onChange.run();
+                        } catch (Exception e) {
+                            Util.exceptionHandler(e);
+                        }
+                    })).start();
                 };
                 field.textProperty().addListener(list);
             }
@@ -171,11 +173,13 @@ public class Fields extends JFXWindow implements Element {
                 }
 
                 list = (observable, oldValue, newValue) -> {
-                    try {
-                        onChange.run();
-                    } catch (Exception e) {
-                        Util.exceptionHandler(e);
-                    }
+                    (new Thread( () -> {
+                        try {
+                            onChange.run();
+                        } catch (Exception e) {
+                            Util.exceptionHandler(e);
+                        }
+                    })).start();
                 };
 
                 field.selectedProperty().addListener(list);
@@ -276,11 +280,13 @@ public class Fields extends JFXWindow implements Element {
                 }
 
                 list = (observable, oldValue, newValue) -> {
-                    try {
-                        onChange.run();
-                    } catch (Exception e) {
-                        Util.exceptionHandler(e);
-                    }
+                    (new Thread( () -> {
+                        try {
+                            onChange.run();
+                        } catch (Exception e) {
+                            Util.exceptionHandler(e);
+                        }
+                    })).start();
                 };
 
                 field.textProperty().addListener(list);
@@ -380,11 +386,13 @@ public class Fields extends JFXWindow implements Element {
                 }
 
                 list = (observable, oldValue, newValue) -> {
-                    try {
-                        onChange.run();
-                    } catch (Exception e) {
-                        Util.exceptionHandler(e);
-                    }
+                    (new Thread( () -> {
+                        try {
+                            onChange.run();
+                        } catch (Exception e) {
+                            Util.exceptionHandler(e);
+                        }
+                    })).start();
                 };
 
                 field.textProperty().addListener(list);
@@ -472,11 +480,13 @@ public class Fields extends JFXWindow implements Element {
                 }
 
                 list = (observable, oldValue, newValue) -> {
-                    try {
-                        onChange.run();
-                    } catch (Exception e) {
-                        Util.exceptionHandler(e);
-                    }
+                    (new Thread(() -> {
+                        try {
+                            onChange.run();
+                        } catch (Exception e) {
+                            Util.exceptionHandler(e);
+                        }
+                    })).start();
                 };
 
                 field.textProperty().addListener(list);
@@ -559,11 +569,13 @@ public class Fields extends JFXWindow implements Element {
             @Override
             public void setOnChange(SRunnable onChange) {
                 field.setOnChange((v) -> {
-                    try {
-                        onChange.run();
-                    } catch (Exception e) {
-                        Util.exceptionHandler(e);
-                    }
+                    (new Thread( () -> {
+                        try {
+                            onChange.run();
+                        } catch (Exception e) {
+                            Util.exceptionHandler(e);
+                        }
+                    })).start();
                 });
             }
 
@@ -652,11 +664,13 @@ public class Fields extends JFXWindow implements Element {
                 }
 
                 list = (observable, oldValue, newValue) -> {
-                    try {
-                        onChange.run();
-                    } catch (Exception e) {
-                        Util.exceptionHandler(e);
-                    }
+                    (new Thread( () -> {
+                        try {
+                            onChange.run();
+                        } catch (Exception e) {
+                            Util.exceptionHandler(e);
+                        }
+                    })).start();
                 };
 
                 field.getSelectionModel().selectedIndexProperty().addListener(list);
