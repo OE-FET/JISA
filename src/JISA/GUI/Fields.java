@@ -5,6 +5,7 @@ import JISA.Control.SRunnable;
 import JISA.Util;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -52,6 +53,7 @@ public class Fields extends JFXWindow implements Element {
         GridPane.setVgrow(field, Priority.NEVER);
         GridPane.setHgrow(label, Priority.NEVER);
         GridPane.setHgrow(field, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
 
         GUI.runNow(() -> list.addRow(rows++, label, field));
 
@@ -147,6 +149,7 @@ public class Fields extends JFXWindow implements Element {
         GridPane.setVgrow(field, Priority.NEVER);
         GridPane.setHgrow(label, Priority.NEVER);
         GridPane.setHgrow(field, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
 
         GUI.runNow(() -> list.addRow(rows++, label, field));
 
@@ -249,6 +252,7 @@ public class Fields extends JFXWindow implements Element {
         GridPane.setVgrow(field, Priority.NEVER);
         GridPane.setHgrow(label, Priority.NEVER);
         GridPane.setHgrow(field, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
 
         HBox inner = new HBox(field, button);
         HBox.setHgrow(field, Priority.ALWAYS);
@@ -356,6 +360,7 @@ public class Fields extends JFXWindow implements Element {
         GridPane.setVgrow(field, Priority.NEVER);
         GridPane.setHgrow(label, Priority.NEVER);
         GridPane.setHgrow(field, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
 
         HBox inner = new HBox(field, button);
         HBox.setHgrow(field, Priority.ALWAYS);
@@ -456,6 +461,7 @@ public class Fields extends JFXWindow implements Element {
         GridPane.setVgrow(field, Priority.NEVER);
         GridPane.setHgrow(label, Priority.NEVER);
         GridPane.setHgrow(field, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
 
         GUI.runNow(() -> list.addRow(rows++, label, field));
 
@@ -549,6 +555,7 @@ public class Fields extends JFXWindow implements Element {
         GridPane.setVgrow(field, Priority.NEVER);
         GridPane.setHgrow(label, Priority.NEVER);
         GridPane.setHgrow(field, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
 
         GUI.runNow(() -> list.addRow(rows++, label, field));
 
@@ -636,6 +643,7 @@ public class Fields extends JFXWindow implements Element {
         GridPane.setVgrow(field, Priority.NEVER);
         GridPane.setHgrow(label, Priority.NEVER);
         GridPane.setHgrow(field, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
 
         GUI.runNow(() -> list.addRow(rows++, label, field));
 

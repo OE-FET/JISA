@@ -18,25 +18,25 @@
     <children>
       <HBox alignment="CENTER_LEFT" layoutX="25.0" layoutY="25.0" spacing="15.0">
          <children>
-            <Label minWidth="100.0" text="Controller" HBox.hgrow="NEVER" />
+            <Label alignment="CENTER_RIGHT" minWidth="100.0" text="Controller" HBox.hgrow="NEVER" />
             <ChoiceBox fx:id="controller" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
          </children>
       </HBox>
         <HBox alignment="CENTER_LEFT" spacing="15.0">
             <children>
-                <Label minWidth="100.0" text="Output" HBox.hgrow="NEVER" />
+                <Label alignment="CENTER_RIGHT" minWidth="100.0" text="Output" HBox.hgrow="NEVER" />
                 <ChoiceBox fx:id="output" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
             </children>
         </HBox>
         <HBox alignment="CENTER_LEFT" spacing="15.0">
             <children>
-                <Label minWidth="100.0" text="Sensor" HBox.hgrow="NEVER" />
+                <Label alignment="CENTER_RIGHT" minWidth="100.0" text="Sensor" HBox.hgrow="NEVER" />
                 <ChoiceBox fx:id="sensor" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
             </children>
         </HBox>
         <HBox alignment="CENTER_LEFT" layoutX="25.0" layoutY="66.0" spacing="15.0">
             <children>
-                <Label minWidth="100.0" text="PID Control" HBox.hgrow="NEVER" />
+                <Label alignment="CENTER_RIGHT" minWidth="100.0" text="PID Control" HBox.hgrow="NEVER" />
                 <ChoiceBox fx:id="pidType" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
                     <items>
                         <FXCollections fx:factory="observableArrayList">
@@ -98,19 +98,19 @@
         </VBox>
         <HBox fx:id="pBox" alignment="CENTER_LEFT" layoutX="25.0" layoutY="107.0" spacing="15.0">
             <children>
-                <Label minWidth="100.0" text="P" HBox.hgrow="NEVER" />
+                <Label alignment="CENTER_RIGHT" minWidth="100.0" text="P" HBox.hgrow="NEVER" />
                 <TextField fx:id="pValue" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
             </children>
         </HBox>
         <HBox fx:id="iBox" alignment="CENTER_LEFT" layoutX="25.0" layoutY="107.0" spacing="15.0">
             <children>
-                <Label minWidth="100.0" text="I" HBox.hgrow="NEVER" />
+                <Label alignment="CENTER_RIGHT" minWidth="100.0" text="I" HBox.hgrow="NEVER" />
                 <TextField fx:id="iValue" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
             </children>
         </HBox>
         <HBox fx:id="dBox" alignment="CENTER_LEFT" layoutX="25.0" layoutY="107.0" spacing="15.0">
             <children>
-                <Label minWidth="100.0" text="D" HBox.hgrow="NEVER" />
+                <Label alignment="CENTER_RIGHT" minWidth="100.0" text="D" HBox.hgrow="NEVER" />
                 <TextField fx:id="dValue" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS" />
             </children>
         </HBox>

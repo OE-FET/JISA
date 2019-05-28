@@ -133,20 +133,20 @@ public class ITC503 extends VISADevice implements MSTC {
     }
 
     @Override
-    public boolean isHeaterAuto() throws IOException {
+    public boolean isUsingAutoHeater() throws IOException {
         return AutoMode.fromInt(getStatus().A).heaterAuto();
     }
 
     @Override
     public void useAutoFlow() throws IOException {
-        AutoMode mode = AutoMode.fromMode(isHeaterAuto(), true);
+        AutoMode mode = AutoMode.fromMode(isUsingAutoHeater(), true);
         query(C_SET_AUTO, mode.toInt());
     }
 
     @Override
     public void setManualFlow(double outputPCT) throws IOException {
         query(C_SET_FLOW, outputPCT);
-        AutoMode mode = AutoMode.fromMode(isHeaterAuto(), false);
+        AutoMode mode = AutoMode.fromMode(isUsingAutoHeater(), false);
         query(C_SET_AUTO, mode.toInt());
     }
 

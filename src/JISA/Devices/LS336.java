@@ -228,7 +228,7 @@ public class LS336 extends VISADevice implements MSMOTC {
     }
 
     @Override
-    public boolean isHeaterAuto(int output) throws IOException, DeviceException {
+    public boolean isUsingAutoHeater(int output) throws IOException, DeviceException {
         checkOutput(output);
         return queryDouble(C_QUERY_M_HEATER, output + 1) == 0;
     }

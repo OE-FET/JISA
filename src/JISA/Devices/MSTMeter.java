@@ -153,4 +153,12 @@ public interface MSTMeter extends TMeter {
         Synch.waitForStableTarget(() -> getTemperature(sensor), temperature, pctMargin, 1000, duration);
     }
 
+    default void checkSensor(int sensor) throws DeviceException, IOException {
+
+        if (!Util.isBetween(sensor, 0, getNumSensors() - 1)) {
+            throw new DeviceException("Sensor number %d does not exist", sensor);
+        }
+
+    }
+
 }

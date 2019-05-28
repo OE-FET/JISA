@@ -211,8 +211,25 @@ public interface MSMOTC extends MSTC {
         return getPValue(0);
     }
 
+    /**
+     * Sets the maximum output power of the heater, as a percentage of its absolute maximum, for the specified output.
+     *
+     * @param output Output number
+     * @param range  Percentage max
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
     void setHeaterRange(int output, double range) throws IOException, DeviceException;
 
+    /**
+     * Sets the maximum output power of the heater, as a percentage of its absolute maximum, for the all outputs.
+     *
+     * @param range Percentage max
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
     default void setHeaterRange(double range) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
             setHeaterRange(onum, range);
@@ -354,7 +371,7 @@ public interface MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    boolean isHeaterAuto(int output) throws IOException, DeviceException;
+    boolean isUsingAutoHeater(int output) throws IOException, DeviceException;
 
     /**
      * Returns whether the controller is automatically controlling the heater output on the default output/control-loop.
@@ -364,8 +381,8 @@ public interface MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    default boolean isHeaterAuto() throws IOException, DeviceException {
-        return isHeaterAuto(0);
+    default boolean isUsingAutoHeater() throws IOException, DeviceException {
+        return isUsingAutoHeater(0);
     }
 
     /**
@@ -593,7 +610,7 @@ public interface MSMOTC extends MSTC {
     }
 
     /**
-     * Returns a virtual TController object to control the specified output/control-loop as if it were a separate
+     * Returns a virtual TC object to control the specified output/control-loop as if it were a separate
      * controller.
      *
      * @param output Output number
@@ -603,11 +620,11 @@ public interface MSMOTC extends MSTC {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    default TC getOutput(int output) throws DeviceException {
+    default MSTC getOutput(int output) throws DeviceException {
 
         checkOutput(output);
 
-        return new TC() {
+        return new MSTC() {
 
             @Override
             public void setTargetTemperature(double temperature) throws IOException, DeviceException {
@@ -615,18 +632,33 @@ public interface MSMOTC extends MSTC {
             }
 
             @Override
-            public double getTemperature() throws IOException, DeviceException {
-                return MSMOTC.this.getTemperature(getUsedSensor(output));
+            public double getTemperature(int sensor) throws IOException, DeviceException {
+                return MSMOTC.this.getTemperature(sensor);
             }
 
             @Override
-            public void setTemperatureRange(double range) throws IOException, DeviceException {
-                MSMOTC.this.setTemperatureRange(getUsedSensor(output), range);
+            public void useSensor(int sensor) throws IOException, DeviceException {
+                MSMOTC.this.useSensor(output, sensor);
             }
 
             @Override
-            public double getTemperatureRange() throws IOException, DeviceException {
-                return MSMOTC.this.getTemperatureRange(getUsedSensor(output));
+            public int getUsedSensor() throws IOException, DeviceException {
+                return MSMOTC.this.getUsedSensor(output);
+            }
+
+            @Override
+            public int getNumSensors() {
+                return MSMOTC.this.getNumSensors();
+            }
+
+            @Override
+            public void setTemperatureRange(int sensor, double range) throws IOException, DeviceException {
+                MSMOTC.this.setTemperatureRange(sensor, range);
+            }
+
+            @Override
+            public double getTemperatureRange(int sensor) throws IOException, DeviceException {
+                return MSMOTC.this.getTemperatureRange(sensor);
             }
 
             @Override
@@ -655,8 +687,8 @@ public interface MSMOTC extends MSTC {
             }
 
             @Override
-            public boolean isHeaterAuto() throws IOException, DeviceException {
-                return MSMOTC.this.isHeaterAuto(output);
+            public boolean isUsingAutoHeater() throws IOException, DeviceException {
+                return MSMOTC.this.isUsingAutoHeater(output);
             }
 
             @Override

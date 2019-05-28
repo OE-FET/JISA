@@ -87,7 +87,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    boolean isHeaterAuto() throws IOException, DeviceException;
+    boolean isUsingAutoHeater() throws IOException, DeviceException;
 
     /**
      * Sets the gas flow to be controlled automatically

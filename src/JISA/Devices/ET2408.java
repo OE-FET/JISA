@@ -153,7 +153,7 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
-    public boolean isHeaterAuto() throws IOException {
+    public boolean isUsingAutoHeater() throws IOException {
         return manual.get() == 0;
     }
 

@@ -1,6 +1,8 @@
 package JISA.Experiment;
 
 import JISA.GUI.Clearable;
+import JISA.Maths.Maths;
+import JISA.Maths.Matrix;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -130,6 +132,18 @@ public abstract class ResultTable implements Iterable<Result> {
 
         for (OnUpdate r : (List<OnUpdate>) onUpdate.clone()) {
             r.run(row);
+        }
+
+    }
+
+    public void addData(Matrix m) {
+
+        if (m.columns() != getNumCols()) {
+            return;
+        }
+
+        for (int i = 0; i < m.rows(); i++) {
+            addData(m.getRowArray(i));
         }
 
     }
@@ -369,7 +383,7 @@ public abstract class ResultTable implements Iterable<Result> {
     }
 
     public Function polyFit(int xData, int yData, Predicate<Result> filter, int degree) {
-        return Maths.polyFit(getXYPoints(xData, yData, filter), degree);
+        return Maths.polyFit(getColumns(filter, xData), getColumns(filter, yData), degree);
     }
 
     public Function polyFit(int xData, int yData, int degree) {
@@ -377,7 +391,7 @@ public abstract class ResultTable implements Iterable<Result> {
     }
 
     public Function fit(int xData, int yData, Predicate<Result> filter, PFunction toFit, double... initialGuess) {
-        return Maths.fit(getXYPoints(xData, yData, filter), toFit, initialGuess);
+        return Maths.fit(getColumns(filter, xData), getColumns(filter, yData), toFit, initialGuess);
     }
 
     public Function fit(int xData, int yData, PFunction toFit, double... initialGuess) {
@@ -408,6 +422,71 @@ public abstract class ResultTable implements Iterable<Result> {
     public interface Evaluable {
 
         double evaluate(Result r);
+
+    }
+
+    public Matrix asMatrix() {
+
+        Matrix result = new Matrix(getNumRows(), getNumCols());
+
+        for (int i = 0; i < getNumRows(); i++) {
+
+            Result r = getRow(i);
+
+            for (int j = 0; j < getNumCols(); j++) {
+
+                result.set(i, j, r.get(j));
+
+            }
+
+        }
+
+        return result;
+
+    }
+
+    public Matrix getColumns(int... columns) {
+        return getColumns((r) -> true, columns);
+    }
+
+    public Matrix getColumns(Predicate<Result> filter, int... columns) {
+
+        Matrix result = new Matrix(getNumRows(), columns.length);
+
+        int i = 0;
+        for (Result r : this) {
+
+            if (filter.test(r)) {
+
+                for (int j = 0; j < columns.length; j++) {
+                    result.set(i, j, r.get(columns[j]));
+                }
+
+                i++;
+
+            }
+
+        }
+
+        return result.subMatrix(0, 0, i, columns.length);
+
+    }
+
+    public Matrix getRows(int... rows) {
+
+        Matrix result = new Matrix(rows.length, getNumCols());
+
+        for (int i = 0; i < rows.length; i++) {
+
+            Result r = getRow(rows[i]);
+
+            for (int j = 0; j < getNumCols(); j++) {
+                result.set(i, j, r.get(j));
+            }
+
+        }
+
+        return result;
 
     }
 

@@ -65,8 +65,6 @@ public abstract class NativeDevice<I extends Library> implements Instrument {
     @Override
     public abstract void close() throws IOException, DeviceException;
 
-
-
     public void finalize() {
 
         try {

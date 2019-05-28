@@ -3,7 +3,6 @@ package JISA.Devices;
 import JISA.Addresses.Address;
 import JISA.Addresses.IDAddress;
 import JISA.Enums.Thermocouple;
-import JISA.Util;
 import JISA.VISA.NativeDevice;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
@@ -155,7 +154,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     @Override
-    public double getTemperature(int sensor) throws DeviceException {
+    public double getTemperature(int sensor) throws DeviceException, IOException {
 
         checkSensor(sensor);
 
@@ -206,7 +205,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     @Override
-    public void setTemperatureRange(int sensor, double range) throws DeviceException {
+    public void setTemperatureRange(int sensor, double range) throws DeviceException, IOException {
         checkSensor(sensor);
         // No ranging options
     }
@@ -224,7 +223,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      *
      * @throws DeviceException Upon device error
      */
-    public void setSensorType(int sensor, Thermocouple type) throws DeviceException {
+    public void setSensorType(int sensor, Thermocouple type) throws DeviceException, IOException {
 
         checkSensor(sensor);
 
@@ -238,7 +237,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
-    public Thermocouple getSensorType(int sensor) throws DeviceException {
+    public Thermocouple getSensorType(int sensor) throws DeviceException, IOException {
 
         checkSensor(sensor);
         return types[sensor];
@@ -283,14 +282,6 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     @Override
     public Address getAddress() {
         return null;
-    }
-
-    private void checkSensor(int sensor) throws DeviceException {
-
-        if (!Util.isBetween(sensor, 0, getNumSensors() - 1)) {
-            throw new DeviceException("Sensor number %d does not exist", sensor);
-        }
-
     }
 
     private String getLastError(short handle) {

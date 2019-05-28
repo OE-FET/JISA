@@ -334,13 +334,13 @@ extends <a href="../../JISA/Devices/MSTController.html" title="class in JISA.Dev
 </tr>
 <tr id="i20" class="altColor">
 <td class="colFirst"><code>boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../JISA/Devices/MSMOTController.html#isHeaterAuto--">isHeaterAuto</a></span>()</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../JISA/Devices/MSMOTController.html#isUsingAutoHeater--">isUsingAutoHeater</a></span>()</code>
 <div class="block">Returns whether the controller is automatically controlling the heater output on the default output/control-loop.</div>
 </td>
 </tr>
 <tr id="i21" class="rowColor">
 <td class="colFirst"><code>abstract boolean</code></td>
-<td class="colLast"><code><span class="memberNameLink"><a href="../../JISA/Devices/MSMOTController.html#isHeaterAuto-int-">isHeaterAuto</a></span>(int&nbsp;output)</code>
+<td class="colLast"><code><span class="memberNameLink"><a href="../../JISA/Devices/MSMOTController.html#isUsingAutoHeater-int-">isUsingAutoHeater</a></span>(int&nbsp;output)</code>
 <div class="block">Returns whether the controller is automatically controlling the heater output on the given output/control-loop.</div>
 </td>
 </tr>
@@ -1166,13 +1166,13 @@ extends <a href="../../JISA/Devices/MSTController.html" title="class in JISA.Dev
 </dl>
 </li>
 </ul>
-<a name="isHeaterAuto-int-">
+<a name="isUsingAutoHeater-int-">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>isHeaterAuto</h4>
-<pre>public abstract&nbsp;boolean&nbsp;isHeaterAuto(int&nbsp;output)
+<h4>isUsingAutoHeater</h4>
+<pre>public abstract&nbsp;boolean&nbsp;isUsingAutoHeater(int&nbsp;output)
                               throws java.io.IOException,
                                      <a href="../../JISA/Devices/DeviceException.html" title="class in JISA.Devices">DeviceException</a></pre>
 <div class="block">Returns whether the controller is automatically controlling the heater output on the given output/control-loop.</div>
@@ -1187,19 +1187,19 @@ extends <a href="../../JISA/Devices/MSTController.html" title="class in JISA.Dev
 </dl>
 </li>
 </ul>
-<a name="isHeaterAuto--">
+<a name="isUsingAutoHeater--">
 <!--   -->
 </a>
 <ul class="blockList">
 <li class="blockList">
-<h4>isHeaterAuto</h4>
-<pre>public&nbsp;boolean&nbsp;isHeaterAuto()
+<h4>isUsingAutoHeater</h4>
+<pre>public&nbsp;boolean&nbsp;isUsingAutoHeater()
                      throws java.io.IOException,
                             <a href="../../JISA/Devices/DeviceException.html" title="class in JISA.Devices">DeviceException</a></pre>
 <div class="block">Returns whether the controller is automatically controlling the heater output on the default output/control-loop.</div>
 <dl>
 <dt><span class="overrideSpecifyLabel">Specified by:</span></dt>
-<dd><code><a href="../../JISA/Devices/TController.html#isHeaterAuto--">isHeaterAuto</a></code>&nbsp;in class&nbsp;<code><a href="../../JISA/Devices/TController.html" title="class in JISA.Devices">TController</a></code></dd>
+<dd><code><a href="../../JISA/Devices/TController.html#isUsingAutoHeater--">isUsingAutoHeater</a></code>&nbsp;in class&nbsp;<code><a href="../../JISA/Devices/TController.html" title="class in JISA.Devices">TController</a></code></dd>
 <dt><span class="returnLabel">Returns:</span></dt>
 <dd>Automatic?</dd>
 <dt><span class="throwsLabel">Throws:</span></dt>

@@ -12,3 +12,15 @@
     -fx-background-insets: 0, 0, 1 1 1 1;
     -fx-background-radius: 3 3 3 3, 3 3 3 3, 2 2 2 2;
 }
+
+.double-input:disabled {
+    -fx-opacity: 0.4;
+}
+
+.text-input:disabled {
+    -fx-opacity: 1!important;
+}
+
+.label:disabled {
+    -fx-opacity: 1!important;
+}
