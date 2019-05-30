@@ -24,7 +24,7 @@ smu2.turnOn()
 ```kotlin
 val results = ResultList("Voltage", "Current", "Temperature")
 
-for (i in 1..10) {
+repeat(10) {
     results.addData(smu.getVoltage(), smu.getCurrent(), tc.getTemperature())
 }
 
