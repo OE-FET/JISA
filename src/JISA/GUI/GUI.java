@@ -14,6 +14,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -196,6 +197,24 @@ public class GUI extends Application {
         GUI.runNow(() -> {
             FileChooser chooser = new FileChooser();
             file.set(chooser.showSaveDialog(new Stage()));
+        });
+
+        return (file.get() == null ? null : file.get().getAbsolutePath());
+
+    }
+
+    /**
+     * Opens a file-select dialogue box for choosing a file path to write to.
+     *
+     * @return Selected file path, null if cancelled
+     */
+    public static String directorySelect() {
+
+        AtomicReference<File> file = new AtomicReference<>();
+
+        GUI.runNow(() -> {
+            DirectoryChooser chooser = new DirectoryChooser();
+            file.set(chooser.showDialog(new Stage()));
         });
 
         return (file.get() == null ? null : file.get().getAbsolutePath());

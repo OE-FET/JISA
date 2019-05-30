@@ -331,6 +331,100 @@ public class Fields extends JFXWindow implements Element {
         return addFileSave(name, "");
     }
 
+    public Field<String> addDirectorySelect(String name, String initialValue) {
+
+        HBox box = new HBox();
+        box.setSpacing(15);
+        box.setAlignment(Pos.CENTER_LEFT);
+
+        TextField field = new TextField(initialValue);
+        Label     label = new Label(name);
+        label.setMinWidth(Region.USE_PREF_SIZE);
+        Button button = new Button("Browse...");
+        button.setMinWidth(Region.USE_PREF_SIZE);
+        button.setOnAction(actionEvent -> {
+            String file = GUI.directorySelect();
+            if (file != null) {
+                field.setText(file);
+            }
+        });
+        field.setMaxWidth(Integer.MAX_VALUE);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(field, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(field, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
+
+        HBox inner = new HBox(field, button);
+        HBox.setHgrow(field, Priority.ALWAYS);
+        HBox.setHgrow(button, Priority.NEVER);
+        inner.setSpacing(15);
+
+        GUI.runNow(() -> list.addRow(rows++, label, inner));
+
+
+        Field<String> f = new Field<String>() {
+
+            private ChangeListener<String> list = null;
+
+            @Override
+            public void set(String value) {
+                field.setText(value);
+            }
+
+            @Override
+            public String get() {
+                return field.getText();
+            }
+
+            @Override
+            public void setOnChange(SRunnable onChange) {
+
+                if (list != null) {
+                    field.textProperty().removeListener(list);
+                }
+
+                list = (observable, oldValue, newValue) -> {
+                    (new Thread( () -> {
+                        try {
+                            onChange.run();
+                        } catch (Exception e) {
+                            Util.exceptionHandler(e);
+                        }
+                    })).start();
+                };
+
+                field.textProperty().addListener(list);
+            }
+
+            @Override
+            public void editValues(String... values) {
+
+            }
+
+            @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
+            }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+                field.setDisable(disabled);
+                button.setDisable(disabled);
+            }
+
+
+        };
+
+        fields.add(f);
+        return f;
+
+    }
+
+    public Field<String> addDirectorySelect(String name) {
+        return addDirectorySelect(name, "");
+    }
+
     /**
      * Adds a text-box with a "browse" button for selecting a file for opening.
      *

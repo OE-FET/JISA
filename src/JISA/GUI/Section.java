@@ -31,7 +31,7 @@ public class Section extends JFXWindow implements NotBordered {
         if (e == null) {
             clear();
         } else {
-            titled.setContent(e.getPane());
+            titled.setContent(e instanceof NotBordered ? ((NotBordered) e).getNoBorderPane() : e.getPane());
         }
 
     }
