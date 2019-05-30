@@ -6,55 +6,56 @@
 
 In essence then, the purpose of `JISA` is to act as an alternative (and actually decent) means of creating experimental control systems. It comprises, largely, of three sections:
 ### 1. Standardised Instrument Control
-```java
-SMU smu1 = new K2560(new TCPIPAddress("192.168.0.2")); // Keithley 2450
-SMU smu2 = new K236(new GPIBAdrress(0,17));            // Keithley 236
+```kotlin
+val smu1 = K2560( TCPIPAddress("192.168.0.2") )  // Keithley 2450
+val smu2 = K236( GPIBAdrress(0,17) )             // Keithley 236
 
-smu1.useAutoRanges();
-smu1.setCurrentLimit(10e-3);
-smu1.setVoltage(5.0);
-smu1.turnOn();
+smu1.useAutoRanges()
+smu1.setCurrentLimit(10e-3)
+smu1.setVoltage(5.0)
+smu1.turnOn()
 
-smu2.useAutoRanges();          // Same code, despite different SMU
-smu2.setCurrentLimit(10e-3);
-smu2.setVoltage(5.0); 
-smu2.turnOn();
+smu2.useAutoRanges()           // Same code, despite different SMU
+smu2.setCurrentLimit(10e-3)
+smu2.setVoltage(5.0)
+smu2.turnOn()
 ```
 ### 2. Data Handling
-```java
-ResultList results = new ResultList("Voltage", "Current", "Temperature");
+```kotlin
+val results = ResultList("Voltage", "Current", "Temperature")
 
-for (int i = 0; i < 10; i++) {
-    results.addData(smu.getVoltage(), smu.getCurrent(), tc.getTemperature());
+for (i in 1..10) {
+    results.addData(smu.getVoltage(), smu.getCurrent(), tc.getTemperature())
 }
 
-results.output("data.csv"); // Easy output as CSV file
+results.output("data.csv")  // Easy output as CSV file
 ```
 ### 3. GUI Building Blocks
-```java
-Fields params = new Fields("Parameters");
+```kotlin
+val params = Fields("Parameters")
 
-Field<Double>  minV = params.addDoubleField("Min V [V]", 0.0);
-Field<Double>  maxV = params.addDoubleField("Max V [V]", 60.0);
-Field<Integer> numV = params.addIntegerField("No. Steps", 61);
+val minV = params.addDoubleField("Min V [V]", 0.0)
+val maxV = params.addDoubleField("Max V [V]", 60.0)
+val numV = params.addIntegerField("No. Steps", 61)
 
-Plot plot = new Plot("Results", "Voltage", "Current");
+val plot = Plot("Results", "Voltage", "Current")
 
-Grid grid = new Grid("Main Window", params, plot);
+val grid = Grid("Main Window", params, plot)
 
-grid.addToolbarButton("Start Sweep", () -> {
+grid.addToolbarButton("Start Sweep") {
 
-    double[] voltages = Util.makeLinearArray(
-        minV.get(),
-        maxV.get(),
-        numV.get()
-    ); // Makes array starting at minV, ending at maxV in numV steps
+    // Makes array starting at minV, ending at maxV in numV steps
+    val voltages = Util.makeLinearArray(
+        minV.get(),   // Start at
+        maxV.get(),   // End at
+        numV.get()    // No. steps
+    )   
     
     // Code to run sweep
     
-});
+}
 
-grid.show();
+grid.show()
 ```
 ![](https://i.imgur.com/afQsknr.png)
 
