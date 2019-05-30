@@ -7,6 +7,7 @@
 In essence then, the purpose of `JISA` is to act as an alternative (and actually decent) means of creating experimental control systems. It comprises, largely, of three sections:
 ### 1. Standardised Instrument Control
 ```kotlin
+// Connect to instruments
 val smu1 = K2560( TCPIPAddress("192.168.0.2") )  // Keithley 2450
 val smu2 = K236( GPIBAdrress(0,17) )             // Keithley 236
 
@@ -22,26 +23,34 @@ smu2.turnOn()
 ```
 ### 2. Data Handling
 ```kotlin
+// Create results storage
 val results = ResultList("Voltage", "Current", "Temperature")
 
+// Take 10 readings
 repeat(10) {
     results.addData(smu.getVoltage(), smu.getCurrent(), tc.getTemperature())
 }
 
-results.output("data.csv")  // Easy output as CSV file
+// Easy output as CSV file
+results.output("data.csv")  
 ```
 ### 3. GUI Building Blocks
 ```kotlin
+// Create user-input panel
 val params = Fields("Parameters")
 
+// Add input fields to it
 val minV = params.addDoubleField("Min V [V]", 0.0)
 val maxV = params.addDoubleField("Max V [V]", 60.0)
 val numV = params.addIntegerField("No. Steps", 61)
 
+// Create plot
 val plot = Plot("Results", "Voltage", "Current")
 
+// Add panel and plot to a grid
 val grid = Grid("Main Window", params, plot)
 
+// Add start button to toolbar
 grid.addToolbarButton("Start Sweep") {
 
     // Makes array starting at minV, ending at maxV in numV steps
@@ -55,6 +64,7 @@ grid.addToolbarButton("Start Sweep") {
     
 }
 
+// Show the grid in a window
 grid.show()
 ```
 ![](https://i.imgur.com/afQsknr.png)
