@@ -8,8 +8,8 @@
 <BorderPane fx:id="border" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
 
     <center>
-        <ScrollPane fx:id="scroll" fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: transparent;">
-            <GridPane fx:id="pane" alignment="CENTER" hgap="15.0" vgap="15.0" BorderPane.alignment="CENTER">
+        <ScrollPane fx:id="scroll" fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" style="-fx-background-color: transparent; -fx-background: transparent;">
+            <GridPane fx:id="pane" alignment="CENTER" hgap="15.0" style="-fx-background-color: transparent;" vgap="15.0" BorderPane.alignment="CENTER">
                 <padding>
                     <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
                 </padding>

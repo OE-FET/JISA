@@ -3,6 +3,7 @@ package JISA.Maths;
 import JISA.Util;
 
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Matrix implements Iterable<Double> {
 
@@ -171,6 +172,42 @@ public class Matrix implements Iterable<Double> {
             throw new IllegalArgumentException("Matrix dimensions must match!");
 
         }
+
+    }
+
+    public Matrix add(Number scalar) {
+
+        Matrix result = new Matrix(rows(), columns());
+
+        forEach((i, j, v) -> result.set(i, j, v + scalar.doubleValue()));
+
+        return result;
+
+    }
+
+    public Matrix subtract(Number scalar) {
+
+        Matrix result = new Matrix(rows(), columns());
+
+        forEach((i, j, v) -> result.set(i, j, v - scalar.doubleValue()));
+
+        return result;
+
+    }
+
+    public double maxElement() {
+
+        AtomicReference<Double> max = new AtomicReference<>(Double.NEGATIVE_INFINITY);
+        forEach(v -> max.set(Math.max(v, max.get())));
+        return max.get();
+
+    }
+
+    public double minElement() {
+
+        AtomicReference<Double> min = new AtomicReference<>(Double.POSITIVE_INFINITY);
+        forEach(v -> min.set(Math.min(v, min.get())));
+        return min.get();
 
     }
 

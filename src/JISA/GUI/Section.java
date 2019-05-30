@@ -1,14 +1,25 @@
 package JISA.GUI;
 
 import javafx.scene.control.TitledPane;
+import javafx.scene.layout.Pane;
 
-public class Section extends JFXWindow {
+public class Section extends JFXWindow implements NotBordered {
 
-    public TitledPane pane;
+    public Pane       pane;
+    public TitledPane titled;
 
     public Section(String title, Element element) {
         super(title, Section.class.getResource("FXML/Section.fxml"));
         setElement(element);
+        setTitle(title);
+    }
+
+    public void setTitle(String title) {
+        titled.setText(title);
+    }
+
+    public String getTitle() {
+        return titled.getText();
     }
 
     public Section(String title) {
@@ -16,11 +27,21 @@ public class Section extends JFXWindow {
     }
 
     public void setElement(Element e) {
-        pane.setContent(e.getPane());
+
+        if (e == null) {
+            clear();
+        } else {
+            titled.setContent(e.getPane());
+        }
+
     }
 
     public void clear() {
-        pane.setContent(null);
+        titled.setContent(null);
     }
 
+    @Override
+    public Pane getNoBorderPane() {
+        return getPane();
+    }
 }

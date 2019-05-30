@@ -10,12 +10,10 @@ import JISA.VISA.VISADevice;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import org.reflections.Reflections;
 
 import java.io.IOException;
@@ -26,15 +24,14 @@ import java.util.*;
 public class InstrumentConfig<T extends Instrument> extends JFXWindow implements Element {
 
     // Elements
-    public ChoiceBox driverChoice;
-    public ChoiceBox protChoice;
-    public Button    browseButton;
-    public Button    applyButton;
-    public Label     title;
-    public ImageView image;
-    public StackPane topPanel;
-    public StackPane pane;
-    public GridPane  parameters;
+    public ChoiceBox  driverChoice;
+    public ChoiceBox  protChoice;
+    public Button     browseButton;
+    public Button     applyButton;
+    public TitledPane titled;
+    public ImageView  image;
+    public StackPane  pane;
+    public GridPane   parameters;
 
     // Properties
     private Class<T>                    deviceType;
@@ -66,7 +63,7 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
     public InstrumentConfig(String title, String key, Class<T> type, ConfigStore c) throws IOException {
         super(title, "FXML/InstrumentConfig.fxml");
         realTitle = title;
-        this.title.setText(title);
+        this.titled.setText(title);
         deviceType = type;
         updateDrivers();
         updateProtocols();
@@ -219,22 +216,31 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
 
     private void makeRed() {
         GUI.runNow(() -> {
-            topPanel.setStyle("-fx-background-color: brown; -fx-background-radius: 5px 5px 0 0;");
-            title.setText(realTitle);
+            titled.applyCss();
+            titled.layout();
+            titled.lookup(".title").setStyle("-fx-background-color: brown; -fx-background-radius: 5px 5px 0 0; -fx-text-fill: white;");
+            titled.setTextFill(Color.WHITE);
+            titled.setText(realTitle);
         });
     }
 
     private void makeAmber() {
         GUI.runNow(() -> {
-            topPanel.setStyle("-fx-background-color: #D9A200; -fx-background-radius: 5px 5px 0 0;");
-            title.setText(realTitle + " (Connecting...)");
+            titled.applyCss();
+            titled.layout();
+            titled.lookup(".title").setStyle("-fx-background-color: #D9A200; -fx-background-radius: 5px 5px 0 0; -fx-text-fill: white;");
+            titled.setTextFill(Color.WHITE);
+            titled.setText(realTitle + " (Connecting...)");
         });
     }
 
     private void makeGreen() {
         GUI.runNow(() -> {
-            topPanel.setStyle("-fx-background-color: teal; -fx-background-radius: 5px 5px 0 0;");
-            title.setText(realTitle);
+            titled.applyCss();
+            titled.layout();
+            titled.lookup(".title").setStyle("-fx-background-color: teal; -fx-background-radius: 5px 5px 0 0;");
+            titled.setTextFill(Color.WHITE);
+            titled.setText(realTitle);
         });
     }
 

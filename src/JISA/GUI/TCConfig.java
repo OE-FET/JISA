@@ -6,6 +6,7 @@ import JISA.Devices.MSMOTC;
 import JISA.Devices.MSTC;
 import JISA.Devices.TC;
 import JISA.Util;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
@@ -19,26 +20,30 @@ import java.io.IOException;
 
 public class TCConfig extends JFXWindow {
 
-    public ChoiceBox<String>            controller;
-    public ChoiceBox<String>            output;
-    public ChoiceBox<String>            sensor;
-    public ChoiceBox<String>            pidType;
-    public VBox                         autoPID;
-    public HBox                         pBox;
-    public HBox                         iBox;
-    public HBox                         dBox;
-    public TableView<ZoneRow>           table;
-    public Button                       remove;
-    public TableColumn<ZoneRow, Double> minCol;
-    public TableColumn<ZoneRow, Double> maxCol;
-    public TableColumn<ZoneRow, Double> pCol;
-    public TableColumn<ZoneRow, Double> iCol;
-    public TableColumn<ZoneRow, Double> dCol;
-    public TableColumn<ZoneRow, Double> rangeCol;
-    public TableColumn<ZoneRow, Double> heatCol;
-    public TextField                    pValue;
-    public TextField                    iValue;
-    public TextField                    dValue;
+    public  ChoiceBox<String>              controller;
+    public  ChoiceBox<String>              output;
+    public  ChoiceBox<String>              sensor;
+    public  ChoiceBox<String>              pidType;
+    public  VBox                           autoPID;
+    public  HBox                           pBox;
+    public  HBox                           iBox;
+    public  HBox                           dBox;
+    public  TableView<ZoneRow>             table;
+    public  Button                         remove;
+    public  TableColumn<ZoneRow, Double>   minCol;
+    public  TableColumn<ZoneRow, Double>   maxCol;
+    public  TableColumn<ZoneRow, Double>   pCol;
+    public  TableColumn<ZoneRow, Double>   iCol;
+    public  TableColumn<ZoneRow, Double>   dCol;
+    public  TableColumn<ZoneRow, Double>   rangeCol;
+    public  TableColumn<ZoneRow, Double>   heatCol;
+    public  TextField                      pValue;
+    public  TextField                      iValue;
+    public  TextField                      dValue;
+    private ChangeListener<? super Number> coList;
+    private ChangeListener<? super Number> chList = (a, b, c) -> update(false);
+    private ChangeListener<? super Number> ouList = (a, b, c) -> update(false);
+    private ChangeListener<? super Number> tyList = (a, b, c) -> typeChange();
 
     private final InstrumentConfig<TC>[] instruments;
 
@@ -84,13 +89,15 @@ public class TCConfig extends JFXWindow {
             names[i] = instruments[i].getTitle();
         }
 
-        controller.getItems().addAll(names);
-        controller.getSelectionModel().select(0);
+        GUI.runNow(() -> {
+            controller.getItems().addAll(names);
+            controller.getSelectionModel().select(0);
+        });
 
         table.setEditable(true);
         table.getSelectionModel().setCellSelectionEnabled(true);
 
-        pidType.getSelectionModel().selectedIndexProperty().addListener(ae -> typeChange());
+        pidType.getSelectionModel().selectedIndexProperty().addListener(tyList);
         pidType.getSelectionModel().select(CHOICE_SINGLE);
         pValue.setText("20.0");
         iValue.setText("10.0");
@@ -141,13 +148,17 @@ public class TCConfig extends JFXWindow {
         for (InstrumentConfig<TC> config : instruments) {
             config.setOnConnect(() -> update(true));
         }
-        update(true);
 
-        controller.getSelectionModel().selectedIndexProperty().addListener(event -> update(false));
+        coList = (a, b, c) -> update(false);
+        controller.getSelectionModel().selectedIndexProperty().addListener(coList);
+
+        update(true);
 
     }
 
     private synchronized void update(boolean connect) {
+
+        setListeners(false);
 
         int index = controller.getSelectionModel().getSelectedIndex();
 
@@ -158,9 +169,12 @@ public class TCConfig extends JFXWindow {
                 names[i] = String.format("%s (%s)", instruments[i].getTitle(), instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED");
             }
 
-            controller.getItems().clear();
-            controller.getItems().addAll(names);
-            controller.getSelectionModel().select(index);
+            GUI.runNow(() -> {
+                controller.getItems().clear();
+                controller.getItems().addAll(names);
+                controller.getSelectionModel().select(index);
+            });
+
         }
 
         TC controller;
@@ -176,37 +190,51 @@ public class TCConfig extends JFXWindow {
 
         if (controller == null) {
 
-            output.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, 4, "Output %d")));
-            sensor.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, 4, "Sensor %d")));
-            output.getSelectionModel().select(Math.min(o, 3));
-            sensor.getSelectionModel().select(Math.min(s, 3));
+            GUI.runNow(() -> {
+                output.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, 4, "Output %d")));
+                sensor.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, 4, "Sensor %d")));
+                output.getSelectionModel().select(Math.min(o, 3));
+                sensor.getSelectionModel().select(Math.min(s, 3));
+            });
 
         } else if (controller instanceof MSMOTC) {
 
             int nO = ((MSMOTC) controller).getNumOutputs();
             int nS = ((MSMOTC) controller).getNumSensors();
-            output.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nO, "Output %d")));
-            sensor.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nS, "Sensor %d")));
-            output.getSelectionModel().select(Math.min(o, nO-1));
-            sensor.getSelectionModel().select(Math.min(s, nS-1));
+
+            GUI.runNow(() -> {
+                output.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nO, "Output %d")));
+                sensor.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nS, "Sensor %d")));
+                output.getSelectionModel().select(Math.min(o, nO - 1));
+                sensor.getSelectionModel().select(Math.min(s, nS - 1));
+            });
 
         } else if (controller instanceof MSTC) {
 
             int nS = ((MSTC) controller).getNumSensors();
-            output.setItems(FXCollections.observableArrayList("N/A"));
-            sensor.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nS, "Sensor %d")));
-            output.getSelectionModel().select(0);
-            sensor.getSelectionModel().select(Math.min(s, nS-1));
+
+            GUI.runNow(() -> {
+                output.setItems(FXCollections.observableArrayList("N/A"));
+                sensor.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nS, "Sensor %d")));
+                output.getSelectionModel().select(0);
+                sensor.getSelectionModel().select(Math.min(s, nS - 1));
+            });
 
         } else {
 
-            output.setItems(FXCollections.observableArrayList("N/A"));
-            sensor.setItems(FXCollections.observableArrayList("N/A"));
+            GUI.runNow(() -> {
+                output.setItems(FXCollections.observableArrayList("N/A"));
+                sensor.setItems(FXCollections.observableArrayList("N/A"));
 
-            output.getSelectionModel().select(0);
-            sensor.getSelectionModel().select(0);
+                output.getSelectionModel().select(0);
+                sensor.getSelectionModel().select(0);
+            });
 
         }
+
+
+        setListeners(true);
+
 
     }
 
@@ -376,7 +404,26 @@ public class TCConfig extends JFXWindow {
 
     }
 
+    private void setListeners(boolean flag) {
+
+        if (flag) {
+            controller.getSelectionModel().selectedIndexProperty().addListener(coList);
+            pidType.getSelectionModel().selectedIndexProperty().addListener(tyList);
+        } else {
+            controller.getSelectionModel().selectedIndexProperty().removeListener(coList);
+            pidType.getSelectionModel().selectedIndexProperty().removeListener(tyList);
+        }
+
+    }
+
     private void load() {
+
+        controller.getSelectionModel().selectedIndexProperty().removeListener(coList);
+
+        coList = (a, b, c) -> {
+            update(false);
+            save();
+        };
 
         if (data == null) {
             data = config.getInstConfig(key);
@@ -414,10 +461,7 @@ public class TCConfig extends JFXWindow {
         pValue.textProperty().addListener(event -> save());
         iValue.textProperty().addListener(event -> save());
         dValue.textProperty().addListener(event -> save());
-        controller.getSelectionModel().selectedIndexProperty().addListener(event -> {
-            update(false);
-            save();
-        });
+        controller.getSelectionModel().selectedIndexProperty().addListener(coList);
 
     }
 

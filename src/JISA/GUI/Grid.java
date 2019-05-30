@@ -1,23 +1,23 @@
 package JISA.GUI;
 
 import javafx.application.Platform;
+import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.VPos;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.ToolBar;
+import javafx.scene.control.*;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import org.python.antlr.op.Not;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Grid extends JFXWindow implements Element, Container {
+public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
     private static final int DEFAULT_NUM_COLS = 3;
 
@@ -86,32 +86,24 @@ public class Grid extends JFXWindow implements Element, Container {
 
         Pane bPane;
 
-        if (toAdd instanceof Grid) {
-            ((Grid) toAdd).pane.setPadding(new Insets(0, 0, 0, 0));
-            bPane = ((Grid) toAdd).pane;
+        if (toAdd instanceof NotBordered) {
+            bPane = ((NotBordered) toAdd).getNoBorderPane();
         } else if (toAdd instanceof InstrumentConfig) {
             bPane = ((InstrumentConfig) toAdd).pane;
         } else {
 
             bPane = new BorderPane();
-            StackPane stack     = new StackPane();
-            StackPane container = new StackPane();
-            Label     t         = new Label();
 
-            stack.setPadding(new Insets(10, 10, 10, 10));
-            stack.setAlignment(Pos.CENTER_LEFT);
-            stack.setStyle("-fx-background-color: #4c4c4c; -fx-background-radius: 5px 5px 0 0;");
-            bPane.setStyle("-fx-background-color: white; -fx-background-radius: 5px;");
-            bPane.setEffect(new DropShadow(10, new Color(0, 0, 0, 0.25)));
-            t.setFont(new Font("System Bold", 14));
-            t.setTextFill(Color.WHITE);
-            t.setText(toAdd.getTitle());
-            stack.getChildren().add(t);
-            container.setPadding(new Insets(15, 15, 15, 15));
             toAdd.getPane().setStyle("-fx-background-color: transparent;");
-            container.getChildren().add(toAdd.getPane());
-            ((BorderPane) bPane).setTop(stack);
-            ((BorderPane) bPane).setCenter(container);
+            StackPane sPane = new StackPane(toAdd.getPane());
+            sPane.setMaxHeight(Double.MAX_VALUE);
+            sPane.setMaxWidth(Double.MAX_VALUE);
+            sPane.setStyle("-fx-background-color: white;");
+            TitledPane tPane = new TitledPane(toAdd.getTitle(), sPane);
+            tPane.setCollapsible(false);
+            tPane.setMaxHeight(Double.MAX_VALUE);
+            tPane.setMaxWidth(Double.MAX_VALUE);
+            ((BorderPane) bPane).setCenter(tPane);
 
         }
 
@@ -210,4 +202,9 @@ public class Grid extends JFXWindow implements Element, Container {
         return border;
     }
 
+    @Override
+    public Pane getNoBorderPane() {
+        pane.setPadding(new Insets(0, 0, 0, 0));
+        return pane;
+    }
 }
