@@ -1,7 +1,9 @@
 package JISA.GUI;
 
+import javafx.geometry.Insets;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.Pane;
+import jnr.ffi.annotations.In;
 
 public class Section extends JFXWindow implements NotBordered {
 
@@ -31,7 +33,8 @@ public class Section extends JFXWindow implements NotBordered {
         if (e == null) {
             clear();
         } else {
-            titled.setContent(e instanceof NotBordered ? ((NotBordered) e).getNoBorderPane() : e.getPane());
+            titled.setContent(e instanceof NotBordered ? ((NotBordered) e).getNoBorderPane(false) : e.getPane());
+
         }
 
     }
@@ -41,7 +44,7 @@ public class Section extends JFXWindow implements NotBordered {
     }
 
     @Override
-    public Pane getNoBorderPane() {
+    public Pane getNoBorderPane(boolean strip) {
         return getPane();
     }
 }

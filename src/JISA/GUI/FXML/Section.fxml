@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 
 <GridPane fx:id="pane" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
-    <TitledPane fx:id="titled" minHeight="100.0" minWidth="100.0" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS" />
+    <TitledPane fx:id="titled" minHeight="-Infinity" minWidth="-Infinity" GridPane.halignment="CENTER" GridPane.hgrow="ALWAYS" GridPane.valignment="CENTER" GridPane.vgrow="ALWAYS" />
    <columnConstraints>
       <ColumnConstraints />
    </columnConstraints>

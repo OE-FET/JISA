@@ -4,6 +4,6 @@ import javafx.scene.layout.Pane;
 
 public interface NotBordered {
 
-    Pane getNoBorderPane();
+    Pane getNoBorderPane(boolean stripPadding);
 
 }

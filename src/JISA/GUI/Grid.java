@@ -87,7 +87,7 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
         Pane bPane;
 
         if (toAdd instanceof NotBordered) {
-            bPane = ((NotBordered) toAdd).getNoBorderPane();
+            bPane = ((NotBordered) toAdd).getNoBorderPane(true);
         } else if (toAdd instanceof InstrumentConfig) {
             bPane = ((InstrumentConfig) toAdd).pane;
         } else {
@@ -203,8 +203,10 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
     }
 
     @Override
-    public Pane getNoBorderPane() {
-        pane.setPadding(new Insets(0, 0, 0, 0));
+    public Pane getNoBorderPane(boolean strip) {
+        if (strip) {
+            pane.setPadding(new Insets(0, 0, 0, 0));
+        }
         return pane;
     }
 }
