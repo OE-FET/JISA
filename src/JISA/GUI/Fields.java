@@ -141,9 +141,10 @@ public class Fields extends JFXWindow implements Element {
         box.setAlignment(Pos.CENTER_LEFT);
 
         CheckBox field = new CheckBox();
+        field.setText(name);
         field.setSelected(initialValue);
         field.setMaxWidth(Integer.MAX_VALUE);
-        Label label = new Label(name);
+        Label label = new Label();
         label.setMinWidth(Region.USE_PREF_SIZE);
         GridPane.setVgrow(label, Priority.NEVER);
         GridPane.setVgrow(field, Priority.NEVER);

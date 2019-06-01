@@ -27,6 +27,17 @@ public interface MSwitch extends Switch {
 
     }
 
+
+    default void setOn(int channel, boolean on) throws IOException, DeviceException {
+
+        if (on) {
+            turnOn(channel);
+        } else {
+            turnOff(channel);
+        }
+
+    }
+
     boolean isOn(int channel) throws IOException, DeviceException;
 
     default boolean isOn() throws IOException, DeviceException {

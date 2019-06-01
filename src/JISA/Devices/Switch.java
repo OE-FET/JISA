@@ -8,6 +8,16 @@ public interface Switch extends Instrument {
 
     void turnOff() throws IOException, DeviceException;
 
+    default void setOn(boolean on) throws IOException, DeviceException {
+
+        if (on) {
+            turnOn();
+        } else {
+            turnOff();
+        }
+
+    }
+
     boolean isOn() throws IOException, DeviceException;
 
 }
