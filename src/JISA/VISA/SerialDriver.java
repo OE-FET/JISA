@@ -122,7 +122,7 @@ public class SerialDriver implements Driver {
 
                 for (int i = 0; i < bufferSize; i++) {
 
-                    single = port.readBytes(1, 50);
+                    single = port.readBytes(1, 2000);
 
                     if (single.length != 1) {
                         throw new VISAException("Error reading from input stream!");

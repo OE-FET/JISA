@@ -267,8 +267,8 @@ public class VISADriver implements Driver {
 
         @Override
         public void setEOS(long character) throws VISAException {
-            setAttribute(VI_ATTR_TERMCHAR, character);
             setAttribute(VI_ATTR_TERMCHAR_EN, character != 0 ? VI_TRUE : VI_FALSE);
+            setAttribute(VI_ATTR_TERMCHAR, character);
         }
 
         @Override

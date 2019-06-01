@@ -1,7 +1,9 @@
 package JISA.Devices;
 
 import JISA.Addresses.Address;
+import JISA.Util;
 import JISA.VISA.Connection;
+import JISA.VISA.SerialDriver;
 import JISA.VISA.VISADevice;
 
 import java.io.IOException;
@@ -12,14 +14,20 @@ public class ADRelay extends VISADevice implements MSwitch {
 
     public ADRelay(Address address) throws IOException, DeviceException {
         super(address);
+        setReadTerminationCharacter(LF_TERMINATOR);
+        setRemoveTerminator("\r\n");
+        setTerminator("\n");
 
-        String idn = getIDN();
+        Util.sleep(1500);
 
-        if (!idn.trim().equals("Arduino Controlled Relay")) {
-            throw new DeviceException("This is not an arduino controlled relay!");
+        String idn = getIDN().trim();
+
+        if (!idn.equals("Arduino Controlled Relay")) {
+            throw new DeviceException("Device at \"%s\" is not an Arduino Controlled Relay.", address.toString());
         }
 
-        NUM_CHANNELS = queryInt("NUMCHANS?");
+        NUM_CHANNELS = queryInt("NCHANS?");
+
     }
 
     @Override

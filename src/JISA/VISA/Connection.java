@@ -156,9 +156,9 @@ public interface Connection {
     }
 
     enum StopBits {
-        ONE(10),
-        ONE_HALF(15),
-        TWO(20);
+        ONE(VISANativeInterface.VI_ASRL_STOP_ONE),
+        ONE_HALF(VISANativeInterface.VI_ASRL_STOP_ONE5),
+        TWO(VISANativeInterface.VI_ASRL_STOP_TWO);
 
         private int value;
 

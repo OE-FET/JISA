@@ -5,6 +5,9 @@ import JISA.Devices.ADRelay;
 import JISA.Devices.DeviceException;
 import JISA.Devices.MSwitch;
 import JISA.Devices.Switch;
+import JISA.GUI.GUI;
+import JISA.VISA.VISADevice;
+import JISA.VISA.VISADriver;
 
 import java.io.IOException;
 
@@ -12,14 +15,11 @@ public class Demo {
 
     public static void main(String[] args) throws IOException, DeviceException {
 
-        MSwitch relays = new ADRelay(new SerialAddress(0));
+        ADRelay device = new ADRelay(new SerialAddress(4));
 
-        Switch  relay1 = relays.getChannel(0);
-        Switch  relay2 = relays.getChannel(1);
-        Switch  relay3 = relays.getChannel(2);
-        Switch  relay4 = relays.getChannel(3);
-
-        relay2.turnOn();
+        device.turnOn();
+        Util.sleep(1500);
+        device.turnOff();
 
     }
 
