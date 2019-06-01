@@ -14,6 +14,7 @@ public class ADRelay extends VISADevice implements MSwitch {
 
     public ADRelay(Address address) throws IOException, DeviceException {
         super(address);
+        setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
         setReadTerminationCharacter(LF_TERMINATOR);
         setRemoveTerminator("\r\n");
         setTerminator("\n");

@@ -15,7 +15,7 @@ public class Demo {
 
     public static void main(String[] args) throws IOException, DeviceException {
 
-        ADRelay device = new ADRelay(new SerialAddress(4));
+        ADRelay device = new ADRelay(new SerialAddress(0));
 
         device.turnOn();
         Util.sleep(1500);
