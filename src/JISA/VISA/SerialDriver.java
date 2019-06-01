@@ -11,6 +11,7 @@ import jssc.SerialPortList;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 public class SerialDriver implements Driver {
 
@@ -40,7 +41,15 @@ public class SerialDriver implements Driver {
             throw new VISAException("Can only open serial connections with the serial driver!");
         }
 
-        SerialPort port   = new SerialPort(String.format(pattern, addr.getBoard()));
+        int board = addr.getBoard();
+
+        String[] portNames = SerialPortList.getPortNames(Pattern.compile(String.valueOf(board)));
+
+        if (portNames.length == 0) {
+            throw new VISAException(String.format("Serial port %d does not exist.", board));
+        }
+
+        SerialPort port   = new SerialPort(portNames[0]);
         boolean    result = false;
 
         try {
@@ -62,7 +71,7 @@ public class SerialDriver implements Driver {
         private SerialPort port;
         private int        tmo;
         private String     terms;
-        private byte[]     terminationSequence;
+        private byte[]     terminationSequence = {};
 
         public SerialConnection(SerialPort comPort) {
             port = comPort;
@@ -113,7 +122,7 @@ public class SerialDriver implements Driver {
 
                 for (int i = 0; i < bufferSize; i++) {
 
-                    single = port.readBytes(1, tmo);
+                    single = port.readBytes(1, 50);
 
                     if (single.length != 1) {
                         throw new VISAException("Error reading from input stream!");
@@ -181,22 +190,22 @@ public class SerialDriver implements Driver {
             switch (stop) {
 
                 case ONE:
-                    stopBits = 1;
+                    stopBits = SerialPort.STOPBITS_1;
                     break;
 
                 case ONE_HALF:
-                    stopBits = 3;
+                    stopBits = SerialPort.STOPBITS_1_5;
                     break;
 
                 case TWO:
-                    stopBits = 2;
+                    stopBits = SerialPort.STOPBITS_2;
                     break;
 
             }
 
             try {
 
-                port.setParams(baud, data, stopBits, parity.toInt(), false, false);
+                port.setParams(baud, data, stopBits, parity.toInt());
 
                 switch (flow) {
 
@@ -255,6 +264,9 @@ public class SerialDriver implements Driver {
                 addresses.add((new SerialAddress(board)).toStrAddress());
             } else if (name.substring(0, 9).equals("/dev/ttyS")) {
                 int board = Integer.valueOf(name.substring(9));
+                addresses.add((new SerialAddress(board)).toStrAddress());
+            } else if (name.substring(0, 11).equals("/dev/ttyUSB")) {
+                int board = Integer.valueOf(name.substring(11));
                 addresses.add((new SerialAddress(board)).toStrAddress());
             }
 

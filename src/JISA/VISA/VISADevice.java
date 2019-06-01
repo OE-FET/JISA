@@ -2,6 +2,7 @@ package JISA.VISA;
 
 import JISA.Addresses.Address;
 import JISA.Devices.Instrument;
+import JISA.Util;
 
 import java.io.IOException;
 
