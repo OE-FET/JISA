@@ -216,20 +216,23 @@ Resulting in:
 
 **Currently Implemented Devices:**
 
-|Class|Type|Model|Source|JavaDoc|
-|-----|----|-----|------|-------|
-|`K2400`|SMU|Keithley 2400 Series|[Source](./src/JISA/Devices/K2400.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2400.html)|
-|`K2450`|SMU|Keithley 2450|[Source](./src/JISA/Devices/K2450.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2450.html)|
-|`K236`|SMU|Keithley 236|[Source](./src/JISA/Devices/K236.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K236.html)|
-|`K2600B`|SMU|Keithley 2600B Series|[Source](./src/JISA/Devices/K2600B.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2600B.html)|
-|`K6430`|SMU|Keithley 6430|[Source](./src/JISA/Devices/K6430.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K6430.html)|
-|`K2200`|DC Power Supply|Keithley 2200 Series|[Source](./src/JISA/Devices/K2200.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/K2200.html)|
-|`ITC503`|Temperature Controller|Mercury ITC 503|[Source](./src/JISA/Devices/ITC503.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/ITC503.html)|
-|`LS336`|Temperature Controller|LakeShore 336|[Source](./src/JISA/Devices/LS336.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/LS336.html)|
-|`SR830`|Lock-In Amplifier|Stanford Research Systems SR830|[Source](./src/JISA/Devices/SR830.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SR830.html)|
-|`SR560`|Voltage Pre-Amp|Stanford Research Systems SR560|[Source](./src/JISA/Devices/SR560.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SR560.html)|
-|`IPS120`|Magnet Power Supply|OI Superconducting Magnet Power Supply|[Source](./src/JISA/Devices/IPS120.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/IPS120.html)|
-|`ILM200`|Helium Level Meter|OI He Level Meter|[Source](./src/JISA/Devices/ILM200.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/ILM200.html)|
+| [](<>)                 | Model        | Type                        | Class     |
+| ---------------------- | ------------ | --------------------------- | --------- |
+| **Keithley**           | 236          | SMU (Single-Channel)        | `K236`    |
+| [](<>)                 | 2400 Series  | SMU (Single-Channel)        | `K2400`   |
+| [](<>)                 | 2450         | SMU (Single-Channel)        | `K2450`   |
+| [](<>)                 | 2600B Series | SMU (Multi-Channel)         | `K2600B`  |
+| [](<>)                 | 6430         | SMU (Single-Channel)        | `K6430`   |
+| [](<>)                 | 2200         | DC Power Supply             | `K2200`   |
+| [](<>)                 | 2182         | Voltmeter                   | `K2182`   |
+| **Oxford Instruments** | ITC-503      | Temperature Controller      | `ITC503`  |
+| [](<>)                 | IPS-120      | Magnet Controller           | `IPS120`  |
+| [](<>)                 | ILM-200      | He Level Meter              | `ILM200`  |
+| **Lake Shore**         | 336          | Temperature Controller      | `LS336`   |
+| **Stanford Research**  | SR830        | Lock-In Amplifier           | `SR830`   |
+| [](<>)                 | SR560        | Voltage Pre-Amp             | `SR560`   |
+| **Eurotherm**          | 2408         | Temperature Controller      | `ET2408`  |
+| **Pico Technology**    | USB-TC08     | Thermometer (Multi-Channel) | `USBTC08` |
 
 **Currently Implemented Device Types:**
 
