@@ -67,7 +67,7 @@ grid.addToolbarButton("Start Sweep") {
 // Show the grid in a window
 grid.show()
 ```
-![](https://i.imgur.com/afQsknr.png)
+![](https://i.imgur.com/5aO8bGQ.png)
 
 
 ## JISA the Polyglot
