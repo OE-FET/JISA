@@ -24,8 +24,8 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public void addPoint(double x, double y) {
-
+    public Series addPoint(double x, double y) {
+        return this;
     }
 
     @Override
@@ -34,17 +34,19 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public void clear() {
+    public Series clear() {
         for (Series s : series) {
             s.clear();
         }
+        return this;
     }
 
     @Override
-    public void showMarkers(boolean show) {
+    public Series showMarkers(boolean show) {
         for (Series s : series) {
             s.showMarkers(show);
         }
+        return this;
     }
 
     @Override
@@ -53,15 +55,16 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public void setMarkerShape(Shape shape, double size) {
+    public Series setMarkerShape(Shape shape, double size) {
         for (Series s : series) {
             s.setMarkerShape(shape, size);
         }
+        return this;
     }
 
     @Override
-    public void setName(String name) {
-
+    public Series setName(String name) {
+        return this;
     }
 
     @Override
@@ -70,8 +73,8 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public void setColour(Color colour) {
-
+    public Series setColour(Color colour) {
+        return this;
     }
 
     @Override
@@ -80,10 +83,11 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public void setLineWidth(double width) {
+    public Series setLineWidth(double width) {
         for (Series s : series) {
             s.setLineWidth(width);
         }
+        return this;
     }
 
     @Override
@@ -92,52 +96,59 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public void setAutoReduction(int reduceTo, int limit) {
+    public Series setAutoReduction(int reduceTo, int limit) {
         for (Series s : series) {
             s.setAutoReduction(reduceTo, limit);
         }
+        return this;
     }
 
     @Override
-    public void reduceNow() {
+    public Series reduceNow() {
         for (Series s : series) {
             s.reduceNow();
         }
+        return this;
     }
 
     @Override
-    public void setXAutoRemove(double range) {
+    public Series setXAutoRemove(double range) {
         for (Series s : series) {
             s.setXAutoRemove(range);
         }
+        return this;
     }
 
     @Override
-    public void setYAutoRemove(double range) {
+    public Series setYAutoRemove(double range) {
         for (Series s : series) {
             s.setYAutoRemove(range);
         }
+        return this;
     }
 
     @Override
-    public void remove() {
+    public Series remove() {
         for (Series s : series) {
             s.remove();
         }
+        return this;
     }
 
     @Override
-    public void updateLimits() {
+    public Series updateLimits() {
         for (Series s : series) {
             s.updateLimits();
         }
+        return this;
     }
 
     @Override
-    public void restore() {
+    public Series restore() {
         for (Series s : series) {
             s.restore();
         }
+        return this;
     }
 
     @Override

@@ -18,59 +18,59 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
             Color.web("#888888")
     };
 
-    void addPoint(double x, double y);
+    Series addPoint(double x, double y);
 
     List<XYChart.Data<Double, Double>> getPoints();
 
-    void clear();
+    Series clear();
 
-    void showMarkers(boolean show);
+    Series showMarkers(boolean show);
 
     boolean isShowingMarkers();
 
-    void setMarkerShape(Shape shape, double size);
+    Series setMarkerShape(Shape shape, double size);
 
-    default void setMarkerShape(Shape shape) {
-        setMarkerShape(shape, 5.0);
+    default Series setMarkerShape(Shape shape) {
+        return setMarkerShape(shape, 5.0);
     }
 
-    void setName(String name);
+    Series setName(String name);
 
     String getName();
 
-    void setColour(Color colour);
+    Series setColour(Color colour);
 
     Color getColour();
 
-    void setLineWidth(double width);
+    Series setLineWidth(double width);
 
     double getLineWidth();
 
-    void setAutoReduction(int reduceTo, int limit);
+    Series setAutoReduction(int reduceTo, int limit);
 
-    default void disableAutoReduction() {
-        setAutoReduction(Integer.MAX_VALUE, Integer.MAX_VALUE);
+    default Series disableAutoReduction() {
+        return setAutoReduction(Integer.MAX_VALUE, Integer.MAX_VALUE);
     }
 
-    void reduceNow();
+    Series reduceNow();
 
-    void setXAutoRemove(double range);
+    Series setXAutoRemove(double range);
 
-    void setYAutoRemove(double range);
+    Series setYAutoRemove(double range);
 
-    default void disableXAutoRemove() {
-        setXAutoRemove(Double.POSITIVE_INFINITY);
+    default Series disableXAutoRemove() {
+        return setXAutoRemove(Double.POSITIVE_INFINITY);
     }
 
-    default void disableYAutoRemove() {
-        setYAutoRemove(Double.POSITIVE_INFINITY);
+    default Series disableYAutoRemove() {
+        return setYAutoRemove(Double.POSITIVE_INFINITY);
     }
 
-    void remove();
+    Series remove();
 
-    void updateLimits();
+    Series updateLimits();
 
-    void restore();
+    Series restore();
 
     XYChart.Series<Double, Double> getXYChartSeries();
 

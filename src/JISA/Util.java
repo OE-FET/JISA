@@ -3,15 +3,10 @@ package JISA;
 import JISA.Control.ERunnable;
 import JISA.Devices.DeviceException;
 import JISA.VISA.VISAException;
-import javafx.collections.ObservableList;
-import javafx.scene.chart.XYChart.Data;
-import javafx.util.Pair;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 public class Util {
 
@@ -142,12 +137,7 @@ public class Util {
         double[] results = new double[2 * array.length - 1];
 
         System.arraycopy(array, 0, results, 0, array.length);
-
-        for (int i = 0; i < array.length - 1; i++) {
-
-            results[array.length + i] = array[array.length - 2 - i];
-
-        }
+        System.arraycopy(reverseArray(array), 1, results, array.length, array.length - 1);
 
         return results;
 
@@ -269,9 +259,13 @@ public class Util {
 
         double intermediate = value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))) - (nSigDig - 1));
 
-        if (dir > 0) intermediate = Math.ceil(intermediate);
-        else if (dir < 0) intermediate = Math.floor(intermediate);
-        else intermediate = Math.round(intermediate);
+        if (dir > 0) {
+            intermediate = Math.ceil(intermediate);
+        } else if (dir < 0) {
+            intermediate = Math.floor(intermediate);
+        } else {
+            intermediate = Math.round(intermediate);
+        }
 
         return (intermediate * Math.pow(10, Math.floor(Math.log10(Math.abs(value))) - (nSigDig - 1)));
 

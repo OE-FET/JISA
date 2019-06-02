@@ -831,17 +831,17 @@ public class SmartChart {
         }
 
         @Override
-        public void addPoint(double x, double y) {
+        public Series addPoint(double x, double y) {
             data.add(new XYChart.Data<>(x, y));
+            return this;
         }
 
-        @Override
         public List<XYChart.Data<Double, Double>> getPoints() {
             return data.list;
         }
 
         @Override
-        public void clear() {
+        public Series clear() {
             GUI.runNow(() -> {
 
                 data.clear();
@@ -853,11 +853,13 @@ public class SmartChart {
                 chart.getData().set(chart.getData().indexOf(series), series);
 
             });
+            return this;
         }
 
         @Override
-        public void showMarkers(boolean show) {
+        public Series showMarkers(boolean show) {
             data.showMarkers(show);
+            return this;
         }
 
         @Override
@@ -866,8 +868,9 @@ public class SmartChart {
         }
 
         @Override
-        public void setMarkerShape(Shape shape, double size) {
+        public Series setMarkerShape(Shape shape, double size) {
             data.setMarkerStyle(SmartChart.this.setSymbol(map.get(this), shape, size));
+            return this;
         }
 
         @Override
@@ -876,8 +879,9 @@ public class SmartChart {
         }
 
         @Override
-        public void setName(String name) {
+        public Series setName(String name) {
             GUI.runNow(() -> series.setName(name));
+            return this;
         }
 
         @Override
@@ -886,9 +890,10 @@ public class SmartChart {
         }
 
         @Override
-        public void setColour(Color colour) {
+        public Series setColour(Color colour) {
             this.colour = colour;
             setSeriesColour(map.get(this), colour);
+            return this;
         }
 
         @Override
@@ -897,51 +902,59 @@ public class SmartChart {
         }
 
         @Override
-        public void setLineWidth(double width) {
+        public Series setLineWidth(double width) {
             lineWidth = width;
             SmartChart.this.setLineWidth(map.get(this), width);
+            return this;
         }
 
         @Override
-        public void setAutoReduction(int reduceTo, int limit) {
+        public Series setAutoReduction(int reduceTo, int limit) {
             reduceValue = reduceTo;
             reduceLimit = limit;
             reduceNow();
+            return this;
         }
 
         @Override
-        public void reduceNow() {
+        public Series reduceNow() {
             GUI.runNow(() -> data.reduce(reduceValue));
+            return this;
         }
 
         @Override
-        public void setXAutoRemove(double range) {
+        public Series setXAutoRemove(double range) {
             xRange = range;
+            return this;
         }
 
         @Override
-        public void setYAutoRemove(double range) {
+        public Series setYAutoRemove(double range) {
             yRange = range;
+            return this;
         }
 
         @Override
-        public void remove() {
+        public Series remove() {
             GUI.runNow(() -> chart.getData().remove(series));
             SmartChart.this.data.remove(this);
             map.remove(this);
+            return this;
         }
 
         @Override
-        public void updateLimits() {
+        public Series updateLimits() {
             data.updateLimits();
+            return this;
         }
 
         @Override
-        public void restore() {
+        public Series restore() {
             disableAutoReduction();
             disableXAutoRemove();
             disableYAutoRemove();
             data.update();
+            return this;
         }
 
         @Override
@@ -993,8 +1006,8 @@ public class SmartChart {
         }
 
         @Override
-        public void addPoint(double x, double y) {
-
+        public Series addPoint(double x, double y) {
+            return this;
         }
 
         @Override
@@ -1003,13 +1016,13 @@ public class SmartChart {
         }
 
         @Override
-        public void clear() {
-
+        public Series clear() {
+            return this;
         }
 
         @Override
-        public void showMarkers(boolean show) {
-
+        public Series showMarkers(boolean show) {
+            return this;
         }
 
         @Override
@@ -1018,8 +1031,8 @@ public class SmartChart {
         }
 
         @Override
-        public void setMarkerShape(Shape shape, double size) {
-
+        public Series setMarkerShape(Shape shape, double size) {
+            return this;
         }
 
         @Override
@@ -1028,8 +1041,9 @@ public class SmartChart {
         }
 
         @Override
-        public void setName(String name) {
+        public Series setName(String name) {
             GUI.runNow(() -> series.setName(name));
+            return this;
         }
 
         @Override
@@ -1038,9 +1052,10 @@ public class SmartChart {
         }
 
         @Override
-        public void setColour(Color colour) {
+        public Series setColour(Color colour) {
             this.colour = colour;
             setSeriesColour(map.get(this), colour);
+            return this;
         }
 
         @Override
@@ -1049,39 +1064,41 @@ public class SmartChart {
         }
 
         @Override
-        public void setLineWidth(double width) {
+        public Series setLineWidth(double width) {
             lineWidth = width;
             SmartChart.this.setLineWidth(map.get(this), width);
+            return this;
         }
 
         @Override
-        public void setAutoReduction(int reduceTo, int limit) {
-
+        public Series setAutoReduction(int reduceTo, int limit) {
+            return this;
         }
 
         @Override
-        public void reduceNow() {
-
+        public Series reduceNow() {
+            return this;
         }
 
         @Override
-        public void setXAutoRemove(double range) {
-
+        public Series setXAutoRemove(double range) {
+            return this;
         }
 
         @Override
-        public void setYAutoRemove(double range) {
-
+        public Series setYAutoRemove(double range) {
+            return this;
         }
 
         @Override
-        public void remove() {
+        public Series remove() {
             GUI.runNow(() -> chart.getData().remove(series));
             SmartChart.this.data.remove(this);
             map.remove(this);
+            return this;
         }
 
-        public void update() {
+        public Series update() {
             GUI.runNow(() -> {
                 series.getData().clear();
 
@@ -1093,16 +1110,17 @@ public class SmartChart {
                     }
                 }
             });
+            return this;
         }
 
         @Override
-        public void updateLimits() {
-
+        public Series updateLimits() {
+            return this;
         }
 
         @Override
-        public void restore() {
-
+        public Series restore() {
+            return this;
         }
 
         @Override
@@ -1181,10 +1199,11 @@ public class SmartChart {
         }
 
         @Override
-        public void addPoint(double x, double y) {
+        public SeriesGroup addPoint(double x, double y) {
             for (Series s : map.values()) {
                 s.addPoint(x, y);
             }
+            return this;
         }
 
         @Override
@@ -1193,7 +1212,7 @@ public class SmartChart {
         }
 
         @Override
-        public void clear() {
+        public SeriesGroup clear() {
             GUI.runNow(() -> {
                 for (Series s : map.values()) {
                     s.clear();
@@ -1201,14 +1220,16 @@ public class SmartChart {
                 }
                 map.clear();
             });
+            return this;
         }
 
         @Override
-        public void showMarkers(boolean show) {
+        public SeriesGroup showMarkers(boolean show) {
             showMarkers = show;
             for (Series s : map.values()) {
                 s.showMarkers(show);
             }
+            return this;
         }
 
         @Override
@@ -1217,12 +1238,13 @@ public class SmartChart {
         }
 
         @Override
-        public void setMarkerShape(Shape shape, double size) {
+        public SeriesGroup setMarkerShape(Shape shape, double size) {
             this.shape = shape;
             this.size = size;
             for (Series s : map.values()) {
                 s.setMarkerShape(shape, size);
             }
+            return this;
         }
 
         @Override
@@ -1231,8 +1253,8 @@ public class SmartChart {
         }
 
         @Override
-        public void setName(String name) {
-
+        public SeriesGroup setName(String name) {
+            return this;
         }
 
         @Override
@@ -1241,8 +1263,8 @@ public class SmartChart {
         }
 
         @Override
-        public void setColour(Color colour) {
-
+        public SeriesGroup setColour(Color colour) {
+            return this;
         }
 
         @Override
@@ -1251,68 +1273,76 @@ public class SmartChart {
         }
 
         @Override
-        public void setLineWidth(double width) {
+        public SeriesGroup setLineWidth(double width) {
             lineWidth = width;
             for (Series s : map.values()) {
                 s.setLineWidth(width);
             }
+            return this;
         }
 
         @Override
-        public void setAutoReduction(int reduceTo, int limit) {
+        public SeriesGroup setAutoReduction(int reduceTo, int limit) {
             reduceValue = reduceTo;
             reduceLimit = limit;
             for (Series s : map.values()) {
                 s.setAutoReduction(reduceTo, limit);
             }
+            return this;
         }
 
         @Override
-        public void reduceNow() {
+        public SeriesGroup reduceNow() {
             for (Series s : map.values()) {
                 s.reduceNow();
             }
+            return this;
         }
 
         @Override
-        public void setXAutoRemove(double range) {
+        public SeriesGroup setXAutoRemove(double range) {
             xRange = range;
             for (Series s : map.values()) {
                 s.setXAutoRemove(range);
             }
+            return this;
         }
 
         @Override
-        public void setYAutoRemove(double range) {
+        public SeriesGroup setYAutoRemove(double range) {
             yRange = range;
             for (Series s : map.values()) {
                 s.setYAutoRemove(range);
             }
+            return this;
         }
 
         @Override
-        public void remove() {
+        public SeriesGroup remove() {
             for (Series s : map.values()) {
                 s.remove();
             }
             map.clear();
+            return this;
         }
 
         @Override
-        public void updateLimits() {
+        public SeriesGroup updateLimits() {
             for (Series s : map.values()) {
                 s.updateLimits();
             }
+            return this;
         }
 
         @Override
-        public void restore() {
+        public SeriesGroup restore() {
             disableAutoReduction();
             disableXAutoRemove();
             disableYAutoRemove();
             for (Series s : map.values()) {
                 s.restore();
             }
+            return this;
         }
 
         @Override
