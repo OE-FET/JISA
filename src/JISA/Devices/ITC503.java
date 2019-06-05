@@ -83,7 +83,7 @@ public class ITC503 extends VISADevice implements MSTC {
 
     }
 
-    public void setTimeout(long value) throws IOException {
+    public void setTimeout(int value) throws IOException {
         super.setTimeout(value);
     }
 

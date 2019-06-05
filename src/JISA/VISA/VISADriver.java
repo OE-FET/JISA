@@ -272,7 +272,7 @@ public class VISADriver implements Driver {
         }
 
         @Override
-        public void setTMO(long duration) throws VISAException {
+        public void setTMO(int duration) throws VISAException {
             setAttribute(VI_ATTR_TMO_VALUE, duration);
         }
 

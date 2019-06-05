@@ -113,7 +113,7 @@ public interface Connection {
      *
      * @throws VISAException Upon something going wrong
      */
-    void setTMO(long duration) throws VISAException;
+    void setTMO(int duration) throws VISAException;
 
     /**
      * Sets the parameters for a serial connection.

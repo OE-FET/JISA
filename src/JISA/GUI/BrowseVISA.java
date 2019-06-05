@@ -1,6 +1,7 @@
 package JISA.GUI;
 
 import JISA.Addresses.*;
+import JISA.Util;
 import JISA.VISA.VISA;
 import JISA.VISA.VISADevice;
 import JISA.VISA.VISAException;
@@ -118,7 +119,8 @@ public class BrowseVISA {
             device = new VISADevice(address);
             device.setTimeout(100);
             device.setRetryCount(1);
-            i = device.query("*IDN?").trim().replace("\n", "").replace("\r", "");
+            Util.sleep(1500);
+            i = device.query("*IDN?\n").trim().replace("\n", "").replace("\r", "");
         } catch (Exception e) {
             i = "Unknown Instrument";
         } finally {

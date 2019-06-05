@@ -126,9 +126,9 @@ public class RawTCPIPDriver implements Driver {
         }
 
         @Override
-        public void setTMO(long duration) throws VISAException {
+        public void setTMO(int duration) throws VISAException {
             try {
-                socket.setSoTimeout((int) duration);
+                socket.setSoTimeout(duration);
             } catch (Exception e) {
                 throw new VISAException(e.getMessage());
             }

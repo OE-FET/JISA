@@ -253,7 +253,7 @@ public class GPIBDriver implements Driver {
         }
 
         @Override
-        public void setTMO(long duration) throws VISAException {
+        public void setTMO(int duration) throws VISAException {
 
             lib.ibconfig(
                     handle,

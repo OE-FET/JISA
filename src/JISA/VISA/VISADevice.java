@@ -19,7 +19,7 @@ public class VISADevice implements Instrument {
     private String     lastRead       = null;
     private int        readBufferSize = 1024;
     private int        retryCount     = 3;
-    private long       timeout        = 2000;
+    private int        timeout        = 2000;
 
     public final static int    DEFAULT_TIMEOUT = 13;
     public final static int    DEFAULT_EOI     = 1;
@@ -152,7 +152,7 @@ public class VISADevice implements Instrument {
      *
      * @throws IOException Upon communications error
      */
-    public void setTimeout(long timeoutMSec) throws IOException {
+    public void setTimeout(int timeoutMSec) throws IOException {
 
         try {
             connection.setTMO(timeoutMSec);

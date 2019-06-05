@@ -43,13 +43,13 @@ public class SerialDriver implements Driver {
 
         int board = addr.getBoard();
 
-        String[] portNames = SerialPortList.getPortNames(Pattern.compile(String.valueOf(board)));
+        String[] portNames = SerialPortList.getPortNames();
 
-        if (portNames.length == 0) {
+        if (portNames.length <= board) {
             throw new VISAException(String.format("Serial port %d does not exist.", board));
         }
 
-        SerialPort port   = new SerialPort(portNames[0]);
+        SerialPort port   = new SerialPort(portNames[board]);
         boolean    result = false;
 
         try {
@@ -71,10 +71,11 @@ public class SerialDriver implements Driver {
         private SerialPort port;
         private int        tmo;
         private String     terms;
-        private byte[]     terminationSequence = {};
+        private byte[]     terminationSequence = {0x0A};
 
-        public SerialConnection(SerialPort comPort) {
+        public SerialConnection(SerialPort comPort) throws VISAException {
             port = comPort;
+            setSerial(9600, 8, Parity.NONE, StopBits.ONE, Flow.NONE);
         }
 
         @Override
@@ -122,7 +123,7 @@ public class SerialDriver implements Driver {
 
                 for (int i = 0; i < bufferSize; i++) {
 
-                    single = port.readBytes(1, 2000);
+                    single = port.readBytes(1, tmo);
 
                     if (single.length != 1) {
                         throw new VISAException("Error reading from input stream!");
@@ -178,8 +179,8 @@ public class SerialDriver implements Driver {
         }
 
         @Override
-        public void setTMO(long duration) throws VISAException {
-            tmo = (int) duration;
+        public void setTMO(int duration) throws VISAException {
+            tmo = duration;
         }
 
         @Override
@@ -257,19 +258,8 @@ public class SerialDriver implements Driver {
 
         ArrayList<StrAddress> addresses = new ArrayList<>();
 
-        for (String name : names) {
-
-            if (name.substring(0, 3).equals("COM")) {
-                int board = Integer.valueOf(name.substring(3));
-                addresses.add((new SerialAddress(board)).toStrAddress());
-            } else if (name.substring(0, 9).equals("/dev/ttyS")) {
-                int board = Integer.valueOf(name.substring(9));
-                addresses.add((new SerialAddress(board)).toStrAddress());
-            } else if (name.substring(0, 11).equals("/dev/ttyUSB")) {
-                int board = Integer.valueOf(name.substring(11));
-                addresses.add((new SerialAddress(board)).toStrAddress());
-            }
-
+        for (int i = 0; i < names.length; i++) {
+            addresses.add(new SerialAddress(i).toStrAddress());
         }
 
         return addresses.toArray(new StrAddress[0]);

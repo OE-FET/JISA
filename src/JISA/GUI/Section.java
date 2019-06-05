@@ -1,9 +1,7 @@
 package JISA.GUI;
 
-import javafx.geometry.Insets;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.Pane;
-import jnr.ffi.annotations.In;
 
 public class Section extends JFXWindow implements NotBordered {
 
