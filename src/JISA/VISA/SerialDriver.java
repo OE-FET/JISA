@@ -1,6 +1,7 @@
 package JISA.VISA;
 
 import JISA.Addresses.Address;
+import JISA.Addresses.COMAddress;
 import JISA.Addresses.SerialAddress;
 import JISA.Addresses.StrAddress;
 import JISA.Util;
@@ -11,6 +12,7 @@ import jssc.SerialPortList;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.regex.Pattern;
 
 public class SerialDriver implements Driver {
@@ -35,21 +37,32 @@ public class SerialDriver implements Driver {
     @Override
     public Connection open(Address address) throws VISAException {
 
-        SerialAddress addr = (new StrAddress(address.toString())).toSerialAddress();
+        COMAddress addr = (new StrAddress(address.toString())).toCOMAddress();
 
         if (addr == null) {
             throw new VISAException("Can only open serial connections with the serial driver!");
         }
 
-        int board = addr.getBoard();
+        String device = addr.getDevice();
 
         String[] portNames = SerialPortList.getPortNames();
 
-        if (portNames.length <= board) {
-            throw new VISAException(String.format("Serial port %d does not exist.", board));
+        String found = null;
+
+        for (String name : portNames) {
+
+            if (name.trim().equals(device.trim())) {
+                found = name;
+                break;
+            }
+
         }
 
-        SerialPort port   = new SerialPort(portNames[board]);
+        if (found == null) {
+            throw new VISAException("No native serial port \"%s\" was found.");
+        }
+
+        SerialPort port   = new SerialPort(found);
         boolean    result = false;
 
         try {
@@ -258,8 +271,8 @@ public class SerialDriver implements Driver {
 
         ArrayList<StrAddress> addresses = new ArrayList<>();
 
-        for (int i = 0; i < names.length; i++) {
-            addresses.add(new SerialAddress(i).toStrAddress());
+        for (String device : names) {
+            addresses.add(new COMAddress(device).toStrAddress());
         }
 
         return addresses.toArray(new StrAddress[0]);

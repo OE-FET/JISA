@@ -180,6 +180,7 @@ public class BrowseVISA {
             switch (address.getType()) {
 
                 case GPIB:
+
                     prot = "GPIB";
                     GPIBAddress g = address.toGPIBAddress();
                     if (g == null) {
@@ -190,6 +191,7 @@ public class BrowseVISA {
                     break;
 
                 case TCPIP:
+
                     prot = "TCP-IP";
                     TCPIPAddress t = address.toTCPIPAddress();
                     if (t == null) {
@@ -198,7 +200,9 @@ public class BrowseVISA {
                     uri = t.getHost();
                     image.setImage(new Image(getClass().getResource("Images/tcpip.png").toString()));
                     break;
+
                 case TCPIP_SOCKET:
+
                     prot = "TCP-IP Socket";
                     TCPIPSocketAddress ts = address.toTCPIPSocketAddress();
                     if (ts == null) {
@@ -207,7 +211,9 @@ public class BrowseVISA {
                     uri = ts.getHost() + ":" + ts.getPort();
                     image.setImage(new Image(getClass().getResource("Images/tcpip.png").toString()));
                     break;
+
                 case USB:
+
                     prot = "USB-TMC";
                     USBAddress u = address.toUSBAddress();
                     if (u == null) {
@@ -216,8 +222,10 @@ public class BrowseVISA {
                     uri = String.format("VendorID: %s, ProductID: %s", u.getManufacturer(), u.getModel());
                     image.setImage(new Image(getClass().getResource("Images/usb.png").toString()));
                     break;
+
                 case SERIAL:
-                    prot = "Serial";
+
+                    prot = "Serial (VISA)";
                     SerialAddress s = address.toSerialAddress();
                     if (s == null) {
                         s = new SerialAddress(0);
@@ -225,6 +233,19 @@ public class BrowseVISA {
                     uri = String.format("COM %d", s.getBoard());
                     image.setImage(new Image(getClass().getResource("Images/serial.png").toString()));
                     break;
+
+                case COM:
+
+                    prot = "Serial (Native)";
+                    COMAddress ca = address.toCOMAddress();
+                    if (ca == null) {
+                        ca = new COMAddress("null");
+                    }
+
+                    uri = ca.getDevice();
+                    image.setImage(new Image(getClass().getResource("Images/serial.png").toString()));
+                    break;
+
                 default:
                     prot = "Unknown";
                     uri = address.toString();

@@ -36,6 +36,8 @@ public interface Address {
             type = Type.MODBUS;
         } else if (parts[0].contains("SNID")) {
             type = Type.ID;
+        } else if (parts[0].contains("SERIAL")) {
+            type = Type.COM;
         }
 
         return type;
@@ -152,6 +154,20 @@ public interface Address {
 
     }
 
+    default COMAddress toCOMAddress() {
+
+        Pattern pattern = Pattern.compile("SERIAL::(.*?)::INSTR");
+        Matcher matcher = pattern.matcher(toString().trim());
+
+        if (matcher.matches()) {
+            String device = matcher.group(1);
+            return new COMAddress(device);
+        } else {
+            return null;
+        }
+
+    }
+
     default AddressParams createParams() {
 
         switch (getType()) {
@@ -177,6 +193,9 @@ public interface Address {
             case ID:
                 return toIDAddress().createParams();
 
+            case COM:
+                return toCOMAddress().createParams();
+
             default:
             case UNKOWN:
                 StrAddress.StrParams p = new StrAddress.StrParams();
@@ -194,6 +213,7 @@ public interface Address {
         SERIAL,
         MODBUS,
         ID,
+        COM,
         UNKOWN
     }
 

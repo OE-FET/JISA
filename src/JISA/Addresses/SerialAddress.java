@@ -45,7 +45,7 @@ public class SerialAddress implements Address {
 
         @Override
         public String getName() {
-            return "Serial";
+            return "Serial (VISA)";
         }
     }
 
