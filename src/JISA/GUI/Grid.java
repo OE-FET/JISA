@@ -155,6 +155,9 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             pane.getChildren().clear();
         });
 
+        c = 0;
+        r = 0;
+
     }
 
     @Override
