@@ -1,6 +1,8 @@
 package JISA.Maths;
 
 import JISA.Util;
+import org.apache.commons.math.linear.MatrixUtils;
+import org.apache.commons.math.linear.RealMatrix;
 
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
@@ -30,6 +32,42 @@ public class Matrix implements Iterable<Double> {
 
         }
 
+    }
+
+    public Matrix(double[][] data) {
+        this.data = data;
+        rows = data.length;
+        cols = data[0].length;
+    }
+
+    public Matrix(RealMatrix matrix) {
+        this(matrix.getData());
+    }
+
+    public RealMatrix toRealMatrix() {
+        return MatrixUtils.createRealMatrix(data);
+    }
+
+    public Matrix asColumn() {
+
+        if (columns() == 1) {
+            return this;
+        }
+
+        Matrix result = new Matrix(size(), 1);
+
+        int i = 0;
+        for (double d : this) {
+            result.set(i, 0, d);
+            i++;
+        }
+
+        return result;
+
+    }
+
+    public Matrix inverse() {
+        return new Matrix(toRealMatrix().inverse());
     }
 
     public Matrix subMatrix(int startRow, int startCol, int n, int m) {
@@ -65,6 +103,10 @@ public class Matrix implements Iterable<Double> {
         checkElement(row, col);
         return data[row][col];
 
+    }
+
+    public double[][] getData() {
+        return data.clone();
     }
 
     /**

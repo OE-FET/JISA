@@ -1,8 +1,10 @@
 package JISA.Control;
 
 import JISA.Addresses.StrAddress;
+import JISA.GUI.Fields;
 import JISA.GUI.InstrumentConfig;
 import JISA.Util;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -11,6 +13,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Iterator;
 
 public class ConfigStore {
 
@@ -18,6 +21,7 @@ public class ConfigStore {
     private JSONObject data        = null;
     private JSONObject instruments = null;
     private JSONObject instConfigs = null;
+    private JSONObject fields      = null;
     private String     path;
 
     public ConfigStore(String name) throws IOException {
@@ -31,10 +35,11 @@ public class ConfigStore {
         if (Files.exists(Paths.get(path))) {
             String raw = new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
             try {
-                json = new JSONObject(raw);
-                data = json.getJSONObject("data");
+                json        = new JSONObject(raw);
+                data        = json.getJSONObject("data");
                 instruments = json.getJSONObject("instruments");
                 instConfigs = json.getJSONObject("instConfigs");
+                fields      = json.getJSONObject("fields");
             } catch (Exception e) {
                 if (json == null) {
                     json = new JSONObject();
@@ -51,17 +56,27 @@ public class ConfigStore {
                     instConfigs = new JSONObject();
                     json.put("instConfigs", instruments);
                 }
+
+                fields = new JSONObject();
+                json.put("fields", fields);
+
+                save();
+
             }
         } else {
-            json = new JSONObject();
-            data = new JSONObject();
+            json        = new JSONObject();
+            data        = new JSONObject();
             instruments = new JSONObject();
             instConfigs = new JSONObject();
+            fields      = new JSONObject();
             json.put("name", name);
             json.put("lastSave", System.currentTimeMillis());
             json.put("data", data);
             json.put("instruments", instruments);
             json.put("instConfigs", instConfigs);
+            json.put("fields", fields);
+
+            save();
         }
 
     }
@@ -153,6 +168,49 @@ public class ConfigStore {
             return instConfigs.getJSONObject(key);
         } else {
             return null;
+        }
+
+    }
+
+    public void saveFields(String name, Fields toSave) throws IOException {
+
+        JSONArray block;
+
+        if (fields.has(name)) {
+            block = fields.getJSONArray(name);
+        } else {
+            block = new JSONArray();
+            fields.put(name, block);
+        }
+
+        for (Field f : toSave) {
+            block.put(f.get());
+        }
+
+        save();
+
+    }
+
+    public void loadFields(String name, Fields toLoad) {
+
+        if (!fields.has(name)) {
+            return;
+        }
+
+        JSONArray array = fields.getJSONArray(name);
+
+        Iterator<Object> objects = array.iterator();
+        Iterator<Field>  fields  = toLoad.iterator();
+
+        while (objects.hasNext() && fields.hasNext()) {
+
+            Object o = objects.next();
+            Field  f = fields.next();
+
+            try {
+                f.set(o);
+            } catch (Throwable ignored) {}
+
         }
 
     }

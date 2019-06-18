@@ -40,6 +40,7 @@ public class ConfigGrid extends Grid {
             configs.add(conf);
             return conf;
         } catch (Exception e) {
+            e.printStackTrace();
             Util.errLog.println(e.getMessage());
             return null;
         }

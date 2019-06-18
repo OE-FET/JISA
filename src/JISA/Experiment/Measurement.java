@@ -18,19 +18,15 @@ public abstract class Measurement {
 
     public abstract void onFinish() throws Exception;
 
-    public abstract String[] getColumns();
-
-    public abstract String[] getUnits();
+    public abstract Col[] getColumns();
 
     public ResultTable newResults() {
         results = new ResultList(getColumns());
-        results.setUnits(getUnits());
         return results;
     }
 
     public ResultTable newResults(String path) throws IOException {
         results = new ResultStream(path, getColumns());
-        results.setUnits(getUnits());
         return results;
     }
 

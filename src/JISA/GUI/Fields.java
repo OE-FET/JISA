@@ -1,5 +1,6 @@
 package JISA.GUI;
 
+import JISA.Control.ConfigStore;
 import JISA.Control.Field;
 import JISA.Control.SRunnable;
 import JISA.Util;
@@ -10,19 +11,23 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 
+import java.io.IOException;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class Fields extends JFXWindow implements Element {
+public class Fields extends JFXWindow implements Element, Iterable<Field> {
 
     public  BorderPane                       pane;
     public  GridPane                         list;
     public  ButtonBar                        buttonBar;
     private LinkedHashMap<String, TextField> map    = new LinkedHashMap<>();
     private List<Field>                      fields = new LinkedList<>();
+    private ConfigStore                      config = null;
+    private String                           tag    = null;
     private int                              rows   = 0;
 
     /**
@@ -32,6 +37,33 @@ public class Fields extends JFXWindow implements Element {
      */
     public Fields(String title) {
         super(title, Fields.class.getResource("FXML/InputWindow.fxml"));
+    }
+
+    public void loadFromConfig(String tag, ConfigStore configStore) {
+        loadFromConfig(tag, configStore, true);
+    }
+
+    public void loadFromConfig(String tag, ConfigStore configStore, boolean save) {
+
+        configStore.loadFields(tag, this);
+
+        if (save) {
+
+            this.config = configStore;
+            this.tag    = tag;
+
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+
+                try {
+                    configStore.saveFields(tag, Fields.this);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            }));
+
+        }
+
     }
 
     /**
@@ -79,7 +111,7 @@ public class Fields extends JFXWindow implements Element {
                 }
 
                 list = (observable, oldValue, newValue) -> {
-                    (new Thread( () -> {
+                    (new Thread(() -> {
                         try {
                             onChange.run();
                         } catch (Exception e) {
@@ -177,7 +209,7 @@ public class Fields extends JFXWindow implements Element {
                 }
 
                 list = (observable, oldValue, newValue) -> {
-                    (new Thread( () -> {
+                    (new Thread(() -> {
                         try {
                             onChange.run();
                         } catch (Exception e) {
@@ -285,7 +317,7 @@ public class Fields extends JFXWindow implements Element {
                 }
 
                 list = (observable, oldValue, newValue) -> {
-                    (new Thread( () -> {
+                    (new Thread(() -> {
                         try {
                             onChange.run();
                         } catch (Exception e) {
@@ -386,7 +418,7 @@ public class Fields extends JFXWindow implements Element {
                 }
 
                 list = (observable, oldValue, newValue) -> {
-                    (new Thread( () -> {
+                    (new Thread(() -> {
                         try {
                             onChange.run();
                         } catch (Exception e) {
@@ -486,7 +518,7 @@ public class Fields extends JFXWindow implements Element {
                 }
 
                 list = (observable, oldValue, newValue) -> {
-                    (new Thread( () -> {
+                    (new Thread(() -> {
                         try {
                             onChange.run();
                         } catch (Exception e) {
@@ -671,7 +703,7 @@ public class Fields extends JFXWindow implements Element {
             @Override
             public void setOnChange(SRunnable onChange) {
                 field.setOnChange((v) -> {
-                    (new Thread( () -> {
+                    (new Thread(() -> {
                         try {
                             onChange.run();
                         } catch (Exception e) {
@@ -767,7 +799,7 @@ public class Fields extends JFXWindow implements Element {
                 }
 
                 list = (observable, oldValue, newValue) -> {
-                    (new Thread( () -> {
+                    (new Thread(() -> {
                         try {
                             onChange.run();
                         } catch (Exception e) {
@@ -918,4 +950,8 @@ public class Fields extends JFXWindow implements Element {
 
     }
 
+    @Override
+    public Iterator<Field> iterator() {
+        return fields.iterator();
+    }
 }

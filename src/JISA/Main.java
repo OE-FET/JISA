@@ -2,9 +2,13 @@ package JISA;
 
 import JISA.Addresses.Address;
 import JISA.Addresses.StrAddress;
+import JISA.Experiment.Function;
 import JISA.GUI.*;
+import JISA.Maths.Maths;
+import JISA.Maths.Matrix;
 import JISA.VISA.VISA;
 import javafx.application.Platform;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -16,6 +20,16 @@ public class Main {
     private final static int CHOICE_EXIT = 3;
 
     public static void main(String[] args) {
+
+        Matrix x = new Matrix(1, 5);
+        Matrix y = new Matrix(1, 5);
+
+        x.setAll(1, 2, 3, 4, 5);
+        y.setAll(1, 3, 9, 16, 25);
+
+        Function f = Maths.polyFit(x, y, 2);
+
+        System.out.printf("a = %s, b = %s, c = %s\n", f.getCoefficients()[2], f.getCoefficients()[1],  f.getCoefficients()[0]);
 
         try {
 

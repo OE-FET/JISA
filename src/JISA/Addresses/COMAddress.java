@@ -24,7 +24,7 @@ public class COMAddress implements Address {
     public AddressParams createParams() {
 
         AddressParams params = new COMParams();
-        params.set(1, device);
+        params.set(0, device);
 
         return params;
 

@@ -45,19 +45,161 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
     private String                      key;
     private List<Runnable>              onApply           = new LinkedList<>();
     private AddressParams               currentParams     = null;
-
+    
     public static class SMU extends InstrumentConfig<JISA.Devices.SMU> {
 
-        public SMU(String title) throws IOException {
-            super(title, null, JISA.Devices.SMU.class, null);
+        public SMU(String title, String key, ConfigStore config) throws IOException {
+            super(title, key, JISA.Devices.SMU.class, config);
         }
+
+        public SMU(String title) throws IOException {
+            this(title, null, null);
+        }
+
     }
 
     public static class TC extends InstrumentConfig<JISA.Devices.TC> {
 
-        public TC(String title) throws IOException {
-            super(title, null, JISA.Devices.TC.class, null);
+        public TC(String title, String key, ConfigStore config) throws IOException {
+            super(title, key, JISA.Devices.TC.class, config);
         }
+
+        public TC(String title) throws IOException {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class LockIn extends InstrumentConfig<JISA.Devices.LockIn> {
+
+        public LockIn(String title, String key, ConfigStore config) throws IOException {
+            super(title, key, JISA.Devices.LockIn.class, config);
+        }
+
+        public LockIn(String title) throws IOException {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class DPLockIn extends InstrumentConfig<JISA.Devices.DPLockIn> {
+
+        public DPLockIn(String title, String key, ConfigStore config) throws IOException {
+            super(title, key, JISA.Devices.DPLockIn.class, config);
+        }
+
+        public DPLockIn(String title) throws IOException {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class DCPower extends InstrumentConfig<JISA.Devices.DCPower> {
+
+        public DCPower(String title, String key, ConfigStore config) throws IOException {
+            super(title, key, JISA.Devices.DCPower.class, config);
+        }
+
+        public DCPower(String title) throws IOException {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class VPreAmp extends InstrumentConfig<JISA.Devices.VPreAmp> {
+
+        public VPreAmp(String title, String key, ConfigStore config) throws IOException {
+            super(title, key, JISA.Devices.VPreAmp.class, config);
+        }
+
+        public VPreAmp(String title) throws IOException {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class VMeter extends InstrumentConfig<JISA.Devices.VMeter> {
+
+        public VMeter(String title, String key, ConfigStore config) throws IOException {
+            super(title, key, JISA.Devices.VMeter.class, config);
+        }
+
+        public VMeter(String title) throws IOException {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class IMeter extends InstrumentConfig<JISA.Devices.IMeter> {
+
+        public IMeter(String title, String key, ConfigStore config) throws IOException {
+            super(title, key, JISA.Devices.IMeter.class, config);
+        }
+
+        public IMeter(String title) throws IOException {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class VSource extends InstrumentConfig<JISA.Devices.VSource> {
+
+        public VSource(String title, String key, ConfigStore config) throws IOException {
+            super(title, key, JISA.Devices.VSource.class, config);
+        }
+
+        public VSource(String title) throws IOException {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class ISource extends InstrumentConfig<JISA.Devices.ISource> {
+
+        public ISource(String title, String key, ConfigStore config) throws IOException {
+            super(title, key, JISA.Devices.ISource.class, config);
+        }
+
+        public ISource(String title) throws IOException {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class IVMeter extends InstrumentConfig<JISA.Devices.IVMeter> {
+
+        public IVMeter(String title, String key, ConfigStore config) throws IOException {
+            super(title, key, JISA.Devices.IVMeter.class, config);
+        }
+
+        public IVMeter(String title) throws IOException {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class IVSource extends InstrumentConfig<JISA.Devices.IVSource> {
+
+        public IVSource(String title, String key, ConfigStore config) throws IOException {
+            super(title, key, JISA.Devices.IVSource.class, config);
+        }
+
+        public IVSource(String title) throws IOException {
+            this(title, null, null);
+        }
+
+    }
+    
+    public static class TMeter extends InstrumentConfig<JISA.Devices.TMeter> {
+
+        public TMeter(String title, String key, ConfigStore config) throws IOException {
+            super(title, key, JISA.Devices.TMeter.class, config);
+        }
+
+        public TMeter(String title) throws IOException {
+            this(title, null, null);
+        }
+
     }
 
     public InstrumentConfig(String title, String key, Class<T> type, ConfigStore c) throws IOException {
@@ -87,7 +229,7 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
         Reflections reflections = new Reflections("JISA");
         Set         drivers     = reflections.getSubTypesOf(deviceType);
 
-        if (!Modifier.isAbstract(deviceType.getModifiers()) && !Modifier.isInterface(driver.getModifiers())) {
+        if (!Modifier.isAbstract(deviceType.getModifiers()) && !Modifier.isInterface(deviceType.getModifiers())) {
             drivers.add(deviceType);
         }
 
@@ -196,6 +338,7 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
 
             if (message) {
                 GUI.errorAlert("Connection Error", "Connection Error", e.getCause() == null ? e.getMessage() : e.getCause().getMessage(), 600);
+                e.printStackTrace();
             } else {
                 Util.errLog.println(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
             }

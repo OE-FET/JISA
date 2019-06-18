@@ -12,8 +12,6 @@ import jssc.SerialPortList;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.regex.Pattern;
 
 public class SerialDriver implements Driver {
 
@@ -24,14 +22,6 @@ public class SerialDriver implements Driver {
 
     public SerialDriver() {
 
-        String osName = System.getProperty("os.name").trim().toLowerCase();
-
-        if (osName.contains("linux") || osName.contains("mac")) {
-            pattern = PATTERN_LINUX_MAC;
-        } else {
-            pattern = PATTERN_WINDOWS;
-        }
-
     }
 
     @Override
@@ -40,7 +30,7 @@ public class SerialDriver implements Driver {
         COMAddress addr = (new StrAddress(address.toString())).toCOMAddress();
 
         if (addr == null) {
-            throw new VISAException("Can only open serial connections with the serial driver!");
+            throw new VISAException("Can only open native serial connections with the native serial driver!");
         }
 
         String device = addr.getDevice();
@@ -59,7 +49,7 @@ public class SerialDriver implements Driver {
         }
 
         if (found == null) {
-            throw new VISAException("No native serial port \"%s\" was found.");
+            throw new VISAException("No native serial port \"%s\" was found.", device.trim());
         }
 
         SerialPort port   = new SerialPort(found);
@@ -72,7 +62,7 @@ public class SerialDriver implements Driver {
         }
 
         if (!result) {
-            throw new VISAException("Error opening port!");
+            throw new VISAException("Error opening port \"%s\".", device.trim());
         }
 
         return new SerialConnection(port);
