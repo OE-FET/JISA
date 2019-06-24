@@ -12,6 +12,7 @@ import org.apache.commons.math.optimization.fitting.CurveFitter;
 import org.apache.commons.math.optimization.fitting.ParametricRealFunction;
 import org.apache.commons.math.optimization.fitting.PolynomialFitter;
 import org.apache.commons.math.optimization.general.GaussNewtonOptimizer;
+import org.apache.commons.math.stat.correlation.PearsonsCorrelation;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -46,10 +47,12 @@ public class Maths {
         }
 
         QRDecomposition decomp = new QRDecompositionImpl(V.toRealMatrix());
-        Matrix          Q      = new Matrix(decomp.getQ()).subMatrix(0, 0, V.columns(), V.columns());
-        Matrix          R      = new Matrix(decomp.getR()).subMatrix(0, 0, V.columns(), V.columns());
-        Matrix          denom  = Q.transpose().multiply(y);
-        Matrix          p      = new Matrix(R.toRealMatrix().solve(denom.toRealMatrix()));
+        Matrix          Q      = new Matrix(decomp.getQ());
+        Matrix          R      = new Matrix(decomp.getR());
+        R = R.subMatrix(0, 0, R.columns(), R.columns());
+        Matrix denom = Q.transpose().multiply(y).subMatrix(0, 0, R.columns(), 1);
+
+        Matrix p = new Matrix(R.toRealMatrix().solve(denom.toRealMatrix()));
 
         double[] c = new double[p.size()];
 
@@ -120,6 +123,13 @@ public class Maths {
             e.printStackTrace();
             return null;
         }
+
+    }
+
+    public static double pearsonsCorrelation(Matrix x, Matrix y) {
+
+        PearsonsCorrelation correlation = new PearsonsCorrelation();
+        return correlation.correlation(x.toArray(), y.toArray());
 
     }
 

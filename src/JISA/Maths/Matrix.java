@@ -20,7 +20,7 @@ public class Matrix implements Iterable<Double> {
      * @param cols Number of columns (m)
      */
     public Matrix(int rows, int cols) {
-        data = new double[rows][cols];
+        data      = new double[rows][cols];
         this.rows = rows;
         this.cols = cols;
 
@@ -36,8 +36,8 @@ public class Matrix implements Iterable<Double> {
 
     public Matrix(double[][] data) {
         this.data = data;
-        rows = data.length;
-        cols = data[0].length;
+        rows      = data.length;
+        cols      = data[0].length;
     }
 
     public Matrix(RealMatrix matrix) {
@@ -45,7 +45,9 @@ public class Matrix implements Iterable<Double> {
     }
 
     public RealMatrix toRealMatrix() {
-        return MatrixUtils.createRealMatrix(data);
+        RealMatrix matrix = MatrixUtils.createRealMatrix(rows(), columns());
+        forEach(matrix::setEntry);
+        return matrix;
     }
 
     public Matrix asColumn() {
@@ -83,7 +85,7 @@ public class Matrix implements Iterable<Double> {
     private void checkElement(int row, int col) {
 
         if (!Util.isBetween(row, 0, rows - 1) || !Util.isBetween(col, 0, cols - 1)) {
-            throw new IndexOutOfBoundsException(String.format("Matrix does not contain element (%d, %d)", row, col));
+            throw new IndexOutOfBoundsException(String.format("Matrix does not contain element (%d, %d) %dx%d", row, col, rows, cols));
         }
 
     }
@@ -107,6 +109,19 @@ public class Matrix implements Iterable<Double> {
 
     public double[][] getData() {
         return data.clone();
+    }
+
+    public double[] toArray() {
+
+        double[] array = new double[size()];
+
+        int i = 0;
+        for (double value : this) {
+            array[i++] = value;
+        }
+
+        return array;
+
     }
 
     /**
@@ -265,7 +280,7 @@ public class Matrix implements Iterable<Double> {
     public Matrix multiply(Matrix toMult) {
 
         if (columns() != toMult.rows()) {
-            throw new IllegalArgumentException("Matrix inner dimensions must match!");
+            throw new IllegalArgumentException(String.format("Matrix inner dimensions must match! %dx%d X %dx%d", rows(), columns(), toMult.rows(), toMult.columns()));
         }
 
         Matrix result = new Matrix(rows(), toMult.columns());

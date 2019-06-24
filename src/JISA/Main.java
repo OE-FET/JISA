@@ -21,16 +21,6 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Matrix x = new Matrix(1, 5);
-        Matrix y = new Matrix(1, 5);
-
-        x.setAll(1, 2, 3, 4, 5);
-        y.setAll(1, 3, 9, 16, 25);
-
-        Function f = Maths.polyFit(x, y, 2);
-
-        System.out.printf("a = %s, b = %s, c = %s\n", f.getCoefficients()[2], f.getCoefficients()[1],  f.getCoefficients()[0]);
-
         try {
 
             VISA.init();
