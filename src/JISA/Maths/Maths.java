@@ -27,42 +27,49 @@ public class Maths {
             throw new IllegalArgumentException("Matrices much match in size!");
         }
 
-        x = x.asColumn();
-        y = y.asColumn();
+        try {
 
-        Matrix V = new Matrix(x.size(), degree + 1);
+            x = x.asColumn();
+            y = y.asColumn();
 
-        for (int i = 0; i < x.size(); i++) {
-            V.set(i, degree, 1);
-        }
-
-        for (int j = degree - 1; j >= 0; j--) {
-
-            Iterator<Double> ittr = x.iterator();
+            Matrix V = new Matrix(x.size(), degree + 1);
 
             for (int i = 0; i < x.size(); i++) {
-                V.set(i, j, ittr.next() * V.get(i, j + 1));
+                V.set(i, degree, 1);
             }
 
+            for (int j = degree - 1; j >= 0; j--) {
+
+                Iterator<Double> ittr = x.iterator();
+
+                for (int i = 0; i < x.size(); i++) {
+                    V.set(i, j, ittr.next() * V.get(i, j + 1));
+                }
+
+            }
+
+            QRDecomposition decomp = new QRDecompositionImpl(V.toRealMatrix());
+            Matrix          Q      = new Matrix(decomp.getQ());
+            Matrix          R      = new Matrix(decomp.getR());
+            R = R.subMatrix(0, 0, R.columns(), R.columns());
+            Matrix denom = Q.transpose().multiply(y).subMatrix(0, 0, R.columns(), 1);
+
+            Matrix p = new Matrix(R.toRealMatrix().solve(denom.toRealMatrix()));
+
+            double[] c = new double[p.size()];
+
+            int i = c.length - 1;
+            for (double v : p) {
+                c[i] = v;
+                i--;
+            }
+
+            return new Function.PolyFunction(new PolynomialFunction(c));
+
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return null;
         }
-
-        QRDecomposition decomp = new QRDecompositionImpl(V.toRealMatrix());
-        Matrix          Q      = new Matrix(decomp.getQ());
-        Matrix          R      = new Matrix(decomp.getR());
-        R = R.subMatrix(0, 0, R.columns(), R.columns());
-        Matrix denom = Q.transpose().multiply(y).subMatrix(0, 0, R.columns(), 1);
-
-        Matrix p = new Matrix(R.toRealMatrix().solve(denom.toRealMatrix()));
-
-        double[] c = new double[p.size()];
-
-        int i = c.length - 1;
-        for (double v : p) {
-            c[i] = v;
-            i--;
-        }
-
-        return new Function.PolyFunction(new PolynomialFunction(c));
 
     }
 
