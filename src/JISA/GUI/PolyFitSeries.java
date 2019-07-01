@@ -31,6 +31,8 @@ public class PolyFitSeries implements Series {
 
         this.degree = degree;
 
+        data.getXYChartSeries().getData().addListener((ListChangeListener<? super XYChart.Data<Double, Double>>) event -> updateFit());
+
     }
 
     public void updateFit() {

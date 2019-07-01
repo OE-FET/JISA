@@ -1357,7 +1357,7 @@ public class SmartChart {
         public AutoSeries(ResultTable results, Evaluable xData, Evaluable yData, Evaluable sData, String pattern, Predicate<Result> filter, int degree) {
 
             if (filter == null) {
-                filter = (r) -> true;
+                filter = r -> true;
             }
 
             final Predicate<Result> finalFilter = filter;
@@ -1369,6 +1369,7 @@ public class SmartChart {
                     final double key = sData.evaluate(r);
 
                     if (!map.containsKey(key)) {
+
                         Series data = new NormalSeries(
                                 results, xData, yData,
                                 (v) -> ((sData.evaluate(v) == key) && finalFilter.test(v)),
@@ -1378,12 +1379,9 @@ public class SmartChart {
 
                         Series s;
 
-                        if (degree > 0) {
-                            Series fitted = new NormalSeries(
-                                    String.format("%s (fit)", data.getName()),
-                                    data.getColour()
-                            );
-                            s = new PolyFitSeries(data, fitted, degree);
+                        if (this.degree > 0) {
+                            s = data.polyFit(this.degree);
+                            ((PolyFitSeries) s).updateFit();
                         } else {
                             s = data;
                         }
@@ -1589,7 +1587,12 @@ public class SmartChart {
 
         @Override
         public Series polyFit(int degree) {
+
             this.degree = degree;
+
+            map.replaceAll((k, series) -> series.polyFit(degree));
+            map.forEach((k, series) -> ((PolyFitSeries) series).updateFit());
+
             return this;
         }
 
@@ -1665,8 +1668,8 @@ public class SmartChart {
             data.addOnUpdate((r) -> {
 
                 if (this.filter.test(r)) {
-                    int                          index = data.getNumRows() - 1;
-                    XYChart.Data<Double, Double> d     = new XYChart.Data<>(
+                    int index = data.getNumRows() - 1;
+                    XYChart.Data<Double, Double> d = new XYChart.Data<>(
                             xData.evaluate(r),
                             yData.evaluate(r),
                             index
@@ -1741,7 +1744,7 @@ public class SmartChart {
 
             double epsilon = limits.getMin();
             while (list.size() > target) {
-                List<XYChart.Data<Double, Double>> toKeep   = reducePoints(list, epsilon);
+                List<XYChart.Data<Double, Double>> toKeep = reducePoints(list, epsilon);
                 List<XYChart.Data<Double, Double>> toRemove = this.list.filtered((p) -> list.contains(p) && !toKeep.contains(
                         p));
                 for (XYChart.Data<Double, Double> d : toRemove) {
