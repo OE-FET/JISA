@@ -782,7 +782,7 @@ public class SmartChart {
     private class NormalSeries implements Series {
 
         protected Color                          colour;
-        protected String[]                       lineStyle    = {"-fx-stroke: orange;", "-fx-stroke-width: 1.5;"};
+        protected String[]                       lineStyle    = {"-fx-stroke: orange;", "-fx-stroke-width: 2;"};
         protected String[]                       symbolStyle  = {"", ""};
         protected XYChart.Series<Double, Double> series;
         protected DataList                       data;
@@ -1374,7 +1374,7 @@ public class SmartChart {
                                 results, xData, yData,
                                 (v) -> ((sData.evaluate(v) == key) && finalFilter.test(v)),
                                 String.format(pattern, key),
-                                null
+                                defaultColours[map.size() % defaultColours.length]
                         );
 
                         Series s;
