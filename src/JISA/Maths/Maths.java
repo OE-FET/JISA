@@ -21,6 +21,15 @@ import java.util.List;
 
 public class Maths {
 
+    /**
+     * Fit a polynomial of given degree to the data provided as two column matrices x and y.
+     *
+     * @param x      X-Data
+     * @param y      Y-Data
+     * @param degree Degree of polynomial to fit
+     *
+     * @return Polynomial function representing the fit
+     */
     public static Function polyFit(Matrix x, Matrix y, final int degree) {
 
         if (x.size() != y.size()) {

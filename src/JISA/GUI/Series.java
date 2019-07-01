@@ -72,6 +72,10 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
     Series restore();
 
+    Series polyFit(int degree);
+
+    void updateStyles();
+
     XYChart.Series<Double, Double> getXYChartSeries();
 
     enum Shape {

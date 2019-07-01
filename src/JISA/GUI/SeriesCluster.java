@@ -152,6 +152,21 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
+    public Series polyFit(int degree) {
+        for (Series s : series) {
+            s.polyFit(degree);
+        }
+        return this;
+    }
+
+    @Override
+    public void updateStyles() {
+        for (Series s : series) {
+            s.updateStyles();
+        }
+    }
+
+    @Override
     public XYChart.Series<Double, Double> getXYChartSeries() {
         return null;
     }

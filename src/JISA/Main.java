@@ -3,11 +3,14 @@ package JISA;
 import JISA.Addresses.Address;
 import JISA.Addresses.StrAddress;
 import JISA.Experiment.Function;
+import JISA.Experiment.ResultList;
+import JISA.Experiment.ResultTable;
 import JISA.GUI.*;
 import JISA.Maths.Maths;
 import JISA.Maths.Matrix;
 import JISA.VISA.VISA;
 import javafx.application.Platform;
+import javafx.scene.paint.Color;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -24,6 +27,24 @@ public class Main {
         try {
 
             VISA.init();
+
+            ResultTable list = new ResultList("X", "Y");
+            Plot        plot = new Plot("Plot", "X", "Y");
+
+            Series s = plot.createSeries("Data")
+                           .setColour(Colour.TEAL)
+                           .polyFit(4);
+
+            plot.show();
+
+            s.addPoint(0, 0);
+            s.addPoint(1, -50);
+            s.addPoint(2, 10);
+            s.addPoint(3, 3);
+            s.addPoint(4, 25);
+
+
+            System.in.read();
 
             while (true) {
 
@@ -54,7 +75,12 @@ public class Main {
                         break;
 
                     case CHOICE_ADDR:
-                        String[] values = GUI.inputWindow("JISA", "Input Address", "Please type the VISA address to connect to...", "Address");
+                        String[] values = GUI.inputWindow(
+                                "JISA",
+                                "Input Address",
+                                "Please type the VISA address to connect to...",
+                                "Address"
+                        );
 
                         if (values == null) {
                             break;
@@ -77,11 +103,13 @@ public class Main {
                         md.addLine("");
                         md.addLine("* `\"Scan for Instruments\"` to see what instruments JISA can detect");
                         md.addLine("");
-                        md.addLine("* `\"Enter Address Manually\"` if you want to connect to an instrument with a known address");
+                        md.addLine(
+                                "* `\"Enter Address Manually\"` if you want to connect to an instrument with a known address");
                         md.addLine("");
                         md.addLine("* `\"Exit\"` to exit this utility");
                         md.addLine("");
-                        md.addLine("For more information regarding how to include and use this library in your project, take a look at the `JISA` wiki at:");
+                        md.addLine(
+                                "For more information regarding how to include and use this library in your project, take a look at the `JISA` wiki at:");
                         md.addLine("");
                         md.addLine("https://github.com/OE-FET/JISA/wiki");
                         md.addLine("");
