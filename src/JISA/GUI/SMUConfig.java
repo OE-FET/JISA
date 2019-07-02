@@ -130,8 +130,7 @@ public class SMUConfig extends Fields {
         this.ilm.set(iLim);
     }
 
-    public SMU getSMU() {
-
+    public SMU get() {
 
         int smuI = this.smu.get();
 

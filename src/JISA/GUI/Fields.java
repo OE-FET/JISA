@@ -814,17 +814,21 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             @Override
             public synchronized void editValues(String... values) {
 
-                int selected = field.getSelectionModel().getSelectedIndex();
+                GUI.runNow(() -> {
 
-                if (list != null) {
-                    field.getSelectionModel().selectedIndexProperty().removeListener(list);
-                    field.setItems(FXCollections.observableArrayList(values));
-                    field.getSelectionModel().select(Math.min(values.length - 1, Math.max(0, selected)));
-                    field.getSelectionModel().selectedIndexProperty().addListener(list);
-                } else {
-                    field.setItems(FXCollections.observableArrayList(values));
-                    field.getSelectionModel().select(Math.min(values.length - 1, Math.max(0, selected)));
-                }
+                    int selected = field.getSelectionModel().getSelectedIndex();
+
+                    if (list != null) {
+                        field.getSelectionModel().selectedIndexProperty().removeListener(list);
+                        field.setItems(FXCollections.observableArrayList(values));
+                        field.getSelectionModel().select(Math.min(values.length - 1, Math.max(0, selected)));
+                        field.getSelectionModel().selectedIndexProperty().addListener(list);
+                    } else {
+                        field.setItems(FXCollections.observableArrayList(values));
+                        field.getSelectionModel().select(Math.min(values.length - 1, Math.max(0, selected)));
+                    }
+
+                });
             }
 
             @Override

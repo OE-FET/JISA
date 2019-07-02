@@ -28,24 +28,6 @@ public class Main {
 
             VISA.init();
 
-            ResultTable list = new ResultList("X", "Y");
-            Plot        plot = new Plot("Plot", "X", "Y");
-
-            Series s = plot.createSeries("Data")
-                           .setColour(Colour.TEAL)
-                           .polyFit(4);
-
-            plot.show();
-
-            s.addPoint(0, 0);
-            s.addPoint(1, -50);
-            s.addPoint(2, 10);
-            s.addPoint(3, 3);
-            s.addPoint(4, 25);
-
-
-            System.in.read();
-
             while (true) {
 
                 // Ask the user if they want to perform a test

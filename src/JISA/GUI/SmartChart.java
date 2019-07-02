@@ -8,6 +8,7 @@ import JISA.GUI.SVG.*;
 import JISA.Maths.Maths;
 import JISA.Maths.Matrix;
 import JISA.Util;
+import com.sun.javafx.charts.Legend;
 import javafx.beans.InvalidationListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -69,6 +70,8 @@ public class SmartChart {
 
         xAxis.setAnimated(false);
         yAxis.setAnimated(false);
+
+        Legend legend = (Legend) chart.getChildrenUnmodifiable().filtered(n -> n instanceof Legend).get(0);
 
     }
 
@@ -166,7 +169,6 @@ public class SmartChart {
                         colour.getOpacity()
                 )
         );
-
 
     }
 
@@ -1638,14 +1640,12 @@ public class SmartChart {
         private List<Integer>                                      shown       = new LinkedList<>();
         private Predicate<Result>                                  filter      = (r) -> true;
         private BiPredicate<Integer, XYChart.Data<Double, Double>> show        = (i, r) -> true;
-        private Runnable                                           onChange    = () -> {
-        };
+        private Runnable                                           onChange    = () -> {};
         private Evaluable                                          xData;
         private Evaluable                                          yData;
         private boolean                                            showMarkers = true;
         private String                                             markerStyle = "";
-        private LimitChange                                        limitChange = (a, b, c, d) -> {
-        };
+        private LimitChange                                        limitChange = (a, b, c, d) -> {};
         private double                                             minX        = Double.POSITIVE_INFINITY;
         private double                                             maxX        = Double.NEGATIVE_INFINITY;
         private double                                             minY        = Double.POSITIVE_INFINITY;

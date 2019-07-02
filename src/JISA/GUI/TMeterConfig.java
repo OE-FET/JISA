@@ -104,7 +104,7 @@ public class TMeterConfig extends Fields {
 
     }
 
-    public TMeter getTMeter() {
+    public TMeter get() {
 
 
         int smuI = this.inst.get();

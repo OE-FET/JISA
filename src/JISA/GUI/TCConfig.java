@@ -304,7 +304,7 @@ public class TCConfig extends JFXWindow {
 
     }
 
-    public TC getTController() {
+    public TC get() {
 
         try {
 
