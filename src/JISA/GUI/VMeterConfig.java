@@ -37,15 +37,30 @@ public class VMeterConfig extends Fields {
             config.setOnConnect(() -> update(true));
         }
 
-        choice.setOnChange(() -> {
-            update(false);
-            save();
-        });
-
-        channel.setOnChange(this::save);
-        zero.setOnChange(this::save);
+        choice.setOnChange(() -> update(false));
 
         update(true);
+
+    }
+
+    public VMeterConfig(String title, ConfigGrid grid) {
+
+        this(title, grid.getInstrumentsByType(VMeter.class));
+
+    }
+
+    public VMeterConfig(String title, String key, ConfigStore config, InstrumentConfig<VMeter>... instruments) {
+
+        this(title, instruments);
+        this.config = config;
+        this.key    = key;
+        load();
+
+    }
+
+    public VMeterConfig(String title, String key, ConfigStore config, ConfigGrid grid) {
+
+        this(title, key, config, grid.getInstrumentsByType(VMeter.class));
 
     }
 
@@ -142,6 +157,36 @@ public class VMeterConfig extends Fields {
                 e.printStackTrace();
             }
 
+        }
+
+    }
+
+    private void load() {
+
+        try {
+
+            JSONObject data = config.getInstConfig(key);
+
+            if (data == null) {
+                data = new JSONObject();
+                config.saveInstConfig(key, data);
+                save();
+            }
+
+            choice.set(data.getInt("choice"));
+            channel.set(data.getInt("channel"));
+            zero.set(data.getBoolean("zero"));
+
+            choice.setOnChange(() -> {
+                update(false);
+                save();
+            });
+
+            channel.setOnChange(this::save);
+            zero.setOnChange(this::save);
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
     }
