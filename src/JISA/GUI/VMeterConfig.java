@@ -173,9 +173,9 @@ public class VMeterConfig extends Fields {
                 save();
             }
 
-            choice.set(data.getInt("choice"));
-            channel.set(data.getInt("channel"));
-            zero.set(data.getBoolean("zero"));
+            choice.set(data.has("choice") ? data.getInt("choice") : 0);
+            channel.set(data.has("channel") ? data.getInt("channel") : 0);
+            zero.set(data.has("zero") ? data.getBoolean("zero") : true);
 
             choice.setOnChange(() -> {
                 update(false);

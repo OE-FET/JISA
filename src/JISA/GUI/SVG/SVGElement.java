@@ -19,7 +19,7 @@ public class SVGElement {
         this.tag = tag;
     }
 
-    public SVGElement setAttribute(String key, double value){
+    public SVGElement setAttribute(String key, double value) {
         return setAttribute(key, String.valueOf(value));
     }
 
@@ -39,20 +39,27 @@ public class SVGElement {
 
     public SVGElement setStrokeColour(Color colour) {
 
-        setStyle(
-                "stroke",
-                String.format("rgb(%s,%s,%s)", colour.getRed() * 255D, colour.getGreen() * 255D, colour.getBlue() * 255D)
-        );
+        return setStrokeColour(String.format(
+                "rgb(%s,%s,%s)",
+                colour.getRed() * 255D,
+                colour.getGreen() * 255D,
+                colour.getBlue() * 255D
+        ));
 
+    }
+
+    public SVGElement setStrokeColour(String colour) {
+
+        setAttribute("stroke", colour);
         return this;
 
     }
 
     public SVGElement setStrokeWidth(double width) {
 
-        setStyle(
+        setAttribute(
                 "stroke-width",
-                String.format("%spx", width)
+                String.format("%s", width)
         );
 
         return this;
@@ -61,7 +68,7 @@ public class SVGElement {
 
     public SVGElement setDash(String... dash) {
 
-        setStyle(
+        setAttribute(
                 "stroke-dasharray",
                 String.join(",", dash)
         );
@@ -72,13 +79,18 @@ public class SVGElement {
 
     public SVGElement setFillColour(Color colour) {
 
-        setStyle(
-                "fill",
-                String.format("rgb(%s,%s,%s)", colour.getRed() * 255D, colour.getGreen() * 255D, colour.getBlue() * 255D)
-        );
+        return setFillColour(String.format(
+                "rgb(%s,%s,%s)",
+                colour.getRed() * 255D,
+                colour.getGreen() * 255D,
+                colour.getBlue() * 255D
+        ));
 
+    }
+
+    public SVGElement setFillColour(String colour) {
+        setAttribute("fill", colour);
         return this;
-
     }
 
     public void output(final PrintStream stream) {

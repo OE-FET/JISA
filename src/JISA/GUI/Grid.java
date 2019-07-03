@@ -1,18 +1,12 @@
 package JISA.GUI;
 
 import javafx.application.Platform;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
-import org.python.antlr.op.Not;
+import javafx.scene.control.Button;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,34 +28,61 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
     private ArrayList<Element> added   = new ArrayList<>();
 
     public Grid(String title, int numColumns) {
+
         super(title, Grid.class.getResource("FXML/GridWindow.fxml"));
         nCols = numColumns;
+
     }
 
     public Grid(String title) {
+
         this(title, DEFAULT_NUM_COLS);
+
     }
 
     public Grid(String title, int numCols, Element... panels) {
+
         this(title, numCols);
+
         for (Element g : panels) {
             add(g);
         }
+
     }
 
     public Grid(String title, Element... panels) {
+
         this(title, DEFAULT_NUM_COLS, panels);
+
     }
 
-    public void addToolbarButton(String text, ClickHandler onClick) {
+    public Grid(int numColumns, Element... panels) {
+
+        this("", numColumns, panels);
+
+    }
+
+    public Grid(Element... panels) {
+
+        this("", panels);
+
+    }
+
+    /**
+     * Adds a button to a toolbar at the top of the grid.
+     *
+     * @param text    Text to display in the button
+     * @param onClick Action to perform when clicked
+     */
+    public JISA.GUI.Button addToolbarButton(String text, ClickHandler onClick) {
+
+        Button button = new Button();
 
         Platform.runLater(() -> {
             if (toolBar == null) {
                 toolBar = new ToolBar();
                 border.setTop(toolBar);
             }
-
-            Button button = new Button();
             button.setText(text);
             button.setOnAction(
                     (actionEvent) -> {
@@ -80,6 +101,73 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             toolBar.getItems().add(button);
         });
 
+        return new JISA.GUI.Button() {
+
+            @Override
+            public void setDisabled(boolean disabled) {
+
+                GUI.runNow(() -> button.setDisable(disabled));
+            }
+
+            @Override
+            public boolean isDisabled() {
+
+                return button.isDisabled();
+            }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    button.setVisible(visible);
+                    button.setManaged(visible);
+                });
+            }
+
+            @Override
+            public boolean isVisible() {
+
+                return button.isVisible();
+            }
+
+            @Override
+            public void setText(String text) {
+
+                GUI.runNow(() -> button.setText(text));
+            }
+
+            @Override
+            public String getText() {
+
+                return button.getText();
+            }
+
+            @Override
+            public void setOnClick(ClickHandler onClick) {
+
+                GUI.runNow(() -> button.setOnAction(
+                        (actionEvent) -> {
+                            Thread t = new Thread(() -> {
+                                try {
+                                    onClick.click();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            });
+                            t.setDaemon(true);
+                            t.start();
+                        }
+                ));
+
+            }
+
+            @Override
+            public void remove() {
+                GUI.runNow(() -> toolBar.getItems().remove(button));
+            }
+
+        };
+
     }
 
     public void add(Element toAdd) {
@@ -87,9 +175,13 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
         Pane bPane;
 
         if (toAdd instanceof NotBordered) {
+
             bPane = ((NotBordered) toAdd).getNoBorderPane(true);
+
         } else if (toAdd instanceof InstrumentConfig) {
+
             bPane = ((InstrumentConfig) toAdd).pane;
+
         } else {
 
             bPane = new BorderPane();
@@ -112,6 +204,7 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
     }
 
     public void setNumColumns(int columns) {
+
         nCols = columns;
         updateGridding();
     }
@@ -119,19 +212,26 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
     private void updateGridding() {
 
         GUI.runNow(() -> {
+
             r = 0;
             c = 0;
+
             for (Node node : pane.getChildren()) {
 
                 GridPane.setRowIndex(node, r);
                 GridPane.setColumnIndex(node, c);
 
                 c++;
+
                 if (c >= nCols) {
+
                     c = 0;
                     r++;
+
                 }
+
             }
+
         });
 
     }
@@ -139,9 +239,16 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
     public void remove(Element toRemove) {
 
         GUI.runNow(() -> {
+
             int index = added.indexOf(toRemove);
+
+            if (index < 0) {
+                return;
+            }
+
             added.remove(index);
             Node node = pane.getChildren().remove(index);
+
         });
 
         updateGridding();
@@ -151,8 +258,10 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
     public void clear() {
 
         GUI.runNow(() -> {
+
             added.clear();
             pane.getChildren().clear();
+
         });
 
         c = 0;
@@ -162,16 +271,19 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
     @Override
     public List<Element> getElements() {
+
         return new ArrayList<>(added);
     }
 
     public int getNumColumns() {
+
         return nCols;
     }
 
     public void addPane(Node toAdd) {
 
         GUI.runNow(() -> {
+
             pane.add(toAdd, c, r);
 
             GridPane.setHgrow(toAdd, hGrow ? Priority.ALWAYS : Priority.NEVER);
@@ -182,6 +294,7 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
                 c = 0;
                 r++;
             }
+
         });
 
     }
@@ -189,6 +302,7 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
     public void setGrowth(boolean horizontal, boolean vertical) {
 
         GUI.runNow(() -> {
+
             hGrow = horizontal;
             vGrow = vertical;
 
@@ -198,18 +312,23 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
                 GridPane.setVgrow(node, vGrow ? Priority.ALWAYS : Priority.NEVER);
 
             }
+
         });
     }
 
     public Pane getPane() {
+
         return border;
+
     }
 
     @Override
     public Pane getNoBorderPane(boolean strip) {
-        if (strip) {
-            pane.setPadding(new Insets(0, 0, 0, 0));
-        }
+
+        if (strip) pane.setPadding(new Insets(0, 0, 0, 0));
+
         return pane;
+
     }
+
 }

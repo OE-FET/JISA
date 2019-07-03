@@ -14,4 +14,14 @@ public interface Field<T> {
 
     boolean isDisabled();
 
+    void setVisible(boolean visible);
+
+    boolean isVisible();
+
+    void remove();
+
+    void setText(String text);
+
+    String getText();
+
 }

@@ -82,47 +82,58 @@ public class ConfigStore {
     }
 
     public int getLastSave() {
+
         return json.getInt("lastSave");
     }
 
     public int getInt(String key) {
+
         return data.getInt(key);
     }
 
     public int getIntOrDefault(String key, int def) {
+
         return has(key) ? getInt(key) : def;
     }
 
     public double getDouble(String key) {
+
         return data.getDouble(key);
     }
 
     public double getDoubleOrDefault(String key, double def) {
+
         return has(key) ? getDouble(key) : def;
     }
 
     public boolean getBoolean(String key) {
+
         return data.getBoolean(key);
     }
 
     public boolean getBooleanOrDefault(String key, boolean def) {
+
         return has(key) ? getBoolean(key) : def;
     }
 
     public String getString(String key) {
+
         return data.getString(key);
     }
 
     public String getStringOrDefault(String key, String def) {
+
         return has(key) ? getString(key) : def;
     }
 
     public void set(String key, Object value) throws IOException {
+
         data.put(key, value);
         save();
     }
 
     public void save() throws IOException {
+
         json.put("lastSave", System.currentTimeMillis());
         FileWriter writer = new FileWriter(path);
         json.write(writer, 4, 0);
@@ -130,10 +141,12 @@ public class ConfigStore {
     }
 
     public boolean has(String key) {
+
         return data.has(key);
     }
 
     public void saveInstrument(String key, InstrumentConfig config) {
+
         JSONObject output = new JSONObject();
         output.put("address", config.getAddress() == null ? "null" : config.getAddress().toString());
         output.put("driver", config.getDriver() == null ? "null" : config.getDriver().getName());
@@ -158,6 +171,7 @@ public class ConfigStore {
     }
 
     public void saveInstConfig(String key, JSONObject data) throws IOException {
+
         instConfigs.put(key, data);
         save();
     }
@@ -174,14 +188,8 @@ public class ConfigStore {
 
     public void saveFields(String name, Fields toSave) throws IOException {
 
-        JSONArray block;
-
-        if (fields.has(name)) {
-            block = fields.getJSONArray(name);
-        } else {
-            block = new JSONArray();
-            fields.put(name, block);
-        }
+        JSONArray block = new JSONArray();
+        fields.put(name, block);
 
         for (Field f : toSave) {
             block.put(f.get());
@@ -208,14 +216,22 @@ public class ConfigStore {
             Field  f = fields.next();
 
             try {
-                f.set(o);
-            } catch (Throwable ignored) {}
+
+                if (f.get() instanceof Double && o instanceof Integer) {
+                    f.set(((Integer) o).doubleValue());
+                } else {
+                    f.set(o);
+                }
+
+            } catch (Throwable ignored) {
+            }
 
         }
 
     }
 
     public boolean hasInstConfig(String key) {
+
         return instConfigs.has(key);
     }
 

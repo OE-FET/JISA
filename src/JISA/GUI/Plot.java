@@ -242,6 +242,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         return createSeries(String.format("Series %d", chart.getData().size() + 1));
     }
+
     public Series watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, Predicate<Result> filter, String name, Color colour) {
 
         return controller.createWatchSeries(name, colour, list, xData, yData, filter);
@@ -682,7 +683,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
     }
 
     public void saveSVG(String path, double w, double h) throws IOException {
-
         controller.writeSVG(w, h, path);
     }
 

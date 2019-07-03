@@ -22,7 +22,9 @@ public final class SmartAxis extends ValueAxis<Double> {
     private       String           label                    = "";
     private       String           labelSuffix              = "";
     private       double           minValue                 = 1.0;
+    private       double           minNonZero               = Double.POSITIVE_INFINITY;
     private       double           maxValue                 = 1.0;
+    private       double           maxNonZero               = Double.NEGATIVE_INFINITY;
     private       double           minValueInRange          = 0.0;
     private       Mode             mode                     = Mode.LINEAR;
     private       double           range                    = Double.POSITIVE_INFINITY;
@@ -42,22 +44,26 @@ public final class SmartAxis extends ValueAxis<Double> {
 
         @Override
         public Object getBean() {
+
             return SmartAxis.this;
         }
 
         @Override
         public String getName() {
+
             return "forceZeroInRange";
         }
     };
 
 
     public SmartAxis() {
+
         super();
         setMode(Mode.LINEAR);
     }
 
     public Mode getMode() {
+
         return mode;
     }
 
@@ -92,6 +98,10 @@ public final class SmartAxis extends ValueAxis<Double> {
         switch (mode) {
 
             case LOGARITHMIC:
+
+                if (value == 0) {
+                    return getSide().isVertical() ? 10 * getHeight() : -9 * getWidth();
+                }
 
                 double logUpperBound = Math.log10(getUpperBound());
                 double logLowerBound = Math.log10(getLowerBound());
@@ -151,28 +161,34 @@ public final class SmartAxis extends ValueAxis<Double> {
     }
 
     public void setLabelText(String label) {
+
         this.label = label;
         setLabel(String.format("%s%s", label, labelSuffix));
     }
 
     public void setLabelSuffix(String suffix) {
+
         this.labelSuffix = suffix;
         setLabel(String.format("%s%s", label, labelSuffix));
     }
 
     public final boolean isForceZeroInRange() {
+
         return forceZeroInRange.getValue();
     }
 
     public final void setForceZeroInRange(boolean value) {
+
         forceZeroInRange.setValue(value);
     }
 
     public final BooleanProperty forceZeroInRangeProperty() {
+
         return forceZeroInRange;
     }
 
     public final double getTickUnit() {
+
         return 10;
     }
 
@@ -181,12 +197,14 @@ public final class SmartAxis extends ValueAxis<Double> {
     }
 
     public final DoubleProperty tickUnitProperty() {
+
         return null;
     }
 
 
     @Override
     protected String getTickMarkLabel(Double value) {
+
         StringConverter<Double> formatter = getTickLabelFormatter();
         if (formatter == null) {
             formatter = defaultFormatter;
@@ -197,6 +215,7 @@ public final class SmartAxis extends ValueAxis<Double> {
 
     @Override
     protected Object getRange() {
+
         return new Object[]{
                 getLowerBound(),
                 getUpperBound(),
@@ -209,6 +228,7 @@ public final class SmartAxis extends ValueAxis<Double> {
 
     @Override
     protected void setRange(Object range, boolean animate) {
+
         final Object[] rangeProps = (Object[]) range;
         final double   lowerBound = (Double) rangeProps[0];
         final double   upperBound = (Double) rangeProps[1];
@@ -237,6 +257,14 @@ public final class SmartAxis extends ValueAxis<Double> {
             for (Number n : data) {
                 min = Math.min(min, n.doubleValue());
                 max = Math.max(max, n.doubleValue());
+
+                double abs = Math.abs(n.doubleValue());
+
+                if (abs > 0) {
+                    minNonZero = Math.min(minNonZero, abs);
+                    maxNonZero = Math.max(maxNonZero, abs);
+                }
+
             }
 
             minValue = min;
@@ -251,7 +279,7 @@ public final class SmartAxis extends ValueAxis<Double> {
 
             minValue = 0;
             maxValue = 100;
-            mag = 0;
+            mag      = 0;
 
             empty = true;
 
@@ -372,10 +400,12 @@ public final class SmartAxis extends ValueAxis<Double> {
     }
 
     public List<Double> getMajorTicks() {
+
         return calculateTickValues(10.0, null);
     }
 
     public List<Double> getMinorTicks() {
+
         return calculateMinorTickMarks();
     }
 
@@ -414,7 +444,11 @@ public final class SmartAxis extends ValueAxis<Double> {
 
                 }
 
-                double[] endTicks = Util.makeLinearArray(majorTicks.get(majorTicks.size() - 1), majorTicks.get(majorTicks.size() - 1) + tickUnit, 6);
+                double[] endTicks = Util.makeLinearArray(
+                        majorTicks.get(majorTicks.size() - 1),
+                        majorTicks.get(majorTicks.size() - 1) + tickUnit,
+                        6
+                );
 
                 for (int i = 1; i < endTicks.length - 1; i++) {
 
@@ -453,14 +487,17 @@ public final class SmartAxis extends ValueAxis<Double> {
     }
 
     protected void layoutChildren() {
+
         super.layoutChildren();
     }
 
     public double getMaxRange() {
+
         return range;
     }
 
     public void setMaxRange(double range) {
+
         this.range = range;
     }
 
@@ -478,9 +515,16 @@ public final class SmartAxis extends ValueAxis<Double> {
                         maxValue = 100;
                     }
 
-                    double minExp = Math.log10(minValue);
-                    double maxExp = Math.log10(maxValue);
+                    double minExp = Math.log10(Math.abs(minNonZero));
+                    double maxExp = Math.log10(Math.abs(maxNonZero));
                     double expRange = maxExp - minExp;
+
+                    if (expRange < 2) {
+                        double diff = (2 - expRange) / 2;
+                        minExp -= diff;
+                        maxExp += diff;
+                        expRange = 2;
+                    }
 
                     return new Object[]{
                             Math.pow(10, minExp - (0.05 * expRange)),
@@ -523,6 +567,7 @@ public final class SmartAxis extends ValueAxis<Double> {
 
     @Override
     public List<CssMetaData<? extends Styleable, ?>> getCssMetaData() {
+
         return getClassCssMetaData();
     }
 
@@ -536,14 +581,17 @@ public final class SmartAxis extends ValueAxis<Double> {
 
         @Override
         public String toString(Double number) {
+
             return String.format("10^%+d", (int) Math.log10(number));
         }
 
         @Override
         public Double fromString(String string) {
+
             String[] values = string.split("\\^");
             return Math.pow(Double.valueOf(values[0]), Double.valueOf(values[1]));
         }
+
     }
 
     public static class DefaultFormatter extends StringConverter<Double> {
@@ -553,10 +601,12 @@ public final class SmartAxis extends ValueAxis<Double> {
         private SmartAxis axis;
 
         public DefaultFormatter(final SmartAxis axis) {
+
             this.axis = axis;
         }
 
         public DefaultFormatter(SmartAxis axis, String prefix, String suffix) {
+
             this(axis);
             this.prefix = prefix;
             this.suffix = suffix;
@@ -564,21 +614,26 @@ public final class SmartAxis extends ValueAxis<Double> {
 
         @Override
         public String toString(Double number) {
+
             return String.format("%.02f", number / magnitude);
         }
 
         private String toString(Double number, String numFormatter) {
+
             return toString(number);
         }
 
         private String toString(Double number, DecimalFormat formatter) {
+
             return toString(number);
         }
 
         @Override
         public Double fromString(String string) {
+
             return Double.valueOf(string) * magnitude;
         }
+
     }
 
 }

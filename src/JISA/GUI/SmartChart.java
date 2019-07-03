@@ -1,9 +1,6 @@
 package JISA.GUI;
 
-import JISA.Experiment.Function;
-import JISA.Experiment.Result;
-import JISA.Experiment.ResultList;
-import JISA.Experiment.ResultTable;
+import JISA.Experiment.*;
 import JISA.GUI.SVG.*;
 import JISA.Maths.Maths;
 import JISA.Maths.Matrix;
@@ -271,6 +268,22 @@ public class SmartChart {
         SVGLine xAxis = new SVGLine(aStartX - 0.5, aStartY, aEndX, aStartY);
         SVGLine yAxis = new SVGLine(aStartX, aStartY + 0.5, aStartX, aEndY);
 
+        SVGElement clip = new SVGElement("clipPath");
+        clip.setAttribute("id", "lineClip");
+
+        SVGElement clipPath = new SVGElement("rect");
+
+        clipPath.setAttribute("x", aStartX)
+                .setAttribute("y", aEndY)
+                .setAttribute("width", width)
+                .setAttribute("height", height);
+
+        clipPath.setStrokeColour("none");
+        clipPath.setFillColour("none");
+
+        clip.add(clipPath);
+        main.add(clip);
+
         SVGText title = new SVGText((aStartX + aEndX) / 2, 50.0, "middle", chart.getTitle());
         title.setAttribute("font-size", "20px");
         main.add(title);
@@ -408,17 +421,26 @@ public class SmartChart {
 
             legendText.setAttribute("font-size", "16px");
 
-            main.add(legendCircle);
-            main.add(legendText);
+            if (chart.isLegendVisible()) {
+                main.add(legendCircle);
+                main.add(legendText);
+            }
 
             boolean first = true;
 
             List<SVGElement> list = new LinkedList<>();
 
+            double lastX = -1;
+            double lastY = -1;
+
             for (XYChart.Data<Double, Double> point : s.getXYChartSeries().getData()) {
 
                 double x = aStartX + xScale * this.xAxis.getDisplayPosition(point.getXValue());
                 double y = aEndY - yScale * this.yAxis.getDisplayPosition(point.getYValue());
+
+                if (!Util.isBetween(x, aStartX, aEndX) || !Util.isBetween(y, aEndY, aStartY)) {
+                    continue;
+                }
 
                 terms.add(String.format("%s%s %s", first ? "M" : "L", x, y));
 
@@ -439,6 +461,7 @@ public class SmartChart {
             }
 
             SVGPath path = new SVGPath(String.join(" ", terms));
+            path.setAttribute("clip-path", "url(#lineClip)");
 
             path.setStrokeColour(c)
                 .setStrokeWidth(w)
@@ -1640,12 +1663,14 @@ public class SmartChart {
         private List<Integer>                                      shown       = new LinkedList<>();
         private Predicate<Result>                                  filter      = (r) -> true;
         private BiPredicate<Integer, XYChart.Data<Double, Double>> show        = (i, r) -> true;
-        private Runnable                                           onChange    = () -> {};
+        private Runnable                                           onChange    = () -> {
+        };
         private Evaluable                                          xData;
         private Evaluable                                          yData;
         private boolean                                            showMarkers = true;
         private String                                             markerStyle = "";
-        private LimitChange                                        limitChange = (a, b, c, d) -> {};
+        private LimitChange                                        limitChange = (a, b, c, d) -> {
+        };
         private double                                             minX        = Double.POSITIVE_INFINITY;
         private double                                             maxX        = Double.NEGATIVE_INFINITY;
         private double                                             minY        = Double.POSITIVE_INFINITY;
