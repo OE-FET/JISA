@@ -808,7 +808,7 @@ public class SmartChart {
 
         protected Color                          colour;
         protected String[]                       lineStyle    = {"-fx-stroke: orange;", "-fx-stroke-width: 2;"};
-        protected String[]                       symbolStyle  = {"", ""};
+        protected String[]                       symbolStyle  = {"", "", "-fx-opacity: 1;"};
         protected XYChart.Series<Double, Double> series;
         protected DataList                       data;
         protected int                            reduceLimit  = Integer.MAX_VALUE;
@@ -875,7 +875,60 @@ public class SmartChart {
 
             data.setShowCondition((d) -> d.getXValue() >= (maxX - xRange) && d.getYValue() >= (maxY - yRange));
 
-            updateSeries();
+            data.addListener(
+                    (ListChangeListener<? super XYChart.Data<Double, Double>>) l -> {
+
+                        chart.applyCss();
+
+                        while (l.next()) {
+
+                            if (!l.wasAdded()) {
+                                continue;
+                            }
+
+                            l.getAddedSubList().forEach(
+                                    d -> {
+
+                                        if (d.getNode() != null) {
+                                            d.getNode().setStyle(String.join(" ", symbolStyle));
+                                            d.getNode().applyCss();
+                                        }
+
+                                    }
+                            );
+                        }
+
+                    }
+            );
+
+            int lIndex = chart.getData().indexOf(series);
+
+            for (Node n : chart.getChildrenUnmodifiable()) {
+
+                if (n instanceof Legend) {
+
+                    ((Legend) n).getItems().addListener((ListChangeListener<? super Legend.LegendItem>) change -> {
+
+                        while (change.next()) {
+
+                            ((Legend) n).getItems().forEach(li -> {
+
+                                Node symbol = li.getSymbol();
+                                if (symbol.getStyleClass().contains(String.format("series%d", lIndex))) {
+                                    symbol.setStyle(symbolStyle[0] + " " + (isShowingMarkers() ? symbolStyle[1] : "-fx-background-radius: 0px; -fx-padding: 0; -fx-padding: 1 5 1 5;"));
+                                    symbol.applyCss();
+                                }
+
+                            });
+
+                        }
+
+                    });
+
+                }
+
+            }
+
 
         }
 
@@ -928,7 +981,179 @@ public class SmartChart {
 
             data.setShowCondition((d) -> d.getXValue() >= (maxX - xRange) && d.getYValue() >= (maxY - yRange));
 
-            updateSeries();
+            data.addListener(
+                    (ListChangeListener<? super XYChart.Data<Double, Double>>) l -> {
+
+                        chart.applyCss();
+
+                        while (l.next()) {
+
+                            if (!l.wasAdded()) {
+                                continue;
+                            }
+
+                            l.getAddedSubList().forEach(
+                                    d -> {
+
+                                        if (d.getNode() != null) {
+                                            d.getNode().setStyle(String.join(" ", symbolStyle));
+                                            d.getNode().applyCss();
+                                        }
+
+                                    }
+                            );
+                        }
+
+                    }
+            );
+
+            int lIndex = chart.getData().indexOf(series);
+
+            for (Node n : chart.getChildrenUnmodifiable()) {
+
+                if (n instanceof Legend) {
+
+                    ((Legend) n).getItems().addListener((ListChangeListener<? super Legend.LegendItem>) change -> {
+
+                        while (change.next()) {
+
+                            ((Legend) n).getItems().forEach(li -> {
+
+                                Node symbol = li.getSymbol();
+                                if (symbol.getStyleClass().contains(String.format("series%d", lIndex))) {
+                                    symbol.setStyle(symbolStyle[0] + " " + (isShowingMarkers() ? symbolStyle[1] : "-fx-background-radius: 0px; -fx-padding: 0; -fx-padding: 1 5 1 5;"));
+                                    symbol.applyCss();
+                                }
+
+                            });
+
+                        }
+
+                    });
+
+                }
+
+            }
+
+        }
+
+        public Series watch(ResultTable list, int xData, int yData) {
+
+            if (getXLabel() == null || getXLabel().equals("")) {
+                setXLabel(list.getTitle(xData));
+            }
+
+            if (getYLabel() == null || getYLabel().equals("")) {
+                setYLabel(list.getTitle(yData));
+            }
+
+            setName(list.getTitle(yData));
+
+            return Series.super.watch(list, xData, yData);
+
+        }
+
+        @Override
+        public Series watch(ResultTable list, Evaluable xData, Evaluable yData) {
+
+            GUI.runNow(() -> {
+                data = new DataList(list, xData, yData, r -> true);
+
+                data.onChange = () -> {
+                    if (data.size() > reduceLimit) {
+                        data.reduce(reduceValue);
+                    }
+                };
+
+                data.limitChange = (xMin, xMax, yMin, yMax) -> {
+                    minX = xMin;
+                    maxX = xMax;
+                    minY = yMin;
+                    maxY = yMax;
+                };
+
+                data.setShowCondition((d) -> d.getXValue() >= (maxX - xRange) && d.getYValue() >= (maxY - yRange));
+
+                series.setData(data);
+
+                data.addListener(
+                        (ListChangeListener<? super XYChart.Data<Double, Double>>) l -> {
+
+                            chart.applyCss();
+
+                            while (l.next()) {
+
+                                if (!l.wasAdded()) {
+                                    continue;
+                                }
+
+                                l.getAddedSubList().forEach(
+                                        d -> {
+
+                                            if (d.getNode() != null) {
+                                                d.getNode().setStyle(String.join(" ", symbolStyle));
+                                                d.getNode().applyCss();
+                                            }
+
+                                        }
+                                );
+                            }
+
+                        }
+                );
+
+            });
+
+            return this;
+        }
+
+        @Override
+        public SeriesGroup split(Evaluable splitBy, String pattern) {
+            remove();
+            return new AutoSeries(data.data, data.xData, data.yData, splitBy, pattern, data.filter).showMarkers(
+                    isShowingMarkers());
+        }
+
+        @Override
+        public SeriesGroup watchAll(ResultTable list, int xData) {
+
+            remove();
+
+            Series[] series = new Series[list.getNumCols() - 1];
+
+            int j = 0;
+            for (int i = 0; i < list.getNumCols(); i++) {
+
+                if (i == xData) {
+                    continue;
+                }
+
+                final int yData = i;
+                series[j++] = new NormalSeries(
+                        list,
+                        r -> r.get(xData),
+                        r -> r.get(yData),
+                        data.filter,
+                        list.getTitle(yData),
+                        null
+                ).showMarkers(isShowingMarkers());
+            }
+
+            return new SeriesCluster(series);
+
+        }
+
+        @Override
+        public ResultTable getWatched() {
+            return data.data;
+        }
+
+        @Override
+        public Series filter(Predicate<Result> filter) {
+
+            data.setFilter(filter);
+            data.update();
+            return this;
 
         }
 
@@ -967,19 +1192,16 @@ public class SmartChart {
 
             data.showMarkers(show);
 
-            if (!show) {
-                symbolStyle[1] = "-fx-background-radius: 0px; -fx-padding: 0; -fx-padding: 1 5 1 5;";
-            }
+            symbolStyle[2] = "-fx-opacity: " + (show ? "1" : "0") + ";";
 
-            updateStyles();
+            updateAllStyles();
 
             return this;
         }
 
         @Override
         public boolean isShowingMarkers() {
-
-            return data.showMarkers;
+            return symbolStyle[2].equals("-fx-opacity: 1;");
         }
 
         @Override
@@ -987,7 +1209,7 @@ public class SmartChart {
 
             symbolStyle[1] = getSymbolCSS(shape, size);
             data.setMarkerStyle(String.join(" ", symbolStyle));
-            updateStyles();
+            updateAllStyles();
             return this;
         }
 
@@ -1029,7 +1251,7 @@ public class SmartChart {
                         colour.getBlue() * 255,
                         colour.getOpacity()
                 );
-                updateStyles();
+                updateAllStyles();
             });
 
             return this;
@@ -1041,27 +1263,38 @@ public class SmartChart {
             GUI.runNow(() -> {
 
                 int index = chart.getData().indexOf(series);
-                series.getNode().lookupAll(".chart-series-line").forEach(n -> n.setStyle(String.join(" ", lineStyle)));
-
-                series.getData().forEach((d) -> {
-                    if (d.getNode() != null) {
-                        d.getNode().lookupAll(".chart-line-symbol").forEach(s -> s.setStyle(String.join(
-                                " ",
-                                symbolStyle
-                        )));
-                    }
-                });
 
                 for (Node node : chart.lookupAll(".chart-legend-item-symbol")) {
                     for (String styleClass : node.getStyleClass()) {
                         if (styleClass.equals(String.format("series%d", index))) {
-                            node.setStyle(String.join(" ", symbolStyle));
+                            node.setStyle(symbolStyle[0] + " " + (isShowingMarkers() ? symbolStyle[1] : "-fx-background-radius: 0px; -fx-padding: 0; -fx-padding: 1 5 1 5;"));
                             break;
                         }
                     }
                 }
 
             });
+
+        }
+
+        public synchronized void updateAllStyles() {
+
+            series.getNode().lookupAll(".chart-series-line").forEach(n -> n.setStyle(String.join(" ", lineStyle)));
+
+            series.getData().forEach((d) -> {
+
+                if (d.getNode() != null) {
+
+                    d.getNode().lookupAll(".chart-line-symbol").forEach(s -> s.setStyle(String.join(
+                            " ",
+                            symbolStyle
+                    )));
+
+                }
+
+            });
+
+            updateStyles();
 
         }
 
@@ -1076,7 +1309,7 @@ public class SmartChart {
 
             lineWidth    = width;
             lineStyle[1] = String.format("-fx-stroke-width: %s;", width);
-            updateStyles();
+            updateAllStyles();
             return this;
 
         }
@@ -1117,8 +1350,10 @@ public class SmartChart {
             GUI.runNow(() -> chart.getData().remove(series));
             SmartChart.this.data.remove(this);
             map.remove(this);
+            data.neutralise();
             updateSeries();
             return this;
+
         }
 
         @Override
@@ -1198,8 +1433,32 @@ public class SmartChart {
         }
 
         @Override
-        public Series addPoint(double x, double y) {
+        public Series watch(ResultTable list, Evaluable xData, Evaluable yData) {
+            return this;
+        }
 
+        @Override
+        public SeriesGroup split(Evaluable splitBy, String pattern) {
+            return new SeriesCluster(this);
+        }
+
+        @Override
+        public SeriesGroup watchAll(ResultTable list, int xData) {
+            return new SeriesCluster(this);
+        }
+
+        @Override
+        public ResultTable getWatched() {
+            return null;
+        }
+
+        @Override
+        public Series filter(Predicate<Result> filter) {
+            return null;
+        }
+
+        @Override
+        public Series addPoint(double x, double y) {
             return this;
         }
 
@@ -1316,9 +1575,6 @@ public class SmartChart {
                 for (double x : Util.makeLinearArray(limMinX, limMaxX, (int) chart.getWidth())) {
                     XYChart.Data<Double, Double> d = new XYChart.Data<>(x, function.value(x));
                     series.getData().add(d);
-                    if (d.getNode() != null) {
-                        d.getNode().setVisible(false);
-                    }
                 }
             });
             return this;
@@ -1363,16 +1619,19 @@ public class SmartChart {
 
     private class AutoSeries implements SeriesGroup {
 
-        private Map<Double, Series> map         = new LinkedHashMap<>();
-        private boolean             showMarkers = true;
-        private int                 reduceLimit = 2000;
-        private int                 reduceValue = 1000;
-        private double              lineWidth   = 3;
-        private Shape               shape       = Shape.CIRCLE;
-        private double              size        = 5;
-        private double              xRange      = Double.POSITIVE_INFINITY;
-        private double              yRange      = Double.POSITIVE_INFINITY;
-        private int                 degree      = -1;
+        private Map<Double, Series>  map         = new LinkedHashMap<>();
+        private boolean              showMarkers = true;
+        private int                  reduceLimit = 2000;
+        private int                  reduceValue = 1000;
+        private double               lineWidth   = 3;
+        private Shape                shape       = Shape.CIRCLE;
+        private double               size        = 5;
+        private double               xRange      = Double.POSITIVE_INFINITY;
+        private double               yRange      = Double.POSITIVE_INFINITY;
+        private int                  degree      = -1;
+        private Predicate<Result>    filter;
+        private ResultTable          watched;
+        private ResultTable.OnUpdate onUpdate;
 
         public AutoSeries(ResultTable results, Evaluable xData, Evaluable yData, Evaluable sData, String pattern, Predicate<Result> filter) {
 
@@ -1385,11 +1644,12 @@ public class SmartChart {
                 filter = r -> true;
             }
 
-            final Predicate<Result> finalFilter = filter;
+            this.filter  = filter;
+            this.watched = results;
 
-            ResultTable.OnUpdate onUpdate = (r) -> {
+            onUpdate = (r) -> {
 
-                if (finalFilter.test(r)) {
+                if (this.filter.test(r)) {
 
                     final double key = sData.evaluate(r);
 
@@ -1397,7 +1657,7 @@ public class SmartChart {
 
                         Series data = new NormalSeries(
                                 results, xData, yData,
-                                (v) -> ((sData.evaluate(v) == key) && finalFilter.test(v)),
+                                (v) -> ((sData.evaluate(v) == key) && this.filter.test(v)),
                                 String.format(pattern, key),
                                 defaultColours[map.size() % defaultColours.length]
                         );
@@ -1441,6 +1701,39 @@ public class SmartChart {
         public Series getSeriesFor(double value) {
 
             return map.getOrDefault(value, null);
+        }
+
+        @Override
+        public Series watch(ResultTable list, Evaluable xData, Evaluable yData) {
+            return this;
+        }
+
+        @Override
+        public SeriesGroup split(Evaluable splitBy, String pattern) {
+            return this;
+        }
+
+        @Override
+        public SeriesGroup watchAll(ResultTable list, int xData) {
+            return this;
+        }
+
+        @Override
+        public ResultTable getWatched() {
+            return watched;
+        }
+
+        @Override
+        public Series filter(Predicate<Result> filter) {
+
+            this.filter = filter;
+
+            for (Series s : map.values()) {
+                s.filter(filter);
+            }
+
+            return this;
+
         }
 
         @Override
@@ -1585,6 +1878,7 @@ public class SmartChart {
                 s.remove();
             }
             map.clear();
+            watched.removeOnUpdate(onUpdate);
             updateSeries();
             return this;
         }
@@ -1675,6 +1969,7 @@ public class SmartChart {
         private double                                             maxX        = Double.NEGATIVE_INFINITY;
         private double                                             minY        = Double.POSITIVE_INFINITY;
         private double                                             maxY        = Double.NEGATIVE_INFINITY;
+        private ResultTable.OnUpdate                               onUpdate;
 
 
         public DataList(ResultTable results, Evaluable xData, Evaluable yData) {
@@ -1685,12 +1980,11 @@ public class SmartChart {
         public DataList(ResultTable results, Evaluable xData, Evaluable yData, Predicate<Result> filter) {
 
 
-            this.data   = results;
-            this.xData  = xData;
-            this.yData  = yData;
-            this.filter = (filter == null) ? (r) -> true : filter;
-
-            data.addOnUpdate((r) -> {
+            this.data     = results;
+            this.xData    = xData;
+            this.yData    = yData;
+            this.filter   = (filter == null) ? (r) -> true : filter;
+            this.onUpdate = (r) -> {
 
                 if (this.filter.test(r)) {
                     int index = data.getNumRows() - 1;
@@ -1703,10 +1997,6 @@ public class SmartChart {
                         GUI.runNow(() -> {
                             list.add(d);
                             shown.add(index);
-                            if (d.getNode() != null) {
-                                d.getNode().setVisible(showMarkers);
-                                d.getNode().lookup(".chart-line-symbol").setStyle(markerStyle);
-                            }
                             onChange.run();
                             minX = Math.min(minX, d.getXValue());
                             maxX = Math.max(maxX, d.getXValue());
@@ -1718,12 +2008,19 @@ public class SmartChart {
                     }
                 }
 
-            });
+            };
+
+
+            data.addOnUpdate(onUpdate);
 
             data.addClearable(() -> GUI.runNow(() -> list.clear()));
 
             update();
 
+        }
+
+        public void neutralise() {
+            data.removeOnUpdate(onUpdate);
         }
 
         public void updateLimits() {
@@ -1785,27 +2082,11 @@ public class SmartChart {
 
             showMarkers = show;
 
-            GUI.runNow(() -> {
-                for (XYChart.Data<Double, Double> point : list) {
-                    if (point.getNode() != null) {
-                        point.getNode().setVisible(showMarkers);
-                    }
-                }
-            });
-
         }
 
         public void setMarkerStyle(String style) {
 
             markerStyle = style;
-
-            GUI.runNow(() -> {
-                for (XYChart.Data<Double, Double> point : list) {
-                    if (point.getNode() != null) {
-                        point.getNode().lookup(".chart-line-symbol").setStyle(markerStyle);
-                    }
-                }
-            });
 
         }
 
@@ -1872,13 +2153,6 @@ public class SmartChart {
 
             GUI.runNow(() -> {
                 list.addAll(toAdd);
-
-                for (XYChart.Data d : toAdd) {
-                    if (d.getNode() != null) {
-                        d.getNode().setVisible(showMarkers);
-                    }
-                }
-
             });
 
         }

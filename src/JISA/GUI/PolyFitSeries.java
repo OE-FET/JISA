@@ -1,6 +1,8 @@
 package JISA.GUI;
 
 import JISA.Experiment.Function;
+import JISA.Experiment.Result;
+import JISA.Experiment.ResultTable;
 import JISA.Maths.Maths;
 import JISA.Maths.Matrix;
 import JISA.Util;
@@ -12,6 +14,7 @@ import javafx.scene.paint.Color;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class PolyFitSeries implements Series {
 
@@ -72,6 +75,33 @@ public class PolyFitSeries implements Series {
 
         updateLimits();
 
+    }
+
+    @Override
+    public Series watch(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData) {
+        dataSeries.watch(list, xData, yData);
+        return this;
+    }
+
+    @Override
+    public SeriesGroup split(SmartChart.Evaluable splitBy, String pattern) {
+        return dataSeries.split(splitBy, pattern);
+    }
+
+    @Override
+    public SeriesGroup watchAll(ResultTable list, int xData) {
+        return (SeriesGroup) dataSeries.watchAll(list, xData).polyFit(degree);
+    }
+
+    @Override
+    public ResultTable getWatched() {
+        return null;
+    }
+
+    @Override
+    public Series filter(Predicate<Result> filter) {
+        dataSeries.filter(filter);
+        return this;
     }
 
     @Override

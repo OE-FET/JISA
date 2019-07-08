@@ -186,6 +186,10 @@ public abstract class ResultTable implements Iterable<Result> {
         onUpdate.add(o);
     }
 
+    public void removeOnUpdate(OnUpdate o) {
+        onUpdate.remove(o);
+    }
+
     /**
      * Output the data as a formatted ASCII table to the given stream.
      *

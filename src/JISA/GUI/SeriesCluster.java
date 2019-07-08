@@ -1,9 +1,12 @@
 package JISA.GUI;
 
+import JISA.Experiment.Result;
+import JISA.Experiment.ResultTable;
 import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class SeriesCluster implements SeriesGroup {
 
@@ -24,7 +27,35 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series addPoint(double x, double y) {
+    public SeriesGroup watch(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData) {
+        series.replaceAll(s -> s.watch(list, xData, yData));
+        return this;
+    }
+
+    @Override
+    public SeriesGroup split(SmartChart.Evaluable splitBy, String pattern) {
+        series.replaceAll(s -> s.split(splitBy, pattern));
+        return this;
+    }
+
+    @Override
+    public SeriesGroup watchAll(ResultTable list, int xData) {
+        return this;
+    }
+
+    @Override
+    public ResultTable getWatched() {
+        return null;
+    }
+
+    @Override
+    public SeriesGroup filter(Predicate<Result> filter) {
+        series.replaceAll(s -> s.filter(filter));
+        return this;
+    }
+
+    @Override
+    public SeriesGroup addPoint(double x, double y) {
         return this;
     }
 
@@ -34,7 +65,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series clear() {
+    public SeriesGroup clear() {
         for (Series s : series) {
             s.clear();
         }
@@ -42,7 +73,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series showMarkers(boolean show) {
+    public SeriesGroup showMarkers(boolean show) {
         for (Series s : series) {
             s.showMarkers(show);
         }
@@ -55,7 +86,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series setMarkerShape(Shape shape, double size) {
+    public SeriesGroup setMarkerShape(Shape shape, double size) {
         for (Series s : series) {
             s.setMarkerShape(shape, size);
         }
@@ -63,7 +94,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series setName(String name) {
+    public SeriesGroup setName(String name) {
         return this;
     }
 
@@ -73,7 +104,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series setColour(Color colour) {
+    public SeriesGroup setColour(Color colour) {
         return this;
     }
 
@@ -83,7 +114,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series setLineWidth(double width) {
+    public SeriesGroup setLineWidth(double width) {
         for (Series s : series) {
             s.setLineWidth(width);
         }
@@ -96,7 +127,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series setAutoReduction(int reduceTo, int limit) {
+    public SeriesGroup setAutoReduction(int reduceTo, int limit) {
         for (Series s : series) {
             s.setAutoReduction(reduceTo, limit);
         }
@@ -104,7 +135,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series reduceNow() {
+    public SeriesGroup reduceNow() {
         for (Series s : series) {
             s.reduceNow();
         }
@@ -112,7 +143,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series setXAutoRemove(double range) {
+    public SeriesGroup setXAutoRemove(double range) {
         for (Series s : series) {
             s.setXAutoRemove(range);
         }
@@ -120,7 +151,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series setYAutoRemove(double range) {
+    public SeriesGroup setYAutoRemove(double range) {
         for (Series s : series) {
             s.setYAutoRemove(range);
         }
@@ -128,7 +159,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series remove() {
+    public SeriesGroup remove() {
         for (Series s : series) {
             s.remove();
         }
@@ -136,7 +167,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series updateLimits() {
+    public SeriesGroup updateLimits() {
         for (Series s : series) {
             s.updateLimits();
         }
@@ -144,7 +175,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series restore() {
+    public SeriesGroup restore() {
         for (Series s : series) {
             s.restore();
         }
@@ -152,7 +183,7 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
-    public Series polyFit(int degree) {
+    public SeriesGroup polyFit(int degree) {
         for (Series s : series) {
             s.polyFit(degree);
         }

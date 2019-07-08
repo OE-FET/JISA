@@ -28,15 +28,17 @@ public class TestFET implements MCSMU {
 
     private static double calculate(double vSD, double vSG) {
 
-        boolean nSat = Math.abs(vSD) < Math.abs(vSG - VT);
+        double vT = vSD < 0 ? VT * -1 : VT;
+
+        boolean nSat = Math.abs(vSD) < Math.abs(vSG - vT);
 
         if (nSat) {
 
-            return MU * C * (W / L) * ((vSG - VT) * vSD - (Math.pow(vSD, 2) / 2)) * (1 + 0.05*random.nextDouble()) + 10e-6 * random.nextDouble();
+            return MU * C * (W / L) * ((vSG - vT) * vSD - (Math.pow(vSD, 2) / 2)) * (1 + 0.05*random.nextDouble()) + 10e-6 * random.nextDouble();
 
         } else {
 
-            return MU * C * (W / L) * (Math.pow((vSG - VT), 2) / 2) * (1 + 0.05*random.nextDouble()) + 10e-6 * random.nextDouble();
+            return MU * C * (W / L) * (Math.pow((vSG - vT), 2) / 2) * (1 + 0.05*random.nextDouble()) + 10e-6 * random.nextDouble();
 
         }
 

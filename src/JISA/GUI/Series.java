@@ -1,9 +1,13 @@
 package JISA.GUI;
 
+import JISA.Experiment.Col;
+import JISA.Experiment.Result;
+import JISA.Experiment.ResultTable;
 import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
@@ -17,6 +21,41 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
             Color.web("#c84164"),
             Color.web("#888888")
     };
+
+    Series watch(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData);
+
+    default Series watch(ResultTable list, int xData, int yData) {
+        return watch(list, r -> r.get(xData), r -> r.get(yData));
+    }
+
+    default Series watch(ResultTable list) {
+        return watch(list, 0, 1);
+    }
+
+    SeriesGroup split(SmartChart.Evaluable splitBy, String pattern);
+
+    default SeriesGroup split(SmartChart.Evaluable splitBy) {
+        return split(splitBy, "%s");
+    }
+
+    default SeriesGroup split(int colNum, String pattern) {
+        return split(r -> r.get(colNum), pattern);
+    }
+
+    default SeriesGroup split(int colNum) {
+        Col column = getWatched().getColumn(colNum);
+        return split(colNum, column.hasUnit() ? "%s " + column.getUnit() : "%s");
+    }
+
+    SeriesGroup watchAll(ResultTable list, int xData);
+
+    default SeriesGroup watchAll(ResultTable list) {
+        return watchAll(list, 0);
+    }
+
+    ResultTable getWatched();
+
+    Series filter(Predicate<Result> filter);
 
     Series addPoint(double x, double y);
 
