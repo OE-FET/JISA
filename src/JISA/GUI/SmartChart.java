@@ -909,19 +909,15 @@ public class SmartChart {
 
                     ((Legend) n).getItems().addListener((ListChangeListener<? super Legend.LegendItem>) change -> {
 
-                        while (change.next()) {
+                        ((Legend) n).getItems().forEach(li -> {
 
-                            ((Legend) n).getItems().forEach(li -> {
+                            Node symbol = li.getSymbol();
+                            if (symbol.getStyleClass().contains(String.format("series%d", lIndex))) {
+                                symbol.setStyle(symbolStyle[0] + " " + (isShowingMarkers() ? symbolStyle[1] : "-fx-background-radius: 0px; -fx-padding: 0; -fx-padding: 1 5 1 5;"));
+                                symbol.applyCss();
+                            }
 
-                                Node symbol = li.getSymbol();
-                                if (symbol.getStyleClass().contains(String.format("series%d", lIndex))) {
-                                    symbol.setStyle(symbolStyle[0] + " " + (isShowingMarkers() ? symbolStyle[1] : "-fx-background-radius: 0px; -fx-padding: 0; -fx-padding: 1 5 1 5;"));
-                                    symbol.applyCss();
-                                }
-
-                            });
-
-                        }
+                        });
 
                     });
 
@@ -1015,19 +1011,15 @@ public class SmartChart {
 
                     ((Legend) n).getItems().addListener((ListChangeListener<? super Legend.LegendItem>) change -> {
 
-                        while (change.next()) {
+                        ((Legend) n).getItems().forEach(li -> {
 
-                            ((Legend) n).getItems().forEach(li -> {
+                            Node symbol = li.getSymbol();
+                            if (symbol.getStyleClass().contains(String.format("series%d", lIndex))) {
+                                symbol.setStyle(symbolStyle[0] + " " + (isShowingMarkers() ? symbolStyle[1] : "-fx-background-radius: 0px; -fx-padding: 0; -fx-padding: 1 5 1 5;"));
+                                symbol.applyCss();
+                            }
 
-                                Node symbol = li.getSymbol();
-                                if (symbol.getStyleClass().contains(String.format("series%d", lIndex))) {
-                                    symbol.setStyle(symbolStyle[0] + " " + (isShowingMarkers() ? symbolStyle[1] : "-fx-background-radius: 0px; -fx-padding: 0; -fx-padding: 1 5 1 5;"));
-                                    symbol.applyCss();
-                                }
-
-                            });
-
-                        }
+                        });
 
                     });
 
