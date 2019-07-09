@@ -8,7 +8,7 @@ In essence then, the purpose of `JISA` is to act as an alternative (and actually
 ### 1. Standardised Instrument Control
 ```kotlin
 // Connect to instruments
-val smu1 = K2560( TCPIPAddress("192.168.0.2") )  // Keithley 2450
+val smu1 = K2450( TCPIPAddress("192.168.0.2") )  // Keithley 2450
 val smu2 = K236( GPIBAdrress(0,17) )             // Keithley 236
 
 smu1.useAutoRanges()
