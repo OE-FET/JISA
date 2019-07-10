@@ -3,6 +3,8 @@ package JISA.Devices;
 import JISA.Addresses.Address;
 import JISA.Control.*;
 import JISA.Enums.AMode;
+import JISA.Enums.TType;
+import JISA.Enums.Terminals;
 import JISA.VISA.Driver;
 import JISA.VISA.VISADevice;
 
@@ -148,4 +150,26 @@ public class K2182 extends VISADevice implements VMeter {
     public boolean isOn() {
         return true;
     }
+
+    @Override
+    public TType getTerminalType(Terminals terminals) {
+
+        if (terminals == Terminals.FRONT) {
+            return TType.BANANA;
+        } else {
+            return TType.NONE;
+        }
+
+    }
+
+    @Override
+    public void setTerminals(Terminals terminals) {
+
+    }
+
+    @Override
+    public Terminals getTerminals() {
+        return Terminals.FRONT;
+    }
+
 }

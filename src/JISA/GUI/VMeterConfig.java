@@ -5,6 +5,7 @@ import JISA.Control.Field;
 import JISA.Devices.MCSMU;
 import JISA.Devices.SMU;
 import JISA.Devices.VMeter;
+import JISA.Enums.Terminals;
 import JISA.Util;
 import org.json.JSONObject;
 
@@ -15,9 +16,11 @@ public class VMeterConfig extends Fields {
 
     private InstrumentConfig<VMeter>[] instruments;
 
-    private Field<Integer> choice  = addChoice("Instrument");
-    private Field<Integer> channel = addChoice("Channel", Util.makeCountingString(0, 4, "Channel %d"));
-    private Field<Boolean> zero    = addCheckBox("Zero Current (SMU)", true);
+    private Field<Integer> choice    = addChoice("Instrument");
+    private Field<Integer> channel   = addChoice("Channel", Util.makeCountingString(0, 4, "Channel %d"));
+    private Field<Integer> terminals = addChoice("Terminals", "Front (NONE)", "Rear (NONE)");
+    private Field<Boolean> fourPP    = addCheckBox("Four-Wire Measurements");
+    private Field<Boolean> zero      = addCheckBox("Zero Current (SMU)", true);
 
     public VMeterConfig(String title, InstrumentConfig<VMeter>... instruments) {
 
@@ -92,6 +95,26 @@ public class VMeterConfig extends Fields {
 
         if (vMeter == null) {
             channel.editValues(Util.makeCountingString(0, 4, "Channel %d"));
+            terminals.editValues("Front (NONE)", "Rear (NONE)");
+        } else {
+
+            String front;
+            String rear;
+
+            try {
+                front = vMeter.getTerminalType(Terminals.FRONT).name();
+            } catch (Exception e) {
+                front = "NONE";
+            }
+
+            try {
+                rear = vMeter.getTerminalType(Terminals.REAR).name();
+            } catch (Exception e) {
+                rear = "NONE";
+            }
+
+            terminals.editValues(String.format("Front (%s)", front), String.format("Rear (%s)", rear));
+
         }
 
         if (vMeter instanceof MCSMU) {
@@ -102,8 +125,10 @@ public class VMeterConfig extends Fields {
 
         if (vMeter instanceof SMU) {
             zero.setDisabled(false);
+            fourPP.setDisabled(false);
         } else {
             zero.setDisabled(true);
+            fourPP.setDisabled(true);
         }
 
     }
@@ -124,12 +149,15 @@ public class VMeterConfig extends Fields {
                 return null;
             }
 
+            vMeter.setTerminals(Terminals.values()[terminals.get()]);
+
             if (vMeter instanceof MCSMU) {
                 vMeter = ((MCSMU) vMeter).getChannel(channel.get());
             }
 
             if (vMeter instanceof SMU) {
-                vMeter = zero.get() ? ((SMU) vMeter).asVoltmeter() : vMeter;
+                ((SMU) vMeter).useFourProbe(fourPP.get());
+                if (zero.get()) ((SMU) vMeter).setCurrent(0.0);
             }
 
             return vMeter;
@@ -149,6 +177,8 @@ public class VMeterConfig extends Fields {
             JSONObject data = config.getInstConfig(key);
             data.put("choice", choice.get());
             data.put("channel", channel.get());
+            data.put("terminals", terminals.get());
+            data.put("fourPP", fourPP.get());
             data.put("zero", zero.get());
 
             try {
@@ -175,7 +205,9 @@ public class VMeterConfig extends Fields {
 
             choice.set(data.has("choice") ? data.getInt("choice") : 0);
             channel.set(data.has("channel") ? data.getInt("channel") : 0);
-            zero.set(data.has("zero") ? data.getBoolean("zero") : true);
+            terminals.set(data.has("terminals") ? data.getInt("terminals") : 0);
+            fourPP.set(data.has("fourPP") && data.getBoolean("fourPP"));
+            zero.set(!data.has("zero") || data.getBoolean("zero"));
 
             choice.setOnChange(() -> {
                 update(false);

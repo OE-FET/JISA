@@ -2,6 +2,8 @@ package JISA.Devices;
 
 import JISA.Control.Synch;
 import JISA.Enums.AMode;
+import JISA.Enums.TType;
+import JISA.Enums.Terminals;
 
 import java.io.IOException;
 
@@ -141,6 +143,38 @@ public interface VMeter extends Instrument {
      * @throws IOException     Upon communications error
      */
     boolean isOn() throws IOException, DeviceException;
+
+    /**
+     * Returns what type of connector is used for the given terminal.
+     *
+     * @param terminals Which terminal
+     *
+     * @return Terminal type (TRIAX, PHOENIX, BNC or BANANA)
+     *
+     * @throws DeviceException
+     * @throws IOException
+     */
+    TType getTerminalType(Terminals terminals) throws DeviceException, IOException;
+
+    /**
+     * Sets which set of terminals should be used on the voltmeter.
+     *
+     * @param terminals Which type of terminals to use
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setTerminals(Terminals terminals) throws DeviceException, IOException;
+
+    /**
+     * Returns the type of the set of terminals currently being used on the voltmeter.
+     *
+     * @return The type of terminals being used
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    Terminals getTerminals() throws DeviceException, IOException;
 
     default void waitForStableVoltage(double pctMargin, int duration) throws IOException, DeviceException, InterruptedException {
 
