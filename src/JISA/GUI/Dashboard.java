@@ -15,11 +15,22 @@ import java.util.List;
 
 public class Dashboard extends Grid {
 
-    private final Grid           topRow     = new Grid(4);
-    private final Grid           plots      = new Grid(3);
-    private final List<Category> categories = new LinkedList<>();
-    private       ResultStream   stream     = null;
-    private       RTask          logger     = null;
+    private final Grid           topRow      = new Grid(4);
+    private final Grid           plots       = new Grid(3);
+    private final List<Category> categories  = new LinkedList<>();
+    private       ResultStream   stream      = null;
+    private       RTask          logger      = null;
+    private final Button         startButton = addToolbarButton("Start", () -> {
+
+        String file = GUI.saveFileSelect();
+
+        if (file != null) {
+            start(file);
+        }
+
+    });
+
+    private final Button stopButton = addToolbarButton("Stop", this::stop);
 
     public Dashboard(String title) {
         super(title, 1);
@@ -47,18 +58,20 @@ public class Dashboard extends Grid {
             this.fields = new Fields(name);
 
             topRow.add(fields);
+            categories.add(this);
 
         }
 
         public void addMeasurement(String name, String unit, Measurable<T> measurement) {
 
             Plotted<T> plotted = new Plotted<>(new Col(name, unit), measurement, fields.addCheckBox(name, false));
+            list.add(plotted);
 
         }
 
     }
 
-    public void start(String filePath) throws IOException {
+    public synchronized void start(String filePath) throws IOException {
 
         if (logger != null && logger.isRunning()) {
             return;
@@ -69,17 +82,16 @@ public class Dashboard extends Grid {
 
         columns.add(new Col("Time", "mins"));
 
-        for (Category cat : categories) {
+        for (Category<Instrument> cat : categories) {
 
             Instrument instrument = cat.conf.get();
 
             int i = 1;
-            for (Object p : cat.list) {
+            for (Plotted<Instrument> plotted : cat.list) {
 
-                Plotted plotted = (Plotted) p;
                 columns.add(plotted.header);
 
-                if (instrument == null || !((Boolean) plotted.checkBox.get())) {
+                if (instrument == null || !(plotted.checkBox.get())) {
                     toMeasure.add(() -> 0.0);
                 } else {
                     toMeasure.add(() -> plotted.measurable.get(instrument));
@@ -90,6 +102,32 @@ public class Dashboard extends Grid {
         }
 
         stream = new ResultStream(filePath, columns.toArray(new Col[0]));
+
+        int j = 1;
+        for (Category<?> cat : categories) {
+
+            for (Plotted<?> plotted : cat.list) {
+
+                if (plotted.checkBox.get()) {
+
+                    plotted.plot.clear();
+                    plotted.plot.createSeries()
+                                .watch(stream, 0, j)
+                                .setName("Data")
+                                .setColour(Series.defaultColours[(j - 1) % Series.defaultColours.length])
+                                .showMarkers(false);
+
+                    System.out.println(Series.defaultColours[(j - 1) % Series.defaultColours.length].toString());
+
+                    plotted.plot.showLegend(false);
+
+                }
+
+                j++;
+
+            }
+
+        }
 
         logger = new RTask(2000, (task) -> {
 
@@ -107,9 +145,13 @@ public class Dashboard extends Grid {
 
         logger.start();
 
+        startButton.setDisabled(true);
+
     }
 
     public void stop() {
+
+        startButton.setDisabled(false);
 
         if (logger != null) {
             logger.stop();

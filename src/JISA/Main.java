@@ -27,13 +27,18 @@ public class Main {
 
         try {
 
+            InstrumentConfig<SMU> smu1 = new InstrumentConfig.SMU("SMU 1");
+            InstrumentConfig<SMU> smu2 = new InstrumentConfig.SMU("SMU 2");
+
+            (new Grid(smu1, smu2)).show();
+
             Dashboard               dash     = new Dashboard("Dashboard");
-            Dashboard.Category<SMU> category1 = dash.addInstrument("Source-Drain", new SMUConfig("SMU"));
+            Dashboard.Category<SMU> category1 = dash.addInstrument("Source-Drain", smu1);
 
             category1.addMeasurement("Source-Drain Voltage", "V", SMU::getVoltage);
             category1.addMeasurement("Drain Current", "A", SMU::getCurrent);
 
-            Dashboard.Category<SMU> category2 = dash.addInstrument("Source-Gate", new SMUConfig("SMU"));
+            Dashboard.Category<SMU> category2 = dash.addInstrument("Source-Gate", smu2);
 
             category2.addMeasurement("Gate Voltage", "V", SMU::getVoltage);
             category2.addMeasurement("Gate Current", "A", SMU::getCurrent);

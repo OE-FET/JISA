@@ -68,8 +68,6 @@ public class SmartChart {
         xAxis.setAnimated(false);
         yAxis.setAnimated(false);
 
-        Legend legend = (Legend) chart.getChildrenUnmodifiable().filtered(n -> n instanceof Legend).get(0);
-
     }
 
     private static List<XYChart.Data<Double, Double>> reducePoints(List<XYChart.Data<Double, Double>> points, double epsilon) {
