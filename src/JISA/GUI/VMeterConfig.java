@@ -2,6 +2,7 @@ package JISA.GUI;
 
 import JISA.Control.ConfigStore;
 import JISA.Control.Field;
+import JISA.Control.IConf;
 import JISA.Devices.MCSMU;
 import JISA.Devices.SMU;
 import JISA.Devices.VMeter;
@@ -9,7 +10,7 @@ import JISA.Enums.Terminals;
 import JISA.Util;
 import org.json.JSONObject;
 
-public class VMeterConfig extends Fields {
+public class VMeterConfig extends Fields implements IConf<VMeter> {
 
     private ConfigStore config = null;
     private String      key    = null;
@@ -19,6 +20,16 @@ public class VMeterConfig extends Fields {
     private Field<Integer> choice    = addChoice("Instrument");
     private Field<Integer> channel   = addChoice("Channel", Util.makeCountingString(0, 4, "Channel %d"));
     private Field<Integer> terminals = addChoice("Terminals", "Front (NONE)", "Rear (NONE)");
+
+    { addSeparator(); }
+
+    private Field<Boolean> var       = addCheckBox("Auto Voltage Range", true);
+    private Field<Double>  vrn       = addDoubleField("Voltage Range [V]", 20.0);
+    private Field<Boolean> iar       = addCheckBox("Auto Current Range", false);
+    private Field<Double>  irn       = addDoubleField("Current Range [A]", 100e-3);
+
+    { addSeparator(); }
+
     private Field<Boolean> fourPP    = addCheckBox("Four-Wire Measurements");
     private Field<Boolean> zero      = addCheckBox("Zero Current (SMU)", true);
 
@@ -26,6 +37,13 @@ public class VMeterConfig extends Fields {
 
         super(title);
         this.instruments = instruments;
+
+        vrn.setDisabled(true);
+        iar.setDisabled(true);
+        irn.setDisabled(true);
+
+        var.setOnChange(() -> vrn.setDisabled(var.get()));
+        iar.setOnChange(() -> irn.setDisabled(iar.isDisabled() || iar.get()));
 
         String[] names = new String[instruments.length];
 
@@ -117,18 +135,25 @@ public class VMeterConfig extends Fields {
 
         }
 
+        channel.setDisabled(false);
+
         if (vMeter instanceof MCSMU) {
             channel.editValues(Util.makeCountingString(0, ((MCSMU) vMeter).getNumChannels(), "Channel %d"));
         } else {
             channel.editValues("N/A");
+            channel.setDisabled(true);
         }
 
         if (vMeter instanceof SMU) {
             zero.setDisabled(false);
             fourPP.setDisabled(false);
+            iar.setDisabled(false);
+            irn.setDisabled(iar.get());
         } else {
             zero.setDisabled(true);
             fourPP.setDisabled(true);
+            iar.setDisabled(true);
+            irn.setDisabled(true);
         }
 
     }
@@ -156,8 +181,23 @@ public class VMeterConfig extends Fields {
             }
 
             if (vMeter instanceof SMU) {
+
                 ((SMU) vMeter).useFourProbe(fourPP.get());
+
                 if (zero.get()) ((SMU) vMeter).setCurrent(0.0);
+
+                if (iar.get()) {
+                    ((SMU) vMeter).useAutoCurrentRange();
+                } else {
+                    ((SMU) vMeter).setCurrentRange(irn.get());
+                }
+
+            }
+
+            if (var.get()) {
+                vMeter.useAutoVoltageRange();
+            } else {
+                vMeter.setVoltageRange(vrn.get());
             }
 
             return vMeter;
@@ -178,6 +218,10 @@ public class VMeterConfig extends Fields {
             data.put("choice", choice.get());
             data.put("channel", channel.get());
             data.put("terminals", terminals.get());
+            data.put("var", var.get());
+            data.put("vrn", vrn.get());
+            data.put("iar", iar.get());
+            data.put("irn", irn.get());
             data.put("fourPP", fourPP.get());
             data.put("zero", zero.get());
 
@@ -206,11 +250,26 @@ public class VMeterConfig extends Fields {
             choice.set(data.has("choice") ? data.getInt("choice") : 0);
             channel.set(data.has("channel") ? data.getInt("channel") : 0);
             terminals.set(data.has("terminals") ? data.getInt("terminals") : 0);
+            var.set(data.has("var") ? data.getBoolean("var") : true);
+            vrn.set(data.has("vrn") ? data.getDouble("vrn") : 20.0);
+            iar.set(data.has("iar") ? data.getBoolean("iar") : true);
+            irn.set(data.has("irn") ? data.getDouble("irn") : 100e-3);
             fourPP.set(data.has("fourPP") && data.getBoolean("fourPP"));
             zero.set(!data.has("zero") || data.getBoolean("zero"));
 
             choice.setOnChange(() -> {
                 update(false);
+                save();
+            });
+
+            vrn.setOnChange(this::save);
+            irn.setOnChange(this::save);
+            var.setOnChange(() -> {
+                vrn.setDisabled(var.get());
+                save();
+            });
+            iar.setOnChange(() -> {
+                irn.setDisabled(iar.get());
                 save();
             });
 

@@ -1,6 +1,7 @@
 package JISA.GUI;
 
 import JISA.Control.ConfigStore;
+import JISA.Control.IConf;
 import JISA.Devices.DeviceException;
 import JISA.Devices.MSMOTC;
 import JISA.Devices.MSTC;
@@ -19,7 +20,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 
-public class TCConfig extends JFXWindow {
+public class TCConfig extends JFXWindow implements IConf<TC> {
 
     public  ChoiceBox<String>              controller;
     public  ChoiceBox<String>              output;

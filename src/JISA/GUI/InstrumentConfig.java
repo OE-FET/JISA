@@ -3,6 +3,7 @@ package JISA.GUI;
 import JISA.Addresses.Address;
 import JISA.Addresses.Address.AddressParams;
 import JISA.Control.ConfigStore;
+import JISA.Control.IConf;
 import JISA.Devices.Instrument;
 import JISA.Devices.SMUCluster;
 import JISA.Util;
@@ -21,7 +22,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Modifier;
 import java.util.*;
 
-public class InstrumentConfig<T extends Instrument> extends JFXWindow implements Element {
+public class InstrumentConfig<T extends Instrument> extends JFXWindow implements Element, IConf<T> {
 
     // Elements
     public ChoiceBox  driverChoice;

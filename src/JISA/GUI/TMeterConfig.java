@@ -2,13 +2,14 @@ package JISA.GUI;
 
 import JISA.Control.ConfigStore;
 import JISA.Control.Field;
+import JISA.Control.IConf;
 import JISA.Devices.MSTMeter;
 import JISA.Devices.TMeter;
 import org.json.JSONObject;
 
 import java.io.IOException;
 
-public class TMeterConfig extends Fields {
+public class TMeterConfig extends Fields implements IConf<TMeter> {
 
 
     private Field<Integer>             inst   = addChoice("Instrument");
@@ -21,14 +22,14 @@ public class TMeterConfig extends Fields {
     public TMeterConfig(String title, String key, ConfigStore config, ConfigGrid configGrid) {
         this(title, configGrid);
         this.config = config;
-        this.key = key;
+        this.key    = key;
         load();
     }
 
     public TMeterConfig(String title, String key, ConfigStore config, InstrumentConfig<TMeter>... instruments) {
         this(title, instruments);
         this.config = config;
-        this.key = key;
+        this.key    = key;
         load();
     }
 
@@ -66,7 +67,11 @@ public class TMeterConfig extends Fields {
             String[] names = new String[instruments.length];
 
             for (int i = 0; i < instruments.length; i++) {
-                names[i] = String.format("%s (%s)", instruments[i].getTitle(), instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED");
+                names[i] = String.format(
+                        "%s (%s)",
+                        instruments[i].getTitle(),
+                        instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED"
+                );
             }
 
             inst.editValues(names);
@@ -88,7 +93,8 @@ public class TMeterConfig extends Fields {
             int num = 4;
             try {
                 num = ((MSTMeter) tm).getNumSensors();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
 
             String[] channels = new String[num];
 
@@ -196,4 +202,5 @@ public class TMeterConfig extends Fields {
         });
 
     }
+
 }

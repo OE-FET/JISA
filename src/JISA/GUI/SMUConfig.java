@@ -2,6 +2,7 @@ package JISA.GUI;
 
 import JISA.Control.ConfigStore;
 import JISA.Control.Field;
+import JISA.Control.IConf;
 import JISA.Devices.DeviceException;
 import JISA.Devices.MCSMU;
 import JISA.Devices.SMU;
@@ -10,13 +11,27 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 
-public class SMUConfig extends Fields {
+public class SMUConfig extends Fields implements IConf<SMU> {
 
     private Field<Integer>          smu    = addChoice("SMU", "SMU 1", "SMU 2");
     private Field<Integer>          chn    = addChoice("Channel", "Channel 0", "Channel 1", "Channel 2", "Channel 3");
     private Field<Integer>          trm    = addChoice("Terminals", "Front (NONE)", "Rear (NONE)");
+
+    { addSeparator(); }
+
     private Field<Double>           vlm    = addDoubleField("Voltage Limit [V]");
     private Field<Double>           ilm    = addDoubleField("Current Limit [A]");
+
+    { addSeparator(); }
+
+    private Field<Boolean>          var    = addCheckBox("Auto Voltage Range");
+    private Field<Double>           vrn    = addDoubleField("Voltage Range [V]");
+    private Field<Boolean>          iar    = addCheckBox("Auto Current Range");
+    private Field<Double>           irn    = addDoubleField("Current Range [A]");
+
+    { addSeparator(); }
+
+    private Field<Boolean>          fpp    = addCheckBox("Four-Wire Measurements", false);
     private InstrumentConfig<SMU>[] instruments;
     private ConfigStore             config = null;
     private String                  key    = null;
@@ -25,14 +40,14 @@ public class SMUConfig extends Fields {
     public SMUConfig(String title, String key, ConfigStore config, ConfigGrid configGrid) {
         this(title, configGrid);
         this.config = config;
-        this.key = key;
+        this.key    = key;
         load();
     }
 
     public SMUConfig(String title, String key, ConfigStore config, InstrumentConfig<SMU>... instruments) {
         this(title, instruments);
         this.config = config;
-        this.key = key;
+        this.key    = key;
         load();
     }
 
@@ -41,12 +56,23 @@ public class SMUConfig extends Fields {
     }
 
     public SMUConfig(String title, InstrumentConfig<SMU>... instruments) {
+
         super(title);
         this.instruments = instruments;
         chn.set(0);
         trm.set(0);
         vlm.set(200.0);
         ilm.set(0.02);
+        var.set(true);
+        vrn.set(20.0);
+        iar.set(true);
+        irn.set(100e-3);
+
+        vrn.setDisabled(true);
+        irn.setDisabled(true);
+
+        var.setOnChange(() -> vrn.setDisabled(var.get()));
+        iar.setOnChange(() -> irn.setDisabled(iar.get()));
 
         String[] names = new String[instruments.length];
 
@@ -73,7 +99,11 @@ public class SMUConfig extends Fields {
             String[] names = new String[instruments.length];
 
             for (int i = 0; i < instruments.length; i++) {
-                names[i] = String.format("%s (%s)", instruments[i].getTitle(), instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED");
+                names[i] = String.format(
+                        "%s (%s)",
+                        instruments[i].getTitle(),
+                        instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED"
+                );
             }
 
             smu.editValues(names);
@@ -88,6 +118,8 @@ public class SMUConfig extends Fields {
             smu = instruments[smuI].get();
         }
 
+        chn.setDisabled(false);
+
         if (smu == null) {
             chn.editValues("Channel 0", "Channel 1", "Channel 2", "Channel 3");
         } else if (smu instanceof MCSMU) {
@@ -98,6 +130,7 @@ public class SMUConfig extends Fields {
             chn.editValues(channels);
         } else {
             chn.editValues("N/A");
+            chn.setDisabled(true);
         }
 
         try {
@@ -159,8 +192,24 @@ public class SMUConfig extends Fields {
         }
 
         try {
+
             toReturn.setLimits(getVoltageLimit(), getCurrentLimit());
             toReturn.setTerminals(getTerminals());
+
+            if (var.get()) {
+                toReturn.useAutoVoltageRange();
+            } else {
+                toReturn.setVoltageRange(vrn.get());
+            }
+
+            if (iar.get()) {
+                toReturn.useAutoCurrentRange();
+            } else {
+                toReturn.setCurrentRange(irn.get());
+            }
+
+            toReturn.useFourProbe(fpp.get());
+
         } catch (DeviceException | IOException e) {
             return null;
         }
@@ -205,6 +254,11 @@ public class SMUConfig extends Fields {
                 data.put("terminals", trm.get());
                 data.put("vimit", vlm.get());
                 data.put("limit", ilm.get());
+                data.put("var", var.get());
+                data.put("vrn", vrn.get());
+                data.put("iar", iar.get());
+                data.put("irn", irn.get());
+                data.put("fpp", fpp.get());
 
                 config.save();
 
@@ -269,6 +323,26 @@ public class SMUConfig extends Fields {
         }
     }
 
+    private void saveRanges() {
+
+        if (config != null && key != null && data != null) {
+
+            data.put("var", var.get());
+            data.put("vrn", vrn.get());
+            data.put("iar", iar.get());
+            data.put("irn", irn.get());
+            data.put("fpp", fpp.get());
+
+            try {
+                config.save();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+    }
+
     private void load() {
 
         if (data == null) {
@@ -284,11 +358,29 @@ public class SMUConfig extends Fields {
         vlm.set(data.has("vimit") ? data.getDouble("vimit") : 200.0);
         ilm.set(data.has("limit") ? data.getDouble("limit") : 0.02);
         smu.set(data.getInt("smu"));
+        var.set(data.has("var") ? data.getBoolean("var") : true);
+        vrn.set(data.has("vrn") ? data.getDouble("vrn") : 20.0);
+        iar.set(data.has("iar") ? data.getBoolean("iar") : true);
+        irn.set(data.has("irn") ? data.getDouble("irn") : 100e-3);
+        fpp.set(data.has("fpp") ? data.getBoolean("fpp") : false);
 
         chn.setOnChange(this::saveCHN);
         trm.setOnChange(this::saveTRM);
         vlm.setOnChange(this::saveVLM);
         ilm.setOnChange(this::saveLIM);
+        vrn.setOnChange(this::saveRanges);
+        irn.setOnChange(this::saveRanges);
+        fpp.setOnChange(this::saveRanges);
+
+        var.setOnChange(() -> {
+            vrn.setDisabled(var.get());
+            saveRanges();
+        });
+
+        iar.setOnChange(() -> {
+            irn.setDisabled(iar.get());
+            saveRanges();
+        });
 
         smu.setOnChange(() -> {
             update(false);

@@ -28,6 +28,16 @@ public class Col {
         return name;
     }
 
+    public String getTitle() {
+
+        if (unit == null) {
+            return name;
+        } else {
+            return String.format("%s [%s]", name, unit);
+        }
+
+    }
+
     public String getUnit() {
         return unit;
     }

@@ -2,6 +2,7 @@ package JISA;
 
 import JISA.Addresses.Address;
 import JISA.Addresses.StrAddress;
+import JISA.Devices.SMU;
 import JISA.Experiment.Function;
 import JISA.Experiment.ResultList;
 import JISA.Experiment.ResultTable;
@@ -25,6 +26,22 @@ public class Main {
     public static void main(String[] args) {
 
         try {
+
+            Dashboard               dash     = new Dashboard("Dashboard");
+            Dashboard.Category<SMU> category1 = dash.addInstrument("Source-Drain", new SMUConfig("SMU"));
+
+            category1.addMeasurement("Source-Drain Voltage", "V", SMU::getVoltage);
+            category1.addMeasurement("Drain Current", "A", SMU::getCurrent);
+
+            Dashboard.Category<SMU> category2 = dash.addInstrument("Source-Gate", new SMUConfig("SMU"));
+
+            category2.addMeasurement("Gate Voltage", "V", SMU::getVoltage);
+            category2.addMeasurement("Gate Current", "A", SMU::getCurrent);
+
+            dash.show();
+            dash.setMaximised(true);
+
+            System.in.read();
 
             VISA.init();
 
