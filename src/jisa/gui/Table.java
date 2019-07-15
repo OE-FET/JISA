@@ -24,7 +24,7 @@ public class Table extends JFXWindow implements Element, Clearable {
      * @param title Window title
      */
     public Table(String title) {
-        super(title, Table.class.getResource("FXML/TableWindow.fxml"));
+        super(title, Table.class.getResource("fxml/TableWindow.fxml"));
     }
 
     /**

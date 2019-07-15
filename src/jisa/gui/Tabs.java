@@ -32,7 +32,7 @@ public class Tabs extends JFXWindow implements Element, Container {
      * @throws IOException
      */
     public Tabs(String title, Element... toAdd) {
-        super(title, Tabs.class.getResource("FXML/TabWindow.fxml"));
+        super(title, Tabs.class.getResource("fxml/TabWindow.fxml"));
         this.title = title;
         addAll(toAdd);
     }

@@ -13,12 +13,13 @@ import jisa.Util;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 
 /**
  * Abstract class defining the standard interface for controller Multiple-Channel SMUs.
  */
-public interface MCSMU extends SMU, Iterable<SMU> {
+public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
 
     /**
      * Returns the voltage of the specified channel
@@ -1257,6 +1258,18 @@ public interface MCSMU extends SMU, Iterable<SMU> {
         } catch (Exception e) {
             return null;
         }
+
+    }
+
+    default List<SMU> getChannels() throws DeviceException {
+
+        List<SMU> list = new ArrayList<>();
+
+        for (int i = 0; i < getNumChannels(); i++) {
+            list.add(getChannel(i));
+        }
+
+        return list;
 
     }
 

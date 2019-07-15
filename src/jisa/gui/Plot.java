@@ -52,7 +52,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
      */
     public Plot(String title, String xLabel, String yLabel) {
 
-        super(title, Plot.class.getResource("FXML/PlotWindow.fxml"));
+        super(title, Plot.class.getResource("fxml/PlotWindow.fxml"));
 
         xAxis = new SmartAxis();
         xAxis.setSide(Side.BOTTOM);

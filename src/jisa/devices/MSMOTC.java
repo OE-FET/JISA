@@ -4,8 +4,10 @@ import jisa.addresses.Address;
 import jisa.Util;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-public interface MSMOTC extends MSTC {
+public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
 
     /**
      * Returns the number of outputs the controller has
@@ -13,6 +15,19 @@ public interface MSMOTC extends MSTC {
      * @return Number of outputs
      */
     int getNumOutputs();
+
+    @Override
+    default List<MSTC> getOutputs() throws DeviceException {
+
+        List<MSTC> list = new ArrayList<>();
+
+        for (int i = 0; i < getNumOutputs(); i++) {
+            list.add(getOutput(i));
+        }
+
+        return list;
+
+    }
 
     /**
      * Configures the controller to use the given sensor for the given output/control-loop.

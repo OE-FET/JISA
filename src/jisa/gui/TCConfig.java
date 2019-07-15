@@ -81,7 +81,7 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
 
     public TCConfig(String title, InstrumentConfig<TC>... instruments) {
 
-        super(title, TCConfig.class.getResource("FXML/TCConfigWindow.fxml"));
+        super(title, TCConfig.class.getResource("fxml/TCConfigWindow.fxml"));
 
         this.instruments = instruments;
 

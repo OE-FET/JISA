@@ -15,7 +15,7 @@ public class Logger extends JFXWindow {
 
 
     public Logger(String title) {
-        super(title, Logger.class.getResource("FXML/LoggerWindow.fxml"));
+        super(title, Logger.class.getResource("fxml/LoggerWindow.fxml"));
         this.title = title;
     }
 

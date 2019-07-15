@@ -187,7 +187,7 @@ public class BrowseVISA {
                         g = new GPIBAddress(0, 0);
                     }
                     uri = String.format("Board %d, Address %d", g.getBus(), g.getAddress());
-                    image.setImage(new Image(getClass().getResource("Images/gpib.png").toString()));
+                    image.setImage(new Image(getClass().getResource("images/gpib.png").toString()));
                     break;
 
                 case TCPIP:
@@ -198,7 +198,7 @@ public class BrowseVISA {
                         t = new TCPIPAddress("Unknown");
                     }
                     uri = t.getHost();
-                    image.setImage(new Image(getClass().getResource("Images/tcpip.png").toString()));
+                    image.setImage(new Image(getClass().getResource("images/tcpip.png").toString()));
                     break;
 
                 case TCPIP_SOCKET:
@@ -209,7 +209,7 @@ public class BrowseVISA {
                         ts = new TCPIPSocketAddress("Unknown", 0);
                     }
                     uri = ts.getHost() + ":" + ts.getPort();
-                    image.setImage(new Image(getClass().getResource("Images/tcpip.png").toString()));
+                    image.setImage(new Image(getClass().getResource("images/tcpip.png").toString()));
                     break;
 
                 case USB:
@@ -220,7 +220,7 @@ public class BrowseVISA {
                         u = new USBAddress(0, 0, "0");
                     }
                     uri = String.format("VendorID: %s, ProductID: %s", u.getManufacturer(), u.getModel());
-                    image.setImage(new Image(getClass().getResource("Images/usb.png").toString()));
+                    image.setImage(new Image(getClass().getResource("images/usb.png").toString()));
                     break;
 
                 case SERIAL:
@@ -231,7 +231,7 @@ public class BrowseVISA {
                         s = new SerialAddress(0);
                     }
                     uri = String.format("COM %d", s.getBoard());
-                    image.setImage(new Image(getClass().getResource("Images/serial.png").toString()));
+                    image.setImage(new Image(getClass().getResource("images/serial.png").toString()));
                     break;
 
                 case COM:
@@ -243,13 +243,13 @@ public class BrowseVISA {
                     }
 
                     uri = ca.getDevice();
-                    image.setImage(new Image(getClass().getResource("Images/serial.png").toString()));
+                    image.setImage(new Image(getClass().getResource("images/serial.png").toString()));
                     break;
 
                 default:
                     prot = "Unknown";
                     uri = address.toString();
-                    image.setImage(new Image(getClass().getResource("Images/serial.png").toString()));
+                    image.setImage(new Image(getClass().getResource("images/serial.png").toString()));
                     break;
 
 

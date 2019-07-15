@@ -204,7 +204,7 @@ public class InstrumentConfig<T extends Instrument> extends JFXWindow implements
     }
 
     public InstrumentConfig(String title, String key, Class<T> type, ConfigStore c) throws IOException {
-        super(title, "FXML/InstrumentConfig.fxml");
+        super(title, "fxml/InstrumentConfig.fxml");
         realTitle = title;
         this.titled.setText(title);
         deviceType = type;

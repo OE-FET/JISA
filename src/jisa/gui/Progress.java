@@ -23,7 +23,7 @@ public class Progress extends JFXWindow implements Element {
 
     public Progress(String title) {
 
-        super(title, Progress.class.getResource("FXML/ProgressWindow.fxml"));
+        super(title, Progress.class.getResource("fxml/ProgressWindow.fxml"));
 
     }
 

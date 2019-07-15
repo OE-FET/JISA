@@ -9,7 +9,7 @@ public class Section extends JFXWindow implements NotBordered {
     public TitledPane titled;
 
     public Section(String title, Element element) {
-        super(title, Section.class.getResource("FXML/Section.fxml"));
+        super(title, Section.class.getResource("fxml/Section.fxml"));
         setElement(element);
         setTitle(title);
     }

@@ -29,7 +29,7 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
     public Grid(String title, int numColumns) {
 
-        super(title, Grid.class.getResource("FXML/GridWindow.fxml"));
+        super(title, Grid.class.getResource("fxml/GridWindow.fxml"));
         nCols = numColumns;
 
     }

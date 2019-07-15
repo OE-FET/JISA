@@ -24,7 +24,7 @@ public class MarkDown extends JFXWindow {
     String content = "";
 
     public MarkDown(String title) {
-        super(title, MarkDown.class.getResource("FXML/MDWindow.fxml"));
+        super(title, MarkDown.class.getResource("fxml/MDWindow.fxml"));
 
         buttonBar.setVisible(false);
         buttonBar.setManaged(false);

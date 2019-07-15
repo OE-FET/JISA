@@ -5,10 +5,11 @@ import jisa.control.Synch;
 import jisa.Util;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public interface MSTMeter extends TMeter {
+public interface MSTMeter extends TMeter, MultiSensor<TMeter> {
 
     /**
      * Returns the temperature being reported by the specified sensor.
@@ -145,6 +146,20 @@ public interface MSTMeter extends TMeter {
             }
 
         };
+
+    }
+
+
+    @Override
+    default List<TMeter> getSensors() throws DeviceException, IOException {
+
+        List<TMeter> list = new ArrayList<>();
+
+        for (int i = 0; i < getNumSensors(); i++) {
+            list.add(getSensor(i));
+        }
+
+        return list;
 
     }
 

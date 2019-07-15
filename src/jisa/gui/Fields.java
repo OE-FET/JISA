@@ -39,7 +39,7 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
      */
     public Fields(String title) {
 
-        super(title, Fields.class.getResource("FXML/InputWindow.fxml"));
+        super(title, Fields.class.getResource("fxml/InputWindow.fxml"));
     }
 
     public void loadFromConfig(String tag, ConfigStore configStore) {
