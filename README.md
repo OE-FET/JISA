@@ -238,16 +238,16 @@ Resulting in:
 
 |Abstract Class|Type|Source|JavaDoc|
 |--------------|----|------|-------|
-|`SMU`|Source-Measure Unit|[Source](./src/JISA/Devices/SMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SMU.html)|
-|`MCSMU`|Multi-Channel Source-Measure Unit|[Source](./src/JISA/Devices/MCSMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MCSMU.html)|
+|`SMU`|Source-Measure Unit|[Source](src/jisa/devices/SMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SMU.html)|
+|`MCSMU`|Multi-Channel Source-Measure Unit|[Source](src/jisa/devices/MCSMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MCSMU.html)|
 |  |  |  |  |
-|`DCPower`|DC Power Supply|[Source](./src/JISA/Devices/DCPower.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DCPower.html)|
+|`DCPower`|DC Power Supply|[Source](src/jisa/devices/DCPower.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DCPower.html)|
 |  |  |  |  |
-|`TC`|Temperature Controller|[Source](./src/JISA/Devices/TC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/TC.html)|
-|`MSTC`|Multi-Sensor Temperature Controller|[Source](./src/JISA/Devices/MSTC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSTC.html)|
-|`MSMOTC`|Multi-Sensor, Multi-Output Temperature Controller|[Source](./src/JISA/Devices/MSMOTC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSMOTC.html)|
+|`TC`|Temperature Controller|[Source](src/jisa/devices/TC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/TC.html)|
+|`MSTC`|Multi-Sensor Temperature Controller|[Source](src/jisa/devices/MSTC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSTC.html)|
+|`MSMOTC`|Multi-Sensor, Multi-Output Temperature Controller|[Source](src/jisa/devices/MSMOTC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSMOTC.html)|
 |  |  |  |  |
-|`LockIn`|Lock-In Amplifier|[Source](./src/JISA/Devices/LockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/LockIn.html)|
-|`DPLockIn`|Dual-Phase Lock-In Amplifier|[Source](./src/JISA/Devices/DPLockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DPLockIn.html)|
+|`LockIn`|Lock-In Amplifier|[Source](src/jisa/devices/LockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/LockIn.html)|
+|`DPLockIn`|Dual-Phase Lock-In Amplifier|[Source](src/jisa/devices/DPLockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DPLockIn.html)|
 |  |  |  |  |
-|`VPreAmp`|Voltage Pre-Amplifier|[Source](./src/JISA/Devices/VPreAmp.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/VPreAmp.html)|
+|`VPreAmp`|Voltage Pre-Amplifier|[Source](src/jisa/devices/VPreAmp.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/VPreAmp.html)|
