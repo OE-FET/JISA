@@ -185,6 +185,17 @@ public class PolyFitSeries implements Series {
     }
 
     @Override
+    public Series showLine(boolean show) {
+        fitSeries.showLine(show);
+        return this;
+    }
+
+    @Override
+    public boolean isShowingLine() {
+        return fitSeries.isShowingLine();
+    }
+
+    @Override
     public Series setAutoReduction(int reduceTo, int limit) {
 
         dataSeries.setAutoReduction(reduceTo, limit);

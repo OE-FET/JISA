@@ -127,6 +127,22 @@ public class SeriesCluster implements SeriesGroup {
     }
 
     @Override
+    public Series showLine(boolean show) {
+
+        for (Series s : series) {
+            s.showLine(show);
+        }
+
+        return this;
+
+    }
+
+    @Override
+    public boolean isShowingLine() {
+        return series.get(0).isShowingLine();
+    }
+
+    @Override
     public SeriesGroup setAutoReduction(int reduceTo, int limit) {
         for (Series s : series) {
             s.setAutoReduction(reduceTo, limit);

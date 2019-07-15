@@ -1,11 +1,11 @@
 package jisa;
 
+import javafx.application.Platform;
 import jisa.addresses.Address;
 import jisa.addresses.StrAddress;
-import jisa.devices.SMU;
-import jisa.gui.*;
-import jisa.visa.VISA;
-import javafx.application.Platform;
+import jisa.gui.DeviceShell;
+import jisa.gui.GUI;
+import jisa.gui.MarkDown;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

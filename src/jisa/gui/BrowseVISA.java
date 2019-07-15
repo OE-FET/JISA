@@ -41,20 +41,24 @@ public class BrowseVISA {
 
             FXMLLoader loader = new FXMLLoader(BrowseVISA.class.getResource("fxml/browseVISA.fxml"));
             loader.setController(this);
+
             Parent    root  = loader.load();
             Scene     scene = new Scene(root);
             Semaphore s     = new Semaphore(0);
+
             Platform.runLater(() -> {
+
                 Stage stage = new Stage();
                 stage.setTitle(title);
                 stage.setScene(scene);
                 this.stage = stage;
                 s.release();
-                this.stage.setOnCloseRequest((we) -> {
-                    cancel();
-                });
+                this.stage.setOnCloseRequest((we) -> cancel());
+
             });
+
             s.acquire();
+
         } catch (Exception e) {
             e.printStackTrace();
         }

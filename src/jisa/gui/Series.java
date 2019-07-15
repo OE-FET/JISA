@@ -85,6 +85,10 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
     double getLineWidth();
 
+    Series showLine(boolean show);
+
+    boolean isShowingLine();
+
     Series setAutoReduction(int reduceTo, int limit);
 
     default Series disableAutoReduction() {

@@ -799,7 +799,7 @@ public class SmartChart {
     private class NormalSeries implements Series {
 
         protected Color                          colour;
-        protected String[]                       lineStyle    = {"-fx-stroke: orange;", "-fx-stroke-width: 2;"};
+        protected String[]                       lineStyle    = {"-fx-stroke: orange;", "-fx-stroke-width: 2;", "-fx-opacity: 1;"};
         protected String[]                       symbolStyle  = {"", "", "-fx-opacity: 1;"};
         protected XYChart.Series<Double, Double> series;
         protected DataList                       data;
@@ -1289,6 +1289,19 @@ public class SmartChart {
         }
 
         @Override
+        public Series showLine(boolean show) {
+
+            lineStyle[2] = String.format("-fx-opacity: %d;", show ? 1 : 0);
+            updateAllStyles();
+            return this;
+        }
+
+        @Override
+        public boolean isShowingLine() {
+            return lineStyle[2].equals("-fx-opacity: 1;");
+        }
+
+        @Override
         public Series setLineWidth(double width) {
 
             lineWidth    = width;
@@ -1510,6 +1523,16 @@ public class SmartChart {
         }
 
         @Override
+        public Series showLine(boolean show) {
+            return null;
+        }
+
+        @Override
+        public boolean isShowingLine() {
+            return false;
+        }
+
+        @Override
         public Series setLineWidth(double width) {
 
             lineWidth = width;
@@ -1608,6 +1631,7 @@ public class SmartChart {
         private int                  reduceLimit = 2000;
         private int                  reduceValue = 1000;
         private double               lineWidth   = 3;
+        private boolean              showLine    = true;
         private Shape                shape       = Shape.CIRCLE;
         private double               size        = 5;
         private double               xRange      = Double.POSITIVE_INFINITY;
@@ -1659,6 +1683,7 @@ public class SmartChart {
                         s.setAutoReduction(reduceValue, reduceLimit);
                         s.setLineWidth(lineWidth);
                         s.setMarkerShape(shape, size);
+                        s.showLine(showLine);
 
                         map.put(key, s);
                     }
@@ -1803,6 +1828,22 @@ public class SmartChart {
         public double getLineWidth() {
 
             return lineWidth;
+        }
+
+        @Override
+        public Series showLine(boolean show) {
+            showLine = show;
+
+            for (Series s : map.values()) {
+                s.showLine(show);
+            }
+
+            return this;
+        }
+
+        @Override
+        public boolean isShowingLine() {
+            return showLine;
         }
 
         @Override

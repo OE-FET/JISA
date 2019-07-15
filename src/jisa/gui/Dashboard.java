@@ -20,6 +20,7 @@ public class Dashboard extends Grid {
     private final List<Category> categories  = new LinkedList<>();
     private       ResultStream   stream      = null;
     private       RTask          logger      = null;
+    private       int            interval;
     private final Button         startButton = addToolbarButton("Start", () -> {
 
         String file = GUI.saveFileSelect();
@@ -32,16 +33,29 @@ public class Dashboard extends Grid {
 
     private final Button stopButton = addToolbarButton("Stop", this::stop);
 
-    public Dashboard(String title) {
+    public Dashboard(String title, int interval) {
         super(title, 1);
         setGrowth(true, false);
         addAll(topRow, plots);
+        this.interval = interval;
+    }
+
+    public Dashboard(String title) {
+        this(title, 2000);
+    }
+
+    public void setInterval(int interval) {
+        this.interval = interval;
     }
 
     public <T extends Instrument> Category<T> addInstrument(String name, IConf<T> conf) {
 
         return new Category<>(name, conf);
 
+    }
+
+    public <T extends Instrument> Category<T> addInstrument(String name, T instrument) {
+        return addInstrument(name, (IConf<T>) () -> instrument);
     }
 
     public class Category<T extends Instrument> {
@@ -129,7 +143,7 @@ public class Dashboard extends Grid {
 
         }
 
-        logger = new RTask(2000, (task) -> {
+        logger = new RTask(interval, (task) -> {
 
             double[] data = new double[columns.size()];
 
