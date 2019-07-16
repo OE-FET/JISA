@@ -102,9 +102,10 @@ public class Util {
         double[] values = new double[numSteps];
         double   step   = (max.doubleValue() - min.doubleValue()) / (numSteps - 1D);
 
-        values[0] = min.doubleValue();
+        values[0]            = min.doubleValue();
+        values[numSteps - 1] = max.doubleValue();
 
-        for (int i = 1; i < values.length; i++) {
+        for (int i = 1; i < numSteps - 1; i++) {
             values[i] = values[i - 1] + step;
         }
 
@@ -180,9 +181,10 @@ public class Util {
         double[] values = new double[numSteps];
         double   step   = Math.pow(max.doubleValue() / min.doubleValue(), 1D / numSteps);
 
-        values[0] = min.doubleValue();
+        values[0]            = min.doubleValue();
+        values[numSteps - 1] = max.doubleValue();
 
-        for (int i = 1; i < values.length; i++) {
+        for (int i = 1; i < numSteps - 1; i++) {
             values[i] = values[i - 1] * step;
         }
 
@@ -216,9 +218,11 @@ public class Util {
     public static String[] makeCountingString(int start, int length, String pattern) {
 
         String[] result = new String[length];
+
         for (int i = 0; i < length; i++) {
             result[i] = String.format(pattern, i + start);
         }
+
         return result;
 
     }
@@ -236,7 +240,10 @@ public class Util {
             return 0;
         }
 
-        return Math.floor(value.doubleValue() / Math.pow(10, Math.floor(Math.log10(Math.abs(value.doubleValue()))))) * Math.pow(10, Math.floor(Math.log10(Math.abs(value.doubleValue()))));
+        return Math.floor(value.doubleValue() / Math.pow(
+                10,
+                Math.floor(Math.log10(Math.abs(value.doubleValue())))
+        )) * Math.pow(10, Math.floor(Math.log10(Math.abs(value.doubleValue()))));
     }
 
     /**
@@ -252,7 +259,10 @@ public class Util {
             return 0;
         }
 
-        return Math.ceil(value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))))) * Math.pow(10, Math.floor(Math.log10(Math.abs(value))));
+        return Math.ceil(value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))))) * Math.pow(
+                10,
+                Math.floor(Math.log10(Math.abs(value)))
+        );
     }
 
     public static double roundSigFig(double value, int nSigDig, int dir) {
