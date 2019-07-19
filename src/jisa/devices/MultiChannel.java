@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface MultiChannel<T> {
 
-    int getNumChannels() throws DeviceException, IOException;
+    int getNumChannels();
 
     List<T> getChannels() throws DeviceException, IOException;
 

@@ -1,9 +1,12 @@
 package jisa.gui;
 
+import jisa.Util;
 import jisa.control.ConfigStore;
 import jisa.control.Field;
 import jisa.control.IConf;
 import jisa.devices.MSTMeter;
+import jisa.devices.MultiChannel;
+import jisa.devices.MultiSensor;
 import jisa.devices.TMeter;
 import org.json.JSONObject;
 
@@ -81,31 +84,27 @@ public class TMeterConfig extends Fields implements IConf<TMeter> {
 
         TMeter tm;
         if (smuI < 0 || smuI >= instruments.length) {
+
             tm = null;
+
         } else {
+
             tm = instruments[smuI].get();
+
         }
 
         if (tm == null) {
+
             chn.editValues("Sensor 0", "Sensor 1", "Sensor 2", "Sensor 3");
-        } else if (tm instanceof MSTMeter) {
 
-            int num = 4;
-            try {
-                num = ((MSTMeter) tm).getNumSensors();
-            } catch (Exception ignored) {
-            }
+        } else if (tm instanceof MultiSensor) {
 
-            String[] channels = new String[num];
-
-            for (int i = 0; i < channels.length; i++) {
-                channels[i] = String.format("Sensor %d", i);
-            }
-
-            chn.editValues(channels);
+            chn.editValues(Util.makeCountingString(0, ((MultiSensor) tm).getNumSensors(), "Sensor %d"));
 
         } else {
+
             chn.editValues("N/A");
+
         }
 
     }
@@ -127,10 +126,10 @@ public class TMeterConfig extends Fields implements IConf<TMeter> {
 
         TMeter toReturn;
 
-        if (tm instanceof MSTMeter) {
+        if (tm instanceof MultiSensor) {
 
             try {
-                toReturn = ((MSTMeter) tm).getSensor(chn.get());
+                toReturn = (TMeter) ((MultiSensor) tm).getSensor(chn.get());
             } catch (Exception e) {
                 return null;
             }

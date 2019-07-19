@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface MultiOutput<T> {
 
-    int getNumOutputs() throws DeviceException, IOException;
+    int getNumOutputs();
 
     List<T> getOutputs() throws DeviceException, IOException;
 

@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface MultiSensor<T> {
 
-    int getNumSensors() throws DeviceException, IOException;
+    int getNumSensors();
 
     List<T> getSensors() throws DeviceException, IOException;
 

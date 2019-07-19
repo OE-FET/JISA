@@ -3,9 +3,7 @@ package jisa.gui;
 import jisa.control.ConfigStore;
 import jisa.control.Field;
 import jisa.control.IConf;
-import jisa.devices.MCSMU;
-import jisa.devices.SMU;
-import jisa.devices.VMeter;
+import jisa.devices.*;
 import jisa.enums.Terminals;
 import jisa.Util;
 import org.json.JSONObject;
@@ -21,17 +19,21 @@ public class VMeterConfig extends Fields implements IConf<VMeter> {
     private Field<Integer> channel   = addChoice("Channel", Util.makeCountingString(0, 4, "Channel %d"));
     private Field<Integer> terminals = addChoice("Terminals", "Front (NONE)", "Rear (NONE)");
 
-    { addSeparator(); }
+    {
+        addSeparator();
+    }
 
-    private Field<Boolean> var       = addCheckBox("Auto Voltage Range", true);
-    private Field<Double>  vrn       = addDoubleField("Voltage Range [V]", 20.0);
-    private Field<Boolean> iar       = addCheckBox("Auto Current Range", false);
-    private Field<Double>  irn       = addDoubleField("Current Range [A]", 100e-3);
+    private Field<Boolean> var = addCheckBox("Auto Voltage Range", true);
+    private Field<Double>  vrn = addDoubleField("Voltage Range [V]", 20.0);
+    private Field<Boolean> iar = addCheckBox("Auto Current Range", false);
+    private Field<Double>  irn = addDoubleField("Current Range [A]", 100e-3);
 
-    { addSeparator(); }
+    {
+        addSeparator();
+    }
 
-    private Field<Boolean> fourPP    = addCheckBox("Four-Wire Measurements");
-    private Field<Boolean> zero      = addCheckBox("Zero Current (SMU)", true);
+    private Field<Boolean> fourPP = addCheckBox("Four-Wire Measurements");
+    private Field<Boolean> zero   = addCheckBox("Zero Current (SMU)", true);
 
     public VMeterConfig(String title, InstrumentConfig<VMeter>... instruments) {
 
@@ -111,9 +113,13 @@ public class VMeterConfig extends Fields implements IConf<VMeter> {
             vMeter = instruments[n].get();
         }
 
+        channel.setDisabled(false);
+
         if (vMeter == null) {
+
             channel.editValues(Util.makeCountingString(0, 4, "Channel %d"));
             terminals.editValues("Front (NONE)", "Rear (NONE)");
+
         } else {
 
             String front;
@@ -135,36 +141,38 @@ public class VMeterConfig extends Fields implements IConf<VMeter> {
 
         }
 
-        channel.setDisabled(false);
-
-        if (vMeter instanceof MCSMU) {
-            channel.editValues(Util.makeCountingString(0, ((MCSMU) vMeter).getNumChannels(), "Channel %d"));
+        if (vMeter instanceof MultiChannel) {
+            channel.editValues(Util.makeCountingString(0, ((MultiChannel) vMeter).getNumChannels(), "Channel %d"));
         } else {
             channel.editValues("N/A");
             channel.setDisabled(true);
         }
 
-        if (vMeter instanceof SMU) {
-            zero.setDisabled(false);
-            fourPP.setDisabled(false);
+        if (vMeter instanceof IMeter) {
             iar.setDisabled(false);
             irn.setDisabled(iar.get());
         } else {
-            zero.setDisabled(true);
-            fourPP.setDisabled(true);
             iar.setDisabled(true);
             irn.setDisabled(true);
         }
 
+        zero.setDisabled(!(vMeter instanceof ISource));
+        fourPP.setDisabled(!(vMeter instanceof SMU));
+
     }
 
+    /**
+     * Returns the configured VMeter object for use.
+     *
+     * @return VMeter object representing the chosen and configure voltmeter
+     */
     public VMeter get() {
 
         try {
 
             int n = choice.get();
 
-            if (n < 0 || n >= instruments.length) {
+            if (!Util.isBetween(n, 0, instruments.length - 1)) {
                 return null;
             }
 
@@ -176,28 +184,36 @@ public class VMeterConfig extends Fields implements IConf<VMeter> {
 
             vMeter.setTerminals(Terminals.values()[terminals.get()]);
 
-            if (vMeter instanceof MCSMU) {
-                vMeter = ((MCSMU) vMeter).getChannel(channel.get());
-            }
-
-            if (vMeter instanceof SMU) {
-
-                ((SMU) vMeter).useFourProbe(fourPP.get());
-
-                if (zero.get()) ((SMU) vMeter).setCurrent(0.0);
-
-                if (iar.get()) {
-                    ((SMU) vMeter).useAutoCurrentRange();
-                } else {
-                    ((SMU) vMeter).setCurrentRange(irn.get());
-                }
-
-            }
-
             if (var.get()) {
                 vMeter.useAutoVoltageRange();
             } else {
                 vMeter.setVoltageRange(vrn.get());
+            }
+
+            // Check for multi-channel meter
+            if (vMeter instanceof MultiChannel) {
+                vMeter = (VMeter) ((MultiChannel) vMeter).getChannel(channel.get());
+            }
+
+            // Check for current sourcing capability
+            if (vMeter instanceof ISource && zero.get()) {
+                ((ISource) vMeter).setCurrent(0.0);
+            }
+
+            // Check for current measuring capability
+            if (vMeter instanceof IMeter) {
+
+                if (iar.get()) {
+                    ((IMeter) vMeter).useAutoCurrentRange();
+                } else {
+                    ((IMeter) vMeter).setCurrentRange(irn.get());
+                }
+
+            }
+
+            // Check if SMU
+            if (vMeter instanceof SMU) {
+                ((SMU) vMeter).useFourProbe(fourPP.get());
             }
 
             return vMeter;

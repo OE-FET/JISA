@@ -1,10 +1,12 @@
 package jisa.gui;
 
+import jisa.Util;
 import jisa.control.ConfigStore;
 import jisa.control.Field;
 import jisa.control.IConf;
 import jisa.devices.DeviceException;
 import jisa.devices.MCSMU;
+import jisa.devices.MultiChannel;
 import jisa.devices.SMU;
 import jisa.enums.Terminals;
 import org.json.JSONObject;
@@ -121,13 +123,11 @@ public class SMUConfig extends Fields implements IConf<SMU> {
         chn.setDisabled(false);
 
         if (smu == null) {
+
             chn.editValues("Channel 0", "Channel 1", "Channel 2", "Channel 3");
-        } else if (smu instanceof MCSMU) {
-            String[] channels = new String[((MCSMU) smu).getNumChannels()];
-            for (int i = 0; i < channels.length; i++) {
-                channels[i] = String.format("Channel %d", i);
-            }
-            chn.editValues(channels);
+
+        } else if (smu instanceof MultiChannel) {
+            chn.editValues(Util.makeCountingString(0, ((MultiChannel) smu).getNumChannels(), "Channel %d"));
         } else {
             chn.editValues("N/A");
             chn.setDisabled(true);
@@ -179,10 +179,10 @@ public class SMUConfig extends Fields implements IConf<SMU> {
 
         SMU toReturn;
 
-        if (smu instanceof MCSMU) {
+        if (smu instanceof MultiChannel) {
 
             try {
-                toReturn = ((MCSMU) smu).getChannel(getChannel());
+                toReturn = (SMU) ((MultiChannel) smu).getChannel(getChannel());
             } catch (Exception e) {
                 return null;
             }

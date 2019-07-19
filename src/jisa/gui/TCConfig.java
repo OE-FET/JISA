@@ -2,10 +2,7 @@ package jisa.gui;
 
 import jisa.control.ConfigStore;
 import jisa.control.IConf;
-import jisa.devices.DeviceException;
-import jisa.devices.MSMOTC;
-import jisa.devices.MSTC;
-import jisa.devices.TC;
+import jisa.devices.*;
 import jisa.Util;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
@@ -61,7 +58,7 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
 
         this(title, configGrid);
         this.config = config;
-        this.key = key;
+        this.key    = key;
         load();
 
     }
@@ -70,7 +67,7 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
 
         this(title, instruments);
         this.config = config;
-        this.key = key;
+        this.key    = key;
         load();
 
     }
@@ -168,7 +165,11 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
             String[] names = new String[instruments.length];
 
             for (int i = 0; i < instruments.length; i++) {
-                names[i] = String.format("%s (%s)", instruments[i].getTitle(), instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED");
+                names[i] = String.format(
+                        "%s (%s)",
+                        instruments[i].getTitle(),
+                        instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED"
+                );
             }
 
             GUI.runNow(() -> {
@@ -199,38 +200,43 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
                 sensor.getSelectionModel().select(Math.min(s, 3));
             });
 
-        } else if (controller instanceof MSMOTC) {
-
-            int nO = ((MSMOTC) controller).getNumOutputs();
-            int nS = ((MSMOTC) controller).getNumSensors();
-
-            GUI.runNow(() -> {
-                output.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nO, "Output %d")));
-                sensor.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nS, "Sensor %d")));
-                output.getSelectionModel().select(Math.min(o, nO - 1));
-                sensor.getSelectionModel().select(Math.min(s, nS - 1));
-            });
-
-        } else if (controller instanceof MSTC) {
-
-            int nS = ((MSTC) controller).getNumSensors();
-
-            GUI.runNow(() -> {
-                output.setItems(FXCollections.observableArrayList("N/A"));
-                sensor.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nS, "Sensor %d")));
-                output.getSelectionModel().select(0);
-                sensor.getSelectionModel().select(Math.min(s, nS - 1));
-            });
-
         } else {
 
-            GUI.runNow(() -> {
-                output.setItems(FXCollections.observableArrayList("N/A"));
-                sensor.setItems(FXCollections.observableArrayList("N/A"));
+            if (controller instanceof MultiOutput) {
 
-                output.getSelectionModel().select(0);
-                sensor.getSelectionModel().select(0);
-            });
+                int nO = ((MultiOutput) controller).getNumOutputs();
+
+                GUI.runNow(() -> {
+                    output.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nO, "Output %d")));
+                    output.getSelectionModel().select(Math.min(o, nO - 1));
+                });
+
+            } else {
+
+                GUI.runNow(() -> {
+                    output.setItems(FXCollections.observableArrayList("N/A"));
+                    output.getSelectionModel().select(0);
+                });
+
+            }
+
+            if (controller instanceof MSTC) {
+
+                int nS = ((MultiSensor) controller).getNumSensors();
+
+                GUI.runNow(() -> {
+                    sensor.setItems(FXCollections.observableArrayList(Util.makeCountingString(0, nS, "Sensor %d")));
+                    sensor.getSelectionModel().select(Math.min(s, nS - 1));
+                });
+
+            } else {
+
+                GUI.runNow(() -> {
+                    sensor.setItems(FXCollections.observableArrayList("N/A"));
+                    sensor.getSelectionModel().select(0);
+                });
+
+            }
 
         }
 
@@ -295,7 +301,14 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
             ZoneRow row = table.getItems().get(i);
 
             if (row.getHeat() < 0) {
-                zones[i] = new TC.PIDZone(row.getMin(), row.getMax(), row.getP(), row.getI(), row.getD(), row.getRange());
+                zones[i] = new TC.PIDZone(
+                        row.getMin(),
+                        row.getMax(),
+                        row.getP(),
+                        row.getI(),
+                        row.getD(),
+                        row.getRange()
+                );
             } else {
                 zones[i] = new TC.PIDZone(row.getMin(), row.getMax(), row.getHeat(), row.getRange());
             }
@@ -323,17 +336,14 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
 
             if (controller == null) {
                 return null;
-            } else if (controller instanceof MSMOTC) {
-                int o = output.getSelectionModel().getSelectedIndex();
-                int s = sensor.getSelectionModel().getSelectedIndex();
-                ((MSMOTC) controller).useSensor(o, s);
-                toReturn = ((MSMOTC) controller).getOutput(o);
-            } else if (controller instanceof MSTC) {
-                int s = sensor.getSelectionModel().getSelectedIndex();
-                ((MSTC) controller).useSensor(s);
-                toReturn = controller;
-            } else {
-                toReturn = controller;
+            }
+
+            if (controller instanceof MultiOutput) {
+                controller = (TC) ((MultiOutput) controller).getOutput(output.getSelectionModel().getSelectedIndex());
+            }
+
+            if (controller instanceof MSTC) {
+                ((MSTC) controller).useSensor(sensor.getSelectionModel().getSelectedIndex());
             }
 
             switch (pidType.getSelectionModel().getSelectedIndex()) {
@@ -350,7 +360,16 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
                     toReturn.useAutoPID(true);
 
                     for (TC.PIDZone zone : toReturn.getAutoPIDZones()) {
-                        System.out.printf("MinT: %s K, MaxT: %s K, P: %s, I: %s, D: %s, R: %s, H: %s\n", zone.getMinT(), zone.getMaxT(), zone.getP(), zone.getI(), zone.getD(), zone.getRange(), zone.getPower());
+                        System.out.printf(
+                                "MinT: %s K, MaxT: %s K, P: %s, I: %s, D: %s, R: %s, H: %s\n",
+                                zone.getMinT(),
+                                zone.getMaxT(),
+                                zone.getP(),
+                                zone.getI(),
+                                zone.getD(),
+                                zone.getRange(),
+                                zone.getPower()
+                        );
                     }
 
                     break;
@@ -483,13 +502,13 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
 
         public ZoneRow(TC.PIDZone zone) {
 
-            min = zone.getMinT();
-            max = zone.getMaxT();
-            p = zone.getP();
-            i = zone.getI();
-            d = zone.getD();
+            min   = zone.getMinT();
+            max   = zone.getMaxT();
+            p     = zone.getP();
+            i     = zone.getI();
+            d     = zone.getD();
             range = zone.getRange();
-            heat = zone.isAuto() ? -1 : zone.getPower();
+            heat  = zone.isAuto() ? -1 : zone.getPower();
 
         }
 
@@ -548,6 +567,7 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
         public void setHeat(Double heat) {
             this.heat = heat;
         }
+
     }
 
 }

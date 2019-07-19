@@ -31,7 +31,7 @@ public interface MSTMeter extends TMeter, MultiSensor<TMeter> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    int getNumSensors() throws IOException, DeviceException;
+    int getNumSensors();
 
     /**
      * Returns the temperature reported by the first sensor.
