@@ -13,7 +13,7 @@ public class VMeterConfig extends Fields implements IConf<VMeter> {
     private ConfigStore config = null;
     private String      key    = null;
 
-    private InstrumentConfig<VMeter>[] instruments;
+    private Connection<VMeter>[] instruments;
 
     private Field<Integer> choice    = addChoice("Instrument");
     private Field<Integer> channel   = addChoice("Channel", Util.makeCountingString(0, 4, "Channel %d"));
@@ -35,7 +35,7 @@ public class VMeterConfig extends Fields implements IConf<VMeter> {
     private Field<Boolean> fourPP = addCheckBox("Four-Wire Measurements");
     private Field<Boolean> zero   = addCheckBox("Zero Current (SMU)", true);
 
-    public VMeterConfig(String title, InstrumentConfig<VMeter>... instruments) {
+    public VMeterConfig(String title, Connection<VMeter>... instruments) {
 
         super(title);
         this.instruments = instruments;
@@ -56,7 +56,7 @@ public class VMeterConfig extends Fields implements IConf<VMeter> {
         choice.editValues(names);
         choice.set(0);
 
-        for (InstrumentConfig<VMeter> config : instruments) {
+        for (Connection<VMeter> config : instruments) {
             config.setOnConnect(() -> update(true));
         }
 
@@ -66,13 +66,13 @@ public class VMeterConfig extends Fields implements IConf<VMeter> {
 
     }
 
-    public VMeterConfig(String title, ConfigGrid grid) {
+    public VMeterConfig(String title, ConnectionGrid grid) {
 
         this(title, grid.getInstrumentsByType(VMeter.class));
 
     }
 
-    public VMeterConfig(String title, String key, ConfigStore config, InstrumentConfig<VMeter>... instruments) {
+    public VMeterConfig(String title, String key, ConfigStore config, Connection<VMeter>... instruments) {
 
         this(title, instruments);
         this.config = config;
@@ -81,7 +81,7 @@ public class VMeterConfig extends Fields implements IConf<VMeter> {
 
     }
 
-    public VMeterConfig(String title, String key, ConfigStore config, ConfigGrid grid) {
+    public VMeterConfig(String title, String key, ConfigStore config, ConnectionGrid grid) {
 
         this(title, key, config, grid.getInstrumentsByType(VMeter.class));
 

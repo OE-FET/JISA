@@ -4,8 +4,6 @@ import jisa.Util;
 import jisa.control.ConfigStore;
 import jisa.control.Field;
 import jisa.control.IConf;
-import jisa.devices.MSTMeter;
-import jisa.devices.MultiChannel;
 import jisa.devices.MultiSensor;
 import jisa.devices.TMeter;
 import org.json.JSONObject;
@@ -15,32 +13,34 @@ import java.io.IOException;
 public class TMeterConfig extends Fields implements IConf<TMeter> {
 
 
-    private Field<Integer>             inst   = addChoice("Instrument");
-    private Field<Integer>             chn    = addChoice("Sensor", "Sensor 0", "Sensor 1", "Sensor 2", "Sensor 3");
-    private InstrumentConfig<TMeter>[] instruments;
-    private ConfigStore                config = null;
-    private String                     key    = null;
-    private JSONObject                 data   = null;
+    private Field<Integer>       inst   = addChoice("Instrument", 0);
+    private Field<Integer>       chn    = addChoice("Sensor", 0, "Sensor 0", "Sensor 1", "Sensor 2", "Sensor 3");
+    private Field<Double>        rng    = addDoubleField("Range [K]", 500.0);
+    private Connection<TMeter>[] instruments;
+    private ConfigStore          config = null;
+    private String               key    = null;
+    private JSONObject           data   = null;
 
-    public TMeterConfig(String title, String key, ConfigStore config, ConfigGrid configGrid) {
-        this(title, configGrid);
+    public TMeterConfig(String title, String key, ConfigStore config, ConnectionGrid connectionGrid) {
+        this(title, connectionGrid);
         this.config = config;
         this.key    = key;
         load();
     }
 
-    public TMeterConfig(String title, String key, ConfigStore config, InstrumentConfig<TMeter>... instruments) {
+    public TMeterConfig(String title, String key, ConfigStore config, Connection<TMeter>... instruments) {
         this(title, instruments);
         this.config = config;
         this.key    = key;
         load();
     }
 
-    public TMeterConfig(String title, ConfigGrid configGrid) {
-        this(title, configGrid.getInstrumentsByType(TMeter.class));
+    public TMeterConfig(String title, ConnectionGrid connectionGrid) {
+        this(title, connectionGrid.getInstrumentsByType(TMeter.class));
     }
 
-    public TMeterConfig(String title, InstrumentConfig<TMeter>... instruments) {
+    public TMeterConfig(String title, Connection<TMeter>... instruments) {
+
         super(title);
         this.instruments = instruments;
         chn.set(0);
@@ -54,7 +54,7 @@ public class TMeterConfig extends Fields implements IConf<TMeter> {
         inst.editValues(names);
         inst.set(0);
 
-        for (InstrumentConfig<TMeter> config : instruments) {
+        for (Connection<TMeter> config : instruments) {
             config.setOnConnect(() -> update(true));
         }
 
@@ -138,20 +138,14 @@ public class TMeterConfig extends Fields implements IConf<TMeter> {
             toReturn = tm;
         }
 
+        try {
+            toReturn.setTemperatureRange(rng.get());
+        } catch (Exception e) {
+            return toReturn;
+        }
+
         return toReturn;
 
-    }
-
-    private void saveCHN() {
-
-        if (config != null && key != null && data != null) {
-            data.put("sensor", chn.get());
-            try {
-                config.save();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private void save() {
@@ -171,6 +165,7 @@ public class TMeterConfig extends Fields implements IConf<TMeter> {
 
                 data.put("inst", inst.get());
                 data.put("sensor", chn.get());
+                data.put("range", rng.get());
 
                 config.save();
 
@@ -190,15 +185,12 @@ public class TMeterConfig extends Fields implements IConf<TMeter> {
             save();
         }
 
-        chn.set(data.getInt("sensor"));
-        inst.set(data.getInt("inst"));
+        if (data.has("sensor")) chn.set(data.getInt("sensor"));
+        if (data.has("inst")) inst.set(data.getInt("inst"));
+        if (data.has("range")) rng.set(data.getDouble("range"));
 
-        chn.setOnChange(this::saveCHN);
-
-        inst.setOnChange(() -> {
-            update(false);
-            save();
-        });
+        // Make sure parameters are saved on exit
+        Runtime.getRuntime().addShutdownHook(new Thread(this::save));
 
     }
 

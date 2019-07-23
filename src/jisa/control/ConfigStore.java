@@ -1,8 +1,8 @@
 package jisa.control;
 
 import jisa.addresses.StrAddress;
+import jisa.gui.Connection;
 import jisa.gui.Fields;
-import jisa.gui.InstrumentConfig;
 import jisa.Util;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -145,7 +145,7 @@ public class ConfigStore {
         return data.has(key);
     }
 
-    public void saveInstrument(String key, InstrumentConfig config) {
+    public void saveInstrument(String key, Connection config) {
 
         JSONObject output = new JSONObject();
         output.put("address", config.getAddress() == null ? "null" : config.getAddress().toString());
@@ -158,7 +158,7 @@ public class ConfigStore {
         }
     }
 
-    public void loadInstrument(String key, InstrumentConfig config) {
+    public void loadInstrument(String key, Connection config) {
 
         try {
             JSONObject input = instruments.getJSONObject(key);

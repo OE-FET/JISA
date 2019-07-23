@@ -5,7 +5,6 @@ import jisa.control.ConfigStore;
 import jisa.control.Field;
 import jisa.control.IConf;
 import jisa.devices.DeviceException;
-import jisa.devices.MCSMU;
 import jisa.devices.MultiChannel;
 import jisa.devices.SMU;
 import jisa.enums.Terminals;
@@ -33,31 +32,31 @@ public class SMUConfig extends Fields implements IConf<SMU> {
 
     { addSeparator(); }
 
-    private Field<Boolean>          fpp    = addCheckBox("Four-Wire Measurements", false);
-    private InstrumentConfig<SMU>[] instruments;
-    private ConfigStore             config = null;
-    private String                  key    = null;
-    private JSONObject              data   = null;
+    private Field<Boolean>    fpp    = addCheckBox("Four-Wire Measurements", false);
+    private Connection<SMU>[] instruments;
+    private ConfigStore       config = null;
+    private String            key    = null;
+    private JSONObject        data   = null;
 
-    public SMUConfig(String title, String key, ConfigStore config, ConfigGrid configGrid) {
-        this(title, configGrid);
+    public SMUConfig(String title, String key, ConfigStore config, ConnectionGrid connectionGrid) {
+        this(title, connectionGrid);
         this.config = config;
         this.key    = key;
         load();
     }
 
-    public SMUConfig(String title, String key, ConfigStore config, InstrumentConfig<SMU>... instruments) {
+    public SMUConfig(String title, String key, ConfigStore config, Connection<SMU>... instruments) {
         this(title, instruments);
         this.config = config;
         this.key    = key;
         load();
     }
 
-    public SMUConfig(String title, ConfigGrid configGrid) {
-        this(title, configGrid.getInstrumentsByType(SMU.class));
+    public SMUConfig(String title, ConnectionGrid connectionGrid) {
+        this(title, connectionGrid.getInstrumentsByType(SMU.class));
     }
 
-    public SMUConfig(String title, InstrumentConfig<SMU>... instruments) {
+    public SMUConfig(String title, Connection<SMU>... instruments) {
 
         super(title);
         this.instruments = instruments;
@@ -85,7 +84,7 @@ public class SMUConfig extends Fields implements IConf<SMU> {
         smu.editValues(names);
         smu.set(0);
 
-        for (InstrumentConfig<SMU> config : instruments) {
+        for (Connection<SMU> config : instruments) {
             config.setOnConnect(() -> update(true));
         }
 
