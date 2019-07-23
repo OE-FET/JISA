@@ -92,7 +92,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
             rect.setVisible(false);
             rect.setManaged(false);
 
-            stack.getChildren().add(rect);
+            // stack.getChildren().add(rect);
             toolbar.setVisible(false);
             toolbar.setManaged(false);
 
