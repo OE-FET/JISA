@@ -34,11 +34,11 @@ public class TestFET implements MCSMU {
 
         if (nSat) {
 
-            return MU * C * (W / L) * ((vSG - vT) * vSD - (Math.pow(vSD, 2) / 2)) * (1 + 0.05*random.nextDouble()) + 10e-6 * random.nextDouble();
+            return MU * C * (W / L) * ((vSG - vT) * vSD - (Math.pow(vSD, 2) / 2)) + 10e-9 * random.nextDouble();
 
         } else {
 
-            return MU * C * (W / L) * (Math.pow((vSG - vT), 2) / 2) * (1 + 0.05*random.nextDouble()) + 10e-6 * random.nextDouble();
+            return MU * C * (W / L) * (Math.pow((vSG - vT), 2) / 2) + 10e-9 * random.nextDouble();
 
         }
 

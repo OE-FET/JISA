@@ -178,9 +178,9 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
             bPane = ((NotBordered) toAdd).getNoBorderPane(true);
 
-        } else if (toAdd instanceof Connection) {
+        } else if (toAdd instanceof Connector) {
 
-            bPane = ((Connection) toAdd).pane;
+            bPane = ((Connector) toAdd).pane;
 
         } else {
 

@@ -12,13 +12,13 @@ import java.io.IOException;
 
 public abstract class Configurator<I extends Instrument> extends Fields implements IConf<I> {
 
-    private   ConfigStore     configStore;
-    private   JSONObject      data       = null;
-    private   String          configKey;
-    protected Connection<I>[] instruments;
-    protected Field<Integer>  instrument = addChoice("Instrument");
+    private   ConfigStore    configStore;
+    private   JSONObject     data       = null;
+    private   String         configKey;
+    protected Connector<I>[] instruments;
+    protected Field<Integer> instrument = addChoice("Instrument");
 
-    public Configurator(String title, String configKey, ConfigStore configStore, Connection<I>... instruments) {
+    public Configurator(String title, String configKey, ConfigStore configStore, Connector<I>... instruments) {
         super(title);
         this.configKey   = configKey;
         this.configStore = configStore;
@@ -26,7 +26,7 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
         makeFields();
 
-        for (Connection<I> config : this.instruments) {
+        for (Connector<I> config : this.instruments) {
             config.setOnConnect(this::connect);
         }
 
@@ -40,7 +40,7 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
     }
 
-    public Configurator(String title, Connection<I>... instruments) {
+    public Configurator(String title, Connector<I>... instruments) {
         this(title, null, null, instruments);
     }
 
@@ -81,11 +81,11 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         private Field<Double>  irn;
         private Field<Boolean> fpp;
 
-        public SMU(String title, String configKey, ConfigStore configStore, Connection<jisa.devices.SMU>... instruments) {
+        public SMU(String title, String configKey, ConfigStore configStore, Connector<jisa.devices.SMU>... instruments) {
             super(title, configKey, configStore, instruments);
         }
 
-        public SMU(String title, Connection<jisa.devices.SMU>... instruments) {
+        public SMU(String title, Connector<jisa.devices.SMU>... instruments) {
             this(title, null, null, instruments);
         }
 
@@ -119,11 +119,11 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
         }
 
-        public SMU(String title, String configKey, ConfigStore configStore, ConnectionGrid grid) {
+        public SMU(String title, String configKey, ConfigStore configStore, ConnectorGrid grid) {
             this(title, configKey, configStore, grid.getInstrumentsByType(jisa.devices.SMU.class));
         }
 
-        public SMU(String title, ConnectionGrid grid) {
+        public SMU(String title, ConnectorGrid grid) {
             this(title, grid.getInstrumentsByType(jisa.devices.SMU.class));
         }
 
@@ -243,13 +243,13 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         private Field<Boolean> manI;
         private Field<Double>  iValue;
 
-        public VMeter(String title, String configKey, ConfigStore configStore, Connection<jisa.devices.VMeter>... instruments) {
+        public VMeter(String title, String configKey, ConfigStore configStore, Connector<jisa.devices.VMeter>... instruments) {
             super(title, configKey, configStore, instruments);
             var.setOnChange(() -> vrn.setDisabled(var.get()));
             iar.setOnChange(() -> irn.setDisabled(iar.isDisabled() || iar.get()));
         }
 
-        public VMeter(String title, Connection<jisa.devices.VMeter>... instruments) {
+        public VMeter(String title, Connector<jisa.devices.VMeter>... instruments) {
             this(title, null, null, instruments);
         }
 
@@ -280,11 +280,11 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
         }
 
-        public VMeter(String title, String configKey, ConfigStore configStore, ConnectionGrid grid) {
+        public VMeter(String title, String configKey, ConfigStore configStore, ConnectorGrid grid) {
             this(title, configKey, configStore, grid.getInstrumentsByType(jisa.devices.VMeter.class));
         }
 
-        public VMeter(String title, ConnectionGrid grid) {
+        public VMeter(String title, ConnectorGrid grid) {
             this(title, grid.getInstrumentsByType(jisa.devices.VMeter.class));
         }
 
@@ -425,11 +425,11 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         private Field<Integer> chn;
         private Field<Double>  rng;
 
-        public TMeter(String title, String configKey, ConfigStore configStore, Connection<jisa.devices.TMeter>... instruments) {
+        public TMeter(String title, String configKey, ConfigStore configStore, Connector<jisa.devices.TMeter>... instruments) {
             super(title, configKey, configStore, instruments);
         }
 
-        public TMeter(String title, Connection<jisa.devices.TMeter>... instruments) {
+        public TMeter(String title, Connector<jisa.devices.TMeter>... instruments) {
             super(title, instruments);
         }
 
@@ -439,11 +439,11 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             rng = addDoubleField("Range [K]", 500.0);
         }
 
-        public TMeter(String title, String configKey, ConfigStore configStore, ConnectionGrid grid) {
+        public TMeter(String title, String configKey, ConfigStore configStore, ConnectorGrid grid) {
             this(title, configKey, configStore, grid.getInstrumentsByType(jisa.devices.TMeter.class));
         }
 
-        public TMeter(String title, ConnectionGrid grid) {
+        public TMeter(String title, ConnectorGrid grid) {
             this(title, grid.getInstrumentsByType(jisa.devices.TMeter.class));
         }
 
@@ -531,11 +531,11 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         private Field<Double>  iValue;
         private Field<Double>  dValue;
 
-        public TC(String title, String configKey, ConfigStore configStore, Connection<jisa.devices.TC>... instruments) {
+        public TC(String title, String configKey, ConfigStore configStore, Connector<jisa.devices.TC>... instruments) {
             super(title, configKey, configStore, instruments);
         }
 
-        public TC(String title, Connection<jisa.devices.TC>... instruments) {
+        public TC(String title, Connector<jisa.devices.TC>... instruments) {
             super(title, instruments);
         }
 
@@ -599,11 +599,11 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
         }
 
-        public TC(String title, String configKey, ConfigStore configStore, ConnectionGrid grid) {
+        public TC(String title, String configKey, ConfigStore configStore, ConnectorGrid grid) {
             this(title, configKey, configStore, grid.getInstrumentsByType(jisa.devices.TC.class));
         }
 
-        public TC(String title, ConnectionGrid grid) {
+        public TC(String title, ConnectorGrid grid) {
             this(title, grid.getInstrumentsByType(jisa.devices.TC.class));
         }
 

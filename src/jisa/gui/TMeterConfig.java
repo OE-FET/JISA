@@ -13,33 +13,33 @@ import java.io.IOException;
 public class TMeterConfig extends Fields implements IConf<TMeter> {
 
 
-    private Field<Integer>       inst   = addChoice("Instrument", 0);
-    private Field<Integer>       chn    = addChoice("Sensor", 0, "Sensor 0", "Sensor 1", "Sensor 2", "Sensor 3");
-    private Field<Double>        rng    = addDoubleField("Range [K]", 500.0);
-    private Connection<TMeter>[] instruments;
-    private ConfigStore          config = null;
-    private String               key    = null;
-    private JSONObject           data   = null;
+    private Field<Integer>      inst   = addChoice("Instrument", 0);
+    private Field<Integer>      chn    = addChoice("Sensor", 0, "Sensor 0", "Sensor 1", "Sensor 2", "Sensor 3");
+    private Field<Double>       rng    = addDoubleField("Range [K]", 500.0);
+    private Connector<TMeter>[] instruments;
+    private ConfigStore         config = null;
+    private String              key    = null;
+    private JSONObject          data   = null;
 
-    public TMeterConfig(String title, String key, ConfigStore config, ConnectionGrid connectionGrid) {
-        this(title, connectionGrid);
+    public TMeterConfig(String title, String key, ConfigStore config, ConnectorGrid connectorGrid) {
+        this(title, connectorGrid);
         this.config = config;
         this.key    = key;
         load();
     }
 
-    public TMeterConfig(String title, String key, ConfigStore config, Connection<TMeter>... instruments) {
+    public TMeterConfig(String title, String key, ConfigStore config, Connector<TMeter>... instruments) {
         this(title, instruments);
         this.config = config;
         this.key    = key;
         load();
     }
 
-    public TMeterConfig(String title, ConnectionGrid connectionGrid) {
-        this(title, connectionGrid.getInstrumentsByType(TMeter.class));
+    public TMeterConfig(String title, ConnectorGrid connectorGrid) {
+        this(title, connectorGrid.getInstrumentsByType(TMeter.class));
     }
 
-    public TMeterConfig(String title, Connection<TMeter>... instruments) {
+    public TMeterConfig(String title, Connector<TMeter>... instruments) {
 
         super(title);
         this.instruments = instruments;
@@ -54,7 +54,7 @@ public class TMeterConfig extends Fields implements IConf<TMeter> {
         inst.editValues(names);
         inst.set(0);
 
-        for (Connection<TMeter> config : instruments) {
+        for (Connector<TMeter> config : instruments) {
             config.setOnConnect(() -> update(true));
         }
 

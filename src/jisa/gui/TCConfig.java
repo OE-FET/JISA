@@ -44,7 +44,7 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
     private ChangeListener<? super Number> ouList = (a, b, c) -> update(false);
     private ChangeListener<? super Number> tyList = (a, b, c) -> typeChange();
 
-    private final Connection<TC>[] instruments;
+    private final Connector<TC>[] instruments;
 
     private final static int CHOICE_SINGLE = 0;
     private final static int CHOICE_ZONING = 1;
@@ -54,16 +54,16 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
     private String       key    = null;
     private JSONObject   data   = null;
 
-    public TCConfig(String title, String key, ConfigStore config, ConnectionGrid connectionGrid) {
+    public TCConfig(String title, String key, ConfigStore config, ConnectorGrid connectorGrid) {
 
-        this(title, connectionGrid);
+        this(title, connectorGrid);
         this.config = config;
         this.key    = key;
         load();
 
     }
 
-    public TCConfig(String title, String key, ConfigStore config, Connection<TC>... instruments) {
+    public TCConfig(String title, String key, ConfigStore config, Connector<TC>... instruments) {
 
         this(title, instruments);
         this.config = config;
@@ -72,11 +72,11 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
 
     }
 
-    public TCConfig(String title, ConnectionGrid connectionGrid) {
-        this(title, connectionGrid.getInstrumentsByType(TC.class));
+    public TCConfig(String title, ConnectorGrid connectorGrid) {
+        this(title, connectorGrid.getInstrumentsByType(TC.class));
     }
 
-    public TCConfig(String title, Connection<TC>... instruments) {
+    public TCConfig(String title, Connector<TC>... instruments) {
 
         super(title, TCConfig.class.getResource("fxml/TCConfigWindow.fxml"));
 
@@ -144,7 +144,7 @@ public class TCConfig extends JFXWindow implements IConf<TC> {
             updateZones();
         });
 
-        for (Connection<TC> config : instruments) {
+        for (Connector<TC> config : instruments) {
             config.setOnConnect(() -> update(true));
         }
 

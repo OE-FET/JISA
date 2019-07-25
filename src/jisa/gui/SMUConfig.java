@@ -32,31 +32,31 @@ public class SMUConfig extends Fields implements IConf<SMU> {
 
     { addSeparator(); }
 
-    private Field<Boolean>    fpp    = addCheckBox("Four-Wire Measurements", false);
-    private Connection<SMU>[] instruments;
-    private ConfigStore       config = null;
-    private String            key    = null;
-    private JSONObject        data   = null;
+    private Field<Boolean>   fpp    = addCheckBox("Four-Wire Measurements", false);
+    private Connector<SMU>[] instruments;
+    private ConfigStore      config = null;
+    private String           key    = null;
+    private JSONObject       data   = null;
 
-    public SMUConfig(String title, String key, ConfigStore config, ConnectionGrid connectionGrid) {
-        this(title, connectionGrid);
+    public SMUConfig(String title, String key, ConfigStore config, ConnectorGrid connectorGrid) {
+        this(title, connectorGrid);
         this.config = config;
         this.key    = key;
         load();
     }
 
-    public SMUConfig(String title, String key, ConfigStore config, Connection<SMU>... instruments) {
+    public SMUConfig(String title, String key, ConfigStore config, Connector<SMU>... instruments) {
         this(title, instruments);
         this.config = config;
         this.key    = key;
         load();
     }
 
-    public SMUConfig(String title, ConnectionGrid connectionGrid) {
-        this(title, connectionGrid.getInstrumentsByType(SMU.class));
+    public SMUConfig(String title, ConnectorGrid connectorGrid) {
+        this(title, connectorGrid.getInstrumentsByType(SMU.class));
     }
 
-    public SMUConfig(String title, Connection<SMU>... instruments) {
+    public SMUConfig(String title, Connector<SMU>... instruments) {
 
         super(title);
         this.instruments = instruments;
@@ -84,7 +84,7 @@ public class SMUConfig extends Fields implements IConf<SMU> {
         smu.editValues(names);
         smu.set(0);
 
-        for (Connection<SMU> config : instruments) {
+        for (Connector<SMU> config : instruments) {
             config.setOnConnect(() -> update(true));
         }
 
