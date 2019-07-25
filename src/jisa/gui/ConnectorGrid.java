@@ -31,6 +31,7 @@ public class ConnectorGrid extends Grid {
 
     public ConnectorGrid(String title, String key, ConfigStore c) {
         this(title);
+        this.key = key;
         setConfigStore(c);
     }
 
