@@ -583,28 +583,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
         controller.setYLimits(min, max);
     }
 
-    public void setLegendPosition(Legend position) {
-
-        switch (position) {
-
-            case TOP:
-                chart.setLegendSide(Side.TOP);
-                break;
-
-            case RIGHT:
-                chart.setLegendSide(Side.RIGHT);
-                break;
-
-            case BOTTOM:
-                chart.setLegendSide(Side.BOTTOM);
-                break;
-
-            case LEFT:
-                chart.setLegendSide(Side.LEFT);
-                break;
-
-        }
-
+    public void setLegendPosition(Side position) {
+        chart.setLegendSide(position);
     }
 
     public void showLegend(boolean show) {
@@ -732,13 +712,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
         X_AXIS,
         Y_AXIS,
         ORDER_ADDED
-    }
-
-    public enum Legend {
-        TOP,
-        RIGHT,
-        BOTTOM,
-        LEFT
     }
 
 }
