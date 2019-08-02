@@ -471,8 +471,11 @@ public class GUI extends Application {
     public static void runNow(Runnable toRun) {
 
         if (Platform.isFxApplicationThread()) {
+
             toRun.run();
+
         } else {
+
             Semaphore s = new Semaphore(0);
             Platform.runLater(() -> {
                 toRun.run();
@@ -483,6 +486,7 @@ public class GUI extends Application {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+
         }
 
     }

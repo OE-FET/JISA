@@ -483,10 +483,10 @@ public class Plot extends JFXWindow implements Element, Clearable {
             final Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
             final Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
 
-            final double minX = xAxis.getValueForDisplay(Math.min(first.get().getX(), pointX.getX())).doubleValue();
-            final double maxX = xAxis.getValueForDisplay(Math.max(first.get().getX(), pointX.getX())).doubleValue();
-            final double minY = yAxis.getValueForDisplay(Math.min(first.get().getY(), pointY.getY())).doubleValue();
-            final double maxY = yAxis.getValueForDisplay(Math.max(first.get().getY(), pointY.getY())).doubleValue();
+            final double minX = xAxis.getValueForDisplay(Math.min(first.get().getX(), pointX.getX()));
+            final double maxX = xAxis.getValueForDisplay(Math.max(first.get().getX(), pointX.getX()));
+            final double minY = yAxis.getValueForDisplay(Math.min(first.get().getY(), pointY.getY()));
+            final double maxY = yAxis.getValueForDisplay(Math.max(first.get().getY(), pointY.getY()));
 
             controller.setLimits(Math.min(minX, maxX), Math.max(minX, maxX), Math.min(minY, maxY),
                                  Math.max(minY, maxY)
@@ -526,10 +526,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
             Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
             Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
 
-            final double diffX = xAxis.getValueForDisplay(pointX.getX()).doubleValue() - xAxis.getValueForDisplay(
-                    start.get().getX()).doubleValue();
-            final double diffY = yAxis.getValueForDisplay(pointY.getY()).doubleValue() - yAxis.getValueForDisplay(
-                    start.get().getY()).doubleValue();
+            final double diffX = xAxis.getValueForDisplay(pointX.getX()) - xAxis.getValueForDisplay(start.get().getX());
+            final double diffY = yAxis.getValueForDisplay(pointY.getY()) - yAxis.getValueForDisplay(start.get().getY());
 
             final double minX = startMin.get().getX() - diffX;
             final double minY = startMin.get().getY() - diffY;
@@ -537,8 +535,11 @@ public class Plot extends JFXWindow implements Element, Clearable {
             final double maxX = startMax.get().getX() - diffX;
             final double maxY = startMax.get().getY() - diffY;
 
-            controller.setLimits(Math.min(minX, maxX), Math.max(minX, maxX), Math.min(minY, maxY),
-                                 Math.max(minY, maxY)
+            controller.setLimits(
+                    Math.min(minX, maxX),
+                    Math.max(minX, maxX),
+                    Math.min(minY, maxY),
+                    Math.max(minY, maxY)
             );
 
         });

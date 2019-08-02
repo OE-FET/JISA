@@ -44,32 +44,6 @@ public class JFXWindow implements Element {
 
     }
 
-    protected JFXWindow(String title, String fxmlPath, boolean ignore) {
-
-        // Make sure the GUI thread has started
-        GUI.touch();
-
-        // Create a loader for our FXML file
-        FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-
-        // Tell the loader to link the FXML file to this object
-        loader.setController(this);
-
-        // Load our layout from our FXML file as a "Scene":
-        try {
-            Scene scene = new Scene(loader.load());
-
-            // Create the stage (window) and add the layout to it in GUI thread.
-            GUI.runNow(() -> {
-                stage = new Stage();
-                stage.setScene(scene);
-                stage.setTitle(title);
-            });
-        } catch (IOException ignored) {
-
-        }
-    }
-
     protected JFXWindow(String title, URL resource) {
 
         // Make sure the GUI thread has started
@@ -84,15 +58,19 @@ public class JFXWindow implements Element {
         // Load our layout from our FXML file as a "Scene":
         // Create the stage (window) and add the layout to it in GUI thread.
         GUI.runNow(() -> {
+
             Scene scene = null;
+
             try {
                 scene = new Scene(loader.load());
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
             stage = new Stage();
             stage.setScene(scene);
             stage.setTitle(title);
+
         });
     }
 
@@ -100,21 +78,21 @@ public class JFXWindow implements Element {
      * Shows the window.
      */
     public void show() {
-        GUI.runNow(() -> stage.show());
+        GUI.runNow(stage::show);
     }
 
     /**
      * Hides the window
      */
     public void hide() {
-        GUI.runNow(() -> stage.hide());
+        GUI.runNow(stage::hide);
     }
 
     /**
      * Closes the window
      */
     public void close() {
-        GUI.runNow(() -> stage.close());
+        GUI.runNow(stage::close);
     }
 
     /**
@@ -138,20 +116,21 @@ public class JFXWindow implements Element {
     public void setExitOnClose(boolean close) {
 
         if (close) {
-            stage.setOnCloseRequest((a) -> {
+
+            stage.setOnCloseRequest(a -> {
                 GUI.stopGUI();
                 System.exit(0);
             });
+
         } else {
-            stage.setOnCloseRequest((a) -> {
-            });
+            stage.setOnCloseRequest(a -> {});
         }
 
     }
 
     public void setOnClose(SRunnable toRun) {
 
-        stage.setOnCloseRequest((a) -> {
+        stage.setOnCloseRequest(a -> {
 
             try {
                 toRun.run();
