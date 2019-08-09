@@ -1,6 +1,7 @@
 package jisa;
 
 import jisa.control.ERunnable;
+import jisa.control.SRunnable;
 import jisa.devices.DeviceException;
 import jisa.visa.VISAException;
 
@@ -51,6 +52,16 @@ public class Util {
             Thread.sleep(msec);
         } catch (Exception e) {
         }
+    }
+
+    public static void runRegardless(SRunnable toRun) {
+
+        try {
+            toRun.run();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+
     }
 
     /**
