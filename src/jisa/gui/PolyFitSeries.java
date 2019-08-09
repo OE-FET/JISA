@@ -51,8 +51,8 @@ public class PolyFitSeries implements Series {
         Matrix y = new Matrix(data.size(), 1);
 
         for (int i = 0; i < data.size(); i++) {
-            x.set(i, 0, data.get(i).getXValue());
-            y.set(i, 0, data.get(i).getYValue());
+            x.setEntry(i, 0, data.get(i).getXValue());
+            y.setEntry(i, 0, data.get(i).getYValue());
         }
 
         Function fitted = Maths.polyFit(x, y, degree);
@@ -65,7 +65,7 @@ public class PolyFitSeries implements Series {
 
             fitSeries.getXYChartSeries().getData().clear();
 
-            for (double xv : Util.makeLinearArray(x.minElement(), x.maxElement(), 100)) {
+            for (double xv : Util.makeLinearArray(x.getMinElement(), x.getMaxElement(), 100)) {
                 fitSeries.addPoint(xv, fitted.value(xv));
             }
 

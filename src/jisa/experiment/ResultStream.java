@@ -26,7 +26,7 @@ public class ResultStream extends ResultTable {
     private void init(String path) throws IOException {
 
         this.path = path;
-        file = new RandomAccessFile(path, "rw");
+        file      = new RandomAccessFile(path, "rw");
         file.setLength(0);
         file.seek(0);
         file.writeBytes(String.join(",", getNames()));
@@ -63,6 +63,35 @@ public class ResultStream extends ResultTable {
                     newFile.append(newLine);
                 }
                 newFile.append("\n");
+                i++;
+
+                line = file.readLine();
+            } while (line != null);
+
+            file.setLength(0);
+            file.writeBytes(newFile.toString());
+
+        } catch (IOException ignored) {
+        }
+
+    }
+
+    protected void removeLine(int lineNo) {
+
+        StringBuilder newFile = new StringBuilder();
+
+        try {
+            int i = 0;
+            file.seek(0);
+            String line;
+
+            line = file.readLine();
+            do {
+
+                if (i != lineNo) {
+                    newFile.append(line);
+                    newFile.append("\n");
+                }
                 i++;
 
                 line = file.readLine();
@@ -173,6 +202,11 @@ public class ResultStream extends ResultTable {
     }
 
     @Override
+    public void removeRow(int i) {
+        removeLine(i);
+    }
+
+    @Override
     public void close() {
         try {
             file.close();
@@ -201,4 +235,5 @@ public class ResultStream extends ResultTable {
         };
 
     }
+
 }

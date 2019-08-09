@@ -1,371 +1,422 @@
 package jisa.maths;
 
-import jisa.Util;
-import org.apache.commons.math.linear.MatrixUtils;
-import org.apache.commons.math.linear.RealMatrix;
+import jisa.experiment.Function;
+import org.apache.commons.math.linear.*;
 
 import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicReference;
 
-public class Matrix implements Iterable<Double> {
+public class Matrix implements RealMatrix, Iterable<Double> {
 
-    private       double[][] data;
-    private final int        rows;
-    private final int        cols;
+    private final RealMatrix backingMatrix;
 
-    /**
-     * Creates an n x m matrix.
-     *
-     * @param rows Number of rows (n)
-     * @param cols Number of columns (m)
-     */
+    public static Matrix toMatrix(RealMatrix m) {
+
+        if (m instanceof Matrix) {
+            return (Matrix) m;
+        } else {
+            return new Matrix(m);
+        }
+
+    }
+
     public Matrix(int rows, int cols) {
-        data      = new double[rows][cols];
-        this.rows = rows;
-        this.cols = cols;
+        backingMatrix = MatrixUtils.createRealMatrix(rows, cols);
+    }
 
-        for (int i = 0; i < rows; i++) {
+    public Matrix(int rows, int cols, double... values) {
+        this(rows, cols);
+        setAllEntries(values);
+    }
 
-            for (int j = 0; j < cols; j++) {
-                data[i][j] = 0.0;
+    public Matrix(RealMatrix matrix) {
+        backingMatrix = matrix;
+    }
+
+    public Matrix(double[][] data) {
+        backingMatrix = MatrixUtils.createRealMatrix(data);
+    }
+
+    public Matrix(double[] data) {
+        backingMatrix = MatrixUtils.createRowRealMatrix(data);
+    }
+
+    public void setAllEntries(double... values) {
+
+        if (values.length != getSize()) {
+            throw new IllegalArgumentException("Number of elements does not match.");
+        }
+
+        int k = 0;
+
+        for (int i = 0; i < getRowDimension(); i++) {
+
+            for (int j = 0; j < getColumnDimension(); j++) {
+
+                setEntry(i, j, values[k++]);
+
             }
 
         }
 
     }
 
-    public Matrix(double[][] data) {
-        this.data = data;
-        rows      = data.length;
-        cols      = data[0].length;
+    public int getSize() {
+        return getRowDimension() * getColumnDimension();
     }
 
-    public Matrix(RealMatrix matrix) {
-        this(matrix.getData());
+    @Override
+    public Matrix createMatrix(int i, int i1) {
+        return new Matrix(i, i1);
     }
 
-    public RealMatrix toRealMatrix() {
-        RealMatrix matrix = MatrixUtils.createRealMatrix(rows(), columns());
-        forEach(matrix::setEntry);
-        return matrix;
+    @Override
+    public Matrix copy() {
+        return new Matrix(backingMatrix.copy());
+    }
+
+    @Override
+    public Matrix add(RealMatrix realMatrix) throws IllegalArgumentException {
+        return new Matrix(backingMatrix.add(realMatrix));
+    }
+
+    @Override
+    public Matrix subtract(RealMatrix realMatrix) throws IllegalArgumentException {
+        return new Matrix(backingMatrix.subtract(realMatrix));
+    }
+
+    public Matrix add(Number scalar) {
+        return scalarAdd(scalar.doubleValue());
+    }
+
+    public Matrix subtract(Number scalar) {
+        return scalarSubtract(scalar.doubleValue());
+    }
+
+    public Matrix multiply(Number scalar) {
+        return scalarMultiply(scalar.doubleValue());
+    }
+
+    public Matrix divide(Number scalar) {
+        return scalarMultiply(1D / scalar.doubleValue());
+    }
+
+    @Override
+    public Matrix scalarAdd(double v) {
+        return new Matrix(backingMatrix.scalarAdd(v));
+    }
+
+    public Matrix scalarSubtract(double v) {
+        return scalarAdd(-v);
+    }
+
+    @Override
+    public Matrix scalarMultiply(double v) {
+        return new Matrix(backingMatrix.scalarMultiply(v));
+    }
+
+    @Override
+    public Matrix multiply(RealMatrix realMatrix) throws IllegalArgumentException {
+        return new Matrix(backingMatrix.multiply(realMatrix));
+    }
+
+    @Override
+    public Matrix preMultiply(RealMatrix realMatrix) throws IllegalArgumentException {
+        return new Matrix(backingMatrix.preMultiply(realMatrix));
+    }
+
+    @Override
+    public double[][] getData() {
+        return backingMatrix.getData();
+    }
+
+    @Override
+    public double getNorm() {
+        return backingMatrix.getNorm();
+    }
+
+    @Override
+    public double getFrobeniusNorm() {
+        return backingMatrix.getFrobeniusNorm();
+    }
+
+    @Override
+    public Matrix getSubMatrix(int startRow, int startCol, int nRows, int nCols) throws MatrixIndexException {
+        return new Matrix(backingMatrix.getSubMatrix(startRow, startCol, nRows, nCols));
+    }
+
+    @Override
+    public Matrix getSubMatrix(int[] ints, int[] ints1) throws MatrixIndexException {
+        return new Matrix(backingMatrix.getSubMatrix(ints, ints1));
+    }
+
+    @Override
+    public void copySubMatrix(int i, int i1, int i2, int i3, double[][] doubles) throws MatrixIndexException, IllegalArgumentException {
+        backingMatrix.copySubMatrix(i, i1, i2, i3, doubles);
+    }
+
+    @Override
+    public void copySubMatrix(int[] ints, int[] ints1, double[][] doubles) throws MatrixIndexException, IllegalArgumentException {
+        backingMatrix.copySubMatrix(ints, ints1, doubles);
+    }
+
+    @Override
+    public void setSubMatrix(double[][] doubles, int i, int i1) throws MatrixIndexException {
+        backingMatrix.setSubMatrix(doubles, i, i1);
+    }
+
+    @Override
+    public Matrix getRowMatrix(int i) throws MatrixIndexException {
+        return new Matrix(backingMatrix.getRowMatrix(i));
+    }
+
+    @Override
+    public void setRowMatrix(int i, RealMatrix realMatrix) throws MatrixIndexException, InvalidMatrixException {
+        backingMatrix.setRowMatrix(i, realMatrix);
+    }
+
+    @Override
+    public Matrix getColumnMatrix(int i) throws MatrixIndexException {
+        return new Matrix(backingMatrix.getColumnMatrix(i));
+    }
+
+    @Override
+    public void setColumnMatrix(int i, RealMatrix realMatrix) throws MatrixIndexException, InvalidMatrixException {
+        backingMatrix.setColumnMatrix(i, realMatrix);
+    }
+
+    @Override
+    public RealVector getRowVector(int i) throws MatrixIndexException {
+        return backingMatrix.getRowVector(i);
+    }
+
+    @Override
+    public void setRowVector(int i, RealVector realVector) throws MatrixIndexException, InvalidMatrixException {
+        backingMatrix.setRowVector(i, realVector);
+    }
+
+    @Override
+    public RealVector getColumnVector(int i) throws MatrixIndexException {
+        return backingMatrix.getColumnVector(i);
+    }
+
+    @Override
+    public void setColumnVector(int i, RealVector realVector) throws MatrixIndexException, InvalidMatrixException {
+        backingMatrix.setColumnVector(i, realVector);
+    }
+
+    @Override
+    public double[] getRow(int i) throws MatrixIndexException {
+        return backingMatrix.getRow(i);
+    }
+
+    @Override
+    public void setRow(int i, double[] doubles) throws MatrixIndexException, InvalidMatrixException {
+        backingMatrix.setRow(i, doubles);
+    }
+
+    @Override
+    public double[] getColumn(int i) throws MatrixIndexException {
+        return backingMatrix.getColumn(i);
+    }
+
+    @Override
+    public void setColumn(int i, double[] doubles) throws MatrixIndexException, InvalidMatrixException {
+        backingMatrix.setColumn(i, doubles);
+    }
+
+    @Override
+    public double getEntry(int i, int i1) throws MatrixIndexException {
+        return backingMatrix.getEntry(i, i1);
+    }
+
+    @Override
+    public void setEntry(int i, int i1, double v) throws MatrixIndexException {
+        backingMatrix.setEntry(i, i1, v);
+    }
+
+    @Override
+    public void addToEntry(int i, int i1, double v) throws MatrixIndexException {
+        backingMatrix.addToEntry(i, i1, v);
+    }
+
+    @Override
+    public void multiplyEntry(int i, int i1, double v) throws MatrixIndexException {
+        backingMatrix.multiplyEntry(i, i1, v);
+    }
+
+    @Override
+    public Matrix transpose() {
+        return new Matrix(backingMatrix.transpose());
+    }
+
+    @Override
+    public Matrix inverse() throws InvalidMatrixException {
+        return new Matrix(backingMatrix.inverse());
+    }
+
+    @Override
+    public double getDeterminant() {
+        return backingMatrix.getDeterminant();
+    }
+
+    @Override
+    public boolean isSingular() {
+        return backingMatrix.isSingular();
+    }
+
+    @Override
+    public double getTrace() throws NonSquareMatrixException {
+        return backingMatrix.getTrace();
+    }
+
+    @Override
+    public double[] operate(double[] doubles) throws IllegalArgumentException {
+        return backingMatrix.operate(doubles);
+    }
+
+    @Override
+    public RealVector operate(RealVector realVector) throws IllegalArgumentException {
+        return backingMatrix.operate(realVector);
+    }
+
+    @Override
+    public double[] preMultiply(double[] doubles) throws IllegalArgumentException {
+        return backingMatrix.preMultiply(doubles);
+    }
+
+    @Override
+    public RealVector preMultiply(RealVector realVector) throws IllegalArgumentException {
+        return backingMatrix.preMultiply(realVector);
+    }
+
+    @Override
+    public double walkInRowOrder(RealMatrixChangingVisitor realMatrixChangingVisitor) throws MatrixVisitorException {
+        return backingMatrix.walkInRowOrder(realMatrixChangingVisitor);
+    }
+
+    @Override
+    public double walkInRowOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor) throws MatrixVisitorException {
+        return backingMatrix.walkInRowOrder(realMatrixPreservingVisitor);
+    }
+
+    @Override
+    public double walkInRowOrder(RealMatrixChangingVisitor realMatrixChangingVisitor, int i, int i1, int i2, int i3) throws MatrixIndexException, MatrixVisitorException {
+        return backingMatrix.walkInRowOrder(realMatrixChangingVisitor, i, i1, i2, i3);
+    }
+
+    @Override
+    public double walkInRowOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor, int i, int i1, int i2, int i3) throws MatrixIndexException, MatrixVisitorException {
+        return backingMatrix.walkInRowOrder(realMatrixPreservingVisitor, i, i1, i2, i3);
+    }
+
+    @Override
+    public double walkInColumnOrder(RealMatrixChangingVisitor realMatrixChangingVisitor) throws MatrixVisitorException {
+        return backingMatrix.walkInColumnOrder(realMatrixChangingVisitor);
+    }
+
+    @Override
+    public double walkInColumnOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor) throws MatrixVisitorException {
+        return backingMatrix.walkInColumnOrder(realMatrixPreservingVisitor);
+    }
+
+    @Override
+    public double walkInColumnOrder(RealMatrixChangingVisitor realMatrixChangingVisitor, int i, int i1, int i2, int i3) throws MatrixIndexException, MatrixVisitorException {
+        return backingMatrix.walkInColumnOrder(realMatrixChangingVisitor, i, i1, i2, i3);
+    }
+
+    @Override
+    public double walkInColumnOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor, int i, int i1, int i2, int i3) throws MatrixIndexException, MatrixVisitorException {
+        return backingMatrix.walkInColumnOrder(realMatrixPreservingVisitor, i, i1, i2, i3);
+    }
+
+    @Override
+    public double walkInOptimizedOrder(RealMatrixChangingVisitor realMatrixChangingVisitor) throws MatrixVisitorException {
+        return backingMatrix.walkInOptimizedOrder(realMatrixChangingVisitor);
+    }
+
+    @Override
+    public double walkInOptimizedOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor) throws MatrixVisitorException {
+        return backingMatrix.walkInOptimizedOrder(realMatrixPreservingVisitor);
+    }
+
+    @Override
+    public double walkInOptimizedOrder(RealMatrixChangingVisitor realMatrixChangingVisitor, int i, int i1, int i2, int i3) throws MatrixIndexException, MatrixVisitorException {
+        return backingMatrix.walkInOptimizedOrder(realMatrixChangingVisitor, i, i1, i2, i3);
+    }
+
+    @Override
+    public double walkInOptimizedOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor, int i, int i1, int i2, int i3) throws MatrixIndexException, MatrixVisitorException {
+        return backingMatrix.walkInOptimizedOrder(realMatrixPreservingVisitor, i, i1, i2, i3);
+    }
+
+    @Override
+    public double[] solve(double[] doubles) throws IllegalArgumentException, InvalidMatrixException {
+        return backingMatrix.solve(doubles);
+    }
+
+    @Override
+    public Matrix solve(RealMatrix realMatrix) throws IllegalArgumentException, InvalidMatrixException {
+        return new Matrix(backingMatrix.solve(realMatrix));
+    }
+
+    @Override
+    public boolean isSquare() {
+        return backingMatrix.isSquare();
+    }
+
+    @Override
+    public int getRowDimension() {
+        return backingMatrix.getRowDimension();
+    }
+
+    @Override
+    public int getColumnDimension() {
+        return backingMatrix.getColumnDimension();
     }
 
     public Matrix asColumn() {
 
-        if (columns() == 1) {
-            return this;
-        }
-
-        Matrix result = new Matrix(size(), 1);
+        Matrix column = new Matrix(getSize(), 1);
 
         int i = 0;
-        for (double d : this) {
-            result.set(i, 0, d);
-            i++;
+        for (double v : this) {
+            column.setEntry(i++, 1, v);
         }
 
-        return result;
+        return column;
 
     }
 
-    public Matrix inverse() {
-        return new Matrix(toRealMatrix().inverse());
-    }
+    public Matrix asRow() {
 
-    public Matrix subMatrix(int startRow, int startCol, int n, int m) {
-
-        Matrix sub = new Matrix(n, m);
-
-        sub.forEach((i, j, v) -> sub.set(i, j, get(i + startRow, j + startCol)));
-
-        return sub;
-
-    }
-
-    private void checkElement(int row, int col) {
-
-        if (!Util.isBetween(row, 0, rows - 1) || !Util.isBetween(col, 0, cols - 1)) {
-            throw new IndexOutOfBoundsException(String.format("Matrix does not contain element (%d, %d) %dx%d", row, col, rows, cols));
-        }
-
-    }
-
-    /**
-     * Returns the value of the element with the specified indices.
-     *
-     * @param row Row index
-     * @param col Columns index
-     *
-     * @return Element value
-     *
-     * @throws IndexOutOfBoundsException If row/column does not exist
-     */
-    public double get(int row, int col) {
-
-        checkElement(row, col);
-        return data[row][col];
-
-    }
-
-    public double[][] getData() {
-        return data.clone();
-    }
-
-    public double[] toArray() {
-
-        double[] array = new double[size()];
+        Matrix row = new Matrix(1, getSize());
 
         int i = 0;
-        for (double value : this) {
-            array[i++] = value;
-        }
-
-        return array;
-
-    }
-
-    /**
-     * Sets the value of the element with the specified indices.
-     *
-     * @param row   Row index
-     * @param col   Column index
-     * @param value Element value
-     *
-     * @throws IndexOutOfBoundsException If row/column does not exist
-     */
-    public void set(int row, int col, Number value) {
-
-        checkElement(row, col);
-        data[row][col] = value.doubleValue();
-
-    }
-
-    public void setAll(Number... values) {
-
-        if (values.length != (rows() * columns())) {
-            throw new IllegalArgumentException("Number of elements does not match!");
-        }
-
-        int k = 0;
-        for (int i = 0; i < rows(); i++) {
-            for (int j = 0; j < columns(); j++) {
-                set(i, j, values[k++]);
-            }
-        }
-
-    }
-
-    /**
-     * Returns the number of columns in the matrix.
-     *
-     * @return Number of columns
-     */
-    public int columns() {
-        return cols;
-    }
-
-
-    /**
-     * Returns the number of rows in the matrix.
-     *
-     * @return Number of rows
-     */
-    public int rows() {
-        return rows;
-    }
-
-    public int size() {
-        return rows * cols;
-    }
-
-    /**
-     * Adds another matrix to this one, returning the result as another Matrix object.
-     *
-     * @param toAdd Matrix to add
-     *
-     * @return Result of addition
-     *
-     * @throws IllegalArgumentException If matrix dimensions do not match
-     */
-    public Matrix add(Matrix toAdd) {
-
-        if (columns() == toAdd.columns() && rows() == toAdd.rows()) {
-
-            Matrix added = new Matrix(rows(), columns());
-
-            forEach((i, j, v) -> added.set(i, j, v + toAdd.get(i, j)));
-
-            return added;
-
-        } else {
-
-            throw new IllegalArgumentException("Matrix dimensions must match!");
-
-        }
-
-    }
-
-    /**
-     * Subtracts another matrix from this one, returning the result as another Matrix object.
-     *
-     * @param toSub Matrix to subtract
-     *
-     * @return Result of subtraction
-     *
-     * @throws IllegalArgumentException If matrix dimensions do not match
-     */
-    public Matrix subtract(Matrix toSub) {
-
-        if (columns() == toSub.columns() && rows() == toSub.rows()) {
-
-            Matrix added = new Matrix(rows(), columns());
-
-            forEach((i, j, v) -> added.set(i, j, v - toSub.get(i, j)));
-
-            return added;
-
-        } else {
-
-            throw new IllegalArgumentException("Matrix dimensions must match!");
-
-        }
-
-    }
-
-    public Matrix add(Number scalar) {
-
-        Matrix result = new Matrix(rows(), columns());
-
-        forEach((i, j, v) -> result.set(i, j, v + scalar.doubleValue()));
-
-        return result;
-
-    }
-
-    public Matrix subtract(Number scalar) {
-
-        Matrix result = new Matrix(rows(), columns());
-
-        forEach((i, j, v) -> result.set(i, j, v - scalar.doubleValue()));
-
-        return result;
-
-    }
-
-    public double maxElement() {
-
-        AtomicReference<Double> max = new AtomicReference<>(Double.NEGATIVE_INFINITY);
-        forEach(v -> max.set(Math.max(v, max.get())));
-        return max.get();
-
-    }
-
-    public double minElement() {
-
-        AtomicReference<Double> min = new AtomicReference<>(Double.POSITIVE_INFINITY);
-        forEach(v -> min.set(Math.min(v, min.get())));
-        return min.get();
-
-    }
-
-    /**
-     * Multiplies this matrix with another, returning the result as another Matrix object.
-     *
-     * @param toMult Matrix to multiply with
-     *
-     * @return Result of multiplication
-     *
-     * @throws IllegalArgumentException If matrix inner dimensions do not match
-     */
-    public Matrix multiply(Matrix toMult) {
-
-        if (columns() != toMult.rows()) {
-            throw new IllegalArgumentException(String.format("Matrix inner dimensions must match! %dx%d X %dx%d", rows(), columns(), toMult.rows(), toMult.columns()));
-        }
-
-        Matrix result = new Matrix(rows(), toMult.columns());
-
-        result.forEach((i, j, v) -> {
-
-            double total = 0;
-
-            for (int k = 0; k < columns(); k++) {
-
-                total += get(i, k) * toMult.get(k, j);
-
-            }
-
-            result.set(i, j, total);
-
-        });
-
-        return result;
-
-    }
-
-    public Matrix multiply(Number scalar) {
-
-        final double scale  = scalar.doubleValue();
-        final Matrix result = new Matrix(rows(), columns());
-
-        forEach((i, j, v) -> result.set(i, j, v * scale));
-
-        return result;
-
-    }
-
-    public Matrix divide(Number scalar) {
-
-        final double scale  = scalar.doubleValue();
-        final Matrix result = new Matrix(rows(), columns());
-
-        forEach((i, j, v) -> result.set(i, j, v / scale));
-
-        return result;
-
-    }
-
-    public Matrix transpose() {
-
-        Matrix transposed = new Matrix(columns(), rows());
-
-        forEach((i, j, v) -> transposed.set(j, i, v));
-
-        return transposed;
-
-    }
-
-    public Matrix getRow(int i) {
-
-        checkElement(i, 0);
-
-        Matrix result = new Matrix(1, columns());
-
-        result.forEach((n, j, v) -> result.set(n, j, get(i, j)));
-
-        return result;
-
-    }
-
-    public double[] getRowArray(int i) {
-
-        double[] row = new double[columns()];
-
-        for (int j = 0; j < columns(); j++) {
-            row[j] = get(i, j);
+        for (double v : this) {
+            row.setEntry(1, i++, v);
         }
 
         return row;
 
     }
 
-    public Matrix getColumn(int j) {
+    public Matrix appendRows(Matrix rows) {
 
-        checkElement(0, j);
+        if (rows.getColumnDimension() != getColumnDimension()) {
+            throw new IllegalArgumentException("Number of columns does not match.");
+        }
 
-        Matrix result = new Matrix(rows(), 1);
+        Matrix result = new Matrix(getRowDimension() + rows.getRowDimension(), getColumnDimension());
 
-        result.forEach((i, n, v) -> result.set(i, j, get(i, j)));
+        int i = 0;
+
+        for (double[] row : getRows()) {
+            result.setRow(i++, row);
+        }
+
+        for (double[] row : rows.getRows()) {
+            result.setRow(i++, row);
+        }
 
         return result;
 
@@ -373,88 +424,32 @@ public class Matrix implements Iterable<Double> {
 
     public Matrix appendColumns(Matrix columns) {
 
-        Matrix result = new Matrix(rows(), columns() + columns.columns());
-
-        forEach(result::set);
-        columns.forEach((i, j, v) -> result.set(i, j + columns(), v));
-
-        return result;
-
-    }
-
-    public Matrix appendRows(Matrix rows) {
-
-        Matrix result = new Matrix(rows() + rows.rows(), columns());
-
-        forEach(result::set);
-        rows.forEach((i, j, v) -> result.set(i + rows(), j, v));
-
-        return result;
-
-    }
-
-    public boolean equals(Object compare) {
-
-        if (compare instanceof Matrix) {
-
-            Matrix mat = (Matrix) compare;
-
-            for (int i = 0; i < rows(); i++) {
-
-                for (int j = 0; j < columns(); j++) {
-
-                    if (get(i, j) != mat.get(i, j)) {
-
-                        return false;
-
-                    }
-
-                }
-
-            }
-
-            return true;
-
-        } else {
-
-            return false;
-
+        if (columns.getRowDimension() != getRowDimension()) {
+            throw new IllegalArgumentException("Number of rows does not match.");
         }
 
-    }
+        Matrix result = new Matrix(getRowDimension(), getColumnDimension() + columns.getColumnDimension());
 
-    public void forEach(ElementConsumer forEach) {
+        int i = 0;
 
-        for (int i = 0; i < rows(); i++) {
-
-            for (int j = 0; j < columns(); j++) {
-
-                forEach.accept(i, j, get(i, j));
-
-            }
-
+        for (double[] col : getColumns()) {
+            result.setColumn(i++, col);
         }
 
-    }
-
-    public Matrix operate(ElementOperator forEach) {
-
-        Matrix result = new Matrix(rows(), columns());
-
-        forEach((i, j, v) -> result.set(i, j, forEach.operate(i, j, v)));
+        for (double[] col : columns.getColumns()) {
+            result.setColumn(i++, col);
+        }
 
         return result;
 
     }
 
-    public Matrix operate(ElementValueOperator forEach) {
+    public QRDecomposition getQRDecomposition() {
+        return new QRDecomposition(this);
+    }
 
-        Matrix result = new Matrix(rows(), columns());
-
-        forEach((i, j, v) -> result.set(i, j, forEach.operate(v)));
-
-        return result;
-
+    public Function polyFitAgainst(Matrix x, int degree) {
+        return Maths.polyFit(x, this, degree);
     }
 
     @Override
@@ -462,54 +457,175 @@ public class Matrix implements Iterable<Double> {
 
         return new Iterator<Double>() {
 
+            private int columns = getColumnDimension();
+            private int size = getSize();
             private int i = 0;
-            private int j = 0;
-            private boolean more = rows() > 0 && columns() > 0;
 
             @Override
             public boolean hasNext() {
-                return more;
+                return i < size;
             }
 
             @Override
             public Double next() {
-
-                double value = get(i, j);
-
-                j++;
-
-                if (j >= columns()) {
-                    j = 0;
-                    i++;
-                }
-
-                if (i >= rows()) {
-                    more = false;
-                }
-
-                return value;
-
+                return getEntry(i / columns, i++ % columns);
             }
 
         };
 
     }
 
-    public interface ElementConsumer {
+    public void forEach(EntryConsumer consumer) {
 
-        void accept(int i, int j, double v);
+        for (int i = 0; i < getRowDimension(); i++) {
+
+            for (int j = 0; j < getColumnDimension(); j++) {
+
+                consumer.accept(i, j, getEntry(i, j));
+
+            }
+
+        }
 
     }
 
-    public interface ElementOperator {
+    public double[] to1DArray() {
 
-        double operate(int i, int j, double v);
+        double[] values = new double[getSize()];
+
+        int i = 0;
+        for (double v : this) {
+            values[i++] = v;
+        }
+
+        return values;
 
     }
 
-    public interface ElementValueOperator {
+    public double getMinElement() {
 
-        double operate(double v);
+        double min = Double.POSITIVE_INFINITY;
+
+        for (double v : this) {
+            min = Math.min(min, v);
+        }
+
+        return min;
+
+    }
+
+    public double getMaxElement() {
+
+        double max = Double.NEGATIVE_INFINITY;
+
+        for (double v : this) {
+            max = Math.max(max, v);
+        }
+
+        return max;
+
+    }
+
+    public double getMean() {
+
+        if (getSize() == 0) {
+            return 0;
+        }
+
+        double total = 0;
+
+        for (double v : this) {
+            total += v;
+        }
+
+        return total / getSize();
+
+    }
+
+    public interface EntryConsumer {
+
+        void accept(int row, int col, double value);
+
+    }
+
+    public interface EntryMapper {
+
+        double map(int row, int col, double value);
+
+    }
+
+    public Iterable<double[]> getRows() {
+
+        return () -> new Iterator<double[]>() {
+
+            private int i = 0;
+            private int rows = getRowDimension();
+
+            @Override
+            public boolean hasNext() {
+                return i < rows;
+            }
+
+            @Override
+            public double[] next() {
+                return getRow(i++);
+            }
+        };
+
+    }
+
+    public Iterable<double[]> getColumns() {
+
+        return () -> new Iterator<double[]>() {
+
+            private int i = 0;
+            private int cols = getColumnDimension();
+
+            @Override
+            public boolean hasNext() {
+                return i < cols;
+            }
+
+            @Override
+            public double[] next() {
+                return getColumn(i++);
+            }
+        };
+
+    }
+
+    public class QRDecomposition implements org.apache.commons.math.linear.QRDecomposition {
+
+        private final QRDecompositionImpl backing;
+
+        public QRDecomposition(Matrix matrix) {
+            this.backing = new QRDecompositionImpl(matrix);
+        }
+
+        @Override
+        public Matrix getR() {
+            return new Matrix(backing.getR());
+        }
+
+        @Override
+        public Matrix getQ() {
+            return new Matrix(backing.getQ());
+        }
+
+        @Override
+        public Matrix getQT() {
+            return new Matrix(backing.getQT());
+        }
+
+        @Override
+        public Matrix getH() {
+            return new Matrix(backing.getH());
+        }
+
+        @Override
+        public DecompositionSolver getSolver() {
+            return backing.getSolver();
+        }
 
     }
 
@@ -518,14 +634,16 @@ public class Matrix implements Iterable<Double> {
 
         public Rot2D(double theta) {
 
-            super(2, 2);
-
-            set(0, 0, Math.cos(theta));
-            set(0, 1, -Math.sin(theta));
-            set(1, 0, Math.sin(theta));
-            set(1, 1, Math.cos(theta));
+            super(
+                2, 2,
+                +Math.cos(theta), -Math.sin(theta),
+                +Math.sin(theta), +Math.cos(theta)
+            );
 
         }
+
     }
 
 }
+
+

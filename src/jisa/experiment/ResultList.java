@@ -100,6 +100,11 @@ public class ResultList extends ResultTable {
     }
 
     @Override
+    public void removeRow(int i) {
+        rows.remove(i);
+    }
+
+    @Override
     public void close() {
 
     }

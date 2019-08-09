@@ -1,10 +1,12 @@
 package jisa.maths;
 
+import jisa.Util;
 import jisa.experiment.Function;
 import jisa.experiment.PFunction;
 import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math.linear.QRDecomposition;
 import org.apache.commons.math.linear.QRDecompositionImpl;
+import org.apache.commons.math.linear.RealMatrix;
 import org.apache.commons.math.optimization.fitting.CurveFitter;
 import org.apache.commons.math.optimization.fitting.ParametricRealFunction;
 import org.apache.commons.math.optimization.general.GaussNewtonOptimizer;
@@ -17,15 +19,18 @@ public class Maths {
     /**
      * Fit a polynomial of given degree to the data provided as two column matrices x and y.
      *
-     * @param x      X-Data
-     * @param y      Y-Data
+     * @param xData  X-Data
+     * @param yData  Y-Data
      * @param degree Degree of polynomial to fit
      *
      * @return Polynomial function representing the fit
      */
-    public static Function polyFit(Matrix x, Matrix y, final int degree) {
+    public static Function polyFit(RealMatrix xData, RealMatrix yData, final int degree) {
 
-        if (x.size() != y.size()) {
+        Matrix x = Matrix.toMatrix(xData);
+        Matrix y = Matrix.toMatrix(yData);
+
+        if (x.getSize() != y.getSize()) {
             throw new IllegalArgumentException("Matrices much match in size!");
         }
 
@@ -34,45 +39,40 @@ public class Maths {
             x = x.asColumn();
             y = y.asColumn();
 
-            Matrix V = new Matrix(x.size(), degree + 1);
+            Matrix V = new Matrix(x.getSize(), degree + 1);
 
-            for (int i = 0; i < x.size(); i++) {
-                V.set(i, degree, 1);
+            for (int i = 0; i < x.getSize(); i++) {
+                V.setEntry(i, degree, 1);
             }
 
             for (int j = degree - 1; j >= 0; j--) {
 
                 Iterator<Double> ittr = x.iterator();
 
-                for (int i = 0; i < x.size(); i++) {
-                    V.set(i, j, ittr.next() * V.get(i, j + 1));
+                for (int i = 0; ittr.hasNext(); i++) {
+                    V.setEntry(i, j, ittr.next() * V.getEntry(i, j + 1));
                 }
 
             }
 
-            QRDecomposition decomp = new QRDecompositionImpl(V.toRealMatrix());
-            Matrix          Q      = new Matrix(decomp.getQ());
-            Matrix          R      = new Matrix(decomp.getR());
-            R = R.subMatrix(0, 0, R.columns(), R.columns());
-            Matrix denom = Q.transpose().multiply(y).subMatrix(0, 0, R.columns(), 1);
+            Matrix.QRDecomposition decomp = V.getQRDecomposition();
+            Matrix                 Q      = decomp.getQ();
+            Matrix                 R      = decomp.getR();
+            Matrix                 subR   = R.getSubMatrix(0, 0, R.getColumnDimension(), R.getColumnDimension());
+            Matrix                 denom  = Q.transpose().multiply(y).getSubMatrix(0, 0, subR.getColumnDimension(), 1);
+            Matrix                 p      = subR.solve(denom);
 
-            Matrix p = new Matrix(R.toRealMatrix().solve(denom.toRealMatrix()));
-
-            double[] c = new double[p.size()];
-
-            int i = c.length - 1;
-            for (double v : p) {
-                c[i] = v;
-                i--;
-            }
-
-            return new Function.PolyFunction(new PolynomialFunction(c));
+            return new Function.PolyFunction(new PolynomialFunction(Util.reverseArray(p.to1DArray())));
 
         } catch (Throwable e) {
             e.printStackTrace();
             return null;
         }
 
+    }
+
+    public static Function polyFit(double[] x, double[] y, int degree) {
+        return polyFit(new Matrix(x), new Matrix(y), 1);
     }
 
     public static Function fit(Matrix x, Matrix y, PFunction toFit, double[] initial) {
@@ -93,7 +93,10 @@ public class Maths {
                     double[] tmpParams = new double[doubles.length];
                     System.arraycopy(doubles, 0, tmpParams, 0, doubles.length);
                     tmpParams[i] *= 1.01;
-                    gradients[i] = (toFit.calculate(v, tmpParams) - toFit.calculate(v, doubles)) / (tmpParams[i] - doubles[i]);
+                    gradients[i] = (toFit.calculate(v, tmpParams) - toFit.calculate(
+                            v,
+                            doubles
+                    )) / (tmpParams[i] - doubles[i]);
 
                 }
 
@@ -138,7 +141,7 @@ public class Maths {
     public static double pearsonsCorrelation(Matrix x, Matrix y) {
 
         PearsonsCorrelation correlation = new PearsonsCorrelation();
-        return correlation.correlation(x.toArray(), y.toArray());
+        return correlation.correlation(x.to1DArray(), y.to1DArray());
 
     }
 

@@ -7,10 +7,7 @@ import jisa.maths.Matrix;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Predicate;
 
 public abstract class ResultTable implements Iterable<Result> {
@@ -138,18 +135,17 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public void addData(Matrix m) {
 
-        if (m.columns() != getNumCols()) {
+        if (m.getColumnDimension() != getNumCols()) {
             return;
         }
 
-        for (int i = 0; i < m.rows(); i++) {
-            addData(m.getRowArray(i));
+        for (double[] row : m.getRows()) {
+            addData(row);
         }
 
     }
 
     protected abstract void addRow(Result row);
-
 
     public void clear() {
 
@@ -173,6 +169,8 @@ public abstract class ResultTable implements Iterable<Result> {
     }
 
     public abstract Result getRow(int i);
+
+    public abstract void removeRow(int i);
 
     public Result getLastResult() {
         return getRow(getNumRows() - 1);
@@ -372,42 +370,29 @@ public abstract class ResultTable implements Iterable<Result> {
         output(",", System.out);
     }
 
-    public List<XYPoint> getXYPoints(int xData, int yData, Predicate<Result> filter) {
+    public List<XYPoint> getXYPoints(int xData, int yData) {
 
         List<XYPoint> points = new LinkedList<>();
 
         for (Result r : this) {
-            if (filter.test(r)) {
-                points.add(new XYPoint(r.get(xData), r.get(yData)));
-            }
+            points.add(new XYPoint(r.get(xData), r.get(yData)));
+
         }
 
         return points;
 
     }
 
-    public Function polyFit(int xData, int yData, Predicate<Result> filter, int degree) {
-        return Maths.polyFit(getColumns(filter, xData), getColumns(filter, yData), degree);
-    }
-
     public Function polyFit(int xData, int yData, int degree) {
-        return polyFit(xData, yData, (r) -> true, degree);
-    }
-
-    public Function fit(int xData, int yData, Predicate<Result> filter, PFunction toFit, double... initialGuess) {
-        return Maths.fit(getColumns(filter, xData), getColumns(filter, yData), toFit, initialGuess);
+        return getColumns(yData).polyFitAgainst(getColumns(xData), degree);
     }
 
     public Function fit(int xData, int yData, PFunction toFit, double... initialGuess) {
-        return fit(xData, yData, (r) -> true, toFit, initialGuess);
-    }
-
-    public Function asFunction(int xData, int yData, Predicate<Result> filter) {
-        return new DataFunction(getXYPoints(xData, yData, filter));
+        return Maths.fit(getColumns(xData), getColumns(yData), toFit, initialGuess);
     }
 
     public Function asFunction(int xData, int yData) {
-        return asFunction(xData, yData, (r) -> true);
+        return new DataFunction(getXYPoints(xData, yData));
     }
 
     public void finalise() {
@@ -434,15 +419,8 @@ public abstract class ResultTable implements Iterable<Result> {
         Matrix result = new Matrix(getNumRows(), getNumCols());
 
         for (int i = 0; i < getNumRows(); i++) {
-
             Result r = getRow(i);
-
-            for (int j = 0; j < getNumCols(); j++) {
-
-                result.set(i, j, r.get(j));
-
-            }
-
+            result.setRow(i, r.getData());
         }
 
         return result;
@@ -450,29 +428,21 @@ public abstract class ResultTable implements Iterable<Result> {
     }
 
     public Matrix getColumns(int... columns) {
-        return getColumns((r) -> true, columns);
-    }
-
-    public Matrix getColumns(Predicate<Result> filter, int... columns) {
 
         Matrix result = new Matrix(getNumRows(), columns.length);
 
         int i = 0;
         for (Result r : this) {
 
-            if (filter.test(r)) {
-
-                for (int j = 0; j < columns.length; j++) {
-                    result.set(i, j, r.get(columns[j]));
-                }
-
-                i++;
-
+            for (int j = 0; j < columns.length; j++) {
+                result.setEntry(i, j, r.get(columns[j]));
             }
+
+            i++;
 
         }
 
-        return result.subMatrix(0, 0, i, columns.length);
+        return result;
 
     }
 
@@ -485,12 +455,120 @@ public abstract class ResultTable implements Iterable<Result> {
             Result r = getRow(rows[i]);
 
             for (int j = 0; j < getNumCols(); j++) {
-                result.set(i, j, r.get(j));
+                result.setEntry(i, j, r.get(j));
             }
 
         }
 
         return result;
+
+    }
+
+    public ResultTable filtered(Predicate<Result> filter) {
+
+        return new ResultTable(columns.toArray(new Col[0])) {
+
+            @Override
+            public void updateColumns() {
+                ResultTable.this.updateColumns();
+            }
+
+            @Override
+            protected void addRow(Result row) {
+                ResultTable.this.addRow(row);
+            }
+
+            @Override
+            protected void clearData() {
+
+                for (int i = ResultTable.this.getNumRows() - 1; i >= 0; i--) {
+
+                    if (filter.test(ResultTable.this.getRow(i))) {
+                        ResultTable.this.removeRow(i);
+                    }
+
+                }
+
+            }
+
+            @Override
+            public int getNumRows() {
+
+                int count = 0;
+
+                for (Result row : this) {
+                    count++;
+                }
+
+                return count;
+
+            }
+
+            @Override
+            public Result getRow(int i) {
+                return ResultTable.this.getRow(getRealRowIndex(i));
+            }
+
+            private int getRealRowIndex(int i) {
+
+                int j = -1;
+
+                for (int r = 0; r < ResultTable.this.getNumRows(); r++) {
+
+                    if (filter.test(ResultTable.this.getRow(r))) {
+                        j++;
+                    }
+
+                    if (j == i) {
+                        return r;
+                    }
+
+                }
+
+                throw new IndexOutOfBoundsException("Index out of bounds.");
+
+            }
+
+            @Override
+            public void removeRow(int i) {
+                ResultTable.this.removeRow(getRealRowIndex(i));
+            }
+
+            @Override
+            public void close() {
+
+            }
+
+            @Override
+            public Iterator<Result> iterator() {
+
+                return new Iterator<Result>() {
+
+                    private int i = getRealRowIndex(0);
+                    private int j = 0;
+                    private boolean hasNext = true;
+
+                    @Override
+                    public boolean hasNext() {
+                        return hasNext;
+                    }
+
+                    @Override
+                    public Result next() {
+                        Result row = ResultTable.this.getRow(i);
+                        try {
+                            i = getRealRowIndex(++j);
+                        } catch (Exception e) {
+                            hasNext = false;
+                        }
+                        return row;
+                    }
+
+                };
+
+            }
+
+        };
 
     }
 
