@@ -414,7 +414,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
-    public Matrix asMatrix() {
+    public Matrix toMatrix() {
 
         Matrix result = new Matrix(getNumRows(), getNumCols());
 
