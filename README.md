@@ -104,7 +104,7 @@ public class Main {
 
 }
 ```
-**Kotlin - Simple, concise and fast - great for beginners**
+**Kotlin - Simple and concise like Python but faster (and slightly more traditional)**
 ```kotlin
 fun main() {
 
@@ -129,7 +129,7 @@ fun main() {
 
 }
 ```
-**Python (Jython) - Simple like Kotlin, but slooooow and less robust**
+**Python (Jython) - Familiar to all you modern, trendy peeps**
 ```python
 def main():
     
