@@ -75,7 +75,7 @@ grid.show()
 
 For example, here's the same program written in Java, Kotlin, Python and even gosh-darn MATLAB:
 
-**Java - Classic style, fast, robust but strict**
+**Java - Classic style, robust but verbose, like a northern grandparent.**
 ```java
 public class Main {
 
@@ -104,7 +104,7 @@ public class Main {
 
 }
 ```
-**Kotlin - Simple and concise like Python but faster (and slightly more traditional)**
+**Kotlin - Slick, simplified and concise without rocking the boat**
 ```kotlin
 fun main() {
 
@@ -129,7 +129,7 @@ fun main() {
 
 }
 ```
-**Python (Jython) - Familiar to all you modern, trendy peeps**
+**Python (Jython) - "Screw your traditions, I'm a snake from the future"**
 ```python
 def main():
     
