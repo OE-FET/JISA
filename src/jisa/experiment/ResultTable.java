@@ -7,8 +7,11 @@ import jisa.maths.Matrix;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class ResultTable implements Iterable<Result> {
 
@@ -471,6 +474,20 @@ public abstract class ResultTable implements Iterable<Result> {
             @Override
             public void updateColumns() {
                 ResultTable.this.updateColumns();
+            }
+
+            public void addOnUpdate(OnUpdate onUpdate) {
+
+                ResultTable.this.addOnUpdate(r -> {
+                    if (filter.test(r)) {
+                        onUpdate.run(r);
+                    }
+                });
+
+            }
+
+            public void addData(double... data) {
+                ResultTable.this.addData(data);
             }
 
             @Override

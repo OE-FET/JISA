@@ -25,7 +25,7 @@ public class ResultList extends ResultTable {
         super(names);
     }
 
-    public static ResultList loadCSVFile(String filePath) throws IOException {
+    public static ResultList loadFile(String filePath) throws IOException {
 
         BufferedReader reader  = new BufferedReader(new FileReader(filePath));
         String         header  = reader.readLine();
