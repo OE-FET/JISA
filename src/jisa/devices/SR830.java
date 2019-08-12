@@ -2,8 +2,7 @@ package jisa.devices;
 
 import jisa.addresses.Address;
 import jisa.control.Nameable;
-import jisa.enums.Coupling;
-import jisa.enums.Shield;
+import jisa.enums.*;
 import jisa.Util;
 import jisa.visa.VISADevice;
 
@@ -406,6 +405,51 @@ public class SR830 extends VISADevice implements DPLockIn {
 
     }
 
+    private void changeSource(Input input, Source source, Impedance mode) throws IOException {
+
+        switch (source) {
+
+            case VOLTAGE:
+
+                switch (input) {
+
+                    case A:
+                    case B:
+                        write(C_SET_SOURCE, SOURCE_VOLT_SINGLE);
+                        break;
+
+                    case DIFF:
+                        write(C_SET_SOURCE, SOURCE_VOLT_DIFF);
+                        break;
+
+                }
+
+                break;
+
+            case CURRENT:
+
+                switch (mode) {
+
+                    case HIGH:
+                        write(C_SET_SOURCE, SOURCE_CURR_HIGH_IMP);
+                        break;
+
+                    case LOW:
+                        write(C_SET_SOURCE, SOURCE_CURR_LOW_IMP);
+                        break;
+
+                }
+
+                break;
+
+        }
+
+    }
+
+    public void setInput(Input input) throws IOException {
+        changeSource(input, getSource(), getImpedanceMode());
+    }
+
     @Override
     public Input getInput() throws IOException {
 
@@ -414,16 +458,12 @@ public class SR830 extends VISADevice implements DPLockIn {
         switch (value) {
 
             case SOURCE_VOLT_SINGLE:
-                return Input.VOLTAGE_SINGLE;
+            case SOURCE_CURR_HIGH_IMP:
+            case SOURCE_CURR_LOW_IMP:
+                return Input.A;
 
             case SOURCE_VOLT_DIFF:
-                return Input.VOLTAGE_DIFFERENCE;
-
-            case SOURCE_CURR_LOW_IMP:
-                return Input.CURRENT_LOW_IMPEDANCE;
-
-            case SOURCE_CURR_HIGH_IMP:
-                return Input.CURRENT_HIGH_IMPEDANCE;
+                return Input.DIFF;
 
             default:
                 throw new IOException("Improper response from SR830. How rude!");
@@ -432,26 +472,51 @@ public class SR830 extends VISADevice implements DPLockIn {
 
     }
 
-    @Override
-    public void setInput(Input source) throws IOException {
+    public void setSource(Source source) throws IOException {
+        changeSource(getInput(), source, getImpedanceMode());
+    }
 
-        switch (source) {
+    public Source getSource() throws IOException {
 
-            case VOLTAGE_SINGLE:
-                write(C_SET_SOURCE, SOURCE_VOLT_SINGLE);
-                break;
+        int mode = queryInt(C_QUERY_SOURCE);
 
-            case VOLTAGE_DIFFERENCE:
-                write(C_SET_SOURCE, SOURCE_VOLT_DIFF);
-                break;
+        switch (mode) {
 
-            case CURRENT_LOW_IMPEDANCE:
-                write(C_SET_SOURCE, SOURCE_CURR_LOW_IMP);
-                break;
+            case SOURCE_VOLT_SINGLE:
+            case SOURCE_VOLT_DIFF:
+                return Source.VOLTAGE;
 
-            case CURRENT_HIGH_IMPEDANCE:
-                write(C_SET_SOURCE, SOURCE_CURR_HIGH_IMP);
-                break;
+            case SOURCE_CURR_HIGH_IMP:
+            case SOURCE_CURR_LOW_IMP:
+                return Source.CURRENT;
+
+            default:
+                throw new IOException("Improper response from SR830. How rude!");
+
+        }
+
+    }
+
+    public void setImpedanceMode(Impedance mode) throws IOException {
+        changeSource(getInput(), getSource(), mode);
+    }
+
+    public Impedance getImpedanceMode() throws IOException {
+
+        int mode = queryInt(C_QUERY_SOURCE);
+
+        switch (mode) {
+
+            case SOURCE_VOLT_SINGLE:
+            case SOURCE_VOLT_DIFF:
+            case SOURCE_CURR_HIGH_IMP:
+                return Impedance.HIGH;
+
+            case SOURCE_CURR_LOW_IMP:
+                return Impedance.LOW;
+
+            default:
+                throw new IOException("Improper response from SR830. How rude!");
 
         }
 
@@ -482,8 +547,8 @@ public class SR830 extends VISADevice implements DPLockIn {
         private String         name;
 
         RefMode(int code, LockIn.RefMode mode, String name) {
-            c = code;
-            refMode = mode;
+            c         = code;
+            refMode   = mode;
             this.name = name;
         }
 
@@ -557,7 +622,7 @@ public class SR830 extends VISADevice implements DPLockIn {
         private double current;
 
         Sensitivity(int code, double V, double I) {
-            c = code;
+            c    = code;
             volt = V;
         }
 
@@ -634,7 +699,7 @@ public class SR830 extends VISADevice implements DPLockIn {
         private double value;
 
         TimeConst(int code, double value) {
-            c = code;
+            c          = code;
             this.value = value;
         }
 
@@ -684,7 +749,7 @@ public class SR830 extends VISADevice implements DPLockIn {
 
         FilterRO(int mode, double value) {
             tag = mode;
-            db = value;
+            db  = value;
         }
 
         public static FilterRO fromDouble(double value) {

@@ -1,8 +1,7 @@
 package jisa.devices;
 
 import jisa.control.Synch;
-import jisa.enums.Coupling;
-import jisa.enums.Shield;
+import jisa.enums.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -245,6 +244,14 @@ public interface LockIn extends Instrument {
 
     Input getInput() throws IOException, DeviceException;
 
+    void setSource(Source source) throws IOException, DeviceException;
+
+    Source getSource() throws IOException, DeviceException;
+
+    void setImpedanceMode(Impedance mode) throws IOException, DeviceException;
+
+    Impedance getImpedanceMode() throws IOException, DeviceException;
+
     /**
      * Halts the current thread (ie pauses the program) until the lock-in has a stable lock
      * (ie the locked-on amplitude has not varied by more than 0.1% in 5 seconds).
@@ -254,13 +261,6 @@ public interface LockIn extends Instrument {
      */
     default void waitForStableLock() throws IOException, DeviceException, InterruptedException {
         waitForStableLock(0.1, 5000);
-    }
-
-    enum Input {
-        VOLTAGE_SINGLE,
-        VOLTAGE_DIFFERENCE,
-        CURRENT_LOW_IMPEDANCE,
-        CURRENT_HIGH_IMPEDANCE
     }
 
     /**
