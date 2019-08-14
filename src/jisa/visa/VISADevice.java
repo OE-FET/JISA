@@ -4,21 +4,23 @@ import jisa.addresses.Address;
 import jisa.devices.Instrument;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Generic instrument encapsulation via VISA
  */
 public class VISADevice implements Instrument {
 
-    private Connection connection;
-    private Address    address;
-    private String     terminator     = "";
-    private String     remTerminator  = null;
-    private String     lastCommand    = null;
-    private String     lastRead       = null;
-    private int        readBufferSize = 1024;
-    private int        retryCount     = 3;
-    private int        timeout        = 2000;
+    private Connection   connection;
+    private Address      address;
+    private String       terminator     = "";
+    private List<String> toRemove       = new LinkedList<>();
+    private String       lastCommand    = null;
+    private String       lastRead       = null;
+    private int          readBufferSize = 1024;
+    private int          retryCount     = 3;
+    private int          timeout        = 2000;
 
     public final static int    DEFAULT_TIMEOUT = 13;
     public final static int    DEFAULT_EOI     = 1;
@@ -48,7 +50,7 @@ public class VISADevice implements Instrument {
 
         try {
             this.connection = VISA.openInstrument(address, prefDriver);
-            this.address = address;
+            this.address    = address;
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
@@ -140,8 +142,29 @@ public class VISADevice implements Instrument {
 
     }
 
-    public void setRemoveTerminator(String terminator) {
-        remTerminator = terminator;
+    /**
+     * Sets which character we should expect to read from the device to indicate that it's done talking to us.
+     *
+     * @param character The character
+     *
+     * @throws IOException Upon communications error
+     */
+    public void setReadTerminationCharacter(String character) throws IOException {
+
+        try {
+            connection.setEOS(character);
+        } catch (VISAException e) {
+            throw new IOException(e.getMessage());
+        }
+
+    }
+
+    public void addAutoRemove(String terminator) {
+        toRemove.add(terminator);
+    }
+
+    public void setRemoveTerminator(String toRemove) {
+        addAutoRemove(toRemove);
     }
 
     /**
@@ -248,8 +271,8 @@ public class VISADevice implements Instrument {
 
                 lastRead = connection.read(readBufferSize);
 
-                if (remTerminator != null) {
-                    lastRead = lastRead.replace(remTerminator, "");
+                for (String remove : toRemove) {
+                    lastRead = lastRead.replace(remove, "");
                 }
 
                 break;
