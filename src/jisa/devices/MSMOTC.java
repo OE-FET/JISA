@@ -124,7 +124,7 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      */
     default void setIValue(double value) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
-            setPValue(onum, value);
+            setIValue(onum, value);
         }
     }
 
@@ -149,7 +149,7 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      */
     default void setDValue(double value) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
-            setPValue(onum, value);
+            setDValue(onum, value);
         }
     }
 
@@ -199,7 +199,7 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      * @throws DeviceException Upon compatibility error
      */
     default double getIValue() throws IOException, DeviceException {
-        return getPValue(0);
+        return getIValue(0);
     }
 
     /**
@@ -223,7 +223,7 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      * @throws DeviceException Upon compatibility error
      */
     default double getDValue() throws IOException, DeviceException {
-        return getPValue(0);
+        return getDValue(0);
     }
 
     /**
