@@ -13,6 +13,8 @@ import com.intelligt.modbus.jlibmodbus.serial.SerialPortException;
 import jssc.SerialPortList;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class ModbusRTUDevice implements Instrument {
@@ -20,7 +22,8 @@ public class ModbusRTUDevice implements Instrument {
     private final String port;
     private final int    unit;
 
-    private ModbusMaster master;
+    private static Map<String, ModbusMaster> masters = new HashMap<>();
+    private        ModbusMaster              master;
 
     public ModbusRTUDevice(Address address, SerialPort.BaudRate baud, int dataBits, int stopBits, SerialPort.Parity parity) throws IOException, DeviceException {
 
@@ -51,12 +54,19 @@ public class ModbusRTUDevice implements Instrument {
 
         SerialParameters parameters = new SerialParameters(found, baud, dataBits, stopBits, parity);
 
-        try {
-            master = ModbusMasterFactory.createModbusMasterRTU(parameters);
-            setTimeout(2000);
-            master.connect();
-        } catch (SerialPortException | ModbusIOException e) {
-            throw new IOException(e.getMessage());
+        if (!masters.containsKey(port.toLowerCase().trim()) || !masters.get(port.toLowerCase().trim()).isConnected()) {
+
+            try {
+                master = ModbusMasterFactory.createModbusMasterRTU(parameters);
+                setTimeout(2000);
+                master.connect();
+                masters.put(port.toLowerCase().trim(), master);
+            } catch (SerialPortException | ModbusIOException e) {
+                throw new IOException(e.getMessage());
+            }
+
+        } else {
+            master = masters.get(port.toLowerCase().trim());
         }
 
     }

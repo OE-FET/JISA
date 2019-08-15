@@ -418,7 +418,7 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
 
             if ((boolean) t) {
 
-                field.setText(currentParams.getString((int) i));
+                GUI.runNow(() -> field.setText(currentParams.getString((int) i)));
 
                 field.textProperty().addListener((observableValue, s, t1) -> {
                     currentParams.set((int) i, field.getText());
@@ -426,7 +426,7 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
 
             } else {
 
-                field.setText(String.valueOf(currentParams.getInt((int) i)));
+                GUI.runNow(() -> field.setText(String.valueOf(currentParams.getInt((int) i))));
 
                 field.textProperty().addListener((observableValue, s, t1) -> {
                     currentParams.set((int) i, ((IntegerField) field).getIntValue());
