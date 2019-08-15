@@ -7,6 +7,8 @@ import jisa.Util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Static class for accessing the native VISA library in a more Java-friendly way
@@ -96,39 +98,15 @@ public class VISA {
      */
     public static StrAddress[] getInstruments() throws VISAException {
 
-        HashMap<String, StrAddress> addresses = new HashMap<>();
+        Map<String, StrAddress> addresses = new LinkedHashMap<>();
 
         for (Driver driver : drivers) {
             for (StrAddress a : driver.search()) {
-                boolean found = false;
-                for (String s : addresses.keySet()) {
-                    if (s.trim().equals(a.toString().trim())) {
-                        found = true;
-                    }
-                }
-                if (!found) {
-                    addresses.put(a.toString(), a);
-                }
+                addresses.put(a.toString().toLowerCase().trim(), a);
             }
         }
 
-        StrAddress[] toReturn = new StrAddress[addresses.size()];
-        int          count    = 0;
-
-        for (Address.Type t : Address.Type.values()) {
-
-            for (StrAddress a : addresses.values()) {
-
-                if (a.getType().equals(t)) {
-                    toReturn[count] = a;
-                    count++;
-                }
-
-            }
-
-        }
-
-        return toReturn;
+        return addresses.values().toArray(new StrAddress[0]);
 
     }
 
