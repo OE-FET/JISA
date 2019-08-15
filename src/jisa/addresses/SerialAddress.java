@@ -2,19 +2,19 @@ package jisa.addresses;
 
 public class SerialAddress implements Address {
 
-    private int board;
+    private String port;
 
-    public SerialAddress(int board) {
-        this.board = board;
+    public SerialAddress(String port) {
+        this.port = port;
     }
 
-    public int getBoard() {
-        return board;
+    public String getPort() {
+        return port;
     }
 
     @Override
     public String toString() {
-        return String.format("ASRL%d::INSTR", board);
+        return String.format("ASRL::%s::INSTR", port);
     }
 
     public SerialAddress toSerialAddress() {
@@ -24,7 +24,7 @@ public class SerialAddress implements Address {
     public AddressParams createParams() {
 
         AddressParams params = new SerialParams();
-        params.set(0, board);
+        params.set(0, port);
 
         return params;
 
@@ -34,18 +34,18 @@ public class SerialAddress implements Address {
 
         public SerialParams() {
 
-            addParam("Port", false);
+            addParam("Port", true);
 
         }
 
         @Override
         public SerialAddress createAddress() {
-            return new SerialAddress(getInt(0));
+            return new SerialAddress(getString(0));
         }
 
         @Override
         public String getName() {
-            return "Serial (VISA)";
+            return "Serial";
         }
     }
 

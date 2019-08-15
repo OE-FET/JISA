@@ -17,8 +17,8 @@ import java.util.regex.Pattern;
 
 public class ModbusRTUDevice implements Instrument {
 
-    private final int port;
-    private final int unit;
+    private final String port;
+    private final int    unit;
 
     private ModbusMaster master;
 
@@ -33,13 +33,23 @@ public class ModbusRTUDevice implements Instrument {
         port = mba.getPort();
         unit = mba.getAddress();
 
-        String[] portNames = SerialPortList.getPortNames(Pattern.compile(String.valueOf(port)));
+        String[] portNames = SerialPortList.getPortNames();
+        String   found     = null;
 
-        if (portNames.length == 0) {
-            throw new IOException(String.format("Serial port %d does not exist.", port));
+        for (String name : portNames) {
+
+            if (name.trim().equals(port.trim())) {
+                found = name;
+                break;
+            }
+
         }
 
-        SerialParameters parameters = new SerialParameters(portNames[0], baud, dataBits, stopBits, parity);
+        if (found == null) {
+            throw new IOException(String.format("No native serial port \"%s\" was found.", port.trim()));
+        }
+
+        SerialParameters parameters = new SerialParameters(found, baud, dataBits, stopBits, parity);
 
         try {
             master = ModbusMasterFactory.createModbusMasterRTU(parameters);

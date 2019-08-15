@@ -311,7 +311,6 @@ public class SR830 extends VISADevice implements DPLockIn {
 
     }
 
-    @Override
     public void setOffsetExpansion(double offset, double expansion) throws IOException {
 
         int key = 0;

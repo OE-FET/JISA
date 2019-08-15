@@ -2,19 +2,19 @@ package jisa.addresses;
 
 public class ModbusAddress implements Address {
 
-    private final int port;
-    private final int address;
+    private final String port;
+    private final int    address;
 
-    public ModbusAddress(int port, int address) {
-        this.port = port;
+    public ModbusAddress(String port, int address) {
+        this.port    = port;
         this.address = address;
     }
 
     public String toString() {
-        return String.format("MODBUS::%d::%d::INSTR", port, address);
+        return String.format("MODBUS::%s::%d::INSTR", port, address);
     }
 
-    public int getPort() {
+    public String getPort() {
         return port;
     }
 
@@ -40,20 +40,21 @@ public class ModbusAddress implements Address {
 
         public ModbusParams() {
 
-            addParam("Port", false);
+            addParam("Port", true);
             addParam("Unit", false);
 
         }
 
         @Override
         public ModbusAddress createAddress() {
-            return new ModbusAddress(getInt(0), getInt(1));
+            return new ModbusAddress(getString(0), getInt(1));
         }
 
         @Override
         public String getName() {
             return "MODBUS";
         }
+
     }
 
 }

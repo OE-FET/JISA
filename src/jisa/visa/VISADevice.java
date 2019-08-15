@@ -1,5 +1,6 @@
 package jisa.visa;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.Instrument;
 
@@ -32,7 +33,10 @@ public class VISADevice implements Instrument {
     public final static String C_IDN           = "*IDN?";
 
     public VISADevice(Address address) throws IOException {
+
         this(address, null);
+        Util.addShutdownHook(this::close);
+
     }
 
     /**
@@ -159,8 +163,8 @@ public class VISADevice implements Instrument {
 
     }
 
-    public void addAutoRemove(String terminator) {
-        toRemove.add(terminator);
+    public void addAutoRemove(String phrase) {
+        toRemove.add(phrase);
     }
 
     public void setRemoveTerminator(String toRemove) {

@@ -1,6 +1,9 @@
 package jisa.visa;
 
+import com.sun.jna.Memory;
+import com.sun.jna.Pointer;
 import jisa.addresses.Address;
+import jisa.addresses.SerialAddress;
 import jisa.addresses.StrAddress;
 import jisa.Util;
 import com.sun.jna.Native;
@@ -10,6 +13,8 @@ import com.sun.jna.ptr.NativeLongByReference;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static jisa.visa.VISANativeInterface.*;
 
@@ -32,10 +37,10 @@ public class VISADriver implements Driver {
         try {
             if (OS_NAME.contains("win")) {
                 libName = "nivisa64";
-                lib = Native.loadLibrary(libName, VISANativeInterface.class);
+                lib     = Native.loadLibrary(libName, VISANativeInterface.class);
             } else if (OS_NAME.contains("linux") || OS_NAME.contains("mac")) {
                 libName = "visa";
-                lib = Native.loadLibrary(libName, VISANativeInterface.class);
+                lib     = Native.loadLibrary(libName, VISANativeInterface.class);
             } else {
                 throw new VISAException("Platform not yet supported!");
             }
@@ -98,16 +103,24 @@ public class VISADriver implements Driver {
 
         NativeLongByReference pViInstrument = new NativeLongByReference();
 
-        ByteBuffer pViString = stringToByteBuffer(address.toString());
+        SerialAddress sAddr = address.toSerialAddress();
+        ByteBuffer    pViString;
+
+        if (sAddr != null) {
+            pViString = stringToByteBuffer(toVISASerial(sAddr));
+        } else {
+            pViString = stringToByteBuffer(address.toString());
+        }
+
         if (pViString == null) {
             throw new VISAException("Error encoding address to ByteBuffer.");
         }
         NativeLong status = lib.viOpen(
-                visaResourceManagerHandle,
-                pViString,         // byte buffer for instrument string
-                new NativeLong(0), // access mode (locking or not). 0:Use Visa default
-                new NativeLong(0), // timeout, only when access mode equals locking
-                pViInstrument      // pointer to instrument object
+            visaResourceManagerHandle,
+            pViString,         // byte buffer for instrument string
+            new NativeLong(0), // access mode (locking or not). 0:Use Visa default
+            new NativeLong(0), // timeout, only when access mode equals locking
+            pViInstrument      // pointer to instrument object
         );
 
         if (status.longValue() == VI_SUCCESS) {
@@ -132,9 +145,68 @@ public class VISADriver implements Driver {
                     throw new VISAException("Open operation timed out.");
 
                 default:
-                    throw new VISAException("Error writing to instrument.");
+                    throw new VISAException("Error trying to open instrument connection.");
 
             }
+        }
+
+    }
+
+    private NativeLong openInstrument(String address) {
+
+
+        NativeLongByReference pViInstrument = new NativeLongByReference();
+        ByteBuffer            pViString     = stringToByteBuffer(address);
+
+        NativeLong status = lib.viOpen(
+            visaResourceManagerHandle,
+            pViString,         // byte buffer for instrument string
+            new NativeLong(0), // access mode (locking or not). 0:Use Visa default
+            new NativeLong(0), // timeout, only when access mode equals locking
+            pViInstrument      // pointer to instrument object
+        );
+
+        if (status.longValue() == VI_SUCCESS) {
+            return pViInstrument.getValue();
+        } else {
+            return null;
+        }
+
+    }
+
+    private String toVISASerial(SerialAddress address) throws VISAException {
+
+        String raw = address.toString();
+
+        Pattern windows = Pattern.compile("ASRL::COM([0-9]*)::INSTR");
+        Matcher matcher = windows.matcher(raw);
+
+        if (matcher.find()) {
+            return String.format("ASRL%s::INSTR", matcher.group(1));
+        } else {
+
+            Pattern asrl = Pattern.compile("ASRL([0-9]*?)::INSTR");
+
+            for (StrAddress found : search(false)) {
+
+                Matcher aMatch = asrl.matcher(found.toString());
+
+                if (aMatch.find()) {
+
+                    String         number = aMatch.group(1);
+                    VISAConnection con    = (VISAConnection) open(found);
+                    String         port   = con.getAttributeString(VI_ATTR_INTF_INST_NAME);
+                    con.close();
+                    if (port.trim().equals(address.getPort().trim())) {
+                        return found.toString();
+                    }
+
+                }
+
+            }
+
+            throw new VISAException("No resource found at \"%s\"", address.toString());
+
         }
 
     }
@@ -157,10 +229,10 @@ public class VISADriver implements Driver {
             NativeLongByReference returnCount = new NativeLongByReference();
 
             NativeLong status = lib.viWrite(
-                    handle,
-                    pBuffer,
-                    new NativeLong(writeLength),
-                    returnCount
+                handle,
+                pBuffer,
+                new NativeLong(writeLength),
+                returnCount
             );
 
             if (status.longValue() != VI_SUCCESS) {
@@ -199,10 +271,10 @@ public class VISADriver implements Driver {
             NativeLongByReference returnCount = new NativeLongByReference();
 
             NativeLong status = lib.viWrite(
-                    handle,
-                    pBuffer,
-                    new NativeLong(writeLength),
-                    returnCount
+                handle,
+                pBuffer,
+                new NativeLong(writeLength),
+                returnCount
             );
 
             if (status.longValue() != VI_SUCCESS) {
@@ -234,10 +306,10 @@ public class VISADriver implements Driver {
             NativeLongByReference returnCount = new NativeLongByReference();
 
             NativeLong status = lib.viRead(
-                    handle,
-                    response,
-                    new NativeLong(bufferSize),
-                    returnCount
+                handle,
+                response,
+                new NativeLong(bufferSize),
+                returnCount
             );
 
             if (status.longValue() != VI_SUCCESS) {
@@ -301,9 +373,9 @@ public class VISADriver implements Driver {
         public void setAttribute(long attribute, long value) throws VISAException {
 
             NativeLong status = lib.viSetAttribute(
-                    handle,
-                    new NativeLong(attribute),
-                    new NativeLong(value)
+                handle,
+                new NativeLong(attribute),
+                new NativeLong(value)
             );
 
             if (status.longValue() != VI_SUCCESS) {
@@ -312,10 +384,42 @@ public class VISADriver implements Driver {
 
         }
 
+        public long getAttributeLong(long attribute) throws VISAException {
+
+            NativeLongByReference pointer = new NativeLongByReference();
+
+            NativeLong status = lib.viGetAttribute(
+                handle,
+                new NativeLong(attribute),
+                pointer.getPointer()
+            );
+
+            return pointer.getValue().longValue();
+
+        }
+
+        public String getAttributeString(long attribute) throws VISAException {
+
+            Pointer pointer = new Memory(VI_FIND_BUFLEN);
+
+            NativeLong status = lib.viGetAttribute(
+                handle,
+                new NativeLong(attribute),
+                pointer
+            );
+
+            return pointer.getString(0);
+
+        }
+
     }
 
     @Override
     public StrAddress[] search() throws VISAException {
+        return search(true);
+    }
+
+    public StrAddress[] search(boolean changeSerial) throws VISAException {
 
         // VISA RegEx for "Anything" (should be .* but they seem to use their own standard)
         ByteBuffer            expr       = stringToByteBuffer("?*");
@@ -325,11 +429,11 @@ public class VISADriver implements Driver {
 
         // Perform the native call
         NativeLong status = lib.viFindRsrc(
-                visaResourceManagerHandle,
-                expr,
-                listHandle,
-                listCount,
-                desc
+            visaResourceManagerHandle,
+            expr,
+            listHandle,
+            listCount,
+            desc
         );
 
         if (status.longValue() == VI_ERROR_RSRC_NFOUND) {
@@ -354,7 +458,20 @@ public class VISADriver implements Driver {
             } catch (UnsupportedEncodingException e) {
                 throw new VISAException("Unable to encode address!");
             }
-            addresses.add(new StrAddress(address));
+
+            StrAddress strAddress = new StrAddress(address);
+
+            if (changeSerial && address.contains("ASRL")) {
+                try {
+                    VISAConnection c    = (VISAConnection) open(strAddress);
+                    String         port = c.getAttributeString(VI_ATTR_INTF_INST_NAME);
+                    c.close();
+                    strAddress = new StrAddress(String.format("ASRL::%s::INSTR", port));
+                } catch (Exception ignored) {
+                }
+            }
+
+            addresses.add(strAddress);
 
             desc = ByteBuffer.allocate(1024);
 

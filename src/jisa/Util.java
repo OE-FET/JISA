@@ -8,11 +8,14 @@ import jisa.visa.VISAException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Util {
 
-    public static  PrintStream errLog    = System.err;
-    private static ERunnable   exHandler = (e) -> {
+    public static  PrintStream     errLog     = System.err;
+    private static List<SRunnable> onShutdown = new LinkedList<>();
+    private static ERunnable       exHandler  = (e) -> {
 
         ExType exceptionType = ExType.fromClass(e.getClass());
 
@@ -42,6 +45,12 @@ public class Util {
 
     };
 
+    static {
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> onShutdown.forEach(Util::runRegardless)));
+
+    }
+
     /**
      * Sleep function that doesn't throw interrupted exceptions. Upon an interrupt it will simply stop sleeping.
      *
@@ -62,6 +71,10 @@ public class Util {
             e.printStackTrace();
         }
 
+    }
+
+    public static void addShutdownHook(SRunnable toRun) {
+        onShutdown.add(toRun);
     }
 
     /**
@@ -252,8 +265,8 @@ public class Util {
         }
 
         return Math.floor(value.doubleValue() / Math.pow(
-                10,
-                Math.floor(Math.log10(Math.abs(value.doubleValue())))
+            10,
+            Math.floor(Math.log10(Math.abs(value.doubleValue())))
         )) * Math.pow(10, Math.floor(Math.log10(Math.abs(value.doubleValue()))));
     }
 
@@ -271,8 +284,8 @@ public class Util {
         }
 
         return Math.ceil(value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))))) * Math.pow(
-                10,
-                Math.floor(Math.log10(Math.abs(value)))
+            10,
+            Math.floor(Math.log10(Math.abs(value)))
         );
     }
 

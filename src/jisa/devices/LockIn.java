@@ -192,30 +192,183 @@ public interface LockIn extends Instrument {
      */
     void setCoupling(Coupling mode) throws IOException, DeviceException;
 
+    /**
+     * Returns the currently used shielding mode for input connections.
+     *
+     * @return Shield.FLOAT or Shield.GROUND
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     Shield getShielding() throws IOException, DeviceException;
 
+    /**
+     * Sets the shielding mode to use for input connections.
+     *
+     * @param mode Shield.FLOAT or Shield.GROUND
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     void setShielding(Shield mode) throws IOException, DeviceException;
 
+    /**
+     * Sets which input the lock-in should use.
+     *
+     * @param source Input: A, B or DIFF (A - B)
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    void setInput(Input source) throws IOException, DeviceException;
+
+    /**
+     * Returns which input is currently being used by the lock-in.
+     *
+     * @return Input: A, B or DIFF (A - B)
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    Input getInput() throws IOException, DeviceException;
+
+    /**
+     * Sets which source quantity to be using for measurement (voltage or current).
+     *
+     * @param source Source.VOLTAGE or Source.CURRENT
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    void setSource(Source source) throws IOException, DeviceException;
+
+    /**
+     * Returns which quantity is being used for measurement (voltage or current).
+     *
+     * @return Source.VOLTAGE or Source.CURRENT
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    Source getSource() throws IOException, DeviceException;
+
+    /**
+     * Sets whether to use HIGH or LOW impedance mode for input signals.
+     *
+     * @param mode Impedance.HIGH or Impedance.LOW
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    void setImpedanceMode(Impedance mode) throws IOException, DeviceException;
+
+    /**
+     * Returns whether HIGH or LOW impedance mode is currently in use.
+     *
+     * @return Impedance.HIGH or Impedance.LOW
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    Impedance getImpedanceMode() throws IOException, DeviceException;
+
+    /**
+     * Returns a list of all harmonics of the powerline frequency being filtered by the lock-in.
+     *
+     * @return List of harmonics (list of integers)
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     List<Integer> getLineFilterHarmonics() throws IOException, DeviceException;
 
+    /**
+     * Attempts to set the lock-in to filter all the specified harmonics of the powerline frequency. Any unavailable
+     * harmonics will be ignored.
+     *
+     * @param harmonics Harmonics to filter, as integers (ie 1, 4, 5 for 1st 4th and 5th)
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     void setLineFilterHarmonics(int... harmonics) throws IOException, DeviceException;
 
-    void setOffsetExpansion(double offset, double expand) throws IOException, DeviceException;
-
+    /**
+     * Returns the offset currently being used by the lock-in.
+     *
+     * @return Offset as % of measurement range
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     double getOffset() throws IOException, DeviceException;
 
+    /**
+     * Sets the offset for input measurements.
+     *
+     * @param offset Offset as % of measurement range
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     void setOffset(double offset) throws IOException, DeviceException;
 
+    /**
+     * Returns the signal expansion factor being used
+     *
+     * @return Expansion factor
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     double getExpansion() throws IOException, DeviceException;
 
+    /**
+     * Sets the signal expansion factor to use. Will choose closest discrete option if not continuous.
+     *
+     * @param expand Expansion factor
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     void setExpansion(double expand) throws IOException, DeviceException;
 
+    /**
+     * Instruct the lock-in to automatically determine the offset to use.
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     void autoOffset() throws IOException, DeviceException;
 
+    /**
+     * Instruct the lock-in to automatically determine the measurement range to use for the currently measured input.
+     * Does not return until completed.
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     void autoRange() throws IOException, DeviceException;
 
+    /**
+     * Returns the triggering mode used for external referencing (SINE, POS_TTL, NEG_TTL).
+     *
+     * @return Triggering mode
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     TrigMode getExternalTriggerMode() throws IOException, DeviceException;
 
+
+    /**
+     * Sets the triggering mode used for external referencing (SINE, POS_TTL, NEG_TTL).
+     *
+     * @param mode Triggering mode
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
     void setExternalTriggerMode(TrigMode mode) throws IOException, DeviceException;
 
     /**
@@ -232,25 +385,13 @@ public interface LockIn extends Instrument {
     default void waitForStableLock(double pctMargin, long duration) throws IOException, DeviceException, InterruptedException {
 
         Synch.waitForParamStable(
-                this::getLockedAmplitude,
-                pctMargin,
-                100,
-                duration
+            this::getLockedAmplitude,
+            pctMargin,
+            100,
+            duration
         );
 
     }
-
-    void setInput(Input source) throws IOException, DeviceException;
-
-    Input getInput() throws IOException, DeviceException;
-
-    void setSource(Source source) throws IOException, DeviceException;
-
-    Source getSource() throws IOException, DeviceException;
-
-    void setImpedanceMode(Impedance mode) throws IOException, DeviceException;
-
-    Impedance getImpedanceMode() throws IOException, DeviceException;
 
     /**
      * Halts the current thread (ie pauses the program) until the lock-in has a stable lock
@@ -271,6 +412,9 @@ public interface LockIn extends Instrument {
         EXTERNAL
     }
 
+    /**
+     * Enumeration of reference triggering modes
+     */
     enum TrigMode {
         SINE,
         POS_TTL,

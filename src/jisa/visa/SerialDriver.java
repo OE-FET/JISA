@@ -1,7 +1,7 @@
 package jisa.visa;
 
 import jisa.addresses.Address;
-import jisa.addresses.COMAddress;
+import jisa.addresses.SerialAddress;
 import jisa.addresses.StrAddress;
 import jisa.Util;
 import jssc.SerialPort;
@@ -26,17 +26,15 @@ public class SerialDriver implements Driver {
     @Override
     public Connection open(Address address) throws VISAException {
 
-        COMAddress addr = (new StrAddress(address.toString())).toCOMAddress();
+        SerialAddress addr = (new StrAddress(address.toString())).toSerialAddress();
 
         if (addr == null) {
             throw new VISAException("Can only open native serial connections with the native serial driver!");
         }
 
-        String device = addr.getDevice();
-
+        String   device    = addr.getPort();
         String[] portNames = SerialPortList.getPortNames();
-
-        String found = null;
+        String   found     = null;
 
         for (String name : portNames) {
 
@@ -48,7 +46,7 @@ public class SerialDriver implements Driver {
         }
 
         if (found == null) {
-            throw new VISAException("No native serial port \"%s\" was found.", device.trim());
+            throw new VISAException("No serial port \"%s\" was found.", device.trim());
         }
 
         SerialPort port   = new SerialPort(found);
@@ -251,6 +249,7 @@ public class SerialDriver implements Driver {
             }
 
         }
+
     }
 
     @Override
@@ -261,10 +260,11 @@ public class SerialDriver implements Driver {
         ArrayList<StrAddress> addresses = new ArrayList<>();
 
         for (String device : names) {
-            addresses.add(new COMAddress(device).toStrAddress());
+            addresses.add(new SerialAddress(device).toStrAddress());
         }
 
         return addresses.toArray(new StrAddress[0]);
 
     }
+
 }

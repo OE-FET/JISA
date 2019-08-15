@@ -60,11 +60,11 @@ public interface Address {
 
     default SerialAddress toSerialAddress() {
 
-        Pattern pattern = Pattern.compile("ASRL([0-9]+)::INSTR");
+        Pattern pattern = Pattern.compile("ASRL::(.*?)::INSTR");
         Matcher matcher = pattern.matcher(toString().trim());
 
         if (matcher.matches()) {
-            int board = Integer.valueOf(matcher.group(1));
+            String board = matcher.group(1);
             return new SerialAddress(board);
         } else {
             return null;
@@ -126,12 +126,12 @@ public interface Address {
 
     default ModbusAddress toModbusAddress() {
 
-        Pattern pattern = Pattern.compile("MODBUS::([0-9]*?)::([0-9]*?)::INSTR");
+        Pattern pattern = Pattern.compile("MODBUS::(.*?)::([0-9]*?)::INSTR");
         Matcher matcher = pattern.matcher(toString().trim());
 
         if (matcher.matches()) {
-            int port    = Integer.valueOf(matcher.group(1));
-            int address = Integer.valueOf(matcher.group(2));
+            String port    = matcher.group(1);
+            int    address = Integer.valueOf(matcher.group(2));
             return new ModbusAddress(port, address);
         } else {
             return null;
@@ -147,20 +147,6 @@ public interface Address {
         if (matcher.matches()) {
             String sn = matcher.group(1);
             return new IDAddress(sn);
-        } else {
-            return null;
-        }
-
-    }
-
-    default COMAddress toCOMAddress() {
-
-        Pattern pattern = Pattern.compile("SERIAL::(.*?)::INSTR");
-        Matcher matcher = pattern.matcher(toString().trim());
-
-        if (matcher.matches()) {
-            String device = matcher.group(1);
-            return new COMAddress(device);
         } else {
             return null;
         }
@@ -191,9 +177,6 @@ public interface Address {
 
             case ID:
                 return toIDAddress().createParams();
-
-            case COM:
-                return toCOMAddress().createParams();
 
             default:
             case UNKOWN:

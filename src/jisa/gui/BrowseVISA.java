@@ -229,24 +229,12 @@ public class BrowseVISA {
 
                 case SERIAL:
 
-                    prot = "Serial (VISA)";
+                    prot = "Serial";
                     SerialAddress s = address.toSerialAddress();
                     if (s == null) {
-                        s = new SerialAddress(0);
+                        s = new SerialAddress("NULL");
                     }
-                    uri = String.format("COM %d", s.getBoard());
-                    image.setImage(new Image(getClass().getResource("images/serial.png").toString()));
-                    break;
-
-                case COM:
-
-                    prot = "Serial (Native)";
-                    COMAddress ca = address.toCOMAddress();
-                    if (ca == null) {
-                        ca = new COMAddress("null");
-                    }
-
-                    uri = ca.getDevice();
+                    uri = s.getPort();
                     image.setImage(new Image(getClass().getResource("images/serial.png").toString()));
                     break;
 
