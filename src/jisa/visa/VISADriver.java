@@ -9,6 +9,7 @@ import jisa.Util;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.NativeLongByReference;
+import org.python.apache.xerces.impl.xpath.regex.Match;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -37,10 +38,10 @@ public class VISADriver implements Driver {
         try {
             if (OS_NAME.contains("win")) {
                 libName = "nivisa64";
-                lib     = Native.loadLibrary(libName, VISANativeInterface.class);
+                lib = Native.loadLibrary(libName, VISANativeInterface.class);
             } else if (OS_NAME.contains("linux") || OS_NAME.contains("mac")) {
                 libName = "visa";
-                lib     = Native.loadLibrary(libName, VISANativeInterface.class);
+                lib = Native.loadLibrary(libName, VISANativeInterface.class);
             } else {
                 throw new VISAException("Platform not yet supported!");
             }
@@ -116,11 +117,11 @@ public class VISADriver implements Driver {
             throw new VISAException("Error encoding address to ByteBuffer.");
         }
         NativeLong status = lib.viOpen(
-            visaResourceManagerHandle,
-            pViString,         // byte buffer for instrument string
-            new NativeLong(0), // access mode (locking or not). 0:Use Visa default
-            new NativeLong(0), // timeout, only when access mode equals locking
-            pViInstrument      // pointer to instrument object
+                visaResourceManagerHandle,
+                pViString,         // byte buffer for instrument string
+                new NativeLong(0), // access mode (locking or not). 0:Use Visa default
+                new NativeLong(0), // timeout, only when access mode equals locking
+                pViInstrument      // pointer to instrument object
         );
 
         if (status.longValue() == VI_SUCCESS) {
@@ -159,11 +160,11 @@ public class VISADriver implements Driver {
         ByteBuffer            pViString     = stringToByteBuffer(address);
 
         NativeLong status = lib.viOpen(
-            visaResourceManagerHandle,
-            pViString,         // byte buffer for instrument string
-            new NativeLong(0), // access mode (locking or not). 0:Use Visa default
-            new NativeLong(0), // timeout, only when access mode equals locking
-            pViInstrument      // pointer to instrument object
+                visaResourceManagerHandle,
+                pViString,         // byte buffer for instrument string
+                new NativeLong(0), // access mode (locking or not). 0:Use Visa default
+                new NativeLong(0), // timeout, only when access mode equals locking
+                pViInstrument      // pointer to instrument object
         );
 
         if (status.longValue() == VI_SUCCESS) {
@@ -185,7 +186,8 @@ public class VISADriver implements Driver {
             return String.format("ASRL%s::INSTR", matcher.group(1));
         } else {
 
-            Pattern asrl = Pattern.compile("ASRL([0-9]*?)::INSTR");
+            Pattern asrl  = Pattern.compile("ASRL([0-9]*?)::INSTR");
+            Pattern dfind = Pattern.compile("(COM([0-9]*))|(/dev/tty((S)|(USB))([0-9]*))");
 
             for (StrAddress found : search(false)) {
 
@@ -193,12 +195,15 @@ public class VISADriver implements Driver {
 
                 if (aMatch.find()) {
 
-                    String         number = aMatch.group(1);
-                    VISAConnection con    = (VISAConnection) open(found);
-                    String         port   = con.getAttributeString(VI_ATTR_INTF_INST_NAME);
-                    con.close();
-                    if (port.trim().equals(address.getPort().trim())) {
-                        return found.toString();
+                    String         number      = aMatch.group(1);
+                    VISAConnection con         = (VISAConnection) open(found);
+                    String         desc        = con.getAttributeString(VI_ATTR_INTF_INST_NAME);
+                    Matcher        portMatcher = dfind.matcher(desc);
+                    if (portMatcher.find()) {
+                        String port = portMatcher.group(0);
+                        if (port.trim().equals(address.getPort().trim())) {
+                            return found.toString();
+                        }
                     }
 
                 }
@@ -229,10 +234,10 @@ public class VISADriver implements Driver {
             NativeLongByReference returnCount = new NativeLongByReference();
 
             NativeLong status = lib.viWrite(
-                handle,
-                pBuffer,
-                new NativeLong(writeLength),
-                returnCount
+                    handle,
+                    pBuffer,
+                    new NativeLong(writeLength),
+                    returnCount
             );
 
             if (status.longValue() != VI_SUCCESS) {
@@ -271,10 +276,10 @@ public class VISADriver implements Driver {
             NativeLongByReference returnCount = new NativeLongByReference();
 
             NativeLong status = lib.viWrite(
-                handle,
-                pBuffer,
-                new NativeLong(writeLength),
-                returnCount
+                    handle,
+                    pBuffer,
+                    new NativeLong(writeLength),
+                    returnCount
             );
 
             if (status.longValue() != VI_SUCCESS) {
@@ -306,10 +311,10 @@ public class VISADriver implements Driver {
             NativeLongByReference returnCount = new NativeLongByReference();
 
             NativeLong status = lib.viRead(
-                handle,
-                response,
-                new NativeLong(bufferSize),
-                returnCount
+                    handle,
+                    response,
+                    new NativeLong(bufferSize),
+                    returnCount
             );
 
             if (status.longValue() != VI_SUCCESS) {
@@ -373,9 +378,9 @@ public class VISADriver implements Driver {
         public void setAttribute(long attribute, long value) throws VISAException {
 
             NativeLong status = lib.viSetAttribute(
-                handle,
-                new NativeLong(attribute),
-                new NativeLong(value)
+                    handle,
+                    new NativeLong(attribute),
+                    new NativeLong(value)
             );
 
             if (status.longValue() != VI_SUCCESS) {
@@ -389,9 +394,9 @@ public class VISADriver implements Driver {
             NativeLongByReference pointer = new NativeLongByReference();
 
             NativeLong status = lib.viGetAttribute(
-                handle,
-                new NativeLong(attribute),
-                pointer.getPointer()
+                    handle,
+                    new NativeLong(attribute),
+                    pointer.getPointer()
             );
 
             return pointer.getValue().longValue();
@@ -403,9 +408,9 @@ public class VISADriver implements Driver {
             Pointer pointer = new Memory(VI_FIND_BUFLEN);
 
             NativeLong status = lib.viGetAttribute(
-                handle,
-                new NativeLong(attribute),
-                pointer
+                    handle,
+                    new NativeLong(attribute),
+                    pointer
             );
 
             return pointer.getString(0);
@@ -429,11 +434,11 @@ public class VISADriver implements Driver {
 
         // Perform the native call
         NativeLong status = lib.viFindRsrc(
-            visaResourceManagerHandle,
-            expr,
-            listHandle,
-            listCount,
-            desc
+                visaResourceManagerHandle,
+                expr,
+                listHandle,
+                listCount,
+                desc
         );
 
         if (status.longValue() == VI_ERROR_RSRC_NFOUND) {
@@ -450,7 +455,7 @@ public class VISADriver implements Driver {
         ArrayList<StrAddress> addresses = new ArrayList<>();
         NativeLong            handle    = listHandle.getValue();
         String                address;
-
+        Pattern               dfind     = Pattern.compile("(COM([0-9]*))|(/dev/tty((S)|(USB))([0-9]*))");
         do {
 
             try {
@@ -462,11 +467,19 @@ public class VISADriver implements Driver {
             StrAddress strAddress = new StrAddress(address);
 
             if (changeSerial && address.contains("ASRL")) {
+
                 try {
+
                     VISAConnection c    = (VISAConnection) open(strAddress);
-                    String         port = c.getAttributeString(VI_ATTR_INTF_INST_NAME);
+                    String         intf = c.getAttributeString(VI_ATTR_INTF_INST_NAME);
                     c.close();
-                    strAddress = new StrAddress(String.format("ASRL::%s::INSTR", port));
+                    Matcher matcher = dfind.matcher(intf);
+
+                    if (matcher.find()) {
+                        String port = matcher.group(0);
+                        strAddress = new StrAddress(String.format("ASRL::%s::INSTR", port.trim()));
+                    }
+
                 } catch (Exception ignored) {
                 }
             }

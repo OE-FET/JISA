@@ -67,8 +67,7 @@ public class Util {
 
         try {
             toRun.run();
-        } catch (Throwable e) {
-            e.printStackTrace();
+        } catch (Throwable ignored) {
         }
 
     }
