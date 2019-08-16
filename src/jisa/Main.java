@@ -3,9 +3,8 @@ package jisa;
 import javafx.application.Platform;
 import jisa.addresses.Address;
 import jisa.addresses.StrAddress;
-import jisa.gui.DeviceShell;
-import jisa.gui.GUI;
-import jisa.gui.MarkDown;
+import jisa.enums.Icon;
+import jisa.gui.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -19,19 +18,40 @@ public class Main {
 
     public static void main(String[] args) {
 
+        Grid grid1 = new Grid("Test 1");
+        Grid grid2 = new Grid("Test 2");
+        Grid grid3 = new Grid("Test 3");
+        Grid grid4 = new Grid("Test 4");
+        Tabs tabs = new Tabs("Window");
+
+        tabs.setIcon(Icon.FLASK);
+        grid1.setIcon(Icon.CONNECTION);
+        grid2.setIcon(Icon.DEVICE);
+        grid3.setIcon(Icon.VOLTMETER);
+        grid4.setIcon(Icon.PLOT);
+
+        tabs.add(grid1);
+        tabs.add(grid2);
+        tabs.add(grid3);
+        tabs.add(grid4);
+
+        tabs.show();
+
         try {
+
+            System.in.read();
 
             while (true) {
 
                 // Ask the user if they want to perform a test
                 int result = GUI.choiceWindow(
-                        "JISA",
-                        "JISA Library - William Wood - 2018-2019",
-                        "What would you like to do?",
-                        "Scan for Instruments",
-                        "Enter Address Manually",
-                        "Help",
-                        "Exit"
+                    "JISA",
+                    "JISA Library - William Wood - 2018-2019",
+                    "What would you like to do?",
+                    "Scan for Instruments",
+                    "Enter Address Manually",
+                    "Help",
+                    "Exit"
                 );
 
                 switch (result) {
@@ -51,10 +71,10 @@ public class Main {
 
                     case CHOICE_ADDR:
                         String[] values = GUI.inputWindow(
-                                "JISA",
-                                "Input Address",
-                                "Please type the VISA address to connect to...",
-                                "Address"
+                            "JISA",
+                            "Input Address",
+                            "Please type the VISA address to connect to...",
+                            "Address"
                         );
 
                         if (values == null) {
@@ -79,12 +99,12 @@ public class Main {
                         md.addLine("* `\"Scan for Instruments\"` to see what instruments JISA can detect");
                         md.addLine("");
                         md.addLine(
-                                "* `\"Enter Address Manually\"` if you want to connect to an instrument with a known address");
+                            "* `\"Enter Address Manually\"` if you want to connect to an instrument with a known address");
                         md.addLine("");
                         md.addLine("* `\"Exit\"` to exit this utility");
                         md.addLine("");
                         md.addLine(
-                                "For more information regarding how to include and use this library in your project, take a look at the `JISA` wiki at:");
+                            "For more information regarding how to include and use this library in your project, take a look at the `JISA` wiki at:");
                         md.addLine("");
                         md.addLine("https://github.com/OE-FET/JISA/wiki");
                         md.addLine("");

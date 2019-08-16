@@ -1,5 +1,6 @@
 package jisa.gui;
 
+import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 
 public interface Element {
@@ -16,5 +17,7 @@ public interface Element {
     default boolean isVisible() {
         return getPane().isVisible();
     }
+
+    Image getIcon();
 
 }

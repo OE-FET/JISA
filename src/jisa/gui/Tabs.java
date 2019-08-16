@@ -1,15 +1,21 @@
 package jisa.gui;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import jisa.Util;
+import jisa.enums.Icon;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +28,7 @@ public class Tabs extends JFXWindow implements Element, Container {
     private ArrayList<HBox>     tabs      = new ArrayList<>();
     private ArrayList<Element>  added     = new ArrayList<>();
     private ArrayList<Runnable> switchers = new ArrayList<>();
+    private ArrayList<Runnable> reseters  = new ArrayList<>();
 
     /**
      * Creates an element that displays other GUI elements in their own individual tabs.
@@ -40,36 +47,92 @@ public class Tabs extends JFXWindow implements Element, Container {
     /**
      * Adds an element as a tab.
      *
-     * @param element Element to add
+     * @param element   Element to add
      */
     public void add(Element element) {
 
-        HBox tab = new HBox();
+        HBox  tab  = new HBox();
+        Image icon = element.getIcon();
+
         tab.setPadding(new Insets(15, 15, 15, 15));
+        tab.setSpacing(15);
+        tab.setAlignment(Pos.CENTER_LEFT);
 
         Label name = new Label(element.getTitle());
         name.setTextFill(Color.WHITE);
 
+        ImageView imageView = new ImageView();
+        imageView.maxWidth(25.0);
+        imageView.maxHeight(25.0);
+        imageView.setFitHeight(25.0);
+        imageView.setFitWidth(25.0);
+
+        final Image finalInverted;
+        if (icon != null) {
+            imageView.setImage(icon);
+            imageView.setSmooth(true);
+            imageView.setPreserveRatio(true);
+            finalInverted = Util.invertImage(icon);
+            tab.getChildren().add(imageView);
+        } else {
+            finalInverted = null;
+        }
+
         tab.getChildren().add(name);
+
+        final Image finalIcon = icon;
+
+        Runnable onReset = () -> {
+
+            tab.setStyle("-fx-background-color: transparent;");
+            tab.setEffect(null);
+            name.setStyle("-fx-text-fill: white;");
+
+            if (finalIcon != null) {
+                imageView.setImage(finalIcon);
+            }
+
+        };
 
         Runnable onClick = () -> {
 
-            for (HBox other : tabs) {
-                other.setStyle("-fx-background-color: transparent;");
-                other.getChildren().get(0).setStyle("-fx-text-fill: white;");
+            for (Runnable other : reseters) {
+                other.run();
             }
 
             tab.setStyle("-fx-background-color: white;");
             name.setStyle("-fx-text-fill: #4c4c4c;");
 
             scrollPane.setContent(element.getPane());
+
+            if (finalIcon != null) {
+                imageView.setImage(finalInverted);
+            }
+
         };
 
         tab.setOnMouseClicked((ae) -> onClick.run());
 
+        tab.setOnMouseEntered((ae) -> {
+
+            if (!tab.getStyle().equals("-fx-background-color: white;")) {
+                tab.setStyle("-fx-background-color: rgba(255,255,255, 0.3);");
+            }
+
+        });
+
+        tab.setOnMouseExited((ae) -> {
+
+            if (!tab.getStyle().equals("-fx-background-color: white;")) {
+                tab.setStyle("-fx-background-color: transparent;");
+            }
+
+        });
+
         sidebar.getChildren().add(tab);
         tabs.add(tab);
         switchers.add(onClick);
+        reseters.add(onReset);
 
         if (tabs.size() == 1) {
             onClick.run();
@@ -128,4 +191,5 @@ public class Tabs extends JFXWindow implements Element, Container {
     public String getTitle() {
         return title;
     }
+
 }

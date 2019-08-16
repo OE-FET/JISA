@@ -1,10 +1,13 @@
 package jisa.gui;
 
+import javafx.scene.image.Image;
+import jisa.Util;
 import jisa.control.SRunnable;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import jisa.enums.Icon;
 
 import java.io.IOException;
 import java.net.URL;
@@ -12,6 +15,7 @@ import java.net.URL;
 public class JFXWindow implements Element {
 
     protected Stage stage;
+    protected Image icon = null;
 
     /**
      * Creates a GUI window using the specified FXML file.
@@ -44,7 +48,11 @@ public class JFXWindow implements Element {
 
     }
 
-    protected JFXWindow(String title, URL resource) {
+    public JFXWindow(String title, URL resource) {
+        this(title, null, resource);
+    }
+
+    protected JFXWindow(String title, Icon icon, URL resource) {
 
         // Make sure the GUI thread has started
         GUI.touch();
@@ -72,6 +80,7 @@ public class JFXWindow implements Element {
             stage.setTitle(title);
 
         });
+
     }
 
     /**
@@ -123,7 +132,8 @@ public class JFXWindow implements Element {
             });
 
         } else {
-            stage.setOnCloseRequest(a -> {});
+            stage.setOnCloseRequest(a -> {
+            });
         }
 
     }
@@ -140,6 +150,36 @@ public class JFXWindow implements Element {
 
         });
 
+    }
+
+    public void setIcon(Icon icon) {
+
+        GUI.runNow(() -> {
+            if (icon != null) {
+                Util.runRegardless(() -> this.icon = new Image(icon.getImage().openStream()));
+                stage.getIcons().add(this.icon);
+            } else {
+                stage.getIcons().clear();
+            }
+        });
+
+    }
+
+    public void setIcon(URL icon) {
+
+
+        GUI.runNow(() -> {
+            if (icon != null) {
+                Util.runRegardless(() -> this.icon = new Image(icon.openStream()));
+                stage.getIcons().add(this.icon);
+            } else {
+                stage.getIcons().clear();
+            }
+        });
+    }
+
+    public Image getIcon() {
+        return icon;
     }
 
 }

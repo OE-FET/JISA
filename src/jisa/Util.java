@@ -1,5 +1,9 @@
 package jisa;
 
+import javafx.scene.image.Image;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.PixelWriter;
+import javafx.scene.image.WritableImage;
 import jisa.control.ERunnable;
 import jisa.control.SRunnable;
 import jisa.devices.DeviceException;
@@ -74,6 +78,28 @@ public class Util {
 
     public static void addShutdownHook(SRunnable toRun) {
         onShutdown.add(toRun);
+    }
+
+    public static Image invertImage(Image toInvert) {
+
+        int           width    = (int) toInvert.getWidth();
+        int           height   = (int) toInvert.getHeight();
+        WritableImage inverted = new WritableImage(width, height);
+        PixelReader   reader   = toInvert.getPixelReader();
+        PixelWriter   writer   = inverted.getPixelWriter();
+
+        for (int x = 0; x < width; x++) {
+
+            for (int y = 0; y < height; y++) {
+
+                writer.setColor(x, y, reader.getColor(x, y).invert());
+
+            }
+
+        }
+
+        return inverted;
+
     }
 
     /**
