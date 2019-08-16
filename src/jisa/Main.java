@@ -18,28 +18,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Grid grid1 = new Grid("Test 1");
-        Grid grid2 = new Grid("Test 2");
-        Grid grid3 = new Grid("Test 3");
-        Grid grid4 = new Grid("Test 4");
-        Tabs tabs = new Tabs("Window");
-
-        tabs.setIcon(Icon.FLASK);
-        grid1.setIcon(Icon.CONNECTION);
-        grid2.setIcon(Icon.DEVICE);
-        grid3.setIcon(Icon.VOLTMETER);
-        grid4.setIcon(Icon.PLOT);
-
-        tabs.add(grid1);
-        tabs.add(grid2);
-        tabs.add(grid3);
-        tabs.add(grid4);
-
-        tabs.show();
-
         try {
-
-            System.in.read();
 
             while (true) {
 

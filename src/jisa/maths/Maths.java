@@ -58,8 +58,8 @@ public class Maths {
             Matrix.QRDecomposition decomp = V.getQRDecomposition();
             Matrix                 Q      = decomp.getQ();
             Matrix                 R      = decomp.getR();
-            Matrix                 subR   = R.getSubMatrix(0, 0, R.getColumnDimension(), R.getColumnDimension());
-            Matrix                 denom  = Q.transpose().multiply(y).getSubMatrix(0, 0, subR.getColumnDimension(), 1);
+            Matrix                 subR   = R.getSubMatrix(0, R.getColumnDimension() - 1, 0, R.getColumnDimension() - 1);
+            Matrix                 denom  = Q.transpose().multiply(y).getSubMatrix(0, subR.getColumnDimension() - 1, 0, 0);
             Matrix                 p      = subR.solve(denom);
 
             return new Function.PolyFunction(new PolynomialFunction(Util.reverseArray(p.to1DArray())));

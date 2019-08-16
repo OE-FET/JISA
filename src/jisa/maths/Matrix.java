@@ -140,8 +140,8 @@ public class Matrix implements RealMatrix, Iterable<Double> {
     }
 
     @Override
-    public Matrix getSubMatrix(int startRow, int startCol, int nRows, int nCols) throws MatrixIndexException {
-        return new Matrix(backingMatrix.getSubMatrix(startRow, startCol, nRows, nCols));
+    public Matrix getSubMatrix(int startRow, int stopRow, int startCol, int stopCol) throws MatrixIndexException {
+        return new Matrix(backingMatrix.getSubMatrix(startRow, stopRow, startCol, stopCol));
     }
 
     @Override
@@ -635,9 +635,9 @@ public class Matrix implements RealMatrix, Iterable<Double> {
         public Rot2D(double theta) {
 
             super(
-                2, 2,
-                +Math.cos(theta), -Math.sin(theta),
-                +Math.sin(theta), +Math.cos(theta)
+                    2, 2,
+                    +Math.cos(theta), -Math.sin(theta),
+                    +Math.sin(theta), +Math.cos(theta)
             );
 
         }
