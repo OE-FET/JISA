@@ -380,7 +380,7 @@ public class Matrix implements RealMatrix, Iterable<Double> {
 
         int i = 0;
         for (double v : this) {
-            column.setEntry(i++, 1, v);
+            column.setEntry(i++, 0, v);
         }
 
         return column;
@@ -393,7 +393,7 @@ public class Matrix implements RealMatrix, Iterable<Double> {
 
         int i = 0;
         for (double v : this) {
-            row.setEntry(1, i++, v);
+            row.setEntry(0, i++, v);
         }
 
         return row;
