@@ -16,7 +16,10 @@ public enum Icon {
     SNOWFLAKE("images/frost.png"),
     LIGHTBULB("images/light.png"),
     WIFI("images/wifi.png"),
-    CONNECTION("images/connection.png");
+    CONNECTION("images/connection.png"),
+    MAGNET("images/magnet.png"),
+    WAVE("images/wave.png"),
+    COGS("images/cogs.png");
 
     private String path;
 
