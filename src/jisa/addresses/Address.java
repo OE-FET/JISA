@@ -201,13 +201,14 @@ public interface Address {
 
     abstract class AddressParams<I extends Address> {
 
-        private List<String>         names  = new LinkedList<>();
-        private List<Boolean>        texts  = new LinkedList<>();
-        private Map<Integer, Object> values = new HashMap<>();
+        private List<String>  names  = new LinkedList<>();
+        private List<Boolean> texts  = new LinkedList<>();
+        private List<String>  values = new LinkedList<>();
 
         protected void addParam(String name, boolean text) {
             names.add(name);
             texts.add(text);
+            values.add("");
         }
 
         public void forEach(TriConsumer<Integer, String, Boolean> forEach) {
@@ -222,16 +223,22 @@ public interface Address {
 
         public abstract String getName();
 
-        public void set(int i, Object val) {
-            values.put(i, val);
+        public synchronized void set(int i, String val) {
+            values.set(i, val);
         }
 
-        public String getString(int i) {
-            return (String) values.getOrDefault(i, "");
+        public synchronized void set(int i, int val) { set(i, String.valueOf(val)); }
+
+        public synchronized String getString(int i) {
+            return values.get(i);
         }
 
-        public int getInt(int i) {
-            return (int) values.getOrDefault(i, 0);
+        public synchronized int getInt(int i) {
+            try {
+                return Integer.parseInt(values.get(i));
+            } catch (Exception e) {
+                return 0;
+            }
         }
 
     }

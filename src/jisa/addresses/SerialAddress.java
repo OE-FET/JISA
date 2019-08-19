@@ -25,7 +25,6 @@ public class SerialAddress implements Address {
 
         AddressParams params = new SerialParams();
         params.set(0, port);
-
         return params;
 
     }

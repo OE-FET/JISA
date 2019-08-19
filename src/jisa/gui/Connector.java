@@ -43,8 +43,8 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
     private ConfigStore                 config            = null;
     private String                      key;
     private List<Runnable>              onApply           = new LinkedList<>();
-    private AddressParams               currentParams     = null;
-    
+    private AddressParams<?>            currentParams     = null;
+
     public static class SMU extends Connector<jisa.devices.SMU> {
 
         public SMU(String title, String key, ConfigStore config) {
@@ -188,7 +188,7 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
         }
 
     }
-    
+
     public static class TMeter extends Connector<jisa.devices.TMeter> {
 
         public TMeter(String title, String key, ConfigStore config) {
@@ -210,7 +210,7 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
         updateProtocols();
         makeRed();
         chooseProtocol();
-        config = c;
+        config   = c;
         this.key = key;
 
         if (config != null) {
@@ -241,7 +241,9 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
 
         for (Class driver : list) {
 
-            if (Modifier.isAbstract(driver.getModifiers()) || Modifier.isInterface(driver.getModifiers()) || driver.getSimpleName().trim().equals("") || driver.equals(SMUCluster.class) || driver.getSimpleName().toLowerCase().contains("virtual") || driver.getSimpleName().toLowerCase().contains("dummy")) {
+            if (Modifier.isAbstract(driver.getModifiers()) || Modifier.isInterface(driver.getModifiers()) || driver.getSimpleName().trim().equals(
+                "") || driver.equals(SMUCluster.class) || driver.getSimpleName().toLowerCase().contains("virtual") || driver.getSimpleName().toLowerCase().contains(
+                "dummy")) {
                 continue;
             }
 
@@ -336,7 +338,12 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
             instrument = null;
 
             if (message) {
-                GUI.errorAlert("Connection Error", "Connection Error", e.getCause() == null ? e.getMessage() : e.getCause().getMessage(), 600);
+                GUI.errorAlert(
+                    "Connection Error",
+                    "Connection Error",
+                    e.getCause() == null ? e.getMessage() : e.getCause().getMessage(),
+                    600
+                );
                 e.printStackTrace();
             } else {
                 Util.errLog.println(e.getCause() == null ? e.getMessage() : e.getCause().getMessage());
@@ -360,7 +367,8 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
         GUI.runNow(() -> {
             titled.applyCss();
             titled.layout();
-            titled.lookup(".title").setStyle("-fx-background-color: brown; -fx-background-radius: 5px 5px 0 0; -fx-text-fill: white;");
+            titled.lookup(".title").setStyle(
+                "-fx-background-color: brown; -fx-background-radius: 5px 5px 0 0; -fx-text-fill: white;");
             titled.setTextFill(Color.WHITE);
             titled.setText(realTitle);
         });
@@ -370,7 +378,8 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
         GUI.runNow(() -> {
             titled.applyCss();
             titled.layout();
-            titled.lookup(".title").setStyle("-fx-background-color: #D9A200; -fx-background-radius: 5px 5px 0 0; -fx-text-fill: white;");
+            titled.lookup(".title").setStyle(
+                "-fx-background-color: #D9A200; -fx-background-radius: 5px 5px 0 0; -fx-text-fill: white;");
             titled.setTextFill(Color.WHITE);
             titled.setText(realTitle + " (Connecting...)");
         });
@@ -394,9 +403,10 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
 
         GUI.runNow(() -> {
 
-            currentParams = address.createParams();
-            int index = possibleAddresses.indexOf(currentParams.getClass());
+            AddressParams<?> newParams = address.createParams();
+            int              index     = possibleAddresses.indexOf(newParams.getClass());
             protChoice.getSelectionModel().select(index);
+            currentParams = newParams;
             createAddressParams();
 
         });
@@ -408,29 +418,28 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
 
         currentParams.forEach((i, n, t) -> {
 
-            int row = (int) i / 2;
-            int col = (int) i % 2;
+            int row = i / 2;
+            int col = i % 2;
 
-            Label name = new Label((String) n);
+            Label name = new Label(n);
             name.setMinWidth(Region.USE_PREF_SIZE);
             name.setAlignment(Pos.CENTER_RIGHT);
-            TextField field = (boolean) t ? new TextField() : new IntegerField();
+            TextField field = t ? new TextField() : new IntegerField();
 
-            if ((boolean) t) {
+            if (t) {
 
-                GUI.runNow(() -> field.setText(currentParams.getString((int) i)));
+                GUI.runNow(() -> field.setText(currentParams.getString(i)));
 
-                field.textProperty().addListener((observableValue, s, t1) -> {
-                    currentParams.set((int) i, field.getText());
-                });
+                field.textProperty().addListener((o, s, t1) -> currentParams.set(i, field.getText()));
 
             } else {
 
-                GUI.runNow(() -> field.setText(String.valueOf(currentParams.getInt((int) i))));
+                GUI.runNow(() -> field.setText(String.valueOf(currentParams.getInt(i))));
 
-                field.textProperty().addListener((observableValue, s, t1) -> {
-                    currentParams.set((int) i, ((IntegerField) field).getIntValue());
-                });
+                field.textProperty().addListener((o, s, t1) -> currentParams.set(
+                    i,
+                    ((IntegerField) field).getIntValue()
+                ));
 
             }
 
@@ -476,7 +485,7 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
     }
 
     public void set(T value) {
-        address = value.getAddress();
+        address    = value.getAddress();
         instrument = value;
 
         for (Class d : possibleDrivers) {

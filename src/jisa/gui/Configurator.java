@@ -26,6 +26,8 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
         makeFields();
 
+        connect();
+
         for (Connector<I> config : this.instruments) {
             config.setOnConnect(this::connect);
         }
