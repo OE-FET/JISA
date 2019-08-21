@@ -18,20 +18,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        Plot plot = new Plot("Title");
-        plot.show();
-        plot.showSlider(true);
-        Series data = plot.createSeries();
-
-        for (double x : Util.makeLinearArray(0, 100, 101)) {
-
-            data.addPoint(x, Math.pow(x, 2));
-
-        }
-
         try {
-
-            System.in.read();
 
             while (true) {
 

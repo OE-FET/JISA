@@ -38,7 +38,7 @@ public class Result {
             }
         }
 
-        return String.join(delim, chunks);
+        return String.join(delim, chunks).concat("\n");
 
     }
 
