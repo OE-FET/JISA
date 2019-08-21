@@ -34,7 +34,7 @@ public class Result {
             if ((data[i] == Math.floor(data[i])) && !Double.isInfinite(data[i])) {
                 chunks[i] = String.format("%d", (int) data[i]);
             } else {
-                chunks[i] = String.format("%e", data[i]);
+                chunks[i] = String.format("%s", data[i]);
             }
         }
 
