@@ -348,6 +348,7 @@ public final class SmartAxis extends ValueAxis<Double> {
 
                 double distance = Double.POSITIVE_INFINITY;
 
+                int counter = 0;
                 for (double v = lowerBound; v <= upperBound; v += tickUnit) {
 
                     if ((Math.abs(upperBound - lowerBound) / tickUnit) > 2.0 * numTicks) {
@@ -368,6 +369,11 @@ public final class SmartAxis extends ValueAxis<Double> {
 
                     if (Math.abs(v - minInRange) < Math.abs(distance)) {
                         distance = v - minInRange;
+                    }
+
+                    if (++counter > 1.5 * numTicks) {
+                        System.err.println("Had to break out of tick loop!");
+                        break;
                     }
 
                 }

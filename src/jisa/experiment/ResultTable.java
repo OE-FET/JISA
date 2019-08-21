@@ -467,6 +467,22 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
+    public ResultTable filteredCopy(Predicate<Result> filter) {
+
+        ResultTable newCopy = new ResultList(columns.toArray(new Col[0]));
+
+        for (Result row : this) {
+
+            if (filter.test(row)) {
+                newCopy.addRow(row);
+            }
+
+        }
+
+        return newCopy;
+
+    }
+
     public ResultTable filtered(Predicate<Result> filter) {
 
         return new ResultTable(columns.toArray(new Col[0])) {
