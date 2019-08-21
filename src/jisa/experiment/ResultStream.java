@@ -259,7 +259,7 @@ public class ResultStream extends ResultTable {
             double[] dVals  = new double[values.length];
 
             for (int j = 0; j < values.length; j++) {
-                dVals[j] = Double.valueOf(values[j]);
+                dVals[j] = Double.parseDouble(values[j]);
             }
 
             return new Result(dVals);

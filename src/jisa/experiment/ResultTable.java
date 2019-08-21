@@ -432,7 +432,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public Matrix getColumns(int... columns) {
 
-        Matrix result = new Matrix(getNumRows(), columns.length);
+        Matrix result = new Matrix(Math.max(1,getNumRows()), Math.max(1,columns.length));
 
         int i = 0;
         for (Result r : this) {

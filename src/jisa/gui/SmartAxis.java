@@ -1,10 +1,11 @@
 package jisa.gui;
 
+import javafx.geometry.Side;
+import javafx.scene.chart.*;
 import jisa.Util;
 import javafx.beans.property.*;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
-import javafx.scene.chart.ValueAxis;
 import javafx.util.StringConverter;
 
 import java.text.DecimalFormat;
@@ -14,23 +15,30 @@ import java.util.List;
 
 public final class SmartAxis extends ValueAxis<Double> {
 
-    private final StringProperty   currentFormatterProperty = new SimpleStringProperty(this, "currentFormatter", "");
-    private final DefaultFormatter defaultFormatter         = new DefaultFormatter(this);
-    private final LogFormatter     logFormatter             = new LogFormatter();
-    private       Object           currentAnimationID;
-    private       int              numTicks                 = 11;
-    private       String           label                    = "";
-    private       String           labelSuffix              = "";
-    private       double           minValue                 = 1.0;
-    private       double           minNonZero               = Double.POSITIVE_INFINITY;
-    private       double           maxValue                 = 1.0;
-    private       double           maxNonZero               = Double.NEGATIVE_INFINITY;
-    private       double           minValueInRange          = 0.0;
-    private       Mode             mode                     = Mode.LINEAR;
-    private       double           range                    = Double.POSITIVE_INFINITY;
-    private       List<Double>     data                     = new LinkedList<>();
-    private       boolean          empty                    = true;
-    private       List<Double>     majorTicks               = new LinkedList<>();
+    private       LineChart<Double, Double> chart;
+    private       boolean                   isXAxis;
+    private final StringProperty            currentFormatterProperty = new SimpleStringProperty(
+        this,
+        "currentFormatter",
+        ""
+    );
+    private final DefaultFormatter          defaultFormatter         = new DefaultFormatter(this);
+    private final LogFormatter              logFormatter             = new LogFormatter();
+    private       Object                    currentAnimationID;
+    private       int                       numTicks                 = 11;
+    private       String                    label                    = "";
+    private       String                    labelSuffix              = "";
+    private       double                    minValue                 = 1.0;
+    private       double                    minNonZero               = Double.POSITIVE_INFINITY;
+    private       double                    maxValue                 = 1.0;
+    private       double                    maxNonZero               = Double.NEGATIVE_INFINITY;
+    private       double                    minValueInRange          = 0.0;
+    private       Mode                      mode                     = Mode.LINEAR;
+    private       double                    range                    = Double.POSITIVE_INFINITY;
+    private       List<Double>              data                     = new LinkedList<>();
+    private       boolean                   empty                    = true;
+    private       List<Double>              majorTicks               = new LinkedList<>();
+
 
     private BooleanProperty forceZeroInRange = new BooleanPropertyBase(true) {
         @Override
@@ -60,6 +68,11 @@ public final class SmartAxis extends ValueAxis<Double> {
 
         super();
         setMode(Mode.LINEAR);
+    }
+
+    public void setChart(LineChart<Double, Double> chart) {
+        this.chart   = chart;
+        this.isXAxis = chart.getXAxis() == this;
     }
 
     public Mode getMode() {
@@ -217,11 +230,11 @@ public final class SmartAxis extends ValueAxis<Double> {
     protected Object getRange() {
 
         return new Object[]{
-                getLowerBound(),
-                getUpperBound(),
-                getTickUnit(),
-                getScale(),
-                currentFormatterProperty.get()
+            getLowerBound(),
+            getUpperBound(),
+            getTickUnit(),
+            getScale(),
+            currentFormatterProperty.get()
         };
     }
 
@@ -269,38 +282,14 @@ public final class SmartAxis extends ValueAxis<Double> {
 
             minValue = min;
             maxValue = max;
-            if (Math.max(Math.abs(min), Math.abs(max)) > 0) {
-                mag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(min), Math.abs(max)))) / 3) * 3;
-            }
-
-            empty = false;
+            empty    = false;
 
         } else {
 
             minValue = 0;
             maxValue = 100;
-            mag      = 0;
 
             empty = true;
-
-        }
-
-
-        defaultFormatter.magnitude = Math.pow(10, mag);
-
-        switch (mode) {
-
-            case LINEAR:
-                if (mag != 0) {
-                    setLabelSuffix(String.format(" (E%+d)", mag));
-                } else {
-                    setLabelSuffix("");
-                }
-                break;
-
-            case LOGARITHMIC:
-                setLabelSuffix("");
-                break;
 
         }
 
@@ -451,9 +440,9 @@ public final class SmartAxis extends ValueAxis<Double> {
                 }
 
                 double[] endTicks = Util.makeLinearArray(
-                        majorTicks.get(majorTicks.size() - 1),
-                        majorTicks.get(majorTicks.size() - 1) + tickUnit,
-                        6
+                    majorTicks.get(majorTicks.size() - 1),
+                    majorTicks.get(majorTicks.size() - 1) + tickUnit,
+                    6
                 );
 
                 for (int i = 1; i < endTicks.length - 1; i++) {
@@ -503,18 +492,91 @@ public final class SmartAxis extends ValueAxis<Double> {
     }
 
     public void setMaxRange(double range) {
-
         this.range = range;
+
+        List<Double> data = new LinkedList<>();
+
+        for (XYChart.Series<Double, Double> series : chart.getData()) {
+
+            for (XYChart.Data<Double, Double> point : series.getData()) {
+                data.add(isXAxis ? point.getXValue() : point.getYValue());
+            }
+
+        }
+
+        invalidateRange(data);
+
+    }
+
+    public boolean isValueToBeShown(Double value) {
+
+        if (isAutoRanging()) {
+            return (maxValue - value) <= range;
+        } else {
+            return Util.isBetween(value, getLowerBound(), getUpperBound());
+        }
+
     }
 
     @Override
     protected Object autoRange(double minValue, double maxValue, double length, double labelSize) {
+
+        double minNonZero = Double.POSITIVE_INFINITY;
+        double maxNonZero = Double.NEGATIVE_INFINITY;
+        double min        = Double.POSITIVE_INFINITY;
+        double max        = Double.NEGATIVE_INFINITY;
+
+        SmartAxis otherAxis = isXAxis ? (SmartAxis) chart.getYAxis() : (SmartAxis) chart.getXAxis();
+
+        for (XYChart.Series<Double, Double> data : chart.getData()) {
+
+            for (XYChart.Data<Double, Double> point : data.getData()) {
+
+                double value = isXAxis ? point.getXValue() : point.getYValue();
+                double other = isXAxis ? point.getYValue() : point.getXValue();
+
+                if (!otherAxis.isValueToBeShown(other)) {
+                    continue;
+                }
+
+                double absolute = Math.abs(value);
+
+                min = Math.min(min, value);
+                max = Math.max(max, value);
+
+                if (absolute > 0) {
+                    minNonZero = Math.min(minNonZero, absolute);
+                    maxNonZero = Math.max(maxNonZero, absolute);
+                }
+
+            }
+
+        }
+
+        if (max == Double.NEGATIVE_INFINITY) {
+            max = 0;
+            empty = true;
+        }
+
+        if (min == Double.POSITIVE_INFINITY) {
+            min = 0;
+            empty = true;
+        }
+
+        int mag = 0;
+        if (Math.max(Math.abs(min), Math.abs(max)) > 0) {
+            mag = (int) Math.floor(Math.floor(Math.log10(Math.max(Math.abs(min), Math.abs(max)))) / 3) * 3;
+        }
+
+        defaultFormatter.magnitude = Math.pow(10, mag);
 
         if (isAutoRanging()) {
 
             switch (mode) {
 
                 case LOGARITHMIC:
+
+                    setLabelSuffix("");
 
                     if (empty) {
                         minValue = 1;
@@ -533,33 +595,41 @@ public final class SmartAxis extends ValueAxis<Double> {
                     }
 
                     return new Object[]{
-                            Math.pow(10, minExp - (0.05 * expRange)),
-                            Math.pow(10, maxExp + (0.05 * expRange)),
-                            getTickUnit(),
-                            getScale(),
-                            currentFormatterProperty.get()
+                        Math.pow(10, minExp - (0.05 * expRange)),
+                        Math.pow(10, maxExp + (0.05 * expRange)),
+                        getTickUnit(),
+                        getScale(),
+                        currentFormatterProperty.get()
                     };
 
 
                 default:
                 case LINEAR:
 
-                    if (empty || (minValue == 0 && maxValue == 0)) {
-                        minValue = -100;
-                        maxValue = 100;
+                    if (mag != 0) {
+                        setLabelSuffix(String.format(" (E%+d)", mag));
+                    } else {
+                        setLabelSuffix("");
                     }
 
-                    double range = maxValue - minValue;
-                    if (range == 0) {
-                        range = maxValue;
+                    if (empty || (min == 0 && max == 0)) {
+                        min = -100;
+                        max = 100;
                     }
+
+                    double range = max - min;
+                    if (range == 0) {
+                        range = max;
+                    }
+
+                    range = Math.min(range, this.range);
 
                     return new Object[]{
-                            Math.max(maxValue - this.range, minValue - 0.5 * (range / numTicks)),
-                            maxValue + 0.5 * (range / numTicks),
-                            getTickUnit(),
-                            getScale(),
-                            currentFormatterProperty.get()
+                        Math.max(max - this.range, min - 0.5 * (range / numTicks)),
+                        max + 0.5 * (range / numTicks),
+                        getTickUnit(),
+                        getScale(),
+                        currentFormatterProperty.get()
                     };
 
 

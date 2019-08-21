@@ -7,6 +7,9 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.Label?>
 <BorderPane fx:id="pane" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
 
 
@@ -15,14 +18,24 @@
 
         </AnchorPane>
     </center>
-   <top>
-      <ToolBar fx:id="toolbar" BorderPane.alignment="CENTER">
-         <items>
-            <ToggleButton fx:id="autoButton" layoutX="64.0" layoutY="11.0" minWidth="75.0" mnemonicParsing="false" onMouseClicked="#setAutoMode" text="Full" />
-            <ToggleButton fx:id="dragButton" minWidth="75.0" mnemonicParsing="false" onMouseClicked="#setDragMode" text="Drag" />
-            <ToggleButton fx:id="zoomButton" layoutX="10.0" layoutY="11.0" minWidth="75.0" mnemonicParsing="false" onMouseClicked="#setZoomMode" text="Zoom" />
-         </items>
-      </ToolBar>
-   </top>
+    <top>
+        <ToolBar fx:id="toolbar" BorderPane.alignment="CENTER">
+            <items>
+                <ToggleButton fx:id="autoButton" layoutX="64.0" layoutY="11.0" minWidth="75.0" mnemonicParsing="false"
+                              onMouseClicked="#setAutoMode" text="Full"/>
+                <ToggleButton fx:id="dragButton" minWidth="75.0" mnemonicParsing="false" onMouseClicked="#setDragMode"
+                              text="Drag"/>
+                <ToggleButton fx:id="zoomButton" layoutX="10.0" layoutY="11.0" minWidth="75.0" mnemonicParsing="false"
+                              onMouseClicked="#setZoomMode" text="Zoom"/>
+            </items>
+        </ToolBar>
+    </top>
+
+    <bottom>
+        <HBox fx:id="sliderBox" alignment="CENTER" spacing="5" style="-fx-padding: 5 5 5 5;">
+            <Label HBox.hgrow="NEVER" text="Range:"/>
+            <Slider HBox.hgrow="ALWAYS" fx:id="rangeSliderX"/>
+        </HBox>
+    </bottom>
 
 </BorderPane>

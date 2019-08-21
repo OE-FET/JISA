@@ -28,18 +28,17 @@ public class Result {
      */
     public String getOutput(String delim) {
 
-        String[] formats = new String[data.length];
-        Double[] dataD   = new Double[data.length];
+        String[] chunks = new String[data.length];
 
-        for (int i = 0; i < dataD.length; i ++) {
-            dataD[i] = data[i];
+        for (int i = 0; i < chunks.length; i ++) {
+            if ((data[i] == Math.floor(data[i])) && !Double.isInfinite(data[i])) {
+                chunks[i] = String.format("%d", (int) data[i]);
+            } else {
+                chunks[i] = String.format("%e", data[i]);
+            }
         }
 
-        Arrays.fill(formats, "%e");
-
-        String format = String.join(delim, formats).concat("\n");
-
-        return String.format(format, dataD);
+        return String.join(delim, chunks);
 
     }
 

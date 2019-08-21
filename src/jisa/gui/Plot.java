@@ -1,5 +1,7 @@
 package jisa.gui;
 
+import javafx.scene.control.Slider;
+import javafx.scene.layout.HBox;
 import jisa.experiment.Function;
 import jisa.experiment.Result;
 import jisa.experiment.ResultTable;
@@ -39,6 +41,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
     public  ToggleButton              autoButton;
     public  ToggleButton              zoomButton;
     public  ToggleButton              dragButton;
+    public  HBox                      sliderBox;
+    public  Slider                    rangeSliderX;
     private SmartChart                controller;
     private Rectangle                 rect;
     private Series                    autoSeries = null;
@@ -62,6 +66,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         chart = new LineChart<>(xAxis, yAxis);
         chart.setMinHeight(400);
+        xAxis.setChart(chart);
+        yAxis.setChart(chart);
 
         AnchorPane.setBottomAnchor(chart, 0.0);
         AnchorPane.setTopAnchor(chart, 0.0);
@@ -95,6 +101,40 @@ public class Plot extends JFXWindow implements Element, Clearable {
             // stack.getChildren().add(rect);
             toolbar.setVisible(false);
             toolbar.setManaged(false);
+            rangeSliderX.setValue(100.0);
+            sliderBox.setVisible(false);
+            sliderBox.setManaged(false);
+
+
+        });
+
+        rangeSliderX.valueProperty().addListener((a, b, c) -> {
+
+            double value = rangeSliderX.getValue() / 100.0;
+
+            if (value >= 1.0) {
+                autoXLimits();
+            } else {
+
+                double min = Double.POSITIVE_INFINITY;
+                double max = Double.NEGATIVE_INFINITY;
+
+                for (XYChart.Series<Double, Double> series : chart.getData()) {
+
+                    for (XYChart.Data<Double, Double> point : series.getData()) {
+
+                        min = Math.min(point.getXValue(), min);
+                        max = Math.max(point.getXValue(), max);
+
+                    }
+
+                }
+
+                double range = Math.abs(max - min) * value;
+
+                setXAutoTrack(range);
+
+            }
 
         });
 
@@ -421,9 +461,31 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     public void showToolbar(boolean flag) {
 
-        toolbar.setManaged(flag);
-        toolbar.setVisible(flag);
-        adjustSize();
+        GUI.runNow(() -> {
+
+            toolbar.setManaged(flag);
+            toolbar.setVisible(flag);
+            adjustSize();
+
+        });
+
+    }
+
+    public void showSlider(boolean flag) {
+
+        GUI.runNow(() -> {
+
+            if (!flag) {
+                rangeSliderX.setValue(100.0);
+            }
+
+            sliderBox.setVisible(flag);
+            sliderBox.setManaged(flag);
+
+            adjustSize();
+
+        });
+
     }
 
     public String getXLabel() {
@@ -536,10 +598,10 @@ public class Plot extends JFXWindow implements Element, Clearable {
             final double maxY = startMax.get().getY() - diffY;
 
             controller.setLimits(
-                    Math.min(minX, maxX),
-                    Math.max(minX, maxX),
-                    Math.min(minY, maxY),
-                    Math.max(minY, maxY)
+                Math.min(minX, maxX),
+                Math.max(minX, maxX),
+                Math.min(minY, maxY),
+                Math.max(minY, maxY)
             );
 
         });

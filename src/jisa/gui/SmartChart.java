@@ -149,14 +149,14 @@ public class SmartChart {
     public void setSeriesColour(int series, Color colour) {
 
         setStyle(
-                String.format("CHART_COLOR_%d", series + 1),
-                String.format(
-                        "rgba(%f,%f,%f,%f)",
-                        colour.getRed() * 255D,
-                        colour.getGreen() * 255D,
-                        colour.getBlue() * 255D,
-                        colour.getOpacity()
-                )
+            String.format("CHART_COLOR_%d", series + 1),
+            String.format(
+                "rgba(%f,%f,%f,%f)",
+                colour.getRed() * 255D,
+                colour.getGreen() * 255D,
+                colour.getBlue() * 255D,
+                colour.getOpacity()
+            )
         );
 
     }
@@ -193,10 +193,10 @@ public class SmartChart {
 
             case DOT:
                 style = String.format(
-                        "-fx-background-radius: %fpx; -fx-padding: %fpx; -fx-background-insets: 0, %fpx;",
-                        size,
-                        size,
-                        2.0 * size
+                    "-fx-background-radius: %fpx; -fx-padding: %fpx; -fx-background-insets: 0, %fpx;",
+                    size,
+                    size,
+                    2.0 * size
                 );
                 break;
 
@@ -206,34 +206,34 @@ public class SmartChart {
 
             case DIAMOND:
                 style = String.format(
-                        "-fx-background-radius: 0;\n" +
-                                "-fx-padding: %fpx;\n" +
-                                "-fx-shape: \"M5,0 L10,9 L5,18 L0,9 Z\";",
-                        size
+                    "-fx-background-radius: 0;\n" +
+                        "-fx-padding: %fpx;\n" +
+                        "-fx-shape: \"M5,0 L10,9 L5,18 L0,9 Z\";",
+                    size
                 );
 
                 break;
 
             case CROSS:
                 style = String.format(
-                        "-fx-background-radius: 0;\n" +
-                                "-fx-padding: %fpx;\n" +
-                                "-fx-shape: \"M2,0 L5,4 L8,0 L10,0 L10,2 L6,5 L10,8 L10,10 L8,10 L5,6 L2,10 L0,10 L0,8 L4,5 L0,2 L0,0 Z\";",
-                        size
+                    "-fx-background-radius: 0;\n" +
+                        "-fx-padding: %fpx;\n" +
+                        "-fx-shape: \"M2,0 L5,4 L8,0 L10,0 L10,2 L6,5 L10,8 L10,10 L8,10 L5,6 L2,10 L0,10 L0,8 L4,5 L0,2 L0,0 Z\";",
+                    size
                 );
                 break;
 
             case TRIANGLE:
                 style = String.format("-fx-background-radius: 0;\n" +
-                                              "-fx-padding: %fpx;\n" +
-                                              "-fx-shape: \"M5,0 L10,8 L0,8 Z\";", size);
+                                          "-fx-padding: %fpx;\n" +
+                                          "-fx-shape: \"M5,0 L10,8 L0,8 Z\";", size);
                 break;
 
             case STAR:
                 style = String.format("-fx-background-radius: 0;\n" +
-                                              "-fx-background-insets: 0, 3px;\n" +
-                                              "-fx-padding: %fpx;\n" +
-                                              "-fx-shape: \"M20,2 L8,36 L38,12 L2,12 L32,36 Z\";", size);
+                                          "-fx-background-insets: 0, 3px;\n" +
+                                          "-fx-padding: %fpx;\n" +
+                                          "-fx-shape: \"M20,2 L8,36 L38,12 L2,12 L32,36 Z\";", size);
                 break;
 
             default:
@@ -405,10 +405,10 @@ public class SmartChart {
 
 
             SVGText legendText = new SVGText(
-                    legendX + 15.0 + 5 + 3 + 10,
-                    legendY + (25 * i) + 15.0 + 5,
-                    "beginning",
-                    s.getName()
+                legendX + 15.0 + 5 + 3 + 10,
+                legendY + (25 * i) + 15.0 + 5,
+                "beginning",
+                s.getName()
             );
 
             legendText.setAttribute("font-size", "16px");
@@ -669,7 +669,7 @@ public class SmartChart {
             return true;
         } else {
             return Util.isBetween(data.getXValue(), limMinX, limMaxX)
-                    && Util.isBetween(data.getYValue(), limMinY, limMaxY);
+                && Util.isBetween(data.getYValue(), limMinY, limMaxY);
         }
 
 
@@ -868,29 +868,29 @@ public class SmartChart {
             data.setShowCondition((d) -> d.getXValue() >= (maxX - xRange) && d.getYValue() >= (maxY - yRange));
 
             data.addListener(
-                    (ListChangeListener<? super XYChart.Data<Double, Double>>) l -> {
+                (ListChangeListener<? super XYChart.Data<Double, Double>>) l -> {
 
-                        chart.applyCss();
+                    chart.applyCss();
 
-                        while (l.next()) {
+                    while (l.next()) {
 
-                            if (!l.wasAdded()) {
-                                continue;
-                            }
-
-                            l.getAddedSubList().forEach(
-                                    d -> {
-
-                                        if (d.getNode() != null) {
-                                            d.getNode().setStyle(String.join(" ", symbolStyle));
-                                            d.getNode().applyCss();
-                                        }
-
-                                    }
-                            );
+                        if (!l.wasAdded()) {
+                            continue;
                         }
 
+                        l.getAddedSubList().forEach(
+                            d -> {
+
+                                if (d.getNode() != null) {
+                                    d.getNode().setStyle(String.join(" ", symbolStyle));
+                                    d.getNode().applyCss();
+                                }
+
+                            }
+                        );
                     }
+
+                }
             );
 
             int lIndex = chart.getData().indexOf(series);
@@ -899,7 +899,7 @@ public class SmartChart {
 
                 if (n instanceof Legend) {
 
-                    ((Legend) n).getItems().addListener((ListChangeListener<? super Legend.LegendItem>) change -> {
+                    ListChangeListener<? super Legend.LegendItem> listener = change -> {
 
                         ((Legend) n).getItems().forEach(li -> {
 
@@ -911,7 +911,10 @@ public class SmartChart {
 
                         });
 
-                    });
+                    };
+
+                    ((Legend) n).getItems().addListener(listener);
+                    chart.sceneProperty().addListener(observable -> listener.onChanged(null));
 
                 }
 
@@ -970,29 +973,29 @@ public class SmartChart {
             data.setShowCondition((d) -> d.getXValue() >= (maxX - xRange) && d.getYValue() >= (maxY - yRange));
 
             data.addListener(
-                    (ListChangeListener<? super XYChart.Data<Double, Double>>) l -> {
+                (ListChangeListener<? super XYChart.Data<Double, Double>>) l -> {
 
-                        chart.applyCss();
+                    chart.applyCss();
 
-                        while (l.next()) {
+                    while (l.next()) {
 
-                            if (!l.wasAdded()) {
-                                continue;
-                            }
-
-                            l.getAddedSubList().forEach(
-                                    d -> {
-
-                                        if (d.getNode() != null) {
-                                            d.getNode().setStyle(String.join(" ", symbolStyle));
-                                            d.getNode().applyCss();
-                                        }
-
-                                    }
-                            );
+                        if (!l.wasAdded()) {
+                            continue;
                         }
 
+                        l.getAddedSubList().forEach(
+                            d -> {
+
+                                if (d.getNode() != null) {
+                                    d.getNode().setStyle(String.join(" ", symbolStyle));
+                                    d.getNode().applyCss();
+                                }
+
+                            }
+                        );
                     }
+
+                }
             );
 
             int lIndex = chart.getData().indexOf(series);
@@ -1061,29 +1064,29 @@ public class SmartChart {
                 series.setData(data);
 
                 data.addListener(
-                        (ListChangeListener<? super XYChart.Data<Double, Double>>) l -> {
+                    (ListChangeListener<? super XYChart.Data<Double, Double>>) l -> {
 
-                            chart.applyCss();
+                        chart.applyCss();
 
-                            while (l.next()) {
+                        while (l.next()) {
 
-                                if (!l.wasAdded()) {
-                                    continue;
-                                }
-
-                                l.getAddedSubList().forEach(
-                                        d -> {
-
-                                            if (d.getNode() != null) {
-                                                d.getNode().setStyle(String.join(" ", symbolStyle));
-                                                d.getNode().applyCss();
-                                            }
-
-                                        }
-                                );
+                            if (!l.wasAdded()) {
+                                continue;
                             }
 
+                            l.getAddedSubList().forEach(
+                                d -> {
+
+                                    if (d.getNode() != null) {
+                                        d.getNode().setStyle(String.join(" ", symbolStyle));
+                                        d.getNode().applyCss();
+                                    }
+
+                                }
+                            );
                         }
+
+                    }
                 );
 
             });
@@ -1095,7 +1098,7 @@ public class SmartChart {
         public SeriesGroup split(Evaluable splitBy, String pattern) {
             remove();
             return new AutoSeries(data.data, data.xData, data.yData, splitBy, pattern, data.filter).showMarkers(
-                    isShowingMarkers());
+                isShowingMarkers());
         }
 
         @Override
@@ -1114,12 +1117,12 @@ public class SmartChart {
 
                 final int yData = i;
                 series[j++] = new NormalSeries(
-                        list,
-                        r -> r.get(xData),
-                        r -> r.get(yData),
-                        data.filter,
-                        list.getTitle(yData),
-                        null
+                    list,
+                    r -> r.get(xData),
+                    r -> r.get(yData),
+                    data.filter,
+                    list.getTitle(yData),
+                    null
                 ).showMarkers(isShowingMarkers());
             }
 
@@ -1222,18 +1225,18 @@ public class SmartChart {
             GUI.runNow(() -> {
                 colour         = c;
                 lineStyle[0]   = String.format(
-                        "-fx-stroke: rgba(%f,%f,%f,%f);",
-                        colour.getRed() * 255,
-                        colour.getGreen() * 255,
-                        colour.getBlue() * 255,
-                        colour.getOpacity()
+                    "-fx-stroke: rgba(%f,%f,%f,%f);",
+                    colour.getRed() * 255,
+                    colour.getGreen() * 255,
+                    colour.getBlue() * 255,
+                    colour.getOpacity()
                 );
                 symbolStyle[0] = String.format(
-                        "-fx-background-color: rgba(%f,%f,%f,%f), white;",
-                        colour.getRed() * 255,
-                        colour.getGreen() * 255,
-                        colour.getBlue() * 255,
-                        colour.getOpacity()
+                    "-fx-background-color: rgba(%f,%f,%f,%f), white;",
+                    colour.getRed() * 255,
+                    colour.getGreen() * 255,
+                    colour.getBlue() * 255,
+                    colour.getOpacity()
                 );
                 updateAllStyles();
             });
@@ -1270,8 +1273,8 @@ public class SmartChart {
                 if (d.getNode() != null) {
 
                     d.getNode().lookupAll(".chart-line-symbol").forEach(s -> s.setStyle(String.join(
-                            " ",
-                            symbolStyle
+                        " ",
+                        symbolStyle
                     )));
 
                 }
@@ -1664,10 +1667,10 @@ public class SmartChart {
                     if (!map.containsKey(key)) {
 
                         Series data = new NormalSeries(
-                                results, xData, yData,
-                                (v) -> ((sData.evaluate(v) == key) && this.filter.test(v)),
-                                String.format(pattern, key),
-                                defaultColours[map.size() % defaultColours.length]
+                            results, xData, yData,
+                            (v) -> ((sData.evaluate(v) == key) && this.filter.test(v)),
+                            String.format(pattern, key),
+                            defaultColours[map.size() % defaultColours.length]
                         );
 
                         Series s;
@@ -2014,9 +2017,9 @@ public class SmartChart {
                 if (this.filter.test(r)) {
                     int index = data.getNumRows() - 1;
                     XYChart.Data<Double, Double> d = new XYChart.Data<>(
-                            xData.evaluate(r),
-                            yData.evaluate(r),
-                            index
+                        xData.evaluate(r),
+                        yData.evaluate(r),
+                        index
                     );
                     if (show.test(index, d)) {
                         GUI.runNow(() -> {
@@ -2093,7 +2096,7 @@ public class SmartChart {
             while (list.size() > target) {
                 List<XYChart.Data<Double, Double>> toKeep = reducePoints(list, epsilon);
                 List<XYChart.Data<Double, Double>> toRemove = this.list.filtered((p) -> list.contains(p) && !toKeep.contains(
-                        p));
+                    p));
                 for (XYChart.Data<Double, Double> d : toRemove) {
                     shown.remove(d.getExtraValue());
                 }
