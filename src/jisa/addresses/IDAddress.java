@@ -34,7 +34,7 @@ public class IDAddress implements Address {
 
         public IDParams() {
 
-            addParam("Serial No.", true);
+            addParam("SN/ID", true);
 
         }
 
@@ -45,7 +45,7 @@ public class IDAddress implements Address {
 
         @Override
         public String getName() {
-            return "Serial No.";
+            return "Native SN/ID";
         }
     }
 
