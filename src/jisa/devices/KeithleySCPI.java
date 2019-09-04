@@ -26,7 +26,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     protected static final String C_SET_TERMINALS         = ":ROUT:TERM %s";
     protected static final String C_QUERY_TERMINALS       = ":ROUT:TERM?";
     protected static final String C_SET_PROBE_MODE        = ":SENS:RSEN %s";
-    protected static final String C_QUERY_PROBE_MODE      = ":SENS:RSEN?";
+    protected static final String C_QUERY_PROBE_MODE      = "CURR:RSEN?";
     protected static final String C_SET_AVG_COUNT         = "AVER:COUNT %d";
     protected static final String C_QUERY_AVG_COUNT       = "VOLT:AVER:COUNT?";
     protected static final String C_SET_AVG_MODE          = "AVER:TCON %s";
@@ -145,7 +145,8 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
     // == METHODS ======================================================================================================
     public void useFourProbe(boolean fourProbe) throws IOException {
-        write(C_SET_PROBE_MODE, fourProbe ? OUTPUT_ON : OUTPUT_OFF);
+        write("VOLT:RSEN %s", fourProbe ? OUTPUT_ON : OUTPUT_OFF);
+        write("CURR:RSEN %s", fourProbe ? OUTPUT_ON : OUTPUT_OFF);
     }
 
     public boolean isUsingFourProbe() throws IOException {
