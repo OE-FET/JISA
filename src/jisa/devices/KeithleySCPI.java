@@ -397,11 +397,11 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     }
 
     protected double measureVoltage() throws IOException, DeviceException {
-        return queryDouble(C_MEASURE_VOLTAGE);
+        return isOn() ? queryDouble(C_MEASURE_VOLTAGE) : 0.0;
     }
 
     protected double measureCurrent() throws IOException, DeviceException {
-        return queryDouble(C_MEASURE_CURRENT);
+        return isOn() ? queryDouble(C_MEASURE_CURRENT) : 0.0;
     }
 
     protected void disableAveraging() throws IOException {
