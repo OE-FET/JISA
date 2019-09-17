@@ -3,17 +3,31 @@ package jisa.experiment;
 import jisa.Util;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ResultStream extends ResultTable {
 
     protected RandomAccessFile file;
+    private   String           path;
     private   String[]         names;
-    private   String[]         units = null;
+    private   String[]         units       = null;
     private   int              cols;
+    private   int              currentLine = 0;
 
+    /**
+     * Creates a ResultStream from a previously written CSV backing file.
+     *
+     * @param path Path to CSV file.
+     *
+     * @return ResultStream created from column headers in file.
+     *
+     * @throws IOException
+     */
     public static ResultStream loadFile(String path) throws IOException {
 
         RandomAccessFile file = new RandomAccessFile(path, "rw");
@@ -39,7 +53,7 @@ public class ResultStream extends ResultTable {
 
         }
 
-        return new ResultStream(file, cols);
+        return new ResultStream(path, file, cols);
 
     }
 
@@ -53,13 +67,28 @@ public class ResultStream extends ResultTable {
         init(path);
     }
 
-    public ResultStream(RandomAccessFile file, Col... columns) throws IOException {
+    public ResultStream(String path, RandomAccessFile file, Col... columns) throws IOException {
         super(columns);
+        this.path = path;
         this.file = file;
         this.file.seek(0);
     }
 
+    public ResultStream(Col... columns) throws IOException {
+
+        super(columns);
+
+        File file = File.createTempFile("JISA-data-", ".csv");
+        file.deleteOnExit();
+        init(file.getAbsolutePath());
+
+    }
+
     private void init(String path) throws IOException {
+
+        // Make sure the directory we're wanting to write into exists.
+        new File(path).getParentFile().mkdirs();
+        this.path = path;
 
         file = new RandomAccessFile(path, "rw");
         file.setLength(0);
@@ -272,6 +301,14 @@ public class ResultStream extends ResultTable {
         }
     }
 
+    public Set<Double> getValueSet(int column) {
+
+        Set<Double> set = new HashSet<>();
+        getColumns(column).forEach(set::add);
+        return set;
+
+    }
+
     @Override
     public void removeRow(int i) {
         removeLine(i);
@@ -282,6 +319,7 @@ public class ResultStream extends ResultTable {
 
         try {
             file.close();
+            file = new RandomAccessFile(path, "r");
         } catch (IOException e) {
             Util.exceptionHandler(e);
         }
@@ -294,7 +332,7 @@ public class ResultStream extends ResultTable {
         return new Iterator<Result>() {
 
             int rows = getNumRows();
-            int row  = 0;
+            int row = 0;
 
             @Override
             public boolean hasNext() {

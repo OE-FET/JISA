@@ -1,5 +1,6 @@
 package jisa.gui;
 
+import jisa.control.RTask;
 import jisa.experiment.*;
 import jisa.gui.svg.*;
 import jisa.Util;
@@ -397,9 +398,19 @@ public class SmartChart {
 
             List<String> terms = new LinkedList<>();
 
-            SVGCircle legendCircle = new SVGCircle(legendX + 15.0, legendY + (25 * i) + 15.0, 5);
+            SVGElement marker;
 
-            legendCircle.setStrokeColour(c)
+            if (s.isShowingMarkers()) {
+
+                marker = new SVGCircle(legendX + 15.0, legendY + (25 * i) + 15.0, 5);
+
+            } else {
+
+                marker = new SVGLine(legendX + 10.0, legendY + (25 * i) + 15.0, legendX + 20.0, legendY + (25 * i) + 15.0);
+
+            }
+
+            marker.setStrokeColour(c)
                         .setFillColour(Color.WHITE)
                         .setStrokeWidth(3);
 
@@ -414,7 +425,7 @@ public class SmartChart {
             legendText.setAttribute("font-size", "16px");
 
             if (chart.isLegendVisible()) {
-                main.add(legendCircle);
+                main.add(marker);
                 main.add(legendText);
             }
 
@@ -915,6 +926,8 @@ public class SmartChart {
 
                     ((Legend) n).getItems().addListener(listener);
                     chart.sceneProperty().addListener(observable -> listener.onChanged(null));
+
+                    (new RTask(2000, () -> listener.onChanged(null))).start();
 
                 }
 
@@ -1983,6 +1996,7 @@ public class SmartChart {
 
         private ObservableList<XYChart.Data<Double, Double>>       list        = FXCollections.observableArrayList();
         private List<Integer>                                      shown       = new LinkedList<>();
+        private List<Result>                                       results     = new LinkedList<>();
         private Predicate<Result>                                  filter      = (r) -> true;
         private BiPredicate<Integer, XYChart.Data<Double, Double>> show        = (i, r) -> true;
         private Runnable                                           onChange    = () -> {
@@ -2025,6 +2039,7 @@ public class SmartChart {
                         GUI.runNow(() -> {
                             list.add(d);
                             shown.add(index);
+                            this.results.add(r);
                             onChange.run();
                             minX = Math.min(minX, d.getXValue());
                             maxX = Math.max(maxX, d.getXValue());
@@ -2144,19 +2159,24 @@ public class SmartChart {
 
             final List<XYChart.Data<Double, Double>> toRemoveData   = new LinkedList<>();
             final List<Integer>                      toRemoveResult = new LinkedList<>();
+            final List<Result>                       toRemoveResults = new LinkedList<>();
 
             boolean removed = false;
 
+            int i = 0;
             for (XYChart.Data<Double, Double> d : list) {
-                if (!show.test((Integer) d.getExtraValue(), d)) {
+                if (!show.test((Integer) d.getExtraValue(), d) || !filter.test(results.get(i))) {
                     toRemoveData.add(d);
                     toRemoveResult.add((Integer) d.getExtraValue());
+                    toRemoveResults.add(results.get(i));
                     removed = true;
                 }
+                i++;
             }
 
             GUI.runNow(() -> list.removeAll(toRemoveData));
             shown.removeAll(toRemoveResult);
+            results.removeAll(toRemoveResults);
 
         }
 
@@ -2167,9 +2187,10 @@ public class SmartChart {
             final List<XYChart.Data<Double, Double>> toAdd = new LinkedList<>();
             forEach((i, r, d) -> {
 
-                if (!shown.contains(i) && show.test(i, d)) {
+                if (!shown.contains(i) && show.test(i, d) && filter.test(r)) {
                     toAdd.add(new XYChart.Data<>(d.getXValue(), d.getYValue()));
                     shown.add(i);
+                    results.add(r);
                     minX = Math.min(minX, d.getXValue());
                     maxX = Math.max(maxX, d.getXValue());
                     minY = Math.min(minY, d.getYValue());

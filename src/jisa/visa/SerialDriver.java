@@ -14,11 +14,6 @@ import java.util.Arrays;
 
 public class SerialDriver implements Driver {
 
-    private static final String PATTERN_LINUX_MAC = "/dev/ttyS%d";
-    private static final String PATTERN_WINDOWS   = "COM%d";
-
-    protected String pattern;
-
     public SerialDriver() {
 
     }
@@ -26,10 +21,10 @@ public class SerialDriver implements Driver {
     @Override
     public Connection open(Address address) throws VISAException {
 
-        SerialAddress addr = (new StrAddress(address.toString())).toSerialAddress();
+        SerialAddress addr = address.toSerialAddress();
 
         if (addr == null) {
-            throw new VISAException("Can only open native serial connections with the native serial driver!");
+            throw new VISAException("Can only open serial connections with the native serial driver!");
         }
 
         String   device    = addr.getPort();
@@ -49,8 +44,8 @@ public class SerialDriver implements Driver {
             throw new VISAException("No serial port \"%s\" was found.", device.trim());
         }
 
-        SerialPort port   = new SerialPort(found);
-        boolean    result = false;
+        SerialPort port = new SerialPort(found);
+        boolean    result;
 
         try {
             result = port.openPort();

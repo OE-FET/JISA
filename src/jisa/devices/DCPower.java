@@ -73,6 +73,26 @@ public interface DCPower extends IVSource {
     double getCurrent() throws IOException, DeviceException;
 
     /**
+     * Sets the voltage limit, also known as over-voltage protection. Setting a value of zero will disable this limit.
+     *
+     * @param limit Voltage limit, in Volts
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon device compatibility error
+     */
+    void setVoltageLimit(double limit) throws IOException, DeviceException;
+
+    /**
+     * Returns the currently set voltage limit (OVP). Zero means no limit is set.
+     *
+     * @return Voltage limit, in Volts
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon device compatibility error
+     */
+    double getVoltageLimit() throws IOException, DeviceException;
+
+    /**
      * Wait for the voltage output of the supply to be stable within the given percentage margin and time-frame
      *
      * @param pctError Margin of error, percentage
@@ -85,10 +105,10 @@ public interface DCPower extends IVSource {
 
 
         Synch.waitForParamStable(
-                this::getVoltage,
-                pctError,
-                100,
-                time
+            this::getVoltage,
+            pctError,
+            100,
+            time
         );
 
 
@@ -106,10 +126,10 @@ public interface DCPower extends IVSource {
     default void waitForStableCurrent(double pctError, long time) throws IOException, DeviceException, InterruptedException {
 
         Synch.waitForParamStable(
-                this::getCurrent,
-                pctError,
-                100,
-                time
+            this::getCurrent,
+            pctError,
+            100,
+            time
         );
 
     }

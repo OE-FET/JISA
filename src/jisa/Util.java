@@ -115,6 +115,42 @@ public class Util {
         return value.doubleValue() >= min.doubleValue() && value.doubleValue() <= max.doubleValue();
     }
 
+    public static boolean isValidIndex(int index, Object[] array) {
+        return Util.isBetween(index, 0, array.length - 1);
+    }
+
+    public static boolean isValidIndex(int index, double[] array) {
+        return Util.isBetween(index, 0, array.length - 1);
+    }
+
+    public static boolean isValidIndex(int index, float[] array) {
+        return Util.isBetween(index, 0, array.length - 1);
+    }
+
+    public static boolean isValidIndex(int index, int[] array) {
+        return Util.isBetween(index, 0, array.length - 1);
+    }
+
+    public static boolean isValidIndex(int index, long[] array) {
+        return Util.isBetween(index, 0, array.length - 1);
+    }
+
+    public static boolean isValidIndex(int index, short[] array) {
+        return Util.isBetween(index, 0, array.length - 1);
+    }
+
+    public static boolean isValidIndex(int index, boolean[] array) {
+        return Util.isBetween(index, 0, array.length - 1);
+    }
+
+    public static boolean isValidIndex(int index, char[] array) {
+        return Util.isBetween(index, 0, array.length - 1);
+    }
+
+    public static boolean isValidIndex(int index, byte[] array) {
+        return Util.isBetween(index, 0, array.length - 1);
+    }
+
     /**
      * Set what the standard exception handler should be.
      *

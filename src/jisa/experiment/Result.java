@@ -31,11 +31,7 @@ public class Result {
         String[] chunks = new String[data.length];
 
         for (int i = 0; i < chunks.length; i ++) {
-            if ((data[i] == Math.floor(data[i])) && !Double.isInfinite(data[i])) {
-                chunks[i] = String.format("%d", (int) data[i]);
-            } else {
-                chunks[i] = String.format("%s", data[i]);
-            }
+            chunks[i] = String.format("%s", data[i]);
         }
 
         return String.join(delim, chunks).concat("\n");

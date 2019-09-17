@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.chart.LineChart?>
-<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.AnchorPane?>
@@ -19,7 +17,7 @@
         </AnchorPane>
     </center>
     <top>
-        <ToolBar fx:id="toolbar" BorderPane.alignment="CENTER">
+        <ToolBar fx:id="toolbar" BorderPane.alignment="CENTER" style="-fx-background-color: transparent;">
             <items>
                 <ToggleButton fx:id="autoButton" layoutX="64.0" layoutY="11.0" minWidth="75.0" mnemonicParsing="false"
                               onMouseClicked="#setAutoMode" text="Full"/>

@@ -483,6 +483,20 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
+    public Set<Double> getUniqueValues(int column) {
+
+        Set<Double> valueSet = new HashSet<>();
+
+        for (Result r : this) {
+
+            valueSet.add(r.get(column));
+
+        }
+
+        return valueSet;
+
+    }
+
     public ResultTable filtered(Predicate<Result> filter) {
 
         return new ResultTable(columns.toArray(new Col[0])) {

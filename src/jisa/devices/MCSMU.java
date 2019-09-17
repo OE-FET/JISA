@@ -339,9 +339,11 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      * @throws IOException     Upon communications error
      */
     default void useFourProbe(boolean fourProbes) throws DeviceException, IOException {
+
         for (int cn = 0; cn < getNumChannels(); cn++) {
             useFourProbe(cn, fourProbes);
         }
+
     }
 
     /**
@@ -1249,9 +1251,7 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      */
     default SMU getChannel(int channel) throws DeviceException {
 
-        if (channel >= getNumChannels()) {
-            throw new DeviceException("This SMU does not have that channel!");
-        }
+        checkChannel(channel);
 
         try {
             return new VirtualSMU(this, channel);
@@ -1315,12 +1315,12 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     default IVPoint[] doLinearSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         return doSweep(
-                channel,
-                source,
-                Util.makeLinearArray(min, max, numSteps),
-                delay,
-                symmetric,
-                onUpdate
+            channel,
+            source,
+            Util.makeLinearArray(min, max, numSteps),
+            delay,
+            symmetric,
+            onUpdate
         );
 
     }
@@ -1350,12 +1350,12 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     default IVPoint[] doLogarithmicSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         return doSweep(
-                channel,
-                source,
-                Util.makeLogarithmicArray(min, max, numSteps),
-                delay,
-                symmetric,
-                onUpdate
+            channel,
+            source,
+            Util.makeLogarithmicArray(min, max, numSteps),
+            delay,
+            symmetric,
+            onUpdate
         );
 
     }
@@ -1421,9 +1421,16 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     }
 
     default void checkChannel(int channel) throws DeviceException {
+
         if (!Util.isBetween(channel, 0, getNumChannels() - 1)) {
-            throw new DeviceException("Channel %d does not exist for this SMU", channel);
+            throw new DeviceException(
+                "Invalid channel, %d, specified for %s SMU (valid range: 0 to %d)",
+                channel,
+                getClass().getSimpleName(),
+                getNumChannels() - 1
+            );
         }
+
     }
 
     class Updater implements Runnable {
@@ -1436,8 +1443,8 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
 
         public Updater(ArrayList<MCIVPoint> p, MCUpdateHandler o) {
             semaphore = new Semaphore(0);
-            points = p;
-            onUpdate = o;
+            points    = p;
+            onUpdate  = o;
         }
 
         public void runUpdate() {
@@ -1472,6 +1479,7 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
             }
 
         }
+
     }
 
     /**
@@ -1597,11 +1605,11 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      */
     class VirtualSMU implements SMU {
 
-        private int channel;
+        private int   channel;
         private MCSMU smu;
 
         public VirtualSMU(MCSMU smu, int channel) {
-            this.smu = smu;
+            this.smu     = smu;
             this.channel = channel;
         }
 
@@ -1853,6 +1861,7 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         public Address getAddress() {
             return smu.getAddress();
         }
+
     }
 
     /**
@@ -1861,7 +1870,7 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     abstract class Sweep {
 
         protected ArrayList<Config> sweeps = new ArrayList<>();
-        protected MCSMU smu;
+        protected MCSMU             smu;
 
         protected class Config {
 
@@ -1873,10 +1882,10 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
 
             public Config(int channel, Source source, double[] values, long delay, boolean symmetric) {
 
-                this.channel = channel;
-                this.source = source;
-                this.values = symmetric ? Util.symArray(values) : values;
-                this.delay = delay;
+                this.channel   = channel;
+                this.source    = source;
+                this.values    = symmetric ? Util.symArray(values) : values;
+                this.delay     = delay;
                 this.symmetric = symmetric;
 
             }
@@ -1889,21 +1898,21 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
 
         public void addLinearSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric) {
             addSweep(
-                    channel,
-                    source,
-                    Util.makeLinearArray(min, max, numSteps),
-                    delay,
-                    symmetric
+                channel,
+                source,
+                Util.makeLinearArray(min, max, numSteps),
+                delay,
+                symmetric
             );
         }
 
         public void addLogarithmicSweep(int channel, Source source, double min, double max, int numSteps, long delay, boolean symmetric) {
             addSweep(
-                    channel,
-                    source,
-                    Util.makeLogarithmicArray(min, max, numSteps),
-                    delay,
-                    symmetric
+                channel,
+                source,
+                Util.makeLogarithmicArray(min, max, numSteps),
+                delay,
+                symmetric
             );
         }
 
@@ -1918,7 +1927,7 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
             return run((n, p) -> {
                 double[] data = new double[2 * smu.getNumChannels()];
                 for (int i = 0; i < smu.getNumChannels(); i++) {
-                    data[i * 2] = p.getChannel(i).voltage;
+                    data[i * 2]     = p.getChannel(i).voltage;
                     data[i * 2 + 1] = p.getChannel(i).current;
                 }
                 list.addData(data);
@@ -1934,10 +1943,10 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         String[] units  = new String[getNumChannels() * 2];
 
         for (int i = 0; i < getNumChannels(); i++) {
-            titles[i * 2] = String.format("Voltage %d", i);
+            titles[i * 2]     = String.format("Voltage %d", i);
             titles[i * 2 + 1] = String.format("Current %d", i);
-            units[i * 2] = "V";
-            units[i * 2 + 1] = "A";
+            units[i * 2]      = "V";
+            units[i * 2 + 1]  = "A";
         }
 
         ResultList list = new ResultList(titles);

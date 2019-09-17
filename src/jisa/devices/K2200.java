@@ -49,6 +49,23 @@ public class K2200 extends VISADevice implements DCPower {
         return queryDouble(C_QUERY_CURRENT);
     }
 
+    @Override
+    public void setVoltageLimit(double limit) throws IOException {
+
+        if (limit > 0) {
+            write("VOLT:PROP:STAT ON");
+            write("VOLT:PROT %eV", limit);
+        } else {
+            write("VOLT:PROP:STAT OFF");
+        }
+
+    }
+
+    @Override
+    public double getVoltageLimit() throws IOException, DeviceException {
+        return queryInt("VOLT:PROP:STAT?") == 1 ? queryDouble("VOLT:PROP:LEVEL?") : 0;
+    }
+
     public void setVoltage(double voltage) throws IOException {
         write(C_SET_VOLTAGE, voltage);
     }

@@ -52,9 +52,9 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
         for (int i = 0; i < instruments.length; i++) {
             names[i] = String.format(
-                    "%s (%s)",
-                    instruments[i].getTitle(),
-                    instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED"
+                "%s (%s)",
+                instruments[i].getTitle(),
+                instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED"
             );
         }
 
@@ -132,21 +132,17 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         @Override
         protected void update() {
 
-            int smuI = instrument.get();
+            int              n   = instrument.get();
+            jisa.devices.SMU smu = null;
 
-            jisa.devices.SMU smu;
-            if (smuI < 0 || smuI >= instruments.length) {
-                smu = null;
-            } else {
-                smu = instruments[smuI].get();
+            if (Util.isValidIndex(n, instruments)) {
+                smu = instruments[n].get();
             }
 
             chn.setDisabled(false);
 
             if (smu == null) {
-
                 chn.editValues("Channel 0", "Channel 1", "Channel 2", "Channel 3");
-
             } else if (smu instanceof MultiChannel) {
                 chn.editValues(Util.makeCountingString(0, ((MultiChannel) smu).getNumChannels(), "Channel %d"));
             } else {
@@ -158,19 +154,19 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
                 if (smu != null) {
                     trm.editValues(
-                            String.format("Front (%s)", smu.getTerminalType(Terminals.FRONT).name()),
-                            String.format("Rear (%s)", smu.getTerminalType(Terminals.REAR).name())
+                        String.format("Front (%s)", smu.getTerminalType(Terminals.FRONT).name()),
+                        String.format("Rear (%s)", smu.getTerminalType(Terminals.REAR).name())
                     );
                 } else {
                     trm.editValues(
-                            "Front (NONE)",
-                            "Rear (NONE)"
+                        "Front (NONE)",
+                        "Rear (NONE)"
                     );
                 }
             } catch (Exception e) {
                 trm.editValues(
-                        "Front (UNKNOWN)",
-                        "Rear (UNKNOWN)"
+                    "Front (UNKNOWN)",
+                    "Rear (UNKNOWN)"
                 );
             }
 
@@ -366,7 +362,7 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
                 int n = instrument.get();
 
-                if (!Util.isBetween(n, 0, instruments.length - 1)) {
+                if (!Util.isValidIndex(n, instruments)) {
                     return null;
                 }
 

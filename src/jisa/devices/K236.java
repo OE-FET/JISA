@@ -51,53 +51,53 @@ public class K236 extends VISADevice implements SMU {
 
     // == FILTERS ======================================================================================================
     private final MedianRepeatFilter MEDIAN_REPEAT_S = new MedianRepeatFilter(
-            () -> readValue(OUTPUT_SOURCE),
-            (c) -> write(C_DISABLE_FILTER)
+        () -> readValue(OUTPUT_SOURCE),
+        (c) -> write(C_DISABLE_FILTER)
     );
 
     private final MedianRepeatFilter MEDIAN_REPEAT_M = new MedianRepeatFilter(
-            () -> readValue(OUTPUT_MEASURE),
-            (c) -> write(C_DISABLE_FILTER)
+        () -> readValue(OUTPUT_MEASURE),
+        (c) -> write(C_DISABLE_FILTER)
     );
 
     private final MedianMovingFilter MEDIAN_MOVING_S = new MedianMovingFilter(
-            () -> readValue(OUTPUT_SOURCE),
-            (c) -> write(C_DISABLE_FILTER)
+        () -> readValue(OUTPUT_SOURCE),
+        (c) -> write(C_DISABLE_FILTER)
     );
 
     private final MedianMovingFilter MEDIAN_MOVING_M = new MedianMovingFilter(
-            () -> readValue(OUTPUT_MEASURE),
-            (c) -> write(C_DISABLE_FILTER)
+        () -> readValue(OUTPUT_MEASURE),
+        (c) -> write(C_DISABLE_FILTER)
     );
 
     private final MeanRepeatFilter MEAN_REPEAT_S = new MeanRepeatFilter(
-            () -> readValue(OUTPUT_SOURCE),
-            (c) -> write(C_DISABLE_FILTER)
+        () -> readValue(OUTPUT_SOURCE),
+        (c) -> write(C_DISABLE_FILTER)
     );
 
     private final MeanRepeatFilter MEAN_REPEAT_M = new MeanRepeatFilter(
-            () -> readValue(OUTPUT_MEASURE),
-            (c) -> write(C_DISABLE_FILTER)
+        () -> readValue(OUTPUT_MEASURE),
+        (c) -> write(C_DISABLE_FILTER)
     );
 
     private final MeanMovingFilter MEAN_MOVING_S = new MeanMovingFilter(
-            () -> readValue(OUTPUT_SOURCE),
-            (c) -> write(C_DISABLE_FILTER)
+        () -> readValue(OUTPUT_SOURCE),
+        (c) -> write(C_DISABLE_FILTER)
     );
 
     private final MeanMovingFilter MEAN_MOVING_M = new MeanMovingFilter(
-            () -> readValue(OUTPUT_MEASURE),
-            (c) -> write(C_DISABLE_FILTER)
+        () -> readValue(OUTPUT_MEASURE),
+        (c) -> write(C_DISABLE_FILTER)
     );
 
     private final BypassFilter NONE_S = new BypassFilter(
-            () -> readValue(OUTPUT_SOURCE),
-            (c) -> write(C_DISABLE_FILTER)
+        () -> readValue(OUTPUT_SOURCE),
+        (c) -> write(C_DISABLE_FILTER)
     );
 
     private final BypassFilter NONE_M = new BypassFilter(
-            () -> readValue(OUTPUT_MEASURE),
-            (c) -> write(C_DISABLE_FILTER)
+        () -> readValue(OUTPUT_MEASURE),
+        (c) -> write(C_DISABLE_FILTER)
     );
 
 
@@ -153,13 +153,13 @@ public class K236 extends VISADevice implements SMU {
 
             case VOLTAGE:
                 if (!Util.isBetween(level, MIN_VOLTAGE, MAX_VOLTAGE)) {
-                    throw new DeviceException("Voltage value of %f V is out of range.", level);
+                    throw new DeviceException("Voltage value of %e V is out of range.", level);
                 }
                 break;
 
             case CURRENT:
                 if (!Util.isBetween(level, MIN_CURRENT, MAX_CURRENT)) {
-                    throw new DeviceException("Current value of %f A is out of range.", level);
+                    throw new DeviceException("Current value of %e A is out of range.", level);
                 }
                 break;
 
@@ -175,6 +175,7 @@ public class K236 extends VISADevice implements SMU {
     }
 
     private void updateLimit() {
+
         switch (source) {
 
             case VOLTAGE:
@@ -186,6 +187,7 @@ public class K236 extends VISADevice implements SMU {
                 break;
 
         }
+
     }
 
     private void setCompliance() throws IOException {
@@ -198,7 +200,6 @@ public class K236 extends VISADevice implements SMU {
 
     private double readValue(int channel) throws IOException {
 
-        // TODO: Test that this works with the actual device in actual reality in the actual lab, actually.
         return queryDouble(C_GET_VALUE, channel, FORMAT_CLEAN, ONE_DC_DATA);
 
     }
@@ -368,6 +369,7 @@ public class K236 extends VISADevice implements SMU {
 
     @Override
     public double getMeasureRange() {
+
         switch (source) {
 
             case VOLTAGE:
@@ -380,6 +382,7 @@ public class K236 extends VISADevice implements SMU {
                 return mRange.getCurrent();
 
         }
+
     }
 
     @Override
@@ -540,14 +543,14 @@ public class K236 extends VISADevice implements SMU {
 
             case CURRENT:
                 if (!Util.isBetween(value, 0, +110)) {
-                    throw new DeviceException("Output limit of %f V is out of range.", value);
+                    throw new DeviceException("Output limit of %e V is out of range.", value);
                 }
                 vLimit = value;
                 break;
 
             case VOLTAGE:
                 if (!Util.isBetween(value, 0, 0.1)) {
-                    throw new DeviceException("Output limit of %f A is out of range.", value);
+                    throw new DeviceException("Output limit of %e A is out of range.", value);
                 }
                 iLimit = value;
                 break;
@@ -560,7 +563,7 @@ public class K236 extends VISADevice implements SMU {
 
     @Override
     public double getOutputLimit() throws IOException {
-        return Double.valueOf(query(C_GET_COMPLIANCE).substring(3));
+        return Double.parseDouble(query(C_GET_COMPLIANCE).substring(3));
     }
 
     @Override
@@ -722,7 +725,7 @@ public class K236 extends VISADevice implements SMU {
 
     public void setSourceFunction(Source s, Function f) throws IOException {
         write(C_SET_SRC_FUNC, s.toInt(), f.toInt());
-        source = s;
+        source   = s;
         function = f;
         updateLimit();
         setCompliance();
@@ -762,7 +765,7 @@ public class K236 extends VISADevice implements SMU {
         }
 
         Source(int code, jisa.enums.Source s) {
-            c = code;
+            c   = code;
             src = s;
         }
 
@@ -861,7 +864,7 @@ public class K236 extends VISADevice implements SMU {
         private double voltage;
 
         SRange(int mode, double current, double voltage) {
-            this.mode = mode;
+            this.mode    = mode;
             this.current = current;
             this.voltage = voltage;
         }
@@ -933,7 +936,9 @@ public class K236 extends VISADevice implements SMU {
 
     private static class MStatus {
 
-        private static final Pattern PATTERN = Pattern.compile("MSTG([0-9]{2}),([0-9]),([0-9])K([0-3])M([0-9]{3}),([0-9])N([0-1])R([0-1])T([0-4]),([0-8]),([0-8]),([0-1])V([0-1])Y([0-4])");
+        private static final Pattern PATTERN = Pattern.compile(
+            "MSTG([0-9]{2}),([0-9]),([0-9])K([0-3])M([0-9]{3}),([0-9])N([0-1])R([0-1])T([0-4]),([0-8]),([0-8]),([0-1])V([0-1])Y([0-4])"
+        );
 
         public int     items;
         public int     format;
@@ -950,12 +955,12 @@ public class K236 extends VISADevice implements SMU {
 
             if (matcher.find()) {
 
-                items = Integer.valueOf(matcher.group(1).trim());
-                format = Integer.valueOf(matcher.group(2).trim());
-                lines = Integer.valueOf(matcher.group(3).trim());
-                EOI = Integer.valueOf(matcher.group(4).trim());
-                mask = Integer.valueOf(matcher.group(5).trim());
-                on = matcher.group(7).trim().equals("1");
+                items      = Integer.parseInt(matcher.group(1).trim());
+                format     = Integer.parseInt(matcher.group(2).trim());
+                lines      = Integer.parseInt(matcher.group(3).trim());
+                EOI        = Integer.parseInt(matcher.group(4).trim());
+                mask       = Integer.parseInt(matcher.group(5).trim());
+                on         = matcher.group(7).trim().equals("1");
                 triggering = matcher.group(8).trim().equals("1");
 
             }
@@ -966,7 +971,9 @@ public class K236 extends VISADevice implements SMU {
 
     private static class MParams {
 
-        private static final Pattern PATTERN = Pattern.compile("[IV]MPL,([0-9]{2})F([0-1]),([0-1])O([0-1])P([0-5])S([0-3])W([0-1])Z([0-1])");
+        private static final Pattern PATTERN = Pattern.compile(
+            "[IV]MPL,([0-9]{2})F([0-1]),([0-1])O([0-1])P([0-5])S([0-3])W([0-1])Z([0-1])"
+        );
 
         public SRange   mRange;
         public Source   source;
@@ -980,11 +987,11 @@ public class K236 extends VISADevice implements SMU {
 
             if (matcher.find()) {
 
-                mRange = SRange.fromInt(Integer.valueOf(matcher.group(1).trim()));
-                source = Source.fromInt(Integer.valueOf(matcher.group(2).trim()));
-                function = Function.fromInt(Integer.valueOf(matcher.group(3).trim()));
+                mRange    = SRange.fromInt(Integer.parseInt(matcher.group(1).trim()));
+                source    = Source.fromInt(Integer.parseInt(matcher.group(2).trim()));
+                function  = Function.fromInt(Integer.parseInt(matcher.group(3).trim()));
                 fourProbe = matcher.group(4).trim().equals("1");
-                intTime = IntTime.fromInt(Integer.valueOf(matcher.group(6).trim()));
+                intTime   = IntTime.fromInt(Integer.parseInt(matcher.group(6).trim()));
 
             }
 

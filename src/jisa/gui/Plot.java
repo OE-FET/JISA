@@ -1,5 +1,6 @@
 package jisa.gui;
 
+import javafx.scene.Cursor;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.HBox;
 import jisa.experiment.Function;
@@ -98,7 +99,12 @@ public class Plot extends JFXWindow implements Element, Clearable {
             rect.setVisible(false);
             rect.setManaged(false);
 
-            // stack.getChildren().add(rect);
+            AnchorPane canvas = new AnchorPane();
+            canvas.setStyle("-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
+            canvas.setMouseTransparent(true);
+            canvas.getChildren().add(rect);
+            canvas.setManaged(false);
+            stack.getChildren().add(canvas);
             toolbar.setVisible(false);
             toolbar.setManaged(false);
             rangeSliderX.setValue(100.0);
@@ -563,6 +569,119 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
+    public void useMouseCommands(boolean flag) {
+
+        if (flag) {
+
+            showToolbar(false);
+
+            XYChart.Series<Double, Double> series = new XYChart.Series<>();
+
+            final Node                          background = chart.lookup(".chart-plot-background");
+            final SimpleObjectProperty<Point2D> startZoom  = new SimpleObjectProperty<>();
+            final SimpleObjectProperty<Point2D> firstZoom  = new SimpleObjectProperty<>();
+            final SimpleObjectProperty<Point2D> start      = new SimpleObjectProperty<>();
+            final SimpleObjectProperty<Point2D> startMax   = new SimpleObjectProperty<>();
+            final SimpleObjectProperty<Point2D> startMin   = new SimpleObjectProperty<>();
+
+            chart.setOnMousePressed(event -> {
+
+                if (event.isControlDown() && event.isPrimaryButtonDown()) {
+
+                    pane.getScene().setCursor(Cursor.CROSSHAIR);
+                    Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+                    Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+                    startZoom.set(new Point2D(event.getX(), event.getY()));
+                    firstZoom.set(new Point2D(pointX.getX(), pointY.getY()));
+                    rect.setVisible(true);
+                    rect.setManaged(true);
+                } else if (event.isPrimaryButtonDown()) {
+                    pane.getScene().setCursor(Cursor.MOVE);
+                    Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+                    Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+                    startMin.set(new Point2D(xAxis.getLowerBound(), yAxis.getLowerBound()));
+                    startMax.set(new Point2D(xAxis.getUpperBound(), yAxis.getUpperBound()));
+                    start.set(new Point2D(pointX.getX(), pointY.getY()));
+                } else if (event.isSecondaryButtonDown()) {
+                    controller.autoLimits();
+                }
+
+            });
+
+            chart.setOnMouseDragged(event -> {
+
+                if (event.isControlDown() && event.isPrimaryButtonDown()) {
+
+                    final double x = Math.max(0, Math.min(stack.getWidth(), event.getX()));
+                    final double y = Math.max(0, Math.min(stack.getHeight(), event.getY()));
+                    rect.setX(Math.min(x, startZoom.get().getX()));
+                    rect.setY(Math.min(y, startZoom.get().getY()));
+                    rect.setWidth(Math.abs(x - startZoom.get().getX()));
+                    rect.setHeight(Math.abs(y - startZoom.get().getY()));
+
+                } else if (event.isPrimaryButtonDown()) {
+
+                    Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+                    Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+
+                    final double diffX = xAxis.getValueForDisplay(pointX.getX()) - xAxis.getValueForDisplay(start.get().getX());
+                    final double diffY = yAxis.getValueForDisplay(pointY.getY()) - yAxis.getValueForDisplay(start.get().getY());
+
+                    final double minX = startMin.get().getX() - diffX;
+                    final double minY = startMin.get().getY() - diffY;
+
+                    final double maxX = startMax.get().getX() - diffX;
+                    final double maxY = startMax.get().getY() - diffY;
+
+                    controller.setLimits(
+                        Math.min(minX, maxX),
+                        Math.max(minX, maxX),
+                        Math.min(minY, maxY),
+                        Math.max(minY, maxY)
+                    );
+
+                }
+
+            });
+
+            chart.setOnMouseReleased(event -> {
+
+                pane.getScene().setCursor(Cursor.DEFAULT);
+
+                if (event.isControlDown()) {
+
+                    final Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+                    final Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
+
+                    final double minX = xAxis.getValueForDisplay(Math.min(firstZoom.get().getX(), pointX.getX()));
+                    final double maxX = xAxis.getValueForDisplay(Math.max(firstZoom.get().getX(), pointX.getX()));
+                    final double minY = yAxis.getValueForDisplay(Math.min(firstZoom.get().getY(), pointY.getY()));
+                    final double maxY = yAxis.getValueForDisplay(Math.max(firstZoom.get().getY(), pointY.getY()));
+
+                    controller.setLimits(Math.min(minX, maxX), Math.max(minX, maxX), Math.min(minY, maxY),
+                                         Math.max(minY, maxY)
+                    );
+
+                    rect.setWidth(0);
+                    rect.setHeight(0);
+                    rect.setVisible(false);
+                    rect.setManaged(false);
+
+                }
+
+            });
+
+        } else {
+
+            chart.setOnMousePressed(null);
+            chart.setOnMouseDragged(null);
+            chart.setOnMouseReleased(null);
+
+        }
+
+
+    }
+
     public void setDragMode() {
 
         zoomButton.setSelected(false);
@@ -759,6 +878,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         return pane;
     }
+
 
     @Override
     public synchronized void clear() {

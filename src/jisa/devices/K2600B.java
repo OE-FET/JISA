@@ -71,25 +71,26 @@ public class K2600B extends VISADevice implements MCSMU {
 
     public K2600B(Address address) throws IOException, DeviceException {
 
+        // Connect and set-up terminators
         super(address, RawTCPIPDriver.class);
         setReadTerminationCharacter(LF_TERMINATOR);
         setTerminator("\n");
-        setRemoveTerminator("\n");
+        addAutoRemove("\n");
 
-        // TODO: Check that this IDN check actually works
-        try {
-            String[] idn = getIDN().split(", ");
-            if (!idn[1].trim().substring(0, 8).equals("Model 26")) {
-                throw new DeviceException("The instrument at address %s is not a Keithley 2600 series!", address.toString());
-            }
-        } catch (IOException e) {
-            throw new DeviceException("The instrument at address %s is not responding!", address.toString());
+        // Check that this is a Keithley 2600B series
+        if (!getIDN().split(", ")[1].contains("Model 26")) {
+            throw new DeviceException(
+                "The instrument at address %s is not a Keithley 2600 series!",
+                address.toString()
+            );
         }
 
+        // Make sure no filtering is enabled
         for (int i = 0; i < getNumChannels(); i++) {
             setAverageMode(i, AMode.NONE);
         }
 
+        // Store the power-line frequency
         LINE_FREQUENCY = queryDouble(C_QUERY_LFR);
 
     }
@@ -97,9 +98,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public double getVoltage(int channel) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         return filterV[channel].getValue();
 
@@ -108,9 +107,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public double getCurrent(int channel) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         return filterI[channel].getValue();
 
@@ -119,9 +116,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public void setVoltage(int channel, double voltage) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         write(C_SET_VOLT, CHANNELS[channel], voltage);
         setSource(channel, Source.VOLTAGE);
@@ -137,9 +132,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public void setCurrent(int channel, double current) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         write(C_SET_CURR, CHANNELS[channel], current);
         setSource(channel, Source.CURRENT);
@@ -149,9 +142,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public void turnOn(int channel) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         write(C_SET_OUTPUT, CHANNELS[channel], OUTPUT_ON);
 
@@ -160,9 +151,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public void turnOff(int channel) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         write(C_SET_OUTPUT, CHANNELS[channel], OUTPUT_OFF);
 
@@ -171,9 +160,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public boolean isOn(int channel) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         return query(C_QUERY_OUTPUT, CHANNELS[channel]).trim().equals(OUTPUT_ON);
     }
@@ -181,9 +168,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public void setSource(int channel, Source source) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         write(C_SET_SOURCE, CHANNELS[channel], SFunc.fromSMU(source).toString());
 
@@ -219,9 +204,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public void setBias(int channel, double level) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         switch (getSource(channel)) {
 
@@ -244,9 +227,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public double getSourceValue(int channel) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         switch (getSource(channel)) {
 
@@ -266,9 +247,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public double getMeasureValue(int channel) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         switch (getSource(channel)) {
 
@@ -292,9 +271,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public void useFourProbe(int channel, boolean fourProbes) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         write(C_SET_SENSE, CHANNELS[channel], fourProbes ? SENSE_REMOTE : SENSE_LOCAL);
 
@@ -303,9 +280,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public boolean isUsingFourProbe(int channel) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         return query(C_QUERY_SENSE, CHANNELS[channel]).trim().equals(SENSE_REMOTE);
 
@@ -314,35 +289,78 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public void setAverageMode(int channel, AMode mode) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
+        checkChannel(channel);
 
         switch (mode) {
 
             case NONE:
-                filterV[channel] = new BypassFilter(() -> measureVoltage(channel), (c) -> disableAveraging(channel));
-                filterI[channel] = new BypassFilter(() -> measureCurrent(channel), (c) -> disableAveraging(channel));
+
+                filterV[channel] = new BypassFilter(
+                    () -> measureVoltage(channel),
+                    (c) -> disableAveraging(channel)
+                );
+
+                filterI[channel] = new BypassFilter(
+                    () -> measureCurrent(channel),
+                    (c) -> disableAveraging(channel)
+                );
+
                 break;
 
             case MEAN_REPEAT:
-                filterV[channel] = new MeanRepeatFilter(() -> measureVoltage(channel), (c) -> disableAveraging(channel));
-                filterI[channel] = new MeanRepeatFilter(() -> measureCurrent(channel), (c) -> disableAveraging(channel));
+
+                filterV[channel] = new MeanRepeatFilter(
+                    () -> measureVoltage(channel),
+                    (c) -> disableAveraging(channel)
+                );
+
+                filterI[channel] = new MeanRepeatFilter(
+                    () -> measureCurrent(channel),
+                    (c) -> disableAveraging(channel)
+                );
+
                 break;
 
             case MEAN_MOVING:
-                filterV[channel] = new MeanMovingFilter(() -> measureVoltage(channel), (c) -> disableAveraging(channel));
-                filterI[channel] = new MeanMovingFilter(() -> measureCurrent(channel), (c) -> disableAveraging(channel));
+
+                filterV[channel] = new MeanMovingFilter(
+                    () -> measureVoltage(channel),
+                    (c) -> disableAveraging(channel)
+                );
+
+                filterI[channel] = new MeanMovingFilter(
+                    () -> measureCurrent(channel),
+                    (c) -> disableAveraging(channel)
+                );
+
                 break;
 
             case MEDIAN_REPEAT:
-                filterV[channel] = new MedianRepeatFilter(() -> measureVoltage(channel), (c) -> disableAveraging(channel));
-                filterI[channel] = new MedianRepeatFilter(() -> measureCurrent(channel), (c) -> disableAveraging(channel));
+
+                filterV[channel] = new MedianRepeatFilter(
+                    () -> measureVoltage(channel),
+                    (c) -> disableAveraging(channel)
+                );
+
+                filterI[channel] = new MedianRepeatFilter(
+                    () -> measureCurrent(channel),
+                    (c) -> disableAveraging(channel)
+                );
+
                 break;
 
             case MEDIAN_MOVING:
-                filterV[channel] = new MedianMovingFilter(() -> measureVoltage(channel), (c) -> disableAveraging(channel));
-                filterI[channel] = new MedianMovingFilter(() -> measureCurrent(channel), (c) -> disableAveraging(channel));
+
+                filterV[channel] = new MedianMovingFilter(
+                    () -> measureVoltage(channel),
+                    (c) -> disableAveraging(channel)
+                );
+
+                filterI[channel] = new MedianMovingFilter(
+                    () -> measureCurrent(channel),
+                    (c) -> disableAveraging(channel)
+                );
+
                 break;
 
         }
@@ -376,10 +394,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public void setAverageCount(int channel, int count) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
-
+        checkChannel(channel);
         filterCount[channel] = count;
         resetFilters(channel);
 
@@ -388,10 +403,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public int getAverageCount(int channel) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
-
+        checkChannel(channel);
         return filterCount[channel];
 
     }
@@ -399,10 +411,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public AMode getAverageMode(int channel) throws DeviceException, IOException {
 
-        if (channel >= getNumChannels() || channel < 0) {
-            throw new DeviceException("Channel does not exist!");
-        }
-
+        checkChannel(channel);
         return filterMode[channel];
 
     }
@@ -449,7 +458,8 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public boolean isAutoRangingSource(int channel) throws DeviceException, IOException {
         checkChannel(channel);
-        return query(C_QUERY_SOURCE_AUTO_RANGE, CHANNELS[channel], getSourceMode(channel).getSymbol()).trim().equals(OUTPUT_ON);
+        return query(C_QUERY_SOURCE_AUTO_RANGE, CHANNELS[channel], getSourceMode(channel).getSymbol()).trim().equals(
+            OUTPUT_ON);
     }
 
     @Override
@@ -495,7 +505,8 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public boolean isAutoRangingMeasure(int channel) throws DeviceException, IOException {
         checkChannel(channel);
-        return query(C_QUERY_MEASURE_AUTO_RANGE, CHANNELS[channel], getMeasureMode(channel).getSymbol()).trim().equals(OUTPUT_ON);
+        return query(C_QUERY_MEASURE_AUTO_RANGE, CHANNELS[channel], getMeasureMode(channel).getSymbol()).trim().equals(
+            OUTPUT_ON);
     }
 
     @Override
@@ -511,8 +522,10 @@ public class K2600B extends VISADevice implements MCSMU {
 
     @Override
     public double getVoltageRange(int channel) throws DeviceException, IOException {
+
         checkChannel(channel);
         return queryDouble(C_QUERY_SOURCE_RANGE, CHANNELS[channel], SFunc.VOLTAGE.getSymbol());
+
     }
 
     @Override
@@ -535,6 +548,7 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public void setCurrentRange(int channel, double value) throws DeviceException, IOException {
 
+        checkChannel(channel);
         write(C_SET_MEASURE_AUTO_RANGE, CHANNELS[channel], SFunc.CURRENT.getSymbol(), OUTPUT_OFF);
         write(C_SET_SOURCE_AUTO_RANGE, CHANNELS[channel], SFunc.CURRENT.getSymbol(), OUTPUT_OFF);
         write(C_SET_SOURCE_RANGE, CHANNELS[channel], SFunc.CURRENT.getSymbol(), value);
@@ -544,8 +558,10 @@ public class K2600B extends VISADevice implements MCSMU {
 
     @Override
     public double getCurrentRange(int channel) throws DeviceException, IOException {
+
         checkChannel(channel);
         return queryDouble(C_QUERY_SOURCE_RANGE, CHANNELS[channel], SFunc.CURRENT.getSymbol());
+
     }
 
     @Override
@@ -567,54 +583,70 @@ public class K2600B extends VISADevice implements MCSMU {
 
     @Override
     public void setOutputLimit(int channel, double value) throws DeviceException, IOException {
+
         checkChannel(channel);
         write(C_SET_LIMIT, CHANNELS[channel], getMeasureMode(channel).getSymbol(), value);
+
     }
 
     @Override
     public double getOutputLimit(int channel) throws DeviceException, IOException {
+
         checkChannel(channel);
         return queryDouble(C_QUERY_LIMIT, CHANNELS[channel], getMeasureMode(channel).getSymbol());
+
     }
 
     @Override
     public void setVoltageLimit(int channel, double value) throws DeviceException, IOException {
+
         checkChannel(channel);
         write(C_SET_LIMIT, CHANNELS[channel], SFunc.VOLTAGE.getSymbol(), value);
+
     }
 
     @Override
     public double getVoltageLimit(int channel) throws DeviceException, IOException {
+
         checkChannel(channel);
         return queryDouble(C_QUERY_LIMIT, CHANNELS[channel], SFunc.VOLTAGE.getSymbol());
+
     }
 
     @Override
     public void setCurrentLimit(int channel, double value) throws DeviceException, IOException {
+
         checkChannel(channel);
         write(C_SET_LIMIT, CHANNELS[channel], SFunc.CURRENT.getSymbol(), value);
+
     }
 
     @Override
     public double getCurrentLimit(int channel) throws DeviceException, IOException {
+
         checkChannel(channel);
         return queryDouble(C_QUERY_LIMIT, CHANNELS[channel], SFunc.CURRENT.getSymbol());
+
     }
 
     @Override
     public void setIntegrationTime(int channel, double time) throws DeviceException, IOException {
+
         checkChannel(channel);
         write(C_SET_NPLC, CHANNELS[channel], time * LINE_FREQUENCY);
+
     }
 
     @Override
     public double getIntegrationTime(int channel) throws DeviceException, IOException {
+
         checkChannel(channel);
         return queryDouble(C_QUERY_NPLC, CHANNELS[channel]) / LINE_FREQUENCY;
+
     }
 
     @Override
-    public TType getTerminalType(int channel, Terminals terminals) throws DeviceException, IOException {
+    public TType getTerminalType(int channel, Terminals terminals) throws DeviceException {
 
         checkChannel(channel);
         if (terminals == Terminals.REAR) {
@@ -627,17 +659,23 @@ public class K2600B extends VISADevice implements MCSMU {
 
     @Override
     public void setTerminals(int channel, Terminals terminals) throws DeviceException {
+
         checkChannel(channel);
+
     }
 
     @Override
-    public Terminals getTerminals(int channel) throws DeviceException, IOException {
+    public Terminals getTerminals(int channel) throws DeviceException {
+
         checkChannel(channel);
         return Terminals.REAR;
+
     }
 
     @Override
-    public void setOffMode(int channel, OffMode mode) throws DeviceException, IOException {
+    public void setOffMode(int channel, OffMode mode) throws IOException, DeviceException {
+
+        checkChannel(channel);
 
         switch (mode) {
 
@@ -653,6 +691,10 @@ public class K2600B extends VISADevice implements MCSMU {
                 write(C_SET_OFF_MODE, CHANNELS[channel], OFF_MODE_HIGH_Z);
                 break;
 
+            default:
+                write(C_SET_OFF_MODE, CHANNELS[channel], OFF_MODE_NORMAL);
+                break;
+
         }
 
     }
@@ -660,7 +702,9 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public OffMode getOffMode(int channel) throws DeviceException, IOException {
 
-        int mode = queryInt(C_QUERY_OFF_MODE);
+        checkChannel(channel);
+
+        int mode = queryInt(C_QUERY_OFF_MODE, CHANNELS[channel]);
 
         switch (mode) {
 
@@ -699,9 +743,9 @@ public class K2600B extends VISADevice implements MCSMU {
         private Source smu;
 
         SFunc(String tag, String symbol, Source smu) {
-            this.tag = tag;
+            this.tag    = tag;
             this.symbol = symbol;
-            this.smu = smu;
+            this.smu    = smu;
         }
 
         public static SFunc fromString(String tag) {
