@@ -128,7 +128,8 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
         DIAMOND,
         CROSS,
         TRIANGLE,
-        STAR
+        STAR,
+        DASH
     }
 
 }

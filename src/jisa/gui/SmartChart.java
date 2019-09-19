@@ -237,6 +237,10 @@ public class SmartChart {
                                           "-fx-shape: \"M20,2 L8,36 L38,12 L2,12 L32,36 Z\";", size);
                 break;
 
+            case DASH:
+                style = String.format("-fx-background-radius: 0px; -fx-padding: 0; -fx-padding: 1 %f 1 %f;", size, size);
+                break;
+
             default:
                 style = String.format("-fx-background-radius: %fpx; -fx-padding: %fpx;", size, size);
                 break;

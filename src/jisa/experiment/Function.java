@@ -4,6 +4,7 @@ import jisa.maths.Matrix;
 import org.apache.commons.math.analysis.DifferentiableUnivariateRealFunction;
 import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 public interface Function extends DifferentiableUnivariateRealFunction {
@@ -12,7 +13,7 @@ public interface Function extends DifferentiableUnivariateRealFunction {
     @Override
     default Function derivative() {
         return x -> {
-            return (Function.this.value(x*1.01) - Function.this.value(x)) / (0.01*x);
+            return (Function.this.value(x * 1.01) - Function.this.value(x)) / (0.01 * x);
         };
     }
 
@@ -61,12 +62,19 @@ public interface Function extends DifferentiableUnivariateRealFunction {
         return new double[0];
     }
 
+    default double[] getCoefficientErrors() {
+        return new double[0];
+    }
+
     class PolyFunction implements Function {
 
-        PolynomialFunction func;
+        private PolynomialFunction func;
+        private double[]           errors;
 
         public PolyFunction(PolynomialFunction f) {
-            func = f;
+            func   = f;
+            errors = new double[func.getCoefficients().length];
+            Arrays.fill(errors, 0.0);
         }
 
         @Override
@@ -80,6 +88,14 @@ public interface Function extends DifferentiableUnivariateRealFunction {
 
         public double[] getCoefficients() {
             return func.getCoefficients();
+        }
+
+        public void setCoefficientErrors(double[] errors) {
+            this.errors = errors;
+        }
+
+        public double[] getCoefficientErrors() {
+            return errors;
         }
 
     }

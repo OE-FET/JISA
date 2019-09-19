@@ -3,6 +3,7 @@ package jisa.maths;
 import jisa.experiment.Function;
 import org.apache.commons.math.linear.*;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 public class Matrix implements RealMatrix, Iterable<Double> {
@@ -40,22 +41,83 @@ public class Matrix implements RealMatrix, Iterable<Double> {
         backingMatrix = MatrixUtils.createRowRealMatrix(data);
     }
 
-    public void setAllEntries(double... values) {
+    public double getSum() {
 
-        if (values.length != getSize()) {
-            throw new IllegalArgumentException("Number of elements does not match.");
+        double total = 0;
+
+        for (double v : this) {
+            total += v;
         }
 
-        int k = 0;
+        return total;
 
-        for (int i = 0; i < getRowDimension(); i++) {
+    }
 
-            for (int j = 0; j < getColumnDimension(); j++) {
+    public Matrix getRowSums() {
 
-                setEntry(i, j, values[k++]);
+        Matrix result = new Matrix(getRowDimension(), 1);
+        result.setAllEntries(0.0);
+        forEach((r, c, v) -> result.addToEntry(r, 0, v));
+        return result;
+
+    }
+
+    public Matrix getColumnSums() {
+
+        Matrix result = new Matrix(1, getColumnDimension());
+        result.setAllEntries(0.0);
+        forEach((r, c, v) -> result.addToEntry(0, c, v));
+        return result;
+
+    }
+
+    public Matrix map(EntryMapper mapper) {
+
+        Matrix result = new Matrix(getRowDimension(), getColumnDimension());
+        forEach((r, c, v) -> result.setEntry(r, c, mapper.map(r, c, v)));
+        return result;
+
+    }
+
+    public Matrix map(Mapper mapper) {
+        return map((r, c, v) -> mapper.map((v)));
+    }
+
+    public Matrix elementMultiply(Matrix matrix) {
+
+        if (matrix.getRowDimension() != getRowDimension() || matrix.getColumnDimension() != getColumnDimension()) {
+            throw new IllegalArgumentException("Matrices must have the same dimensions");
+        }
+
+        Matrix result = new Matrix(getRowDimension(), getColumnDimension());
+
+        forEach((r, c, v) -> result.setEntry(r, c, v * matrix.getEntry(r, c)));
+
+        return result;
+
+    }
+
+
+    public void setAllEntries(double... values) {
+
+        if (values.length == 1) {
+            forEach((r, c, v) -> setEntry(r, c, values[0]));
+
+        } else if (values.length == getSize()) {
+
+            int k = 0;
+
+            for (int i = 0; i < getRowDimension(); i++) {
+
+                for (int j = 0; j < getColumnDimension(); j++) {
+
+                    setEntry(i, j, values[k++]);
+
+                }
 
             }
-
+        } else {
+            throw new IllegalArgumentException("Number of elements does not match!");
         }
 
     }
@@ -150,12 +212,14 @@ public class Matrix implements RealMatrix, Iterable<Double> {
     }
 
     @Override
-    public void copySubMatrix(int i, int i1, int i2, int i3, double[][] doubles) throws MatrixIndexException, IllegalArgumentException {
+    public void copySubMatrix(int i, int i1, int i2, int i3, double[][] doubles) throws
+                                                                                 MatrixIndexException, IllegalArgumentException {
         backingMatrix.copySubMatrix(i, i1, i2, i3, doubles);
     }
 
     @Override
-    public void copySubMatrix(int[] ints, int[] ints1, double[][] doubles) throws MatrixIndexException, IllegalArgumentException {
+    public void copySubMatrix(int[] ints, int[] ints1, double[][] doubles) throws
+                                                                           MatrixIndexException, IllegalArgumentException {
         backingMatrix.copySubMatrix(ints, ints1, doubles);
     }
 
@@ -295,57 +359,73 @@ public class Matrix implements RealMatrix, Iterable<Double> {
     }
 
     @Override
-    public double walkInRowOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor) throws MatrixVisitorException {
+    public double walkInRowOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor) throws
+                                                                                          MatrixVisitorException {
         return backingMatrix.walkInRowOrder(realMatrixPreservingVisitor);
     }
 
     @Override
-    public double walkInRowOrder(RealMatrixChangingVisitor realMatrixChangingVisitor, int i, int i1, int i2, int i3) throws MatrixIndexException, MatrixVisitorException {
+    public double walkInRowOrder(RealMatrixChangingVisitor realMatrixChangingVisitor, int i, int i1, int i2, int i3) throws
+                                                                                                                     MatrixIndexException, MatrixVisitorException {
         return backingMatrix.walkInRowOrder(realMatrixChangingVisitor, i, i1, i2, i3);
     }
 
     @Override
-    public double walkInRowOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor, int i, int i1, int i2, int i3) throws MatrixIndexException, MatrixVisitorException {
+    public double walkInRowOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor, int i, int i1, int i2,
+                                 int i3) throws
+                                         MatrixIndexException, MatrixVisitorException {
         return backingMatrix.walkInRowOrder(realMatrixPreservingVisitor, i, i1, i2, i3);
     }
 
     @Override
-    public double walkInColumnOrder(RealMatrixChangingVisitor realMatrixChangingVisitor) throws MatrixVisitorException {
+    public double walkInColumnOrder(RealMatrixChangingVisitor realMatrixChangingVisitor) throws
+                                                                                         MatrixVisitorException {
         return backingMatrix.walkInColumnOrder(realMatrixChangingVisitor);
     }
 
     @Override
-    public double walkInColumnOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor) throws MatrixVisitorException {
+    public double walkInColumnOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor) throws
+                                                                                             MatrixVisitorException {
         return backingMatrix.walkInColumnOrder(realMatrixPreservingVisitor);
     }
 
     @Override
-    public double walkInColumnOrder(RealMatrixChangingVisitor realMatrixChangingVisitor, int i, int i1, int i2, int i3) throws MatrixIndexException, MatrixVisitorException {
+    public double walkInColumnOrder(RealMatrixChangingVisitor realMatrixChangingVisitor, int i, int i1, int i2,
+                                    int i3) throws
+                                            MatrixIndexException, MatrixVisitorException {
         return backingMatrix.walkInColumnOrder(realMatrixChangingVisitor, i, i1, i2, i3);
     }
 
     @Override
-    public double walkInColumnOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor, int i, int i1, int i2, int i3) throws MatrixIndexException, MatrixVisitorException {
+    public double walkInColumnOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor, int i, int i1, int i2,
+                                    int i3) throws
+                                            MatrixIndexException, MatrixVisitorException {
         return backingMatrix.walkInColumnOrder(realMatrixPreservingVisitor, i, i1, i2, i3);
     }
 
     @Override
-    public double walkInOptimizedOrder(RealMatrixChangingVisitor realMatrixChangingVisitor) throws MatrixVisitorException {
+    public double walkInOptimizedOrder(RealMatrixChangingVisitor realMatrixChangingVisitor) throws
+                                                                                            MatrixVisitorException {
         return backingMatrix.walkInOptimizedOrder(realMatrixChangingVisitor);
     }
 
     @Override
-    public double walkInOptimizedOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor) throws MatrixVisitorException {
+    public double walkInOptimizedOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor) throws
+                                                                                                MatrixVisitorException {
         return backingMatrix.walkInOptimizedOrder(realMatrixPreservingVisitor);
     }
 
     @Override
-    public double walkInOptimizedOrder(RealMatrixChangingVisitor realMatrixChangingVisitor, int i, int i1, int i2, int i3) throws MatrixIndexException, MatrixVisitorException {
+    public double walkInOptimizedOrder(RealMatrixChangingVisitor realMatrixChangingVisitor, int i, int i1, int i2,
+                                       int i3) throws
+                                               MatrixIndexException, MatrixVisitorException {
         return backingMatrix.walkInOptimizedOrder(realMatrixChangingVisitor, i, i1, i2, i3);
     }
 
     @Override
-    public double walkInOptimizedOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor, int i, int i1, int i2, int i3) throws MatrixIndexException, MatrixVisitorException {
+    public double walkInOptimizedOrder(RealMatrixPreservingVisitor realMatrixPreservingVisitor, int i, int i1,
+                                       int i2, int i3) throws
+                                                       MatrixIndexException, MatrixVisitorException {
         return backingMatrix.walkInOptimizedOrder(realMatrixPreservingVisitor, i, i1, i2, i3);
     }
 
@@ -448,8 +528,36 @@ public class Matrix implements RealMatrix, Iterable<Double> {
         return new QRDecomposition(this);
     }
 
-    public Function polyFitAgainst(Matrix x, int degree) {
+    public Fit polyFitAgainst(Matrix x, int degree) {
         return Maths.polyFit(x, this, degree);
+    }
+
+    public Matrix asSquareDiagonal() {
+
+        int    size   = getSize();
+        Matrix result = new Matrix(size, size);
+
+        int i = 0;
+
+        for (double v : this) {
+            result.setEntry(i, i++, v);
+        }
+
+        return result;
+
+    }
+
+    public Matrix getDiagonals() {
+
+        int    size   = Math.min(getRowDimension(), getColumnDimension());
+        Matrix result = new Matrix(size, 1);
+
+        for (int i = 0; i < size; i++) {
+            result.setEntry(i, 0, getEntry(i, i));
+        }
+
+        return result;
+
     }
 
     @Override
@@ -554,6 +662,12 @@ public class Matrix implements RealMatrix, Iterable<Double> {
 
     }
 
+    public interface Mapper {
+
+        double map(double value);
+
+    }
+
     public Iterable<double[]> getRows() {
 
         return () -> new Iterator<double[]>() {
@@ -635,14 +749,32 @@ public class Matrix implements RealMatrix, Iterable<Double> {
         public Rot2D(double theta) {
 
             super(
-                    2, 2,
-                    +Math.cos(theta), -Math.sin(theta),
-                    +Math.sin(theta), +Math.cos(theta)
+                2, 2,
+                +Math.cos(theta), -Math.sin(theta),
+                +Math.sin(theta), +Math.cos(theta)
             );
 
         }
 
     }
+
+    public static class Identity extends Matrix {
+
+        public Identity(int rows, int columns) {
+
+            super(rows, columns);
+            setAllEntries(0.0);
+
+            for (int i = 0; i < Math.min(rows, columns); i++) {
+
+                setEntry(i, i, 1.0);
+
+            }
+
+        }
+
+    }
+
 
 }
 

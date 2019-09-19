@@ -1,6 +1,7 @@
 package jisa.experiment;
 
 import jisa.gui.Clearable;
+import jisa.maths.Fit;
 import jisa.maths.Maths;
 import jisa.maths.Matrix;
 
@@ -386,7 +387,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
-    public Function polyFit(int xData, int yData, int degree) {
+    public Fit polyFit(int xData, int yData, int degree) {
         return getColumns(yData).polyFitAgainst(getColumns(xData), degree);
     }
 

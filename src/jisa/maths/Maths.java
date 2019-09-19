@@ -25,7 +25,7 @@ public class Maths {
      *
      * @return Polynomial function representing the fit
      */
-    public static Function polyFit(RealMatrix xData, RealMatrix yData, final int degree) {
+    public static Fit polyFit(RealMatrix xData, RealMatrix yData, final int degree) {
 
         Matrix x = Matrix.toMatrix(xData);
         Matrix y = Matrix.toMatrix(yData);
@@ -60,9 +60,41 @@ public class Maths {
             Matrix                 R      = decomp.getR();
             Matrix                 subR   = R.getSubMatrix(0, R.getColumnDimension() - 1, 0, R.getColumnDimension() - 1);
             Matrix                 denom  = Q.transpose().multiply(y).getSubMatrix(0, subR.getColumnDimension() - 1, 0, 0);
-            Matrix                 p      = subR.solve(denom);
+            double[]               p      = Util.reverseArray(subR.solve(denom).to1DArray());
+            Function.PolyFunction  fitted = new Function.PolyFunction(new PolynomialFunction(p));
+            double                 norm   = y.subtract(x.map(fitted::value)).getNorm();
+            Matrix                 covb   = R.transpose().multiply(R).solve(new Matrix.Identity(R.getColumnDimension(), R.getColumnDimension())).multiply(norm * norm / (x.getSize() - degree));
+            Matrix                 se     = covb.getDiagonals().map(Math::sqrt);
+            double[]               errors = Util.reverseArray(se.to1DArray());
 
-            return new Function.PolyFunction(new PolynomialFunction(Util.reverseArray(p.to1DArray())));
+            return new Fit() {
+
+                @Override
+                public double getCoefficient(int order) {
+                    return p[order];
+                }
+
+                @Override
+                public double[] getCoefficients() {
+                    return p.clone();
+                }
+
+                @Override
+                public double getError(int order) {
+                    return errors[order];
+                }
+
+                @Override
+                public double[] getErrors() {
+                    return errors.clone();
+                }
+
+                @Override
+                public Function getFunction() {
+                    return fitted;
+                }
+
+            };
 
         } catch (Throwable e) {
             e.printStackTrace();
@@ -71,7 +103,7 @@ public class Maths {
 
     }
 
-    public static Function polyFit(double[] x, double[] y, int degree) {
+    public static Fit polyFit(double[] x, double[] y, int degree) {
         return polyFit(new Matrix(x), new Matrix(y), 1);
     }
 
@@ -94,8 +126,8 @@ public class Maths {
                     System.arraycopy(doubles, 0, tmpParams, 0, doubles.length);
                     tmpParams[i] *= 1.01;
                     gradients[i] = (toFit.calculate(v, tmpParams) - toFit.calculate(
-                            v,
-                            doubles
+                        v,
+                        doubles
                     )) / (tmpParams[i] - doubles[i]);
 
                 }

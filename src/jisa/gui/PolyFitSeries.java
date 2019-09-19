@@ -3,6 +3,7 @@ package jisa.gui;
 import jisa.experiment.Function;
 import jisa.experiment.Result;
 import jisa.experiment.ResultTable;
+import jisa.maths.Fit;
 import jisa.maths.Maths;
 import jisa.maths.Matrix;
 import jisa.Util;
@@ -55,11 +56,13 @@ public class PolyFitSeries implements Series {
             y.setEntry(i, 0, data.get(i).getYValue());
         }
 
-        Function fitted = Maths.polyFit(x, y, degree);
+        Fit fit = Maths.polyFit(x, y, degree);
 
-        if (fitted == null) {
+        if (fit == null) {
             return;
         }
+
+        Function fitted = fit.getFunction();
 
         GUI.runNow(() -> {
 

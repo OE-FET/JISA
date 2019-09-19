@@ -100,7 +100,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
             rect.setManaged(false);
 
             AnchorPane canvas = new AnchorPane();
-            canvas.setStyle("-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
+            canvas.setStyle(
+                "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
             canvas.setMouseTransparent(true);
             canvas.getChildren().add(rect);
             canvas.setManaged(false);
@@ -584,9 +585,28 @@ public class Plot extends JFXWindow implements Element, Clearable {
             final SimpleObjectProperty<Point2D> startMax   = new SimpleObjectProperty<>();
             final SimpleObjectProperty<Point2D> startMin   = new SimpleObjectProperty<>();
 
+
             chart.setOnMousePressed(event -> {
 
-                if (event.isControlDown() && event.isPrimaryButtonDown()) {
+                if (event.getClickCount() >= 2) {
+
+                    final double xValue = xAxis.getValueForDisplay(
+                        xAxis.sceneToLocal(
+                            event.getSceneX(),
+                            event.getSceneY()
+                        ).getX()
+                    );
+
+                    final double yValue = yAxis.getValueForDisplay(
+                        yAxis.sceneToLocal(
+                            event.getSceneX(),
+                            event.getSceneY()
+                        ).getY()
+                    );
+
+
+
+                } else if (event.isControlDown() && event.isPrimaryButtonDown()) {
 
                     pane.getScene().setCursor(Cursor.CROSSHAIR);
                     Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
