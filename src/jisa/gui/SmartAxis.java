@@ -1,12 +1,14 @@
 package jisa.gui;
 
-import javafx.geometry.Side;
-import javafx.scene.chart.*;
-import jisa.Util;
 import javafx.beans.property.*;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
+import javafx.geometry.Side;
+import javafx.scene.chart.ValueAxis;
+import javafx.scene.chart.XYChart;
 import javafx.util.StringConverter;
+import jisa.Util;
+import jisa.control.RTask;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -15,29 +17,29 @@ import java.util.List;
 
 public final class SmartAxis extends ValueAxis<Double> {
 
-    private       LineChart<Double, Double> chart;
-    private       boolean                   isXAxis;
-    private final StringProperty            currentFormatterProperty = new SimpleStringProperty(
+    private final StringProperty   currentFormatterProperty = new SimpleStringProperty(
         this,
         "currentFormatter",
         ""
     );
-    private final DefaultFormatter          defaultFormatter         = new DefaultFormatter(this);
-    private final LogFormatter              logFormatter             = new LogFormatter();
-    private       Object                    currentAnimationID;
-    private       int                       numTicks                 = 11;
-    private       String                    label                    = "";
-    private       String                    labelSuffix              = "";
-    private       double                    minValue                 = 1.0;
-    private       double                    minNonZero               = Double.POSITIVE_INFINITY;
-    private       double                    maxValue                 = 1.0;
-    private       double                    maxNonZero               = Double.NEGATIVE_INFINITY;
-    private       double                    minValueInRange          = 0.0;
-    private       Mode                      mode                     = Mode.LINEAR;
-    private       double                    range                    = Double.POSITIVE_INFINITY;
-    private       List<Double>              data                     = new LinkedList<>();
-    private       boolean                   empty                    = true;
-    private       List<Double>              majorTicks               = new LinkedList<>();
+    private final DefaultFormatter defaultFormatter         = new DefaultFormatter(this);
+    private final LogFormatter     logFormatter             = new LogFormatter();
+    private       JISAChart        chart;
+    private       boolean          isXAxis;
+    private       Object           currentAnimationID;
+    private       int              numTicks                 = 11;
+    private       String           label                    = "";
+    private       String           labelSuffix              = "";
+    private       double           minValue                 = 1.0;
+    private       double           minNonZero               = Double.POSITIVE_INFINITY;
+    private       double           maxValue                 = 1.0;
+    private       double           maxNonZero               = Double.NEGATIVE_INFINITY;
+    private       double           minValueInRange          = 0.0;
+    private       Mode             mode                     = Mode.LINEAR;
+    private       double           range                    = Double.POSITIVE_INFINITY;
+    private       List<Double>     data                     = new LinkedList<>();
+    private       boolean          empty                    = true;
+    private       List<Double>     majorTicks               = new LinkedList<>();
 
 
     private BooleanProperty forceZeroInRange = new BooleanPropertyBase(true) {
@@ -68,9 +70,10 @@ public final class SmartAxis extends ValueAxis<Double> {
 
         super();
         setMode(Mode.LINEAR);
+
     }
 
-    public void setChart(LineChart<Double, Double> chart) {
+    public void setChart(JISAChart chart) {
         this.chart   = chart;
         this.isXAxis = chart.getXAxis() == this;
     }
@@ -173,6 +176,10 @@ public final class SmartAxis extends ValueAxis<Double> {
 
     }
 
+    public String getLabelText() {
+        return label;
+    }
+
     public void setLabelText(String label) {
 
         this.label = label;
@@ -210,10 +217,8 @@ public final class SmartAxis extends ValueAxis<Double> {
     }
 
     public final DoubleProperty tickUnitProperty() {
-
         return null;
     }
-
 
     @Override
     protected String getTickMarkLabel(Double value) {
@@ -225,7 +230,6 @@ public final class SmartAxis extends ValueAxis<Double> {
         return formatter.toString(value);
     }
 
-
     @Override
     protected Object getRange() {
 
@@ -236,8 +240,8 @@ public final class SmartAxis extends ValueAxis<Double> {
             getScale(),
             currentFormatterProperty.get()
         };
-    }
 
+    }
 
     @Override
     protected void setRange(Object range, boolean animate) {
@@ -255,6 +259,7 @@ public final class SmartAxis extends ValueAxis<Double> {
         setTickUnit(tickUnit);
         currentLowerBound.set(lowerBound);
         setScale(scale);
+
     }
 
     public void invalidateRange(List<Double> data) {
@@ -492,6 +497,7 @@ public final class SmartAxis extends ValueAxis<Double> {
     }
 
     public void setMaxRange(double range) {
+
         this.range = range;
 
         List<Double> data = new LinkedList<>();
@@ -510,8 +516,10 @@ public final class SmartAxis extends ValueAxis<Double> {
 
     public boolean isValueToBeShown(Double value) {
 
+        boolean isXAxis = (this == chart.getXAxis());
+
         if (isAutoRanging()) {
-            return (maxValue - value) <= range;
+            return maxValue - range <= value;
         } else {
             return Util.isBetween(value, getLowerBound(), getUpperBound());
         }
@@ -528,25 +536,33 @@ public final class SmartAxis extends ValueAxis<Double> {
 
         SmartAxis otherAxis = isXAxis ? (SmartAxis) chart.getYAxis() : (SmartAxis) chart.getXAxis();
 
-        for (XYChart.Series<Double, Double> data : chart.getData()) {
+        if (chart.getData() == null) {
+            return getRange();
+        }
 
-            for (XYChart.Data<Double, Double> point : data.getData()) {
+        for (int j = 0; j < chart.getData().size(); j++) {
+
+            XYChart.Series<Double, Double> data = chart.getData().get(j);
+
+            for (int i = 0; i < data.getData().size(); i++) {
+
+                XYChart.Data<Double, Double> point = data.getData().get(i);
 
                 double value = isXAxis ? point.getXValue() : point.getYValue();
                 double other = isXAxis ? point.getYValue() : point.getXValue();
+                double error = isXAxis || point.getExtraValue() == null ? 0.0 : (Double) point.getExtraValue();
 
-                if (!otherAxis.isValueToBeShown(other)) {
-                    continue;
-                }
+                if (otherAxis.isValueToBeShown(other)) {
+                    double absolute = Math.abs(value);
 
-                double absolute = Math.abs(value);
+                    min = Math.min(min, value - error);
+                    max = Math.max(max, value + error);
 
-                min = Math.min(min, value);
-                max = Math.max(max, value);
+                    if (absolute > 0) {
+                        minNonZero = Math.min(minNonZero, absolute);
+                        maxNonZero = Math.max(maxNonZero, absolute);
+                    }
 
-                if (absolute > 0) {
-                    minNonZero = Math.min(minNonZero, absolute);
-                    maxNonZero = Math.max(maxNonZero, absolute);
                 }
 
             }
@@ -554,12 +570,12 @@ public final class SmartAxis extends ValueAxis<Double> {
         }
 
         if (max == Double.NEGATIVE_INFINITY) {
-            max = 0;
+            max   = 0;
             empty = true;
         }
 
         if (min == Double.POSITIVE_INFINITY) {
-            min = 0;
+            min   = 0;
             empty = true;
         }
 
@@ -665,7 +681,7 @@ public final class SmartAxis extends ValueAxis<Double> {
         public Double fromString(String string) {
 
             String[] values = string.split("\\^");
-            return Math.pow(Double.valueOf(values[0]), Double.valueOf(values[1]));
+            return Math.pow(Double.parseDouble(values[0]), Double.parseDouble(values[1]));
         }
 
     }
@@ -706,8 +722,7 @@ public final class SmartAxis extends ValueAxis<Double> {
 
         @Override
         public Double fromString(String string) {
-
-            return Double.valueOf(string) * magnitude;
+            return Double.parseDouble(string) * magnitude;
         }
 
     }

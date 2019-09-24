@@ -4,6 +4,8 @@ import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.*;
 import jisa.control.ERunnable;
 import jisa.control.SRunnable;
 import jisa.devices.DeviceException;
@@ -73,6 +75,38 @@ public class Util {
             toRun.run();
         } catch (Throwable ignored) {
         }
+
+    }
+
+    public static String colourToCSS(Color colour) {
+
+        return String.format(
+            "rgba(%s,%s,%s,%s)",
+            colour.getRed() * 255,
+            colour.getGreen() * 255,
+            colour.getBlue() * 255,
+            colour.getOpacity()
+        );
+
+    }
+
+    public static String pathToSVG(Path path) {
+
+        List<String> list = new LinkedList<>();
+
+        for (PathElement element : path.getElements()) {
+
+            if (element instanceof MoveTo) {
+                list.add(String.format("M%s,%s", ((MoveTo) element).getX(), ((MoveTo) element).getY()));
+            } else if (element instanceof LineTo) {
+                list.add(String.format("L%s,%s", ((LineTo) element).getX(), ((LineTo) element).getY()));
+            } else if (element instanceof ClosePath) {
+                list.add("Z");
+            }
+
+        }
+
+        return String.join(" ", list);
 
     }
 

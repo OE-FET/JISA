@@ -1,5 +1,6 @@
 package jisa.maths;
 
+import javafx.scene.chart.XYChart;
 import jisa.Util;
 import jisa.experiment.Function;
 import jisa.experiment.PFunction;
@@ -12,9 +13,27 @@ import org.apache.commons.math.optimization.fitting.ParametricRealFunction;
 import org.apache.commons.math.optimization.general.GaussNewtonOptimizer;
 import org.apache.commons.math.stat.correlation.PearsonsCorrelation;
 
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 public class Maths {
+
+    public static Fit polyFit(List<XYChart.Data<Double, Double>> data, final int degree) {
+
+        int size = data.size();
+
+        Matrix x = new Matrix(size, 1);
+        Matrix y = new Matrix(size, 1);
+
+        for (int i = 0; i < size; i++) {
+            x.setEntry(i, 0, data.get(i).getXValue());
+            y.setEntry(i, 0, data.get(i).getYValue());
+        }
+
+        return polyFit(x, y, degree);
+
+    }
 
     /**
      * Fit a polynomial of given degree to the data provided as two column matrices x and y.
@@ -97,7 +116,6 @@ public class Maths {
             };
 
         } catch (Throwable e) {
-            e.printStackTrace();
             return null;
         }
 

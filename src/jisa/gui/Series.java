@@ -1,10 +1,12 @@
 package jisa.gui;
 
+import javafx.scene.chart.XYChart;
+import javafx.scene.paint.Color;
 import jisa.experiment.Col;
 import jisa.experiment.Result;
 import jisa.experiment.ResultTable;
-import javafx.scene.chart.XYChart;
-import javafx.scene.paint.Color;
+import jisa.maths.Fit;
+import jisa.maths.Maths;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -12,44 +14,57 @@ import java.util.function.Predicate;
 public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
     Color[] defaultColours = {
-            Color.web("#f3622d"),
-            Color.web("#fba71b"),
-            Color.web("#57b757"),
-            Color.web("#41a9c9"),
-            Color.web("#4258c9"),
-            Color.web("#9a42c8"),
-            Color.web("#c84164"),
-            Color.web("#888888")
+        Color.web("#f3622d"),
+        Color.web("#fba71b"),
+        Color.web("#57b757"),
+        Color.web("#41a9c9"),
+        Color.web("#4258c9"),
+        Color.web("#9a42c8"),
+        Color.web("#c84164"),
+        Color.web("#888888")
     };
 
-    Series watch(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData);
+    Series watch(ResultTable list, ResultTable.Evaluable xData, ResultTable.Evaluable yData, ResultTable.Evaluable eData);
+
+
+    default Series watch(ResultTable list, ResultTable.Evaluable xData, ResultTable.Evaluable yData) {
+        return watch(list, xData, yData, r -> 0);
+    }
+
+    default Series watch(ResultTable list, int xData, int yData, int eData) {
+        return watch(list, r -> r.get(xData), r -> r.get(yData), r -> r.get(eData));
+    }
 
     default Series watch(ResultTable list, int xData, int yData) {
-        return watch(list, r -> r.get(xData), r -> r.get(yData));
+        return watch(list, r -> r.get(xData), r -> r.get(yData), r -> 0);
     }
 
     default Series watch(ResultTable list) {
         return watch(list, 0, 1);
     }
 
-    SeriesGroup split(SmartChart.Evaluable splitBy, String pattern);
+    Series split(ResultTable.Evaluable splitBy, SeriesFormatter pattern);
 
-    default SeriesGroup split(SmartChart.Evaluable splitBy) {
+    default Series split(ResultTable.Evaluable splitBy, String pattern) { return split(splitBy, r -> String.format(pattern, splitBy.evaluate(r))); }
+
+    default Series split(ResultTable.Evaluable splitBy) {
         return split(splitBy, "%s");
     }
 
-    default SeriesGroup split(int colNum, String pattern) {
+    default Series split(int colNum, String pattern) {
         return split(r -> r.get(colNum), pattern);
     }
 
-    default SeriesGroup split(int colNum) {
+    default Series split(int colNum) {
         Col column = getWatched().getColumn(colNum);
         return split(colNum, column.hasUnit() ? "%s " + column.getUnit() : "%s");
     }
 
-    SeriesGroup watchAll(ResultTable list, int xData);
+    Series watchAll(ResultTable list, int xData);
 
-    default SeriesGroup watchAll(ResultTable list) {
+    Series setOnClick(JISAChart.DataHandler onClick);
+
+    default Series watchAll(ResultTable list) {
         return watchAll(list, 0);
     }
 
@@ -57,7 +72,11 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
     Series filter(Predicate<Result> filter);
 
-    Series addPoint(double x, double y);
+    Series addPoint(double x, double y, double error);
+
+    default Series addPoint(double x, double y) {
+        return addPoint(x, y, 0);
+    }
 
     List<XYChart.Data<Double, Double>> getPoints();
 
@@ -73,17 +92,34 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
         return setMarkerShape(shape, 5.0);
     }
 
-    Series setName(String name);
+    Shape getMarkerShape();
+
+    double getMarkerSize();
 
     String getName();
 
-    Series setColour(Color colour);
+    Series setName(String name);
 
     Color getColour();
 
-    Series setLineWidth(double width);
+    Series setColour(Color colour);
+
+    /**
+     * Sets the sequence of colours to use when auto-generating sub-series (for example, when split() is called).
+     *
+     * @param colours The colours in order that they should be used.
+     *
+     * @return Self-reference.
+     */
+    Series setColourSequence(Color... colours);
 
     double getLineWidth();
+
+    Series setLineWidth(double width);
+
+    Series setLineDash(Dash dash);
+
+    Dash getLineDash();
 
     Series showLine(boolean show);
 
@@ -111,13 +147,27 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
     Series remove();
 
-    Series updateLimits();
+    Series fit(JISAChart.Fitter fitter);
 
-    Series restore();
+    default Series polyFit(final int degree) {
 
-    Series polyFit(int degree);
+        return fit((data) -> {
 
-    void updateStyles();
+            if (data.size() < degree) {
+                return null;
+            }
+
+            return Maths.polyFit(data, degree);
+
+        });
+
+    }
+
+    Fit getFit();
+
+    JISAChart.Fitter getFitter();
+
+    boolean isFitted();
 
     XYChart.Series<Double, Double> getXYChartSeries();
 
@@ -130,6 +180,33 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
         TRIANGLE,
         STAR,
         DASH
+    }
+
+    enum Dash {
+
+        SOLID(),
+        DASHED(5.0, 5.0),
+        DOTTED(1.0, 5.0),
+        TWO_DASH(20.0, 5.0, 10.0, 5.0),
+        DOT_DASH(1.0, 5.0, 5.0, 5.0),
+        LONG_DASH(40.0, 5.0);
+
+        private Double[] array;
+
+        Dash(Double... array) {
+            this.array = array;
+        }
+
+        public Double[] getArray() {
+            return array;
+        }
+
+    }
+
+    interface SeriesFormatter {
+
+        String getName(Result row);
+
     }
 
 }

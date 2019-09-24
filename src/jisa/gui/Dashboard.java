@@ -124,12 +124,12 @@ public class Dashboard extends Grid {
 
                 if (plotted.checkBox.get()) {
 
-                    plotted.plot.clear();
-                    plotted.plot.createSeries()
-                                .watch(stream, 0, j)
-                                .setName("Data")
-                                .setColour(Series.defaultColours[(j - 1) % Series.defaultColours.length])
-                                .showMarkers(false);
+//                    plotted.plot.clear();
+//                    plotted.plot.createSeries()
+//                                .watch(stream, 0, j)
+//                                .setName("Data")
+//                                .setColour(Series.defaultColours[(j - 1) % Series.defaultColours.length])
+//                                .showMarkers(false);
 
                     System.out.println(Series.defaultColours[(j - 1) % Series.defaultColours.length].toString());
 

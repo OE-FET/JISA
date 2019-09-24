@@ -184,8 +184,9 @@ public abstract class ResultTable implements Iterable<Result> {
         toClear.add(c);
     }
 
-    public void addOnUpdate(OnUpdate o) {
+    public OnUpdate addOnUpdate(OnUpdate o) {
         onUpdate.add(o);
+        return o;
     }
 
     public void removeOnUpdate(OnUpdate o) {
@@ -507,9 +508,9 @@ public abstract class ResultTable implements Iterable<Result> {
                 ResultTable.this.updateColumns();
             }
 
-            public void addOnUpdate(OnUpdate onUpdate) {
+            public OnUpdate addOnUpdate(OnUpdate onUpdate) {
 
-                ResultTable.this.addOnUpdate(r -> {
+                return ResultTable.this.addOnUpdate(r -> {
                     if (filter.test(r)) {
                         onUpdate.run(r);
                     }

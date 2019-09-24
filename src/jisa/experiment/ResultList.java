@@ -70,6 +70,8 @@ public class ResultList extends ResultTable {
 
         }
 
+        reader.close();
+
         return list;
 
     }

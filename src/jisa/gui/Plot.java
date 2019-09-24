@@ -1,52 +1,50 @@
 package jisa.gui;
 
-import javafx.scene.Cursor;
-import javafx.scene.control.Slider;
-import javafx.scene.layout.HBox;
-import jisa.experiment.Function;
-import jisa.experiment.Result;
-import jisa.experiment.ResultTable;
-import jisa.Util;
-import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
-import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.util.StringConverter;
+import jisa.Util;
+import jisa.experiment.ResultTable;
+import jisa.gui.svg.*;
 
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-import java.util.function.Predicate;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Plot extends JFXWindow implements Element, Clearable {
 
-    public  BorderPane                pane;
-    public  ToolBar                   toolbar;
-    public  Pane                      stack;
-    public  LineChart<Double, Double> chart;
-    public  SmartAxis                 xAxis;
-    public  SmartAxis                 yAxis;
-    public  ToggleButton              autoButton;
-    public  ToggleButton              zoomButton;
-    public  ToggleButton              dragButton;
-    public  HBox                      sliderBox;
-    public  Slider                    rangeSliderX;
-    private SmartChart                controller;
-    private Rectangle                 rect;
-    private Series                    autoSeries = null;
+    public  BorderPane   pane;
+    public  ToolBar      toolbar;
+    public  Pane         stack;
+    public  JISAChart    chart;
+    public  SmartAxis    xAxis;
+    public  SmartAxis    yAxis;
+    public  ToggleButton autoButton;
+    public  ToggleButton zoomButton;
+    public  ToggleButton dragButton;
+    public  HBox         sliderBox;
+    public  Slider       rangeSliderX;
+    private Rectangle    rect;
+    private Series       autoSeries = null;
 
     /**
      * Creates an empty plot from the given title, x-axis label, and y-axis label.
@@ -59,16 +57,10 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         super(title, Plot.class.getResource("fxml/PlotWindow.fxml"));
 
-        xAxis = new SmartAxis();
-        xAxis.setSide(Side.BOTTOM);
-
-        yAxis = new SmartAxis();
-        yAxis.setSide(Side.LEFT);
-
-        chart = new LineChart<>(xAxis, yAxis);
+        chart = new JISAChart();
         chart.setMinHeight(400);
-        xAxis.setChart(chart);
-        yAxis.setChart(chart);
+        xAxis = (SmartAxis) chart.getXAxis();
+        yAxis = (SmartAxis) chart.getYAxis();
 
         AnchorPane.setBottomAnchor(chart, 0.0);
         AnchorPane.setTopAnchor(chart, 0.0);
@@ -112,7 +104,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
             sliderBox.setVisible(false);
             sliderBox.setManaged(false);
 
-
         });
 
         rangeSliderX.valueProperty().addListener((a, b, c) -> {
@@ -145,44 +136,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         });
 
-        controller = new SmartChart(chart, xAxis, yAxis);
-    }
-
-    /**
-     * Creates a plot that automatically tracks and plots a ResultTable (ResultList or ResultStream) object, specifying
-     * which columns to plot, the name of the data series and its colour.
-     *
-     * @param title      Title for the plot
-     * @param list       The ResultTable (ResultList/ResultStream) to track
-     * @param xData      Column number to plot on the x-axis
-     * @param yData      Column number to plot on the y-axis
-     * @param seriesName The name of the data series to create
-     * @param colour     The colour to use for the plotted points and line
-     */
-    public Plot(String title, ResultTable list, int xData, int yData, String seriesName, Color colour) {
-
-        this(title, list.getTitle(xData), list.getTitle(yData));
-        autoSeries = watchList(list, xData, yData, seriesName, colour);
-    }
-
-    /**
-     * Creates a plot that automatically tracks and plots a ResultTable (ResultList or ResultStream) object, specifying
-     * which two columns to plot. Colour and series name automatically chosen.
-     *
-     * @param title Title for the plot
-     * @param list  The ResultTable to track
-     * @param xData Column number to plot on the x-axis
-     * @param yData Column number to plot on the y-axis
-     */
-    public Plot(String title, ResultTable list, int xData, int yData) {
-
-        this(title, list, xData, yData, list.getTitle(yData), null);
-    }
-
-    public Plot(String title, ResultTable list, int xData, int yData, int sData) {
-
-        this(title, list.getTitle(xData), list.getTitle(yData));
-        autoSeries = watchListSplit(list, xData, yData, sData);
     }
 
     public Plot(String title, String xLabel) {
@@ -195,22 +148,34 @@ public class Plot extends JFXWindow implements Element, Clearable {
         this(title, "", "");
     }
 
-    public Plot(String title, ResultTable list, int xData) {
+    public Plot(String title, ResultTable toWatch) {
 
         this(title);
-        watchAll(list, xData);
+        autoSeries = createSeries().watchAll(toWatch);
+
     }
 
-    /**
-     * Creates a plot that automatically tracks and plots the first two columns of a ResultTable. Column 0 on the x-axis
-     * and column 1 on the y-axis. Series name and colour automatically chosen.
-     *
-     * @param title The title of the plot
-     * @param list  The ResultTable to track
-     */
-    public Plot(String title, ResultTable list) {
+    public Plot(String title, ResultTable toWatch, int xData) {
 
-        this(title, list, 0);
+        this(title);
+        autoSeries = createSeries().watchAll(toWatch, xData);
+
+    }
+
+
+    public Plot(String title, ResultTable toWatch, int xData, int yData) {
+
+        this(title);
+        autoSeries = createSeries().watch(toWatch, xData, yData);
+
+    }
+
+
+    public Plot(String title, ResultTable toWatch, int xData, int yData, int sData) {
+
+        this(title);
+        autoSeries = createSeries().watch(toWatch, xData, yData).split(sData);
+
     }
 
     public void setYAxisType(AxisType type) {
@@ -246,23 +211,11 @@ public class Plot extends JFXWindow implements Element, Clearable {
     }
 
     public void setPointOrdering(Sort ordering) {
+        chart.setAxisSortingPolicy(ordering);
+    }
 
-        switch (ordering) {
-
-            case X_AXIS:
-                chart.setAxisSortingPolicy(LineChart.SortingPolicy.X_AXIS);
-                break;
-
-            case Y_AXIS:
-                chart.setAxisSortingPolicy(LineChart.SortingPolicy.Y_AXIS);
-                break;
-
-            case ORDER_ADDED:
-                chart.setAxisSortingPolicy(LineChart.SortingPolicy.NONE);
-                break;
-
-        }
-
+    public Series createSeries() {
+        return chart.createSeries();
     }
 
     /**
@@ -273,197 +226,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
     public Series getAutoSeries() {
 
         return autoSeries;
-    }
-
-    public Series createSeries(String name, Color colour) {
-
-        return controller.createSeries(name, colour);
-    }
-
-    public Series createSeries(String name) {
-
-        return createSeries(name, null);
-    }
-
-    public Series createSeries() {
-
-        return createSeries(String.format("Series %d", chart.getData().size() + 1));
-    }
-
-    public Series watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, Predicate<Result> filter, String name, Color colour) {
-
-        return controller.createWatchSeries(name, colour, list, xData, yData, filter);
-    }
-
-    public Series watchListPolyFit(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, Predicate<Result> filter, String name, Color colour, int degree) {
-
-        return controller.createWatchSeries(name, colour, list, xData, yData, filter);
-    }
-
-    public Series watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, String name, Color colour) {
-
-        return watchList(list, xData, yData, null, name, colour);
-    }
-
-    public Series watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, String name) {
-
-        return watchList(list, xData, yData, null, name, null);
-    }
-
-    public Series watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, Predicate<Result> filter) {
-
-        return watchList(list, xData, yData, filter, String.format("Series %d", chart.getData().size() + 1), null);
-    }
-
-    public Series watchList(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData) {
-
-        return watchList(list, xData, yData, (Predicate<Result>) null);
-    }
-
-    public Series watchList(ResultTable list, int xData, int yData, Predicate<Result> filter, String name, Color colour) {
-
-        if (getXLabel().equals("")) {
-            setXLabel(list.getTitle(xData));
-        }
-
-        if (getYLabel().equals("")) {
-            setYLabel(list.getTitle(yData));
-        }
-
-        return watchList(list, r -> r.get(xData), r -> r.get(yData), filter, name, colour);
-    }
-
-    public Series watchList(ResultTable list, int xData, int yData, String name, Color colour) {
-
-        return watchList(list, xData, yData, null, name, colour);
-    }
-
-    public Series watchList(ResultTable list, int xData, int yData, String name) {
-
-        return watchList(list, xData, yData, name, null);
-    }
-
-    public Series watchList(ResultTable list, int xData, int yData, Predicate<Result> filter, String name) {
-
-        return watchList(list, xData, yData, filter, name, null);
-    }
-
-    public Series watchList(ResultTable list, int xData, int yData, Predicate<Result> filter) {
-
-        return watchList(list, xData, yData, filter, list.getTitle(yData));
-    }
-
-    public Series watchList(ResultTable list, int xData, int yData) {
-
-        return watchList(list, xData, yData, (Predicate<Result>) null);
-    }
-
-    public Series watchList(ResultTable list, String name, Color colour) {
-
-        return watchList(list, 0, 1, name, colour);
-    }
-
-    public Series watchList(ResultTable list, String name) {
-
-        return watchList(list, name, null);
-    }
-
-    public Series watchList(ResultTable list) {
-
-        return watchList(list, list.getTitle(1), null);
-    }
-
-    public SeriesGroup watchListSplit(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, SmartChart.Evaluable sData, Predicate<Result> filter, String pattern) {
-
-        return controller.createAutoSeries(list, xData, yData, sData, pattern, filter);
-    }
-
-    public SeriesGroup watchListSplit(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, SmartChart.Evaluable sData, String pattern) {
-
-        return watchListSplit(list, xData, yData, sData, null, pattern);
-    }
-
-    public SeriesGroup watchListSplit(ResultTable list, SmartChart.Evaluable xData, SmartChart.Evaluable yData, SmartChart.Evaluable sData) {
-
-        return watchListSplit(list, xData, yData, sData, null, "%s");
-    }
-
-    public SeriesGroup watchListSplit(ResultTable list, int xData, int yData, int sData, Predicate<Result> filter, String pattern) {
-
-        if (getXLabel().equals("")) {
-            setXLabel(list.getTitle(xData));
-        }
-
-        if (getYLabel().equals("")) {
-            setYLabel(list.getTitle(yData));
-        }
-
-        return watchListSplit(list, r -> r.get(xData), r -> r.get(yData), r -> r.get(sData), filter, pattern);
-    }
-
-    public SeriesGroup watchListSplit(ResultTable list, int xData, int yData, int sData, Predicate<Result> filter) {
-
-        return watchListSplit(list, xData, yData, sData, filter,
-                              list.getColumn(yData).hasUnit() ? "%s " + list.getUnits(sData) : "%s"
-        );
-    }
-
-    public SeriesGroup watchListSplit(ResultTable list, int xData, int yData, int sData, String pattern) {
-
-        return watchListSplit(list, xData, yData, sData, null, pattern);
-    }
-
-    public SeriesGroup watchListSplit(ResultTable list, int xData, int yData, int sData) {
-
-        return watchListSplit(list, xData, yData, sData, (Predicate<Result>) null);
-    }
-
-    public SeriesGroup watchAll(ResultTable list, int xData) {
-
-        Series[] series = new Series[list.getNumCols() - 1];
-
-        if (getYLabel().equals("")) {
-            setYLabel("Values");
-        }
-
-        int j = 0;
-        for (int i = 0; i < list.getNumCols(); i++) {
-
-            if (i == xData) {
-                continue;
-            }
-
-            series[j] = watchList(list, xData, i);
-            j++;
-
-        }
-
-        return new SeriesCluster(series);
-
-    }
-
-    public SeriesGroup watchAll(ResultTable list) {
-
-        return watchAll(list, 0);
-    }
-
-
-    public Series plotFunction(Function toPlot, String name, Color colour) {
-
-        return controller.createFunctionSeries(name, colour, toPlot);
-    }
-
-    public Series plotFunction(Function toPlot, double minX, double maxX, int steps, String name, Color colour) {
-
-        Series s = createSeries(name, colour);
-        s.showMarkers(false);
-
-        for (double x : Util.makeLinearArray(minX, maxX, steps)) {
-            s.addPoint(x, toPlot.value(x));
-        }
-
-        return s;
-
     }
 
     public void showToolbar(boolean flag) {
@@ -496,23 +258,19 @@ public class Plot extends JFXWindow implements Element, Clearable {
     }
 
     public String getXLabel() {
-
-        return controller.getXLabel();
+        return xAxis.getLabelText();
     }
 
     public void setXLabel(String label) {
-
-        controller.setXLabel(label);
+        xAxis.setLabelText(label);
     }
 
     public String getYLabel() {
-
-        return controller.getYLabel();
+        return yAxis.getLabelText();
     }
 
     public void setYLabel(String label) {
-
-        controller.setYLabel(label);
+        yAxis.setLabelText(label);
     }
 
     public void setZoomMode() {
@@ -557,9 +315,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
             final double minY = yAxis.getValueForDisplay(Math.min(first.get().getY(), pointY.getY()));
             final double maxY = yAxis.getValueForDisplay(Math.max(first.get().getY(), pointY.getY()));
 
-            controller.setLimits(Math.min(minX, maxX), Math.max(minX, maxX), Math.min(minY, maxY),
-                                 Math.max(minY, maxY)
-            );
+            setXLimits(Math.min(minX, maxX), Math.max(minX, maxX));
+            setYLimits(Math.min(minY, maxY), Math.max(minY, maxY));
 
             rect.setWidth(0);
             rect.setHeight(0);
@@ -588,25 +345,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             chart.setOnMousePressed(event -> {
 
-                if (event.getClickCount() >= 2) {
-
-                    final double xValue = xAxis.getValueForDisplay(
-                        xAxis.sceneToLocal(
-                            event.getSceneX(),
-                            event.getSceneY()
-                        ).getX()
-                    );
-
-                    final double yValue = yAxis.getValueForDisplay(
-                        yAxis.sceneToLocal(
-                            event.getSceneX(),
-                            event.getSceneY()
-                        ).getY()
-                    );
-
-
-
-                } else if (event.isControlDown() && event.isPrimaryButtonDown()) {
+                if (event.isSecondaryButtonDown()) {
 
                     pane.getScene().setCursor(Cursor.CROSSHAIR);
                     Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
@@ -615,22 +354,23 @@ public class Plot extends JFXWindow implements Element, Clearable {
                     firstZoom.set(new Point2D(pointX.getX(), pointY.getY()));
                     rect.setVisible(true);
                     rect.setManaged(true);
-                } else if (event.isPrimaryButtonDown()) {
+                } else if ((event.isPrimaryButtonDown() && event.isControlDown()) || event.isMiddleButtonDown()) {
                     pane.getScene().setCursor(Cursor.MOVE);
                     Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
                     Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
                     startMin.set(new Point2D(xAxis.getLowerBound(), yAxis.getLowerBound()));
                     startMax.set(new Point2D(xAxis.getUpperBound(), yAxis.getUpperBound()));
                     start.set(new Point2D(pointX.getX(), pointY.getY()));
-                } else if (event.isSecondaryButtonDown()) {
-                    controller.autoLimits();
+                } else if (event.getClickCount() >= 2) {
+                    autoXLimits();
+                    autoYLimits();
                 }
 
             });
 
             chart.setOnMouseDragged(event -> {
 
-                if (event.isControlDown() && event.isPrimaryButtonDown()) {
+                if (event.isSecondaryButtonDown()) {
 
                     final double x = Math.max(0, Math.min(stack.getWidth(), event.getX()));
                     final double y = Math.max(0, Math.min(stack.getHeight(), event.getY()));
@@ -639,7 +379,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
                     rect.setWidth(Math.abs(x - startZoom.get().getX()));
                     rect.setHeight(Math.abs(y - startZoom.get().getY()));
 
-                } else if (event.isPrimaryButtonDown()) {
+                } else if ((event.isPrimaryButtonDown() && event.isControlDown()) || event.isMiddleButtonDown()) {
 
                     Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
                     Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
@@ -653,12 +393,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
                     final double maxX = startMax.get().getX() - diffX;
                     final double maxY = startMax.get().getY() - diffY;
 
-                    controller.setLimits(
-                        Math.min(minX, maxX),
-                        Math.max(minX, maxX),
-                        Math.min(minY, maxY),
-                        Math.max(minY, maxY)
-                    );
+                    setXLimits(Math.min(minX, maxX), Math.max(minX, maxX));
+                    setYLimits(Math.min(minY, maxY), Math.max(minY, maxY));
 
                 }
 
@@ -668,7 +404,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
                 pane.getScene().setCursor(Cursor.DEFAULT);
 
-                if (event.isControlDown()) {
+                if (rect.isVisible() && rect.getWidth() > 0 && rect.getHeight() > 0) {
 
                     final Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
                     final Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
@@ -678,15 +414,19 @@ public class Plot extends JFXWindow implements Element, Clearable {
                     final double minY = yAxis.getValueForDisplay(Math.min(firstZoom.get().getY(), pointY.getY()));
                     final double maxY = yAxis.getValueForDisplay(Math.max(firstZoom.get().getY(), pointY.getY()));
 
-                    controller.setLimits(Math.min(minX, maxX), Math.max(minX, maxX), Math.min(minY, maxY),
-                                         Math.max(minY, maxY)
-                    );
+                    setXLimits(Math.min(minX, maxX), Math.max(minX, maxX));
+                    setYLimits(Math.min(minY, maxY), Math.max(minY, maxY));
 
                     rect.setWidth(0);
                     rect.setHeight(0);
                     rect.setVisible(false);
                     rect.setManaged(false);
 
+                } else if (rect.isVisible()) {
+                    rect.setWidth(0);
+                    rect.setHeight(0);
+                    rect.setVisible(false);
+                    rect.setManaged(false);
                 }
 
             });
@@ -736,12 +476,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
             final double maxX = startMax.get().getX() - diffX;
             final double maxY = startMax.get().getY() - diffY;
 
-            controller.setLimits(
-                Math.min(minX, maxX),
-                Math.max(minX, maxX),
-                Math.min(minY, maxY),
-                Math.max(minY, maxY)
-            );
+            setXLimits(Math.min(minX, maxX), Math.max(minX, maxX));
+            setYLimits(Math.min(minY, maxY), Math.max(minY, maxY));
 
         });
 
@@ -759,7 +495,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
         chart.setOnMouseDragged(null);
         chart.setOnMouseReleased(null);
 
-        controller.autoLimits();
+        autoXLimits();
+        autoYLimits();
 
     }
 
@@ -771,7 +508,12 @@ public class Plot extends JFXWindow implements Element, Clearable {
      */
     public void setXLimits(final double min, final double max) {
 
-        controller.setXLimits(min, max);
+        GUI.runNow(() -> {
+            xAxis.setAutoRanging(false);
+            xAxis.setLowerBound(min);
+            xAxis.setUpperBound(max);
+        });
+
     }
 
     /**
@@ -782,11 +524,15 @@ public class Plot extends JFXWindow implements Element, Clearable {
      */
     public void setYLimits(final double min, final double max) {
 
-        controller.setYLimits(min, max);
+        GUI.runNow(() -> {
+            yAxis.setAutoRanging(false);
+            yAxis.setLowerBound(min);
+            yAxis.setUpperBound(max);
+        });
     }
 
     public void setLegendPosition(Side position) {
-        chart.setLegendSide(position);
+        GUI.runNow(() -> chart.setLegendSide(position));
     }
 
     public void showLegend(boolean show) {
@@ -798,33 +544,39 @@ public class Plot extends JFXWindow implements Element, Clearable {
      * Sets the x-axis to automatically choose its bounds.
      */
     public void autoXLimits() {
-
-        controller.autoXLimits();
+        GUI.runNow(() -> {
+            xAxis.setMaxRange(Double.POSITIVE_INFINITY);
+            xAxis.setAutoRanging(true);
+        });
     }
 
     /**
      * Sets the y-axis to automatically choose its bounds.
      */
     public void autoYLimits() {
-
-        Platform.runLater(() -> yAxis.setAutoRanging(true));
-        controller.autoYLimits();
+        GUI.runNow(() -> {
+            yAxis.setMaxRange(Double.POSITIVE_INFINITY);
+            yAxis.setAutoRanging(true);
+        });
     }
 
     public void setXAutoTrack(double range) {
-
-        controller.setTrackingX(range);
+        GUI.runNow(() -> {
+            xAxis.setMaxRange(range);
+            xAxis.setAutoRanging(true);
+        });
     }
 
     public void setYAutoTrack(double range) {
-
-        controller.setTrackingY(range);
+        GUI.runNow(() -> {
+            yAxis.setMaxRange(range);
+            yAxis.setAutoRanging(true);
+        });
     }
 
     public void show() {
 
         super.show();
-        controller.updateSeries();
         adjustSize();
     }
 
@@ -864,8 +616,235 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
-    public void saveSVG(String path, double w, double h) throws IOException {
-        controller.writeSVG(w, h, path);
+    public void saveSVG(String fileName, double width, double height) throws IOException {
+
+        SVGElement main = new SVGElement("g");
+
+        main.setAttribute("font-family", "sans-serif")
+            .setAttribute("font-size", 12);
+
+        double aStartX = 100.0;
+        double aStartY = height + 65.0;
+        double aEndX   = 100.0 + width;
+        double aEndY   = 65.0;
+
+        SVGLine xAxis = new SVGLine(aStartX - 0.5, aStartY, aEndX, aStartY);
+        SVGLine yAxis = new SVGLine(aStartX, aStartY + 0.5, aStartX, aEndY);
+
+        SVGElement clip = new SVGElement("clipPath");
+        clip.setAttribute("id", "lineClip");
+
+        SVGElement clipPath = new SVGElement("rect");
+
+        clipPath.setAttribute("x", aStartX)
+                .setAttribute("y", aEndY)
+                .setAttribute("width", width)
+                .setAttribute("height", height);
+
+        clipPath.setStrokeColour("none");
+        clipPath.setFillColour("none");
+
+        clip.add(clipPath);
+        main.add(clip);
+
+        SVGText title = new SVGText((aStartX + aEndX) / 2, 50.0, "middle", chart.getTitle());
+        title.setAttribute("font-size", "20px");
+        main.add(title);
+
+        xAxis.setStrokeWidth(1)
+             .setStrokeColour(Color.GREY);
+
+        yAxis.setStrokeWidth(1)
+             .setStrokeColour(Color.GREY);
+
+        List<Double> xTicks = this.xAxis.getMajorTicks();
+        List<Double> yTicks = this.yAxis.getMajorTicks();
+
+        double xScale = (aEndX - aStartX) / this.xAxis.getWidth();
+        double yScale = (aEndY - aStartY) / this.yAxis.getHeight();
+
+        StringConverter<Double> formatterX = this.xAxis.getTickLabelFormatter();
+        StringConverter<Double> formatterY = this.yAxis.getTickLabelFormatter();
+
+        for (Double x : xTicks) {
+
+            double pos = xScale * this.xAxis.getDisplayPosition(x) + aStartX;
+
+            if (!Util.isBetween(pos, aStartX, aEndX)) {
+                continue;
+            }
+
+            SVGLine tick = new SVGLine(pos, aStartY, pos, aStartY + 10);
+
+            tick.setStrokeWidth(1)
+                .setStrokeColour(Colour.GREY);
+
+            SVGLine grid = new SVGLine(pos, aStartY, pos, aEndY);
+
+            grid.setStrokeWidth(0.5)
+                .setStrokeColour(Colour.SILVER)
+                .setDash("5", "5");
+
+            main.add(tick);
+            main.add(grid);
+
+            SVGText label = new SVGText(pos, aStartY + 26.0, "middle", formatterX.toString(x));
+            main.add(label);
+
+        }
+
+        SVGText xLabel = new SVGText((aEndX + aStartX) / 2, aStartY + 75.0, "middle", this.xAxis.getLabel());
+        xLabel.setAttribute("font-size", "16px");
+        main.add(xLabel);
+
+        for (Double y : yTicks) {
+
+            double pos = aEndY - yScale * this.yAxis.getDisplayPosition(y);
+
+            if (!Util.isBetween(pos, aEndY, aStartY)) {
+                continue;
+            }
+
+            SVGLine tick = new SVGLine(aStartX, pos, aStartX - 10, pos);
+
+            tick.setStrokeWidth(1)
+                .setStrokeColour(Colour.GREY);
+            SVGLine grid = new SVGLine(aStartX, pos, aEndX, pos);
+
+            grid.setStrokeWidth(0.5)
+                .setStrokeColour(Colour.SILVER)
+                .setDash("5", "5");
+            main.add(tick);
+            main.add(grid);
+
+            SVGText label = new SVGText(aStartX - 12.0, pos + 4.0, "end", formatterY.toString(y));
+            main.add(label);
+
+        }
+
+        SVGText yLabel = new SVGText(aStartX - 75.0, (aEndY + aStartY) / 2, "middle", this.yAxis.getLabel());
+        yLabel.setAttribute("transform", String.format("rotate(-90 %s %s)", aStartX - 75.0, (aEndY + aStartY) / 2))
+              .setAttribute("font-size", "16px");
+        main.add(yLabel);
+
+        main.add(xAxis);
+        main.add(yAxis);
+
+        SVGElement legend = new SVGElement("rect");
+
+        legend.setStrokeWidth(1.0)
+              .setStrokeColour(Color.SILVER)
+              .setFillColour(Color.web("#f5f5f5"));
+
+
+        double legendH = (chart.getData().size() * 25) + 5.0;
+        double legendX = aEndX + 25.0;
+        double legendY = ((aEndY + aStartY) / 2) - (legendH / 2);
+
+        double legendW = 0.0;
+
+        for (XYChart.Series s : chart.getData()) {
+            legendW = Math.max(legendW, (10.0 * s.getName().length()) + 15.0 + 5 + 3 + 20.0);
+        }
+
+        legend.setAttribute("x", legendX)
+              .setAttribute("y", legendY)
+              .setAttribute("width", legendW)
+              .setAttribute("height", legendH)
+              .setAttribute("rx", 5)
+              .setAttribute("ry", 5);
+
+        if (chart.isLegendVisible()) {
+            main.add(legend);
+        } else {
+            legendW = 0;
+        }
+
+        int i = 0;
+        for (Series s : chart.getSeries()) {
+
+            Color  c = s.getColour();
+            double w = s.getLineWidth();
+
+            List<String> terms = new LinkedList<>();
+
+            SVGCircle legendCircle = new SVGCircle(legendX + 15.0, legendY + (25 * i) + 15.0, 5);
+
+            legendCircle.setStrokeColour(c)
+                        .setFillColour(Color.WHITE)
+                        .setStrokeWidth(3);
+
+
+            SVGText legendText = new SVGText(
+                legendX + 15.0 + 5 + 3 + 10,
+                legendY + (25 * i) + 15.0 + 5,
+                "beginning",
+                s.getName()
+            );
+
+            legendText.setAttribute("font-size", "16px");
+
+            if (chart.isLegendVisible()) {
+                main.add(legendCircle);
+                main.add(legendText);
+            }
+
+            boolean first = true;
+
+            List<SVGElement> list = new LinkedList<>();
+
+            double lastX = -1;
+            double lastY = -1;
+
+            for (XYChart.Data<Double, Double> point : s.getXYChartSeries().getData()) {
+
+                double x = aStartX + xScale * this.xAxis.getDisplayPosition(point.getXValue());
+                double y = aEndY - yScale * this.yAxis.getDisplayPosition(point.getYValue());
+
+                if (!Util.isBetween(x, aStartX, aEndX) || !Util.isBetween(y, aEndY, aStartY)) {
+                    continue;
+                }
+
+                terms.add(String.format("%s%s %s", first ? "M" : "L", x, y));
+
+                if (s.isShowingMarkers()) {
+
+                    SVGCircle circle = new SVGCircle(x, y, 5);
+
+                    circle.setStrokeColour(c)
+                          .setFillColour(Color.WHITE)
+                          .setStrokeWidth(3);
+
+                    list.add(circle);
+
+                }
+
+                first = false;
+
+            }
+
+            SVGPath path = new SVGPath(String.join(" ", terms));
+            path.setAttribute("clip-path", "url(#lineClip)");
+
+            path.setStrokeColour(c)
+                .setStrokeWidth(w)
+                .setStyle("fill", "none");
+
+            main.add(path);
+
+            list.forEach(main::add);
+
+            i++;
+
+        }
+
+
+        SVG svg = new SVG(width + legendW + 50.0 + 100.0, height + 60.0 + 100.0);
+        svg.add(main);
+
+        svg.output(fileName);
+
+
     }
 
     public void saveSVG(String path) throws IOException {
@@ -902,8 +881,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     @Override
     public synchronized void clear() {
-
-        controller.clear();
+        GUI.runNow(() -> chart.getData().clear());
     }
 
     public enum AxisType {
