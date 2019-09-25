@@ -15,47 +15,34 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-public class DeviceShell {
+public class DeviceShell extends JFXWindow {
 
     public  ListView   terminal;
     public  TextField  input;
-    private Stage      stage;
     private Address    address;
     private VISADevice device = null;
 
     public DeviceShell(Address address) {
 
+        super(String.format("Device Shell: %s", address.toString()), DeviceShell.class.getResource("fxml/DeviceShell.fxml"));
+
         this.address = address;
 
-        try {
-
-            FXMLLoader loader = new FXMLLoader(DeviceShell.class.getResource("fxml/DeviceShell.fxml"));
-            loader.setController(this);
-            Parent root  = loader.load();
-            Scene  scene = new Scene(root);
-            GUI.runNow(() -> {
-                Stage stage = new Stage();
-                stage.setTitle(String.format("Device Shell: %s", address.toString()));
-                stage.setScene(scene);
-                this.stage = stage;
-                input.setDisable(true);
-                this.stage.setOnCloseRequest((we) -> {
-                    if (device != null) {
-                        addStatusLine("Closing connection...");
-                        try {
-                            device.close();
-                            addSuccessLine("Connection closed.");
-                        } catch (IOException e) {
-                            addErrorLine(e.getMessage());
-                        }
+        GUI.runNow(() -> {
+            input.setDisable(true);
+            this.stage.setOnCloseRequest((we) -> {
+                if (device != null) {
+                    addStatusLine("Closing connection...");
+                    try {
+                        device.close();
+                        addSuccessLine("Connection closed.");
+                    } catch (IOException e) {
+                        addErrorLine(e.getMessage());
                     }
-                    stage.close();
-                });
+                }
+                stage.close();
             });
-
-        } catch (IOException ignored) {
-
-        }
+        });
 
     }
 
@@ -95,12 +82,12 @@ public class DeviceShell {
         try {
             device.write(line);
             addInputLine(line);
-        } catch (Exception e)
-    {
-        addErrorLine(e.getMessage());
+        } catch (Exception e) {
+            addErrorLine(e.getMessage());
+        }
+
     }
 
-}
     public void readLine() {
 
         try {
