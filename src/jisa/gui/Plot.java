@@ -93,7 +93,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             AnchorPane canvas = new AnchorPane();
             canvas.setStyle(
-                "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
+                    "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
             canvas.setMouseTransparent(true);
             canvas.getChildren().add(rect);
             canvas.setManaged(false);
@@ -776,10 +776,10 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
 
             SVGText legendText = new SVGText(
-                legendX + 15.0 + 5 + 3 + 10,
-                legendY + (25 * i) + 15.0 + 5,
-                "beginning",
-                s.getName()
+                    legendX + 15.0 + 5 + 3 + 10,
+                    legendY + (25 * i) + 15.0 + 5,
+                    "beginning",
+                    s.getName()
             );
 
             legendText.setAttribute("font-size", "16px");
@@ -815,6 +815,25 @@ public class Plot extends JFXWindow implements Element, Clearable {
                           .setFillColour(Color.WHITE)
                           .setStrokeWidth(3);
 
+                    if (point.getExtraValue() != null && (double) point.getExtraValue() > 0) {
+
+                        double error = (double) point.getExtraValue();
+                        double yp    = aEndY - yScale * this.yAxis.getDisplayPosition(point.getYValue() + error);
+                        double yn    = aEndY - yScale * this.yAxis.getDisplayPosition(point.getYValue() - error);
+                        double xn    = x - 5;
+                        double xp    = x + 5;
+
+                        String  erPath   = String.format("M%s %s L%s %s M%s %s L%s %s M%s %s L%s %s", xn, yp, xp, yp, x, yp, x, yn, xn, yn, xp, yn);
+                        SVGPath errorBar = new SVGPath(erPath);
+
+                        errorBar.setStrokeColour(c)
+                                .setStrokeWidth(w)
+                                .setStyle("fill", "none");
+
+                        list.add(errorBar);
+
+                    }
+
                     list.add(circle);
 
                 }
@@ -828,9 +847,12 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             path.setStrokeColour(c)
                 .setStrokeWidth(w)
+                .setDash(s.getLineDash().getArray())
                 .setStyle("fill", "none");
 
-            main.add(path);
+            if (s.isShowingLine()) {
+                main.add(path);
+            }
 
             list.forEach(main::add);
 

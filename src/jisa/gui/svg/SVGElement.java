@@ -77,6 +77,18 @@ public class SVGElement {
 
     }
 
+    public SVGElement setDash(Double... dash) {
+
+        String[] strDash = new String[dash.length];
+
+        for (int i = 0; i < dash.length; i++) {
+            strDash[i] = Double.toString(dash[i]);
+        }
+
+        return setDash(strDash);
+
+    }
+
     public SVGElement setFillColour(Color colour) {
 
         return setFillColour(String.format(

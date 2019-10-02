@@ -359,6 +359,10 @@ public class JISAChart extends XYChart<Double, Double> {
 
     }
 
+    public Legend getChartLegend() {
+        return legend;
+    }
+
     public List<JISASeries> getSeries() {
         return new ArrayList<>(series);
     }
@@ -888,7 +892,7 @@ public class JISAChart extends XYChart<Double, Double> {
         private List<Data<Double, Double>> data;
         private ChartNode                  template;
         private ChartLine                  line;
-        private Dash                       dash;
+        private Dash                       dash           = Dash.SOLID;
         private ResultHandler              handler;
         private List<jisa.gui.Series>      subSeries      = new ArrayList<>();
         private ResultTable.Evaluable      xData          = null;
