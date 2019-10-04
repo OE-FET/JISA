@@ -19,7 +19,12 @@ public enum Icon {
     CONNECTION("images/connection.png"),
     MAGNET("images/magnet.png"),
     WAVE("images/wave.png"),
-    COGS("images/cogs.png");
+    COGS("images/cogs.png"),
+    DIODE("images/diode.png"),
+    TRANSISTOR("images/transistor.png"),
+    RHEOSTAT("images/rheostat.png"),
+    LED("images/led.png"),
+    RESISTOR("images/resistor.png");
 
     private String path;
 
