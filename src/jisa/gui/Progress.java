@@ -1,5 +1,6 @@
 package jisa.gui;
 
+import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -20,6 +21,7 @@ public class Progress extends JFXWindow implements Element {
     public  Label       pctLabel;
     private Stage       stage;
     private double      max;
+    private Timeline    timeline = new Timeline();
 
     public Progress(String title) {
 
@@ -28,24 +30,31 @@ public class Progress extends JFXWindow implements Element {
     }
 
     public void setProgress(double value, double max) {
-        Platform.runLater(() -> {
-            this.max = max;
 
-            Timeline timeline = new Timeline();
-            KeyValue keyValue = new KeyValue(progressBar.progressProperty(), value / this.max);
-            KeyFrame keyFrame = new KeyFrame(new Duration(200), keyValue);
-            timeline.getKeyFrames().add(keyFrame);
-            timeline.play();
+        this.max = max;
+        GUI.runNow(() -> timeline.stop());
+
+        timeline = new Timeline();
+
+        timeline.getKeyFrames().setAll(
+            new KeyFrame(Duration.ZERO, new KeyValue(progressBar.progressProperty(), progressBar.getProgress())),
+            new KeyFrame(Duration.millis(250), new KeyValue(progressBar.progressProperty(), value / this.max))
+        );
+
+        GUI.runNow(() -> {
+
+            timeline.playFrom(Duration.ZERO);
 
             if (value == -1) {
                 pctLabel.setText("");
             } else {
                 pctLabel.setText(
-                        String.format("%d%%", (int) Math.round(100 * (value / this.max)))
+                    String.format("%d%%", (int) Math.round(100 * (value / this.max)))
                 );
             }
 
         });
+
     }
 
     public void setProgress(double value) {

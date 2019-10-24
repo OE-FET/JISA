@@ -53,7 +53,7 @@ public class Util {
 
     static {
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> onShutdown.forEach(Util::runRegardless)));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> onShutdown.forEach(SRunnable::runRegardless)));
 
     }
 
@@ -97,12 +97,26 @@ public class Util {
         for (PathElement element : path.getElements()) {
 
             if (element instanceof MoveTo) {
-                list.add(String.format("M%s,%s", ((MoveTo) element).getX(), ((MoveTo) element).getY()));
+                list.add(String.format("M%s %s", ((MoveTo) element).getX(), ((MoveTo) element).getY()));
             } else if (element instanceof LineTo) {
-                list.add(String.format("L%s,%s", ((LineTo) element).getX(), ((LineTo) element).getY()));
+                list.add(String.format("L%s %s", ((LineTo) element).getX(), ((LineTo) element).getY()));
             } else if (element instanceof ClosePath) {
                 list.add("Z");
             }
+
+        }
+
+        return String.join(" ", list);
+
+    }
+
+    public static String polygonToSVG(Polygon path) {
+
+        List<String> list = new LinkedList<>();
+
+        for (int i = 0; i < path.getPoints().size(); i += 2) {
+
+            list.add(String.format("%s,%s", path.getPoints().get(i), path.getPoints().get(i + 1)));
 
         }
 

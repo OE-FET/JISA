@@ -6,9 +6,11 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.chart.XYChart;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
@@ -87,7 +89,7 @@ public class JISAChart extends XYChart<Double, Double> {
         for (int i = 1; i < end; i++) {
             double d = line.getDistance(points.get(i));
             if (d > dmax) {
-                dmax = d;
+                dmax  = d;
                 index = i;
             }
         }
@@ -175,14 +177,12 @@ public class JISAChart extends XYChart<Double, Double> {
 
                 for (int seriesIndex = 0; seriesIndex < getData().size(); seriesIndex++) {
 
-                    Series<Double, Double> series     = getData().get(seriesIndex);
-                    Legend.LegendItem      legenditem = new Legend.LegendItem(series.getName());
+                    Series series = getData().get(seriesIndex);
 
                     if (nodeTemplates.containsKey(series)) {
-                        legenditem.setSymbol(nodeTemplates.get(series).clone(true));
+                        Legend.LegendItem legendItem = new Legend.LegendItem(series.getName(), nodeTemplates.get(series).clone(true));
+                        legend.getItems().add(legendItem);
                     }
-
-                    legend.getItems().add(legenditem);
 
                 }
             }
@@ -221,6 +221,8 @@ public class JISAChart extends XYChart<Double, Double> {
 
             nodeTemplates.remove(series);
             fitters.remove(series);
+
+            updateLegend();
 
         });
 
@@ -296,10 +298,21 @@ public class JISAChart extends XYChart<Double, Double> {
                     }
 
                     if (fitted != null) {
-                        int pixels = (int) (maxX - minX);
-                        for (double x : Util.makeLinearArray(minX, maxX, pixels + 1)) {
-                            constructedPath.add(new JISALineTo(x, getYAxis().getDisplayPosition(fitted.value(getXAxis().getValueForDisplay(x)))));
+
+                        double start = 0;
+                        double stop  = getWidth();
+
+                        int pixels = (int) (stop - start);
+
+                        for (double x : Util.makeLinearArray(start, stop, pixels + 1)) {
+
+                            constructedPath.add(new JISALineTo(
+                                x,
+                                getYAxis().getDisplayPosition(fitted.value(getXAxis().getValueForDisplay(x)))
+                            ));
+
                         }
+
                     }
 
                     List<Data<Double, Double>> sorted = new ArrayList<>(series.getData());
@@ -428,6 +441,7 @@ public class JISAChart extends XYChart<Double, Double> {
 
     public interface Fitter {
         Fit getFit(List<Data<Double, Double>> data);
+
     }
 
     public interface DataHandler {
@@ -443,6 +457,10 @@ public class JISAChart extends XYChart<Double, Double> {
         }
 
         public Timeline animate(LineTo last, LineTo next) {
+            return animate(last, next, 250);
+        }
+
+        public Timeline animate(LineTo last, LineTo next, double millis) {
 
             double fromX;
             double fromY;
@@ -462,16 +480,39 @@ public class JISAChart extends XYChart<Double, Double> {
 
             Timeline timeline = new Timeline();
             timeline.getKeyFrames().addAll(
-                    new KeyFrame(Duration.millis(0), new KeyValue(xProperty(), fromX)),
-                    new KeyFrame(Duration.millis(0), new KeyValue(yProperty(), fromY)),
-                    new KeyFrame(Duration.millis(250), new KeyValue(xProperty(), getX())),
-                    new KeyFrame(Duration.millis(250), new KeyValue(yProperty(), getY()))
+                new KeyFrame(Duration.millis(0), new KeyValue(xProperty(), fromX)),
+                new KeyFrame(Duration.millis(0), new KeyValue(yProperty(), fromY)),
+                new KeyFrame(Duration.millis(millis), new KeyValue(xProperty(), getX())),
+                new KeyFrame(Duration.millis(millis), new KeyValue(yProperty(), getY()))
             );
 
             setX(fromX);
             setY(fromY);
 
             return timeline;
+
+        }
+
+    }
+
+    public static class ChartTag extends StackPane {
+
+        public ChartTag() {
+
+            setShape(new Path(
+                new MoveTo(0, 0),
+                new LineTo(5, 10),
+                new LineTo(50, 10),
+                new LineTo(50, -10),
+                new LineTo(5, -10),
+                new LineTo(0, 0),
+                new ClosePath()
+            ));
+
+            setHeight(20);
+            setWidth(50);
+
+            setEffect(new DropShadow(5.0, Color.BLACK));
 
         }
 
@@ -566,10 +607,10 @@ public class JISAChart extends XYChart<Double, Double> {
             Timeline movement = new Timeline();
 
             movement.getKeyFrames().addAll(
-                    new KeyFrame(Duration.millis(0), new KeyValue(layoutXProperty(), x)),
-                    new KeyFrame(Duration.millis(0), new KeyValue(layoutYProperty(), y)),
-                    new KeyFrame(Duration.millis(250), new KeyValue(layoutXProperty(), getLayoutX())),
-                    new KeyFrame(Duration.millis(250), new KeyValue(layoutYProperty(), getLayoutY()))
+                new KeyFrame(Duration.millis(0), new KeyValue(layoutXProperty(), x)),
+                new KeyFrame(Duration.millis(0), new KeyValue(layoutYProperty(), y)),
+                new KeyFrame(Duration.millis(250), new KeyValue(layoutXProperty(), getLayoutX())),
+                new KeyFrame(Duration.millis(250), new KeyValue(layoutYProperty(), getLayoutY()))
             );
 
             FadeTransition fade = new FadeTransition();
@@ -625,9 +666,9 @@ public class JISAChart extends XYChart<Double, Double> {
                 case DIAMOND:
 
                     style.put("-fx-padding", size + "px");
-                    style.put("-fx-shape", String.format("\"M0,%1$s L%1$s,%2$s L%2$s,%1$s L%1$s,0 L0,%1$s Z\"", size, 2 * size));
                     style.put("-fx-background-insets", "0, 2px");
                     style.put("-fx-background-color", Util.colourToCSS(colour) + ", white");
+                    style.put("-fx-rotate", "45");
                     break;
 
                 case CROSS:
@@ -659,7 +700,7 @@ public class JISAChart extends XYChart<Double, Double> {
                 case TRIANGLE:
 
                     style.put("-fx-padding", size + "px");
-                    style.put("-fx-shape", String.format("\"M0,%2$s L%1$s,0 L%2$s,%2$s L0,%2$s Z\"", size, 2 * size));
+                    style.put("-fx-shape", "\"" + String.format("M%s %s L%s %s L%s %s Z", 0 - size, 0 + size, 0, 0- size, 0 + size, 0 + size) + "\"");
                     style.put("-fx-background-insets", "0, 2px");
                     style.put("-fx-background-color", Util.colourToCSS(colour) + ", white");
                     break;
@@ -685,9 +726,9 @@ public class JISAChart extends XYChart<Double, Double> {
             }
 
             updateStyle();
-            this.shape = shape;
+            this.shape  = shape;
             this.colour = colour;
-            this.size = size;
+            this.size   = size;
 
             errorBar.setStroke(colour);
 
@@ -771,14 +812,14 @@ public class JISAChart extends XYChart<Double, Double> {
 
         public Line(XYChart.Data<Double, Double> start, XYChart.Data<Double, Double> end) {
 
-            x1 = start.getXValue();
-            x2 = end.getXValue();
-            y1 = start.getYValue();
-            y2 = end.getYValue();
-            dx = x1 - x2;
-            dy = y1 - y2;
-            x1y2 = x1 * y2;
-            x2y1 = x2 * y1;
+            x1     = start.getXValue();
+            x2     = end.getXValue();
+            y1     = start.getYValue();
+            y2     = end.getYValue();
+            dx     = x1 - x2;
+            dy     = y1 - y2;
+            x1y2   = x1 * y2;
+            x2y1   = x2 * y1;
             length = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
         }
 
@@ -799,6 +840,7 @@ public class JISAChart extends XYChart<Double, Double> {
         private double              width   = 2.5;
         private Color               colour  = Colour.ORANGERED;
         private boolean             visible = true;
+        private List<ChartLine>     clones  = new LinkedList<>();
 
         public ChartLine() {
 
@@ -813,9 +855,11 @@ public class JISAChart extends XYChart<Double, Double> {
         public ChartLine clone() {
 
             ChartLine node = new ChartLine();
-            node.setLineWidth(width);
-            node.setLineColour(colour);
-            node.setLineVisible(visible);
+            node.style = this.style;
+            node.setDashes(getDashes());
+            node.updateStyle();
+            clones.add(node);
+
             return node;
 
         }
@@ -826,6 +870,8 @@ public class JISAChart extends XYChart<Double, Double> {
             style.forEach((k, v) -> list.add(String.format("%s: %s;", k, v)));
             setStyle(String.join(" ", list));
             applyCss();
+
+            clones.forEach(ChartLine::updateStyle);
 
         }
 
@@ -846,13 +892,15 @@ public class JISAChart extends XYChart<Double, Double> {
         }
 
         public void setDashes(List<Double> dashes) {
-            getStrokeDashArray().clear();
-            getStrokeDashArray().addAll(dashes);
+
+            getStrokeDashArray().setAll(dashes);
+            clones.forEach(c -> c.getStrokeDashArray().setAll(dashes));
         }
 
         public void setDashes(Double... dashes) {
-            getStrokeDashArray().clear();
-            getStrokeDashArray().addAll(dashes);
+
+            getStrokeDashArray().setAll(dashes);
+            clones.forEach(c -> c.getStrokeDashArray().setAll(dashes));
         }
 
         public Color getLineColour() {
@@ -915,8 +963,8 @@ public class JISAChart extends XYChart<Double, Double> {
             }
 
             this.template = nodeTemplates.get(series);
-            this.line = (ChartLine) series.getNode();
-            this.data = series.getData();
+            this.line     = (ChartLine) series.getNode();
+            this.data     = series.getData();
 
         }
 
@@ -936,7 +984,7 @@ public class JISAChart extends XYChart<Double, Double> {
             this.xData = xData;
             this.yData = yData;
             this.eData = eData;
-            handler = (r, x, y, e) -> addPoint(x, y, e);
+            handler    = (r, x, y, e) -> addPoint(x, y, e);
             rtListener = list.addOnUpdate(r -> {
 
                 if (filter.test(r)) {
@@ -1015,11 +1063,12 @@ public class JISAChart extends XYChart<Double, Double> {
                 if (!map.containsKey(value)) {
 
                     jisa.gui.Series series = createSeries()
-                            .setName(formatter.getName(r))
-                            .setColour(defaultColours[subSeries.size() % defaultColours.length])
-                            .showLine(isShowingLine())
-                            .showMarkers(isShowingMarkers())
-                            .setMarkerShape(getMarkerShape(), getMarkerSize());
+                        .setName(formatter.getName(r))
+                        .setColour(defaultColours[subSeries.size() % defaultColours.length])
+                        .showLine(isShowingLine())
+                        .showMarkers(isShowingMarkers())
+                        .setMarkerShape(getMarkerShape())
+                        .setMarkerSize(getMarkerSize());
 
                     if (isFitted()) {
                         series.fit(getFitter());
@@ -1064,8 +1113,8 @@ public class JISAChart extends XYChart<Double, Double> {
                 }
 
                 jisa.gui.Series series = createSeries()
-                        .setName(list.getTitle(i))
-                        .setColour(defaultColours[subSeries.size() % defaultColours.length]);
+                    .setName(list.getTitle(i))
+                    .setColour(defaultColours[subSeries.size() % defaultColours.length]);
 
                 if (isFitted()) {
                     series.fit(getFitter());
@@ -1092,7 +1141,7 @@ public class JISAChart extends XYChart<Double, Double> {
 
             };
 
-            watching = list;
+            watching   = list;
             this.xData = r -> r.get(xData);
             this.yData = r -> r.get(xData);
 
@@ -1208,11 +1257,22 @@ public class JISAChart extends XYChart<Double, Double> {
         }
 
         @Override
-        public JISASeries setMarkerShape(Shape shape, double size) {
+        public JISASeries setMarkerShape(Shape shape) {
 
             GUI.runNow(() -> {
-                template.setStyle(shape, template.getMarkerColour(), size);
-                subSeries.forEach(s -> s.setMarkerShape(shape, size));
+                template.setMarkerShape(shape);
+                subSeries.forEach(s -> s.setMarkerShape(shape));
+            });
+
+            return this;
+
+        }
+
+        public JISASeries setMarkerSize(double size) {
+
+            GUI.runNow(() -> {
+                template.setMarkerSize(size);
+                subSeries.forEach(s -> s.setMarkerSize(size));
             });
 
             return this;
@@ -1295,7 +1355,7 @@ public class JISAChart extends XYChart<Double, Double> {
         @Override
         public JISASeries setLineDash(Dash dash) {
 
-            GUI.runNow(() -> line.getStrokeDashArray().setAll(dash.getArray()));
+            GUI.runNow(() -> line.setDashes(dash.getArray()));
             subSeries.forEach(s -> s.setLineDash(dash));
             this.dash = dash;
             return this;
@@ -1450,6 +1510,7 @@ public class JISAChart extends XYChart<Double, Double> {
         public Iterator<Data<Double, Double>> iterator() {
             return series.getData().iterator();
         }
+
     }
 
 }

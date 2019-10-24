@@ -27,7 +27,7 @@ public final class SmartAxis extends ValueAxis<Double> {
     private       JISAChart        chart;
     private       boolean          isXAxis;
     private       Object           currentAnimationID;
-    private       int              numTicks                 = 11;
+    private       int              numTicks                 = 8;
     private       String           label                    = "";
     private       String           labelSuffix              = "";
     private       double           minValue                 = 1.0;

@@ -10,6 +10,7 @@ import javafx.geometry.HPos;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.Separator;
 import javafx.scene.control.Button;
 import javafx.scene.layout.*;
 
@@ -1229,12 +1230,34 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
     }
 
 
-    public void addSeparator() {
+    public jisa.gui.Separator addSeparator() {
 
         Separator separator = new Separator();
         GUI.runNow(() -> list.addRow(rows++, separator));
         GridPane.setColumnSpan(separator, 2);
         VBox.setVgrow(separator, Priority.ALWAYS);
+
+        return new jisa.gui.Separator() {
+
+            @Override
+            public void remove() {
+                GUI.runNow(() -> {
+                    list.getChildren().remove(separator);
+                    updateGridding();
+                });
+            }
+
+            @Override
+            public void setVisible(boolean visible) {
+                GUI.runNow(() -> separator.setVisible(visible));
+            }
+
+            @Override
+            public boolean isVisible() {
+                return separator.isVisible();
+            }
+
+        };
 
     }
 

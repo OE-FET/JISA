@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.Separator;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.control.Button;
@@ -164,6 +165,42 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             @Override
             public void remove() {
                 GUI.runNow(() -> toolBar.getItems().remove(button));
+            }
+
+        };
+
+    }
+
+    public jisa.gui.Separator addToolbarSeparator() {
+
+        Separator separator = new Separator();
+
+        Platform.runLater(() -> {
+
+            if (toolBar == null) {
+                toolBar = new ToolBar();
+                border.setTop(toolBar);
+            }
+
+            toolBar.getItems().add(separator);
+
+        });
+
+        return new jisa.gui.Separator() {
+
+            @Override
+            public void remove() {
+                GUI.runNow(() -> toolBar.getItems().remove(separator));
+            }
+
+            @Override
+            public void setVisible(boolean visible) {
+                GUI.runNow(() -> separator.setVisible(visible));
+            }
+
+            @Override
+            public boolean isVisible() {
+                return separator.isVisible();
             }
 
         };

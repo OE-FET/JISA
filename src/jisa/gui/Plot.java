@@ -93,7 +93,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             AnchorPane canvas = new AnchorPane();
             canvas.setStyle(
-                    "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
+                "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
             canvas.setMouseTransparent(true);
             canvas.getChildren().add(rect);
             canvas.setManaged(false);
@@ -683,7 +683,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             grid.setStrokeWidth(0.5)
                 .setStrokeColour(Colour.SILVER)
-                .setDash("5", "5");
+                .setDash("2", "2");
 
             main.add(tick);
             main.add(grid);
@@ -713,7 +713,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             grid.setStrokeWidth(0.5)
                 .setStrokeColour(Colour.SILVER)
-                .setDash("5", "5");
+                .setDash("2", "2");
             main.add(tick);
             main.add(grid);
 
@@ -763,23 +763,23 @@ public class Plot extends JFXWindow implements Element, Clearable {
         int i = 0;
         for (Series s : chart.getSeries()) {
 
-            Color  c = s.getColour();
-            double w = s.getLineWidth();
+            if (!chart.getData().contains(s.getXYChartSeries())) {
+                continue;
+            }
+
+            Color        c = s.getColour();
+            double       w = s.getLineWidth();
+            double       m = s.getMarkerSize();
+            Series.Shape p = s.getMarkerShape();
 
             List<String> terms = new LinkedList<>();
 
-            SVGCircle legendCircle = new SVGCircle(legendX + 15.0, legendY + (25 * i) + 15.0, 5);
-
-            legendCircle.setStrokeColour(c)
-                        .setFillColour(Color.WHITE)
-                        .setStrokeWidth(3);
-
-
+            SVGElement legendCircle = makeMarker(s.isShowingMarkers() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
             SVGText legendText = new SVGText(
-                    legendX + 15.0 + 5 + 3 + 10,
-                    legendY + (25 * i) + 15.0 + 5,
-                    "beginning",
-                    s.getName()
+                legendX + 15.0 + 5 + 3 + 10,
+                legendY + (25 * i) + 15.0 + 5,
+                "beginning",
+                s.getName()
             );
 
             legendText.setAttribute("font-size", "16px");
@@ -809,12 +809,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
                 if (s.isShowingMarkers()) {
 
-                    SVGCircle circle = new SVGCircle(x, y, 5);
-
-                    circle.setStrokeColour(c)
-                          .setFillColour(Color.WHITE)
-                          .setStrokeWidth(3);
-
                     if (point.getExtraValue() != null && (double) point.getExtraValue() > 0) {
 
                         double error = (double) point.getExtraValue();
@@ -834,7 +828,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
                     }
 
-                    list.add(circle);
+                    list.add(makeMarker(p, c, x, y, m));
 
                 }
 
@@ -866,6 +860,66 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         svg.output(fileName);
 
+
+    }
+
+    private SVGElement makeMarker(Series.Shape p, Color c, double x, double y, double m) {
+        SVGElement marker;
+
+        switch (p) {
+
+            case TRIANGLE:
+
+                marker = new SVGTriangle(x, y, m)
+                    .setStrokeColour(c)
+                    .setFillColour(Color.WHITE)
+                    .setStrokeWidth(2);
+                break;
+
+            case DASH:
+
+                marker = new SVGLine(x - m, y, x + m, y)
+                    .setStrokeColour(c)
+                    .setStrokeWidth(2);
+                break;
+
+            default:
+            case CIRCLE:
+            case DOT:
+
+                marker = new SVGCircle(x, y, m)
+                    .setStrokeColour(c)
+                    .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
+                    .setStrokeWidth(2);
+                break;
+
+            case SQUARE:
+            case DIAMOND:
+
+                marker = new SVGSquare(x, y, m)
+                    .setStrokeColour(c)
+                    .setFillColour(Color.WHITE)
+                    .setStrokeWidth(2);
+
+                if (p == Series.Shape.DIAMOND) {
+                    marker.setAttribute("transform", "rotate(45 " + x + " " + y + ")");
+                }
+
+                break;
+
+            case CROSS:
+
+                marker = new SVGCross(x, y, m)
+                    .setStrokeColour(c)
+                    .setFillColour(c)
+                    .setStrokeWidth(1);
+
+                break;
+
+
+        }
+
+        return marker;
 
     }
 

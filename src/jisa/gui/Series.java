@@ -86,11 +86,9 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
     boolean isShowingMarkers();
 
-    Series setMarkerShape(Shape shape, double size);
+    Series setMarkerShape(Shape shape);
 
-    default Series setMarkerShape(Shape shape) {
-        return setMarkerShape(shape, 5.0);
-    }
+    Series setMarkerSize(double size);
 
     Shape getMarkerShape();
 
