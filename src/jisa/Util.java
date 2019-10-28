@@ -13,6 +13,7 @@ import jisa.visa.VISAException;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -75,6 +76,12 @@ public class Util {
             toRun.run();
         } catch (Throwable ignored) {
         }
+
+    }
+
+    public static String joinPath(String first, String... more) {
+
+        return Paths.get(first, more).toString();
 
     }
 
