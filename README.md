@@ -82,9 +82,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         SMU         smu     = new K2450(new GPIBAddress(0, 20));
-        ResultTable results = new ResultList("Voltage", "Current");
-
-        results.setUnits("V", "A");
+        ResultTable results = new ResultList(new Col("Voltage", "V"), new Col("Current", "A"));
 
         smu.setVoltage(0.0);
         smu.turnOn();
@@ -109,9 +107,7 @@ public class Main {
 fun main() {
 
     val smu     = K2450(GPIBAddress(0,20))
-    val results = ResultList("Voltage", "Current")
-
-    results.setUnits("V", "A")
+    val results = ResultList(Col("Voltage", "V"), Col("Current", "A"))
 
     smu.setVoltage(0.0)
     smu.turnOn()
@@ -134,9 +130,7 @@ fun main() {
 def main():
     
     smu     = K2450(GPIBAddress(0,20))
-    results = ResultList(["Voltage", "Current"])
-    
-    results.setUnits(["V", "A"])   
+    results = ResultList([Col("Voltage", "V"), Col("Current", "A")])
 
     smu.setVoltage(0.0)
     smu.turnOn()
@@ -158,18 +152,18 @@ main()
 ```matlab
 function main()
     
-    smu     = JISA.Devices.K2450(JISA.Addresses.GPIBAddress(0,20));
-    results = JISA.Experiment.ResultList({'Voltage', 'Current'});
+    smu     = jisa.devices.K2450(JISA.Addresses.GPIBAddress(0,20));
+    results = jisa.experiment.ResultList({'Voltage', 'Current'});
 
     results.setUnits({'V', 'A'});    
 
     smu.setVoltage(0.0);
     smu.turnOn();
     
-    for v=JISA.Util.makeLinearArray(0.0, 60.0, 61)
+    for v=jisa.Util.makeLinearArray(0.0, 60.0, 61)
     
         smu.setVoltage(v);
-        JISA.Util.sleep(500);
+        jisa.Util.sleep(500);
         results.addData([smu.getVoltage(), smu.getCurrent()]);
         
     end
@@ -184,9 +178,7 @@ We can then extend this program easily, with only two lines, to display a plot o
 fun main() {
 
     val smu     = K2450(GPIBAddress(0,20))
-    val results = ResultList("Voltage", "Current")
-
-    results.setUnits("V", "A")    
+    val results = ResultList(Col("Voltage", "V"), Col("Current", "A")) 
 
     // Make a plot that watches our results
     val plot = Plot("Results", results)
@@ -233,21 +225,3 @@ Resulting in:
 | [](<>)                 | SR560        | Voltage Pre-Amp             | `SR560`   |
 | **Eurotherm**          | 2408         | Temperature Controller      | `ET2408`  |
 | **Pico Technology**    | USB-TC08     | Thermometer (Multi-Channel) | `USBTC08` |
-
-**Currently Implemented Device Types:**
-
-|Abstract Class|Type|Source|JavaDoc|
-|--------------|----|------|-------|
-|`SMU`|Source-Measure Unit|[Source](src/jisa/devices/SMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/SMU.html)|
-|`MCSMU`|Multi-Channel Source-Measure Unit|[Source](src/jisa/devices/MCSMU.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MCSMU.html)|
-|  |  |  |  |
-|`DCPower`|DC Power Supply|[Source](src/jisa/devices/DCPower.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DCPower.html)|
-|  |  |  |  |
-|`TC`|Temperature Controller|[Source](src/jisa/devices/TC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/TC.html)|
-|`MSTC`|Multi-Sensor Temperature Controller|[Source](src/jisa/devices/MSTC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSTC.html)|
-|`MSMOTC`|Multi-Sensor, Multi-Output Temperature Controller|[Source](src/jisa/devices/MSMOTC.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/MSMOTC.html)|
-|  |  |  |  |
-|`LockIn`|Lock-In Amplifier|[Source](src/jisa/devices/LockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/LockIn.html)|
-|`DPLockIn`|Dual-Phase Lock-In Amplifier|[Source](src/jisa/devices/DPLockIn.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/DPLockIn.html)|
-|  |  |  |  |
-|`VPreAmp`|Voltage Pre-Amplifier|[Source](src/jisa/devices/VPreAmp.java)|[JavaDoc](https://oe-fet.github.io/JISA/JISA/Devices/VPreAmp.html)|
