@@ -917,7 +917,7 @@ making modifications to this package which may subsequently be redistributed
 and/or involve the use of third party software.
 ```
 
-### JLibMODBUS 1.2.9.0
+## JLibMODBUS 1.2.9.0
 
 ```
                                  Apache License
