@@ -289,8 +289,6 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         @Override
         protected void update() {
 
-            System.out.println("fired");
-
             int n = instrument.get();
 
             jisa.devices.VMeter vMeter = null;
