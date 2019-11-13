@@ -52,7 +52,7 @@ public class GUI extends Application {
                 resource.close();
             }
 
-            path = tempDir.toString() + ";" + path;
+            path = tempDir.toString() + (System.getProperty("os.name").contains("windows") ? ";" : ":") + path;
             System.setProperty("java.library.path", path);
 
         } catch (Exception ignored) {}
