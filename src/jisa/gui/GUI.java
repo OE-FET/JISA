@@ -31,7 +31,7 @@ public class GUI extends Application {
 
     private static boolean   done   = false;
     private static File      file;
-    private static Semaphore s;
+    private static Semaphore s      = new Semaphore(0);
     private static boolean   loaded = false;
 
     static {
@@ -63,19 +63,47 @@ public class GUI extends Application {
 
             }));
 
-            while (nat.hasNextLine()) {
-                String      name     = nat.nextLine();
-                InputStream resource = Main.class.getResource("/native/" + name).openStream();
-                Files.copy(resource, Paths.get(tempDir.toString(), name));
-                resource.close();
+            String osName = System.getProperty("os.name").toLowerCase();
+            String extension;
+            String libSep;
+
+            if (osName.contains("win")) {
+                extension = ".dll";
+                libSep    = ";";
+            } else if (osName.contains("mac")) {
+                extension = ".dylib";
+                libSep    = ":";
+            } else {
+                extension = ".so";
+                libSep    = ":";
             }
 
-            path = tempDir.toString() + (System.getProperty("os.name").toLowerCase().contains("win") ? ";" : ":") + path;
+            while (nat.hasNextLine()) {
+
+                String name = nat.nextLine();
+
+                if (name.contains(extension)) {
+                    InputStream resource = Main.class.getResource("/native/" + name).openStream();
+                    Files.copy(resource, Paths.get(tempDir.toString(), name));
+                    resource.close();
+                }
+
+            }
+
+            path = tempDir.toString() + libSep + path;
             System.setProperty("java.library.path", path);
 
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
-        (new Thread(GUI::startGUI)).start();
+        try {
+            Thread t = new Thread(() -> Application.launch(App.class));
+            t.start();
+            Platform.setImplicitExit(false);
+        } catch (Exception ignored) {
+
+        }
+
     }
 
     public static void touch() {
@@ -485,20 +513,7 @@ public class GUI extends Application {
         loaded = true;
 
         s = new Semaphore(0);
-        try {
-            Thread t = new Thread(() -> {
-                try {
-                    Application.launch(App.class);
-                } catch (Exception e) {
-                    s.release();
-                }
-            });
-            t.start();
-            s.acquire();
-            Platform.setImplicitExit(false);
-        } catch (Exception ignored) {
 
-        }
 
     }
 
@@ -562,15 +577,6 @@ public class GUI extends Application {
 
             errorAlert("Error", "Exception Encountered", String.format("There was an error with the measurement:\n%s", e.getMessage()), 600);
 
-        }
-
-    }
-
-    public static class App extends Application {
-
-        @Override
-        public void start(Stage primaryStage) throws Exception {
-            s.release();
         }
 
     }

@@ -2,7 +2,6 @@ package jisa.gui;
 
 import jisa.Util;
 import jisa.control.ConfigStore;
-import jisa.control.Field;
 import jisa.control.IConf;
 import jisa.devices.*;
 import jisa.enums.Terminals;

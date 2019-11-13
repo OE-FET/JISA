@@ -1,6 +1,6 @@
 package jisa.gui;
 
-public interface Separator {
+public interface Separator extends SubElement {
 
     void remove();
 

@@ -1,16 +1,8 @@
 package jisa.gui;
 
-import jisa.addresses.*;
-import jisa.Util;
-import jisa.visa.VISA;
-import jisa.visa.VISADevice;
-import jisa.visa.VISAException;
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -20,48 +12,38 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.stage.Stage;
+import jisa.Util;
+import jisa.addresses.*;
+import jisa.control.SRunnable;
+import jisa.visa.VISA;
+import jisa.visa.VISADevice;
+import jisa.visa.VISAException;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.Semaphore;
 
-public class BrowseVISA {
+public class BrowseVISA extends JFXWindow {
 
     public  VBox                  list;
     public  Label                 searching;
     public  ProgressBar           progBar;
     private ArrayList<StrAddress> found = new ArrayList<>();
     private AddrHandler           onOkay;
-    private Stage                 stage;
 
     public BrowseVISA(String title) {
 
-        try {
+        super(title, BrowseVISA.class.getResource("fxml/browseVISA.fxml"));
+        setOnClose(this::cancel);
 
-            FXMLLoader loader = new FXMLLoader(BrowseVISA.class.getResource("fxml/browseVISA.fxml"));
-            loader.setController(this);
+    }
 
-            Parent    root  = loader.load();
-            Scene     scene = new Scene(root);
-            Semaphore s     = new Semaphore(0);
+    @Override
+    public void setOnClose(SRunnable onClose) {
 
-            Platform.runLater(() -> {
-
-                Stage stage = new Stage();
-                stage.setTitle(title);
-                stage.setScene(scene);
-                this.stage = stage;
-                s.release();
-                this.stage.setOnCloseRequest((we) -> cancel());
-
-            });
-
-            s.acquire();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        super.setOnClose(() -> {
+            cancel();
+            onClose.run();
+        });
 
     }
 
@@ -73,7 +55,7 @@ public class BrowseVISA {
 
     public void search(AddrHandler onOkay) {
 
-        stage.show();
+        show();
         progBar.setVisible(true);
         progBar.setManaged(true);
 
@@ -280,10 +262,6 @@ public class BrowseVISA {
     public void cancel() {
         onOkay.onOkay(null);
         close();
-    }
-
-    public void close() {
-        ((Stage) list.getScene().getWindow()).close();
     }
 
 }
