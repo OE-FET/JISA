@@ -40,10 +40,28 @@ public class GUI extends Application {
 
         try {
 
+            // Create temporary directory to extract native libraries to
             File    tempDir = Files.createTempDirectory("jfx-extracted-").toFile();
             Scanner nat     = new Scanner(Main.class.getResourceAsStream("/native/libraries.txt"));
             tempDir.mkdirs();
-            tempDir.deleteOnExit();
+
+            // Make sure we clean up when we exit.
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+
+                File   directory = new File(tempDir.toString());
+                File[] contents  = directory.listFiles();
+
+                if (contents != null) {
+
+                    for (File file : contents) {
+                        file.delete();
+                    }
+
+                }
+
+                directory.delete();
+
+            }));
 
             while (nat.hasNextLine()) {
                 String      name     = nat.nextLine();
