@@ -35,18 +35,13 @@ public class GUI extends Application {
     private static boolean   loaded = false;
 
     static {
-        loadLibraries();
-        (new Thread(GUI::startGUI)).start();
-    }
-
-    public static void loadLibraries() {
 
         String path = System.getProperty("java.library.path");
 
         try {
 
-            Scanner nat     = new Scanner(Main.class.getResourceAsStream("/native/libraries.txt"));
             File    tempDir = Files.createTempDirectory("jfx-extracted-").toFile();
+            Scanner nat     = new Scanner(Main.class.getResourceAsStream("/native/libraries.txt"));
             tempDir.mkdirs();
             tempDir.deleteOnExit();
 
@@ -57,12 +52,12 @@ public class GUI extends Application {
                 resource.close();
             }
 
-            path += ":" + tempDir.toString();
+            path = tempDir.toString() + ";" + path;
             System.setProperty("java.library.path", path);
 
         } catch (Exception ignored) {}
 
-
+        (new Thread(GUI::startGUI)).start();
     }
 
     public static void touch() {
@@ -469,6 +464,8 @@ public class GUI extends Application {
             return;
         }
 
+        loaded = true;
+
         s = new Semaphore(0);
         try {
             Thread t = new Thread(() -> {
@@ -481,7 +478,6 @@ public class GUI extends Application {
             t.start();
             s.acquire();
             Platform.setImplicitExit(false);
-            loaded = true;
         } catch (Exception ignored) {
 
         }
