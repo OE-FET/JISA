@@ -208,10 +208,13 @@ public class JISAChart extends XYChart<Double, Double> {
         GUI.runNow(() -> {
 
             for (Data<Double, Double> data : series.getData()) {
+
                 Node symbol = data.getNode();
+
                 if (symbol != null) {
                     getPlotChildren().remove(symbol);
                 }
+
             }
 
             Node line = series.getNode();

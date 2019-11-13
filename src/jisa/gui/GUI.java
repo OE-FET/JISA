@@ -1,13 +1,11 @@
 package jisa.gui;
 
-import jisa.addresses.Address;
-import jisa.experiment.Measurement;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
 import javafx.scene.control.Button;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
@@ -15,10 +13,17 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import jisa.Main;
+import jisa.addresses.Address;
+import jisa.experiment.Measurement;
 
 import java.io.File;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.Scanner;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -30,7 +35,34 @@ public class GUI extends Application {
     private static boolean   loaded = false;
 
     static {
+        loadLibraries();
         (new Thread(GUI::startGUI)).start();
+    }
+
+    public static void loadLibraries() {
+
+        String path = System.getProperty("java.library.path");
+
+        try {
+
+            Scanner nat     = new Scanner(Main.class.getResourceAsStream("/native/libraries.txt"));
+            File    tempDir = Files.createTempDirectory("jfx-extracted-").toFile();
+            tempDir.mkdirs();
+            tempDir.deleteOnExit();
+
+            while (nat.hasNextLine()) {
+                String      name     = nat.nextLine();
+                InputStream resource = Main.class.getResource("/native/" + name).openStream();
+                Files.copy(resource, Paths.get(tempDir.toString(), name));
+                resource.close();
+            }
+
+            path += ":" + tempDir.toString();
+            System.setProperty("java.library.path", path);
+
+        } catch (Exception ignored) {}
+
+
     }
 
     public static void touch() {
