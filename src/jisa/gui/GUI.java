@@ -34,6 +34,10 @@ public class GUI extends Application {
     private static Semaphore s      = new Semaphore(0);
     private static boolean   loaded = false;
 
+    /*
+     * When first accessing the GUI class, all needed JavaFx native libraries must be extracted and added to
+     * the java library path
+     */
     static {
 
         String path = System.getProperty("java.library.path");
@@ -41,9 +45,10 @@ public class GUI extends Application {
         try {
 
             // Create temporary directory to extract native libraries to
-            File    tempDir = Files.createTempDirectory("jfx-extracted-").toFile();
-            Scanner nat     = new Scanner(Main.class.getResourceAsStream("/native/libraries.txt"));
-            tempDir.mkdirs();
+            File tempDir = Files.createTempDirectory("jfx-extracted-").toFile();
+
+            // Read the list of all jfx native libraries contained in this jar
+            Scanner nat = new Scanner(Main.class.getResourceAsStream("/native/libraries.txt"));
 
             // Make sure we clean up when we exit.
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -63,21 +68,23 @@ public class GUI extends Application {
 
             }));
 
+            // We only want to extract libraries for the current platform
             String osName = System.getProperty("os.name").toLowerCase();
             String extension;
             String libSep;
 
             if (osName.contains("win")) {
                 extension = ".dll";
-                libSep    = ";";
+                libSep = ";";
             } else if (osName.contains("mac")) {
                 extension = ".dylib";
-                libSep    = ":";
+                libSep = ":";
             } else {
                 extension = ".so";
-                libSep    = ":";
+                libSep = ":";
             }
 
+            // Run through each library listed in the file, extracting it if it's for this platform
             while (nat.hasNextLine()) {
 
                 String name = nat.nextLine();
@@ -90,12 +97,15 @@ public class GUI extends Application {
 
             }
 
+            // Add the temporary directory to the library path list
             path = tempDir.toString() + libSep + path;
             System.setProperty("java.library.path", path);
 
         } catch (Exception ignored) {
+            // If this goes wrong, then continue as planned hoping the there is a copy of JavaFx already installed
         }
 
+        // Start-up the JavaFx GUI thread
         try {
             Thread t = new Thread(() -> Application.launch(App.class));
             t.start();
@@ -106,6 +116,9 @@ public class GUI extends Application {
 
     }
 
+    /**
+     * Dummy method used to initiate first accessing of the GUI thread early.
+     */
     public static void touch() {
 
     }
