@@ -95,7 +95,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             AnchorPane canvas = new AnchorPane();
             canvas.setStyle(
-                "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
+                    "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
             canvas.setMouseTransparent(true);
             canvas.getChildren().add(rect);
             canvas.setManaged(false);
@@ -180,6 +180,11 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
+    /**
+     * Sets the scaling type to use for the y-axis.
+     *
+     * @param type LINEAR or LOGARITHMIC
+     */
     public void setYAxisType(AxisType type) {
 
         switch (type) {
@@ -196,6 +201,11 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
+    /**
+     * Sets the scaling type to use for the x-axis.
+     *
+     * @param type LINEAR or LOGARITHMIC
+     */
     public void setXAxisType(AxisType type) {
 
         switch (type) {
@@ -212,16 +222,26 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
+    /**
+     * Sets how line-segments connecting plotted points should be ordered.
+     *
+     * @param ordering X_AXIS, Y_AXIS or ORDER_ADDED
+     */
     public void setPointOrdering(Sort ordering) {
         chart.setAxisSortingPolicy(ordering);
     }
 
+    /**
+     * Creates a new data series to display on the plot.
+     *
+     * @return Newly created Series object
+     */
     public Series createSeries() {
         return chart.createSeries();
     }
 
     /**
-     * Returns the series object of any automatically generated series from the Plot constructor
+     * Returns the series object of any automatically generated series from the Plot constructor.
      *
      * @return Automatically generated series, null if there is none
      */
@@ -230,6 +250,11 @@ public class Plot extends JFXWindow implements Element, Clearable {
         return autoSeries;
     }
 
+    /**
+     * Sets whether the control toolbar is visible or not.
+     *
+     * @param flag Visible?
+     */
     public void showToolbar(boolean flag) {
 
         GUI.runNow(() -> {
@@ -242,6 +267,11 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
+    /**
+     * Sets whether the x-axis range slider is visible or not.
+     *
+     * @param flag Visible?
+     */
     public void showSlider(boolean flag) {
 
         GUI.runNow(() -> {
@@ -259,21 +289,42 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
+    /**
+     * Returns the text used for the x-axis label.
+     *
+     * @return Current x-axis label text
+     */
     public String getXLabel() {
         return xAxis.getLabelText();
     }
 
+    /**
+     * Sets the text used for the x-axis label.
+     *
+     * @param label New x-axis label text
+     */
     public void setXLabel(String label) {
         xAxis.setLabelText(label);
     }
 
+    /**
+     * Returns the text used for the y-axis label.
+     *
+     * @return Current y-axis label text
+     */
     public String getYLabel() {
         return yAxis.getLabelText();
     }
 
+    /**
+     * Sets the text used for the y-axis label.
+     *
+     * @param label New y-axis label text
+     */
     public void setYLabel(String label) {
         yAxis.setLabelText(label);
     }
+
 
     public void setZoomMode() {
 
@@ -329,6 +380,10 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
+    /**
+     * Sets whether
+     * @param flag
+     */
     public void useMouseCommands(boolean flag) {
 
         if (flag) {
@@ -778,10 +833,10 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             SVGElement legendCircle = makeMarker(s.isShowingMarkers() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
             SVGText legendText = new SVGText(
-                legendX + 15.0 + 5 + 3 + 10,
-                legendY + (25 * i) + 15.0 + 5,
-                "beginning",
-                s.getName()
+                    legendX + 15.0 + 5 + 3 + 10,
+                    legendY + (25 * i) + 15.0 + 5,
+                    "beginning",
+                    s.getName()
             );
 
             legendText.setAttribute("font-size", "16px");
@@ -900,16 +955,16 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case TRIANGLE:
 
                 marker = new SVGTriangle(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(Color.WHITE)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setFillColour(Color.WHITE)
+                        .setStrokeWidth(2);
                 break;
 
             case DASH:
 
                 marker = new SVGLine(x - m, y, x + m, y)
-                    .setStrokeColour(c)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setStrokeWidth(2);
                 break;
 
             default:
@@ -917,18 +972,18 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case DOT:
 
                 marker = new SVGCircle(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
+                        .setStrokeWidth(2);
                 break;
 
             case SQUARE:
             case DIAMOND:
 
                 marker = new SVGSquare(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(Color.WHITE)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setFillColour(Color.WHITE)
+                        .setStrokeWidth(2);
 
                 if (p == Series.Shape.DIAMOND) {
                     marker.setAttribute("transform", "rotate(45 " + x + " " + y + ")");
@@ -939,9 +994,9 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case CROSS:
 
                 marker = new SVGCross(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(c)
-                    .setStrokeWidth(1);
+                        .setStrokeColour(c)
+                        .setFillColour(c)
+                        .setStrokeWidth(1);
 
                 break;
 

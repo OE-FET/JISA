@@ -1,16 +1,19 @@
 package jisa.gui;
 
+import javafx.geometry.Insets;
 import javafx.geometry.Side;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.Pane;
 import jisa.Util;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-public class TabGroup extends JFXWindow implements Container {
+/**
+ * A GUI container element for displaying multiple other elements as traditional-style tabs.
+ */
+public class TabGroup extends JFXWindow implements Container, NotBordered {
 
     public  TabPane       pane;
     private List<Element> elements = new LinkedList<>();
@@ -25,6 +28,10 @@ public class TabGroup extends JFXWindow implements Container {
     public TabGroup(String title, Element... elements) {
         this(title);
         addAll(elements);
+    }
+
+    public Pane getPane() {
+        return new Pane(pane);
     }
 
     @Override
@@ -69,34 +76,72 @@ public class TabGroup extends JFXWindow implements Container {
         return new LinkedList<>(elements);
     }
 
-    public void setTabsPosition(Side side) {
-        GUI.runNow(() -> pane.setSide(side));
-    }
-
     public Side getTabsPosition() {
         return pane.getSide();
     }
 
+    /**
+     * Sets the side for the tabs to be displayed on.
+     *
+     * @param side LEFT, RIGHT, TOP or BOTTOM
+     */
+    public void setTabsPosition(Side side) {
+        GUI.runNow(() -> pane.setSide(side));
+    }
+
+    /**
+     * Sets which tab is selected, by specifying its index.
+     *
+     * @param index Tab index
+     */
     public void select(int index) {
         GUI.runNow(() -> pane.getSelectionModel().select(index));
     }
 
+    /**
+     * Sets which tab is selected, by specifying its corresponding Element object.
+     *
+     * @param select Element to be selected
+     */
     public void select(Element select) {
 
         int index = elements.indexOf(select);
 
-        if (Util.isBetween(index, 0, pane.getTabs().size()-1)) {
+        if (Util.isBetween(index, 0, pane.getTabs().size() - 1)) {
             select(index);
         }
 
     }
 
+    /**
+     * Returns the index of the tab currently selected.
+     *
+     * @return Tab index
+     */
     public int getSelectedIndex() {
         return pane.getSelectionModel().getSelectedIndex();
     }
 
+    /**
+     * Returns the element that is currently selected.
+     *
+     * @return Selected element
+     */
     public Element getSelectedElement() {
         return elements.get(getSelectedIndex());
     }
 
+    @Override
+    public Pane getNoBorderPane(boolean stripPadding) {
+
+        Pane parent = new Pane(pane);
+        parent.setStyle("-fx-background-color: transparent");
+
+        if (stripPadding) {
+            parent.setPadding(new Insets(0,0,0,0));
+        }
+
+        return parent;
+
+    }
 }
