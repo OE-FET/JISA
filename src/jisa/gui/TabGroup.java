@@ -16,10 +16,10 @@ public class TabGroup extends JFXWindow implements Container {
     private List<Element> elements = new LinkedList<>();
 
     public TabGroup(String title) {
+
         super(title, TabGroup.class.getResource("fxml/TabGroup.fxml"));
-        GUI.runNow(() -> {
-            pane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        });
+        GUI.runNow(() -> pane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE));
+
     }
 
     public TabGroup(String title, Element... elements) {

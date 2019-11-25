@@ -2,6 +2,7 @@ package jisa.control;
 
 import jisa.addresses.StrAddress;
 import jisa.gui.Connector;
+import jisa.gui.Field;
 import jisa.gui.Fields;
 import jisa.Util;
 import org.json.JSONArray;

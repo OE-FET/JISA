@@ -21,8 +21,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.StringConverter;
 import jisa.Util;
+import jisa.experiment.Function;
 import jisa.experiment.ResultTable;
 import jisa.gui.svg.*;
+import jisa.maths.Fit;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -836,8 +838,35 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             }
 
-            SVGPath path = new SVGPath(String.join(" ", terms));
-            path.setAttribute("clip-path", "url(#lineClip)");
+            SVGPath path;
+            if (!s.isFitted()) {
+                path = new SVGPath(String.join(" ", terms));
+                path.setAttribute("clip-path", "url(#lineClip)");
+            } else {
+
+                Fit          fit      = s.getFit();
+                Function     func     = fit.getFunction();
+                List<String> elements = new LinkedList<>();
+                boolean      firstEl  = true;
+
+                for (double xc = aStartX; xc <= aEndX; xc++) {
+
+                    double x  = this.xAxis.getValueForDisplay((xc - aStartX) / xScale);
+                    double y  = func.value(x);
+                    double yc = aEndY - yScale * this.yAxis.getDisplayPosition(y);
+
+                    if (Util.isBetween(yc, aEndY, aStartY)) {
+
+                        elements.add(String.format("%s%s %s", firstEl ? "M" : "L", xc, yc));
+                        firstEl = false;
+
+                    }
+
+                }
+
+                path = new SVGPath(String.join(" ", elements));
+
+            }
 
             path.setStrokeColour(c)
                 .setStrokeWidth(w)

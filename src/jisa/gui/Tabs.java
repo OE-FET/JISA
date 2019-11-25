@@ -129,7 +129,7 @@ public class Tabs extends JFXWindow implements Element, Container {
 
         });
 
-        sidebar.getChildren().add(tab);
+        GUI.runNow(() -> sidebar.getChildren().add(tab));
         tabs.add(tab);
         switchers.add(onClick);
         reseters.add(onReset);

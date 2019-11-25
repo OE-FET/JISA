@@ -1,6 +1,5 @@
 package jisa.gui;
 
-import jisa.control.Field;
 import jisa.control.IConf;
 import jisa.control.RTask;
 import jisa.control.Returnable;

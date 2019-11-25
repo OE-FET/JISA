@@ -1,6 +1,6 @@
 package jisa.gui;
 
-public interface Button {
+public interface Button extends SubElement {
 
     /**
      * Sets whether the button is disabled or not (greyed-out and un-clickable).

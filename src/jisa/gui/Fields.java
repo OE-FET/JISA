@@ -1,7 +1,6 @@
 package jisa.gui;
 
 import jisa.control.ConfigStore;
-import jisa.control.Field;
 import jisa.control.SRunnable;
 import jisa.Util;
 import javafx.beans.value.ChangeListener;

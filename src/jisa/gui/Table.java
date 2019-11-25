@@ -45,10 +45,19 @@ public class Table extends JFXWindow implements Element, Clearable {
      */
     public synchronized void watchList(ResultTable list) {
 
-        list.addOnUpdate((r) -> update(r));
+        list.addOnUpdate(this::update);
         setUp(list);
         list.addClearable(this);
 
+    }
+
+    /**
+     * Watch the given ResultTable to display its contents.
+     *
+     * @param list ResultTable to watch
+     */
+    public void watch(ResultTable list) {
+        watchList(list);
     }
 
     private synchronized void setUp(ResultTable list) {

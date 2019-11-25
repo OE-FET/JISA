@@ -39,12 +39,11 @@ public class SVGElement {
 
     public SVGElement setStrokeColour(Color colour) {
 
-        return setStrokeColour(String.format(
-                "rgb(%s,%s,%s)",
-                colour.getRed() * 255D,
-                colour.getGreen() * 255D,
-                colour.getBlue() * 255D
-        ));
+        return setStrokeColour(String.format("#%02X%02X%02X",
+            (int) (colour.getRed() * 255),
+            (int) (colour.getGreen() * 255),
+            (int) (colour.getBlue() * 255))
+        );
 
     }
 
@@ -58,8 +57,8 @@ public class SVGElement {
     public SVGElement setStrokeWidth(double width) {
 
         setAttribute(
-                "stroke-width",
-                String.format("%s", width)
+            "stroke-width",
+            String.format("%s", width)
         );
 
         return this;
@@ -69,8 +68,8 @@ public class SVGElement {
     public SVGElement setDash(String... dash) {
 
         setAttribute(
-                "stroke-dasharray",
-                String.join(",", dash)
+            "stroke-dasharray",
+            String.join(",", dash)
         );
 
         return this;
@@ -92,11 +91,10 @@ public class SVGElement {
     public SVGElement setFillColour(Color colour) {
 
         return setFillColour(String.format(
-                "rgb(%s,%s,%s)",
-                colour.getRed() * 255D,
-                colour.getGreen() * 255D,
-                colour.getBlue() * 255D
-        ));
+            "#%02X%02X%02X",
+            (int) (colour.getRed() * 255),
+            (int) (colour.getGreen() * 255),
+            (int) (colour.getBlue() * 255)));
 
     }
 
