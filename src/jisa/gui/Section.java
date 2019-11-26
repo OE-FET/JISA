@@ -3,6 +3,9 @@ package jisa.gui;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.Pane;
 
+/**
+ * A collapsible section box that surrounds one GUI element.
+ */
 public class Section extends JFXWindow implements NotBordered {
 
     public Pane       pane;
@@ -14,29 +17,37 @@ public class Section extends JFXWindow implements NotBordered {
         setTitle(title);
     }
 
+    public Section(String title) {
+        this(title, null);
+    }
+
     public void setTitle(String title) {
-        titled.setText(title);
+        GUI.runNow(() -> titled.setText(title));
     }
 
     public String getTitle() {
         return titled.getText();
     }
 
-    public Section(String title) {
-        this(title, null);
-    }
+    /**
+     * Sets which GUI element is displayed inside this section.
+     *
+     * @param element Element to show
+     */
+    public void setElement(Element element) {
 
-    public void setElement(Element e) {
-
-        if (e == null) {
+        if (element == null) {
             clear();
         } else {
-            titled.setContent(e instanceof NotBordered ? ((NotBordered) e).getNoBorderPane(false) : e.getPane());
+            titled.setContent(element instanceof NotBordered ? ((NotBordered) element).getNoBorderPane(false) : element.getPane());
 
         }
 
     }
 
+    /**
+     * Removes the contents of this section.
+     */
     public void clear() {
         titled.setContent(null);
     }
@@ -45,4 +56,5 @@ public class Section extends JFXWindow implements NotBordered {
     public Pane getNoBorderPane(boolean strip) {
         return getPane();
     }
+
 }

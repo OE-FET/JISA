@@ -28,6 +28,12 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
     private boolean            vGrow   = true;
     private ArrayList<Element> added   = new ArrayList<>();
 
+    /**
+     * Creates a Grid element with the given title and number of columns.
+     *
+     * @param title      Title
+     * @param numColumns Number of columns
+     */
     public Grid(String title, int numColumns) {
 
         super(title, Grid.class.getResource("fxml/GridWindow.fxml"));
@@ -35,31 +41,49 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
     }
 
+    /**
+     * Creates a Grid element with the given title and the default number (3) of columns.
+     *
+     * @param title Title
+     */
     public Grid(String title) {
 
         this(title, DEFAULT_NUM_COLS);
 
     }
 
-    public Grid(String title, int numCols, Element... panels) {
+    /**
+     * Creates a Grid element with the given title, number of columns and adds the given elements to it as children.
+     *
+     * @param title    Title
+     * @param numCols  Number of columns
+     * @param children Children to add
+     */
+    public Grid(String title, int numCols, Element... children) {
 
         this(title, numCols);
 
-        for (Element g : panels) {
+        for (Element g : children) {
             add(g);
         }
 
     }
 
-    public Grid(String title, Element... panels) {
+    /**
+     * Creates a Grid element with the given title, 3 columns and adds the given elements to it as children.
+     *
+     * @param title    Title
+     * @param children Children to add
+     */
+    public Grid(String title, Element... children) {
 
-        this(title, DEFAULT_NUM_COLS, panels);
+        this(title, DEFAULT_NUM_COLS, children);
 
     }
 
-    public Grid(int numColumns, Element... panels) {
+    public Grid(int numColumns, Element... children) {
 
-        this("", numColumns, panels);
+        this("", numColumns, children);
 
     }
 
@@ -69,11 +93,19 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
     }
 
+    public void autoAdjustSize() {
+
+        super.autoAdjustSize();
+
+    }
+
     /**
      * Adds a button to a toolbar at the top of the grid.
      *
      * @param text    Text to display in the button
      * @param onClick Action to perform when clicked
+     *
+     * @return Newly created button sub-element object
      */
     public jisa.gui.Button addToolbarButton(String text, ClickHandler onClick) {
 
@@ -86,6 +118,53 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             }
             button.setText(text);
             button.setOnAction(
+                (actionEvent) -> {
+                    Thread t = new Thread(() -> {
+                        try {
+                            onClick.click();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    t.setDaemon(true);
+                    t.start();
+                }
+            );
+
+            toolBar.getItems().add(button);
+        });
+
+        return new jisa.gui.Button() {
+
+            @Override
+            public void setDisabled(boolean disabled) { GUI.runNow(() -> button.setDisable(disabled)); }
+
+            @Override
+            public boolean isDisabled() { return button.isDisabled(); }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    button.setVisible(visible);
+                    button.setManaged(visible);
+                });
+
+            }
+
+            @Override
+            public boolean isVisible() { return button.isVisible(); }
+
+            @Override
+            public void setText(String text) { GUI.runNow(() -> button.setText(text)); }
+
+            @Override
+            public String getText() { return button.getText(); }
+
+            @Override
+            public void setOnClick(ClickHandler onClick) {
+
+                GUI.runNow(() -> button.setOnAction(
                     (actionEvent) -> {
                         Thread t = new Thread(() -> {
                             try {
@@ -97,80 +176,22 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
                         t.setDaemon(true);
                         t.start();
                     }
-            );
-
-            toolBar.getItems().add(button);
-        });
-
-        return new jisa.gui.Button() {
-
-            @Override
-            public void setDisabled(boolean disabled) {
-
-                GUI.runNow(() -> button.setDisable(disabled));
-            }
-
-            @Override
-            public boolean isDisabled() {
-
-                return button.isDisabled();
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    button.setVisible(visible);
-                    button.setManaged(visible);
-                });
-            }
-
-            @Override
-            public boolean isVisible() {
-
-                return button.isVisible();
-            }
-
-            @Override
-            public void setText(String text) {
-
-                GUI.runNow(() -> button.setText(text));
-            }
-
-            @Override
-            public String getText() {
-
-                return button.getText();
-            }
-
-            @Override
-            public void setOnClick(ClickHandler onClick) {
-
-                GUI.runNow(() -> button.setOnAction(
-                        (actionEvent) -> {
-                            Thread t = new Thread(() -> {
-                                try {
-                                    onClick.click();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            });
-                            t.setDaemon(true);
-                            t.start();
-                        }
                 ));
 
             }
 
             @Override
-            public void remove() {
-                GUI.runNow(() -> toolBar.getItems().remove(button));
-            }
+            public void remove() { GUI.runNow(() -> toolBar.getItems().remove(button)); }
 
         };
 
     }
 
+    /**
+     * Adds a separator to the toolbar at the top of the Grid.
+     *
+     * @return Newly created separator sub-element object
+     */
     public jisa.gui.Separator addToolbarSeparator() {
 
         Separator separator = new Separator();
@@ -207,6 +228,11 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
     }
 
+    /**
+     * Adds the given GUI element as a child of this grid, placing it as a panel in the next available space.
+     *
+     * @param toAdd Element to add
+     */
     public void add(Element toAdd) {
 
         Pane bPane;
@@ -238,6 +264,25 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
         added.add(toAdd);
         addPane(bPane);
+    }
+
+    protected void addPane(Node toAdd) {
+
+        GUI.runNow(() -> {
+
+            pane.add(toAdd, c, r);
+
+            GridPane.setHgrow(toAdd, hGrow ? Priority.ALWAYS : Priority.NEVER);
+            GridPane.setVgrow(toAdd, vGrow ? Priority.ALWAYS : Priority.NEVER);
+
+            c++;
+            if (c >= nCols) {
+                c = 0;
+                r++;
+            }
+
+        });
+
     }
 
     public void setNumColumns(int columns) {
@@ -315,25 +360,6 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
     public int getNumColumns() {
 
         return nCols;
-    }
-
-    public void addPane(Node toAdd) {
-
-        GUI.runNow(() -> {
-
-            pane.add(toAdd, c, r);
-
-            GridPane.setHgrow(toAdd, hGrow ? Priority.ALWAYS : Priority.NEVER);
-            GridPane.setVgrow(toAdd, vGrow ? Priority.ALWAYS : Priority.NEVER);
-
-            c++;
-            if (c >= nCols) {
-                c = 0;
-                r++;
-            }
-
-        });
-
     }
 
     public void setGrowth(boolean horizontal, boolean vertical) {

@@ -888,4 +888,12 @@ public class Colour {
      */
     public static final Color YELLOWGREEN = Color.color(0.6039216f, 0.8039216f, 0.19607843f);
 
+    public static Color rgb(int red, int green, int blue) {
+        return Color.color(((double) red / 255D), ((double) green / 255D), ((double) blue / 255D));
+    }
+
+    public static Color string(String string) {
+        return Color.valueOf(string);
+    }
+
 }

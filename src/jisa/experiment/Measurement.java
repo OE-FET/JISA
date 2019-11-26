@@ -11,11 +11,11 @@ public abstract class Measurement {
     private ResultTable results   = null;
     private Thread      runThread = Thread.currentThread();
 
-    public abstract void run() throws Exception;
+    protected abstract void run() throws Exception;
 
-    public abstract void onInterrupt() throws Exception;
+    protected abstract void onInterrupt() throws Exception;
 
-    public abstract void onFinish() throws Exception;
+    protected abstract void onFinish() throws Exception;
 
     public abstract Col[] getColumns();
 

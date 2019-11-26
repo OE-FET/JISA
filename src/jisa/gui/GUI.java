@@ -90,7 +90,7 @@ public class GUI extends Application {
                 String name = nat.nextLine();
 
                 if (name.contains(extension)) {
-                    InputStream resource = Main.class.getResource("/native/" + name).openStream();
+                    InputStream resource = Main.class.getResourceAsStream("/native/" + name);
                     Files.copy(resource, Paths.get(tempDir.toString(), name));
                     resource.close();
                 }
@@ -102,6 +102,7 @@ public class GUI extends Application {
             System.setProperty("java.library.path", path);
 
         } catch (Exception ignored) {
+            ignored.printStackTrace();
             // If this goes wrong, then continue as planned hoping the there is a copy of JavaFx already installed
         }
 

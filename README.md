@@ -1,3 +1,4 @@
+[![](https://img.shields.io/badge/Download-JISA-teal)](https://github.com/OE-FET/JISA/raw/master/JISA.jar)
 
 <p align="center"><img src="https://i.imgur.com/MUXiBqM.png"/></p>
 
@@ -226,10 +227,32 @@ Resulting in:
 | **Eurotherm**          | 2408         | Temperature Controller      | `ET2408`  |
 | **Pico Technology**    | USB-TC08     | Thermometer (Multi-Channel) | `USBTC08` |
 
+## Prerequisites
+
+Before being able to use JISA, you will need the Java Development Kit (JDK) 11 or newer installed.
+
+### Linux
+
+Either you'll already have OpenJDK installed or you simply need to run something like:
+
+```
+sudo apt install openjdk-11-jdk
+```
+
+### Windows and MacOS X
+
+You can download pre-built OpenJDK packages (with installers) from the Adopt Open JDK website:
+
+[https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=hotspot](https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=hotspot)
+
 ## Using JISA
 
-Just include the `JISA.jar` file as a library in your project. If you do not want the require your users to have JavaFx installed you can include the `JISA-JavaFx.jar` file instead, but you must compile and run using at least Java 11. Also, `MarkDown` elements will not currently work using the slimmed-down copy of JavaFx included in the jar.
+You can use JISA in your project simply by including the JISA.jar file as a library. This will work so-long as your project uses Java 11 or newer.
 
-For Java 8 (with JavaFx already installed): [JISA.jar](https://github.com/OE-FET/JISA/raw/master/JISA.jar)
+<p align="center">
 
-For Java 11 : [JISA-JavaFx.jar](https://github.com/OE-FET/JISA/raw/master/JISA-JavaFx.jar)
+[![](https://img.shields.io/badge/Download-JISA.jar-teal)](https://github.com/OE-FET/JISA/raw/master/JISA.jar)
+
+</p>
+
+If using IntelliJ IDEA, this means adding JISA.jar to your project directory and, inside IDEA, right-clicking on it then selecting "Add as Library..."

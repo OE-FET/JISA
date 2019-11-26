@@ -32,18 +32,10 @@ public class Progress extends JFXWindow implements Element {
     public void setProgress(double value, double max) {
 
         this.max = max;
-        GUI.runNow(() -> timeline.stop());
-
-        timeline = new Timeline();
-
-        timeline.getKeyFrames().setAll(
-            new KeyFrame(Duration.ZERO, new KeyValue(progressBar.progressProperty(), progressBar.getProgress())),
-            new KeyFrame(Duration.millis(250), new KeyValue(progressBar.progressProperty(), value / this.max))
-        );
 
         GUI.runNow(() -> {
 
-            timeline.playFrom(Duration.ZERO);
+            progressBar.setProgress(value / max);
 
             if (value == -1) {
                 pctLabel.setText("");

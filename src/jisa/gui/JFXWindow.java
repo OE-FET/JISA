@@ -104,6 +104,25 @@ public class JFXWindow implements Element {
         GUI.runNow(stage::close);
     }
 
+    public void autoAdjustSize() {
+
+        GUI.runNow(() -> {
+
+            double minHeight = stage.getMinHeight();
+            double minWidth  = stage.getMinWidth();
+
+            stage.setMinHeight(stage.getHeight());
+            stage.setMinWidth(stage.getWidth());
+
+            stage.sizeToScene();
+
+            stage.setMinHeight(minHeight);
+            stage.setMinWidth(minWidth);
+
+        });
+
+    }
+
     /**
      * Sets whether the window is maximised or not.
      *
