@@ -1,6 +1,7 @@
 package jisa.gui;
 
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ListChangeListener;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -9,6 +10,7 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
@@ -21,6 +23,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.StringConverter;
 import jisa.Util;
+import jisa.control.SRunnable;
 import jisa.experiment.Function;
 import jisa.experiment.ResultTable;
 import jisa.gui.svg.*;
@@ -34,19 +37,17 @@ import java.util.List;
 
 public class Plot extends JFXWindow implements Element, Clearable {
 
-    public  BorderPane   pane;
-    public  ToolBar      toolbar;
-    public  Pane         stack;
-    public  JISAChart    chart;
-    public  SmartAxis    xAxis;
-    public  SmartAxis    yAxis;
-    public  ToggleButton autoButton;
-    public  ToggleButton zoomButton;
-    public  ToggleButton dragButton;
-    public  HBox         sliderBox;
-    public  Slider       rangeSliderX;
-    private Rectangle    rect;
-    private Series       autoSeries = null;
+    public  BorderPane pane;
+    public  ToolBar    toolbar;
+    public  Pane       stack;
+    public  JISAChart  chart;
+    public  SmartAxis  xAxis;
+    public  SmartAxis  yAxis;
+    public  Button     autoButton;
+    public  HBox       sliderBox;
+    public  Slider     rangeSliderX;
+    private Rectangle  rect;
+    private Series     autoSeries = null;
 
     /**
      * Creates an empty plot from the given title, x-axis label, and y-axis label.
@@ -95,13 +96,20 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             AnchorPane canvas = new AnchorPane();
             canvas.setStyle(
-                    "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
+                "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
             canvas.setMouseTransparent(true);
             canvas.getChildren().add(rect);
             canvas.setManaged(false);
             stack.getChildren().add(canvas);
             toolbar.setVisible(false);
             toolbar.setManaged(false);
+
+            toolbar.getItems().addListener((ListChangeListener<? super Node>) change -> {
+                boolean show = !toolbar.getItems().isEmpty();
+                toolbar.setVisible(show);
+                toolbar.setManaged(show);
+            });
+
             rangeSliderX.setValue(100.0);
             sliderBox.setVisible(false);
             sliderBox.setManaged(false);
@@ -251,19 +259,134 @@ public class Plot extends JFXWindow implements Element, Clearable {
     }
 
     /**
-     * Sets whether the control toolbar is visible or not.
+     * Adds toolbar button that opens the plot save dialog when clicked.
      *
-     * @param flag Visible?
+     * @param text Text to show
      */
-    public void showToolbar(boolean flag) {
+    public jisa.gui.Button addSaveButton(String text) {
+        return addToolbarButton(text, this::showSaveDialog);
+    }
 
-        GUI.runNow(() -> {
+    public jisa.gui.Button addToolbarButton(String text, ClickHandler onClick) {
 
-            toolbar.setManaged(flag);
-            toolbar.setVisible(flag);
-            adjustSize();
+        Button button = new Button(text);
+        button.setOnMouseClicked(mouseEvent -> new Thread(() -> {
+            try {
+                onClick.click();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start());
+
+        GUI.runNow(() -> toolbar.getItems().add(button));
+
+        return new jisa.gui.Button() {
+            @Override
+            public void setDisabled(boolean disabled) { GUI.runNow(() -> button.setDisable(disabled)); }
+
+            @Override
+            public boolean isDisabled() { return button.isDisabled(); }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    button.setVisible(visible);
+                    button.setManaged(visible);
+                });
+
+            }
+
+            @Override
+            public boolean isVisible() { return button.isVisible(); }
+
+            @Override
+            public void setText(String text) { GUI.runNow(() -> button.setText(text)); }
+
+            @Override
+            public String getText() { return button.getText(); }
+
+            @Override
+            public void setOnClick(ClickHandler onClick) {
+                button.setOnMouseClicked(mouseEvent -> new Thread(() -> {
+                    try {
+                        onClick.click();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }).start());
+            }
+
+            @Override
+            public void remove() {
+                GUI.runNow(() -> toolbar.getItems().remove(button));
+            }
+
+        };
+
+    }
+
+    public jisa.gui.Separator addToolbarSeparator() {
+
+        javafx.scene.control.Separator separator = new javafx.scene.control.Separator();
+
+        GUI.runNow(() -> toolbar.getItems().add(separator));
+
+        return new Separator() {
+            @Override
+            public void remove() {
+                GUI.runNow(() -> toolbar.getItems().remove(separator));
+            }
+
+            @Override
+            public boolean isVisible() {
+                return separator.isVisible();
+            }
+
+            @Override
+            public void setVisible(boolean visible) {
+                GUI.runNow(() -> {
+                    separator.setVisible(visible);
+                    separator.setManaged(visible);
+                });
+            }
+        };
+
+    }
+
+    public void showSaveDialog() {
+
+        Fields         save   = new Fields("Save Plot");
+        Field<Integer> format = save.addChoice("Format", "svg", "png");
+        Field<Integer> width  = save.addIntegerField("Width", 600);
+        Field<Integer> height = save.addIntegerField("Height", 400);
+        Field<String>  file   = save.addFileSave("Path");
+
+        save.addButton("Cancel", save::close);
+
+        save.addButton("Save", () -> {
+
+            if (!file.get().trim().equals("")) {
+
+                switch (format.get()) {
+
+                    case 0:
+                        saveSVG(file.get(), width.get(), height.get());
+                        break;
+
+                    case 1:
+                        savePNG(file.get(), width.get(), height.get());
+                        break;
+
+                }
+
+                save.close();
+
+            }
 
         });
+
+        save.show();
 
     }
 
@@ -328,10 +451,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     public void setZoomMode() {
 
-        zoomButton.setSelected(true);
-        autoButton.setSelected(false);
-        dragButton.setSelected(false);
-
         XYChart.Series<Double, Double> series = new XYChart.Series<>();
 
         final Node                          background = chart.lookup(".chart-plot-background");
@@ -382,13 +501,12 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     /**
      * Sets whether
+     *
      * @param flag
      */
     public void useMouseCommands(boolean flag) {
 
         if (flag) {
-
-            showToolbar(false);
 
             XYChart.Series<Double, Double> series = new XYChart.Series<>();
 
@@ -501,10 +619,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     public void setDragMode() {
 
-        zoomButton.setSelected(false);
-        autoButton.setSelected(false);
-        dragButton.setSelected(true);
-
         final Node                          background = chart.lookup(".chart-plot-background");
         final SimpleObjectProperty<Point2D> start      = new SimpleObjectProperty<>();
         final SimpleObjectProperty<Point2D> startMax   = new SimpleObjectProperty<>();
@@ -543,10 +657,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
     }
 
     public void setAutoMode() {
-
-        zoomButton.setSelected(false);
-        autoButton.setSelected(true);
-        dragButton.setSelected(false);
 
         chart.setOnMousePressed(null);
         chart.setOnMouseDragged(null);
@@ -688,6 +798,9 @@ public class Plot extends JFXWindow implements Element, Clearable {
         SVGLine xAxis = new SVGLine(aStartX - 0.5, aStartY, aEndX, aStartY);
         SVGLine yAxis = new SVGLine(aStartX, aStartY + 0.5, aStartX, aEndY);
 
+        SVGLine xAxisBox = new SVGLine(aStartX - 0.5, aEndY, aEndX, aEndY);
+        SVGLine yAxisBox = new SVGLine(aEndX, aStartY + 0.5, aEndX, aEndY);
+
         SVGElement clip = new SVGElement("clipPath");
         clip.setAttribute("id", "lineClip");
 
@@ -712,6 +825,12 @@ public class Plot extends JFXWindow implements Element, Clearable {
              .setStrokeColour(Color.GREY);
 
         yAxis.setStrokeWidth(1)
+             .setStrokeColour(Color.GREY);
+
+        xAxisBox.setStrokeWidth(1)
+             .setStrokeColour(Color.GREY);
+
+        yAxisBox.setStrokeWidth(1)
              .setStrokeColour(Color.GREY);
 
         List<Double> xTicks = this.xAxis.getMajorTicks();
@@ -787,6 +906,9 @@ public class Plot extends JFXWindow implements Element, Clearable {
         main.add(xAxis);
         main.add(yAxis);
 
+        main.add(xAxisBox);
+        main.add(yAxisBox);
+
         SVGElement legend = new SVGElement("rect");
 
         legend.setStrokeWidth(1.0)
@@ -833,10 +955,10 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             SVGElement legendCircle = makeMarker(s.isShowingMarkers() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
             SVGText legendText = new SVGText(
-                    legendX + 15.0 + 5 + 3 + 10,
-                    legendY + (25 * i) + 15.0 + 5,
-                    "beginning",
-                    s.getName()
+                legendX + 15.0 + 5 + 3 + 10,
+                legendY + (25 * i) + 15.0 + 5,
+                "beginning",
+                s.getName()
             );
 
             legendText.setAttribute("font-size", "16px");
@@ -955,16 +1077,16 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case TRIANGLE:
 
                 marker = new SVGTriangle(x, y, m)
-                        .setStrokeColour(c)
-                        .setFillColour(Color.WHITE)
-                        .setStrokeWidth(2);
+                    .setStrokeColour(c)
+                    .setFillColour(Color.WHITE)
+                    .setStrokeWidth(2);
                 break;
 
             case DASH:
 
                 marker = new SVGLine(x - m, y, x + m, y)
-                        .setStrokeColour(c)
-                        .setStrokeWidth(2);
+                    .setStrokeColour(c)
+                    .setStrokeWidth(2);
                 break;
 
             default:
@@ -972,18 +1094,18 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case DOT:
 
                 marker = new SVGCircle(x, y, m)
-                        .setStrokeColour(c)
-                        .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
-                        .setStrokeWidth(2);
+                    .setStrokeColour(c)
+                    .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
+                    .setStrokeWidth(2);
                 break;
 
             case SQUARE:
             case DIAMOND:
 
                 marker = new SVGSquare(x, y, m)
-                        .setStrokeColour(c)
-                        .setFillColour(Color.WHITE)
-                        .setStrokeWidth(2);
+                    .setStrokeColour(c)
+                    .setFillColour(Color.WHITE)
+                    .setStrokeWidth(2);
 
                 if (p == Series.Shape.DIAMOND) {
                     marker.setAttribute("transform", "rotate(45 " + x + " " + y + ")");
@@ -994,9 +1116,9 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case CROSS:
 
                 marker = new SVGCross(x, y, m)
-                        .setStrokeColour(c)
-                        .setFillColour(c)
-                        .setStrokeWidth(1);
+                    .setStrokeColour(c)
+                    .setFillColour(c)
+                    .setStrokeWidth(1);
 
                 break;
 
