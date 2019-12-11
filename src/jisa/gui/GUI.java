@@ -102,7 +102,6 @@ public class GUI extends Application {
             System.setProperty("java.library.path", path);
 
         } catch (Exception ignored) {
-            ignored.printStackTrace();
             // If this goes wrong, then continue as planned hoping the there is a copy of JavaFx already installed
         }
 

@@ -53,6 +53,7 @@ public class Matrix implements RealMatrix, Iterable<Double> {
 
     }
 
+
     public Matrix getRowSums() {
 
         Matrix result = new Matrix(getRowDimension(), 1);
@@ -67,6 +68,26 @@ public class Matrix implements RealMatrix, Iterable<Double> {
         Matrix result = new Matrix(1, getColumnDimension());
         result.setAllEntries(0.0);
         forEach((r, c, v) -> result.addToEntry(0, c, v));
+        return result;
+
+    }
+
+    public Matrix getRowQuadratures() {
+
+        Matrix result = new Matrix(getRowDimension(), 1);
+        result.setAllEntries(0.0);
+        forEach((r, c, v) -> result.addToEntry(r, 0, v*v));
+        result.forEach((r, c, v) -> result.setEntry(r, c, Math.sqrt(v)));
+        return result;
+
+    }
+
+    public Matrix getColumnQuadratures() {
+
+        Matrix result = new Matrix(1, getColumnDimension());
+        result.setAllEntries(0.0);
+        forEach((r, c, v) -> result.addToEntry(0, c, v*v));
+        result.forEach((r, c, v) -> result.setEntry(r, c, Math.sqrt(v)));
         return result;
 
     }
@@ -97,6 +118,14 @@ public class Matrix implements RealMatrix, Iterable<Double> {
 
     }
 
+
+    public Matrix elementPow(double pow) {
+        return map(v -> Math.pow(v, pow));
+    }
+
+    public Matrix elementSqrt() {
+        return map(Math::sqrt);
+    }
 
     public void setAllEntries(double... values) {
 

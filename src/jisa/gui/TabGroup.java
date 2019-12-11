@@ -4,7 +4,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Side;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import jisa.Util;
 
 import java.util.LinkedList;
@@ -134,8 +135,9 @@ public class TabGroup extends JFXWindow implements Container, NotBordered {
     @Override
     public Pane getNoBorderPane(boolean stripPadding) {
 
-        Pane parent = new Pane(pane);
+        BorderPane parent = new BorderPane(pane);
         parent.setStyle("-fx-background-color: transparent");
+        parent.setBorder(new Border(new BorderStroke(Color.web("#c8c8c8"), BorderStrokeStyle.SOLID, new CornerRadii(0.0), new BorderWidths(1.0))));
 
         if (stripPadding) {
             parent.setPadding(new Insets(0,0,0,0));
