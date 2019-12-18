@@ -1,9 +1,8 @@
 package jisa.maths;
 
-import jisa.experiment.Function;
+import jisa.maths.fits.Fit;
 import org.apache.commons.math.linear.*;
 
-import java.util.Arrays;
 import java.util.Iterator;
 
 public class Matrix implements RealMatrix, Iterable<Double> {
@@ -558,7 +557,7 @@ public class Matrix implements RealMatrix, Iterable<Double> {
     }
 
     public Fit polyFitAgainst(Matrix x, int degree) {
-        return Maths.polyFit(x, this, degree);
+        return Fitting.polyFit(x, this, degree);
     }
 
     public Matrix asSquareDiagonal() {

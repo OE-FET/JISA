@@ -1,19 +1,20 @@
 package jisa.gui;
 
+import javafx.geometry.HPos;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.Address.AddressParams;
 import jisa.control.ConfigStore;
 import jisa.control.IConf;
-import jisa.devices.*;
-import jisa.Util;
+import jisa.devices.Instrument;
+import jisa.devices.SMUCluster;
 import jisa.visa.VISADevice;
-import javafx.geometry.HPos;
-import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.control.Button;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import org.reflections.Reflections;
 
 import java.lang.reflect.Constructor;
@@ -45,171 +46,20 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
     private List<Runnable>              onApply           = new LinkedList<>();
     private AddressParams<?>            currentParams     = null;
 
-    public static class SMU extends Connector<jisa.devices.SMU> {
-
-        public SMU(String title, String key, ConfigStore config) {
-            super(title, key, jisa.devices.SMU.class, config);
-        }
-
-        public SMU(String title) {
-            this(title, null, null);
-        }
-
-    }
-
-    public static class TC extends Connector<jisa.devices.TC> {
-
-        public TC(String title, String key, ConfigStore config) {
-            super(title, key, jisa.devices.TC.class, config);
-        }
-
-        public TC(String title) {
-            this(title, null, null);
-        }
-
-    }
-
-    public static class LockIn extends Connector<jisa.devices.LockIn> {
-
-        public LockIn(String title, String key, ConfigStore config) {
-            super(title, key, jisa.devices.LockIn.class, config);
-        }
-
-        public LockIn(String title) {
-            this(title, null, null);
-        }
-
-    }
-
-    public static class DPLockIn extends Connector<jisa.devices.DPLockIn> {
-
-        public DPLockIn(String title, String key, ConfigStore config) {
-            super(title, key, jisa.devices.DPLockIn.class, config);
-        }
-
-        public DPLockIn(String title) {
-            this(title, null, null);
-        }
-
-    }
-
-    public static class DCPower extends Connector<jisa.devices.DCPower> {
-
-        public DCPower(String title, String key, ConfigStore config) {
-            super(title, key, jisa.devices.DCPower.class, config);
-        }
-
-        public DCPower(String title) {
-            this(title, null, null);
-        }
-
-    }
-
-    public static class VPreAmp extends Connector<jisa.devices.VPreAmp> {
-
-        public VPreAmp(String title, String key, ConfigStore config) {
-            super(title, key, jisa.devices.VPreAmp.class, config);
-        }
-
-        public VPreAmp(String title) {
-            this(title, null, null);
-        }
-
-    }
-
-    public static class VMeter extends Connector<jisa.devices.VMeter> {
-
-        public VMeter(String title, String key, ConfigStore config) {
-            super(title, key, jisa.devices.VMeter.class, config);
-        }
-
-        public VMeter(String title) {
-            this(title, null, null);
-        }
-
-    }
-
-    public static class IMeter extends Connector<jisa.devices.IMeter> {
-
-        public IMeter(String title, String key, ConfigStore config) {
-            super(title, key, jisa.devices.IMeter.class, config);
-        }
-
-        public IMeter(String title) {
-            this(title, null, null);
-        }
-
-    }
-
-    public static class VSource extends Connector<jisa.devices.VSource> {
-
-        public VSource(String title, String key, ConfigStore config) {
-            super(title, key, jisa.devices.VSource.class, config);
-        }
-
-        public VSource(String title) {
-            this(title, null, null);
-        }
-
-    }
-
-    public static class ISource extends Connector<jisa.devices.ISource> {
-
-        public ISource(String title, String key, ConfigStore config) {
-            super(title, key, jisa.devices.ISource.class, config);
-        }
-
-        public ISource(String title) {
-            this(title, null, null);
-        }
-
-    }
-
-    public static class IVMeter extends Connector<jisa.devices.IVMeter> {
-
-        public IVMeter(String title, String key, ConfigStore config) {
-            super(title, key, jisa.devices.IVMeter.class, config);
-        }
-
-        public IVMeter(String title) {
-            this(title, null, null);
-        }
-
-    }
-
-    public static class IVSource extends Connector<jisa.devices.IVSource> {
-
-        public IVSource(String title, String key, ConfigStore config) {
-            super(title, key, jisa.devices.IVSource.class, config);
-        }
-
-        public IVSource(String title) {
-            this(title, null, null);
-        }
-
-    }
-
-    public static class TMeter extends Connector<jisa.devices.TMeter> {
-
-        public TMeter(String title, String key, ConfigStore config) {
-            super(title, key, jisa.devices.TMeter.class, config);
-        }
-
-        public TMeter(String title) {
-            this(title, null, null);
-        }
-
-    }
-
     public Connector(String title, String key, Class<T> type, ConfigStore c) {
+
         super(title, Connector.class.getResource("fxml/InstrumentConfig.fxml"));
-        realTitle = title;
-        this.titled.setText(title);
+
+        realTitle  = title;
         deviceType = type;
+
+        this.titled.setText(title);
+
         updateDrivers();
         updateProtocols();
         makeRed();
         chooseProtocol();
+
         config   = c;
         this.key = key;
 
@@ -217,9 +67,9 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
             config.loadInstrument(key, this);
         }
 
-        protChoice.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
-            chooseProtocol();
-        });
+        protChoice.getSelectionModel()
+                  .selectedItemProperty()
+                  .addListener((observable, oldValue, newValue) -> chooseProtocol());
 
     }
 
@@ -521,6 +371,165 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
 
     public Class<T> getDeviceType() {
         return deviceType;
+    }
+
+    /**
+     * Connector for SMU instruments
+     */
+    public static class SMU extends Connector<jisa.devices.SMU> {
+
+        public SMU(String title, String key, ConfigStore config) {
+            super(title, key, jisa.devices.SMU.class, config);
+        }
+
+        public SMU(String title) {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class TC extends Connector<jisa.devices.TC> {
+
+        public TC(String title, String key, ConfigStore config) {
+            super(title, key, jisa.devices.TC.class, config);
+        }
+
+        public TC(String title) {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class LockIn extends Connector<jisa.devices.LockIn> {
+
+        public LockIn(String title, String key, ConfigStore config) {
+            super(title, key, jisa.devices.LockIn.class, config);
+        }
+
+        public LockIn(String title) {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class DPLockIn extends Connector<jisa.devices.DPLockIn> {
+
+        public DPLockIn(String title, String key, ConfigStore config) {
+            super(title, key, jisa.devices.DPLockIn.class, config);
+        }
+
+        public DPLockIn(String title) {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class DCPower extends Connector<jisa.devices.DCPower> {
+
+        public DCPower(String title, String key, ConfigStore config) {
+            super(title, key, jisa.devices.DCPower.class, config);
+        }
+
+        public DCPower(String title) {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class VPreAmp extends Connector<jisa.devices.VPreAmp> {
+
+        public VPreAmp(String title, String key, ConfigStore config) {
+            super(title, key, jisa.devices.VPreAmp.class, config);
+        }
+
+        public VPreAmp(String title) {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class VMeter extends Connector<jisa.devices.VMeter> {
+
+        public VMeter(String title, String key, ConfigStore config) {
+            super(title, key, jisa.devices.VMeter.class, config);
+        }
+
+        public VMeter(String title) {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class IMeter extends Connector<jisa.devices.IMeter> {
+
+        public IMeter(String title, String key, ConfigStore config) {
+            super(title, key, jisa.devices.IMeter.class, config);
+        }
+
+        public IMeter(String title) {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class VSource extends Connector<jisa.devices.VSource> {
+
+        public VSource(String title, String key, ConfigStore config) {
+            super(title, key, jisa.devices.VSource.class, config);
+        }
+
+        public VSource(String title) {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class ISource extends Connector<jisa.devices.ISource> {
+
+        public ISource(String title, String key, ConfigStore config) {
+            super(title, key, jisa.devices.ISource.class, config);
+        }
+
+        public ISource(String title) {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class IVMeter extends Connector<jisa.devices.IVMeter> {
+
+        public IVMeter(String title, String key, ConfigStore config) {
+            super(title, key, jisa.devices.IVMeter.class, config);
+        }
+
+        public IVMeter(String title) {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class IVSource extends Connector<jisa.devices.IVSource> {
+
+        public IVSource(String title, String key, ConfigStore config) {
+            super(title, key, jisa.devices.IVSource.class, config);
+        }
+
+        public IVSource(String title) {
+            this(title, null, null);
+        }
+
+    }
+
+    public static class TMeter extends Connector<jisa.devices.TMeter> {
+
+        public TMeter(String title, String key, ConfigStore config) {
+            super(title, key, jisa.devices.TMeter.class, config);
+        }
+
+        public TMeter(String title) {
+            this(title, null, null);
+        }
+
     }
 
 }

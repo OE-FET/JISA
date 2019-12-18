@@ -1,12 +1,9 @@
 package jisa.gui;
 
 import javafx.animation.*;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.chart.XYChart;
@@ -16,11 +13,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.util.Duration;
 import jisa.Util;
-import jisa.control.RTask;
 import jisa.experiment.Function;
 import jisa.experiment.Result;
 import jisa.experiment.ResultTable;
-import jisa.maths.Fit;
+import jisa.maths.fits.Fit;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;

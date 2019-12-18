@@ -13,7 +13,7 @@ import java.util.concurrent.Semaphore;
 
 /**
  * Class for controlling Lake Shore Model 336 temperature controllers.
- * <p>
+ *
  * They are generally annoying with a shoddy communications implementation. Hooray!
  */
 public class LS336 extends VISADevice implements MSMOTC {

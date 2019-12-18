@@ -5,8 +5,8 @@ import javafx.scene.paint.Color;
 import jisa.experiment.Col;
 import jisa.experiment.Result;
 import jisa.experiment.ResultTable;
-import jisa.maths.Fit;
-import jisa.maths.Maths;
+import jisa.maths.fits.Fit;
+import jisa.maths.Fitting;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -463,7 +463,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
                 return null;
             }
 
-            return Maths.polyFit(data, degree);
+            return Fitting.polyFit(data, degree);
 
         });
 

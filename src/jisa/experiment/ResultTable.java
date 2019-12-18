@@ -1,18 +1,15 @@
 package jisa.experiment;
 
 import jisa.gui.Clearable;
-import jisa.maths.Fit;
-import jisa.maths.Maths;
+import jisa.maths.fits.Fit;
+import jisa.maths.Fitting;
 import jisa.maths.Matrix;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.io.RandomAccessFile;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public abstract class ResultTable implements Iterable<Result> {
 
@@ -392,8 +389,8 @@ public abstract class ResultTable implements Iterable<Result> {
         return getColumns(yData).polyFitAgainst(getColumns(xData), degree);
     }
 
-    public Function fit(int xData, int yData, PFunction toFit, double... initialGuess) {
-        return Maths.fit(getColumns(xData), getColumns(yData), toFit, initialGuess);
+    public Fit fit(int xData, int yData, PFunction toFit, double... initialGuess) {
+        return Fitting.fit(getColumns(xData), getColumns(yData), toFit, initialGuess);
     }
 
     public Function asFunction(int xData, int yData) {
