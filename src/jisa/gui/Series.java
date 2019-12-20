@@ -2,9 +2,11 @@ package jisa.gui;
 
 import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
+import jisa.Util;
 import jisa.experiment.Col;
 import jisa.experiment.Result;
 import jisa.experiment.ResultTable;
+import jisa.maths.Matrix;
 import jisa.maths.fits.Fit;
 import jisa.maths.Fitting;
 
@@ -217,6 +219,35 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      */
     default Series addPoint(double x, double y) {
         return addPoint(x, y, 0);
+    }
+
+    default Series addPoints(Iterable<Double> x, Iterable<Double> y) {
+
+        Util.iterateCombined(x, y, this::addPoint);
+        return this;
+
+    }
+
+    default Series addPoints(Matrix data) {
+
+        if (data.getColumnDimension() == 2) {
+
+            for (int i = 0; i < data.getRowDimension(); i++) {
+                addPoint(data.get(i, 0), data.get(i, 1));
+            }
+
+        } else if (data.getColumnDimension() == 3) {
+
+            for (int i = 0; i < data.getRowDimension(); i++) {
+                addPoint(data.get(i, 0), data.get(i, 1), data.get(i, 2));
+            }
+
+        } else {
+            throw new IllegalArgumentException("Matrix must be n x 2 or n x 3!");
+        }
+
+        return this;
+
     }
 
     /**

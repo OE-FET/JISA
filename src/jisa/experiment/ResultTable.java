@@ -1,6 +1,8 @@
 package jisa.experiment;
 
 import jisa.gui.Clearable;
+import jisa.maths.Function;
+import jisa.maths.PFunction;
 import jisa.maths.fits.Fit;
 import jisa.maths.Fitting;
 import jisa.maths.Matrix;

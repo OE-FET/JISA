@@ -1,7 +1,6 @@
 package jisa.maths.fits;
 
-import jisa.experiment.Function;
-import org.apache.commons.math.analysis.UnivariateRealFunction;
+import jisa.maths.Function;
 
 public interface Fit {
 

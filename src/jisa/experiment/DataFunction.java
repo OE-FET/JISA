@@ -1,5 +1,7 @@
 package jisa.experiment;
 
+import jisa.maths.Function;
+
 import java.util.Comparator;
 import java.util.List;
 

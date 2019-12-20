@@ -9,14 +9,18 @@ import javafx.scene.shape.*;
 import jisa.control.ERunnable;
 import jisa.control.SRunnable;
 import jisa.devices.DeviceException;
+import jisa.maths.ColumnMatrix;
+import jisa.maths.Matrix;
 import jisa.visa.VISAException;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class Util {
 
@@ -253,6 +257,10 @@ public class Util {
 
     }
 
+    public static Matrix makeLinearColumn(Number min, Number max, int numSteps){
+        return new ColumnMatrix(makeLinearArray(min, max, numSteps));
+    }
+
     /**
      * Creates an equally spaced symmetric array of numbers, starting at min, ending at max in numSteps steps, and then back again to min in numSteps.
      *
@@ -460,6 +468,17 @@ public class Util {
         System.arraycopy(toTrim, 0, trimmed, 0, trimmed.length);
 
         return trimmed;
+
+    }
+
+    public static <U,V> void iterateCombined(Iterable<U> x, Iterable<V> y, BiConsumer<U, V> forEach) {
+
+        Iterator<U> ittrX = x.iterator();
+        Iterator<V> ittrY = y.iterator();
+
+        while (ittrX.hasNext() && ittrY.hasNext()) {
+            forEach.accept(ittrX.next(), ittrY.next());
+        }
 
     }
 

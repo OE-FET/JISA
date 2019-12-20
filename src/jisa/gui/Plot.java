@@ -22,7 +22,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.StringConverter;
 import jisa.Util;
-import jisa.experiment.Function;
+import jisa.maths.Function;
 import jisa.experiment.ResultTable;
 import jisa.gui.svg.*;
 import jisa.maths.fits.Fit;

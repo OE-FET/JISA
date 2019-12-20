@@ -1,6 +1,6 @@
 package jisa.maths.fits;
 
-import jisa.experiment.Function;
+import jisa.maths.Function;
 import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
 
 public class PolyFit implements Fit {
