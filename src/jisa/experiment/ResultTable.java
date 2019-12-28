@@ -1,11 +1,13 @@
 package jisa.experiment;
 
+import jisa.Util;
 import jisa.gui.Clearable;
-import jisa.maths.Function;
-import jisa.maths.PFunction;
 import jisa.maths.fits.Fit;
-import jisa.maths.Fitting;
-import jisa.maths.Matrix;
+import jisa.maths.fits.Fitting;
+import jisa.maths.functions.Function;
+import jisa.maths.functions.PFunction;
+import jisa.maths.matrices.Matrix;
+import jisa.maths.matrices.RMatrix;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -136,14 +138,14 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
-    public void addData(Matrix m) {
+    public void addData(Matrix<Double> m) {
 
-        if (m.getColumnDimension() != getNumCols()) {
+        if (m.cols() != getNumCols()) {
             return;
         }
 
-        for (double[] row : m.getRows()) {
-            addData(row);
+        for (int i = 0; i < m.rows(); i++) {
+            addData(Util.primitiveArray(m.getRowArray(i)));
         }
 
     }
@@ -388,7 +390,7 @@ public abstract class ResultTable implements Iterable<Result> {
     }
 
     public Fit polyFit(int xData, int yData, int degree) {
-        return getColumns(yData).polyFitAgainst(getColumns(xData), degree);
+        return Fitting.polyFit(getColumns(xData), getColumns(yData), degree);
     }
 
     public Fit fit(int xData, int yData, PFunction toFit, double... initialGuess) {
@@ -406,21 +408,9 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public abstract void close();
 
-    public interface OnUpdate {
+    public RMatrix toMatrix() {
 
-        void run(Result row);
-
-    }
-
-    public interface Evaluable {
-
-        double evaluate(Result r);
-
-    }
-
-    public Matrix toMatrix() {
-
-        Matrix result = new Matrix(getNumRows(), getNumCols());
+        RMatrix result = new RMatrix(getNumRows(), getNumCols());
 
         for (int i = 0; i < getNumRows(); i++) {
             Result r = getRow(i);
@@ -431,15 +421,15 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
-    public Matrix getColumns(int... columns) {
+    public RMatrix getColumns(int... columns) {
 
-        Matrix result = new Matrix(Math.max(1,getNumRows()), Math.max(1,columns.length));
+        RMatrix result = new RMatrix(Math.max(1, getNumRows()), Math.max(1, columns.length));
 
         int i = 0;
         for (Result r : this) {
 
             for (int j = 0; j < columns.length; j++) {
-                result.setEntry(i, j, r.get(columns[j]));
+                result.set(i, j, r.get(columns[j]));
             }
 
             i++;
@@ -450,16 +440,16 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
-    public Matrix getRows(int... rows) {
+    public RMatrix getRows(int... rows) {
 
-        Matrix result = new Matrix(rows.length, getNumCols());
+        RMatrix result = new RMatrix(rows.length, getNumCols());
 
         for (int i = 0; i < rows.length; i++) {
 
             Result r = getRow(rows[i]);
 
             for (int j = 0; j < getNumCols(); j++) {
-                result.setEntry(i, j, r.get(j));
+                result.set(i, j, r.get(j));
             }
 
         }
@@ -617,6 +607,18 @@ public abstract class ResultTable implements Iterable<Result> {
             }
 
         };
+
+    }
+
+    public interface OnUpdate {
+
+        void run(Result row);
+
+    }
+
+    public interface Evaluable {
+
+        double evaluate(Result r);
 
     }
 

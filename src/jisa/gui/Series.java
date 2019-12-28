@@ -6,9 +6,9 @@ import jisa.Util;
 import jisa.experiment.Col;
 import jisa.experiment.Result;
 import jisa.experiment.ResultTable;
-import jisa.maths.Matrix;
+import jisa.maths.matrices.Matrix;
 import jisa.maths.fits.Fit;
-import jisa.maths.Fitting;
+import jisa.maths.fits.Fitting;
 
 import java.util.List;
 import java.util.function.Predicate;
@@ -228,22 +228,22 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
     }
 
-    default Series addPoints(Matrix data) {
+    default Series addPoints(Matrix<Double> data) {
 
-        if (data.getColumnDimension() == 2) {
+        if (data.cols() == 2) {
 
-            for (int i = 0; i < data.getRowDimension(); i++) {
+            for (int i = 0; i < data.rows(); i++) {
                 addPoint(data.get(i, 0), data.get(i, 1));
             }
 
-        } else if (data.getColumnDimension() == 3) {
+        } else if (data.cols() == 3) {
 
-            for (int i = 0; i < data.getRowDimension(); i++) {
+            for (int i = 0; i < data.rows(); i++) {
                 addPoint(data.get(i, 0), data.get(i, 1), data.get(i, 2));
             }
 
         } else {
-            throw new IllegalArgumentException("Matrix must be n x 2 or n x 3!");
+            throw new IllegalArgumentException("Matrix must be nx2 or nx3!");
         }
 
         return this;

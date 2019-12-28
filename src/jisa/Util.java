@@ -9,17 +9,13 @@ import javafx.scene.shape.*;
 import jisa.control.ERunnable;
 import jisa.control.SRunnable;
 import jisa.devices.DeviceException;
-import jisa.maths.ColumnMatrix;
-import jisa.maths.Matrix;
+import jisa.maths.matrices.RMatrix;
 import jisa.visa.VISAException;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 public class Util {
@@ -257,8 +253,32 @@ public class Util {
 
     }
 
-    public static Matrix makeLinearColumn(Number min, Number max, int numSteps){
-        return new ColumnMatrix(makeLinearArray(min, max, numSteps));
+    public static int[] makeCountingArray(int start, int stop) {
+
+        int[] result = new int[stop - start + 1];
+
+        for (int i = start; i <= stop; i++) {
+            result[i - start] = i;
+        }
+
+        return result;
+
+    }
+
+    public static RMatrix makeLinearColumn(Number min, Number max, int numSteps) {
+        return new RMatrix.Col(makeLinearArray(min, max, numSteps));
+    }
+
+    public static String joinInts(String delim, int... ints) {
+
+        String[] parts = new String[ints.length];
+
+        for (int i = 0; i < ints.length; i++) {
+            parts[i] = String.format("%d", ints[i]);
+        }
+
+        return String.join(delim, parts);
+
     }
 
     /**
@@ -302,6 +322,30 @@ public class Util {
     public static double[] reverseArray(double[] toReverse) {
 
         double[] array = new double[toReverse.length];
+
+        for (int i = 0; i < array.length; i++) {
+            array[i] = toReverse[array.length - i - 1];
+        }
+
+        return array;
+
+    }
+
+    public static double[] primitiveArray(Double... values) {
+
+        double[] primitive = new double[values.length];
+
+        for (int i = 0; i < values.length; i++) {
+            primitive[i] = values[i];
+        }
+
+        return primitive;
+
+    }
+
+    public static <T> T[] reverseArray(T[] toReverse) {
+
+        T[] array = Arrays.copyOf(toReverse, toReverse.length);
 
         for (int i = 0; i < array.length; i++) {
             array[i] = toReverse[array.length - i - 1];
@@ -471,7 +515,7 @@ public class Util {
 
     }
 
-    public static <U,V> void iterateCombined(Iterable<U> x, Iterable<V> y, BiConsumer<U, V> forEach) {
+    public static <U, V> void iterateCombined(Iterable<U> x, Iterable<V> y, BiConsumer<U, V> forEach) {
 
         Iterator<U> ittrX = x.iterator();
         Iterator<V> ittrY = y.iterator();
@@ -479,6 +523,37 @@ public class Util {
         while (ittrX.hasNext() && ittrY.hasNext()) {
             forEach.accept(ittrX.next(), ittrY.next());
         }
+
+    }
+
+    public static double[] iterableToArray(Iterable<Double> iterable) {
+
+        int count = 0;
+
+        for (double v : iterable) {
+            count++;
+        }
+
+        double[] array = new double[count];
+
+        int i = 0;
+        for (double v : iterable) {
+            array[i++] = v;
+        }
+
+        return array;
+
+    }
+
+    public static <T> List<T> iterableToList(Iterable<T> iterable) {
+
+        List<T> list = new LinkedList<>();
+
+        for (T v : iterable) {
+            list.add(v);
+        }
+
+        return list;
 
     }
 

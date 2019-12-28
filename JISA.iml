@@ -9,7 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="lib" level="project" />
     <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="library" name="commons-math-2.2" level="project" />
     <orderEntry type="library" name="jssc" level="project" />
     <orderEntry type="library" name="reflections-0.9.11" level="project" />
     <orderEntry type="library" name="json-20180813" level="project" />
@@ -18,5 +17,6 @@
     <orderEntry type="library" name="jlibmodbus-1.2.9.0" level="project" />
     <orderEntry type="library" name="javafx-11-combined" level="project" />
     <orderEntry type="library" name="guava-20.0" level="project" />
+    <orderEntry type="library" name="commons-math-2.2" level="project" />
   </component>
 </module>

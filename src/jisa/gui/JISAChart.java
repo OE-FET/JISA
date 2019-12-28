@@ -13,7 +13,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.util.Duration;
 import jisa.Util;
-import jisa.maths.Function;
+import jisa.maths.functions.Function;
 import jisa.experiment.Result;
 import jisa.experiment.ResultTable;
 import jisa.maths.fits.Fit;

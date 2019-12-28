@@ -3,8 +3,13 @@ package jisa;
 import javafx.application.Platform;
 import jisa.addresses.Address;
 import jisa.addresses.StrAddress;
-import jisa.enums.Icon;
-import jisa.gui.*;
+import jisa.gui.DeviceShell;
+import jisa.gui.GUI;
+import jisa.gui.MarkDown;
+import jisa.maths.matrices.Matrix;
+import jisa.maths.matrices.MatrixFactory;
+import jisa.maths.matrices.RMatrix;
+import org.apache.commons.math.fraction.Fraction;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
