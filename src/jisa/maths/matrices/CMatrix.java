@@ -455,6 +455,17 @@ public class CMatrix implements Matrix<Complex> {
     }
 
     @Override
+    public CMatrix reshape(int rows, int cols) {
+
+        if (rows * cols != size()) {
+            throw new DimensionException(rows * cols, size());
+        }
+
+        return new CMatrix(rows, cols, getFlatData());
+
+    }
+
+    @Override
     public CMatrix leftDivide(Matrix<Complex> rhs) {
 
         FieldMatrix<Complex> field;

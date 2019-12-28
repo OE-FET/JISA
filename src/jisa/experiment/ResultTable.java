@@ -2,8 +2,7 @@ package jisa.experiment;
 
 import jisa.Util;
 import jisa.gui.Clearable;
-import jisa.maths.fits.Fit;
-import jisa.maths.fits.Fitting;
+import jisa.maths.fits.*;
 import jisa.maths.functions.Function;
 import jisa.maths.functions.PFunction;
 import jisa.maths.matrices.Matrix;
@@ -389,12 +388,24 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
-    public Fit polyFit(int xData, int yData, int degree) {
-        return Fitting.polyFit(getColumns(xData), getColumns(yData), degree);
+    public LinearFit linearFit(int xData, int yData) {
+        return Fitting.linearFit(this, xData, yData);
+    }
+
+    public PolyFit polyFit(int xData, int yData, int degree) {
+        return Fitting.polyFit(this, xData, yData, degree);
+    }
+
+    public GaussianFit gaussianFit(int xData, int yData) {
+        return Fitting.gaussianFit(this, xData, yData);
+    }
+
+    public CosFit cosFit(int xData, int yData) {
+        return Fitting.cosFit(this, xData, yData);
     }
 
     public Fit fit(int xData, int yData, PFunction toFit, double... initialGuess) {
-        return Fitting.fit(getColumns(xData), getColumns(yData), toFit, initialGuess);
+        return Fitting.fit(this, xData, yData, toFit, initialGuess);
     }
 
     public Function asFunction(int xData, int yData) {
@@ -474,13 +485,13 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
-    public Set<Double> getUniqueValues(int column) {
+    public Set<Double> getUniqueValues(Evaluable column) {
 
         Set<Double> valueSet = new HashSet<>();
 
         for (Result r : this) {
 
-            valueSet.add(r.get(column));
+            valueSet.add(column.evaluate(r));
 
         }
 
@@ -488,126 +499,25 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
-    public ResultTable filtered(Predicate<Result> filter) {
+    public Set<Double> getUniqueValues(int column) {
+        return getUniqueValues(r -> r.get(column));
+    }
 
-        return new ResultTable(columns.toArray(new Col[0])) {
+    public Map<Double, ResultTable> split(Evaluable splitBy) {
 
-            @Override
-            public void updateColumns() {
-                ResultTable.this.updateColumns();
-            }
+        Set<Double>              values = getUniqueValues(splitBy);
+        Map<Double, ResultTable> map    = new TreeMap<>();
 
-            public OnUpdate addOnUpdate(OnUpdate onUpdate) {
+        for (double value : values) {
+            map.put(value, filteredCopy(r -> splitBy.evaluate(r) == value));
+        }
 
-                return ResultTable.this.addOnUpdate(r -> {
-                    if (filter.test(r)) {
-                        onUpdate.run(r);
-                    }
-                });
+        return map;
 
-            }
+    }
 
-            public void addData(double... data) {
-                ResultTable.this.addData(data);
-            }
-
-            @Override
-            protected void addRow(Result row) {
-                ResultTable.this.addRow(row);
-            }
-
-            @Override
-            protected void clearData() {
-
-                for (int i = ResultTable.this.getNumRows() - 1; i >= 0; i--) {
-
-                    if (filter.test(ResultTable.this.getRow(i))) {
-                        ResultTable.this.removeRow(i);
-                    }
-
-                }
-
-            }
-
-            @Override
-            public int getNumRows() {
-
-                int count = 0;
-
-                for (Result row : this) {
-                    count++;
-                }
-
-                return count;
-
-            }
-
-            @Override
-            public Result getRow(int i) {
-                return ResultTable.this.getRow(getRealRowIndex(i));
-            }
-
-            private int getRealRowIndex(int i) {
-
-                int j = -1;
-
-                for (int r = 0; r < ResultTable.this.getNumRows(); r++) {
-
-                    if (filter.test(ResultTable.this.getRow(r))) {
-                        j++;
-                    }
-
-                    if (j == i) {
-                        return r;
-                    }
-
-                }
-
-                throw new IndexOutOfBoundsException("Index out of bounds.");
-
-            }
-
-            @Override
-            public void removeRow(int i) {
-                ResultTable.this.removeRow(getRealRowIndex(i));
-            }
-
-            @Override
-            public void close() {
-
-            }
-
-            @Override
-            public Iterator<Result> iterator() {
-
-                return new Iterator<Result>() {
-
-                    private int i = getRealRowIndex(0);
-                    private int j = 0;
-                    private boolean hasNext = true;
-
-                    @Override
-                    public boolean hasNext() {
-                        return hasNext;
-                    }
-
-                    @Override
-                    public Result next() {
-                        Result row = ResultTable.this.getRow(i);
-                        try {
-                            i = getRealRowIndex(++j);
-                        } catch (Exception e) {
-                            hasNext = false;
-                        }
-                        return row;
-                    }
-
-                };
-
-            }
-
-        };
-
+    public Map<Double, ResultTable> split(int column) {
+        return split(r -> r.get(column));
     }
 
     public interface OnUpdate {

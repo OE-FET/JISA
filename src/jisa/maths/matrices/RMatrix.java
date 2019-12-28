@@ -694,6 +694,17 @@ public class RMatrix implements Matrix<Double> {
     }
 
     @Override
+    public RMatrix reshape(int rows, int cols) {
+
+        if (rows * cols != size()) {
+            throw new DimensionException(rows * cols, size());
+        }
+
+        return new RMatrix(rows, cols, getFlatData());
+
+    }
+
+    @Override
     public RMatrix leftDivide(Matrix<Double> rhs) {
 
         if (isSingular()) {

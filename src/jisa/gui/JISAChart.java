@@ -13,10 +13,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import javafx.util.Duration;
 import jisa.Util;
-import jisa.maths.functions.Function;
 import jisa.experiment.Result;
 import jisa.experiment.ResultTable;
 import jisa.maths.fits.Fit;
+import jisa.maths.functions.Function;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -348,7 +348,7 @@ public class JISAChart extends XYChart<Double, Double> {
 
                         if (toAnimate.contains(element)) {
                             Timeline trans = element.animate(n > 0 ? constructedPath.get(n - 1) : null, (n + 1) < constructedPath.size() ? constructedPath.get(n + 1) : null);
-                            if (trans != null) animation.getChildren().add(trans);
+                            if (trans != null) { animation.getChildren().add(trans); }
                         }
 
                     }
@@ -699,7 +699,7 @@ public class JISAChart extends XYChart<Double, Double> {
                 case TRIANGLE:
 
                     style.put("-fx-padding", size + "px");
-                    style.put("-fx-shape", "\"" + String.format("M%s %s L%s %s L%s %s Z", 0 - size, 0 + size, 0, 0- size, 0 + size, 0 + size) + "\"");
+                    style.put("-fx-shape", "\"" + String.format("M%s %s L%s %s L%s %s Z", 0 - size, 0 + size, 0, 0 - size, 0 + size, 0 + size) + "\"");
                     style.put("-fx-background-insets", "0, 2px");
                     style.put("-fx-background-color", Util.colourToCSS(colour) + ", white");
                     break;
@@ -1156,6 +1156,17 @@ public class JISAChart extends XYChart<Double, Double> {
                 }
             }
 
+            SmartAxis xAxis = ((SmartAxis) getXAxis());
+            SmartAxis yAxis = ((SmartAxis) getYAxis());
+
+            if (xAxis.getLabelText().trim().equals("")) {
+                xAxis.setLabelText(list.getTitle(xData));
+            }
+
+            if (list.getNumCols() == 2 && yAxis.getLabelText().trim().equals("")) {
+                yAxis.setLabelText(list.getTitle(xData == 0 ? 1 : 0));
+            }
+
             return this;
 
         }
@@ -1256,6 +1267,11 @@ public class JISAChart extends XYChart<Double, Double> {
         }
 
         @Override
+        public Shape getMarkerShape() {
+            return template.getMarkerShape();
+        }
+
+        @Override
         public JISASeries setMarkerShape(Shape shape) {
 
             GUI.runNow(() -> {
@@ -1267,6 +1283,11 @@ public class JISAChart extends XYChart<Double, Double> {
 
         }
 
+        @Override
+        public double getMarkerSize() {
+            return template.getMarkerSize();
+        }
+
         public JISASeries setMarkerSize(double size) {
 
             GUI.runNow(() -> {
@@ -1276,16 +1297,6 @@ public class JISAChart extends XYChart<Double, Double> {
 
             return this;
 
-        }
-
-        @Override
-        public Shape getMarkerShape() {
-            return template.getMarkerShape();
-        }
-
-        @Override
-        public double getMarkerSize() {
-            return template.getMarkerSize();
         }
 
         @Override

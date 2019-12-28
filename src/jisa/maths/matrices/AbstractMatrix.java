@@ -633,6 +633,20 @@ public abstract class AbstractMatrix<T> implements Matrix<T> {
     }
 
     @Override
+    public Matrix<T> reshape(int rows, int cols) {
+
+        if (rows * cols != size()) {
+            throw new DimensionException(rows * cols, size());
+        }
+
+        Matrix<T> newMatrix = create(rows, cols);
+        newMatrix.setAll(getFlatData());
+
+        return newMatrix;
+
+    }
+
+    @Override
     public Matrix<T> leftDivide(Matrix<T> rhs) {
 
         FieldMatrix<FieldElement> field;
