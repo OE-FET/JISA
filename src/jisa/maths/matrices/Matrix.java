@@ -785,6 +785,24 @@ public interface Matrix<T> extends Iterable<T> {
     boolean isSingular();
 
     /**
+     * Returns whether this matrix is a row matrix (rows() == 1).
+     *
+     * @return Row matrix?
+     */
+    default boolean isRow() {
+        return rows() == 1;
+    }
+
+    /**
+     * Returns whether this matrix is a column matrix (cols() == 1).
+     *
+     * @return Column matrix?
+     */
+    default boolean isCol() {
+        return cols() == 1;
+    }
+
+    /**
      * Returns the determinant of the matrix (only for square matrices).
      *
      * @return Determinant value

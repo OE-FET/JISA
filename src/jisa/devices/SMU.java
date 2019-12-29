@@ -451,8 +451,8 @@ public interface SMU extends IVMeter, IVSource {
      *
      * @return Terminal type (TRIAX, PHOENIX, BNC or BANANA)
      *
-     * @throws DeviceException
-     * @throws IOException
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
      */
     TType getTerminalType(Terminals terminals) throws DeviceException, IOException;
 

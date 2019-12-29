@@ -9,7 +9,6 @@ import javafx.scene.shape.*;
 import jisa.control.ERunnable;
 import jisa.control.SRunnable;
 import jisa.devices.DeviceException;
-import jisa.maths.matrices.RMatrix;
 import jisa.visa.VISAException;
 
 import java.io.IOException;
@@ -263,10 +262,6 @@ public class Util {
 
         return result;
 
-    }
-
-    public static RMatrix makeLinearColumn(Number min, Number max, int numSteps) {
-        return new RMatrix.Col(makeLinearArray(min, max, numSteps));
     }
 
     public static String joinInts(String delim, int... ints) {

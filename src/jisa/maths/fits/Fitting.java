@@ -5,8 +5,7 @@ import jisa.Util;
 import jisa.experiment.ResultTable;
 import jisa.maths.functions.Function;
 import jisa.maths.functions.PFunction;
-import jisa.maths.matrices.Matrix;
-import jisa.maths.matrices.RMatrix;
+import jisa.maths.matrices.RealMatrix;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math.optimization.OptimizationException;
@@ -91,12 +90,12 @@ public class Fitting {
      */
     public static PolyFit polyFit(Iterable<Double> xData, Iterable<Double> yData, final int degree) {
 
-        RMatrix x = RMatrix.iterableToCol(xData);
-        RMatrix y = RMatrix.iterableToCol(yData);
+        RealMatrix x = RealMatrix.iterableToCol(xData);
+        RealMatrix y = RealMatrix.iterableToCol(yData);
 
         try {
 
-            RMatrix V = new RMatrix(x.size(), degree + 1);
+            RealMatrix V = new RealMatrix(x.size(), degree + 1);
 
             for (int i = 0; i < x.size(); i++) {
                 V.set(i, degree, 1.0);
@@ -112,17 +111,17 @@ public class Fitting {
 
             }
 
-            RMatrix.QR decomp = V.getQR();
-            RMatrix    Q      = decomp.getQ();
-            RMatrix    R      = decomp.getR();
-            RMatrix    subR   = R.getSubMatrix(0, R.cols() - 1, 0, R.cols() - 1);
-            RMatrix    denom  = Q.transpose().multiply(y).getSubMatrix(0, subR.cols() - 1, 0, 0);
-            double[]   p      = Util.reverseArray(subR.leftDivide(denom).getCol(0));
+            RealMatrix.QR decomp = V.getQR();
+            RealMatrix    Q      = decomp.getQ();
+            RealMatrix    R      = decomp.getR();
+            RealMatrix    subR   = R.getSubMatrix(0, R.cols() - 1, 0, R.cols() - 1);
+            RealMatrix    denom  = Q.transpose().multiply(y).getSubMatrix(0, subR.cols() - 1, 0, 0);
+            double[]      p      = Util.reverseArray(subR.leftDivide(denom).getCol(0));
             Function   fitted = new Function.WrappedFunction(new PolynomialFunction(p));
-            double     norm   = y.subtract(fitted.value(x)).getNorm();
-            RMatrix    covb   = R.transpose().multiply(R).leftDivide(new RMatrix.Identity(R.cols())).multiply(norm * norm / (x.size() - degree));
-            RMatrix    se     = covb.getDiagonal().map(Math::sqrt);
-            double[]   errors = Util.reverseArray(se.getCol(0));
+            double        norm   = y.subtract(fitted.value(x)).getNorm();
+            RealMatrix    covb   = R.transpose().multiply(R).leftDivide(RealMatrix.identity(R.cols())).multiply(norm * norm / (x.size() - degree));
+            RealMatrix    se     = covb.getDiagonal().map(Math::sqrt);
+            double[]      errors = Util.reverseArray(se.getCol(0));
 
             return new PolyFit(p, errors);
 

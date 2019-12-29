@@ -6,7 +6,7 @@ import jisa.maths.fits.*;
 import jisa.maths.functions.Function;
 import jisa.maths.functions.PFunction;
 import jisa.maths.matrices.Matrix;
-import jisa.maths.matrices.RMatrix;
+import jisa.maths.matrices.RealMatrix;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -34,6 +34,26 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
+    public int getColumnFromString(String name) {
+
+        name = name.trim();
+
+        int i = 0;
+        for (Col col : columns) {
+            if (col.getName().trim().equals(name.trim())) {
+                return i;
+            }
+            i++;
+        }
+
+        return -1;
+
+    }
+
+    public int getColumnFromCol(Col column) {
+        return columns.indexOf(column);
+    }
+
 
     /**
      * Sets the units for each column in the result table
@@ -50,7 +70,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
-    public abstract void updateColumns();
+    protected abstract void updateColumns();
 
     /**
      * Returns the name of the column with the given number.
@@ -115,7 +135,7 @@ public abstract class ResultTable implements Iterable<Result> {
             }
 
         }
-        Result row = new Result(fullData);
+        Result row = new Result(this, fullData);
 
         for (int j = 0; j < fullData.length; j++) {
 
@@ -419,9 +439,9 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public abstract void close();
 
-    public RMatrix toMatrix() {
+    public RealMatrix toMatrix() {
 
-        RMatrix result = new RMatrix(getNumRows(), getNumCols());
+        RealMatrix result = new RealMatrix(getNumRows(), getNumCols());
 
         for (int i = 0; i < getNumRows(); i++) {
             Result r = getRow(i);
@@ -432,9 +452,9 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
-    public RMatrix getColumns(int... columns) {
+    public RealMatrix getColumns(int... columns) {
 
-        RMatrix result = new RMatrix(Math.max(1, getNumRows()), Math.max(1, columns.length));
+        RealMatrix result = new RealMatrix(Math.max(1, getNumRows()), Math.max(1, columns.length));
 
         int i = 0;
         for (Result r : this) {
@@ -451,9 +471,9 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
-    public RMatrix getRows(int... rows) {
+    public RealMatrix getRows(int... rows) {
 
-        RMatrix result = new RMatrix(rows.length, getNumCols());
+        RealMatrix result = new RealMatrix(rows.length, getNumCols());
 
         for (int i = 0; i < rows.length; i++) {
 

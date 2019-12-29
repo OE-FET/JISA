@@ -291,7 +291,7 @@ public class ResultStream extends ResultTable {
                 dVals[j] = Double.parseDouble(values[j]);
             }
 
-            return new Result(dVals);
+            return new Result(this, dVals);
 
         } catch (IOException e) {
 

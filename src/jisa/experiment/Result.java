@@ -1,22 +1,23 @@
 package jisa.experiment;
 
 import java.io.PrintStream;
-import java.util.Arrays;
 
 /**
  * Structure to contain the data of a single row of a ResultList.
  */
 public class Result {
 
-    private double[] data;
+    private final ResultTable table;
+    private       double[]    data;
 
     /**
      * Create a data row with the given data.
      *
      * @param data The data to add
      */
-    public Result(double... data) {
-        this.data = data;
+    public Result(ResultTable table, double... data) {
+        this.table = table;
+        this.data  = data;
     }
 
     /**
@@ -30,7 +31,7 @@ public class Result {
 
         String[] chunks = new String[data.length];
 
-        for (int i = 0; i < chunks.length; i ++) {
+        for (int i = 0; i < chunks.length; i++) {
             chunks[i] = String.format("%s", data[i]);
         }
 
@@ -57,6 +58,14 @@ public class Result {
      */
     public Double get(int i) {
         return data[i];
+    }
+
+    public Double get(String name) {
+        return get(table.getColumnFromString(name));
+    }
+
+    public Double get(Col column) {
+        return get(table.getColumnFromCol(column));
     }
 
     /**
