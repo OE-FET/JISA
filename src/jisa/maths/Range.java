@@ -4,10 +4,7 @@ import jisa.maths.matrices.RealMatrix;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class Range<T extends Number> implements Iterable<T> {
 
@@ -33,6 +30,10 @@ public class Range<T extends Number> implements Iterable<T> {
             throw new IllegalArgumentException("You cannot have fewer than 1 step.");
         }
 
+        if (start.intValue() == start.doubleValue() && stop.intValue() == stop.doubleValue() && (stop.intValue() - start.intValue() + 1) == numSteps) {
+            return linear(start.intValue(), stop.intValue());
+        }
+
         BigDecimal[] values = new BigDecimal[numSteps];
         BigDecimal   step   = (BigDecimal.valueOf(stop.doubleValue()).subtract(BigDecimal.valueOf(start.doubleValue()))).divide(BigDecimal.valueOf(numSteps - 1), RoundingMode.HALF_UP);
 
@@ -47,14 +48,28 @@ public class Range<T extends Number> implements Iterable<T> {
 
     }
 
-    public static Range<Integer> linear(int start, int stop) {
+    public static Range<Double> linear(int start, int stop) {
+
+        int      numSteps = Math.abs(stop - start) + 1;
+        Double[] range    = new Double[numSteps];
+        int      step     = stop < start ? -1 : +1;
+
+        for (int i = 0; i < numSteps; i++) {
+            range[i] = (double) (start + (i * step));
+        }
+
+        return new Range<>(range);
+
+    }
+
+    public static Range<Integer> count(int start, int stop) {
 
         int       numSteps = Math.abs(stop - start) + 1;
         Integer[] range    = new Integer[numSteps];
         int       step     = stop < start ? -1 : +1;
 
         for (int i = 0; i < numSteps; i++) {
-            range[i] = start + (i * step);
+            range[i] = (start + (i * step));
         }
 
         return new Range<>(range);
@@ -81,7 +96,7 @@ public class Range<T extends Number> implements Iterable<T> {
 
     }
 
-    public static Range<Double> geometricStep(Number start, Number stop, Number factor) {
+    public static Range<Double> logarithmic(Number start, Number stop, Number factor) {
 
         BigDecimal       a      = BigDecimal.valueOf(start.doubleValue());
         BigDecimal       b      = BigDecimal.valueOf(stop.doubleValue());
@@ -122,6 +137,14 @@ public class Range<T extends Number> implements Iterable<T> {
 
     }
 
+    public static Range<Double> repeat(Number value, int numTimes) {
+
+        Double[] values = new Double[numTimes];
+        Arrays.fill(values, value);
+        return new Range<>(values);
+
+    }
+
     public Range<T> reverse() {
 
         T[] newData = Arrays.copyOf(data, data.length);
@@ -155,6 +178,28 @@ public class Range<T extends Number> implements Iterable<T> {
         }
 
         return new Range<>(newData);
+
+    }
+
+    public Range<T> shift(int places) {
+
+        places = places % size();
+
+        T[] newData = Arrays.copyOf(data, data.length);
+
+        for (int i = 0; i < size(); i++) {
+            newData[i] = data[(size() + (i - places)) % size()];
+        }
+
+        return new Range<>(newData);
+
+    }
+
+    public Range<T> shuffle() {
+
+        List<T> data = Arrays.asList(this.data);
+        Collections.shuffle(data);
+        return new Range<>(data.toArray(Arrays.copyOf(this.data, this.data.length)));
 
     }
 
@@ -196,16 +241,16 @@ public class Range<T extends Number> implements Iterable<T> {
 
     }
 
+    public RealMatrix column() {
+        return reshape(size(), 1);
+    }
+
+    public RealMatrix row() {
+        return reshape(1, size());
+    }
+
     public String toString() {
-
-        String[] values = new String[size()];
-
-        for (int i = 0; i < size(); i++) {
-            values[i] = get(i).toString();
-        }
-
-        return "[" + String.join(", ", values) + "]";
-
+        return Arrays.toString(data);
     }
 
     @Override

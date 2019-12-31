@@ -6,8 +6,6 @@ import jisa.addresses.StrAddress;
 import jisa.gui.DeviceShell;
 import jisa.gui.GUI;
 import jisa.gui.MarkDown;
-import jisa.maths.Range;
-import jisa.maths.matrices.RealMatrix;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -20,8 +18,6 @@ public class Main {
     private final static int CHOICE_EXIT = 3;
 
     public static void main(String[] args) {
-
-        RealMatrix matrix = Range.linear(1, 9).reshape(3,3);
 
         try {
 
