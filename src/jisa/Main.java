@@ -6,6 +6,7 @@ import jisa.addresses.StrAddress;
 import jisa.gui.DeviceShell;
 import jisa.gui.GUI;
 import jisa.gui.MarkDown;
+import jisa.maths.Range;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

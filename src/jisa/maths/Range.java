@@ -35,7 +35,9 @@ public class Range<T extends Number> implements Iterable<T> {
         }
 
         BigDecimal[] values = new BigDecimal[numSteps];
-        BigDecimal   step   = (BigDecimal.valueOf(stop.doubleValue()).subtract(BigDecimal.valueOf(start.doubleValue()))).divide(BigDecimal.valueOf(numSteps - 1), RoundingMode.HALF_UP);
+        BigDecimal   step   = BigDecimal.valueOf((stop.doubleValue() - start.doubleValue()) / (numSteps - 1));
+
+        System.out.println(step);
 
         values[0]            = BigDecimal.valueOf(start.doubleValue());
         values[numSteps - 1] = BigDecimal.valueOf(stop.doubleValue());
@@ -121,7 +123,7 @@ public class Range<T extends Number> implements Iterable<T> {
             throw new IllegalArgumentException("Step size must not be zero!");
         }
 
-        int steps = stopN.subtract(startN).abs().divide(stepN.abs().add(BigDecimal.ONE), RoundingMode.HALF_UP).intValue();
+        int steps = stopN.subtract(startN).abs().divide(stepN.abs(), RoundingMode.HALF_UP).add(BigDecimal.ONE).intValue();
 
         stepN = (stopN.compareTo(startN) < 0 ? stepN.abs().negate() : stepN.abs());
 
@@ -140,7 +142,7 @@ public class Range<T extends Number> implements Iterable<T> {
     public static Range<Double> repeat(Number value, int numTimes) {
 
         Double[] values = new Double[numTimes];
-        Arrays.fill(values, value);
+        Arrays.fill(values, value.doubleValue());
         return new Range<>(values);
 
     }
