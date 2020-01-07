@@ -4,12 +4,14 @@ import javafx.application.Platform;
 import jisa.addresses.Address;
 import jisa.addresses.StrAddress;
 import jisa.gui.DeviceShell;
+import jisa.gui.Doc;
 import jisa.gui.GUI;
 import jisa.gui.MarkDown;
 import jisa.maths.Range;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URL;
 
 public class Main {
 
@@ -27,7 +29,7 @@ public class Main {
                 // Ask the user if they want to perform a test
                 int result = GUI.choiceWindow(
                     "JISA",
-                    "JISA Library - William Wood - 2018-2019",
+                    "JISA Library - William Wood - 2018-2020",
                     "What would you like to do?",
                     "Scan for Instruments",
                     "Enter Address Manually",
@@ -69,30 +71,23 @@ public class Main {
 
                     case CHOICE_HELP:
 
-                        MarkDown md = new MarkDown("Help");
+                        Doc doc = new Doc("Help");
+                        doc.setIcon(new URL("https://i.imgur.com/DbXtrcM.png"));
 
-                        md.addLine("## JISA Testing Utility");
-                        md.addLine("");
-                        md.addLine("This is the built-in testing utility for JISA.");
-                        md.addLine("");
-                        md.addLine("Using this utility, you can:");
-                        md.addLine("");
-                        md.addLine("* `\"Scan for Instruments\"` to see what instruments JISA can detect");
-                        md.addLine("");
-                        md.addLine(
-                            "* `\"Enter Address Manually\"` if you want to connect to an instrument with a known address");
-                        md.addLine("");
-                        md.addLine("* `\"Exit\"` to exit this utility");
-                        md.addLine("");
-                        md.addLine(
-                            "For more information regarding how to include and use this library in your project, take a look at the `JISA` wiki at:");
-                        md.addLine("");
-                        md.addLine("https://github.com/OE-FET/JISA/wiki");
-                        md.addLine("");
-                        md.addLine("_Close this window or press `OK` to return to menu_");
+                        doc.addImage("https://i.imgur.com/bBE3oK4.png")
+                           .setAlignment(Doc.Align.CENTRE);
+                        doc.addHeading("Testing Utility")
+                           .setAlignment(Doc.Align.CENTRE);
+                        doc.addText("This is the built-in testing utility for JISA. Using this utility, you can:");
+                        doc.addList(false)
+                           .addItem("Scan for instruments, to see what instruments JISA can detect")
+                           .addItem("Enter address manually, to connect to an instrument with a known address")
+                           .addItem("Exit, to exit this utility");
+                        doc.addText("For more information regarding how to include and use this library in your project, take a look at the JISA wiki at:");
+                        doc.addLink("https://github.com/OE-FET/JISA/wiki", "https://github.com/OE-FET/JISA/wiki")
+                           .setAlignment(Doc.Align.CENTRE);
 
-                        md.showAndWait();
-
+                        doc.showAndWait();
                         break;
 
                     case CHOICE_EXIT:

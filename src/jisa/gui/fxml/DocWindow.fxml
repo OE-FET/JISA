@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<BorderPane fx:id="pane" xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml">
+
+    <center>
+        <ScrollPane style="-fx-background-color: transparent;" fitToHeight="true" fitToWidth="true">
+            <VBox style="-fx-padding: 15px; -fx-background-color: transparent;" spacing="15" fx:id="list"/>
+        </ScrollPane>
+    </center>
+
+    <bottom>
+        <ButtonBar fx:id="buttonBar">
+            <padding>
+                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>
+            </padding>
+        </ButtonBar>
+    </bottom>
+
+</BorderPane>
