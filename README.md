@@ -88,7 +88,7 @@ public class Main {
         smu.setVoltage(0.0);
         smu.turnOn();
 
-        for (double v : Util.makeLinearArray(0, 60, 61)) {
+        for (double v : Range.linear(0, 60, 61)) {
 
             smu.setVoltage(v);
             Util.sleep(500);
@@ -113,7 +113,7 @@ fun main() {
     smu.setVoltage(0.0)
     smu.turnOn()
 
-    for (v in Util.makeLinearArray(0.0, 60.0, 61)) {
+    for (v in Range.linear(0.0, 60.0, 61)) {
     
         smu.setVoltage(v)
         Util.sleep(500)
@@ -136,7 +136,7 @@ def main():
     smu.setVoltage(0.0)
     smu.turnOn()
     
-    for v in Util.makeLinearArray(0.0, 60.0, 61):
+    for v in Range.linear(0.0, 60.0, 61):
     
         smu.setVoltage(v)
         Util.sleep(500)
@@ -161,7 +161,7 @@ function main()
     smu.setVoltage(0.0);
     smu.turnOn();
     
-    for v=jisa.Util.makeLinearArray(0.0, 60.0, 61)
+    for v=jisa.maths.Range.linear(0.0, 60.0, 61)
     
         smu.setVoltage(v);
         jisa.Util.sleep(500);
@@ -188,7 +188,7 @@ fun main() {
     smu.setVoltage(0.0)
     smu.turnOn()
 
-    for (v in Util.makeLinearArray(0.0, 60.0, 61)) {
+    for (v in Range.linear(0.0, 60.0, 61)) {
     
         smu.setVoltage(v)
         Util.sleep(500)
