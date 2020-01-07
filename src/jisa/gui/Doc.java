@@ -372,7 +372,6 @@ public class Doc extends JFXWindow {
             public Link setURL(String url) {
 
                 label.setOnMouseClicked(mouseEvent -> Util.openInBrowser(url));
-
                 return this;
 
             }

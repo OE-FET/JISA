@@ -412,8 +412,7 @@ public class Util {
             } else if (os.contains("nix") || os.contains("nux")) {
 
                 // Try xdg-open before trying a list of others
-                String[] browsers = {"xdg-open", "chromium-browser", "epiphany", "firefox", "mozilla", "konqueror",
-                                     "netscape", "opera", "links", "lynx"};
+                String[] browsers = {"xdg-open", "chromium-browser", "firefox"};
 
                 // Build a command string which looks like "browser1 "url" || browser2 "url" ||..."
                 StringBuilder cmd = new StringBuilder();
