@@ -54,8 +54,8 @@ val grid = Grid("Main Window", params, plot)
 // Add start button to toolbar
 grid.addToolbarButton("Start Sweep") {
 
-    // Makes array starting at minV, ending at maxV in numV steps
-    val voltages = Util.makeLinearArray(
+    // Makes range starting at minV, ending at maxV in numV steps
+    val voltages = Range.linear(
         minV.get(),   // Start at
         maxV.get(),   // End at
         numV.get()    // No. steps
