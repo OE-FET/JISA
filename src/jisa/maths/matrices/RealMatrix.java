@@ -14,7 +14,7 @@ public class RealMatrix implements Matrix<Double> {
         return new RealMatrix(1, values.length, values);
     }
 
-    public static RealMatrix asRow(double... values) {
+    public static RealMatrix asRow(double[] values) {
         return new RealMatrix(1, values.length, values);
     }
 
@@ -22,7 +22,7 @@ public class RealMatrix implements Matrix<Double> {
         return new RealMatrix(values.length, 1, values);
     }
 
-    public static RealMatrix asColumn(double... values) {
+    public static RealMatrix asColumn(double[] values) {
         return new RealMatrix(values.length, 1, values);
     }
 
@@ -86,7 +86,7 @@ public class RealMatrix implements Matrix<Double> {
         setAll(values);
     }
 
-    public RealMatrix(int rows, int cols, double... values) {
+    public RealMatrix(int rows, int cols, double[] values) {
         this(rows, cols);
         setAll(values);
     }
@@ -325,7 +325,7 @@ public class RealMatrix implements Matrix<Double> {
         }
 
     }
-    public void setAll(double... values) {
+    public void setAll(double[] values) {
 
         if (values.length != size()) {
             throw new DimensionException(values.length, size());
