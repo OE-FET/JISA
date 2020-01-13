@@ -489,6 +489,68 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
+    public double getMax(Evaluable value) {
+
+        if (getNumRows() < 1) {
+            throw new IllegalStateException("Cannot find maximum in empty table!");
+        }
+
+        double max = Double.NEGATIVE_INFINITY;
+
+        for (Result row : this) {
+            max = Math.max(max, value.evaluate(row));
+        }
+
+        return max;
+
+    }
+
+    public double getMax(int column) {
+        return getMax(r -> r.get(column));
+    }
+
+    public double getMin(Evaluable value) {
+
+        if (getNumRows() < 1) {
+            throw new IllegalStateException("Cannot find minimum in empty table!");
+        }
+
+        double min = Double.POSITIVE_INFINITY;
+
+        for (Result row : this) {
+            min = Math.min(min, value.evaluate(row));
+        }
+
+        return min;
+
+    }
+
+    public double getMin(int column) {
+        return getMin(r -> r.get(column));
+    }
+
+    public double getMean(Evaluable value) {
+
+        if (getNumRows() < 1) {
+            throw new IllegalStateException("Cannot find mean in empty table!");
+        }
+
+        double sum   = 0;
+        int    count = 0;
+
+        for (Result row : this) {
+            sum += value.evaluate(row);
+            count++;
+        }
+
+        return sum / count;
+
+    }
+
+    public double getMean(int column) {
+        return getMean(r -> r.get(column));
+    }
+
     public ResultTable filteredCopy(Predicate<Result> filter) {
 
         ResultTable newCopy = new ResultList(columns.toArray(new Col[0]));
