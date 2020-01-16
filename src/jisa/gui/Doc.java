@@ -8,11 +8,9 @@ import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.TextAlignment;
@@ -26,6 +24,7 @@ import java.util.concurrent.Semaphore;
 public class Doc extends JFXWindow {
 
     public BorderPane pane;
+    public ScrollPane scroll;
     public VBox       list;
     public ButtonBar  buttonBar;
 
@@ -42,6 +41,9 @@ public class Doc extends JFXWindow {
             buttonBar.setManaged(!buttonBar.getButtons().isEmpty());
 
         });
+
+        scroll.applyCss();
+        scroll.lookup(".viewport").setStyle("-fx-background-color: white;");
 
     }
 
@@ -413,6 +415,87 @@ public class Doc extends JFXWindow {
 
     }
 
+    public Value addValue(String name, String initial) {
+
+        Label title = new Label(name);
+        title.setStyle("-fx-font-weight: bold;");
+        title.setMinHeight(Region.USE_PREF_SIZE);
+        title.minWidth(Region.USE_PREF_SIZE);
+        Label value = new Label(initial);
+        value.setMinHeight(Region.USE_PREF_SIZE);
+        value.setMaxWidth(Double.MAX_VALUE);
+        HBox container = new HBox(title, value);
+        container.setSpacing(15);
+        HBox.setHgrow(title, Priority.NEVER);
+        HBox.setHgrow(value, Priority.ALWAYS);
+
+        GUI.runNow(() -> list.getChildren().add(container));
+
+        return new Value() {
+            @Override
+            public Value setValue(String text) {
+                GUI.runNow(() -> value.setText(text));
+                return this;
+            }
+
+            @Override
+            public Value setText(String text) {
+                GUI.runNow(() -> title.setText(text));
+                return this;
+            }
+
+            @Override
+            public Value setAlignment(Align alignment) {
+
+                GUI.runNow(() -> {
+                    value.setAlignment(alignment.getPos());
+                    value.setTextAlignment(alignment.getAlignment());
+                });
+
+                return this;
+
+            }
+
+            @Override
+            public Value setColour(Color colour) {
+
+                GUI.runNow(() -> {
+                    title.setTextFill(colour);
+                    value.setTextFill(colour);
+                });
+
+                return this;
+
+            }
+
+            @Override
+            public Value clear() {
+                GUI.runNow(() -> value.setText(""));
+                return this;
+            }
+
+            @Override
+            public boolean isVisible() {
+                return container.isVisible();
+            }
+
+            @Override
+            public void setVisible(boolean visible) {
+                GUI.runNow(() -> {
+                    container.setVisible(visible);
+                    container.setManaged(visible);
+                });
+            }
+
+            @Override
+            public void remove() {
+                GUI.runNow(() -> list.getChildren().remove(container));
+            }
+
+        };
+
+    }
+
     public void showAndWait() {
 
         final Semaphore s = new Semaphore(0);
@@ -483,6 +566,20 @@ public class Doc extends JFXWindow {
         Paragraph clear();
 
         Paragraph setColour(Color colour);
+
+    }
+
+    public interface Value extends SubElement {
+
+        Value setValue(String text);
+
+        Value setText(String text);
+
+        Value setAlignment(Align alignment);
+
+        Value setColour(Color colour);
+
+        Value clear();
 
     }
 

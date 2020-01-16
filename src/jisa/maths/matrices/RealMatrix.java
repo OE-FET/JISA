@@ -10,6 +10,16 @@ public class RealMatrix implements Matrix<Double> {
     private final org.apache.commons.math.linear.RealMatrix backing;
     private       LUDecomposition                           lu = null;
 
+    public static RealMatrix asRealMatrix(Matrix<Double> matrix) {
+
+        if (matrix instanceof RealMatrix) {
+            return (RealMatrix) matrix;
+        } else {
+            return new RealMatrix(matrix);
+        }
+
+    }
+
     public static RealMatrix asRow(Double... values) {
         return new RealMatrix(1, values.length, values);
     }
@@ -34,12 +44,8 @@ public class RealMatrix implements Matrix<Double> {
 
     }
 
-    public static RealMatrix linearRange(Number start, Number stop, int steps) {
-        return asColumn(Util.makeLinearArray(start, stop, steps));
-    }
-
-    public static RealMatrix logRange(Number start, Number stop, int steps) {
-        return asColumn(Util.makeLogarithmicArray(start, stop, steps));
+    public static RealMatrix rotation2D(double angle) {
+        return new RealMatrix(2, 2, Math.cos(angle), -Math.sin(angle), Math.sin(angle), Math.cos(angle));
     }
 
     public RealMatrix(int rows, int cols) {
@@ -163,6 +169,58 @@ public class RealMatrix implements Matrix<Double> {
 
         return data;
 
+    }
+
+    public RealMatrix divide(Matrix<Double> rhs) {
+        return multiply(rhs.invert());
+    }
+
+    @Override
+    public RealMatrix times(Matrix<Double> rhs) {
+        return multiply(rhs);
+    }
+
+    @Override
+    public RealMatrix times(Double rhs) {
+        return multiply(rhs);
+    }
+
+    @Override
+    public RealMatrix div(Matrix<Double> rhs) {
+        return divide(rhs);
+    }
+
+    @Override
+    public RealMatrix div(Double rhs) {
+        return divide(rhs);
+    }
+
+    public RealMatrix rotate2D(double angle) {
+        if (cols() == 2 && rows() != 2) {
+            return rotation2D(angle).multiply(transpose()).transpose();
+        } else {
+            return rotation2D(angle).multiply(this);
+        }
+    }
+
+    @Override
+    public RealMatrix plus(Matrix<Double> rhs) {
+        return add(rhs);
+    }
+
+    @Override
+    public RealMatrix plus(Double rhs) {
+        return add(rhs);
+    }
+
+    @Override
+    public RealMatrix minus(Matrix<Double> rhs) {
+        return subtract(rhs);
+    }
+
+    @Override
+    public RealMatrix minus(Double rhs) {
+        return subtract(rhs);
     }
 
     @Override
@@ -325,6 +383,7 @@ public class RealMatrix implements Matrix<Double> {
         }
 
     }
+
     public void setAll(double[] values) {
 
         if (values.length != size()) {
@@ -511,13 +570,7 @@ public class RealMatrix implements Matrix<Double> {
 
     @Override
     public RealMatrix leftMultiply(Matrix<Double> lhs) {
-
-        if (lhs instanceof RealMatrix) {
-            return ((RealMatrix) lhs).multiply(this);
-        } else {
-            return new RealMatrix(lhs.multiply(this));
-        }
-
+        return asRealMatrix(lhs.multiply(this));
     }
 
     @Override
@@ -527,37 +580,45 @@ public class RealMatrix implements Matrix<Double> {
 
     @Override
     public RealMatrix leftMultiply(Double lhs) {
-        return map(v -> lhs * v);
+        return multiply(lhs);
     }
 
     @Override
     public RealMatrix elementMultiply(Matrix<Double> rhs) {
 
-        if (!Matrix.dimensionsMatch(this, rhs)) {
+        if (Matrix.dimensionsMatch(this, rhs)) {
+            return map((r, c, v) -> v * rhs.get(r, c));
+        } else if (Matrix.rowMatrixMatch(this, rhs)) {
+            return map((r, c, v) -> v * rhs.get(0, c));
+        } else if (Matrix.colMatrixMatch(this, rhs)) {
+            return map((r, c, v) -> v * rhs.get(r, 0));
+        } else if (Matrix.isScalar(rhs)) {
+            return multiply(rhs.get(0,0));
+        } else {
             throw new DimensionException(rhs, this);
         }
-
-        return map((r, c, v) -> v * rhs.get(r, c));
     }
 
     @Override
     public RealMatrix leftElementMultiply(Matrix<Double> lhs) {
-
-        if (!Matrix.dimensionsMatch(this, lhs)) {
-            throw new DimensionException(lhs, this);
-        }
-
-        return map((r, c, v) -> lhs.get(r, c) * v);
+        return elementMultiply(lhs);
     }
 
     @Override
     public RealMatrix elementDivide(Matrix<Double> rhs) {
 
-        if (!Matrix.dimensionsMatch(this, rhs)) {
+        if (Matrix.dimensionsMatch(this, rhs)) {
+            return map((r, c, v) -> v / rhs.get(r, c));
+        } else if (Matrix.rowMatrixMatch(this, rhs)) {
+            return map((r, c, v) -> v / rhs.get(0, c));
+        } else if (Matrix.colMatrixMatch(this, rhs)) {
+            return map((r, c, v) -> v / rhs.get(r, 0));
+        } else if (Matrix.isScalar(rhs)) {
+            return divide(rhs.get(0,0));
+        }  else {
             throw new DimensionException(rhs, this);
         }
 
-        return map((r, c, v) -> v / rhs.get(r, c));
     }
 
     @Override
@@ -583,11 +644,18 @@ public class RealMatrix implements Matrix<Double> {
     @Override
     public RealMatrix add(Matrix<Double> rhs) {
 
-        if (!Matrix.dimensionsMatch(this, rhs)) {
+        if (Matrix.dimensionsMatch(this, rhs)) {
+            return map((r, c, v) -> v + rhs.get(r, c));
+        } else if (Matrix.rowMatrixMatch(this, rhs)) {
+            return map((r, c, v) -> v + rhs.get(0, c));
+        } else if (Matrix.colMatrixMatch(this, rhs)) {
+            return map((r, c, v) -> v + rhs.get(r, 0));
+        } else if (Matrix.isScalar(rhs)) {
+            return add(rhs.get(0,0));
+        }  else {
             throw new DimensionException(rhs, this);
         }
 
-        return map((r, c, v) -> v + rhs.get(r, c));
     }
 
     @Override
@@ -598,11 +666,17 @@ public class RealMatrix implements Matrix<Double> {
     @Override
     public RealMatrix subtract(Matrix<Double> rhs) {
 
-        if (!Matrix.dimensionsMatch(this, rhs)) {
+        if (Matrix.dimensionsMatch(this, rhs)) {
+            return map((r, c, v) -> v - rhs.get(r, c));
+        } else if (Matrix.rowMatrixMatch(this, rhs)) {
+            return map((r, c, v) -> v - rhs.get(0, c));
+        } else if (Matrix.colMatrixMatch(this, rhs)) {
+            return map((r, c, v) -> v - rhs.get(r, 0));
+        } else if (Matrix.isScalar(rhs)) {
+            return subtract(rhs.get(0,0));
+        }  else {
             throw new DimensionException(rhs, this);
         }
-
-        return map((r, c, v) -> v - rhs.get(r, c));
     }
 
     @Override
@@ -686,7 +760,7 @@ public class RealMatrix implements Matrix<Double> {
 
         RealMatrix newMatrix = new RealMatrix(rows(), cols() + cols.cols());
 
-        newMatrix.setSubMatrix(0 ,0, this);
+        newMatrix.setSubMatrix(0, 0, this);
         newMatrix.setSubMatrix(0, cols(), cols);
 
         return newMatrix;

@@ -505,6 +505,116 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
 
     }
 
+    public Field<Double> addDoubleDisplay(String name, double initialValue) {
+
+        TextField field = new TextField(String.format("%e", initialValue));
+        field.setMaxWidth(Integer.MAX_VALUE);
+        field.setBackground(Background.EMPTY);
+        field.setBorder(Border.EMPTY);
+        field.setEditable(false);
+        Label label = new Label(name);
+        label.setMinWidth(Region.USE_PREF_SIZE);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(field, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(field, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
+
+        GUI.runNow(() -> list.addRow(rows++, label, field));
+
+        Field<Double> f = new Field<Double>() {
+
+            private double value = initialValue;
+            private ChangeListener<String> list = null;
+
+            @Override
+            public void set(Double value) {
+                GUI.runNow(() -> field.setText(String.format("%e", value)));
+                this.value = value;
+            }
+
+            @Override
+            public Double get() {
+                return value;
+            }
+
+            @Override
+            public void setOnChange(SRunnable onChange) {
+
+                field.textProperty().removeListener(list);
+
+                list = (observableValue, s, t1) -> new Thread(() -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }).start();
+
+                field.textProperty().addListener(list);
+
+            }
+
+            @Override
+            public void editValues(String... values) {
+
+            }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    label.setManaged(visible);
+                    field.setVisible(visible);
+                    field.setManaged(visible);
+                });
+
+            }
+
+            @Override
+            public boolean isVisible() {
+                return field.isVisible();
+            }
+
+            @Override
+            public void remove() {
+
+                GUI.runNow(() -> {
+                    Fields.this.list.getChildren().removeAll(label, field);
+                    updateGridding();
+                });
+
+            }
+
+            @Override
+            public void setText(String text) {
+                GUI.runNow(() -> label.setText(text));
+            }
+
+            @Override
+            public String getText() {
+                return label.getText();
+            }
+
+            @Override
+            public boolean isDisabled() {
+                return field.isDisabled();
+            }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+                field.setDisable(disabled);
+            }
+
+
+        };
+
+        fields.add(f);
+        return f;
+
+    }
+
     /**
      * Adds a text-box with a "browse" button for selecting a file save location.
      *
@@ -1325,17 +1435,17 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             public void setOnClick(ClickHandler onClick) {
 
                 GUI.runNow(() -> button.setOnAction(
-                        (actionEvent) -> {
-                            Thread t = new Thread(() -> {
-                                try {
-                                    onClick.click();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            });
-                            t.setDaemon(true);
-                            t.start();
-                        }
+                    (actionEvent) -> {
+                        Thread t = new Thread(() -> {
+                            try {
+                                onClick.click();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                        t.setDaemon(true);
+                        t.start();
+                    }
                 ));
 
             }

@@ -5,11 +5,11 @@
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.VBox?>
-<BorderPane fx:id="pane" xmlns="http://javafx.com/javafx"
+<BorderPane style="-fx-background-color: transparent;" fx:id="pane" xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml">
 
     <center>
-        <ScrollPane style="-fx-background-color: transparent;" fitToHeight="true" fitToWidth="true">
+        <ScrollPane fx:id="scroll" style="-fx-background-color: transparent;" fitToHeight="true" fitToWidth="true">
             <VBox style="-fx-padding: 15px; -fx-background-color: transparent;" spacing="15" fx:id="list"/>
         </ScrollPane>
     </center>

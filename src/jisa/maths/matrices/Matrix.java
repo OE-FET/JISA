@@ -20,6 +20,18 @@ public interface Matrix<T> extends Iterable<T> {
         return (a.rows() == b.rows()) && (a.cols() == b.cols());
     }
 
+    public static boolean rowMatrixMatch(Matrix a, Matrix b) {
+        return (a.cols() == b.cols() && b.rows() == 1);
+    }
+
+    public static boolean colMatrixMatch(Matrix a, Matrix b) {
+        return (a.rows() == b.rows() && b.cols() == 1);
+    }
+
+    public static boolean isScalar(Matrix a) {
+        return a.rows() == 1 && a.cols() == 1;
+    }
+
     /**
      * Checks if the two matrices, A and B, can be multiplied (A*B)
      *
