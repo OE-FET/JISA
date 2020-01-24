@@ -1,12 +1,12 @@
 package jisa.devices;
 
+import jisa.Util;
 import jisa.enums.AMode;
 import jisa.enums.Source;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
 import jisa.experiment.IVPoint;
 import jisa.experiment.ResultList;
-import jisa.Util;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,16 +25,6 @@ public interface SMU extends IVMeter, IVSource {
     double getVoltage() throws DeviceException, IOException;
 
     /**
-     * Returns the current either being injected or measured by the SMU.
-     *
-     * @return Current value
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    double getCurrent() throws DeviceException, IOException;
-
-    /**
      * Sets the voltage value to be applied by the SMU (switching to voltage source mode if not already)
      *
      * @param voltage Value to set
@@ -45,6 +35,16 @@ public interface SMU extends IVMeter, IVSource {
     void setVoltage(double voltage) throws DeviceException, IOException;
 
     /**
+     * Returns the current either being injected or measured by the SMU.
+     *
+     * @return Current value
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    double getCurrent() throws DeviceException, IOException;
+
+    /**
      * Sets the current value to be applied by the SMU (switching to current source mode if not already)
      *
      * @param current Value to set
@@ -53,6 +53,44 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     void setCurrent(double current) throws DeviceException, IOException;
+
+    /**
+     * Pulses the voltage output of the SMU, returning the measured current value after a set amount of time before returning voltage to base.
+     * By default controlled and timed by computer but should be overridden in SMUs that support internal timing mechanisms.
+     * <p>
+     * 1. Turn off voltage output
+     * 2. Wait for offTime seconds
+     * 3. V set to puleVoltage
+     * 4. Wait for measureDelay seconds
+     * 5. I measured
+     * 6. V set to baseVoltage
+     * 7. Turn off voltage output
+     * 8. Return previously measured current value
+     *
+     * @param pulseVoltage Voltage to pulse
+     * @param offTime     Time to wait at base voltage before pulse
+     * @param measureDelay Time to wait at pulse voltage before current measurement
+     *
+     * @return Current measurement taken during pulse
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default double pulseVoltage(double pulseVoltage, double offTime, double measureDelay) throws DeviceException, IOException {
+
+        int base    = (int) (offTime * 1000);
+        int measure = (int) (measureDelay * 1000);
+
+        turnOff();
+        setVoltage(pulseVoltage);
+        Util.sleep(base);
+        turnOn();
+        Util.sleep(measure);
+        double current = getCurrent();
+        turnOff();
+        return current;
+
+    }
 
     /**
      * Turns the output of the SMU on
@@ -81,16 +119,6 @@ public interface SMU extends IVMeter, IVSource {
     boolean isOn() throws DeviceException, IOException;
 
     /**
-     * Sets the source mode of the SMU (VOLTAGE or CURRENT)
-     *
-     * @param source Source mode to set
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setSource(Source source) throws DeviceException, IOException;
-
-    /**
      * Returns the current source mode of the SMU (VOLTAGE OR CURRENT)
      *
      * @return Source mode
@@ -99,6 +127,16 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     Source getSource() throws DeviceException, IOException;
+
+    /**
+     * Sets the source mode of the SMU (VOLTAGE or CURRENT)
+     *
+     * @param source Source mode to set
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setSource(Source source) throws DeviceException, IOException;
 
     /**
      * Sets the value for whichever parameter is currently being sourced
@@ -152,26 +190,6 @@ public interface SMU extends IVMeter, IVSource {
     boolean isUsingFourProbe() throws DeviceException, IOException;
 
     /**
-     * Sets the averaging mode of the SMU.
-     *
-     * @param mode Mode to use
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setAverageMode(AMode mode) throws DeviceException, IOException;
-
-    /**
-     * Sets how many measurements the SMU should average over.
-     *
-     * @param count Number of measurements
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setAverageCount(int count) throws DeviceException, IOException;
-
-    /**
      * Sets both the averaging mode and count together.
      *
      * @param mode  Averaging mode
@@ -196,6 +214,16 @@ public interface SMU extends IVMeter, IVSource {
     AMode getAverageMode() throws DeviceException, IOException;
 
     /**
+     * Sets the averaging mode of the SMU.
+     *
+     * @param mode Mode to use
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setAverageMode(AMode mode) throws DeviceException, IOException;
+
+    /**
      * Returns the number of measurements used for averaging by the SMU.
      *
      * @return Number of measurements
@@ -206,15 +234,14 @@ public interface SMU extends IVMeter, IVSource {
     int getAverageCount() throws DeviceException, IOException;
 
     /**
-     * Sets the range of allowed values for the quantity being sourced by the SMU.
-     * A value of n indicates a range of -n to +n.
+     * Sets how many measurements the SMU should average over.
      *
-     * @param value Range value, in Volts or Amps
+     * @param count Number of measurements
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void setSourceRange(double value) throws DeviceException, IOException;
+    void setAverageCount(int count) throws DeviceException, IOException;
 
     /**
      * Returns the range of allowed values for the quantity being sourced by the SMU.
@@ -226,6 +253,17 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     double getSourceRange() throws DeviceException, IOException;
+
+    /**
+     * Sets the range of allowed values for the quantity being sourced by the SMU.
+     * A value of n indicates a range of -n to +n.
+     *
+     * @param value Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setSourceRange(double value) throws DeviceException, IOException;
 
     /**
      * Sets the SMU to automatically determine the source range to use.
@@ -246,17 +284,6 @@ public interface SMU extends IVMeter, IVSource {
     boolean isAutoRangingSource() throws DeviceException, IOException;
 
     /**
-     * Sets the range of allowed values for the quantity being measured by the SMU.
-     *
-     * @param value Range value, in Volts or Amps
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setMeasureRange(double value) throws DeviceException, IOException;
-
-
-    /**
      * Returns the range of allowed values for the quantity being measured by the SMU.
      *
      * @return Range value, in Volts or Amps
@@ -265,6 +292,16 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     double getMeasureRange() throws DeviceException, IOException;
+
+    /**
+     * Sets the range of allowed values for the quantity being measured by the SMU.
+     *
+     * @param value Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setMeasureRange(double value) throws DeviceException, IOException;
 
     /**
      * Tells the SMU to automatically determine the range to use for the measured quantity.
@@ -285,17 +322,6 @@ public interface SMU extends IVMeter, IVSource {
     boolean isAutoRangingMeasure() throws DeviceException, IOException;
 
     /**
-     * Sets the range of allowed values for voltages being sourced or measured by the SMU.
-     * A value of n indicates a range of -n to +n.
-     *
-     * @param value Range value, in Volts
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setVoltageRange(double value) throws DeviceException, IOException;
-
-    /**
      * Returns the range of allowed values for voltages being sourced or measured by the SMU.
      * A value of n indicates a range of -n to +n.
      *
@@ -305,6 +331,17 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     double getVoltageRange() throws DeviceException, IOException;
+
+    /**
+     * Sets the range of allowed values for voltages being sourced or measured by the SMU.
+     * A value of n indicates a range of -n to +n.
+     *
+     * @param value Range value, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setVoltageRange(double value) throws DeviceException, IOException;
 
     /**
      * Tells the SMU to automatically determine the range it uses for voltages.
@@ -325,17 +362,6 @@ public interface SMU extends IVMeter, IVSource {
     boolean isAutoRangingVoltage() throws DeviceException, IOException;
 
     /**
-     * Sets the range of allowed values for currents being sourced or measured by the SMU.
-     *
-     * @param value Range value, in Amps
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setCurrentRange(double value) throws DeviceException, IOException;
-
-
-    /**
      * Returns the range of allowed values for currents being sourced or measured by the SMU.
      *
      * @return Range value, inAmps
@@ -344,6 +370,16 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     double getCurrentRange() throws DeviceException, IOException;
+
+    /**
+     * Sets the range of allowed values for currents being sourced or measured by the SMU.
+     *
+     * @param value Range value, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setCurrentRange(double value) throws DeviceException, IOException;
 
     /**
      * Tells the SMU to automatically determine the range to use for current values.
@@ -364,16 +400,6 @@ public interface SMU extends IVMeter, IVSource {
     boolean isAutoRangingCurrent() throws DeviceException, IOException;
 
     /**
-     * Sets the limit for the measured quantity (ie compliance value).
-     *
-     * @param value The limit to use, in Volts or Amps
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setOutputLimit(double value) throws DeviceException, IOException;
-
-    /**
      * Returns the limit for the measured quantity (compliance value).
      *
      * @return The limit, in Volts or Amps
@@ -384,14 +410,14 @@ public interface SMU extends IVMeter, IVSource {
     double getOutputLimit() throws DeviceException, IOException;
 
     /**
-     * Sets the limit for voltages output when sourcing current (compliance value).
+     * Sets the limit for the measured quantity (ie compliance value).
      *
-     * @param voltage The limit, in Volts
+     * @param value The limit to use, in Volts or Amps
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void setVoltageLimit(double voltage) throws DeviceException, IOException;
+    void setOutputLimit(double value) throws DeviceException, IOException;
 
     /**
      * Returns the limit on voltages output when sourcing current (compliance value).
@@ -404,14 +430,14 @@ public interface SMU extends IVMeter, IVSource {
     double getVoltageLimit() throws DeviceException, IOException;
 
     /**
-     * Sets the limit for currents output when sourcing voltage (compliance value).
+     * Sets the limit for voltages output when sourcing current (compliance value).
      *
-     * @param current The limit, in Amps
+     * @param voltage The limit, in Volts
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void setCurrentLimit(double current) throws DeviceException, IOException;
+    void setVoltageLimit(double voltage) throws DeviceException, IOException;
 
     /**
      * Returns the limit for currents output when sourcing voltage (compliance value).
@@ -424,14 +450,14 @@ public interface SMU extends IVMeter, IVSource {
     double getCurrentLimit() throws DeviceException, IOException;
 
     /**
-     * Sets the integration time for each individual measurement, or closest over-estimate possible.
+     * Sets the limit for currents output when sourcing voltage (compliance value).
      *
-     * @param time Integration time, in seconds
+     * @param current The limit, in Amps
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void setIntegrationTime(double time) throws DeviceException, IOException;
+    void setCurrentLimit(double current) throws DeviceException, IOException;
 
     /**
      * Returns the integration time used for each individual measurement.
@@ -443,6 +469,15 @@ public interface SMU extends IVMeter, IVSource {
      */
     double getIntegrationTime() throws DeviceException, IOException;
 
+    /**
+     * Sets the integration time for each individual measurement, or closest over-estimate possible.
+     *
+     * @param time Integration time, in seconds
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setIntegrationTime(double time) throws DeviceException, IOException;
 
     /**
      * Returns what type of connector is used for the given terminal.
@@ -457,16 +492,6 @@ public interface SMU extends IVMeter, IVSource {
     TType getTerminalType(Terminals terminals) throws DeviceException, IOException;
 
     /**
-     * Sets which set of terminals should be used on the SMU.
-     *
-     * @param terminals Which type of terminals to use
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setTerminals(Terminals terminals) throws DeviceException, IOException;
-
-    /**
      * Returns the type of the set of terminals currently being used on the SMU.
      *
      * @return The type of terminals being used
@@ -476,9 +501,19 @@ public interface SMU extends IVMeter, IVSource {
      */
     Terminals getTerminals() throws DeviceException, IOException;
 
-    void setOffMode(OffMode mode) throws DeviceException, IOException;
+    /**
+     * Sets which set of terminals should be used on the SMU.
+     *
+     * @param terminals Which type of terminals to use
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setTerminals(Terminals terminals) throws DeviceException, IOException;
 
     OffMode getOffMode() throws DeviceException, IOException;
+
+    void setOffMode(OffMode mode) throws DeviceException, IOException;
 
     /**
      * Returns a combined voltage and current measurement.
@@ -603,11 +638,11 @@ public interface SMU extends IVMeter, IVSource {
     default IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         return doSweep(
-                source,
-                Util.makeLinearArray(min, max, numSteps),
-                delay,
-                symmetric,
-                onUpdate
+            source,
+            Util.makeLinearArray(min, max, numSteps),
+            delay,
+            symmetric,
+            onUpdate
         );
 
     }
@@ -675,11 +710,11 @@ public interface SMU extends IVMeter, IVSource {
     default IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
 
         return doSweep(
-                source,
-                Util.makeLogarithmicArray(min, max, numSteps),
-                delay,
-                symmetric,
-                onUpdate
+            source,
+            Util.makeLogarithmicArray(min, max, numSteps),
+            delay,
+            symmetric,
+            onUpdate
         );
 
     }
@@ -703,54 +738,6 @@ public interface SMU extends IVMeter, IVSource {
      */
     default IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ResultList list) throws DeviceException, IOException {
         return doLogarithmicSweep(source, min, max, numSteps, delay, symmetric, (i, p) -> list.addData(p.voltage, p.current));
-    }
-
-    class Updater implements Runnable {
-
-        private int                i    = 0;
-        private Semaphore          semaphore;
-        private ArrayList<IVPoint> points;
-        private ProgressMonitor    onUpdate;
-        private boolean            exit = false;
-
-        public Updater(ArrayList<IVPoint> p, ProgressMonitor o) {
-            semaphore = new Semaphore(0);
-            points = p;
-            onUpdate = o;
-        }
-
-        public void runUpdate() {
-            semaphore.release();
-        }
-
-        public void end() {
-            exit = true;
-            semaphore.release();
-        }
-
-        @Override
-        public void run() {
-
-            while (true) {
-                try {
-                    semaphore.acquire();
-                } catch (InterruptedException ignored) {
-                }
-
-                if (exit) {
-                    break;
-                }
-
-                try {
-                    onUpdate.update(i, points.get(i));
-                    i++;
-                } catch (Exception e) {
-                    Util.exceptionHandler(e);
-                }
-
-            }
-
-        }
     }
 
     /**
@@ -926,7 +913,6 @@ public interface SMU extends IVMeter, IVSource {
         GUARD
     }
 
-
     /**
      * Structure for defining what to do on each update
      */
@@ -934,6 +920,54 @@ public interface SMU extends IVMeter, IVSource {
 
         void update(int i, IVPoint point) throws IOException, DeviceException;
 
+    }
+
+    class Updater implements Runnable {
+
+        private int                i    = 0;
+        private Semaphore          semaphore;
+        private ArrayList<IVPoint> points;
+        private ProgressMonitor    onUpdate;
+        private boolean            exit = false;
+
+        public Updater(ArrayList<IVPoint> p, ProgressMonitor o) {
+            semaphore = new Semaphore(0);
+            points    = p;
+            onUpdate  = o;
+        }
+
+        public void runUpdate() {
+            semaphore.release();
+        }
+
+        public void end() {
+            exit = true;
+            semaphore.release();
+        }
+
+        @Override
+        public void run() {
+
+            while (true) {
+                try {
+                    semaphore.acquire();
+                } catch (InterruptedException ignored) {
+                }
+
+                if (exit) {
+                    break;
+                }
+
+                try {
+                    onUpdate.update(i, points.get(i));
+                    i++;
+                } catch (Exception e) {
+                    Util.exceptionHandler(e);
+                }
+
+            }
+
+        }
     }
 
 }

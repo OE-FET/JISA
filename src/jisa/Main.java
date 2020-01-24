@@ -6,6 +6,10 @@ import jisa.addresses.StrAddress;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
+import jisa.maths.Range;
+import jisa.maths.functions.XYFunction;
+import jisa.maths.interpolation.Interpolation;
+import jisa.maths.matrices.RealMatrix;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -19,6 +23,25 @@ public class Main {
     private final static int CHOICE_EXIT = 3;
 
     public static void main(String[] args) {
+
+        RealMatrix x = RealMatrix.asColumn(1, 1, 1, 2, 2, 2, 3, 3, 3);
+        RealMatrix y = RealMatrix.asColumn(1, 2, 3, 1, 2, 3, 1, 2, 3);
+        RealMatrix v = RealMatrix.asColumn(1, 5, 3, 6, 2, 7, 2, 9, 0);
+
+        XYFunction interpolated = Interpolation.interpolate2D(x, y, v);
+
+        for (double yv : Range.linear(1, 3, 6)) {
+
+            for (double xv : Range.linear(1, 3, 6)) {
+
+                System.out.printf("%e", interpolated.value(xv, yv));
+                System.out.print("\t");
+
+            }
+
+            System.out.println();
+
+        }
 
         try {
 

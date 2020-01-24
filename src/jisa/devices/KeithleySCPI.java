@@ -418,6 +418,21 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
         setSourceValue(Source.VOLTAGE, voltage);
     }
 
+    public double pulseVoltage(double pulseVoltage, double offTime, double measureDelay) throws IOException, DeviceException {
+
+        turnOff();
+        setVoltage(pulseVoltage);
+        write(":TRIG:LOAD \"EMPTY\"");
+        write(":TRIG:BLOCK:DELAY:CONSTANT 1 %e", offTime);
+        write(":TRIG:BLOCK:SOURCE:STATE 2 ON");
+        write(":TRIG:BLOCK:DELAY:CONSTANT 3 %e", measureDelay);
+        write(":TRIG:BLOCK:MEASURE 4");
+        write(":TRIG:BLOCK:SOURCE:STATE 5 OFF");
+        write(":INITIATE");
+        return queryDouble(":FETCH?");
+
+    }
+
     public double getCurrent() throws IOException, DeviceException {
         return filterI.getValue();
     }
