@@ -33,6 +33,15 @@ public class VISA {
         }
 
         try {
+            System.out.print("Trying Agilent VISA driver...        \t");
+            AgilentVISADriver.init();
+            drivers.add(new AgilentVISADriver());
+            System.out.println("Success.");
+        } catch (VISAException ignored) {
+            System.out.println("Nope.");
+        }
+
+        try {
             System.out.print("Trying Linux GPIB (libgpib) driver...\t");
             GPIBDriver.init();
             drivers.add(new GPIBDriver());

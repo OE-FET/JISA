@@ -20,17 +20,17 @@ import static jisa.visa.VISANativeInterface.*;
 
 public class VISADriver implements Driver {
 
-    private static       VISANativeInterface lib;
-    private static final String              OS_NAME          = System.getProperty("os.name").toLowerCase();
-    private static       String              libName;
-    private static final String              responseEncoding = "UTF8";
-    private static final long                VISA_ERROR       = 0x7FFFFFFF;
-    private static final int                 _VI_ERROR        = -2147483648;
-    private static final int                 VI_SUCCESS       = 0;
-    private static final int                 VI_NULL          = 0;
-    private static final int                 VI_TRUE          = 1;
-    private static final int                 VI_FALSE         = 0;
-    private static       NativeLong          visaResourceManagerHandle;
+    protected static       VISANativeInterface lib;
+    protected static final String              OS_NAME          = System.getProperty("os.name").toLowerCase();
+    protected static       String              libName;
+    protected static final String              responseEncoding = "UTF8";
+    protected static final long                VISA_ERROR       = 0x7FFFFFFF;
+    protected static final int                 _VI_ERROR        = -2147483648;
+    protected static final int                 VI_SUCCESS       = 0;
+    protected static final int                 VI_NULL          = 0;
+    protected static final int                 VI_TRUE          = 1;
+    protected static final int                 VI_FALSE         = 0;
+    protected static       NativeLong          visaResourceManagerHandle;
 
     public static void init() throws VISAException {
 
@@ -68,7 +68,7 @@ public class VISADriver implements Driver {
      *
      * @throws VISAException When VISA does go gone screw it up
      */
-    private static NativeLong getResourceManager() throws VISAException {
+    protected static NativeLong getResourceManager() throws VISAException {
 
         NativeLongByReference pViSession = new NativeLongByReference();
         NativeLong            visaStatus = lib.viOpenDefaultRM(pViSession);
@@ -87,7 +87,7 @@ public class VISADriver implements Driver {
      *
      * @return The ByteBuffer that I mentioned.
      */
-    private static ByteBuffer stringToByteBuffer(String source) {
+    protected static ByteBuffer stringToByteBuffer(String source) {
         try {
             ByteBuffer dest = ByteBuffer.allocate(source.length() + 1);
             dest.put(source.getBytes(responseEncoding));
@@ -152,7 +152,7 @@ public class VISADriver implements Driver {
 
     }
 
-    private NativeLong openInstrument(String address) {
+    protected NativeLong openInstrument(String address) {
 
 
         NativeLongByReference pViInstrument = new NativeLongByReference();
@@ -174,7 +174,7 @@ public class VISADriver implements Driver {
 
     }
 
-    private String toVISASerial(SerialAddress address) throws VISAException {
+    protected String toVISASerial(SerialAddress address) throws VISAException {
 
         String raw = address.toString();
 
@@ -217,7 +217,7 @@ public class VISADriver implements Driver {
 
     public class VISAConnection implements Connection {
 
-        private NativeLong handle;
+        protected NativeLong handle;
 
         public VISAConnection(NativeLong viHandle) {
             handle = viHandle;
