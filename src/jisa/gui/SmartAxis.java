@@ -3,12 +3,10 @@ package jisa.gui;
 import javafx.beans.property.*;
 import javafx.css.CssMetaData;
 import javafx.css.Styleable;
-import javafx.geometry.Side;
 import javafx.scene.chart.ValueAxis;
 import javafx.scene.chart.XYChart;
 import javafx.util.StringConverter;
 import jisa.Util;
-import jisa.control.RTask;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -23,9 +21,9 @@ public final class SmartAxis extends ValueAxis<Double> {
         ""
     );
     private final DefaultFormatter defaultFormatter         = new DefaultFormatter(this);
-    private final LogFormatter     logFormatter             = new LogFormatter();
-    private       JISAChart        chart;
-    private       boolean          isXAxis;
+    private final LogFormatter logFormatter             = new LogFormatter();
+    private       JISAChart    chart;
+    private       boolean      isXAxis;
     private       Object           currentAnimationID;
     private       int              numTicks                 = 8;
     private       String           label                    = "";

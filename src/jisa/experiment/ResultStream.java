@@ -3,7 +3,6 @@ package jisa.experiment;
 import jisa.Util;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;

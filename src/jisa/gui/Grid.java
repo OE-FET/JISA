@@ -258,6 +258,7 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             tPane.setCollapsible(false);
             tPane.setMaxHeight(Double.MAX_VALUE);
             tPane.setMaxWidth(Double.MAX_VALUE);
+            sPane.setPadding(new Insets(0,0,0,0));
             ((BorderPane) bPane).setCenter(tPane);
 
         }
@@ -353,12 +354,10 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
     @Override
     public List<Element> getElements() {
-
         return new ArrayList<>(added);
     }
 
     public int getNumColumns() {
-
         return nCols;
     }
 
@@ -377,6 +376,7 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             }
 
         });
+
     }
 
     public Pane getPane() {

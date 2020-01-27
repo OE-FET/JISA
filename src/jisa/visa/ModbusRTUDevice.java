@@ -15,7 +15,6 @@ import jssc.SerialPortList;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public class ModbusRTUDevice implements Instrument {
 

@@ -574,7 +574,7 @@ public class GUI extends Application {
 
         try {
 
-            measurement.performMeasurement();
+            measurement.start();
 
             if (measurement.wasStopped()) {
 

@@ -1,5 +1,6 @@
 package jisa.devices;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.control.*;
 import jisa.enums.AMode;
@@ -10,7 +11,6 @@ import jisa.visa.VISADevice;
 
 import java.io.IOException;
 
-import static jisa.devices.Agilent4155C.VoltRange.*;
 import static jisa.enums.AMode.*;
 import static jisa.enums.Source.*;
 
@@ -21,8 +21,12 @@ public class Agilent4155C extends VISADevice implements SPA {
 
     private final boolean[]   states       = {false, false, false, false, false, false};
     private final Source[]    modes        = {VOLTAGE, VOLTAGE, VOLTAGE, VOLTAGE, VOLTAGE, VOLTAGE};
-    private final VoltRange[] voltageRange = {AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING};
-    private final int[]       currentRange = {0, 0, 0, 0, 0, 0};
+    private final VoltRange[] voltageRange = {VoltRange.AUTO_RANGING, VoltRange.AUTO_RANGING, VoltRange.AUTO_RANGING, VoltRange.AUTO_RANGING, VoltRange.AUTO_RANGING, VoltRange.AUTO_RANGING};
+    private final CurrRange[] currentRange = {CurrRange.AUTO_RANGING, CurrRange.AUTO_RANGING, CurrRange.AUTO_RANGING, CurrRange.AUTO_RANGING, CurrRange.AUTO_RANGING, CurrRange.AUTO_RANGING};
+    private final double[]    currentComp  = {0.5, 0.5, 0.5, 0.5, 0.5, 0.5};
+    private final double[]    voltageComp  = {40, 40, 40, 40, 40, 40};
+    private final double[]    intTimes     = {0.02, 0.02, 0.02, 0.02, 0.02, 0.02};
+    private       double      lastIntTime  = 0.02;
 
     private final ReadFilter[] voltageFilters = {
         makeVoltageFilter(0, NONE),
@@ -74,13 +78,26 @@ public class Agilent4155C extends VISADevice implements SPA {
     @Override
     public double getVoltage(int channel) throws DeviceException, IOException {
         checkChannel(channel);
-        return queryDouble("TV? %d,%d", channel + 1, voltageRange[channel]);
+        updateIntTime(channel);
+        return voltageFilters[channel].getValue();
     }
 
     @Override
     public double getCurrent(int channel) throws DeviceException, IOException {
         checkChannel(channel);
-        return queryDouble("TI? %d,%d", channel + 1, currentRange[channel]);
+        updateIntTime(channel);
+        return currentFilters[channel].getValue();
+    }
+
+    protected void updateIntTime(int channel) throws IOException {
+
+        if (lastIntTime != intTimes[channel]) {
+            lastIntTime = intTimes[channel];
+            int mode = lastIntTime <= 10.16e-3 ? 1 : 3;
+            write("SIT %d,%e", mode, lastIntTime);
+            write("SLI %d", mode);
+        }
+
     }
 
     protected double measureVoltage(int channel) throws DeviceException, IOException {
@@ -146,7 +163,7 @@ public class Agilent4155C extends VISADevice implements SPA {
         checkChannel(channel);
         modes[channel]  = VOLTAGE;
         values[channel] = voltage;
-        write("DV %d,%d,%e", channel + 1, voltageRange[channel], voltage);
+        write("DV %d,%d,%e,%e", channel + 1, voltageRange[channel], voltage, currentComp[channel]);
     }
 
     @Override
@@ -154,7 +171,7 @@ public class Agilent4155C extends VISADevice implements SPA {
         checkChannel(channel);
         modes[channel]  = CURRENT;
         values[channel] = current;
-        write("DI %d,%d,%e", channel + 1, currentRange[channel], current);
+        write("DI %d,%d,%e,%e", channel + 1, currentRange[channel], current, voltageComp[channel]);
     }
 
     @Override
@@ -319,122 +336,250 @@ public class Agilent4155C extends VISADevice implements SPA {
     @Override
     public void setSourceRange(int channel, double value) throws DeviceException, IOException {
 
+        switch (getSource(channel)) {
+
+            case VOLTAGE:
+                setVoltageRange(channel, value);
+                break;
+
+            case CURRENT:
+                setCurrentRange(channel, value);
+                break;
+
+        }
+
     }
 
     @Override
     public double getSourceRange(int channel) throws DeviceException, IOException {
-        return 0;
+
+        switch (getSource(channel)) {
+
+            default:
+            case VOLTAGE:
+                return getVoltageRange(channel);
+
+            case CURRENT:
+                return getCurrentRange(channel);
+
+        }
+
     }
 
     @Override
     public void useAutoSourceRange(int channel) throws DeviceException, IOException {
 
+        switch (getSource(channel)) {
+
+            case VOLTAGE:
+                useAutoVoltageRange(channel);
+                break;
+
+            case CURRENT:
+                useAutoCurrentRange(channel);
+                break;
+
+        }
+
     }
 
     @Override
     public boolean isAutoRangingSource(int channel) throws DeviceException, IOException {
-        return false;
+
+        switch (getSource(channel)) {
+
+            default:
+            case VOLTAGE:
+                return isAutoRangingVoltage(channel);
+
+            case CURRENT:
+                return isAutoRangingCurrent(channel);
+
+        }
+
     }
 
     @Override
     public void setMeasureRange(int channel, double value) throws DeviceException, IOException {
 
+        switch (getSource(channel)) {
+
+            case VOLTAGE:
+                setCurrentRange(channel, value);
+                break;
+
+            case CURRENT:
+                setVoltageRange(channel, value);
+                break;
+
+        }
+
     }
 
     @Override
     public double getMeasureRange(int channel) throws DeviceException, IOException {
-        return 0;
+
+        switch (getSource(channel)) {
+
+            default:
+            case VOLTAGE:
+                return getCurrentRange(channel);
+
+            case CURRENT:
+                return getVoltageRange(channel);
+
+        }
+
     }
 
     @Override
     public void useAutoMeasureRange(int channel) throws DeviceException, IOException {
 
+        switch (getSource(channel)) {
+
+            case VOLTAGE:
+                useAutoCurrentRange(channel);
+                break;
+
+            case CURRENT:
+                useAutoVoltageRange(channel);
+                break;
+
+        }
+
     }
 
     @Override
     public boolean isAutoRangingMeasure(int channel) throws DeviceException, IOException {
-        return false;
+
+        switch (getSource(channel)) {
+
+            default:
+            case VOLTAGE:
+                return isAutoRangingCurrent(channel);
+
+            case CURRENT:
+                return isAutoRangingVoltage(channel);
+
+        }
+
     }
 
     @Override
     public void setVoltageRange(int channel, double value) throws DeviceException, IOException {
-
+        checkChannel(channel);
+        voltageRange[channel] = VoltRange.fromVoltage(value);
     }
 
     @Override
     public double getVoltageRange(int channel) throws DeviceException, IOException {
-        return 0;
+        checkChannel(channel);
+        return voltageRange[channel].getRange();
     }
 
     @Override
     public void useAutoVoltageRange(int channel) throws DeviceException, IOException {
         checkChannel(channel);
-        voltageRange[channel] = AUTO_RANGING;
+        voltageRange[channel] = VoltRange.AUTO_RANGING;
     }
 
     @Override
     public boolean isAutoRangingVoltage(int channel) throws DeviceException, IOException {
-        return false;
+        checkChannel(channel);
+        return voltageRange[channel] == VoltRange.AUTO_RANGING;
     }
 
     @Override
     public void setCurrentRange(int channel, double value) throws DeviceException, IOException {
-
+        checkChannel(channel);
+        currentRange[channel] = CurrRange.fromCurrent(value);
     }
 
     @Override
     public double getCurrentRange(int channel) throws DeviceException, IOException {
-        return 0;
+        checkChannel(channel);
+        return currentRange[channel].getRange();
     }
 
     @Override
     public void useAutoCurrentRange(int channel) throws DeviceException, IOException {
         checkChannel(channel);
+        currentRange[channel] = CurrRange.AUTO_RANGING;
     }
 
     @Override
     public boolean isAutoRangingCurrent(int channel) throws DeviceException, IOException {
-        return false;
+        checkChannel(channel);
+        return currentRange[channel] == CurrRange.AUTO_RANGING;
     }
 
     @Override
     public void setOutputLimit(int channel, double value) throws DeviceException, IOException {
 
+        switch (getSource(channel)) {
+
+            case VOLTAGE:
+                setCurrentLimit(channel, value);
+                break;
+
+            case CURRENT:
+                setVoltageLimit(channel, value);
+                break;
+
+        }
+
     }
 
     @Override
     public double getOutputLimit(int channel) throws DeviceException, IOException {
-        return 0;
+
+        switch (getSource(channel)) {
+
+            default:
+            case VOLTAGE:
+                return getCurrentLimit(channel);
+
+            case CURRENT:
+                return getVoltageLimit(channel);
+
+        }
+
     }
 
     @Override
     public void setVoltageLimit(int channel, double value) throws DeviceException, IOException {
-
+        checkChannel(channel);
+        voltageComp[channel] = value;
     }
 
     @Override
     public double getVoltageLimit(int channel) throws DeviceException, IOException {
-        return 0;
+        checkChannel(channel);
+        return voltageComp[channel];
     }
 
     @Override
     public void setCurrentLimit(int channel, double value) throws DeviceException, IOException {
-
+        checkChannel(channel);
+        currentComp[channel] = value;
     }
 
     @Override
     public double getCurrentLimit(int channel) throws DeviceException, IOException {
-        return 0;
+        checkChannel(channel);
+        return currentComp[channel];
     }
 
     @Override
     public void setIntegrationTime(int channel, double time) throws DeviceException, IOException {
-
+        checkChannel(channel);
+        intTimes[channel] = time;
     }
 
     @Override
     public double getIntegrationTime(int channel) throws DeviceException, IOException {
-        return 0;
+        checkChannel(channel);
+        return intTimes[channel];
     }
 
     @Override
@@ -454,12 +599,14 @@ public class Agilent4155C extends VISADevice implements SPA {
 
     @Override
     public void setOffMode(int channel, OffMode mode) throws DeviceException, IOException {
-
+        checkChannel(channel);
+        Util.errLog.println("Agilent 4155C does not support different off-modes.");
     }
 
     @Override
     public OffMode getOffMode(int channel) throws DeviceException, IOException {
-        return null;
+        checkChannel(channel);
+        return OffMode.NORMAL;
     }
 
     protected enum VoltRange {
@@ -524,7 +671,15 @@ public class Agilent4155C extends VISADevice implements SPA {
         R_10_pA(-9, 10e-12),
         R_100_pA(-10, 100e-12),
         R_1_nA(-11, 1e-9),
-        R_10_nA(-12, 10e-9);
+        R_10_nA(-12, 10e-9),
+        R_100_nA(-13, 100e-9),
+        R_1_uA(-14, 1e-6),
+        R_10_uA(-15, 10e-6),
+        R_100_uA(-16, 100e-6),
+        R_1_mA(-17, 1e-3),
+        R_10_mA(-18, 10e-3),
+        R_100_mA(-19, 100e-3),
+        R_1_A(-20, 1.0);
 
         private final int    code;
         private final double range;
@@ -548,7 +703,7 @@ public class Agilent4155C extends VISADevice implements SPA {
 
         }
 
-        public static CurrRange fromVoltage(double value) {
+        public static CurrRange fromCurrent(double value) {
 
             for (CurrRange range : values()) {
 

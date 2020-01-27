@@ -9,7 +9,6 @@ import jisa.Util;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.NativeLongByReference;
-import org.python.apache.xerces.impl.xpath.regex.Match;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;

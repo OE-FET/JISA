@@ -16,9 +16,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.TextAlignment;
 import jisa.Util;
 
-import java.awt.*;
-import java.io.IOException;
-import java.net.URI;
+import java.net.URL;
 import java.util.concurrent.Semaphore;
 
 public class Doc extends JFXWindow {
@@ -305,9 +303,21 @@ public class Doc extends JFXWindow {
 
     }
 
-    public Image addImage(String url) {
+    public Image addImage(URL url) {
+        try {
+            return addImage(new javafx.scene.image.Image(url.openStream()));
+        } catch (Exception e) {
+            return addImage(Doc.class.getResource("images/jisa.png"));
+        }
+    }
 
-        ImageView imageView = new ImageView(new javafx.scene.image.Image(url));
+    public Image addImage(String url) {
+        return addImage(new javafx.scene.image.Image(url));
+    }
+
+    public Image addImage(javafx.scene.image.Image image) {
+
+        ImageView imageView = new ImageView(image);
         imageView.setPreserveRatio(true);
         imageView.setSmooth(true);
         stage.widthProperty().addListener((observableValue, number, t1) -> imageView.maxWidth(stage.getWidth() - 35));
