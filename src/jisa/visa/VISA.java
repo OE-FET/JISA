@@ -24,9 +24,9 @@ public class VISA {
         System.out.println("Attempting to load drivers.");
 
         try {
-            System.out.print("Trying VISA driver...                \t");
-            VISADriver.init();
-            drivers.add(new VISADriver());
+            System.out.print("Trying NI VISA driver...             \t");
+            NIVISADriver.init();
+            drivers.add(new NIVISADriver());
             System.out.println("Success.");
         } catch (VISAException ignored) {
             System.out.println("Nope.");
@@ -146,21 +146,33 @@ public class VISA {
 
         }
 
+        boolean tried = false;
+
         // Try each driver in order
         for (Driver d : drivers) {
 
-            try {
-                connection = d.open(address);
-                break;                      // If it worked, then let's use it!
-            } catch (VISAException e) {
-                errors.add(String.format("* %s: %s", d.getClass().getSimpleName(), e.getMessage()));
+            if (d.worksWith(address)) {
+
+                tried = true;
+
+                try {
+                    connection = d.open(address);
+                    break;                      // If it worked, then let's use it!
+                } catch (VISAException e) {
+                    errors.add(String.format("* %s: %s", d.getClass().getSimpleName(), e.getMessage()));
+                }
+
             }
 
         }
 
+        if (!tried) {
+            throw new VISAException("No drivers available that support connecting to %s", address.toString());
+        }
+
         // If no drivers worked
         if (connection == null) {
-            throw new VISAException("Could not open %s using any driver:\n%s", address.toString(), String.join("\n", errors));
+            throw new VISAException("Could not open %s using any driver%n%s", address.toString(), String.join("\n", errors));
         }
 
         return connection;

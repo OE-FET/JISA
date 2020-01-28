@@ -2,7 +2,7 @@ package jisa.visa;
 
 import com.sun.jna.Native;
 
-public class AgilentVISADriver extends VISADriver {
+public class AgilentVISADriver extends NIVISADriver {
 
     public static void init() throws VISAException {
 

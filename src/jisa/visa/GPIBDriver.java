@@ -299,6 +299,11 @@ public class GPIBDriver implements Driver {
 
     }
 
+    @Override
+    public boolean worksWith(Address address) {
+        return address.getType() == Address.Type.GPIB;
+    }
+
     public List<StrAddress> search(int board) throws VISAException {
 
         lib.SendIFC(board);

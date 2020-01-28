@@ -152,4 +152,10 @@ public class RawTCPIPDriver implements Driver {
     public StrAddress[] search() throws VISAException {
         return new StrAddress[0];
     }
+
+    @Override
+    public boolean worksWith(Address address) {
+        return address.getType() == Address.Type.TCPIP_SOCKET;
+    }
+
 }

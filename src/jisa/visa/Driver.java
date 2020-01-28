@@ -25,4 +25,6 @@ public interface Driver {
      */
     StrAddress[] search() throws VISAException;
 
+    boolean worksWith(Address address);
+
 }

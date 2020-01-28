@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 
 import static jisa.visa.VISANativeInterface.*;
 
-public class VISADriver implements Driver {
+public class NIVISADriver implements Driver {
 
     protected static       VISANativeInterface lib;
     protected static final String              OS_NAME          = System.getProperty("os.name").toLowerCase();
@@ -421,6 +421,22 @@ public class VISADriver implements Driver {
     @Override
     public StrAddress[] search() throws VISAException {
         return search(true);
+    }
+
+    @Override
+    public boolean worksWith(Address address) {
+
+        switch (address.getType()) {
+
+            case ID:
+            case MODBUS:
+                return false;
+
+            default:
+                return true;
+
+        }
+
     }
 
     public StrAddress[] search(boolean changeSerial) throws VISAException {

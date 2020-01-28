@@ -262,4 +262,9 @@ public class SerialDriver implements Driver {
 
     }
 
+    @Override
+    public boolean worksWith(Address address) {
+        return address.getType() == Address.Type.SERIAL;
+    }
+
 }
