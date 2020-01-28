@@ -2,7 +2,10 @@ package jisa;
 
 import javafx.application.Platform;
 import jisa.addresses.Address;
+import jisa.addresses.GPIBAddress;
 import jisa.addresses.StrAddress;
+import jisa.devices.K1234;
+import jisa.devices.SMU;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;

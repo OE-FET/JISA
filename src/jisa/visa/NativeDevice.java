@@ -1,5 +1,6 @@
 package jisa.visa;
 
+import jisa.Util;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import com.sun.jna.Library;
@@ -7,6 +8,7 @@ import com.sun.jna.Native;
 import org.reflections.Reflections;
 
 import java.io.IOException;
+import java.lang.ref.Cleaner;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.LinkedList;
@@ -53,11 +55,14 @@ public abstract class NativeDevice<I extends Library> implements Instrument {
             throw new IOException(String.format("Unable to load library \"%s\":\n\n%s", name, e.getMessage()));
         }
 
+        Util.addShutdownHook(this::close);
+
     }
 
     public NativeDevice(String libraryName, Class<I> libraryInterface, I library) {
         name = libraryName;
-        lib = library;
+        lib  = library;
+        Util.addShutdownHook(this::close);
     }
 
     public abstract String getIDN() throws IOException, DeviceException;
@@ -65,14 +70,5 @@ public abstract class NativeDevice<I extends Library> implements Instrument {
     @Override
     public abstract void close() throws IOException, DeviceException;
 
-    public void finalize() {
-
-        try {
-            close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
 
 }

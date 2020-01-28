@@ -1067,6 +1067,8 @@ public class JISAChart extends XYChart<Double, Double> {
                         .showLine(isShowingLine())
                         .showMarkers(isShowingMarkers())
                         .setMarkerShape(getMarkerShape())
+                        .setLineDash(getLineDash())
+                        .setLineWidth(getLineWidth())
                         .setMarkerSize(getMarkerSize());
 
                     if (isFitted()) {

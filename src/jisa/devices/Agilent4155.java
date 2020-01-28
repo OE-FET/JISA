@@ -612,7 +612,7 @@ public class Agilent4155 extends VISADevice implements SPA {
 
     @Override
     public TType getTerminalType(int channel, Terminals terminals) throws DeviceException, IOException {
-        return TType.BNC;
+        return (terminals == Terminals.REAR) ? TType.TRIAX : TType.NONE;
     }
 
     @Override
@@ -622,7 +622,7 @@ public class Agilent4155 extends VISADevice implements SPA {
 
     @Override
     public Terminals getTerminals(int channel) throws DeviceException, IOException {
-        return Terminals.FRONT;
+        return Terminals.REAR;
     }
 
     @Override

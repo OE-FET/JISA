@@ -5,6 +5,7 @@ import jisa.addresses.Address;
 import jisa.devices.Instrument;
 
 import java.io.IOException;
+import java.lang.ref.Cleaner;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -23,19 +24,18 @@ public class VISADevice implements Instrument {
     private int          retryCount     = 3;
     private int          timeout        = 2000;
 
-    public final static int    DEFAULT_TIMEOUT = 13;
-    public final static int    DEFAULT_EOI     = 1;
-    public final static int    DEFAULT_EOS     = 0;
-    public final static int    EOS_RETURN      = 5130;
-    public final static int    LF_TERMINATOR   = 0x0A;
-    public final static int    CR_TERMINATOR   = 0x0D;
-    public final static int    CRLF_TERMINATOR = 0x0D0A;
-    public final static String C_IDN           = "*IDN?";
+    public final static  int     DEFAULT_TIMEOUT = 13;
+    public final static  int     DEFAULT_EOI     = 1;
+    public final static  int     DEFAULT_EOS     = 0;
+    public final static  int     EOS_RETURN      = 5130;
+    public final static  int     LF_TERMINATOR   = 0x0A;
+    public final static  int     CR_TERMINATOR   = 0x0D;
+    public final static  int     CRLF_TERMINATOR = 0x0D0A;
+    public final static  String  C_IDN           = "*IDN?";
 
     public VISADevice(Address address) throws IOException {
 
         this(address, null);
-        Util.addShutdownHook(this::close);
 
     }
 
@@ -58,6 +58,8 @@ public class VISADevice implements Instrument {
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
+
+        Util.addShutdownHook(this::close);
 
     }
 
@@ -393,16 +395,6 @@ public class VISADevice implements Instrument {
             connection.close();
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
-        }
-
-    }
-
-    public void finalize() {
-
-        try {
-            close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
     }
