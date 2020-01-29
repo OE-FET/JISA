@@ -38,12 +38,8 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
         connect();
 
-        instrument.setOnChange(this::update);
-
-        enabled.setOnChange(() -> {
-            updateEnabled();
-            update();
-        });
+        instrument.setOnChange(this::updateGUI);
+        enabled.setOnChange(this::updateGUI);
 
     }
 
@@ -76,9 +72,16 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         return configStore != null && configKey != null;
     }
 
-    protected void updateEnabled() {
-        setFieldsDisabled(!enabled.get());
-        enabled.setDisabled(false);
+    protected void updateGUI() {
+        
+        if (!enabled.get()) {
+            setFieldsDisabled(true);
+            enabled.setDisabled(false);
+        } else {
+            setFieldsDisabled(false);
+            update();
+        }
+        
     }
 
     public static class SMU extends Configurator<jisa.devices.SMU> {
@@ -119,15 +122,12 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             iar = addCheckBox("Auto Current Range", true);
             irn = addDoubleField("Current Range [A]", 200e-3);
 
+            var.setOnChange(this::updateGUI);
+            iar.setOnChange(this::updateGUI);
+
             addSeparator();
 
             fpp = addCheckBox("Four-Wire Measurements", false);
-
-            var.setOnChange(() -> vrn.setDisabled(var.get()));
-            iar.setOnChange(() -> irn.setDisabled(iar.get()));
-
-            vrn.setDisabled(var.get());
-            irn.setDisabled(iar.get());
 
         }
 
@@ -183,7 +183,10 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
                 );
             }
 
-            if (!enabled.get()) updateEnabled();
+
+            vrn.setDisabled(var.get());
+            irn.setDisabled(iar.get());
+
 
         }
 
@@ -292,10 +295,7 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             addSeparator();
 
             fourPP = addCheckBox("Four-Wire Measurements");
-
-            iValue.setDisabled(!manI.get() || manI.isDisabled());
-
-            manI.setOnChange(() -> iValue.setDisabled(!manI.get() || manI.isDisabled()));
+            manI.setOnChange(this::updateGUI);
 
         }
 
@@ -370,8 +370,8 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             }
 
             fourPP.setDisabled(!(vMeter instanceof jisa.devices.SMU));
+            iValue.setDisabled(!manI.get() || manI.isDisabled());
 
-            if (!enabled.get()) updateEnabled();
 
         }
 
@@ -503,7 +503,7 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
             }
 
-            if (!enabled.get()) updateEnabled();
+
 
         }
 
@@ -626,7 +626,7 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             } catch (Exception ignored) {
             }
 
-            if (!enabled.get()) updateEnabled();
+
 
         }
 
