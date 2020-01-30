@@ -16,14 +16,14 @@ import java.util.List;
 public final class SmartAxis extends ValueAxis<Double> {
 
     private final StringProperty   currentFormatterProperty = new SimpleStringProperty(
-        this,
-        "currentFormatter",
-        ""
+            this,
+            "currentFormatter",
+            ""
     );
     private final DefaultFormatter defaultFormatter         = new DefaultFormatter(this);
-    private final LogFormatter logFormatter             = new LogFormatter();
-    private       JISAChart    chart;
-    private       boolean      isXAxis;
+    private final LogFormatter     logFormatter             = new LogFormatter();
+    private       JISAChart        chart                    = null;
+    private       boolean          isXAxis;
     private       Object           currentAnimationID;
     private       int              numTicks                 = 8;
     private       String           label                    = "";
@@ -72,7 +72,7 @@ public final class SmartAxis extends ValueAxis<Double> {
     }
 
     public void setChart(JISAChart chart) {
-        this.chart   = chart;
+        this.chart = chart;
         this.isXAxis = chart.getXAxis() == this;
     }
 
@@ -232,11 +232,11 @@ public final class SmartAxis extends ValueAxis<Double> {
     protected Object getRange() {
 
         return new Object[]{
-            getLowerBound(),
-            getUpperBound(),
-            getTickUnit(),
-            getScale(),
-            currentFormatterProperty.get()
+                getLowerBound(),
+                getUpperBound(),
+                getTickUnit(),
+                getScale(),
+                currentFormatterProperty.get()
         };
 
     }
@@ -285,7 +285,7 @@ public final class SmartAxis extends ValueAxis<Double> {
 
             minValue = min;
             maxValue = max;
-            empty    = false;
+            empty = false;
 
         } else {
 
@@ -443,9 +443,9 @@ public final class SmartAxis extends ValueAxis<Double> {
                 }
 
                 double[] endTicks = Util.makeLinearArray(
-                    majorTicks.get(majorTicks.size() - 1),
-                    majorTicks.get(majorTicks.size() - 1) + tickUnit,
-                    6
+                        majorTicks.get(majorTicks.size() - 1),
+                        majorTicks.get(majorTicks.size() - 1) + tickUnit,
+                        6
                 );
 
                 for (int i = 1; i < endTicks.length - 1; i++) {
@@ -485,7 +485,6 @@ public final class SmartAxis extends ValueAxis<Double> {
     }
 
     protected void layoutChildren() {
-
         super.layoutChildren();
     }
 
@@ -568,12 +567,12 @@ public final class SmartAxis extends ValueAxis<Double> {
         }
 
         if (max == Double.NEGATIVE_INFINITY) {
-            max   = 0;
+            max = 0;
             empty = true;
         }
 
         if (min == Double.POSITIVE_INFINITY) {
-            min   = 0;
+            min = 0;
             empty = true;
         }
 
@@ -609,11 +608,11 @@ public final class SmartAxis extends ValueAxis<Double> {
                     }
 
                     return new Object[]{
-                        Math.pow(10, minExp - (0.05 * expRange)),
-                        Math.pow(10, maxExp + (0.05 * expRange)),
-                        getTickUnit(),
-                        getScale(),
-                        currentFormatterProperty.get()
+                            Math.pow(10, minExp - (0.05 * expRange)),
+                            Math.pow(10, maxExp + (0.05 * expRange)),
+                            getTickUnit(),
+                            getScale(),
+                            currentFormatterProperty.get()
                     };
 
 
@@ -639,11 +638,11 @@ public final class SmartAxis extends ValueAxis<Double> {
                     range = Math.min(range, this.range);
 
                     return new Object[]{
-                        Math.max(max - this.range, min - 0.5 * (range / numTicks)),
-                        max + 0.5 * (range / numTicks),
-                        getTickUnit(),
-                        getScale(),
-                        currentFormatterProperty.get()
+                            Math.max(max - this.range, min - 0.5 * (range / numTicks)),
+                            max + 0.5 * (range / numTicks),
+                            getTickUnit(),
+                            getScale(),
+                            currentFormatterProperty.get()
                     };
 
 

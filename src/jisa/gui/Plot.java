@@ -22,10 +22,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.StringConverter;
 import jisa.Util;
-import jisa.maths.functions.Function;
 import jisa.experiment.ResultTable;
 import jisa.gui.svg.*;
 import jisa.maths.fits.Fit;
+import jisa.maths.functions.Function;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -94,7 +94,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             AnchorPane canvas = new AnchorPane();
             canvas.setStyle(
-                "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
+                    "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
             canvas.setMouseTransparent(true);
             canvas.getChildren().add(rect);
             canvas.setManaged(false);
@@ -144,15 +144,15 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         });
 
+        pane.needsLayoutProperty().addListener((observableValue, aBoolean, t1) -> chart.updateAxisRange());
+
     }
 
     public Plot(String title, String xLabel) {
-
         this(title, xLabel, "");
     }
 
     public Plot(String title) {
-
         this(title, "", "");
     }
 
@@ -205,6 +205,9 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         }
 
+        GUI.runNow(chart::updateAxes);
+        GUI.runNow(pane::requestLayout);
+
     }
 
     /**
@@ -225,6 +228,9 @@ public class Plot extends JFXWindow implements Element, Clearable {
                 break;
 
         }
+
+        GUI.runNow(chart::updateAxes);
+        GUI.runNow(pane::requestLayout);
 
     }
 
@@ -280,12 +286,19 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         return new jisa.gui.Button() {
             @Override
-            public void setDisabled(boolean disabled) { GUI.runNow(() -> button.setDisable(disabled)); }
+            public boolean isDisabled() {
+                return button.isDisabled();
+            }
 
             @Override
-            public boolean isDisabled() { return button.isDisabled(); }
+            public void setDisabled(boolean disabled) {
+                GUI.runNow(() -> button.setDisable(disabled));
+            }
 
             @Override
+            public boolean isVisible() {
+                return button.isVisible();
+            }            @Override
             public void setVisible(boolean visible) {
 
                 GUI.runNow(() -> {
@@ -296,13 +309,14 @@ public class Plot extends JFXWindow implements Element, Clearable {
             }
 
             @Override
-            public boolean isVisible() { return button.isVisible(); }
+            public String getText() {
+                return button.getText();
+            }
 
             @Override
-            public void setText(String text) { GUI.runNow(() -> button.setText(text)); }
-
-            @Override
-            public String getText() { return button.getText(); }
+            public void setText(String text) {
+                GUI.runNow(() -> button.setText(text));
+            }
 
             @Override
             public void setOnClick(ClickHandler onClick) {
@@ -320,6 +334,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
                 GUI.runNow(() -> toolbar.getItems().remove(button));
             }
 
+
+
         };
 
     }
@@ -329,6 +345,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
         javafx.scene.control.Separator separator = new javafx.scene.control.Separator();
 
         GUI.runNow(() -> toolbar.getItems().add(separator));
+
 
         return new Separator() {
             @Override
@@ -417,6 +434,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
             adjustSize();
 
         });
+
 
     }
 
@@ -625,50 +643,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
-    public void setDragMode() {
-
-        final Node                          background = chart.lookup(".chart-plot-background");
-        final SimpleObjectProperty<Point2D> start      = new SimpleObjectProperty<>();
-        final SimpleObjectProperty<Point2D> startMax   = new SimpleObjectProperty<>();
-        final SimpleObjectProperty<Point2D> startMin   = new SimpleObjectProperty<>();
-
-
-        chart.setOnMousePressed(event -> {
-            Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-            Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-            startMin.set(new Point2D(xAxis.getLowerBound(), yAxis.getLowerBound()));
-            startMax.set(new Point2D(xAxis.getUpperBound(), yAxis.getUpperBound()));
-            start.set(new Point2D(pointX.getX(), pointY.getY()));
-        });
-
-        chart.setOnMouseDragged(event -> {
-
-            Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-            Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-
-            final double diffX = xAxis.getValueForDisplay(pointX.getX()) - xAxis.getValueForDisplay(start.get().getX());
-            final double diffY = yAxis.getValueForDisplay(pointY.getY()) - yAxis.getValueForDisplay(start.get().getY());
-
-            final double minX = startMin.get().getX() - diffX;
-            final double minY = startMin.get().getY() - diffY;
-
-            final double maxX = startMax.get().getX() - diffX;
-            final double maxY = startMax.get().getY() - diffY;
-
-            setXLimits(Math.min(minX, maxX), Math.max(minX, maxX));
-            setYLimits(Math.min(minY, maxY), Math.max(minY, maxY));
-
-        });
-
-        chart.setOnMouseReleased(null);
-
-    }
-
     public void setAutoMode() {
-
-        chart.setOnMousePressed(null);
-        chart.setOnMouseDragged(null);
-        chart.setOnMouseReleased(null);
 
         autoXLimits();
         autoYLimits();
@@ -707,28 +682,33 @@ public class Plot extends JFXWindow implements Element, Clearable {
     }
 
     public void setLegendPosition(Side position) {
+
         GUI.runNow(() -> chart.setLegendSide(position));
+
+
     }
 
     public void showLegend(boolean show) {
 
         GUI.runNow(() -> chart.setLegendVisible(show));
-    }
-    
-    public void setLegendColumns(int num) {
-        chart.setLegendColumns(num);
-    }
 
-    public void setLegendRows(int num) {
-        chart.setLegendRows(num);
+
     }
 
     public int getLegendColumns() {
         return chart.getLegendColumns();
     }
 
+    public void setLegendColumns(int num) {
+        chart.setLegendColumns(num);
+    }
+
     public int getLegendRows() {
         return chart.getLegendRows();
+    }
+
+    public void setLegendRows(int num) {
+        chart.setLegendRows(num);
     }
 
     /**
@@ -852,10 +832,10 @@ public class Plot extends JFXWindow implements Element, Clearable {
              .setStrokeColour(Color.GREY);
 
         xAxisBox.setStrokeWidth(1)
-             .setStrokeColour(Color.GREY);
+                .setStrokeColour(Color.GREY);
 
         yAxisBox.setStrokeWidth(1)
-             .setStrokeColour(Color.GREY);
+                .setStrokeColour(Color.GREY);
 
         List<Double> xTicks = this.xAxis.getMajorTicks();
         List<Double> yTicks = this.yAxis.getMajorTicks();
@@ -979,10 +959,10 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             SVGElement legendCircle = makeMarker(s.isShowingMarkers() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
             SVGText legendText = new SVGText(
-                legendX + 15.0 + 5 + 3 + 10,
-                legendY + (25 * i) + 15.0 + 5,
-                "beginning",
-                s.getName()
+                    legendX + 15.0 + 5 + 3 + 10,
+                    legendY + (25 * i) + 15.0 + 5,
+                    "beginning",
+                    s.getName()
             );
 
             legendText.setAttribute("font-size", "16px");
@@ -1101,16 +1081,16 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case TRIANGLE:
 
                 marker = new SVGTriangle(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(Color.WHITE)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setFillColour(Color.WHITE)
+                        .setStrokeWidth(2);
                 break;
 
             case DASH:
 
                 marker = new SVGLine(x - m, y, x + m, y)
-                    .setStrokeColour(c)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setStrokeWidth(2);
                 break;
 
             default:
@@ -1118,18 +1098,18 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case DOT:
 
                 marker = new SVGCircle(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
+                        .setStrokeWidth(2);
                 break;
 
             case SQUARE:
             case DIAMOND:
 
                 marker = new SVGSquare(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(Color.WHITE)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setFillColour(Color.WHITE)
+                        .setStrokeWidth(2);
 
                 if (p == Series.Shape.DIAMOND) {
                     marker.setAttribute("transform", "rotate(45 " + x + " " + y + ")");
@@ -1140,9 +1120,9 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case CROSS:
 
                 marker = new SVGCross(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(c)
-                    .setStrokeWidth(1);
+                        .setStrokeColour(c)
+                        .setFillColour(c)
+                        .setStrokeWidth(1);
 
                 break;
 

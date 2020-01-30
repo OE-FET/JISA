@@ -34,7 +34,7 @@ public class JISAChart extends XYChart<Double, Double> {
     private double                 minY          = Double.POSITIVE_INFINITY;
     private double                 maxY          = Double.NEGATIVE_INFINITY;
     private List<Node>             newlyAdded    = new ArrayList<>();
-    private ParallelTransition     animation     = new ParallelTransition();
+    // private ParallelTransition     animation     = new ParallelTransition();
 
     public JISAChart() {
 
@@ -120,6 +120,14 @@ public class JISAChart extends XYChart<Double, Double> {
 
         return symbol;
 
+    }
+
+    public void updateAxisRange() {
+        super.updateAxisRange();
+    }
+
+    public void updateAxes() {
+        layoutChartChildren(0,0,0,0);
     }
 
     @Override
@@ -228,12 +236,12 @@ public class JISAChart extends XYChart<Double, Double> {
     }
 
     @Override
-    protected synchronized void layoutPlotChildren() {
+    public synchronized void layoutPlotChildren() {
 
         GUI.runNow(() -> {
 
-            this.animation.jumpTo(Duration.millis(250));
-            ParallelTransition animation = new ParallelTransition();
+            // this.animation.jumpTo(Duration.millis(250));
+            // ParallelTransition animation = new ParallelTransition();
 
             List<JISALineTo> constructedPath = new ArrayList<>();
 
@@ -330,28 +338,28 @@ public class JISAChart extends XYChart<Double, Double> {
 
                     }
 
-                    for (int j = 0; j < sorted.size(); j++) {
+//                    for (int j = 0; j < sorted.size(); j++) {
+//
+//                        ChartNode symbol = (ChartNode) sorted.get(j).getNode();
+//
+//                        if (newlyAdded.contains(symbol)) {
+//                            newlyAdded.remove(symbol);
+//                            Animation anim = symbol.animate(j > 0 ? sorted.get(j - 1).getNode() : null, j + 1 < sorted.size() ? sorted.get(j + 1).getNode() : null);
+//                            animation.getChildren().add(anim);
+//                        }
+//
+//                    }
 
-                        ChartNode symbol = (ChartNode) sorted.get(j).getNode();
-
-                        if (newlyAdded.contains(symbol)) {
-                            newlyAdded.remove(symbol);
-                            Animation anim = symbol.animate(j > 0 ? sorted.get(j - 1).getNode() : null, j + 1 < sorted.size() ? sorted.get(j + 1).getNode() : null);
-                            animation.getChildren().add(anim);
-                        }
-
-                    }
-
-                    for (int n = 0; n < constructedPath.size(); n++) {
-
-                        JISALineTo element = constructedPath.get(n);
-
-                        if (toAnimate.contains(element)) {
-                            Timeline trans = element.animate(n > 0 ? constructedPath.get(n - 1) : null, (n + 1) < constructedPath.size() ? constructedPath.get(n + 1) : null);
-                            if (trans != null) { animation.getChildren().add(trans); }
-                        }
-
-                    }
+//                    for (int n = 0; n < constructedPath.size(); n++) {
+//
+//                        JISALineTo element = constructedPath.get(n);
+//
+//                        if (toAnimate.contains(element)) {
+//                            Timeline trans = element.animate(n > 0 ? constructedPath.get(n - 1) : null, (n + 1) < constructedPath.size() ? constructedPath.get(n + 1) : null);
+//                            if (trans != null) { animation.getChildren().add(trans); }
+//                        }
+//
+//                    }
 
                     if (!constructedPath.isEmpty()) {
 
@@ -364,8 +372,8 @@ public class JISAChart extends XYChart<Double, Double> {
                 }
 
             }
-            this.animation = animation;
-            animation.play();
+            // this.animation = animation;
+            // animation.play();
 
         });
 
