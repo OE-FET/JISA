@@ -45,6 +45,14 @@ public class Section extends JFXWindow implements NotBordered {
 
     }
 
+    public void setExpanded(boolean expanded) {
+        GUI.runNow(() -> titled.setExpanded(expanded));
+    }
+
+    public boolean isExpanded() {
+        return titled.isExpanded();
+    }
+
     /**
      * Removes the contents of this section.
      */

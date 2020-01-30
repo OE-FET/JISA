@@ -20,17 +20,17 @@ import static jisa.visa.VISANativeInterface.*;
 
 public class NIVISADriver implements Driver {
 
-    protected static       VISANativeInterface lib;
-    protected static final String              OS_NAME          = System.getProperty("os.name").toLowerCase();
-    protected static       String              libName;
-    protected static final String              responseEncoding = "UTF8";
-    protected static final long                VISA_ERROR       = 0x7FFFFFFF;
-    protected static final int                 _VI_ERROR        = -2147483648;
-    protected static final int                 VI_SUCCESS       = 0;
-    protected static final int                 VI_NULL          = 0;
-    protected static final int                 VI_TRUE          = 1;
-    protected static final int                 VI_FALSE         = 0;
-    protected static       NativeLong          visaResourceManagerHandle;
+   private static       VISANativeInterface lib;
+   private static final String              OS_NAME          = System.getProperty("os.name").toLowerCase();
+   private static       String              libName;
+   private static final String              responseEncoding = "UTF8";
+   private static final long                VISA_ERROR       = 0x7FFFFFFF;
+   private static final int                 _VI_ERROR        = -2147483648;
+   private static final int                 VI_SUCCESS       = 0;
+   private static final int                 VI_NULL          = 0;
+   private static final int                 VI_TRUE          = 1;
+   private static final int                 VI_FALSE         = 0;
+   private static       NativeLong          visaResourceManagerHandle;
 
     public static void init() throws VISAException {
 
