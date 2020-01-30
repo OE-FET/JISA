@@ -276,6 +276,19 @@ public class Util {
 
     }
 
+    public static String joinDoubles(String delim, Collection<Double> doubles) {
+
+        String[] parts = new String[doubles.size()];
+
+        int i = 0;
+        for (double d : doubles) {
+            parts[i++] = String.format("%s", d);
+        }
+
+        return String.join(delim, parts);
+
+    }
+
     /**
      * Creates an equally spaced symmetric array of numbers, starting at min, ending at max in numSteps steps, and then back again to min in numSteps.
      *

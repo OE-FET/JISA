@@ -176,7 +176,7 @@ public class JISAChart extends XYChart<Double, Double> {
                     Series series = getData().get(seriesIndex);
 
                     if (nodeTemplates.containsKey(series)) {
-                        Legend.LegendItem legendItem = new Legend.LegendItem(series.getName(), nodeTemplates.get(series).clone(true));
+                        Legend.LegendItem legendItem = new Legend.LegendItem(series.getName(), nodeTemplates.get(series).clone(true, (ChartLine) series.getNode()));
                         legend.getItems().add(legendItem);
                     }
 
@@ -379,6 +379,22 @@ public class JISAChart extends XYChart<Double, Double> {
         return new ArrayList<>(series);
     }
 
+    public void setLegendColumns(int num) {
+        GUI.runNow(() -> legend.setPrefColumns(num));
+    }
+
+    public int getLegendColumns() {
+        return legend.getPrefColumns();
+    }
+
+    public void setLegendRows(int num) {
+        GUI.runNow(() -> legend.setPrefRows(num));
+    }
+
+    public int getLegendRows() {
+        return legend.getPrefRows();
+    }
+
     public JISASeries createSeries() {
 
         Series<Double, Double>      series  = new Series<>(FXCollections.observableArrayList());
@@ -528,15 +544,17 @@ public class JISAChart extends XYChart<Double, Double> {
         private List<ChartNode>       clones    = new LinkedList<>();
         private StackPane             symbol    = new StackPane();
         private Path                  errorBar  = new Path();
+        private ChartLine             line;
         private Animation             animation = null;
 
         public ChartNode() {
-            this(false);
+            this(false, null);
         }
 
-        public ChartNode(boolean legend) {
+        public ChartNode(boolean legend, ChartLine line) {
 
-            isLegend = legend;
+            isLegend  = legend;
+            this.line = line;
             getChildren().addAll(errorBar, symbol);
             setStyle(shape, colour, size);
             setLineWidth(2.5);
@@ -545,12 +563,12 @@ public class JISAChart extends XYChart<Double, Double> {
         }
 
         public ChartNode clone() {
-            return clone(false);
+            return clone(false, null);
         }
 
-        public ChartNode clone(boolean legend) {
+        public ChartNode clone(boolean legend, ChartLine line) {
 
-            ChartNode node = new ChartNode(legend);
+            ChartNode node = new ChartNode(legend, line);
             node.setStyle(shape, colour, size);
             node.setMarkerVisible(visible);
             clones.add(node);
@@ -719,9 +737,18 @@ public class JISAChart extends XYChart<Double, Double> {
 
             if (isLegend && !isMarkerVisible()) {
                 style.clear();
-                style.put("-fx-background-color", Util.colourToCSS(colour));
-                style.put("-fx-padding", "1px 5px 1px 5px");
+                style.put("-fx-background-color", "transparent");
                 style.put("visibility", "visible");
+
+                javafx.scene.shape.Line ln = new javafx.scene.shape.Line(0, 0, 10, 0);
+                ln.strokeProperty().bind(line.strokeProperty());
+                ln.getStrokeDashArray().setAll(line.getStrokeDashArray());
+                line.getStrokeDashArray().addListener((ListChangeListener<? super Double>) change -> ln.getStrokeDashArray().setAll(line.getStrokeDashArray()));
+                ln.strokeWidthProperty().bind(line.strokeWidthProperty());
+                getChildren().add(ln);
+
+            } else {
+                getChildren().clear();
             }
 
             updateStyle();
@@ -781,12 +808,20 @@ public class JISAChart extends XYChart<Double, Double> {
             style.put("visibility", flag ? "visible" : "hidden");
             this.visible = flag;
 
-            // If this is the legend item and were hiding the markers, change the legend symbol to a line
             if (isLegend && !isMarkerVisible()) {
                 style.clear();
-                style.put("-fx-background-color", Util.colourToCSS(colour));
-                style.put("-fx-padding", "1px 5px 1px 5px");
+                style.put("-fx-background-color", "transparent");
                 style.put("visibility", "visible");
+
+                javafx.scene.shape.Line ln = new javafx.scene.shape.Line(0, 0, 10, 0);
+                ln.strokeProperty().bind(line.strokeProperty());
+                ln.getStrokeDashArray().setAll(line.getStrokeDashArray());
+                line.getStrokeDashArray().addListener((ListChangeListener<? super Double>) change -> ln.getStrokeDashArray().setAll(line.getStrokeDashArray()));
+                ln.strokeWidthProperty().bind(line.strokeWidthProperty());
+                getChildren().add(ln);
+
+            } else {
+                getChildren().clear();
             }
 
             updateStyle();

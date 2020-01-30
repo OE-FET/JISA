@@ -369,10 +369,20 @@ public class Plot extends JFXWindow implements Element, Clearable {
                 switch (format.get()) {
 
                     case 0:
+
+                        if (!file.get().endsWith(".svg")) {
+                            file.set(file.get() + ".svg");
+                        }
+
                         saveSVG(file.get(), width.get(), height.get());
                         break;
 
                     case 1:
+
+                        if (!file.get().endsWith(".png")) {
+                            file.set(file.get() + ".png");
+                        }
+
                         savePNG(file.get(), width.get(), height.get());
                         break;
 
@@ -703,6 +713,22 @@ public class Plot extends JFXWindow implements Element, Clearable {
     public void showLegend(boolean show) {
 
         GUI.runNow(() -> chart.setLegendVisible(show));
+    }
+    
+    public void setLegendColumns(int num) {
+        chart.setLegendColumns(num);
+    }
+
+    public void setLegendRows(int num) {
+        chart.setLegendRows(num);
+    }
+
+    public int getLegendColumns() {
+        return chart.getLegendColumns();
+    }
+
+    public int getLegendRows() {
+        return chart.getLegendRows();
     }
 
     /**

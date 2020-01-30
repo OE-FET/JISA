@@ -2,6 +2,7 @@ package jisa.gui;
 
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.ListChangeListener;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
@@ -225,6 +226,7 @@ public class Doc extends JFXWindow {
         GridPane grid = new GridPane();
         grid.setHgap(5);
         grid.setVgap(5);
+        grid.setPadding(new Insets(0, 0, 0, 15));
 
         GUI.runNow(() -> list.getChildren().add(grid));
 
@@ -244,7 +246,7 @@ public class Doc extends JFXWindow {
                     ((Label) bullet).setMinWidth(Region.USE_PREF_SIZE);
                     ((Label) bullet).setMinHeight(Region.USE_PREF_SIZE);
                 } else {
-                    bullet = new Circle(3, colour.get());
+                    bullet = new Circle(2, colour.get());
                     ((Circle) bullet).fillProperty().bind(colour);
                 }
 

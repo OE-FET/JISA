@@ -40,17 +40,8 @@ public class Section extends JFXWindow implements NotBordered {
             clear();
         } else {
             titled.setContent(element instanceof NotBordered ? ((NotBordered) element).getNoBorderPane(false) : element.getPane());
-
         }
 
-    }
-
-    public void setExpanded(boolean expanded) {
-        GUI.runNow(() -> titled.setExpanded(expanded));
-    }
-
-    public boolean isExpanded() {
-        return titled.isExpanded();
     }
 
     /**
@@ -63,6 +54,14 @@ public class Section extends JFXWindow implements NotBordered {
     @Override
     public Pane getNoBorderPane(boolean strip) {
         return getPane();
+    }
+
+    public void setExpanded(boolean expanded) {
+        GUI.runNow(() -> titled.setExpanded(expanded));
+    }
+
+    public boolean isExpanded() {
+        return titled.isExpanded();
     }
 
 }
