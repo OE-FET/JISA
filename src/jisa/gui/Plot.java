@@ -296,9 +296,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
             }
 
             @Override
-            public boolean isVisible() {
-                return button.isVisible();
-            }            @Override
             public void setVisible(boolean visible) {
 
                 GUI.runNow(() -> {
@@ -309,14 +306,13 @@ public class Plot extends JFXWindow implements Element, Clearable {
             }
 
             @Override
-            public String getText() {
-                return button.getText();
-            }
+            public boolean isVisible() { return button.isVisible(); }
 
             @Override
-            public void setText(String text) {
-                GUI.runNow(() -> button.setText(text));
-            }
+            public void setText(String text) { GUI.runNow(() -> button.setText(text)); }
+
+            @Override
+            public String getText() { return button.getText(); }
 
             @Override
             public void setOnClick(ClickHandler onClick) {
@@ -334,8 +330,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
                 GUI.runNow(() -> toolbar.getItems().remove(button));
             }
 
-
-
         };
 
     }
@@ -345,7 +339,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
         javafx.scene.control.Separator separator = new javafx.scene.control.Separator();
 
         GUI.runNow(() -> toolbar.getItems().add(separator));
-
 
         return new Separator() {
             @Override
@@ -434,7 +427,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
             adjustSize();
 
         });
-
 
     }
 
@@ -585,17 +577,31 @@ public class Plot extends JFXWindow implements Element, Clearable {
                     Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
                     Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
 
-                    final double diffX = xAxis.getValueForDisplay(pointX.getX()) - xAxis.getValueForDisplay(start.get().getX());
-                    final double diffY = yAxis.getValueForDisplay(pointY.getY()) - yAxis.getValueForDisplay(start.get().getY());
 
-                    final double minX = startMin.get().getX() - diffX;
-                    final double minY = startMin.get().getY() - diffY;
+                    if (xAxis.getMode() == SmartAxis.Mode.LINEAR) {
+                        final double diff = xAxis.getValueForDisplay(pointX.getX()) - xAxis.getValueForDisplay(start.get().getX());
+                        final double min  = startMin.get().getX() - diff;
+                        final double max  = startMax.get().getX() - diff;
+                        setXLimits(Math.min(min, max), Math.max(min, max));
+                    } else {
+                        final double diff10 = Math.log10(xAxis.getValueForDisplay(pointX.getX())) - Math.log10(xAxis.getValueForDisplay(start.get().getX()));
+                        final double min    = Math.pow(10, Math.log10(startMin.get().getX()) - diff10);
+                        final double max    = Math.pow(10, Math.log10(startMax.get().getX()) - diff10);
+                        setXLimits(Math.min(min, max), Math.max(min, max));
+                    }
 
-                    final double maxX = startMax.get().getX() - diffX;
-                    final double maxY = startMax.get().getY() - diffY;
 
-                    setXLimits(Math.min(minX, maxX), Math.max(minX, maxX));
-                    setYLimits(Math.min(minY, maxY), Math.max(minY, maxY));
+                    if (yAxis.getMode() == SmartAxis.Mode.LINEAR) {
+                        final double diff = yAxis.getValueForDisplay(pointY.getY()) - yAxis.getValueForDisplay(start.get().getY());
+                        final double min  = startMin.get().getY() - diff;
+                        final double max  = startMax.get().getY() - diff;
+                        setYLimits(Math.min(min, max), Math.max(min, max));
+                    } else {
+                        final double diff10 = Math.log10(yAxis.getValueForDisplay(pointY.getY())) - Math.log10(yAxis.getValueForDisplay(start.get().getY()));
+                        final double min    = Math.pow(10, Math.log10(startMin.get().getY()) - diff10);
+                        final double max    = Math.pow(10, Math.log10(startMax.get().getY()) - diff10);
+                        setYLimits(Math.min(min, max), Math.max(min, max));
+                    }
 
                 }
 
@@ -682,33 +688,28 @@ public class Plot extends JFXWindow implements Element, Clearable {
     }
 
     public void setLegendPosition(Side position) {
-
         GUI.runNow(() -> chart.setLegendSide(position));
-
-
     }
 
     public void showLegend(boolean show) {
 
         GUI.runNow(() -> chart.setLegendVisible(show));
+    }
+    
+    public void setLegendColumns(int num) {
+        chart.setLegendColumns(num);
+    }
 
-
+    public void setLegendRows(int num) {
+        chart.setLegendRows(num);
     }
 
     public int getLegendColumns() {
         return chart.getLegendColumns();
     }
 
-    public void setLegendColumns(int num) {
-        chart.setLegendColumns(num);
-    }
-
     public int getLegendRows() {
         return chart.getLegendRows();
-    }
-
-    public void setLegendRows(int num) {
-        chart.setLegendRows(num);
     }
 
     /**
