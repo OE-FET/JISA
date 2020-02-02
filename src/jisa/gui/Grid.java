@@ -270,6 +270,19 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
     }
 
+    public void scrollToElement(Element element) {
+
+        int index = added.indexOf(element);
+
+        if (index > -1) {
+            Node node     = pane.getChildren().get(index);
+            double height = scroll.getContent().getBoundsInLocal().getHeight();
+            double y      = node.getBoundsInParent().getMaxY();
+            scrollTo(y/height);
+        }
+
+    }
+
     /**
      * Adds the given GUI element as a child of this grid, placing it as a panel in the next available space.
      *
