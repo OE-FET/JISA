@@ -116,8 +116,6 @@ public class JISAChart extends XYChart<Double, Double> {
             nodeTemplates.put(series, symbol);
         }
 
-        symbol.setOpacity(0);
-
         return symbol;
 
     }
@@ -610,45 +608,45 @@ public class JISAChart extends XYChart<Double, Double> {
 
         }
 
-        public Animation animate(Node lastNode, Node nextNode) {
-
-            double x;
-            double y;
-
-            if (lastNode != null && nextNode != null) {
-                x = (lastNode.getLayoutX() + nextNode.getLayoutX()) / 2;
-                y = (lastNode.getLayoutY() + nextNode.getLayoutY()) / 2;
-            } else if (lastNode != null) {
-                x = lastNode.getLayoutX();
-                y = lastNode.getLayoutY();
-            } else if (nextNode != null) {
-                x = nextNode.getLayoutX();
-                y = nextNode.getLayoutY();
-            } else {
-                x = getLayoutX();
-                y = getLayoutY();
-            }
-
-            Timeline movement = new Timeline();
-
-            movement.getKeyFrames().addAll(
-                new KeyFrame(Duration.millis(0), new KeyValue(layoutXProperty(), x)),
-                new KeyFrame(Duration.millis(0), new KeyValue(layoutYProperty(), y)),
-                new KeyFrame(Duration.millis(250), new KeyValue(layoutXProperty(), getLayoutX())),
-                new KeyFrame(Duration.millis(250), new KeyValue(layoutYProperty(), getLayoutY()))
-            );
-
-            FadeTransition fade = new FadeTransition();
-            fade.setNode(this);
-            fade.setFromValue(0.0);
-            fade.setToValue(1.0);
-            fade.setDuration(Duration.millis(500));
-
-            animation = new ParallelTransition(fade, movement);
-
-            return animation;
-
-        }
+//        public Animation animate(Node lastNode, Node nextNode) {
+//
+//            double x;
+//            double y;
+//
+//            if (lastNode != null && nextNode != null) {
+//                x = (lastNode.getLayoutX() + nextNode.getLayoutX()) / 2;
+//                y = (lastNode.getLayoutY() + nextNode.getLayoutY()) / 2;
+//            } else if (lastNode != null) {
+//                x = lastNode.getLayoutX();
+//                y = lastNode.getLayoutY();
+//            } else if (nextNode != null) {
+//                x = nextNode.getLayoutX();
+//                y = nextNode.getLayoutY();
+//            } else {
+//                x = getLayoutX();
+//                y = getLayoutY();
+//            }
+//
+//            Timeline movement = new Timeline();
+//
+//            movement.getKeyFrames().addAll(
+//                new KeyFrame(Duration.millis(0), new KeyValue(layoutXProperty(), x)),
+//                new KeyFrame(Duration.millis(0), new KeyValue(layoutYProperty(), y)),
+//                new KeyFrame(Duration.millis(250), new KeyValue(layoutXProperty(), getLayoutX())),
+//                new KeyFrame(Duration.millis(250), new KeyValue(layoutYProperty(), getLayoutY()))
+//            );
+//
+//            FadeTransition fade = new FadeTransition();
+//            fade.setNode(this);
+//            fade.setFromValue(0.0);
+//            fade.setToValue(1.0);
+//            fade.setDuration(Duration.millis(500));
+//
+//            animation = new ParallelTransition(fade, movement);
+//
+//            return animation;
+//
+//        }
 
         public synchronized void updateStyle() {
 
@@ -744,10 +742,6 @@ public class JISAChart extends XYChart<Double, Double> {
             style.put("visibility", isMarkerVisible() ? "visible" : "hidden");
 
             if (isLegend && !isMarkerVisible()) {
-                style.clear();
-                style.put("-fx-background-color", "transparent");
-                style.put("visibility", "visible");
-
                 javafx.scene.shape.Line ln = new javafx.scene.shape.Line(0, 0, 10, 0);
                 ln.strokeProperty().bind(line.strokeProperty());
                 ln.getStrokeDashArray().setAll(line.getStrokeDashArray());
@@ -755,8 +749,8 @@ public class JISAChart extends XYChart<Double, Double> {
                 ln.strokeWidthProperty().bind(line.strokeWidthProperty());
                 getChildren().add(ln);
 
-            } else {
-                getChildren().clear();
+            } else if (isLegend) {
+                getChildren().removeIf(c -> c instanceof javafx.scene.shape.Line);
             }
 
             updateStyle();
@@ -817,10 +811,6 @@ public class JISAChart extends XYChart<Double, Double> {
             this.visible = flag;
 
             if (isLegend && !isMarkerVisible()) {
-                style.clear();
-                style.put("-fx-background-color", "transparent");
-                style.put("visibility", "visible");
-
                 javafx.scene.shape.Line ln = new javafx.scene.shape.Line(0, 0, 10, 0);
                 ln.strokeProperty().bind(line.strokeProperty());
                 ln.getStrokeDashArray().setAll(line.getStrokeDashArray());
@@ -828,8 +818,8 @@ public class JISAChart extends XYChart<Double, Double> {
                 ln.strokeWidthProperty().bind(line.strokeWidthProperty());
                 getChildren().add(ln);
 
-            } else {
-                getChildren().clear();
+            } else if (isLegend) {
+                getChildren().removeIf(c -> c instanceof javafx.scene.shape.Line);
             }
 
             updateStyle();
