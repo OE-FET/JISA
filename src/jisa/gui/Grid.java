@@ -1,13 +1,17 @@
 package jisa.gui;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
 import javafx.scene.control.Separator;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.scene.control.Button;
+import javafx.util.Duration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -118,53 +122,6 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             }
             button.setText(text);
             button.setOnAction(
-                (actionEvent) -> {
-                    Thread t = new Thread(() -> {
-                        try {
-                            onClick.click();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
-                    t.setDaemon(true);
-                    t.start();
-                }
-            );
-
-            toolBar.getItems().add(button);
-        });
-
-        return new jisa.gui.Button() {
-
-            @Override
-            public void setDisabled(boolean disabled) { GUI.runNow(() -> button.setDisable(disabled)); }
-
-            @Override
-            public boolean isDisabled() { return button.isDisabled(); }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    button.setVisible(visible);
-                    button.setManaged(visible);
-                });
-
-            }
-
-            @Override
-            public boolean isVisible() { return button.isVisible(); }
-
-            @Override
-            public void setText(String text) { GUI.runNow(() -> button.setText(text)); }
-
-            @Override
-            public String getText() { return button.getText(); }
-
-            @Override
-            public void setOnClick(ClickHandler onClick) {
-
-                GUI.runNow(() -> button.setOnAction(
                     (actionEvent) -> {
                         Thread t = new Thread(() -> {
                             try {
@@ -176,12 +133,71 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
                         t.setDaemon(true);
                         t.start();
                     }
+            );
+
+            toolBar.getItems().add(button);
+        });
+
+        return new jisa.gui.Button() {
+
+            @Override
+            public boolean isDisabled() {
+                return button.isDisabled();
+            }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+                GUI.runNow(() -> button.setDisable(disabled));
+            }
+
+            @Override
+            public boolean isVisible() {
+                return button.isVisible();
+            }            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    button.setVisible(visible);
+                    button.setManaged(visible);
+                });
+
+            }
+
+            @Override
+            public String getText() {
+                return button.getText();
+            }
+
+            @Override
+            public void setText(String text) {
+                GUI.runNow(() -> button.setText(text));
+            }
+
+            @Override
+            public void setOnClick(ClickHandler onClick) {
+
+                GUI.runNow(() -> button.setOnAction(
+                        (actionEvent) -> {
+                            Thread t = new Thread(() -> {
+                                try {
+                                    onClick.click();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            });
+                            t.setDaemon(true);
+                            t.start();
+                        }
                 ));
 
             }
 
             @Override
-            public void remove() { GUI.runNow(() -> toolBar.getItems().remove(button)); }
+            public void remove() {
+                GUI.runNow(() -> toolBar.getItems().remove(button));
+            }
+
+
 
         };
 
@@ -215,16 +231,42 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             }
 
             @Override
+            public boolean isVisible() {
+                return separator.isVisible();
+            }            @Override
             public void setVisible(boolean visible) {
                 GUI.runNow(() -> separator.setVisible(visible));
             }
 
-            @Override
-            public boolean isVisible() {
-                return separator.isVisible();
-            }
+
 
         };
+
+    }
+
+    public void scrollToEnd() {
+        scrollTo(1.0);
+    }
+
+    public void scrollToTop() {
+        scrollTo(0.0);
+    }
+
+    public void scrollTo(double percentage) {
+
+        GUI.runNow(() -> {
+
+            Timeline timeline = new Timeline(
+                    new KeyFrame(Duration.ZERO, new KeyValue(scroll.vvalueProperty(), scroll.getVvalue())),
+                    new KeyFrame(Duration.millis(250), new KeyValue(scroll.vvalueProperty(), percentage))
+            );
+
+            scroll.applyCss();
+            scroll.layout();
+
+            timeline.play();
+
+        });
 
     }
 
@@ -258,7 +300,7 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             tPane.setCollapsible(false);
             tPane.setMaxHeight(Double.MAX_VALUE);
             tPane.setMaxWidth(Double.MAX_VALUE);
-            sPane.setPadding(new Insets(0,0,0,0));
+            sPane.setPadding(new Insets(0, 0, 0, 0));
             ((BorderPane) bPane).setCenter(tPane);
 
         }
@@ -284,12 +326,6 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
         });
 
-    }
-
-    public void setNumColumns(int columns) {
-
-        nCols = columns;
-        updateGridding();
     }
 
     private void updateGridding() {
@@ -359,6 +395,12 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
     public int getNumColumns() {
         return nCols;
+    }
+
+    public void setNumColumns(int columns) {
+
+        nCols = columns;
+        updateGridding();
     }
 
     public void setGrowth(boolean horizontal, boolean vertical) {
