@@ -20,7 +20,7 @@ import static jisa.visa.VISANativeInterface.*;
 
 public class NIVISADriver implements Driver {
 
-   private static       VISANativeInterface lib;
+   private static       VISANativeInterface libStatic;
    private static final String              OS_NAME          = System.getProperty("os.name").toLowerCase();
    private static       String              libName;
    private static final String              responseEncoding = "UTF8";
@@ -30,35 +30,43 @@ public class NIVISADriver implements Driver {
    private static final int                 VI_NULL          = 0;
    private static final int                 VI_TRUE          = 1;
    private static final int                 VI_FALSE         = 0;
-   private static       NativeLong          visaResourceManagerHandle;
+   private static       NativeLong          visaResourceManagerHandleStatic;
 
-    public static void init() throws VISAException {
+   protected VISANativeInterface lib;
+   protected NativeLong visaResourceManagerHandle;
+
+   public static void init() throws VISAException {
 
         try {
             if (OS_NAME.contains("win")) {
                 libName = "nivisa64";
-                lib = Native.loadLibrary(libName, VISANativeInterface.class);
+                libStatic = Native.loadLibrary(NIVISADriver.libName, VISANativeInterface.class);
             } else if (OS_NAME.contains("linux") || OS_NAME.contains("mac")) {
                 libName = "visa";
-                lib = Native.loadLibrary(libName, VISANativeInterface.class);
+                libStatic = Native.loadLibrary(NIVISADriver.libName, VISANativeInterface.class);
             } else {
                 throw new VISAException("Platform not yet supported!");
             }
         } catch (UnsatisfiedLinkError e) {
-            lib = null;
+            libStatic = null;
         }
 
-        if (lib == null) {
+        if (libStatic == null) {
             throw new VISAException("Could not load VISA library");
         }
 
         // Attempt to get a resource manager handle
         try {
-            visaResourceManagerHandle = getResourceManager();
+            visaResourceManagerHandleStatic = getResourceManager();
         } catch (VISAException e) {
             throw new VISAException("Could not get resource manager");
         }
 
+    }
+
+    public NIVISADriver() {
+       lib = NIVISADriver.libStatic;
+       visaResourceManagerHandle = NIVISADriver.visaResourceManagerHandleStatic;
     }
 
     /**
@@ -71,7 +79,7 @@ public class NIVISADriver implements Driver {
     protected static NativeLong getResourceManager() throws VISAException {
 
         NativeLongByReference pViSession = new NativeLongByReference();
-        NativeLong            visaStatus = lib.viOpenDefaultRM(pViSession);
+        NativeLong            visaStatus = NIVISADriver.libStatic.viOpenDefaultRM(pViSession);
 
         if (visaStatus.longValue() != VI_SUCCESS) {
             throw new VISAException("Error opening resource manager!");
@@ -145,7 +153,7 @@ public class NIVISADriver implements Driver {
                     throw new VISAException("Open operation timed out.");
 
                 default:
-                    throw new VISAException("Error trying to open instrument connection.");
+                    throw new VISAException("Error trying to open instrument connection. Status: %d", status.intValue());
 
             }
         }
