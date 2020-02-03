@@ -41,6 +41,8 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         instrument.setOnChange(this::updateGUI);
         enabled.setOnChange(this::updateGUI);
 
+        updateGUI();
+
     }
 
     public Configurator(String title, Connector<I>... instruments) {
@@ -60,7 +62,7 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         }
 
         instrument.editValues(names);
-        update();
+        updateGUI();
 
     }
 
