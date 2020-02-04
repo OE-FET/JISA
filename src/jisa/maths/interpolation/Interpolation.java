@@ -17,6 +17,7 @@ import org.apache.commons.math.analysis.interpolation.MultivariateRealInterpolat
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 public class Interpolation {
 
@@ -226,26 +227,24 @@ public class Interpolation {
 
     public static Function interpolate1D(Iterable<Double> x, Iterable<Double> v) {
 
-        LinearInterpolator interpolator = new LinearInterpolator();
-        List<Double>       paramList    = new LinkedList<>();
-        List<Double>       valueList    = new LinkedList<>();
+        LinearInterpolator              interpolator = new LinearInterpolator();
+        List<Map.Entry<Double, Double>> list         = new LinkedList<>();
 
         Iterator<Double> xi = x.iterator();
         Iterator<Double> vi = v.iterator();
 
         while (xi.hasNext() && vi.hasNext()) {
-
-            paramList.add(xi.next());
-            valueList.add(vi.next());
-
+            list.add(Map.entry(xi.next(), vi.next()));
         }
 
-        double[] params = new double[paramList.size()];
-        double[] values = new double[paramList.size()];
+        list.sort(Map.Entry.comparingByKey());
+
+        double[] params = new double[list.size()];
+        double[] values = new double[list.size()];
 
         for (int i = 0; i < values.length; i++) {
-            params[i] = paramList.get(i);
-            values[i] = valueList.get(i);
+            params[i] = list.get(i).getKey();
+            values[i] = list.get(i).getValue();
         }
 
         return new Function.WrappedFunction(interpolator.interpolate(params, values));

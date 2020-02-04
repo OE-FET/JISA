@@ -567,6 +567,85 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
+    public ResultTable sortedCopy(Evaluable sortBy) {
+
+        List<Map.Entry<Integer, Double>> toSort = new ArrayList<>(getNumRows());
+
+        int i = 0;
+        for (Result row : this) {
+            toSort.add(Map.entry(i++, sortBy.evaluate(row)));
+        }
+
+        toSort.sort(Map.Entry.comparingByValue());
+
+        ResultTable newCopy = new ResultList(columns.toArray(new Col[0]));
+
+        for (Map.Entry<Integer, Double> entry : toSort) {
+            newCopy.addRow(getRow(entry.getKey()));
+        }
+
+        return newCopy;
+
+    }
+
+    public FwdBwd splitTwoWaySweep(Evaluable swept) {
+
+        int         mode      = -2;
+        double      lastValue = swept.evaluate(getRow(0));
+        ResultTable forward   = new ResultList(columns.toArray(new Col[0]));
+        ResultTable backward  = new ResultList(columns.toArray(new Col[0]));
+
+        ResultTable current   = forward;
+
+        current.addRow(getRow(0));
+
+        for (int i = 1; i < getNumRows(); i++) {
+
+            Result row   = getRow(i);
+            double value = swept.evaluate(row);
+
+            if (mode == -2) {
+
+                mode = Double.compare(value, lastValue);
+                current.addRow(row);
+
+            } else {
+
+                int newMode = Double.compare(value, lastValue);
+
+                if (newMode != mode) {
+                    current = backward;
+                }
+
+                current.addRow(row);
+                mode = newMode;
+
+            }
+
+            lastValue = value;
+
+        }
+
+        return new FwdBwd(forward, backward);
+
+    }
+
+    public ResultTable sortedCopy(int column) {
+        return sortedCopy(r -> r.get(column));
+    }
+
+    public ResultTable flippedCopy() {
+
+        ResultTable newCopy = new ResultList(columns.toArray(new Col[0]));
+
+        for (int i = getNumRows() - 1; i >= 0; i--) {
+            newCopy.addRow(getRow(i));
+        }
+
+        return newCopy;
+
+    }
+
     public Set<Double> getUniqueValues(Evaluable column) {
 
         Set<Double> valueSet = new HashSet<>();
@@ -611,6 +690,19 @@ public abstract class ResultTable implements Iterable<Result> {
     public interface Evaluable {
 
         double evaluate(Result r);
+
+    }
+
+    public static class FwdBwd {
+
+        public final ResultTable forward;
+        public final ResultTable backward;
+
+
+        public FwdBwd(ResultTable forward, ResultTable backward) {
+            this.forward  = forward;
+            this.backward = backward;
+        }
 
     }
 
