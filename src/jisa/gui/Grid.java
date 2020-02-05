@@ -4,6 +4,8 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -15,6 +17,8 @@ import javafx.util.Duration;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
@@ -23,6 +27,7 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
     public  GridPane           pane;
     public  ScrollPane         scroll;
     public  BorderPane         border;
+    public  ButtonBar          buttonBar;
     private ToolBar            toolBar = null;
     private Stage              stage;
     private int                nCols;
@@ -42,6 +47,12 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
         super(title, Grid.class.getResource("fxml/GridWindow.fxml"));
         nCols = numColumns;
+
+        buttonBar.getButtons().addListener((InvalidationListener) change -> GUI.runNow(() -> {
+            boolean show = !buttonBar.getButtons().isEmpty();
+            buttonBar.setVisible(show);
+            buttonBar.setManaged(show);
+        }));
 
     }
 
@@ -104,6 +115,53 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
     }
 
     /**
+     * Shows the fields as its own window, with an "OK" and "Cancel" button. Does not return until the window has been
+     * closed either by clicking "OK" or "Cancel" or closing the window. Returns a boolean indicating whether "OK" was
+     * clicked or not.
+     *
+     * @return Was "OK" clicked?
+     */
+    public boolean showAndWait() {
+
+        final Semaphore     semaphore = new Semaphore(0);
+        final AtomicBoolean result    = new AtomicBoolean(false);
+
+        Button okay   = new Button("OK");
+        Button cancel = new Button("Cancel");
+
+        okay.setOnAction(ae -> {
+            result.set(true);
+            semaphore.release();
+        });
+
+        cancel.setOnAction(ae -> {
+            result.set(false);
+            semaphore.release();
+        });
+
+        GUI.runNow(() -> buttonBar.getButtons().addAll(cancel, okay));
+
+        setOnClose(() -> {
+            result.set(false);
+            semaphore.release();
+        });
+
+        show();
+
+        try {
+            semaphore.acquire();
+        } catch (Exception ignored) {
+        }
+
+        close();
+
+        GUI.runNow(() -> buttonBar.getButtons().removeAll(cancel, okay));
+
+        return result.get();
+
+    }
+
+    /**
      * Adds a button to a toolbar at the top of the grid.
      *
      * @param text    Text to display in the button
@@ -122,17 +180,17 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             }
             button.setText(text);
             button.setOnAction(
-                    (actionEvent) -> {
-                        Thread t = new Thread(() -> {
-                            try {
-                                onClick.click();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
-                        t.setDaemon(true);
-                        t.start();
-                    }
+                (actionEvent) -> {
+                    Thread t = new Thread(() -> {
+                        try {
+                            onClick.click();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    t.setDaemon(true);
+                    t.start();
+                }
             );
 
             toolBar.getItems().add(button);
@@ -153,7 +211,9 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             @Override
             public boolean isVisible() {
                 return button.isVisible();
-            }            @Override
+            }
+
+            @Override
             public void setVisible(boolean visible) {
 
                 GUI.runNow(() -> {
@@ -177,17 +237,17 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             public void setOnClick(ClickHandler onClick) {
 
                 GUI.runNow(() -> button.setOnAction(
-                        (actionEvent) -> {
-                            Thread t = new Thread(() -> {
-                                try {
-                                    onClick.click();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            });
-                            t.setDaemon(true);
-                            t.start();
-                        }
+                    (actionEvent) -> {
+                        Thread t = new Thread(() -> {
+                            try {
+                                onClick.click();
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                        t.setDaemon(true);
+                        t.start();
+                    }
                 ));
 
             }
@@ -196,7 +256,6 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             public void remove() {
                 GUI.runNow(() -> toolBar.getItems().remove(button));
             }
-
 
 
         };
@@ -233,11 +292,12 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             @Override
             public boolean isVisible() {
                 return separator.isVisible();
-            }            @Override
+            }
+
+            @Override
             public void setVisible(boolean visible) {
                 GUI.runNow(() -> separator.setVisible(visible));
             }
-
 
 
         };
@@ -257,8 +317,8 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
         GUI.runNow(() -> {
 
             Timeline timeline = new Timeline(
-                    new KeyFrame(Duration.ZERO, new KeyValue(scroll.vvalueProperty(), scroll.getVvalue())),
-                    new KeyFrame(Duration.millis(250), new KeyValue(scroll.vvalueProperty(), percentage))
+                new KeyFrame(Duration.ZERO, new KeyValue(scroll.vvalueProperty(), scroll.getVvalue())),
+                new KeyFrame(Duration.millis(250), new KeyValue(scroll.vvalueProperty(), percentage))
             );
 
             scroll.applyCss();
@@ -270,18 +330,34 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
     }
 
-    public void scrollToElement(Element element) {
+    public void scrollToElement(Element element, double spacing) {
 
-        int index = added.indexOf(element);
+        GUI.runNow(() -> {
+            scroll.applyCss();
+            scroll.layout();
+        });
 
-        if (index > -1) {
-            Node node     = pane.getChildren().get(index);
-            double height = scroll.getContent().getBoundsInLocal().getHeight();
-            double y      = node.getBoundsInParent().getMaxY();
-            scrollTo(y/height);
+        Node   node          = element.getPane();
+        Bounds viewport      = scroll.getViewportBounds();
+        double contentHeight = scroll.getContent().localToScene(scroll.getContent().getBoundsInLocal()).getHeight();
+        double nodeMinY      = node.localToScene(node.getBoundsInLocal()).getMinY();
+        double nodeMaxY      = node.localToScene(node.getBoundsInLocal()).getMaxY();
+
+        double vValueDelta   = 0;
+        double vValueCurrent = scroll.getVvalue();
+
+        if (nodeMaxY < 0) {
+            vValueDelta = ((nodeMinY - spacing) - viewport.getHeight()) / contentHeight;
+        } else if (nodeMinY > viewport.getHeight()) {
+            vValueDelta = ((nodeMinY - spacing) + viewport.getHeight() - spacing) / contentHeight;
         }
 
+        scrollTo(vValueCurrent + vValueDelta);
+
     }
+
+    public void scrollToElement(Element element) { scrollToElement(element, 0.0);}
+
 
     /**
      * Adds the given GUI element as a child of this grid, placing it as a panel in the next available space.
@@ -290,6 +366,12 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
      */
     public void add(Element toAdd) {
 
+        added.add(toAdd);
+        addPane(makePane(toAdd));
+
+    }
+
+    protected Pane makePane(Element toAdd) {
         Pane bPane;
 
         if (toAdd instanceof NotBordered) {
@@ -318,8 +400,8 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
         }
 
-        added.add(toAdd);
-        addPane(bPane);
+        return bPane;
+
     }
 
     protected void addPane(Node toAdd) {

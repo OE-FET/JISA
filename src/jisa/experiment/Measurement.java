@@ -14,6 +14,13 @@ public abstract class Measurement {
     private Thread      runThread = Thread.currentThread();
 
     /**
+     * Returns the name of this measurement.
+     *
+     * @return Name of the measurement
+     */
+    public abstract String getName();
+
+    /**
      * This method should perform the measurement itself and throw and exception if either something is wrong (ie
      * missing instruments) or if something goes wrong during the measurement.
      *

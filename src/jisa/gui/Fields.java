@@ -1,5 +1,6 @@
 package jisa.gui;
 
+import javafx.beans.InvalidationListener;
 import jisa.control.ConfigStore;
 import jisa.control.SRunnable;
 import jisa.Util;
@@ -40,6 +41,11 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
     public Fields(String title) {
 
         super(title, Fields.class.getResource("fxml/InputWindow.fxml"));
+        buttonBar.getButtons().addListener((InvalidationListener) change -> GUI.runNow(() -> {
+            boolean show = !buttonBar.getButtons().isEmpty();
+            buttonBar.setVisible(show);
+            buttonBar.setManaged(show);
+        }));
     }
 
     public void loadFromConfig(String tag, ConfigStore configStore) {

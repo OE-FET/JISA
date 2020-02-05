@@ -39,7 +39,7 @@ public class Section extends JFXWindow implements NotBordered {
         if (element == null) {
             clear();
         } else {
-            titled.setContent(element instanceof NotBordered ? ((NotBordered) element).getNoBorderPane(false) : element.getPane());
+            GUI.runNow(() -> titled.setContent(element instanceof NotBordered ? ((NotBordered) element).getNoBorderPane(false) : element.getPane()));
         }
 
     }
@@ -48,7 +48,7 @@ public class Section extends JFXWindow implements NotBordered {
      * Removes the contents of this section.
      */
     public void clear() {
-        titled.setContent(null);
+        GUI.runNow(() -> titled.setContent(null));
     }
 
     @Override
@@ -62,6 +62,14 @@ public class Section extends JFXWindow implements NotBordered {
 
     public boolean isExpanded() {
         return titled.isExpanded();
+    }
+
+    public void setExpandable(boolean expanded) {
+        GUI.runNow(() -> titled.setCollapsible(expanded));
+    }
+
+    public boolean isExpandable() {
+        return titled.isCollapsible();
     }
 
 }

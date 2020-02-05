@@ -5,6 +5,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.GridPane?>
 
+<?import javafx.scene.control.ButtonBar?>
 <BorderPane fx:id="border" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
 
     <center>
@@ -16,5 +17,13 @@
             </GridPane>
         </ScrollPane>
     </center>
+
+    <bottom>
+        <ButtonBar visible="false" managed="false" fx:id="buttonBar">
+            <padding>
+                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+            </padding>
+        </ButtonBar>
+    </bottom>
 
 </BorderPane>

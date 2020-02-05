@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+
+<BorderPane fx:id="pane" style="-fx-background-color: white;" minHeight="200.0" minWidth="400.0" xmlns="http://javafx.com/javafx/10.0.2-internal"
+            xmlns:fx="http://javafx.com/fxml/1">
+
+    <top>
+        <ToolBar style="-fx-background-color: white; -fx-border-color: rgba(0,0,0,0.1); -fx-border-width: 0 0 1 0;" fx:id="toolBar" visible="false" managed="false"/>
+    </top>
+
+    <center>
+        <ListView fx:id="list" BorderPane.alignment="CENTER"/>
+    </center>
+</BorderPane>
