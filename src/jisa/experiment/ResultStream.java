@@ -83,7 +83,7 @@ public class ResultStream extends ResultTable {
 
     }
 
-    private void init(String path) throws IOException {
+    private synchronized void init(String path) throws IOException {
 
         // Make sure the directory we're wanting to write into exists.
         new File(path).getParentFile().mkdirs();
@@ -98,7 +98,7 @@ public class ResultStream extends ResultTable {
     }
 
     @Override
-    public void updateColumns() {
+    public synchronized void updateColumns() {
 
         if (!open) {
             throw new IllegalStateException("You cannot alter a finalised ResultTable");
@@ -108,16 +108,16 @@ public class ResultStream extends ResultTable {
 
     }
 
-    protected void replaceLine(int lineNo, String newLine) {
+    protected synchronized void replaceLine(int lineNo, String newLine) {
 
         StringBuilder newFile = new StringBuilder();
 
         try {
 
-            file.seek(0);
+            resetPosition();
 
             int    i    = 0;
-            String line = file.readLine();
+            String line = getLine();
 
             do {
 
@@ -129,12 +129,14 @@ public class ResultStream extends ResultTable {
 
                 newFile.append("\n");
 
-                line = file.readLine();
+                line = getLine();
 
             } while (line != null);
 
             file.setLength(0);
             file.writeBytes(newFile.toString());
+
+            resetPosition();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -142,16 +144,16 @@ public class ResultStream extends ResultTable {
 
     }
 
-    protected void removeLine(int lineNo) {
+    protected synchronized void removeLine(int lineNo) {
 
         StringBuilder newFile = new StringBuilder();
 
         try {
 
-            file.seek(0);
+            resetPosition();
 
             int    i    = 0;
-            String line = file.readLine();
+            String line = getLine();
 
             do {
 
@@ -160,12 +162,14 @@ public class ResultStream extends ResultTable {
                     newFile.append("\n");
                 }
 
-                line = file.readLine();
+                line = getLine();
 
             } while (line != null);
 
             file.setLength(0);
             file.writeBytes(newFile.toString());
+
+            resetPosition();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -173,16 +177,16 @@ public class ResultStream extends ResultTable {
 
     }
 
-    protected void addBefore(int lineNo, String newLine) {
+    protected synchronized void addBefore(int lineNo, String newLine) {
 
         StringBuilder newFile = new StringBuilder();
 
         try {
 
-            file.seek(0);
+            resetPosition();
 
             int    i    = 0;
-            String line = file.readLine();
+            String line = getLine();
 
             do {
 
@@ -201,13 +205,15 @@ public class ResultStream extends ResultTable {
                 newFile.append("\n");
                 i++;
 
-                line = file.readLine();
+                line = getLine();
 
             } while (line != null);
 
             file.setLength(0);
             file.writeBytes(newFile.toString());
 
+            resetPosition();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -215,12 +221,14 @@ public class ResultStream extends ResultTable {
     }
 
     @Override
-    protected void addRow(Result row) {
+    protected synchronized void addRow(Result row) {
 
         try {
 
+            long current = file.getFilePointer();
             file.seek(file.length());
             file.writeBytes(row.getOutput(","));
+            file.seek(current);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -229,7 +237,7 @@ public class ResultStream extends ResultTable {
     }
 
     @Override
-    protected void clearData() {
+    protected synchronized void clearData() {
 
         try {
 
@@ -244,6 +252,9 @@ public class ResultStream extends ResultTable {
             file.writeBytes(String.join(",", titles));
             file.writeBytes("\n");
 
+            resetPosition();
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -251,15 +262,15 @@ public class ResultStream extends ResultTable {
     }
 
     @Override
-    public int getNumRows() {
+    public synchronized int getNumRows() {
 
         int count = 0;
 
         try {
 
-            file.seek(0);
+            resetPosition();
 
-            while (file.readLine() != null) {
+            while (getLine() != null) {
                 count++;
             }
 
@@ -271,19 +282,36 @@ public class ResultStream extends ResultTable {
 
     }
 
+    protected synchronized void resetPosition() throws IOException {
+        file.seek(0);
+        currentLine = 0;
+    }
+
+    protected synchronized String getLine(int no) throws IOException {
+
+        if (no < currentLine) {
+            resetPosition();
+        }
+
+        for (int i = currentLine; i < no; i++) {
+            getLine();
+        }
+
+        return getLine();
+
+    }
+
+    protected synchronized String getLine() throws IOException {
+        currentLine++;
+        return file.readLine();
+    }
+
     @Override
-    public Result getRow(int i) {
+    public synchronized Result getRow(int i) {
 
         try {
 
-            file.seek(0);
-            file.readLine();
-
-            for (int j = 0; j < i; j++) {
-                file.readLine();
-            }
-
-            String[] values = file.readLine().split(",");
+            String[] values = getLine(i + 1).split(",");
             double[] dVals  = new double[values.length];
 
             for (int j = 0; j < values.length; j++) {
@@ -300,7 +328,7 @@ public class ResultStream extends ResultTable {
         }
     }
 
-    public Set<Double> getValueSet(int column) {
+    public synchronized Set<Double> getValueSet(int column) {
 
         Set<Double> set = new HashSet<>();
         getColumns(column).forEach(set::add);
@@ -309,12 +337,12 @@ public class ResultStream extends ResultTable {
     }
 
     @Override
-    public void removeRow(int i) {
+    public synchronized void removeRow(int i) {
         removeLine(i);
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
 
         try {
             file.close();
