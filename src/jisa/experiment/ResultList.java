@@ -1,10 +1,14 @@
 package jisa.experiment;
 
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,9 +17,10 @@ import java.util.regex.Pattern;
  */
 public class ResultList extends ResultTable {
 
-    private String[]          names;
-    private String[]          units = null;
-    private ArrayList<Result> rows  = new ArrayList<>();
+    private String[]            names;
+    private String[]            units      = null;
+    private ArrayList<Result>   rows       = new ArrayList<>();
+    private Map<String, String> attributes = new HashMap<>();
 
     public ResultList(Col... columns) {
         super(columns);
@@ -27,17 +32,24 @@ public class ResultList extends ResultTable {
 
     public static ResultList loadFile(String filePath) throws IOException {
 
-        BufferedReader reader  = new BufferedReader(new FileReader(filePath));
-        String         header  = reader.readLine();
-        String[]       columns = header.split(",");
-        Col[]          cols    = new Col[columns.length];
+        BufferedReader reader = new BufferedReader(new FileReader(filePath));
+        String         header = reader.readLine();
+
+        JSONObject attributes = null;
+        if (header.startsWith("% ATTRIBUTES: ")) {
+            attributes = new JSONObject(header);
+            header     = reader.readLine();
+        }
+
+        String[] columns = header.split(",");
+        Col[]    cols    = new Col[columns.length];
 
         Pattern pattern = Pattern.compile("(.*)\\s\\[(.*)\\]");
 
         for (int i = 0; i < cols.length; i++) {
 
             Matcher matcher = pattern.matcher(columns[i]);
-            Col col;
+            Col     col;
             if (matcher.find()) {
                 col = new Col(matcher.group(1), matcher.group(2));
             } else {
@@ -49,6 +61,10 @@ public class ResultList extends ResultTable {
         }
 
         ResultList list = new ResultList(cols);
+
+        if (attributes != null) {
+            for (String key : attributes.keySet()) list.setAttribute(key, attributes.getString(key));
+        }
 
         String line;
 
@@ -74,6 +90,21 @@ public class ResultList extends ResultTable {
 
         return list;
 
+    }
+
+    @Override
+    public void setAttribute(String name, String value) {
+        attributes.put(name, value);
+    }
+
+    @Override
+    public String getAttribute(String name) {
+        return attributes.getOrDefault(name, null);
+    }
+
+    @Override
+    public Map<String, String> getAttributes() {
+        return new HashMap<>(attributes);
     }
 
     @Override

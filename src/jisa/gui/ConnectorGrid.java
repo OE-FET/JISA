@@ -2,6 +2,7 @@ package jisa.gui;
 
 import javafx.scene.layout.Pane;
 import jisa.Util;
+import jisa.control.ConfigBlock;
 import jisa.control.ConfigStore;
 import jisa.control.SRunnable;
 import jisa.devices.*;
@@ -15,7 +16,7 @@ public class ConnectorGrid extends Grid {
     public  Pane                 pane;
     private String               title;
     private ArrayList<Connector> configs = new ArrayList<>();
-    private ConfigStore          config  = null;
+    private ConfigBlock          config  = null;
     private String               key     = "";
 
     public ConnectorGrid(String title) {
@@ -25,11 +26,11 @@ public class ConnectorGrid extends Grid {
         setGrowth(true, false);
     }
 
-    public ConnectorGrid(String title, ConfigStore c) {
+    public ConnectorGrid(String title, ConfigBlock c) {
         this(title, "ConGrid", c);
     }
 
-    public ConnectorGrid(String title, String key, ConfigStore c) {
+    public ConnectorGrid(String title, String key, ConfigBlock c) {
         this(title);
         this.key = key;
         setConfigStore(c);
@@ -38,8 +39,7 @@ public class ConnectorGrid extends Grid {
     public <T extends Instrument> Connector<T> addInstrument(String name, Class<T> type) {
 
         try {
-            String       key  = String.format("%s-instrument%d", this.key, configs.size());
-            Connector<T> conf = new Connector<>(name, key, type, config);
+            Connector<T> conf = new Connector<>(name, type, config.subBlock(name));
             addPane(conf.getPane());
             configs.add(conf);
             return conf;
@@ -118,7 +118,7 @@ public class ConnectorGrid extends Grid {
 
     }
 
-    public void setConfigStore(ConfigStore c) {
+    public void setConfigStore(ConfigBlock c) {
         config = c;
     }
 

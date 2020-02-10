@@ -1,11 +1,12 @@
 package jisa.experiment;
 
 import jisa.Util;
+import org.json.JSONObject;
 
-import java.io.*;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,8 +16,36 @@ public class ResultStream extends ResultTable {
     private   String           path;
     private   String[]         names;
     private   String[]         units       = null;
+    private   JSONObject       attributes  = new JSONObject();
     private   int              cols;
     private   int              currentLine = 0;
+
+    public ResultStream(String path, Col... columns) throws IOException {
+        super(columns);
+        init(path);
+    }
+
+    public ResultStream(String path, String... names) throws IOException {
+        super(names);
+        init(path);
+    }
+
+    public ResultStream(String path, RandomAccessFile file, JSONObject attributes, Col... columns) throws IOException {
+        super(columns);
+        this.path = path;
+        this.file = file;
+        this.file.seek(0);
+    }
+
+    public ResultStream(Col... columns) throws IOException {
+
+        super(columns);
+
+        File file = File.createTempFile("JISA-data-", ".csv");
+        file.deleteOnExit();
+        init(file.getAbsolutePath());
+
+    }
 
     /**
      * Creates a ResultStream from a previously written CSV backing file.
@@ -32,7 +61,15 @@ public class ResultStream extends ResultTable {
         RandomAccessFile file = new RandomAccessFile(path, "rw");
         file.seek(0);
 
-        String   header  = file.readLine();
+        JSONObject attributes;
+        String     header     = file.readLine();
+
+        if (header.startsWith("% ATTRIBUTES: ")) {
+            attributes = new JSONObject(header.replaceFirst("% ATTRIBUTES: ", ""));
+        } else {
+            attributes = null;
+        }
+
         String[] columns = header.split(",");
         Col[]    cols    = new Col[columns.length];
 
@@ -52,34 +89,39 @@ public class ResultStream extends ResultTable {
 
         }
 
-        return new ResultStream(path, file, cols);
+        if (attributes == null) {
+
+            ResultStream stream = new ResultStream(path, file, new JSONObject(), cols);
+            stream.addBefore(0, "% ATTRIBUTES: {}");
+            return stream;
+
+        } else {
+            return new ResultStream(path, file, attributes, cols);
+        }
 
     }
 
-    public ResultStream(String path, Col... columns) throws IOException {
-        super(columns);
-        init(path);
+    @Override
+    public void setAttribute(String name, String value) {
+        attributes.put(name, value);
+        replaceLine(0, "% ATTRIBUTES: " + attributes.toString());
     }
 
-    public ResultStream(String path, String... names) throws IOException {
-        super(names);
-        init(path);
+    @Override
+    public String getAttribute(String name) {
+        return attributes.getString(name);
     }
 
-    public ResultStream(String path, RandomAccessFile file, Col... columns) throws IOException {
-        super(columns);
-        this.path = path;
-        this.file = file;
-        this.file.seek(0);
-    }
+    @Override
+    public Map<String, String> getAttributes() {
 
-    public ResultStream(Col... columns) throws IOException {
+        HashMap<String, String> entries = new HashMap<>(attributes.length());
 
-        super(columns);
+        for (String key : attributes.keySet()) {
+            entries.put(key, attributes.getString(key));
+        }
 
-        File file = File.createTempFile("JISA-data-", ".csv");
-        file.deleteOnExit();
-        init(file.getAbsolutePath());
+        return entries;
 
     }
 
@@ -92,6 +134,7 @@ public class ResultStream extends ResultTable {
         file = new RandomAccessFile(path, "rw");
         file.setLength(0);
         file.seek(0);
+        file.writeBytes("% ATTRIBUTES: " + attributes.toString() + "\n");
         file.writeBytes(String.join(",", getNames()));
         file.writeBytes("\n");
 
@@ -104,7 +147,7 @@ public class ResultStream extends ResultTable {
             throw new IllegalStateException("You cannot alter a finalised ResultTable");
         }
 
-        replaceLine(0, String.join(",", String.join(",", getNames())));
+        replaceLine(1, String.join(",", String.join(",", getNames())));
 
     }
 
@@ -278,7 +321,7 @@ public class ResultStream extends ResultTable {
             e.printStackTrace();
         }
 
-        return count - 1;
+        return count - 2;
 
     }
 
@@ -311,7 +354,7 @@ public class ResultStream extends ResultTable {
 
         try {
 
-            String[] values = getLine(i + 1).split(",");
+            String[] values = getLine(i + 2).split(",");
             double[] dVals  = new double[values.length];
 
             for (int j = 0; j < values.length; j++) {

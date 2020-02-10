@@ -7,6 +7,7 @@ import jisa.maths.functions.Function;
 import jisa.maths.functions.PFunction;
 import jisa.maths.matrices.Matrix;
 import jisa.maths.matrices.RealMatrix;
+import org.json.JSONObject;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -33,6 +34,20 @@ public abstract class ResultTable implements Iterable<Result> {
         }
 
     }
+
+    public abstract void setAttribute(String name, String value);
+
+    public void setAttribute(String name, double value) {
+        setAttribute(name, String.format("%s", value));
+    }
+
+    public abstract String getAttribute(String name);
+
+    public double getAttributeDouble(String name) {
+        return Double.parseDouble(getAttribute(name));
+    }
+
+    public abstract Map<String, String> getAttributes();
 
     public int getColumnFromString(String name) {
 
@@ -151,8 +166,9 @@ public abstract class ResultTable implements Iterable<Result> {
 
         addRow(row);
 
-        for (OnUpdate r : (List<OnUpdate>) onUpdate.clone()) {
-            r.run(row);
+        int size = onUpdate.size();
+        for (int k = 0; k < size; k++) {
+            onUpdate.get(k).run(row);
         }
 
     }
@@ -248,7 +264,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
         }
 
-        stream.print("\n");
+        stream.println();
         stream.print("|");
 
         for (int i = 0; i < cols; i++) {
@@ -277,7 +293,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
         }
 
-        stream.print("\n");
+        stream.println();
 
         for (Result r : this) {
 
@@ -297,7 +313,8 @@ public abstract class ResultTable implements Iterable<Result> {
 
             }
 
-            stream.print("\n+");
+            stream.println();
+            stream.print("+");
 
             for (int w : widths) {
 
@@ -309,7 +326,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
             }
 
-            stream.print("\n");
+            stream.println();
 
         }
 
@@ -365,9 +382,9 @@ public abstract class ResultTable implements Iterable<Result> {
     public void output(String delim, PrintStream stream) {
 
 
-        String[] titles = getNames();
-        stream.print(String.join(delim, titles));
-        stream.print("\n");
+        String[]   titles = getNames();
+        stream.println("% ATTRIBUTES: " + (new JSONObject(getAttributes())).toString());
+        stream.println(String.join(delim, titles));
 
         for (Result r : this) {
             r.output(stream, delim);
@@ -434,6 +451,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public void finalise() {
         open = false;
+        onUpdate.clear();
         close();
     }
 
@@ -595,7 +613,7 @@ public abstract class ResultTable implements Iterable<Result> {
         ResultTable forward   = new ResultList(columns.toArray(new Col[0]));
         ResultTable backward  = new ResultList(columns.toArray(new Col[0]));
 
-        ResultTable current   = forward;
+        ResultTable current = forward;
 
         current.addRow(getRow(0));
 

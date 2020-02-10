@@ -6,9 +6,7 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.ToolBar;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -17,13 +15,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import jisa.Util;
 import jisa.experiment.ActionQueue;
 import jisa.experiment.ResultTable;
 
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 public class ActionQueueDisplay extends JFXWindow {
@@ -35,13 +30,15 @@ public class ActionQueueDisplay extends JFXWindow {
     @FXML
     protected ToolBar                               toolBar;
     private   ActionQueue                           queue;
-    private   List<ActionQueue.Action>              actions  = new LinkedList<>();
-    private   Map<ActionQueue.Action, ClickHandler> onClick  = new HashMap<>();
-    private   int                                   scrollTo = 0;
+    private   Map<ActionQueue.Action, HBox>         listItems = new HashMap<>();
+    private   Map<ActionQueue.Action, ClickHandler> onClick   = new HashMap<>();
+    private   int                                   scrollTo  = 0;
 
     public ActionQueueDisplay(String title, ActionQueue queue) {
 
         super(title, ActionQueueDisplay.class.getResource("fxml/ActionQueueWindow.fxml"));
+
+        this.queue = queue;
 
         toolBar.getItems().addListener((ListChangeListener<? super Node>) change -> {
             boolean show = !toolBar.getItems().isEmpty();
@@ -49,38 +46,19 @@ public class ActionQueueDisplay extends JFXWindow {
             toolBar.setManaged(show);
         });
 
-        for (ActionQueue.Action action : queue) {
-            list.getItems().add(makeItem(action));
-            actions.add(action);
-        }
+        for (ActionQueue.Action action : queue) add(action);
 
         queue.addQueueListener((added, removed) -> GUI.runNow(() -> {
 
             GUI.runNow(() -> {
 
                 for (ActionQueue.Action add : added) add(add);
-
-                for (ActionQueue.Action rem : removed) {
-
-                    int index = actions.indexOf(rem);
-
-                    if (index < 0) continue;
-
-                    list.getItems().remove(index);
-                    onClick.remove(rem);
-                    actions.remove(rem);
-
-                }
+                for (ActionQueue.Action rem : removed) remove(rem);
 
             });
 
         }));
 
-    }
-
-    private synchronized void add(ActionQueue.Action action) {
-        list.getItems().add(makeItem(action));
-        actions.add(action);
     }
 
     private static Image imageFromStatus(ActionQueue.Status status) {
@@ -131,12 +109,27 @@ public class ActionQueueDisplay extends JFXWindow {
 
     }
 
+    private synchronized void add(ActionQueue.Action action) {
+        HBox entry = makeItem(action);
+        list.getItems().add(entry);
+        list.scrollTo(entry);
+    }
+
+    private synchronized void remove(ActionQueue.Action action) {
+        if (listItems.containsKey(action)) list.getItems().remove(listItems.get(action));
+    }
+
     private synchronized HBox makeItem(ActionQueue.Action action) {
 
         HBox container = new HBox();
         container.setSpacing(15);
         container.setAlignment(Pos.CENTER_LEFT);
 
+        MenuItem remItem = new MenuItem("Remove");
+        ContextMenu menu = new ContextMenu(remItem);
+
+        remItem.setOnAction(event -> queue.removeAction(action));
+        container.setOnContextMenuRequested(event -> menu.show(container, event.getScreenX(), event.getScreenY()));
 
         ImageView image  = new ImageView(imageFromStatus(action.getStatus()));
         Label     name   = new Label(action.getName());
@@ -220,6 +213,7 @@ public class ActionQueueDisplay extends JFXWindow {
 
         });
 
+        listItems.put(action, container);
 
         return container;
 
@@ -279,6 +273,38 @@ public class ActionQueueDisplay extends JFXWindow {
             @Override
             public void remove() {
                 GUI.runNow(() -> toolBar.getItems().remove(button));
+            }
+
+        };
+
+    }
+
+    public MenuButton addToolbarMenuButton(String text) {
+
+        javafx.scene.control.MenuButton button = new javafx.scene.control.MenuButton(text);
+        GUI.runNow(() -> toolBar.getItems().add(button));
+
+        return new MenuButton.MenuButtonWrapper(button) {
+
+            @Override
+            public void remove() {
+                GUI.runNow(() -> toolBar.getItems().remove(button));
+            }
+
+        };
+
+    }
+
+    public Separator addToolbarSeparator() {
+
+        javafx.scene.control.Separator separator = new javafx.scene.control.Separator();
+        GUI.runNow(() -> toolBar.getItems().add(separator));
+
+        return new Separator.SeparatorWrapper(separator) {
+
+            @Override
+            public void remove() {
+                GUI.runNow(() -> toolBar.getItems().remove(separator));
             }
 
         };

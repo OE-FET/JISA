@@ -78,6 +78,25 @@ public class Util {
 
     }
 
+    public static String msToString(long millis) {
+
+        long ms = millis % 1000;
+        long s  = (millis / 1000) % 60;
+        long m  = (millis / (1000 * 60)) % 60;
+        long h  = (millis / (1000 * 60 * 60));
+
+        List<String> parts = new LinkedList<>();
+
+
+        if (h > 0)  parts.add(String.format("%dh", h));
+        if (m > 0)  parts.add(String.format("%dm", m));
+        if (s > 0)  parts.add(String.format("%ds", s));
+        if (ms > 0) parts.add(String.format("%dms", ms));
+
+        return String.join(" ", parts);
+
+    }
+
     public static String joinPath(String first, String... more) {
 
         return Paths.get(first, more).toString();
@@ -87,11 +106,11 @@ public class Util {
     public static String colourToCSS(Color colour) {
 
         return String.format(
-            "rgba(%s,%s,%s,%s)",
-            colour.getRed() * 255,
-            colour.getGreen() * 255,
-            colour.getBlue() * 255,
-            colour.getOpacity()
+                "rgba(%s,%s,%s,%s)",
+                colour.getRed() * 255,
+                colour.getGreen() * 255,
+                colour.getBlue() * 255,
+                colour.getOpacity()
         );
 
     }
@@ -241,7 +260,7 @@ public class Util {
         double[] values = new double[numSteps];
         double   step   = (max.doubleValue() - min.doubleValue()) / (numSteps - 1D);
 
-        values[0]            = min.doubleValue();
+        values[0] = min.doubleValue();
         values[numSteps - 1] = max.doubleValue();
 
         for (int i = 1; i < numSteps - 1; i++) {
@@ -381,7 +400,7 @@ public class Util {
         double[] values = new double[numSteps];
         double   step   = Math.pow(max.doubleValue() / min.doubleValue(), 1D / numSteps);
 
-        values[0]            = min.doubleValue();
+        values[0] = min.doubleValue();
         values[numSteps - 1] = max.doubleValue();
 
         for (int i = 1; i < numSteps - 1; i++) {
@@ -478,8 +497,8 @@ public class Util {
         }
 
         return Math.floor(value.doubleValue() / Math.pow(
-            10,
-            Math.floor(Math.log10(Math.abs(value.doubleValue())))
+                10,
+                Math.floor(Math.log10(Math.abs(value.doubleValue())))
         )) * Math.pow(10, Math.floor(Math.log10(Math.abs(value.doubleValue()))));
     }
 
@@ -497,8 +516,8 @@ public class Util {
         }
 
         return Math.ceil(value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))))) * Math.pow(
-            10,
-            Math.floor(Math.log10(Math.abs(value)))
+                10,
+                Math.floor(Math.log10(Math.abs(value)))
         );
     }
 

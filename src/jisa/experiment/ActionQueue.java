@@ -4,11 +4,10 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import jisa.Util;
 import jisa.control.SRunnable;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -72,6 +71,16 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         queue.add(action);
 
         return action;
+
+    }
+
+    public void removeAction(Action action) {
+
+        if (isRunning) {
+            throw new IllegalStateException("Cannot modify action queue while it is running");
+        }
+
+        queue.remove(action);
 
     }
 
@@ -266,7 +275,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         public Action(String name, SRunnable runnable) {
 
-            this.name = name;
+            this.name     = name;
             this.runnable = runnable;
 
             status.addListener((v, o, n) -> statusExecutor.submit(() -> {
@@ -350,20 +359,21 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
     public static class MeasureAction extends Action {
 
-        private final Measurement measurement;
-        private       SRunnable   before;
-        private       SRunnable   after;
-        private       String      name;
-        private       String      resultPath = null;
+        private final Measurement         measurement;
+        private final Map<String, String> attributes = new HashMap<>();
+        private       SRunnable           before;
+        private       SRunnable           after;
+        private       String              name;
+        private       String              resultPath = null;
 
         public MeasureAction(String name, Measurement measurement, SRunnable before, SRunnable after) {
 
             super(String.format("%s (%s)", measurement.getName(), name), measurement::start);
 
             this.measurement = measurement;
-            this.before = before;
-            this.after = after;
-            this.name = name;
+            this.before      = before;
+            this.after       = after;
+            this.name        = name;
 
         }
 
@@ -377,6 +387,11 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         public void doNotOutputResults() {
             resultPath = null;
+        }
+
+        public void setAttribute(String name, Object value) {
+            attributes.put(name, value.toString());
+            if (getData() != null) getData().setAttribute(name, value.toString());
         }
 
         public void stop() {
@@ -395,6 +410,8 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
                     setData(measurement.newResults());
                 }
             }
+
+            attributes.forEach((k,v) -> getData().setAttribute(k,v));
 
             before.runRegardless();
 
@@ -420,7 +437,9 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         }
 
         public MeasureAction copy() {
-            return new MeasureAction(name, measurement, before, after);
+            MeasureAction action =  new MeasureAction(name, measurement, before, after);
+            action.attributes.putAll(attributes);
+            return action;
         }
 
     }
@@ -429,7 +448,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         public WaitAction(long millis) {
 
-            super(String.format("Wait %d ms", millis), () -> Thread.sleep(millis));
+            super(String.format("Wait %s", Util.msToString(millis)), () -> Thread.sleep(millis));
         }
 
     }
