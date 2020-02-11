@@ -37,7 +37,7 @@ public class ResultList extends ResultTable {
 
         JSONObject attributes = null;
         if (header.startsWith("% ATTRIBUTES: ")) {
-            attributes = new JSONObject(header);
+            attributes = new JSONObject(header.replaceFirst("% ATTRIBUTES: ", ""));
             header     = reader.readLine();
         }
 

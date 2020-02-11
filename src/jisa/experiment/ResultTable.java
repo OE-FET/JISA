@@ -549,10 +549,6 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public double getMean(Evaluable value) {
 
-        if (getNumRows() < 1) {
-            throw new IllegalStateException("Cannot find mean in empty table!");
-        }
-
         double sum   = 0;
         int    count = 0;
 

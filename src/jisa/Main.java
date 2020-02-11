@@ -6,13 +6,15 @@ import jisa.addresses.GPIBAddress;
 import jisa.addresses.StrAddress;
 import jisa.devices.K1234;
 import jisa.devices.SMU;
-import jisa.gui.DeviceShell;
-import jisa.gui.Doc;
-import jisa.gui.GUI;
+import jisa.experiment.Combination;
+import jisa.gui.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class Main {
 
@@ -24,6 +26,12 @@ public class Main {
     public static void main(String[] args) {
 
         try {
+
+            RangeInput range = new RangeInput("Test", "V");
+
+            range.show();
+
+            System.in.read();
 
             Doc doc = new Doc("Help");
 

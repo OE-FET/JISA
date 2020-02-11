@@ -6,6 +6,7 @@ import jisa.Util;
 import jisa.experiment.Col;
 import jisa.experiment.Result;
 import jisa.experiment.ResultTable;
+import jisa.experiment.RowValue;
 import jisa.maths.matrices.Matrix;
 import jisa.maths.fits.Fit;
 import jisa.maths.fits.Fitting;
@@ -101,7 +102,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    Series split(ResultTable.Evaluable splitBy, SeriesFormatter pattern);
+    Series split(RowValue splitBy, SeriesFormatter pattern);
 
     /**
      * Cause the series to automatically split into a set of sub-series based on a value in each result.
@@ -111,7 +112,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    default Series split(ResultTable.Evaluable splitBy, String pattern) {
+    default Series split(RowValue splitBy, String pattern) {
         return split(splitBy, r -> String.format(pattern, splitBy.evaluate(r)));
     }
 
@@ -122,7 +123,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    default Series split(ResultTable.Evaluable splitBy) {
+    default Series split(RowValue splitBy) {
         return split(splitBy, "%s");
     }
 

@@ -50,12 +50,8 @@ public class ActionQueueDisplay extends JFXWindow {
 
         queue.addQueueListener((added, removed) -> GUI.runNow(() -> {
 
-            GUI.runNow(() -> {
-
-                for (ActionQueue.Action add : added) add(add);
-                for (ActionQueue.Action rem : removed) remove(rem);
-
-            });
+            for (ActionQueue.Action add : added) add(add);
+            for (ActionQueue.Action rem : removed) remove(rem);
 
         }));
 
@@ -125,8 +121,8 @@ public class ActionQueueDisplay extends JFXWindow {
         container.setSpacing(15);
         container.setAlignment(Pos.CENTER_LEFT);
 
-        MenuItem remItem = new MenuItem("Remove");
-        ContextMenu menu = new ContextMenu(remItem);
+        MenuItem    remItem = new MenuItem("Remove");
+        ContextMenu menu    = new ContextMenu(remItem);
 
         remItem.setOnAction(event -> queue.removeAction(action));
         container.setOnContextMenuRequested(event -> menu.show(container, event.getScreenX(), event.getScreenY()));

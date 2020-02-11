@@ -30,20 +30,28 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         }));
 
         queue.addListener((ListChangeListener<? super Action>) change -> queueExecutor.submit(
-                () -> {
+            () -> {
 
-                    List<Action> added   = new LinkedList<>();
-                    List<Action> removed = new LinkedList<>();
+                List<Action> added   = new LinkedList<>();
+                List<Action> removed = new LinkedList<>();
 
-                    while (change.next()) {
-                        added.addAll(change.getAddedSubList());
-                        removed.addAll(change.getRemoved());
-                    }
-
-                    for (ListListener<Action> listener : queueListeners) listener.updated(added, removed);
-
+                while (change.next()) {
+                    added.addAll(change.getAddedSubList());
+                    removed.addAll(change.getRemoved());
                 }
+
+                for (ListListener<Action> listener : queueListeners) listener.updated(added, removed);
+
+            }
         ));
+
+    }
+
+    public int getVariableCount(String name) {
+
+        int count = 0;
+        for (Action action : queue) if (action.variables.containsKey(name)) count++;
+        return count;
 
     }
 
@@ -99,14 +107,12 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
      *
      * @param measurement Measurement to run
      */
-    public MeasureAction addMeasurement(String name, Measurement measurement, SRunnable before, SRunnable after) {
+    public MeasureAction addMeasurement(String name, Measurement measurement, ARunnable before, ARunnable after) {
         return (MeasureAction) addAction(new MeasureAction(name, measurement, before, after));
     }
 
     public MeasureAction addMeasurement(String name, Measurement measurement) {
-        return addMeasurement(name, measurement, () -> {
-        }, () -> {
-        });
+        return addMeasurement(name, measurement, a -> {}, a -> {});
     }
 
     /**
@@ -268,6 +274,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         private final SRunnable                    runnable;
         private final SimpleObjectProperty<Status> status    = new SimpleObjectProperty<>(Status.NOT_STARTED);
         private final List<Listener<Status>>       listeners = new LinkedList<>();
+        private final Map<String, String>          variables = new LinkedHashMap<>();
         private       String                       name;
         private       Exception                    exception;
         private       Thread                       runThread;
@@ -351,8 +358,35 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             return exception;
         }
 
+        public void setVariable(String name, String value) {
+            variables.put(name, value);
+        }
+
+        public String getVariable(String name) {
+            return variables.get(name);
+        }
+
+        public String getVariableOrDefault(String name, String defaultValue) {
+            return variables.getOrDefault(name, defaultValue);
+        }
+
+        public Map<String, String> getVariables() {
+            return variables;
+        }
+
         public Action copy() {
-            return new Action(getName(), runnable);
+            Action action = new Action(getName(), runnable);
+            action.variables.putAll(variables);
+            return action;
+        }
+
+        public String getVariableString() {
+
+            List<String> parts = new LinkedList<>();
+            variables.forEach((name, value) -> parts.add(String.format("%s = %s", name, value)));
+            Collections.reverse(parts);
+            return String.join(", ", parts);
+
         }
 
     }
@@ -361,14 +395,14 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         private final Measurement         measurement;
         private final Map<String, String> attributes = new HashMap<>();
-        private       SRunnable           before;
-        private       SRunnable           after;
+        private       ARunnable           before;
+        private       ARunnable           after;
         private       String              name;
         private       String              resultPath = null;
 
-        public MeasureAction(String name, Measurement measurement, SRunnable before, SRunnable after) {
+        public MeasureAction(String name, Measurement measurement, ARunnable before, ARunnable after) {
 
-            super(String.format("%s (%s)", measurement.getName(), name), measurement::start);
+            super(name, measurement::start);
 
             this.measurement = measurement;
             this.before      = before;
@@ -377,11 +411,30 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         }
 
+        public String getName() {
+
+            if (getVariables().isEmpty()) {
+                return String.format("%s (%s)", measurement.getName(), name);
+            } else {
+                return String.format("%s (%s) (%s)", measurement.getName(), name, getVariableString());
+            }
+
+        }
+
+        public String getVariablePathString() {
+
+            List<String> parts = new LinkedList<>();
+            getVariables().forEach((name, value) -> parts.add(String.format("%s=%s", name.replace(" ", ""), value.replace(" ", ""))));
+            Collections.reverse(parts);
+            return String.join("-", parts);
+
+        }
+
         public void setResultsPath(String path) {
             resultPath = path;
         }
 
-        public String getResultPath() {
+        public String getResultsPath() {
             return resultPath;
         }
 
@@ -404,30 +457,42 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             if (resultPath == null) {
                 setData(measurement.newResults());
             } else {
+
                 try {
-                    setData(measurement.newResults(resultPath));
+
+                    String path;
+
+                    if (resultPath.contains("%s")) {
+                        path = String.format(resultPath, getVariablePathString());
+                    } else {
+                        path = resultPath;
+                    }
+
+                    setData(measurement.newResults(path));
+
                 } catch (Exception e) {
                     setData(measurement.newResults());
                 }
+
             }
 
-            attributes.forEach((k,v) -> getData().setAttribute(k,v));
+            attributes.forEach((k, v) -> getData().setAttribute(k, v));
 
-            before.runRegardless();
+            before.runRegardless(this);
 
         }
 
         public void cleanUp() {
             getData().finalise();
-            after.runRegardless();
+            after.runRegardless(this);
         }
 
-        public MeasureAction setBefore(SRunnable before) {
+        public MeasureAction setBefore(ARunnable before) {
             this.before = before;
             return this;
         }
 
-        public MeasureAction setAfter(SRunnable after) {
+        public MeasureAction setAfter(ARunnable after) {
             this.after = after;
             return this;
         }
@@ -437,8 +502,10 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         }
 
         public MeasureAction copy() {
-            MeasureAction action =  new MeasureAction(name, measurement, before, after);
+            MeasureAction action = new MeasureAction(name, measurement, before, after);
             action.attributes.putAll(attributes);
+            action.getVariables().putAll(getVariables());
+            action.resultPath = resultPath;
             return action;
         }
 
@@ -449,6 +516,16 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         public WaitAction(long millis) {
 
             super(String.format("Wait %s", Util.msToString(millis)), () -> Thread.sleep(millis));
+        }
+
+    }
+
+    public interface ARunnable {
+
+        void run(MeasureAction action) throws Exception;
+
+        default void runRegardless(MeasureAction action) {
+            try { run(action); } catch (Exception e) { e.printStackTrace(); }
         }
 
     }

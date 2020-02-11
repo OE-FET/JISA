@@ -15,6 +15,7 @@ import javafx.util.Duration;
 import jisa.Util;
 import jisa.experiment.Result;
 import jisa.experiment.ResultTable;
+import jisa.experiment.RowValue;
 import jisa.maths.fits.Fit;
 import jisa.maths.functions.Function;
 
@@ -1075,7 +1076,7 @@ public class JISAChart extends XYChart<Double, Double> {
 
 
         @Override
-        public JISASeries split(ResultTable.Evaluable splitBy, SeriesFormatter formatter) {
+        public JISASeries split(RowValue splitBy, SeriesFormatter formatter) {
 
             if (watching == null) {
                 throw new IllegalStateException("A series must be watching a ResultTable before being able to be split.");
@@ -1086,11 +1087,11 @@ public class JISAChart extends XYChart<Double, Double> {
             getData().remove(series);
 
             // Create a map of splitting value to series
-            final Map<Double, jisa.gui.Series> map = new HashMap<>();
+            final Map<Object, jisa.gui.Series> map = new TreeMap<>();
 
             handler = (r, x, y, e) -> {
 
-                double value = splitBy.evaluate(r);
+                Object value = splitBy.evaluate(r);
 
                 if (!map.containsKey(value)) {
 

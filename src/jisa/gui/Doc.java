@@ -623,4 +623,26 @@ public class Doc extends JFXWindow {
 
     }
 
+    public interface Table extends SubElement {
+
+        TableRow addRow();
+
+    }
+
+    public interface TableRow extends SubElement {
+
+        TableCell addCell();
+
+    }
+
+    public interface TableCell extends SubElement {
+
+        TableCell setText(String text);
+
+        TableCell setAlignment(Align alignment);
+
+        TableCell setColour(Color colour);
+
+    }
+
 }

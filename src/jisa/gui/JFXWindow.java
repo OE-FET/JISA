@@ -104,6 +104,10 @@ public class JFXWindow implements Element {
         GUI.runNow(stage::close);
     }
 
+    public boolean isOpen() {
+        return stage.isShowing();
+    }
+
     public void autoAdjustSize() {
 
         GUI.runNow(() -> {

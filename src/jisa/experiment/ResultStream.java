@@ -61,14 +61,8 @@ public class ResultStream extends ResultTable {
         RandomAccessFile file = new RandomAccessFile(path, "rw");
         file.seek(0);
 
-        JSONObject attributes;
         String     header     = file.readLine();
-
-        if (header.startsWith("% ATTRIBUTES: ")) {
-            attributes = new JSONObject(header.replaceFirst("% ATTRIBUTES: ", ""));
-        } else {
-            attributes = null;
-        }
+        JSONObject attributes = header.startsWith("% ATTRIBUTES: ") ? new JSONObject(header.replaceFirst("% ATTRIBUTES: ", "")) : null;
 
         String[] columns = header.split(",");
         Col[]    cols    = new Col[columns.length];
@@ -78,12 +72,7 @@ public class ResultStream extends ResultTable {
         for (int i = 0; i < cols.length; i++) {
 
             Matcher matcher = pattern.matcher(columns[i]);
-            Col     col;
-            if (matcher.find()) {
-                col = new Col(matcher.group(1), matcher.group(2));
-            } else {
-                col = new Col(columns[i]);
-            }
+            Col     col     = matcher.find() ? new Col(matcher.group(1), matcher.group(2)) : new Col(columns[i]);
 
             cols[i] = col;
 
