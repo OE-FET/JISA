@@ -1,5 +1,6 @@
 package jisa.experiment;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -17,6 +18,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     private static final ExecutorService              queueExecutor    = Executors.newSingleThreadExecutor();
     private static final ExecutorService              currentExecutor  = Executors.newSingleThreadExecutor();
     private final        ObservableList<Action>       queue            = FXCollections.observableList(new LinkedList<>());
+    private final        List<Action>                 oldList          = new LinkedList<>(queue);
     private final        SimpleObjectProperty<Action> current          = new SimpleObjectProperty<>(null);
     private final        List<Listener<Action>>       currentListeners = new LinkedList<>();
     private final        List<ListListener<Action>>   queueListeners   = new LinkedList<>();
@@ -29,21 +31,21 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             for (Listener<Action> listener : currentListeners) listener.updated(oldValue, newValue);
         }));
 
-        queue.addListener((ListChangeListener<? super Action>) change -> queueExecutor.submit(
-            () -> {
+        queue.addListener((InvalidationListener) change -> queueExecutor.submit(this::updateQueueListeners));
 
-                List<Action> added   = new LinkedList<>();
-                List<Action> removed = new LinkedList<>();
+    }
 
-                while (change.next()) {
-                    added.addAll(change.getAddedSubList());
-                    removed.addAll(change.getRemoved());
-                }
+    private synchronized void updateQueueListeners() {
 
-                for (ListListener<Action> listener : queueListeners) listener.updated(added, removed);
+        List<Action> added = new LinkedList<>(queue);
+        added.removeAll(oldList);
+        List<Action> removed = new LinkedList<>(oldList);
+        removed.removeAll(queue);
 
-            }
-        ));
+        oldList.clear();
+        oldList.addAll(queue);
+
+        for (ListListener<Action> listener : queueListeners) listener.updated(added, removed);
 
     }
 

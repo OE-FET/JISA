@@ -33,6 +33,10 @@ public class Main {
 
             System.in.read();
 
+            System.out.println(range.getRange());
+
+            System.in.read();
+
             Doc doc = new Doc("Help");
 
             doc.addImage(Main.class.getResource("gui/images/jisa.png"))

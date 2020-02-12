@@ -73,7 +73,7 @@ public class Dashboard extends Grid {
 
         }
 
-        public Category<T> addMeasurement(String name, String unit, Measurable measurement) {
+        public Category<T> addMeasurement(String name, String unit, Measurable<T> measurement) {
 
             Plotted<T> plotted = new Plotted<>(new Col(name, unit), measurement, fields.addCheckBox(name, false));
             list.add(plotted);
@@ -106,7 +106,7 @@ public class Dashboard extends Grid {
                 if (instrument == null || !(plotted.checkBox.get())) {
                     toMeasure.add(() -> 0.0);
                 } else {
-                    toMeasure.add(() -> plotted.measurable.get(instrument));
+                    toMeasure.add(() -> plotted.measurable.getGeneric(instrument));
                 }
 
             }
@@ -178,11 +178,11 @@ public class Dashboard extends Grid {
     private class Plotted<T extends Instrument> {
 
         protected final Field<Boolean> checkBox;
-        protected final Measurable     measurable;
+        protected final Measurable<T>  measurable;
         protected final Plot           plot;
         protected final Col            header;
 
-        public Plotted(Col header, Measurable measurable, Field<Boolean> checkBox) {
+        public Plotted(Col header, Measurable<T> measurable, Field<Boolean> checkBox) {
 
             this.header     = header;
             this.measurable = measurable;
@@ -203,9 +203,13 @@ public class Dashboard extends Grid {
 
     }
 
-    public interface Measurable {
+    public interface Measurable<T extends Instrument> {
 
-        double get(Instrument device) throws DeviceException, IOException;
+        double get(T device) throws DeviceException, IOException;
+
+        default double getGeneric(Instrument device) throws DeviceException, IOException {
+            return get((T) device);
+        }
 
     }
 

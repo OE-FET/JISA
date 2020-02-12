@@ -13,8 +13,8 @@ public class RangeInput extends Fields {
     private final Field<Integer> mode;
     private final Field<Double>  start;
     private final Field<Double>  stop;
-    private final Field<Integer> stepCount;
-    private final Field<Double>  stepSize;
+    private       Field<Integer> stepCount;
+    private       Field<Double>  stepSize;
     private final Field<Boolean> mirror;
 
     public RangeInput(String title, String units) {
@@ -34,36 +34,14 @@ public class RangeInput extends Fields {
         updateGUI();
         mode.setOnChange(this::updateGUI);
 
-        stepCount.setOnChange(this::updateSize);
-        stepSize.setOnChange(this::updateCount);
-
-        start.setOnChange(() -> {
-            updateSize();
-            updateCount();
-        });
-
-        stop.setOnChange(() -> {
-            updateSize();
-            updateCount();
-        });
 
     }
 
     private void updateGUI() {
 
-        stepCount.setDisabled(mode.get() != STEP_COUNT);
-        stepSize.setDisabled(mode.get() != STEP_SIZE);
-        updateSize();
-        updateCount();
+        stepCount.setVisible(mode.get() == STEP_COUNT);
+        stepSize.setVisible(mode.get() == STEP_SIZE);
 
-    }
-
-    private void updateSize() {
-        if (!stepCount.isDisabled()) stepSize.set((stepCount.get() > 1) ? (stop.get() - start.get()) / (stepCount.get() - 1) : 0.0);
-    }
-
-    private void updateCount() {
-        if (!stepSize.isDisabled()) stepCount.set((int) Math.floor(Math.abs((stop.get() - start.get()) / stepSize.get())) + 1);
     }
 
     public Range<Double> getRange() {
@@ -72,14 +50,23 @@ public class RangeInput extends Fields {
         int mode  = this.mode.get();
 
         Range<Double> range = null;
+
         if (scale == LINEAR && mode == STEP_COUNT) {
+
             range = Range.linear(start.get(), stop.get(), stepCount.get());
+
         } else if (scale == LINEAR && mode == STEP_SIZE) {
+
             range = Range.step(start.get(), stop.get(), stepSize.get());
+
         } else if (scale == LOGARITHMIC && mode == STEP_COUNT) {
+
             range = Range.exponential(start.get(), stop.get(), stepCount.get());
+
         } else if (scale == LOGARITHMIC && mode == STEP_SIZE) {
+
             range = Range.geometric(start.get(), stop.get(), stepSize.get());
+
         }
 
         if (range == null) {
