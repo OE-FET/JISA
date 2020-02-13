@@ -94,7 +94,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             AnchorPane canvas = new AnchorPane();
             canvas.setStyle(
-                    "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
+                "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
             canvas.setMouseTransparent(true);
             canvas.getChildren().add(rect);
             canvas.setManaged(false);
@@ -365,7 +365,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
     public void showSaveDialog() {
 
         Fields         save   = new Fields("Save Plot");
-        Field<Integer> format = save.addChoice("Format", "svg", "png");
+        Field<Integer> format = save.addChoice("Format", 1, "svg", "png");
         Field<Integer> width  = save.addIntegerField("Width", 600);
         Field<Integer> height = save.addIntegerField("Height", 400);
         Field<String>  file   = save.addFileSave("Path");
@@ -672,6 +672,22 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
+    public double getXLowerLimit() {
+        return xAxis.getLowerBound();
+    }
+
+    public double getXUpperLimit() {
+        return xAxis.getUpperBound();
+    }
+
+    public double getYLowerLimit() {
+        return yAxis.getLowerBound();
+    }
+
+    public double getYUpperLimit() {
+        return yAxis.getUpperBound();
+    }
+
     /**
      * Sets the bounds on the y-axis.
      *
@@ -695,7 +711,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         GUI.runNow(() -> chart.setLegendVisible(show));
     }
-    
+
     public void setLegendColumns(int num) {
         chart.setLegendColumns(num);
     }
@@ -754,23 +770,53 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     public void savePNG(String path, double w, double h) {
 
-        Util.sleep(500);
+        Plot plot = new Plot(getTitle(), getXLabel(), getYLabel());
 
-        double height = stage.getHeight();
-        double width  = stage.getWidth();
+        for (JISAChart.JISASeries series : chart.getSeries()) {
+
+            if (!chart.getData().contains(series.getXYChartSeries())) {
+                continue;
+            }
+
+            Series copy = plot.createSeries();
+
+            copy.setName(series.getName())
+                .setColour(series.getColour())
+                .setLineDash(series.getLineDash())
+                .setLineWidth(series.getLineWidth())
+                .setMarkerShape(series.getMarkerShape())
+                .setMarkerSize(series.getMarkerSize())
+                .showMarkers(series.isShowingMarkers())
+                .showLine(series.isShowingLine());
+
+            if (series.isFitted()) copy.fit(series.getFitter());
+
+            for (XYChart.Data<Double, Double> point : series.getPoints()) {
+
+                if (point.getExtraValue() instanceof Double) {
+                    copy.addPoint(point.getXValue(), point.getYValue(), (Double) point.getExtraValue());
+                } else {
+                    copy.addPoint(point.getXValue(), point.getYValue());
+                }
+
+            }
+
+        }
+
+        plot.xAxis.setMode(xAxis.getMode());
+        plot.yAxis.setMode(yAxis.getMode());
+        plot.setXLimits(getXLowerLimit(), getXUpperLimit());
+        plot.setYLimits(getYLowerLimit(), getYUpperLimit());
+
+        plot.stage.setHeight(h);
+        plot.stage.setWidth(w);
+        plot.show();
+
+        Util.sleep(250);
 
         GUI.runNow(() -> {
 
-            stage.setWidth(w);
-            stage.setHeight(h);
-
-        });
-
-        Util.sleep(100);
-
-        GUI.runNow(() -> {
-
-            WritableImage image = chart.snapshot(new SnapshotParameters(), null);
+            WritableImage image = plot.chart.snapshot(new SnapshotParameters(), null);
             try {
                 ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", new File(path));
             } catch (IOException e) {
@@ -779,12 +825,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         });
 
-        Util.sleep(100);
-
-        GUI.runNow(() -> {
-            stage.setWidth(width);
-            stage.setHeight(height);
-        });
+        plot.close();
 
     }
 
@@ -960,10 +1001,10 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             SVGElement legendCircle = makeMarker(s.isShowingMarkers() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
             SVGText legendText = new SVGText(
-                    legendX + 15.0 + 5 + 3 + 10,
-                    legendY + (25 * i) + 15.0 + 5,
-                    "beginning",
-                    s.getName()
+                legendX + 15.0 + 5 + 3 + 10,
+                legendY + (25 * i) + 15.0 + 5,
+                "beginning",
+                s.getName()
             );
 
             legendText.setAttribute("font-size", "16px");
@@ -1082,16 +1123,16 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case TRIANGLE:
 
                 marker = new SVGTriangle(x, y, m)
-                        .setStrokeColour(c)
-                        .setFillColour(Color.WHITE)
-                        .setStrokeWidth(2);
+                    .setStrokeColour(c)
+                    .setFillColour(Color.WHITE)
+                    .setStrokeWidth(2);
                 break;
 
             case DASH:
 
                 marker = new SVGLine(x - m, y, x + m, y)
-                        .setStrokeColour(c)
-                        .setStrokeWidth(2);
+                    .setStrokeColour(c)
+                    .setStrokeWidth(2);
                 break;
 
             default:
@@ -1099,18 +1140,18 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case DOT:
 
                 marker = new SVGCircle(x, y, m)
-                        .setStrokeColour(c)
-                        .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
-                        .setStrokeWidth(2);
+                    .setStrokeColour(c)
+                    .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
+                    .setStrokeWidth(2);
                 break;
 
             case SQUARE:
             case DIAMOND:
 
                 marker = new SVGSquare(x, y, m)
-                        .setStrokeColour(c)
-                        .setFillColour(Color.WHITE)
-                        .setStrokeWidth(2);
+                    .setStrokeColour(c)
+                    .setFillColour(Color.WHITE)
+                    .setStrokeWidth(2);
 
                 if (p == Series.Shape.DIAMOND) {
                     marker.setAttribute("transform", "rotate(45 " + x + " " + y + ")");
@@ -1121,9 +1162,9 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case CROSS:
 
                 marker = new SVGCross(x, y, m)
-                        .setStrokeColour(c)
-                        .setFillColour(c)
-                        .setStrokeWidth(1);
+                    .setStrokeColour(c)
+                    .setFillColour(c)
+                    .setStrokeWidth(1);
 
                 break;
 

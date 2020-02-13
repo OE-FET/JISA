@@ -504,11 +504,13 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         }
 
         public MeasureAction copy() {
+
             MeasureAction action = new MeasureAction(name, measurement, before, after);
             action.attributes.putAll(attributes);
             action.getVariables().putAll(getVariables());
             action.resultPath = resultPath;
             return action;
+
         }
 
     }

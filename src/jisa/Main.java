@@ -27,16 +27,6 @@ public class Main {
 
         try {
 
-            RangeInput range = new RangeInput("Test", "V");
-
-            range.show();
-
-            System.in.read();
-
-            System.out.println(range.getRange());
-
-            System.in.read();
-
             Doc doc = new Doc("Help");
 
             doc.addImage(Main.class.getResource("gui/images/jisa.png"))
