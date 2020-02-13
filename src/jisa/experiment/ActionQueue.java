@@ -41,13 +41,14 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
     }
 
-    public void clear() {
+    public synchronized void clear() {
 
         if (isRunning) {
             throw new IllegalStateException("Cannot modify action queue while it is running");
         }
 
-        for (ListListener<Action> listener : queueListeners) queueExecutor.submit(() -> listener.updated(Collections.emptyList(), new LinkedList<>(queue)));
+        List<Action> removed = new LinkedList<>(queue);
+        for (ListListener<Action> listener : queueListeners) queueExecutor.submit(() -> listener.updated(Collections.emptyList(), removed));
 
         queue.clear();
 
