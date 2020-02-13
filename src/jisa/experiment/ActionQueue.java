@@ -17,7 +17,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     private static final ExecutorService              statusExecutor   = Executors.newSingleThreadExecutor();
     private static final ExecutorService              queueExecutor    = Executors.newSingleThreadExecutor();
     private static final ExecutorService              currentExecutor  = Executors.newSingleThreadExecutor();
-    private final        ObservableList<Action>       queue            = FXCollections.observableList(new LinkedList<>());
+    private final        List<Action>                 queue            = new LinkedList<>();
     private final        List<Action>                 oldList          = new LinkedList<>(queue);
     private final        SimpleObjectProperty<Action> current          = new SimpleObjectProperty<>(null);
     private final        List<Listener<Action>>       currentListeners = new LinkedList<>();
@@ -30,22 +30,6 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         current.addListener((o, oldValue, newValue) -> currentExecutor.submit(() -> {
             for (Listener<Action> listener : currentListeners) listener.updated(oldValue, newValue);
         }));
-
-        queue.addListener((InvalidationListener) change -> queueExecutor.submit(this::updateQueueListeners));
-
-    }
-
-    private synchronized void updateQueueListeners() {
-
-        List<Action> added = new LinkedList<>(queue);
-        added.removeAll(oldList);
-        List<Action> removed = new LinkedList<>(oldList);
-        removed.removeAll(queue);
-
-        oldList.clear();
-        oldList.addAll(queue);
-
-        for (ListListener<Action> listener : queueListeners) listener.updated(added, removed);
 
     }
 
@@ -63,6 +47,8 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             throw new IllegalStateException("Cannot modify action queue while it is running");
         }
 
+        for (ListListener<Action> listener : queueListeners) queueExecutor.submit(() -> listener.updated(Collections.emptyList(), new LinkedList<>(queue)));
+
         queue.clear();
 
     }
@@ -72,7 +58,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
      *
      * @param action Action to add to queue
      */
-    public Action addAction(Action action) {
+    public synchronized Action addAction(Action action) {
 
         if (isRunning) {
             throw new IllegalStateException("Cannot modify action queue while it is running");
@@ -80,15 +66,19 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         queue.add(action);
 
+        for (ListListener<Action> listener : queueListeners) queueExecutor.submit(() -> listener.updated(Collections.singletonList(action), Collections.emptyList()));
+
         return action;
 
     }
 
-    public void removeAction(Action action) {
+    public synchronized void removeAction(Action action) {
 
         if (isRunning) {
             throw new IllegalStateException("Cannot modify action queue while it is running");
         }
+
+        for (ListListener<Action> listener : queueListeners) queueExecutor.submit(() -> listener.updated(Collections.emptyList(), Collections.singletonList(action)));
 
         queue.remove(action);
 
@@ -100,7 +90,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
      * @param name  Name of the action
      * @param toRun Code to execute to perform action
      */
-    public Action addAction(String name, SRunnable toRun) {
+    public synchronized Action addAction(String name, SRunnable toRun) {
         return addAction(new Action(name, toRun));
     }
 
@@ -109,11 +99,11 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
      *
      * @param measurement Measurement to run
      */
-    public MeasureAction addMeasurement(String name, Measurement measurement, ARunnable before, ARunnable after) {
+    public synchronized MeasureAction addMeasurement(String name, Measurement measurement, ARunnable before, ARunnable after) {
         return (MeasureAction) addAction(new MeasureAction(name, measurement, before, after));
     }
 
-    public MeasureAction addMeasurement(String name, Measurement measurement) {
+    public synchronized MeasureAction addMeasurement(String name, Measurement measurement) {
         return addMeasurement(name, measurement, a -> {}, a -> {});
     }
 
@@ -122,7 +112,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
      *
      * @param millis Time to wait, in milliseconds
      */
-    public WaitAction addWait(long millis) {
+    public synchronized WaitAction addWait(long millis) {
         return (WaitAction) addAction(new WaitAction(millis));
     }
 
@@ -268,7 +258,6 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
     public interface ListListener<T> {
         void updated(List<T> added, List<T> removed);
-
     }
 
     public static class Action {
