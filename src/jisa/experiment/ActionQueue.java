@@ -5,9 +5,13 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.scene.image.Image;
 import jisa.Util;
 import jisa.control.SRunnable;
+import jisa.gui.GUI;
 
+import java.io.InputStream;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -239,11 +243,29 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     }
 
     public enum Status {
-        NOT_STARTED,
-        RUNNING,
-        INTERRUPTED,
-        COMPLETED,
-        ERROR
+
+        NOT_STARTED("Not Started", "queued"),
+        RUNNING("Running", "progress"),
+        INTERRUPTED("Interrupted", "cancelled"),
+        COMPLETED("Completed", "complete"),
+        ERROR("Error Encountered", "error");
+
+        private final Image  image;
+        private final String text;
+
+        Status(String text, String imageName) {
+            this.text = text;
+            image     = new Image(GUI.class.getResourceAsStream(String.format("images/%s.png", imageName)));
+        }
+
+        public Image getImage() {
+            return image;
+        }
+
+        public String getText() {
+            return text;
+        }
+
     }
 
     public enum Result {
@@ -259,6 +281,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
     public interface ListListener<T> {
         void updated(List<T> added, List<T> removed);
+
     }
 
     public static class Action {

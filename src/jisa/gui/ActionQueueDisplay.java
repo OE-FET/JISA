@@ -57,54 +57,6 @@ public class ActionQueueDisplay extends JFXWindow {
 
     }
 
-    private static Image imageFromStatus(ActionQueue.Status status) {
-
-        switch (status) {
-
-            default:
-            case NOT_STARTED:
-                return new Image(ActionQueueDisplay.class.getResourceAsStream("images/queued.png"));
-
-            case RUNNING:
-                return new Image(ActionQueueDisplay.class.getResourceAsStream("images/progress.png"));
-
-            case INTERRUPTED:
-                return new Image(ActionQueueDisplay.class.getResourceAsStream("images/cancelled.png"));
-
-            case COMPLETED:
-                return new Image(ActionQueueDisplay.class.getResourceAsStream("images/complete.png"));
-
-            case ERROR:
-                return new Image(ActionQueueDisplay.class.getResourceAsStream("images/error.png"));
-
-        }
-
-    }
-
-    private static String stringFromStatus(ActionQueue.Status status) {
-
-        switch (status) {
-
-            default:
-            case NOT_STARTED:
-                return "Not Started";
-
-            case RUNNING:
-                return "Running";
-
-            case INTERRUPTED:
-                return "Interrupted";
-
-            case COMPLETED:
-                return "Completed";
-
-            case ERROR:
-                return "Error Encountered";
-
-        }
-
-    }
-
     private synchronized void add(ActionQueue.Action action) {
         HBox entry = makeItem(action);
         list.getItems().add(entry);
@@ -127,15 +79,15 @@ public class ActionQueueDisplay extends JFXWindow {
         remItem.setOnAction(event -> queue.removeAction(action));
         container.setOnContextMenuRequested(event -> menu.show(container, event.getScreenX(), event.getScreenY()));
 
-        ImageView image  = new ImageView(imageFromStatus(action.getStatus()));
+        ImageView image  = new ImageView(action.getStatus().getImage());
         Label     name   = new Label(action.getName());
-        Label     status = new Label(stringFromStatus(action.getStatus()));
+        Label     status = new Label(action.getStatus().getText());
         name.setFont(Font.font(name.getFont().getName(), FontWeight.BOLD, 16));
 
         action.addStatusListener((old, value) -> GUI.runNow(() -> {
 
-            image.setImage(imageFromStatus(value));
-            status.setText(stringFromStatus(value) + (value == ActionQueue.Status.ERROR ? ": " + action.getException().getMessage() : ""));
+            image.setImage(value.getImage());
+            status.setText(value.getText() + (value == ActionQueue.Status.ERROR ? ": " + action.getException().getMessage() : ""));
 
             if (value == ActionQueue.Status.RUNNING) {
 
@@ -152,8 +104,8 @@ public class ActionQueueDisplay extends JFXWindow {
 
         }));
 
-        image.setImage(imageFromStatus(action.getStatus()));
-        status.setText(stringFromStatus(action.getStatus()) + (action.getStatus() == ActionQueue.Status.ERROR ? ": " + action.getException().getMessage() : ""));
+        image.setImage(action.getStatus().getImage());
+        status.setText(action.getStatus().getText() + (action.getStatus() == ActionQueue.Status.ERROR ? ": " + action.getException().getMessage() : ""));
 
         image.setFitHeight(32);
         image.setFitWidth(32);
@@ -176,13 +128,13 @@ public class ActionQueueDisplay extends JFXWindow {
                 Grid window = new Grid(action.getName(), 1);
                 Doc  doc    = new Doc(action.getName());
 
-                doc.addImage(imageFromStatus(action.getStatus()))
+                doc.addImage(action.getStatus().getImage())
                    .setAlignment(Doc.Align.CENTRE);
 
                 doc.addHeading(action.getName())
                    .setAlignment(Doc.Align.CENTRE);
 
-                doc.addValue("Status", stringFromStatus(action.getStatus()));
+                doc.addValue("Status", action.getStatus().getText());
 
                 if (action.getStatus() == ActionQueue.Status.ERROR) {
                     doc.addText(action.getException().getMessage())
