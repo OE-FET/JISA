@@ -10,7 +10,11 @@
 
     <center>
         <ScrollPane fx:id="scroll" style="-fx-background-color: transparent;" fitToHeight="true" fitToWidth="true">
-            <VBox style="-fx-padding: 15px; -fx-background-color: transparent;" spacing="15" fx:id="list"/>
+            <BorderPane style="-fx-background-color: transparent;" fx:id="container">
+                <center>
+                    <VBox style="-fx-padding: 15px; -fx-background-color: transparent;" spacing="15" fx:id="list"/>
+                </center>
+            </BorderPane>
         </ScrollPane>
     </center>
 

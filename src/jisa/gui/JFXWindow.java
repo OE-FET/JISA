@@ -1,6 +1,8 @@
 package jisa.gui;
 
+import javafx.geometry.Rectangle2D;
 import javafx.scene.image.Image;
+import javafx.stage.Screen;
 import jisa.Util;
 import jisa.control.SRunnable;
 import javafx.fxml.FXMLLoader;
@@ -14,8 +16,10 @@ import java.net.URL;
 
 public class JFXWindow implements Element {
 
-    protected Stage stage;
-    protected Image icon = null;
+    protected Stage  stage;
+    protected Image  icon   = null;
+    private   double width  = -1;
+    private   double height = -1;
 
     /**
      * Creates a GUI window using the specified FXML file.
@@ -83,11 +87,55 @@ public class JFXWindow implements Element {
 
     }
 
+    public void setWindowSize(double width, double height) {
+
+        this.width  = width;
+        this.height = height;
+
+        GUI.runNow(() -> {
+            stage.setWidth(width);
+            stage.setHeight(height);
+        });
+
+    }
+
+    public void autoSizeWindow() {
+
+        this.width = -1;
+        this.height = -1;
+
+        if (stage.isShowing()) {
+            GUI.runNow(() -> stage.sizeToScene());
+        }
+
+    }
+
     /**
      * Shows the window.
      */
     public void show() {
-        GUI.runNow(stage::show);
+
+        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+
+        GUI.runNow(() -> {
+
+            stage.show();
+
+            if (stage.isMaximized()) {
+                return;
+            }
+
+            if (width < 0 && height < 0) {
+                stage.sizeToScene();
+                stage.setHeight(Math.min(stage.getHeight(), bounds.getHeight()));
+                stage.setWidth(Math.min(stage.getWidth(), bounds.getWidth()));
+            } else {
+                stage.setWidth(width);
+                stage.setHeight(height);
+            }
+
+        });
+
     }
 
     /**

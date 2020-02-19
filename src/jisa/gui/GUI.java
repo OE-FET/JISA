@@ -22,9 +22,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -320,6 +318,34 @@ public class GUI extends Application {
         });
 
         return (file.get() == null ? null : file.get().getAbsolutePath());
+
+    }
+
+    /**
+     * Opens a file-select dialogue box for choosing an already existing file to open.
+     *
+     * @return Selected file path, null if cancelled
+     */
+    public static List<String> openFileMultipleSelect() {
+
+        AtomicReference<List<File>> file = new AtomicReference<>();
+
+        GUI.runNow(() -> {
+            FileChooser chooser = new FileChooser();
+            file.set(chooser.showOpenMultipleDialog(new Stage()));
+        });
+
+        List<File> list = file.get();
+
+        if (list == null) {
+            return null;
+        }
+
+        List<String> paths = new LinkedList<>();
+
+        list.forEach(f -> paths.add(f.getAbsolutePath()));
+
+        return paths;
 
     }
 

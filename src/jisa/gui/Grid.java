@@ -386,8 +386,10 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
             bPane = new BorderPane();
 
-            toAdd.getPane().setStyle("-fx-background-color: transparent;");
-            StackPane sPane = new StackPane(toAdd.getPane());
+            Pane addPane = toAdd.getPane();
+
+            addPane.setStyle("-fx-background-color: white;");
+            StackPane sPane = new StackPane(addPane);
             sPane.setMaxHeight(Double.MAX_VALUE);
             sPane.setMaxWidth(Double.MAX_VALUE);
             sPane.setStyle("-fx-background-color: white;");

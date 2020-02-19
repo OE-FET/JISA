@@ -16,23 +16,29 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import jisa.experiment.ActionQueue;
+import jisa.experiment.ActionQueue.Action;
 import jisa.experiment.ResultTable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import static jisa.experiment.ActionQueue.Status.COMPLETED;
+import static jisa.experiment.ActionQueue.Status.ERROR;
 
 public class ActionQueueDisplay extends JFXWindow {
 
     @FXML
-    protected BorderPane                            pane;
+    protected BorderPane                pane;
     @FXML
-    protected ListView<HBox>                        list;
+    protected ListView<HBox>            list;
     @FXML
-    protected ToolBar                               toolBar;
-    private   ActionQueue                           queue;
-    private   Map<ActionQueue.Action, HBox>         listItems = new HashMap<>();
-    private   Map<ActionQueue.Action, ClickHandler> onClick   = new HashMap<>();
-    private   int                                   scrollTo  = 0;
+    protected ToolBar                   toolBar;
+    private   ActionQueue               queue;
+    private   Map<Action, HBox>         listItems = new HashMap<>();
+    private   Map<Action, ClickHandler> onClick   = new HashMap<>();
+    private   int                       scrollTo  = 0;
+    private   DataDisplay               display   = (def, action) -> new Grid(1, def, new Table("Data", action.getData()));
 
     public ActionQueueDisplay(String title, ActionQueue queue) {
 
@@ -46,28 +52,28 @@ public class ActionQueueDisplay extends JFXWindow {
             toolBar.setManaged(show);
         });
 
-        for (ActionQueue.Action action : queue) add(action);
+        for (Action action : queue) add(action);
 
         queue.addQueueListener((added, removed) -> GUI.runNow(() -> {
 
-            for (ActionQueue.Action add : added) add(add);
-            for (ActionQueue.Action rem : removed) remove(rem);
+            for (Action add : added) add(add);
+            for (Action rem : removed) remove(rem);
 
         }));
 
     }
 
-    private synchronized void add(ActionQueue.Action action) {
+    private synchronized void add(Action action) {
         HBox entry = makeItem(action);
         list.getItems().add(entry);
         list.scrollTo(entry);
     }
 
-    private synchronized void remove(ActionQueue.Action action) {
+    private synchronized void remove(Action action) {
         if (listItems.containsKey(action)) list.getItems().remove(listItems.get(action));
     }
 
-    private synchronized HBox makeItem(ActionQueue.Action action) {
+    private synchronized HBox makeItem(Action action) {
 
         HBox container = new HBox();
         container.setSpacing(15);
@@ -141,13 +147,10 @@ public class ActionQueueDisplay extends JFXWindow {
                        .setColour(Colour.RED);
                 }
 
-                ResultTable data = action.getData();
-
-                window.add(doc);
-
-                if (data != null) {
-                    Table table = new Table("Data");
-                    window.add(new Table("Data", data));
+                if (action.getData() != null) {
+                    window.add(display.getDisplay(doc, action));
+                } else {
+                    window.add(doc);
                 }
 
                 (new Thread(window::showAndWait)).start();
@@ -167,8 +170,19 @@ public class ActionQueueDisplay extends JFXWindow {
 
     }
 
-    public void setOnClick(ActionQueue.Action action, ClickHandler onClick) {
+    public void setOnClick(Action action, ClickHandler onClick) {
         this.onClick.put(action, onClick);
+    }
+
+    public void setDataDisplay(DataDisplay display) {
+        this.display = display;
+    }
+
+
+    public interface DataDisplay {
+
+        Element getDisplay(Element defElement, Action action);
+
     }
 
     public jisa.gui.Button addToolbarButton(String name, ClickHandler onClick) {
@@ -261,9 +275,9 @@ public class ActionQueueDisplay extends JFXWindow {
 
     public interface ActionClick {
 
-        void click(ActionQueue.Action action) throws Exception;
+        void click(Action action) throws Exception;
 
-        default void runRegardless(ActionQueue.Action action) {
+        default void runRegardless(Action action) {
             try {
                 click(action);
             } catch (Exception e) {
@@ -271,7 +285,7 @@ public class ActionQueueDisplay extends JFXWindow {
             }
         }
 
-        default void start(ActionQueue.Action action) {
+        default void start(Action action) {
             (new Thread(() -> runRegardless(action))).start();
         }
 

@@ -4,6 +4,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -12,6 +13,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import jisa.Util;
+import jnr.ffi.annotations.In;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -135,6 +137,24 @@ public class Tabs extends JFXWindow implements Element, Container {
         if (tabs.size() == 1) {
             onClick.run();
         }
+
+    }
+
+    public jisa.gui.Separator addSeparator() {
+
+        Separator separator = new Separator();
+        separator.setPadding(new Insets(15, 15, 15, 15));
+
+        GUI.runNow(() -> sidebar.getChildren().add(separator));
+
+        return new jisa.gui.Separator.SeparatorWrapper(separator) {
+
+            @Override
+            public void remove() {
+                GUI.runNow(() -> sidebar.getChildren().remove(separator));
+            }
+
+        };
 
     }
 

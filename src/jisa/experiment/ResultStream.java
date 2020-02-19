@@ -98,7 +98,7 @@ public class ResultStream extends ResultTable {
 
     @Override
     public String getAttribute(String name) {
-        return attributes.getString(name);
+        return attributes.has(name) ? attributes.getString(name) : null;
     }
 
     @Override

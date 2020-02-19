@@ -25,6 +25,7 @@ public class Doc extends JFXWindow {
     public BorderPane pane;
     public ScrollPane scroll;
     public VBox       list;
+    public BorderPane container;
     public ButtonBar  buttonBar;
 
     public Doc(String title) {
@@ -54,6 +55,7 @@ public class Doc extends JFXWindow {
         label.setMaxWidth(Double.MAX_VALUE);
         label.setStyle("-fx-font-size: 2em; -fx-font-weight: bold;");
         label.setWrapText(true);
+        label.setTextFill(Colour.BLACK);
 
         GUI.runNow(() -> list.getChildren().add(label));
 
@@ -109,6 +111,8 @@ public class Doc extends JFXWindow {
         label.setMaxWidth(Double.MAX_VALUE);
         label.setStyle("-fx-font-size: 1.5em; -fx-font-weight: bold");
         label.setWrapText(true);
+        label.setTextFill(Colour.BLACK);
+
         GUI.runNow(() -> list.getChildren().add(label));
 
         return new Heading() {
@@ -161,6 +165,8 @@ public class Doc extends JFXWindow {
         label.setMinHeight(Region.USE_PREF_SIZE);
         label.setMaxWidth(Double.MAX_VALUE);
         label.setWrapText(true);
+        label.setTextFill(Colour.BLACK);
+
         GUI.runNow(() -> list.getChildren().add(label));
 
         return new Paragraph() {
@@ -427,6 +433,10 @@ public class Doc extends JFXWindow {
 
     }
 
+    public Pane getPane() {
+        return container;
+    }
+
     public Value addValue(String name, String initial) {
 
         Label title = new Label(name);
@@ -440,6 +450,9 @@ public class Doc extends JFXWindow {
         container.setSpacing(15);
         HBox.setHgrow(title, Priority.NEVER);
         HBox.setHgrow(value, Priority.ALWAYS);
+
+        title.setTextFill(Colour.BLACK);
+        value.setTextFill(Colour.BLACK);
 
         GUI.runNow(() -> list.getChildren().add(container));
 

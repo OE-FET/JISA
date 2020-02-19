@@ -808,8 +808,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
         plot.setXLimits(getXLowerLimit(), getXUpperLimit());
         plot.setYLimits(getYLowerLimit(), getYUpperLimit());
 
-        plot.stage.setHeight(h);
-        plot.stage.setWidth(w);
+        plot.setWindowSize(w, h);
         plot.show();
 
         Util.sleep(250);
