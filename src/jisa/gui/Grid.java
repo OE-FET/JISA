@@ -529,7 +529,11 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
         if (strip) pane.setPadding(new Insets(0, 0, 0, 0));
 
-        return pane;
+        BorderPane borderPane = new BorderPane();
+        borderPane.setTop(toolBar);
+        borderPane.setCenter(pane);
+
+        return borderPane;
 
     }
 

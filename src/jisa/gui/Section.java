@@ -1,20 +1,52 @@
 package jisa.gui;
 
+import javafx.beans.InvalidationListener;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.control.TitledPane;
+import javafx.scene.control.ToolBar;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 
 /**
  * A collapsible section box that surrounds one GUI element.
  */
 public class Section extends JFXWindow implements NotBordered {
 
-    public Pane       pane;
-    public TitledPane titled;
+    public  Pane       pane;
+    public  TitledPane titled;
+    private Label      title      = new Label();
+    private BorderPane borderPane = new BorderPane();
+    private HBox       toolBar    = new HBox();
 
     public Section(String title, Element element) {
+
         super(title, Section.class.getResource("fxml/Section.fxml"));
+        borderPane.setLeft(this.title);
+        Pane centre = new Pane();
+        centre.setMaxWidth(Double.MAX_VALUE);
+        borderPane.setCenter(centre);
+        borderPane.setRight(toolBar);
+        borderPane.minWidthProperty().bind(titled.widthProperty().subtract(25));
+
+        toolBar.getChildren().addListener((InvalidationListener) observable -> {
+            boolean show = !toolBar.getChildren().isEmpty();
+            toolBar.setVisible(show);
+            toolBar.setManaged(show);
+        });
+
+        toolBar.setVisible(false);
+        toolBar.setManaged(false);
+        toolBar.setPadding(new Insets(0, 10, 0, 10));
+
+        titled.setGraphic(borderPane);
+
         setElement(element);
         setTitle(title);
+
     }
 
     public Section(String title) {
@@ -22,11 +54,11 @@ public class Section extends JFXWindow implements NotBordered {
     }
 
     public void setTitle(String title) {
-        GUI.runNow(() -> titled.setText(title));
+        GUI.runNow(() -> this.title.setText(title));
     }
 
     public String getTitle() {
-        return titled.getText();
+        return title.getText();
     }
 
     /**
@@ -70,6 +102,25 @@ public class Section extends JFXWindow implements NotBordered {
 
     public boolean isExpandable() {
         return titled.isCollapsible();
+    }
+
+    public Button addTitleButton(String text, ClickHandler onClick) {
+
+        javafx.scene.control.Button button = new javafx.scene.control.Button(text);
+        button.setOnAction(event -> onClick.start());
+        button.setPadding(new Insets(1, 5, 1, 5));
+
+        GUI.runNow(() -> toolBar.getChildren().add(button));
+
+        return new Button.ButtonWrapper(button) {
+
+            @Override
+            public void remove() {
+                GUI.runNow(() -> toolBar.getChildren().remove(button));
+            }
+
+        };
+
     }
 
 }

@@ -11,6 +11,7 @@ import jisa.maths.matrices.Matrix;
 import jisa.maths.fits.Fit;
 import jisa.maths.fits.Fitting;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -225,6 +226,20 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
     default Series addPoints(Iterable<Double> x, Iterable<Double> y) {
 
         Util.iterateCombined(x, y, this::addPoint);
+        return this;
+
+    }
+
+    default Series addPoints(Iterable<Double> x, Iterable<Double> y, Iterable<Double> e) {
+
+        Iterator<Double> xI = x.iterator();
+        Iterator<Double> yI = y.iterator();
+        Iterator<Double> eI = e.iterator();
+
+        while (xI.hasNext() && yI.hasNext() && eI.hasNext()) {
+            addPoint(xI.next(), yI.next(), eI.next());
+        }
+
         return this;
 
     }
