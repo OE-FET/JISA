@@ -127,6 +127,9 @@ fun main() {
 }
 ```
 **Python (Jython) - "Screw your traditions, I'm a snake from the future"**
+
+To use in Python, take a look at PyJISA [here](https://github.com/OE-FET/PyJISA).
+
 ```python
 def main():
     
