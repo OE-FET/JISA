@@ -7,6 +7,8 @@ import jisa.visa.RawTCPIPDriver;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -36,8 +38,8 @@ public class LS336 extends VISADevice implements MSMOTC {
     private static final String          TERMINATOR           = "\r\n";
     private              Semaphore       timingControl        = new Semaphore(1);
     private              ExecutorService timingService        = Executors.newFixedThreadPool(1);
-    private              boolean[]       nativeAPID           = {false, false};
-    private              Zoner[]         zoner                = {null, null};
+    private              boolean[]       autoPID              = {false, false};
+    private              PIDZone[][]     zones                = new PIDZone[2][0];
 
     public LS336(Address address) throws IOException, DeviceException {
 
@@ -186,6 +188,32 @@ public class LS336 extends VISADevice implements MSMOTC {
     }
 
     @Override
+    public void useAutoPID(int output, boolean flag) throws DeviceException, IOException {
+        checkOutput(output);
+        autoPID[output] = flag;
+        updateAutoPID(output);
+    }
+
+    @Override
+    public boolean isUsingAutoPID(int output) throws DeviceException {
+        checkOutput(output);
+        return autoPID[output];
+    }
+
+    @Override
+    public List<PIDZone> getAutoPIDZones(int output) throws DeviceException {
+        checkOutput(output);
+        return Arrays.asList(zones[output]);
+    }
+
+    @Override
+    public void setAutoPIDZones(int output, PIDZone... zones) throws IOException, DeviceException {
+        checkOutput(output);
+        this.zones[output] = zones;
+        updateAutoPID(output);
+    }
+
+    @Override
     public void setHeaterRange(int output, double range) throws IOException, DeviceException {
         checkOutput(output);
         write(C_SET_HEATER_RANGE, output + 1, HRange.fromDouble(range).ordinal());
@@ -201,6 +229,7 @@ public class LS336 extends VISADevice implements MSMOTC {
     public void setTargetTemperature(int output, double temperature) throws IOException, DeviceException {
         checkOutput(output);
         write(C_SET_SET_POINT, output + 1, temperature);
+        updateAutoPID(output);
     }
 
     @Override
@@ -239,40 +268,20 @@ public class LS336 extends VISADevice implements MSMOTC {
     }
 
     @Override
-    public boolean isFlowAuto(int output) {
+    public boolean isUsingAutoFlow(int output) {
         Util.errLog.println("WARNING: LakeShore 336 does not control gas flow.");
         return false;
     }
 
     @Override
-    public void setManualHeater(int output, double powerPCT) throws IOException, DeviceException {
+    public void setHeaterPower(int output, double powerPCT) throws IOException, DeviceException {
         checkOutput(output);
         write(C_SET_HEATER, output + 1, powerPCT);
     }
 
     @Override
-    public void setManualFlow(int output, double outputPCT) throws DeviceException {
+    public void setFlow(int output, double outputPCT) throws DeviceException {
         throw new DeviceException("LS336 does not control gas flow.");
-    }
-
-    @Override
-    public Zoner getZoner(int output) {
-        return zoner[output];
-    }
-
-    @Override
-    public void setZoner(int output, Zoner zoner) {
-        this.zoner[output] = zoner;
-    }
-
-    @Override
-    public TC.Zoner getZoner() {
-        return null;
-    }
-
-    @Override
-    public void setZoner(TC.Zoner zoner) {
-
     }
 
     private static class OutMode {

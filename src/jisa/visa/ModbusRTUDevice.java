@@ -195,14 +195,4 @@ public class ModbusRTUDevice implements Instrument {
 
     }
 
-    public void finalize() {
-
-        try {
-            close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-    }
-
 }

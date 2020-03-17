@@ -1,25 +1,16 @@
 package jisa.devices;
 
 import jisa.control.Synch;
-import jisa.Util;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Abstract class to define the standard functionality of temperature controllers
  */
 public interface TC extends TMeter {
-
-    /**
-     * Sets the target temperature of the temperature controller.
-     *
-     * @param temperature Target temperature, in Kelvin
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setTargetTemperature(double temperature) throws IOException, DeviceException;
 
     /**
      * Returns the temperature measured by the controller.
@@ -40,6 +31,16 @@ public interface TC extends TMeter {
      * @throws DeviceException Upon compatibility error
      */
     double getTargetTemperature() throws IOException, DeviceException;
+
+    /**
+     * Sets the target temperature of the temperature controller.
+     *
+     * @param temperature Target temperature, in Kelvin
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    void setTargetTemperature(double temperature) throws IOException, DeviceException;
 
     /**
      * Returns the heater output power percentage.
@@ -77,7 +78,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    void setManualHeater(double powerPCT) throws IOException, DeviceException;
+    void setHeaterPower(double powerPCT) throws IOException, DeviceException;
 
     /**
      * Returns whether the heater is currently operating automatically or manually
@@ -105,7 +106,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    void setManualFlow(double outputPCT) throws IOException, DeviceException;
+    void setFlow(double outputPCT) throws IOException, DeviceException;
 
     /**
      * Returns whether the gas flow is currently controlled automatically or manually
@@ -115,37 +116,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    boolean isFlowAuto() throws IOException, DeviceException;
-
-    /**
-     * Sets the proportional term co-efficient for PID control
-     *
-     * @param value Proportional co-efficient
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setPValue(double value) throws IOException, DeviceException;
-
-    /**
-     * Sets the integral term co-efficient for PID control
-     *
-     * @param value Integral co-efficient
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setIValue(double value) throws IOException, DeviceException;
-
-    /**
-     * Sets the derivative term co-efficient for PID control
-     *
-     * @param value Derivative co-efficient
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setDValue(double value) throws IOException, DeviceException;
+    boolean isUsingAutoFlow() throws IOException, DeviceException;
 
     /**
      * Returns the proportional term co-efficient used for PID control
@@ -158,6 +129,16 @@ public interface TC extends TMeter {
     double getPValue() throws IOException, DeviceException;
 
     /**
+     * Sets the proportional term co-efficient for PID control
+     *
+     * @param value Proportional co-efficient
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    void setPValue(double value) throws IOException, DeviceException;
+
+    /**
      * Returns the integral term co-efficient used for PID control
      *
      * @return Integral co-efficient
@@ -166,6 +147,87 @@ public interface TC extends TMeter {
      * @throws DeviceException Upon compatibility error
      */
     double getIValue() throws IOException, DeviceException;
+
+    /**
+     * Sets the integral term co-efficient for PID control
+     *
+     * @param value Integral co-efficient
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    void setIValue(double value) throws IOException, DeviceException;
+
+    /**
+     * Sets whether auto PID-zoning should be used.
+     *
+     * @param flag Should it be used?
+     */
+    void useAutoPID(boolean flag) throws IOException, DeviceException;
+
+    /**
+     * Returns whether auto PID-zoning is being used currently.
+     *
+     * @return Is it being used?
+     */
+    boolean isUsingAutoPID() throws IOException, DeviceException;
+
+    /**
+     * Returns a list of all PID zones currently set.
+     *
+     * @return List of zones
+     */
+    List<PIDZone> getAutoPIDZones() throws IOException, DeviceException;
+
+    /**
+     * Sets the PID zones to use for auto-zoning.
+     *
+     * @param zones Zones to use
+     */
+    void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException;
+
+    /**
+     * Sets the PID zones to use for auto-zoning.
+     *
+     * @param zones Zones to use
+     */
+    default void setAutoPIDZones(Collection<PIDZone> zones) throws IOException, DeviceException {
+        setAutoPIDZones(zones.toArray(new PIDZone[0]));
+    }
+
+    default void updateAutoPID() throws IOException, DeviceException {
+
+        if (isUsingAutoPID()) {
+
+            double temp = getTargetTemperature();
+
+            for (PIDZone zone : getAutoPIDZones()) {
+
+                if (zone.matches(temp)) {
+                    usePIDZone(zone);
+                    break;
+                }
+
+            }
+
+        }
+
+    }
+
+    default void usePIDZone(PIDZone zone) throws IOException, DeviceException {
+
+        setPValue(zone.getP());
+        setIValue(zone.getI());
+        setDValue(zone.getD());
+        setHeaterRange(zone.getRange());
+
+        if (zone.isAuto()) {
+            useAutoHeater();
+        } else {
+            setHeaterPower(zone.getPower());
+        }
+
+    }
 
     /**
      * Returns the derivative term co-efficient used for PID control
@@ -177,9 +239,19 @@ public interface TC extends TMeter {
      */
     double getDValue() throws IOException, DeviceException;
 
-    void setHeaterRange(double rangePCT) throws IOException, DeviceException;
+    /**
+     * Sets the derivative term co-efficient for PID control
+     *
+     * @param value Derivative co-efficient
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    void setDValue(double value) throws IOException, DeviceException;
 
     double getHeaterRange() throws IOException, DeviceException;
+
+    void setHeaterRange(double rangePCT) throws IOException, DeviceException;
 
     default TMeter asThermometer() {
         return this;
@@ -208,199 +280,6 @@ public interface TC extends TMeter {
 
     }
 
-    Zoner getZoner();
-
-    void setZoner(Zoner zoner);
-
-    /**
-     * Sets the zones to use (ie the look-up table) for auto PID control.
-     *
-     * @param zones Zones to use
-     */
-    default void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
-
-        Zoner zoner = getZoner();
-
-        if (zoner != null && zoner.isRunning()) {
-            zoner.stop();
-            zoner = new Zoner(this, zones);
-            zoner.start();
-            setZoner(zoner);
-        } else {
-            setZoner(new Zoner(this, zones));
-        }
-    }
-
-    /**
-     * Returns an array of PIDZone object representing the zones used for auto PID control.
-     *
-     * @return Zones used
-     */
-    default PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
-
-        if (getZoner() == null) {
-            return new PIDZone[0];
-        } else {
-            return getZoner().getZones();
-        }
-
-    }
-
-    /**
-     * Sets whether the PID values are being automatically controlled using the look-up table defined with setAutoPIDZones().
-     *
-     * @param auto Automatic?
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default void useAutoPID(boolean auto) throws IOException, DeviceException {
-
-        Zoner zoner = getZoner();
-
-        if (auto && zoner == null) {
-            throw new DeviceException("You must set PID zones before using this feature.");
-        }
-
-        if (auto && !zoner.isRunning()) {
-            zoner.start();
-        } else if (zoner != null && zoner.isRunning() && !auto) {
-            zoner.stop();
-        }
-
-    }
-
-    /**
-     * Returns whether auto PID control is currently active or not.
-     *
-     * @return Is PID control auto?
-     */
-    default boolean isUsingAutoPID() throws IOException, DeviceException {
-        Zoner zoner = getZoner();
-        return zoner != null && zoner.isRunning();
-    }
-
-    class Zoner implements Runnable {
-
-        private final PIDZone[] zones;
-        private       PIDZone   currentZone;
-        private       boolean   running = false;
-        private       PIDZone   minZone;
-        private       PIDZone   maxZone;
-        private       Thread    thread;
-        private       TC        tc;
-
-        public Zoner(TC tc, PIDZone[] zones) {
-
-            this.tc = tc;
-            this.zones = zones;
-            currentZone = zones[0];
-            minZone = zones[0];
-            maxZone = zones[0];
-
-            for (PIDZone zone : zones) {
-
-                if (zone.getMinT() < minZone.getMinT()) {
-                    minZone = zone;
-                }
-
-                if (zone.getMaxT() > maxZone.getMaxT()) {
-                    maxZone = zone;
-                }
-
-            }
-
-        }
-
-        public PIDZone[] getZones() {
-            return zones.clone();
-        }
-
-        @Override
-        public void run() {
-
-            try {
-                applyZone(currentZone);
-            } catch (Exception e) {
-                Util.errLog.printf("Error in starting auto-PID control: \"%s\"\n", e.getMessage());
-            }
-
-            while (running) {
-
-                try {
-
-                    double T = tc.getTemperature();
-
-                    if (!currentZone.matches(T)) {
-
-                        boolean found = false;
-                        for (PIDZone zone : zones) {
-                            if (zone.matches(T)) {
-                                currentZone = zone;
-                                found = true;
-                                break;
-                            }
-                        }
-
-                        if (!found) {
-
-                            if (T <= minZone.getMinT()) {
-                                currentZone = minZone;
-                            } else if (T >= maxZone.getMaxT()) {
-                                currentZone = maxZone;
-                            }
-
-                        }
-
-                        applyZone(currentZone);
-
-                    }
-
-                } catch (Exception e) {
-                    Util.errLog.printf("Error in auto-PID control: \"%s\"\n", e.getMessage());
-                }
-
-                if (!running) {
-                    break;
-                }
-
-                Util.sleep(1000);
-            }
-
-        }
-
-        private void applyZone(PIDZone zone) throws IOException, DeviceException {
-
-            if (zone.isAuto()) {
-                tc.useAutoHeater();
-                tc.setHeaterRange(zone.getRange());
-                tc.setPValue(currentZone.getP());
-                tc.setIValue(currentZone.getI());
-                tc.setDValue(currentZone.getD());
-            } else {
-                tc.setHeaterRange(zone.getRange());
-                tc.setManualHeater(currentZone.getPower());
-            }
-
-        }
-
-        public void start() {
-            running = true;
-            thread = new Thread(this);
-            thread.start();
-        }
-
-        public void stop() {
-            running = false;
-            thread.interrupt();
-        }
-
-        public boolean isRunning() {
-            return running;
-        }
-
-    }
-
     class PIDZone {
 
         private final double  minT;
@@ -414,37 +293,37 @@ public interface TC extends TMeter {
 
         public PIDZone(JSONObject data) {
 
-            minT = data.getDouble("minT");
-            maxT = data.getDouble("maxT");
-            P = data.getDouble("P");
-            I = data.getDouble("I");
-            D = data.getDouble("D");
+            minT  = data.getDouble("minT");
+            maxT  = data.getDouble("maxT");
+            P     = data.getDouble("P");
+            I     = data.getDouble("I");
+            D     = data.getDouble("D");
             range = data.getDouble("range");
-            auto = data.getBoolean("auto");
+            auto  = data.getBoolean("auto");
             power = data.getDouble("power");
 
         }
 
         public PIDZone(double minT, double maxT, double P, double I, double D, double range) {
-            this.minT = minT;
-            this.maxT = maxT;
-            this.P = P;
-            this.I = I;
-            this.D = D;
+            this.minT  = minT;
+            this.maxT  = maxT;
+            this.P     = P;
+            this.I     = I;
+            this.D     = D;
             this.range = range;
-            auto = true;
-            power = 0;
+            auto       = true;
+            power      = 0;
         }
 
         public PIDZone(double minT, double maxT, double heaterPower, double range) {
-            this.minT = minT;
-            this.maxT = maxT;
-            P = 0;
-            I = 0;
-            D = 0;
+            this.minT  = minT;
+            this.maxT  = maxT;
+            P          = 0;
+            I          = 0;
+            D          = 0;
             this.range = range;
-            auto = false;
-            power = heaterPower;
+            auto       = false;
+            power      = heaterPower;
         }
 
         public double getMinT() {
