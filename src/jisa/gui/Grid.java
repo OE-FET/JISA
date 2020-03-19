@@ -14,6 +14,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import jisa.control.SRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -169,7 +170,7 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
      *
      * @return Newly created button sub-element object
      */
-    public jisa.gui.Button addToolbarButton(String text, ClickHandler onClick) {
+    public jisa.gui.Button addToolbarButton(String text, SRunnable onClick) {
 
         Button button = new Button();
 
@@ -179,19 +180,7 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
                 border.setTop(toolBar);
             }
             button.setText(text);
-            button.setOnAction(
-                (actionEvent) -> {
-                    Thread t = new Thread(() -> {
-                        try {
-                            onClick.click();
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    });
-                    t.setDaemon(true);
-                    t.start();
-                }
-            );
+            button.setOnAction(event -> onClick.start());
 
             toolBar.getItems().add(button);
         });
@@ -234,21 +223,9 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
             }
 
             @Override
-            public void setOnClick(ClickHandler onClick) {
+            public void setOnClick(SRunnable onClick) {
 
-                GUI.runNow(() -> button.setOnAction(
-                    (actionEvent) -> {
-                        Thread t = new Thread(() -> {
-                            try {
-                                onClick.click();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
-                        t.setDaemon(true);
-                        t.start();
-                    }
-                ));
+                GUI.runNow(() -> button.setOnAction(event -> onClick.start()));
 
             }
 

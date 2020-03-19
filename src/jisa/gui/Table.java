@@ -1,13 +1,16 @@
 package jisa.gui;
 
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import jisa.control.SRunnable;
 import jisa.experiment.Result;
 import jisa.experiment.ResultTable;
 
@@ -17,6 +20,7 @@ public class Table extends JFXWindow implements Element, Clearable {
 
     public TableView  table;
     public BorderPane pane;
+    public ToolBar    toolBar;
 
     /**
      * Creates an empty table.
@@ -24,7 +28,24 @@ public class Table extends JFXWindow implements Element, Clearable {
      * @param title Window title
      */
     public Table(String title) {
+
         super(title, Table.class.getResource("fxml/TableWindow.fxml"));
+
+        GUI.runNow(() -> {
+            toolBar.setVisible(false);
+            toolBar.setManaged(false);
+        });
+
+        toolBar.getItems().addListener((InvalidationListener) observable -> {
+
+            GUI.runNow(() -> {
+                boolean flag = !toolBar.getItems().isEmpty();
+                toolBar.setVisible(flag);
+                toolBar.setManaged(flag);
+            });
+
+        });
+
     }
 
     /**
@@ -124,4 +145,38 @@ public class Table extends JFXWindow implements Element, Clearable {
             table.getItems().clear();
         });
     }
+
+    public Button addToolbarButton(String text, SRunnable onClick) {
+
+        javafx.scene.control.Button button = new javafx.scene.control.Button(text);
+        button.setOnAction(event -> onClick.start());
+        GUI.runNow(() -> toolBar.getItems().add(button));
+
+        return new Button.ButtonWrapper(button) {
+
+            @Override
+            public void remove() {
+                GUI.runNow(() -> toolBar.getItems().remove(button));
+            }
+
+        };
+
+    }
+
+    public Separator addToolbarSeparator() {
+
+        javafx.scene.control.Separator separator = new javafx.scene.control.Separator();
+        GUI.runNow(() -> toolBar.getItems().add(separator));
+
+        return new Separator.SeparatorWrapper(separator) {
+
+            @Override
+            public void remove() {
+                GUI.runNow(() -> toolBar.getItems().remove(separator));
+            }
+
+        };
+
+    }
+
 }

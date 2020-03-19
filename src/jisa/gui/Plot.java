@@ -22,6 +22,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.StringConverter;
 import jisa.Util;
+import jisa.control.SRunnable;
 import jisa.experiment.ResultTable;
 import jisa.gui.svg.*;
 import jisa.maths.fits.Fit;
@@ -119,7 +120,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
             double value = rangeSliderX.getValue() / 100.0;
 
             if (value >= 1.0) {
-                autoXLimits();
+                useAutoXLimits();
             } else {
 
                 double min = Double.POSITIVE_INFINITY;
@@ -315,14 +316,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
             public String getText() { return button.getText(); }
 
             @Override
-            public void setOnClick(ClickHandler onClick) {
-                button.setOnMouseClicked(mouseEvent -> new Thread(() -> {
-                    try {
-                        onClick.click();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }).start());
+            public void setOnClick(SRunnable onClick) {
+                button.setOnMouseClicked(event -> onClick.start());
             }
 
             @Override
@@ -360,6 +355,22 @@ public class Plot extends JFXWindow implements Element, Clearable {
             }
         };
 
+    }
+
+    public void setLegendColumns(int columns) {
+        chart.getChartLegend().setMaxColumns(columns);
+    }
+
+    public void setLegendRows(int rows) {
+        chart.getChartLegend().setMaxRows(rows);
+    }
+
+    public int getLegendColumns() {
+        return chart.getChartLegend().getMaxColumns();
+    }
+
+    public int getLegendRows() {
+        return chart.getChartLegend().getMaxRows();
     }
 
     public void showSaveDialog() {
@@ -445,7 +456,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
      * @param label New x-axis label text
      */
     public void setXLabel(String label) {
-        xAxis.setLabelText(label);
+        GUI.runNow(() -> xAxis.setLabelText(label));
     }
 
     /**
@@ -463,58 +474,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
      * @param label New y-axis label text
      */
     public void setYLabel(String label) {
-        yAxis.setLabelText(label);
-    }
-
-
-    public void setZoomMode() {
-
-        XYChart.Series<Double, Double> series = new XYChart.Series<>();
-
-        final Node                          background = chart.lookup(".chart-plot-background");
-        final SimpleObjectProperty<Point2D> start      = new SimpleObjectProperty<>();
-        final SimpleObjectProperty<Point2D> first      = new SimpleObjectProperty<>();
-
-        chart.setOnMousePressed(event -> {
-            Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-            Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-            start.set(new Point2D(event.getX(), event.getY()));
-            first.set(new Point2D(pointX.getX(), pointY.getY()));
-            rect.setVisible(true);
-            rect.setManaged(true);
-        });
-
-        chart.setOnMouseDragged(event -> {
-
-            final double x = Math.max(0, Math.min(stack.getWidth(), event.getX()));
-            final double y = Math.max(0, Math.min(stack.getHeight(), event.getY()));
-            rect.setX(Math.min(x, start.get().getX()));
-            rect.setY(Math.min(y, start.get().getY()));
-            rect.setWidth(Math.abs(x - start.get().getX()));
-            rect.setHeight(Math.abs(y - start.get().getY()));
-
-        });
-
-        chart.setOnMouseReleased(event -> {
-
-            final Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-            final Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-
-            final double minX = xAxis.getValueForDisplay(Math.min(first.get().getX(), pointX.getX()));
-            final double maxX = xAxis.getValueForDisplay(Math.max(first.get().getX(), pointX.getX()));
-            final double minY = yAxis.getValueForDisplay(Math.min(first.get().getY(), pointY.getY()));
-            final double maxY = yAxis.getValueForDisplay(Math.max(first.get().getY(), pointY.getY()));
-
-            setXLimits(Math.min(minX, maxX), Math.max(minX, maxX));
-            setYLimits(Math.min(minY, maxY), Math.max(minY, maxY));
-
-            rect.setWidth(0);
-            rect.setHeight(0);
-            rect.setVisible(false);
-            rect.setManaged(false);
-
-        });
-
+        GUI.runNow(() -> yAxis.setLabelText(label));
     }
 
     /**
@@ -555,8 +515,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
                     startMax.set(new Point2D(xAxis.getUpperBound(), yAxis.getUpperBound()));
                     start.set(new Point2D(pointX.getX(), pointY.getY()));
                 } else if (event.getClickCount() >= 2) {
-                    autoXLimits();
-                    autoYLimits();
+                    useAutoXLimits();
+                    useAutoYLimits();
                 }
 
             });
@@ -649,10 +609,13 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
-    public void setAutoMode() {
+    /**
+     * Use auto-ranging for both X and Y limits
+     */
+    public void useAutoLimits() {
 
-        autoXLimits();
-        autoYLimits();
+        useAutoXLimits();
+        useAutoYLimits();
 
     }
 
@@ -712,26 +675,10 @@ public class Plot extends JFXWindow implements Element, Clearable {
         GUI.runNow(() -> chart.setLegendVisible(show));
     }
 
-    public void setLegendColumns(int num) {
-        chart.setLegendColumns(num);
-    }
-
-    public void setLegendRows(int num) {
-        chart.setLegendRows(num);
-    }
-
-    public int getLegendColumns() {
-        return chart.getLegendColumns();
-    }
-
-    public int getLegendRows() {
-        return chart.getLegendRows();
-    }
-
     /**
      * Sets the x-axis to automatically choose its bounds.
      */
-    public void autoXLimits() {
+    public void useAutoXLimits() {
         GUI.runNow(() -> {
             xAxis.setMaxRange(Double.POSITIVE_INFINITY);
             xAxis.setAutoRanging(true);
@@ -741,7 +688,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
     /**
      * Sets the y-axis to automatically choose its bounds.
      */
-    public void autoYLimits() {
+    public void useAutoYLimits() {
         GUI.runNow(() -> {
             yAxis.setMaxRange(Double.POSITIVE_INFINITY);
             yAxis.setAutoRanging(true);

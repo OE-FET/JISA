@@ -391,10 +391,6 @@ public class SMUCluster implements MCSMU {
         return null;
     }
 
-    public IVPoint[] doSweep(int channel, Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
-        return devices.get(channel).doSweep(source, values, delay, symmetric, onUpdate);
-    }
-
     public Iterator<SMU> iterator() {
         return devices.iterator();
     }

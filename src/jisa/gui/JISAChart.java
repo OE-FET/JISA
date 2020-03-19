@@ -1,6 +1,9 @@
 package jisa.gui;
 
-import javafx.animation.*;
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -29,7 +32,7 @@ public class JISAChart extends XYChart<Double, Double> {
     private Map<Series, Fitter>    fitters       = new HashMap<>();
     private List<JISASeries>       series        = new LinkedList<>();
     private Plot.Sort              sorting       = Plot.Sort.X_AXIS;
-    private Legend                 legend        = new Legend();
+    private JISALegend             legend        = new JISALegend();
     private double                 minX          = Double.POSITIVE_INFINITY;
     private double                 maxX          = Double.NEGATIVE_INFINITY;
     private double                 minY          = Double.POSITIVE_INFINITY;
@@ -49,30 +52,6 @@ public class JISAChart extends XYChart<Double, Double> {
         setLegendSide(Side.RIGHT);
 
         setData(FXCollections.observableArrayList());
-
-        getData().addListener((ListChangeListener<? super Series<Double, Double>>) c -> {
-
-            while (c.next()) {
-
-                if (c.wasAdded()) {
-
-                    for (Series<Double, Double> added : c.getAddedSubList()) {
-                        seriesAdded(added, getData().size());
-                    }
-
-                }
-
-                if (c.wasRemoved()) {
-
-                    for (Series<Double, Double> added : c.getRemoved()) {
-                        seriesRemoved(added);
-                    }
-
-                }
-
-            }
-
-        });
 
     }
 
@@ -107,7 +86,7 @@ public class JISAChart extends XYChart<Double, Double> {
 
     }
 
-    private Node createSymbol(Series<Double, Double> series, Data<Double, Double> item) {
+    private ChartNode createSymbol(Series<Double, Double> series, Data<Double, Double> item) {
 
         ChartNode symbol;
         if (nodeTemplates.containsKey(series)) {
@@ -126,7 +105,7 @@ public class JISAChart extends XYChart<Double, Double> {
     }
 
     public void updateAxes() {
-        layoutChartChildren(0,0,0,0);
+        layoutChartChildren(0, 0, 0, 0);
     }
 
     @Override
@@ -156,11 +135,7 @@ public class JISAChart extends XYChart<Double, Double> {
     }
 
     @Override
-    protected void seriesAdded(Series<Double, Double> series, int seriesIndex) {
-
-        Path line = new ChartLine();
-        series.setNode(line);
-        getPlotChildren().add(line);
+    protected synchronized void seriesAdded(Series<Double, Double> series, int seriesIndex) {
 
         int i = 0;
         for (Data<Double, Double> data : series.getData()) {
@@ -170,27 +145,26 @@ public class JISAChart extends XYChart<Double, Double> {
     }
 
     @Override
-    protected void updateLegend() {
+    protected synchronized void updateLegend() {
 
         GUI.runNow(() -> {
 
-            legend.getItems().clear();
+            legend.clear();
 
             if (getData() != null) {
 
                 for (int seriesIndex = 0; seriesIndex < getData().size(); seriesIndex++) {
 
-                    Series series = getData().get(seriesIndex);
+                    Series<Double, Double> series = getData().get(seriesIndex);
 
                     if (nodeTemplates.containsKey(series)) {
-                        Legend.LegendItem legendItem = new Legend.LegendItem(series.getName(), nodeTemplates.get(series).clone(true, (ChartLine) series.getNode()));
-                        legend.getItems().add(legendItem);
+                        legend.addItem(series, nodeTemplates.get(series).clone(true, (ChartLine) series.getNode()));
                     }
 
                 }
             }
 
-            if (legend.getItems().size() > 0) {
+            if (legend.getChildren().size() > 0) {
 
                 if (getLegend() == null) {
                     setLegend(legend);
@@ -228,7 +202,7 @@ public class JISAChart extends XYChart<Double, Double> {
             nodeTemplates.remove(series);
             fitters.remove(series);
 
-            updateLegend();
+            legend.removeItem(series);
 
         });
 
@@ -378,28 +352,12 @@ public class JISAChart extends XYChart<Double, Double> {
 
     }
 
-    public Legend getChartLegend() {
+    public JISALegend getChartLegend() {
         return legend;
     }
 
     public List<JISASeries> getSeries() {
         return new ArrayList<>(series);
-    }
-
-    public void setLegendColumns(int num) {
-        GUI.runNow(() -> legend.setPrefColumns(num));
-    }
-
-    public int getLegendColumns() {
-        return legend.getPrefColumns();
-    }
-
-    public void setLegendRows(int num) {
-        GUI.runNow(() -> legend.setPrefRows(num));
-    }
-
-    public int getLegendRows() {
-        return legend.getPrefRows();
     }
 
     public JISASeries createSeries() {
@@ -409,17 +367,20 @@ public class JISAChart extends XYChart<Double, Double> {
 
         GUI.runNow(() -> {
 
-            getData().add(series);
+            Path line = new ChartLine();
+            series.setNode(line);
+            getPlotChildren().add(line);
+
             JISASeries toReturn = new JISASeries(series);
             int        count    = getData().size();
-            toReturn.setColour(jisa.gui.Series.defaultColours[(count - 1) % jisa.gui.Series.defaultColours.length]);
-            toReturn.setName(String.format("Series %d", count));
+            toReturn.setName(String.format("Series %d", count + 1));
+            getData().add(series);
+            toReturn.setColour(jisa.gui.Series.defaultColours[count % jisa.gui.Series.defaultColours.length]);
             this.series.add(toReturn);
             created.set(toReturn);
 
         });
 
-        updateLegend();
         return created.get();
 
     }
@@ -441,7 +402,6 @@ public class JISAChart extends XYChart<Double, Double> {
 
         });
 
-        updateLegend();
         return created.get();
 
     }

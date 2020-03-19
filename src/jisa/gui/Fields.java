@@ -1440,21 +1440,9 @@ public class Fields extends JFXWindow implements Element, Iterable<Field<?>> {
             }
 
             @Override
-            public void setOnClick(ClickHandler onClick) {
+            public void setOnClick(SRunnable onClick) {
 
-                GUI.runNow(() -> button.setOnAction(
-                        (actionEvent) -> {
-                            Thread t = new Thread(() -> {
-                                try {
-                                    onClick.click();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            });
-                            t.setDaemon(true);
-                            t.start();
-                        }
-                ));
+                GUI.runNow(() -> button.setOnAction(event -> onClick.start()));
 
             }
 

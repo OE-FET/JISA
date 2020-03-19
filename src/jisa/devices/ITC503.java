@@ -130,7 +130,7 @@ public class ITC503 extends VISADevice implements MSTC {
     }
 
     @Override
-    public double getGasFlow() throws IOException {
+    public double getFlow() throws IOException {
         return readChannel(GAS_OP);
     }
 
@@ -414,12 +414,12 @@ public class ITC503 extends VISADevice implements MSTC {
                 throw new IOException("Improperly formatted response from ITC503");
             }
 
-            X = Integer.valueOf(match.group(1));
-            A = Integer.valueOf(match.group(2));
-            C = Integer.valueOf(match.group(3));
-            S = Integer.valueOf(match.group(4));
-            H = Integer.valueOf(match.group(5));
-            L = Integer.valueOf(match.group(6));
+            X = Integer.parseInt(match.group(1));
+            A = Integer.parseInt(match.group(2));
+            C = Integer.parseInt(match.group(3));
+            S = Integer.parseInt(match.group(4));
+            H = Integer.parseInt(match.group(5));
+            L = Integer.parseInt(match.group(6));
 
         }
 

@@ -1,14 +1,14 @@
 package jisa.gui;
 
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Scene;
 import javafx.scene.image.Image;
+import javafx.scene.layout.Pane;
 import javafx.stage.Screen;
+import javafx.stage.Stage;
 import jisa.Util;
 import jisa.control.SRunnable;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
-import javafx.stage.Stage;
 import jisa.enums.Icon;
 
 import java.io.IOException;
@@ -101,7 +101,7 @@ public class JFXWindow implements Element {
 
     public void autoSizeWindow() {
 
-        this.width = -1;
+        this.width  = -1;
         this.height = -1;
 
         if (stage.isShowing()) {
@@ -152,6 +152,11 @@ public class JFXWindow implements Element {
         GUI.runNow(stage::close);
     }
 
+    /**
+     * Returns whether the element is currently open in its own window.
+     *
+     * @return Open?
+     */
     public boolean isOpen() {
         return stage.isShowing();
     }
@@ -193,6 +198,10 @@ public class JFXWindow implements Element {
         return stage.getTitle();
     }
 
+    public void setTitle(String title) {
+        GUI.runNow(() -> stage.setTitle(title));
+    }
+
     public void setExitOnClose(boolean close) {
 
         if (close) {
@@ -223,6 +232,10 @@ public class JFXWindow implements Element {
 
     }
 
+    public Image getIcon() {
+        return icon;
+    }
+
     public void setIcon(Icon icon) {
 
         GUI.runNow(() -> {
@@ -247,10 +260,6 @@ public class JFXWindow implements Element {
                 stage.getIcons().clear();
             }
         });
-    }
-
-    public Image getIcon() {
-        return icon;
     }
 
 }

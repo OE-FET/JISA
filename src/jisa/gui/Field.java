@@ -1,6 +1,5 @@
 package jisa.gui;
 
-import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
 
 public interface Field<T> extends SubElement {
@@ -18,6 +17,20 @@ public interface Field<T> extends SubElement {
      * @return Value being displayed
      */
     T get();
+
+    /**
+     * Alias for get() for Kotlin property access.
+     *
+     * @return Value being displayed
+     */
+    default T getValue() { return get(); }
+
+    /**
+     * Alias for set(T value) for Kotlin property access.
+     *
+     * @param value Value to display
+     */
+    default void setValue(T value) { set(value); }
 
     /**
      * Sets the action to perform when the value of this input field is changed.

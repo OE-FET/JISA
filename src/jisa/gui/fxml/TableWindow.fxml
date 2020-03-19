@@ -3,7 +3,12 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.BorderPane?>
 
+<?import javafx.scene.control.ToolBar?>
 <BorderPane fx:id="pane" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1">
+
+    <top>
+        <ToolBar fx:id="toolBar"/>
+    </top>
 
     <center>
 

@@ -1,13 +1,13 @@
 package jisa.devices;
 
-import jisa.addresses.Address;
-import jisa.addresses.IDAddress;
-import jisa.enums.Thermocouple;
-import jisa.visa.NativeDevice;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.ptr.ShortByReference;
+import jisa.addresses.Address;
+import jisa.addresses.IDAddress;
+import jisa.enums.Thermocouple;
+import jisa.visa.NativeDevice;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -42,37 +42,19 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     private final short          handle;
     private final Thermocouple[] types = {
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE
+        Thermocouple.NONE,
+        Thermocouple.NONE,
+        Thermocouple.NONE,
+        Thermocouple.NONE,
+        Thermocouple.NONE,
+        Thermocouple.NONE,
+        Thermocouple.NONE,
+        Thermocouple.NONE,
+        Thermocouple.NONE
     };
 
     private float[] lastValues = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     private long    lastTime   = 0;
-
-    public static List<USBTC08> find() {
-
-        List<USBTC08> devices = new LinkedList<>();
-
-        while (true) {
-
-            try {
-                devices.add(new USBTC08());
-            } catch (Throwable e) {
-                break;
-            }
-
-        }
-
-        return devices;
-
-    }
 
     public USBTC08() throws IOException, DeviceException {
 
@@ -140,6 +122,24 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         this(new IDAddress(serial));
     }
 
+    public static List<USBTC08> find() {
+
+        List<USBTC08> devices = new LinkedList<>();
+
+        while (true) {
+
+            try {
+                devices.add(new USBTC08());
+            } catch (Throwable e) {
+                break;
+            }
+
+        }
+
+        return devices;
+
+    }
+
     public String getSerial() throws DeviceException {
 
         byte[] read   = new byte[256];
@@ -175,6 +175,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         // If zero, then something's gone wrong.
         if (result == 0) {
+            ;
+
             throw new DeviceException(getLastError(handle));
         }
 
@@ -328,86 +330,37 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     protected interface NativeInterface extends Library {
 
+        int   USBTC08_MAX_CHANNELS         = 8;
+        short USBTC08LINE_BATCH_AND_SERIAL = 4;
+        byte  USB_TC08_THERMOCOUPLE_TYPE_B = (byte) 'B';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_E = (byte) 'E';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_J = (byte) 'J';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_K = (byte) 'K';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_N = (byte) 'N';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_R = (byte) 'R';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_S = (byte) 'S';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_T = (byte) 'T';
+        byte  USB_TC08_VOLTAGE_READINGS    = (byte) 'X';
+        byte  USB_TC08_DISABLE_CHANNEL     = (byte) ' ';
 
-        // Method definitions from usbtc08.h C header file
-        // ===============================================
-
-        // C prototype definition :
-        // int16_t (usb_tc08_open_unit) (void);
         short usb_tc08_open_unit();
 
-        // C prototype definition :
-        // int16_t (usb_tc08_close_unit) (int16_t handle);
         short usb_tc08_close_unit(short handle);
 
-        // C prototype definition :
-        // int16_t (usb_tc08_set_mains) (int16_t handle, int16_t sixty_hertz);
         short usb_tc08_set_mains(short handle, short sixty_hertz);
 
-        // C prototype definition :
-        // int16_t (usb_tc08_set_channel) (int16_t handle, int16_t channel, int8_t  tc_type);
         short usb_tc08_set_channel(short handle, short channel, byte tc_type);
 
-        // C prototype definition :
-        // int32_t (usb_tc08_get_minimum_interval_ms) (int16_t handle);
         int usb_tc08_get_minimum_interval_ms(short handle);
 
-        // C prototype definition :
-        // int16_t (usb_tc08_get_formatted_info) (int16_t  handle, int8_t  *unit_info, int16_t  string_length);
         short usb_tc08_get_formatted_info(short handle, byte[] unitInfo, short stringLength);
 
         short usb_tc08_get_unit_info2(short handle, byte[] unitInfo, short stringLength, short line);
 
-        // C prototype definition :
-        // int16_t (usb_tc08_get_single) (int16_t handle, float * temp, int16_t * overflow_flags, int16_t units);
         short usb_tc08_get_single(short handle, Memory temp, ShortByReference overflowFlags, short units);
 
         short usb_tc08_get_last_error(short handle);
 
-        // Constants
-        // =========
-        int USBTC08_MAX_CHANNELS = 8;
-
-        byte USB_TC08_THERMOCOUPLE_TYPE_B = (byte) 'B';
-        byte USB_TC08_THERMOCOUPLE_TYPE_E = (byte) 'E';
-        byte USB_TC08_THERMOCOUPLE_TYPE_J = (byte) 'J';
-        byte USB_TC08_THERMOCOUPLE_TYPE_K = (byte) 'K';
-        byte USB_TC08_THERMOCOUPLE_TYPE_N = (byte) 'N';
-        byte USB_TC08_THERMOCOUPLE_TYPE_R = (byte) 'R';
-        byte USB_TC08_THERMOCOUPLE_TYPE_S = (byte) 'S';
-        byte USB_TC08_THERMOCOUPLE_TYPE_T = (byte) 'T';
-        byte USB_TC08_VOLTAGE_READINGS    = (byte) 'X';
-        byte USB_TC08_DISABLE_CHANNEL     = (byte) ' ';
-
-        short USBTC08LINE_BATCH_AND_SERIAL = 4;
-
-
-        // Enumerations
-        // ============
-
-        enum USBTC08Channels {
-            USBTC08_CHANNEL_CJC,
-            USBTC08_CHANNEL_1,
-            USBTC08_CHANNEL_2,
-            USBTC08_CHANNEL_3,
-            USBTC08_CHANNEL_4,
-            USBTC08_CHANNEL_5,
-            USBTC08_CHANNEL_6,
-            USBTC08_CHANNEL_7,
-            USBTC08_CHANNEL_8
-        }
-
-        enum USBTC08Units {
-            USBTC08_UNITS_CENTIGRADE,
-            USBTC08_UNITS_FAHRENHEIT,
-            USBTC08_UNITS_KELVIN,
-            USBTC08_UNITS_RANKINE
-        }
-
-        enum USBTC08MainsFrequency {
-            USBTC08_FIFTY_HERTZ,
-            USBTC08_SIXTY_HERTZ
-        }
     }
 
 }

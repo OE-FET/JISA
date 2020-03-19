@@ -60,7 +60,7 @@ public interface TC extends TMeter {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    double getGasFlow() throws IOException, DeviceException;
+    double getFlow() throws IOException, DeviceException;
 
     /**
      * Sets the heater to be operated automatically

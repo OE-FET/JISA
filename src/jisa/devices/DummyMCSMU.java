@@ -21,13 +21,6 @@ public class DummyMCSMU implements MCSMU {
     private        double[]  R       = {random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500};
     private static Cleaner   cleaner = Cleaner.create();
 
-    public DummyMCSMU() {
-        cleaner.register(this, () -> {
-            System.out.println("lol");
-            Util.runRegardless(this::close);
-        });
-    }
-
     @Override
     public double getVoltage(int channel) throws DeviceException, IOException {
         return voltage[channel] == null ? getCurrent(channel) * (R[channel] + (1 - 2 * random.nextDouble()) * 0.05 * R[channel]) : voltage[channel];

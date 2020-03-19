@@ -1,5 +1,7 @@
 package jisa.gui;
 
+import jisa.control.SRunnable;
+
 public interface Button extends SubElement {
 
     /**
@@ -49,7 +51,7 @@ public interface Button extends SubElement {
      *
      * @param onClick Lambda
      */
-    void setOnClick(ClickHandler onClick);
+    void setOnClick(SRunnable onClick);
 
 
     /**
@@ -101,7 +103,7 @@ public interface Button extends SubElement {
         }
 
         @Override
-        public void setOnClick(ClickHandler onClick) {
+        public void setOnClick(SRunnable onClick) {
             button.setOnAction(event -> onClick.start());
         }
 
@@ -146,7 +148,7 @@ public interface Button extends SubElement {
         }
 
         @Override
-        public void setOnClick(ClickHandler onClick) {
+        public void setOnClick(SRunnable onClick) {
             button.setOnAction(event -> onClick.start());
         }
 

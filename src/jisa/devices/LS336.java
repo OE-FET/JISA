@@ -245,7 +245,7 @@ public class LS336 extends VISADevice implements MSMOTC {
     }
 
     @Override
-    public double getGasFlow(int output) {
+    public double getFlow(int output) {
         Util.errLog.println("LakeShore 336 does not control gas flow.");
         return 0;
     }

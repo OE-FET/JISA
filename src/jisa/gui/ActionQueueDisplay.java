@@ -15,6 +15,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import jisa.control.SRunnable;
 import jisa.experiment.ActionQueue;
 import jisa.experiment.ActionQueue.Action;
 import jisa.experiment.ResultTable;
@@ -228,7 +229,7 @@ public class ActionQueueDisplay extends JFXWindow {
             }
 
             @Override
-            public void setOnClick(ClickHandler onClick) {
+            public void setOnClick(SRunnable onClick) {
                 button.setOnMouseClicked(event -> onClick.start());
             }
 

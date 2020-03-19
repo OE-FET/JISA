@@ -410,7 +410,7 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    double getGasFlow(int output) throws IOException, DeviceException;
+    double getFlow(int output) throws IOException, DeviceException;
 
     /**
      * Returns the gas flow rate for the default output/control-loop.
@@ -420,8 +420,8 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    default double getGasFlow() throws IOException, DeviceException {
-        return getGasFlow(0);
+    default double getFlow() throws IOException, DeviceException {
+        return getFlow(0);
     }
 
     /**
@@ -676,8 +676,8 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
             }
 
             @Override
-            public double getGasFlow() throws IOException, DeviceException {
-                return MSMOTC.this.getGasFlow(output);
+            public double getFlow() throws IOException, DeviceException {
+                return MSMOTC.this.getFlow(output);
             }
 
             @Override

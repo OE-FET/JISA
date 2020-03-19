@@ -146,7 +146,7 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
-    public double getGasFlow() {
+    public double getFlow() {
         return 0.0;
     }
 

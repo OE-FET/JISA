@@ -23,6 +23,13 @@ public interface Element {
     String getTitle();
 
     /**
+     * Sets the title of the element
+     *
+     * @param title Title of element
+     */
+    void setTitle(String title);
+
+    /**
      * Returns whether this element is currently visible or not.
      *
      * @return Is it visible?
