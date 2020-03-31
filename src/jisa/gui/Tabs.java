@@ -1,213 +1,149 @@
 package jisa.gui;
 
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Separator;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.VBox;
+import javafx.geometry.Side;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import jisa.Util;
-import jnr.ffi.annotations.In;
 
-import java.io.IOException;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
-public class Tabs extends JFXWindow implements Element, Container {
+/**
+ * A GUI container element for displaying multiple other elements as traditional-style tabs.
+ */
+public class Tabs extends JFXWindow implements Container, NotBordered {
 
-    public  BorderPane          pane;
-    public  VBox                sidebar;
-    public  ScrollPane          scrollPane;
-    private String              title;
-    private ArrayList<HBox>     tabs      = new ArrayList<>();
-    private ArrayList<Element>  added     = new ArrayList<>();
-    private ArrayList<Runnable> switchers = new ArrayList<>();
-    private ArrayList<Runnable> reseters  = new ArrayList<>();
+    public  TabPane       pane;
+    private List<Element> elements = new LinkedList<>();
 
-    /**
-     * Creates an element that displays other GUI elements in their own individual tabs.
-     *
-     * @param title Window title
-     * @param toAdd Elements to add
-     *
-     * @throws IOException
-     */
-    public Tabs(String title, Element... toAdd) {
-        super(title, Tabs.class.getResource("fxml/TabWindow.fxml"));
-        this.title = title;
-        addAll(toAdd);
-    }
+    public Tabs(String title) {
 
-    /**
-     * Adds an element as a tab.
-     *
-     * @param element   Element to add
-     */
-    public void add(Element element) {
-
-        HBox  tab  = new HBox();
-        Image icon = element.getIcon();
-
-        tab.setPadding(new Insets(15, 15, 15, 15));
-        tab.setSpacing(15);
-        tab.setAlignment(Pos.CENTER_LEFT);
-
-        Label name = new Label(element.getTitle());
-        name.setTextFill(Color.WHITE);
-
-        ImageView imageView = new ImageView();
-        imageView.maxWidth(25.0);
-        imageView.maxHeight(25.0);
-        imageView.setFitHeight(25.0);
-        imageView.setFitWidth(25.0);
-
-        final Image finalInverted;
-        if (icon != null) {
-            imageView.setImage(icon);
-            imageView.setSmooth(true);
-            imageView.setPreserveRatio(true);
-            finalInverted = Util.invertImage(icon);
-            tab.getChildren().add(imageView);
-        } else {
-            finalInverted = null;
-        }
-
-        tab.getChildren().add(name);
-
-        final Image finalIcon = icon;
-
-        Runnable onReset = () -> {
-
-            tab.setStyle("-fx-background-color: transparent;");
-            tab.setEffect(null);
-            name.setStyle("-fx-text-fill: white;");
-
-            if (finalIcon != null) {
-                imageView.setImage(finalIcon);
-            }
-
-        };
-
-        Runnable onClick = () -> {
-
-            for (Runnable other : reseters) {
-                other.run();
-            }
-
-            tab.setStyle("-fx-background-color: white;");
-            name.setStyle("-fx-text-fill: #4c4c4c;");
-
-            scrollPane.setContent(element.getPane());
-
-            if (finalIcon != null) {
-                imageView.setImage(finalInverted);
-            }
-
-        };
-
-        tab.setOnMouseClicked((ae) -> onClick.run());
-
-        tab.setOnMouseEntered((ae) -> {
-
-            if (!tab.getStyle().equals("-fx-background-color: white;")) {
-                tab.setStyle("-fx-background-color: rgba(255,255,255, 0.3);");
-            }
-
-        });
-
-        tab.setOnMouseExited((ae) -> {
-
-            if (!tab.getStyle().equals("-fx-background-color: white;")) {
-                tab.setStyle("-fx-background-color: transparent;");
-            }
-
-        });
-
-        GUI.runNow(() -> sidebar.getChildren().add(tab));
-        tabs.add(tab);
-        switchers.add(onClick);
-        reseters.add(onReset);
-
-        if (tabs.size() == 1) {
-            onClick.run();
-        }
+        super(title, Tabs.class.getResource("fxml/TabGroup.fxml"));
+        GUI.runNow(() -> pane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE));
 
     }
 
-    public jisa.gui.Separator addSeparator() {
+    public Tabs(String title, Element... elements) {
+        this(title);
+        addAll(elements);
+    }
 
-        Separator separator = new Separator();
-        separator.setPadding(new Insets(15, 15, 15, 15));
+    public Pane getPane() {
+        return new Pane(pane);
+    }
 
-        GUI.runNow(() -> sidebar.getChildren().add(separator));
+    @Override
+    public synchronized void add(Element element) {
 
-        return new jisa.gui.Separator.SeparatorWrapper(separator) {
-
-            @Override
-            public void remove() {
-                GUI.runNow(() -> sidebar.getChildren().remove(separator));
-            }
-
-        };
+        GUI.runNow(() -> {
+            Tab tab = new Tab(element.getTitle(), element.getPane());
+            pane.getTabs().add(tab);
+            elements.add(element);
+        });
 
     }
 
     @Override
-    public void remove(Element element) {
+    public synchronized void remove(Element element) {
 
-        int index = added.indexOf(element);
+        GUI.runNow(() -> {
 
-        if (index > -1) {
+            int index = elements.indexOf(element);
 
-            sidebar.getChildren().remove(tabs.get(index));
-            tabs.remove(index);
-            switchers.remove(index);
-            added.remove(index);
+            if (Util.isBetween(index, 0, pane.getTabs().size() - 1)) {
+                pane.getTabs().remove(index);
+                elements.remove(element);
+            }
 
-        }
+        });
 
     }
 
     @Override
-    public void clear() {
-        sidebar.getChildren().clear();
-        tabs.clear();
-        switchers.clear();
-        added.clear();
+    public synchronized void clear() {
+
+        GUI.runNow(() -> {
+            pane.getTabs().clear();
+            elements.clear();
+        });
+
     }
 
     @Override
     public List<Element> getElements() {
-        return new ArrayList<>(added);
+        return new LinkedList<>(elements);
+    }
+
+    public Side getTabsPosition() {
+        return pane.getSide();
     }
 
     /**
-     * Selects the specified tab.
+     * Sets the side for the tabs to be displayed on.
      *
-     * @param pane Pane to select
+     * @param side LEFT, RIGHT, TOP or BOTTOM
      */
-    public void select(int pane) {
+    public void setTabsPosition(Side side) {
+        GUI.runNow(() -> pane.setSide(side));
+    }
 
-        GUI.runNow(() -> {
-            switchers.get(pane).run();
-        });
+    /**
+     * Sets which tab is selected, by specifying its index.
+     *
+     * @param index Tab index
+     */
+    public void select(int index) {
+        GUI.runNow(() -> pane.getSelectionModel().select(index));
+    }
 
+    /**
+     * Sets which tab is selected, by specifying its corresponding Element object.
+     *
+     * @param select Element to be selected
+     */
+    public void select(Element select) {
+
+        int index = elements.indexOf(select);
+
+        if (Util.isBetween(index, 0, pane.getTabs().size() - 1)) {
+            select(index);
+        }
+
+    }
+
+    /**
+     * Returns the index of the tab currently selected.
+     *
+     * @return Tab index
+     */
+    public int getSelectedIndex() {
+        return pane.getSelectionModel().getSelectedIndex();
+    }
+
+    /**
+     * Returns the element that is currently selected.
+     *
+     * @return Selected element
+     */
+    public Element getSelectedElement() {
+        return elements.get(getSelectedIndex());
     }
 
     @Override
-    public Pane getPane() {
-        return pane;
-    }
+    public Pane getNoBorderPane(boolean stripPadding) {
 
-    @Override
-    public String getTitle() {
-        return title;
-    }
+        BorderPane parent = new BorderPane(pane);
+        parent.setStyle("-fx-background-color: transparent");
+        parent.setBorder(new Border(new BorderStroke(Color.web("#c8c8c8"), BorderStrokeStyle.SOLID, new CornerRadii(0.0), new BorderWidths(1.0))));
 
+        if (stripPadding) {
+            parent.setPadding(new Insets(0,0,0,0));
+        }
+
+        return parent;
+
+    }
 }

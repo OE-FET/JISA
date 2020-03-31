@@ -110,7 +110,7 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
-    public void setTemperatureRange(double range) throws IOException, DeviceException {
+    public void setTemperatureRange(double range) throws IOException {
 
         if (range < 100) {
             decPlaces.set(DEC_PLACES_2);
@@ -120,8 +120,6 @@ public class ET2408 extends ModbusRTUDevice implements TC {
             decPlaces.set(DEC_PLACES_0);
         }
 
-        updateAutoPID();
-
     }
 
     @Override
@@ -130,8 +128,11 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
-    public void setTargetTemperature(double temperature) throws IOException {
+    public void setTargetTemperature(double temperature) throws IOException, DeviceException {
+
         setPoint.set((int) (temperature * getScale()));
+        updateAutoPID();
+
     }
 
     @Override
@@ -141,8 +142,10 @@ public class ET2408 extends ModbusRTUDevice implements TC {
 
     @Override
     public void setHeaterPower(double powerPCT) throws IOException {
+
         manual.set(1);
         output.set((int) (powerPCT * 10.0));
+
     }
 
     @Override
