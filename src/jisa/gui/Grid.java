@@ -348,7 +348,7 @@ public class Grid extends JFXWindow implements Element, Container, NotBordered {
 
     }
 
-    protected Pane makePane(Element toAdd) {
+    public static Pane makePane(Element toAdd) {
         Pane bPane;
 
         if (toAdd instanceof NotBordered) {

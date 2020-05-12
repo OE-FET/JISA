@@ -5,7 +5,7 @@ import jisa.addresses.Address;
 import jisa.devices.Instrument;
 
 import java.io.IOException;
-import java.lang.ref.Cleaner;
+import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -13,6 +13,40 @@ import java.util.List;
  * Generic instrument encapsulation via VISA
  */
 public class VISADevice implements Instrument {
+
+    public final static int    DEFAULT_TIMEOUT = 13;
+    public final static int    DEFAULT_EOI     = 1;
+    public final static int    DEFAULT_EOS     = 0;
+    public final static int    EOS_RETURN      = 5130;
+    public final static int    LF_TERMINATOR   = 0x0A;
+    public final static int    CR_TERMINATOR   = 0x0D;
+    public final static int    CRLF_TERMINATOR = 0x0D0A;
+    public final static String C_IDN           = "*IDN?";
+
+    private final static List<WeakReference<VISADevice>> opened = new LinkedList<>();
+
+    static {
+
+        /*
+         * Close any surviving connections when the JVM shuts down.
+         */
+        Util.addShutdownHook(() -> {
+
+            for (WeakReference<VISADevice> reference : opened) {
+
+                VISADevice device = reference.get();
+                if (device != null) {
+                    try {
+                        device.close();
+                    } catch (Exception ignored) {
+                    }
+                }
+
+            }
+
+        });
+
+    }
 
     private Connection   connection;
     private Address      address;
@@ -23,15 +57,6 @@ public class VISADevice implements Instrument {
     private int          readBufferSize = 1024;
     private int          retryCount     = 3;
     private int          timeout        = 2000;
-
-    public final static  int     DEFAULT_TIMEOUT = 13;
-    public final static  int     DEFAULT_EOI     = 1;
-    public final static  int     DEFAULT_EOS     = 0;
-    public final static  int     EOS_RETURN      = 5130;
-    public final static  int     LF_TERMINATOR   = 0x0A;
-    public final static  int     CR_TERMINATOR   = 0x0D;
-    public final static  int     CRLF_TERMINATOR = 0x0D0A;
-    public final static  String  C_IDN           = "*IDN?";
 
     public VISADevice(Address address) throws IOException {
 
@@ -59,7 +84,8 @@ public class VISADevice implements Instrument {
             throw new IOException(e.getMessage());
         }
 
-        Util.addShutdownHook(this::close);
+        // Keep a weak reference to this
+        opened.add(new WeakReference<>(this));
 
     }
 
@@ -70,7 +96,7 @@ public class VISADevice implements Instrument {
      *
      * @throws IOException Upon communications error
      */
-    public void clearRead() throws IOException {
+    public void clearReadBuffer() throws IOException {
 
         try {
             connection.setTMO(250);
@@ -138,7 +164,7 @@ public class VISADevice implements Instrument {
      *
      * @throws IOException Upon communications error
      */
-    public void setReadTerminationCharacter(long character) throws IOException {
+    public void setReadTerminator(long character) throws IOException {
 
         try {
             connection.setEOS(character);
@@ -155,7 +181,7 @@ public class VISADevice implements Instrument {
      *
      * @throws IOException Upon communications error
      */
-    public void setReadTerminationCharacter(String character) throws IOException {
+    public void setReadTerminator(String character) throws IOException {
 
         try {
             connection.setEOS(character);
@@ -167,10 +193,6 @@ public class VISADevice implements Instrument {
 
     public void addAutoRemove(String phrase) {
         toRemove.add(phrase);
-    }
-
-    public void setRemoveTerminator(String toRemove) {
-        addAutoRemove(toRemove);
     }
 
     /**
@@ -210,7 +232,7 @@ public class VISADevice implements Instrument {
      *
      * @param term The character to use (eg "\n" or "\r")
      */
-    public void setTerminator(String term) {
+    public void setWriteTerminator(String term) {
         terminator = term;
     }
 

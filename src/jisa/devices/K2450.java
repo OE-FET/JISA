@@ -21,7 +21,7 @@ public class K2450 extends KeithleySCPI {
             throw new DeviceException("Instrument at address \"%s\" is not a Keithley 2450.", address.toString());
         }
 
-        setRemoveTerminator("\n");
+        addAutoRemove("\n");
 
     }
 

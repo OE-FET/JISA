@@ -118,11 +118,11 @@ public class IPS120 extends VISADevice {
 
         super(address);
         setEOI(false);
-        setTerminator(TERMINATOR);
+        setWriteTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);
-        setReadTerminationCharacter(EOS_RETURN);
+        setReadTerminator(EOS_RETURN);
 
-        clearRead();
+        clearReadBuffer();
 
         setMode(Mode.REMOTE_UNLOCKED);
 

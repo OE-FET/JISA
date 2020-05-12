@@ -64,11 +64,11 @@ public class ITC503 extends VISADevice implements MSTC {
 
         super(address);
         setEOI(false);
-        setTerminator(TERMINATOR);
+        setWriteTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);
-        setReadTerminationCharacter(EOS_RETURN);
+        setReadTerminator(EOS_RETURN);
 
-        clearRead();
+        clearReadBuffer();
 
         try {
             String idn = query("V");
@@ -82,7 +82,7 @@ public class ITC503 extends VISADevice implements MSTC {
         setMode(Mode.REMOTE_UNLOCKED);
         write(C_SET_AUTO_PID, 0);
 
-        clearRead();
+        clearReadBuffer();
 
     }
 
@@ -95,7 +95,7 @@ public class ITC503 extends VISADevice implements MSTC {
             String reply = query(C_READ, channel);
             return Double.parseDouble(reply.substring(1));
         } catch (Exception e) {
-            clearRead();
+            clearReadBuffer();
             String reply = query(C_READ, channel);
             return Double.parseDouble(reply.substring(1));
         }

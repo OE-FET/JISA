@@ -42,15 +42,15 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     private final short          handle;
     private final Thermocouple[] types = {
-        Thermocouple.NONE,
-        Thermocouple.NONE,
-        Thermocouple.NONE,
-        Thermocouple.NONE,
-        Thermocouple.NONE,
-        Thermocouple.NONE,
-        Thermocouple.NONE,
-        Thermocouple.NONE,
-        Thermocouple.NONE
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE,
+            Thermocouple.NONE
     };
 
     private float[] lastValues = {0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -59,7 +59,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     public USBTC08() throws IOException, DeviceException {
 
         // Load native library
-        super(LIBRARY_NAME, LIBRARY_CLASS, INSTANCE);
+        super(LIBRARY_NAME, INSTANCE);
 
         if (INSTANCE == null) {
             throw new IOException("Error loading usbtc08 library!");
@@ -80,7 +80,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     public USBTC08(Address address) throws IOException, DeviceException {
 
         // Load native library
-        super(LIBRARY_NAME, LIBRARY_CLASS, INSTANCE);
+        super(LIBRARY_NAME, INSTANCE);
 
         if (address.toIDAddress() == null) {
             throw new DeviceException("This driver requires a serial number address.");

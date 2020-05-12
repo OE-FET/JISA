@@ -190,7 +190,7 @@ public class SR560 extends VISADevice implements VPreAmp {
 
         setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.TWO, Connection.Flow.NONE);
 
-        setTerminator(TERMINATOR);
+        setWriteTerminator(TERMINATOR);
 
         // Tell device to listen
         write(C_LISTEN);

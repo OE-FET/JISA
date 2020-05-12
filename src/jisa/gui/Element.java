@@ -15,6 +15,10 @@ public interface Element {
      */
     Pane getPane();
 
+    default Pane getBorderedPane() {
+        return Grid.makePane(this);
+    }
+
     /**
      * Returns the title of the element.
      *

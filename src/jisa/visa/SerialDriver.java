@@ -61,7 +61,7 @@ public class SerialDriver implements Driver {
 
     }
 
-    public class SerialConnection implements Connection {
+    public static class SerialConnection implements Connection {
 
         private SerialPort port;
         private int        tmo;

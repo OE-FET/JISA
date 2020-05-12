@@ -7,7 +7,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -18,28 +17,23 @@ import javafx.scene.text.FontWeight;
 import jisa.control.SRunnable;
 import jisa.experiment.ActionQueue;
 import jisa.experiment.ActionQueue.Action;
-import jisa.experiment.ResultTable;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-
-import static jisa.experiment.ActionQueue.Status.COMPLETED;
-import static jisa.experiment.ActionQueue.Status.ERROR;
 
 public class ActionQueueDisplay extends JFXWindow {
 
     @FXML
-    protected BorderPane                pane;
+    protected BorderPane        pane;
     @FXML
-    protected ListView<HBox>            list;
+    protected ListView<HBox>    list;
     @FXML
-    protected ToolBar                   toolBar;
-    private   ActionQueue               queue;
-    private   Map<Action, HBox>         listItems = new HashMap<>();
-    private   Map<Action, ClickHandler> onClick   = new HashMap<>();
-    private   int                       scrollTo  = 0;
-    private   DataDisplay               display   = (def, action) -> new Grid(1, def, new Table("Data", action.getData()));
+    protected ToolBar           toolBar;
+    private   ActionQueue       queue;
+    private   Map<Action, HBox> listItems     = new HashMap<>();
+    private   int               scrollTo      = 0;
+    private   ActionRunnable    onClick       = null;
+    private   ActionRunnable    onDoubleClick = null;
 
     public ActionQueueDisplay(String title, ActionQueue queue) {
 
@@ -130,36 +124,14 @@ public class ActionQueueDisplay extends JFXWindow {
 
         container.setOnMouseClicked(event -> {
 
-            if (event.getClickCount() >= 2) {
+            if (event.getClickCount() >= 2 && onDoubleClick != null) {
 
-                Grid window = new Grid(action.getName(), 1);
-                Doc  doc    = new Doc(action.getName());
-
-                doc.addImage(action.getStatus().getImage())
-                   .setAlignment(Doc.Align.CENTRE);
-
-                doc.addHeading(action.getName())
-                   .setAlignment(Doc.Align.CENTRE);
-
-                doc.addValue("Status", action.getStatus().getText());
-
-                if (action.getStatus() == ActionQueue.Status.ERROR) {
-                    doc.addText(action.getException().getMessage())
-                       .setColour(Colour.RED);
-                }
-
-                if (action.getData() != null) {
-                    window.add(display.getDisplay(doc, action));
-                } else {
-                    window.add(doc);
-                }
-
-                (new Thread(window::showAndWait)).start();
+                onDoubleClick.start(action);
 
 
-            } else if (onClick.containsKey(action)) {
+            } else if (onClick != null) {
 
-                onClick.get(action).start();
+                onClick.start(action);
 
             }
 
@@ -171,19 +143,12 @@ public class ActionQueueDisplay extends JFXWindow {
 
     }
 
-    public void setOnClick(Action action, ClickHandler onClick) {
-        this.onClick.put(action, onClick);
+    public void setOnClick(ActionRunnable onClick) {
+        this.onClick = onClick;
     }
 
-    public void setDataDisplay(DataDisplay display) {
-        this.display = display;
-    }
-
-
-    public interface DataDisplay {
-
-        Element getDisplay(Element defElement, Action action);
-
+    public void setOnDoubleClick(ActionRunnable onDoubleClick) {
+        this.onDoubleClick = onDoubleClick;
     }
 
     public jisa.gui.Button addToolbarButton(String name, ClickHandler onClick) {
@@ -271,6 +236,24 @@ public class ActionQueueDisplay extends JFXWindow {
             }
 
         };
+
+    }
+
+    public interface ActionRunnable {
+
+        void run(Action action) throws Exception;
+
+        default void runRegardless(Action action) {
+            try {
+                run(action);
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+        }
+
+        default void start(Action action) {
+            (new Thread(() -> runRegardless(action))).start();
+        }
 
     }
 

@@ -1,6 +1,5 @@
 package jisa.devices;
 
-import jisa.Util;
 import jisa.addresses.Address;
 import jisa.control.*;
 import jisa.enums.AMode;
@@ -65,8 +64,8 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
 
         super(address);
 
-        setTerminator("\r");
-        setReadTerminationCharacter("\r");
+        setWriteTerminator("\r");
+        setReadTerminator("\r");
 
         write(C_RESET);
         write(C_FLEX);

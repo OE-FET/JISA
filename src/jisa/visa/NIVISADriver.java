@@ -1,14 +1,14 @@
 package jisa.visa;
 
 import com.sun.jna.Memory;
+import com.sun.jna.Native;
+import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.NativeLongByReference;
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.SerialAddress;
 import jisa.addresses.StrAddress;
-import jisa.Util;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
-import com.sun.jna.ptr.NativeLongByReference;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -20,29 +20,34 @@ import static jisa.visa.VISANativeInterface.*;
 
 public class NIVISADriver implements Driver {
 
-   private static       VISANativeInterface libStatic;
-   private static final String              OS_NAME          = System.getProperty("os.name").toLowerCase();
-   private static       String              libName;
-   private static final String              responseEncoding = "UTF8";
-   private static final long                VISA_ERROR       = 0x7FFFFFFF;
-   private static final int                 _VI_ERROR        = -2147483648;
-   private static final int                 VI_SUCCESS       = 0;
-   private static final int                 VI_NULL          = 0;
-   private static final int                 VI_TRUE          = 1;
-   private static final int                 VI_FALSE         = 0;
-   private static       NativeLong          visaResourceManagerHandleStatic;
+    private static final String              OS_NAME          = System.getProperty("os.name").toLowerCase();
+    private static final String              responseEncoding = "UTF8";
+    private static final long                VISA_ERROR       = 0x7FFFFFFF;
+    private static final int                 _VI_ERROR        = -2147483648;
+    private static final int                 VI_SUCCESS       = 0;
+    private static final int                 VI_NULL          = 0;
+    private static final int                 VI_TRUE          = 1;
+    private static final int                 VI_FALSE         = 0;
+    private static       VISANativeInterface libStatic;
+    private static       String              libName;
+    private static       NativeLong          visaResourceManagerHandleStatic;
 
-   protected VISANativeInterface lib;
-   protected NativeLong visaResourceManagerHandle;
+    protected VISANativeInterface lib;
+    protected NativeLong          visaResourceManagerHandle;
 
-   public static void init() throws VISAException {
+    public NIVISADriver() {
+        lib                       = NIVISADriver.libStatic;
+        visaResourceManagerHandle = NIVISADriver.visaResourceManagerHandleStatic;
+    }
+
+    public static void init() throws VISAException {
 
         try {
             if (OS_NAME.contains("win")) {
-                libName = "nivisa64";
+                libName   = "nivisa64";
                 libStatic = Native.loadLibrary(NIVISADriver.libName, VISANativeInterface.class);
             } else if (OS_NAME.contains("linux") || OS_NAME.contains("mac")) {
-                libName = "visa";
+                libName   = "visa";
                 libStatic = Native.loadLibrary(NIVISADriver.libName, VISANativeInterface.class);
             } else {
                 throw new VISAException("Platform not yet supported!");
@@ -62,11 +67,6 @@ public class NIVISADriver implements Driver {
             throw new VISAException("Could not get resource manager");
         }
 
-    }
-
-    public NIVISADriver() {
-       lib = NIVISADriver.libStatic;
-       visaResourceManagerHandle = NIVISADriver.visaResourceManagerHandleStatic;
     }
 
     /**
@@ -123,6 +123,7 @@ public class NIVISADriver implements Driver {
         if (pViString == null) {
             throw new VISAException("Error encoding address to ByteBuffer.");
         }
+
         NativeLong status = lib.viOpen(
                 visaResourceManagerHandle,
                 pViString,         // byte buffer for instrument string
@@ -132,7 +133,9 @@ public class NIVISADriver implements Driver {
         );
 
         if (status.longValue() == VI_SUCCESS) {
+
             return new VISAConnection(pViInstrument.getValue());
+
         } else {
 
             switch (status.intValue()) {
@@ -168,10 +171,10 @@ public class NIVISADriver implements Driver {
 
         NativeLong status = lib.viOpen(
                 visaResourceManagerHandle,
-                pViString,         // byte buffer for instrument string
-                new NativeLong(0), // access mode (locking or not). 0:Use Visa default
-                new NativeLong(0), // timeout, only when access mode equals locking
-                pViInstrument      // pointer to instrument object
+                pViString,
+                new NativeLong(0),
+                new NativeLong(0),
+                pViInstrument
         );
 
         if (status.longValue() == VI_SUCCESS) {
@@ -206,6 +209,7 @@ public class NIVISADriver implements Driver {
                     VISAConnection con         = (VISAConnection) open(found);
                     String         desc        = con.getAttributeString(VI_ATTR_INTF_INST_NAME);
                     Matcher        portMatcher = dfind.matcher(desc);
+
                     if (portMatcher.find()) {
                         String port = portMatcher.group(0);
                         if (port.trim().equals(address.getPort().trim())) {
@@ -221,6 +225,99 @@ public class NIVISADriver implements Driver {
 
         }
 
+    }
+
+    @Override
+    public StrAddress[] search() throws VISAException {
+        return search(true);
+    }
+
+    @Override
+    public boolean worksWith(Address address) {
+
+        switch (address.getType()) {
+
+            case ID:
+            case MODBUS:
+                return false;
+
+            default:
+                return true;
+
+        }
+
+    }
+
+    public StrAddress[] search(boolean changeSerial) throws VISAException {
+
+        // VISA RegEx for "Anything" (should be .* but they seem to use their own standard)
+        ByteBuffer            expr       = stringToByteBuffer("?*");
+        ByteBuffer            desc       = ByteBuffer.allocate(1024);
+        NativeLongByReference listHandle = new NativeLongByReference();
+        NativeLongByReference listCount  = new NativeLongByReference();
+
+        // Perform the native call
+        NativeLong status = lib.viFindRsrc(
+                visaResourceManagerHandle,
+                expr,
+                listHandle,
+                listCount,
+                desc
+        );
+
+        if (status.longValue() == VI_ERROR_RSRC_NFOUND) {
+            lib.viClose(listHandle.getValue());
+            return new StrAddress[0];
+        }
+
+        if (status.longValue() != VI_SUCCESS) {
+            lib.viClose(listHandle.getValue());
+            throw new VISAException("Error searching for devices.");
+        }
+
+        int                   count     = listCount.getValue().intValue();
+        ArrayList<StrAddress> addresses = new ArrayList<>();
+        NativeLong            handle    = listHandle.getValue();
+        String                address;
+        Pattern               dfind     = Pattern.compile("(COM([0-9]*))|(/dev/tty((S)|(USB))([0-9]*))");
+        do {
+
+            try {
+                address = new String(desc.array(), 0, 1024, responseEncoding);
+            } catch (UnsupportedEncodingException e) {
+                throw new VISAException("Unable to encode address!");
+            }
+
+            StrAddress strAddress = new StrAddress(address);
+
+            if (changeSerial && address.contains("ASRL")) {
+
+                try {
+
+                    VISAConnection c    = (VISAConnection) open(strAddress);
+                    String         intf = c.getAttributeString(VI_ATTR_INTF_INST_NAME);
+                    c.close();
+                    Matcher matcher = dfind.matcher(intf);
+
+                    if (matcher.find()) {
+                        String port = matcher.group(0);
+                        strAddress = new StrAddress(String.format("ASRL::%s::INSTR", port.trim()));
+                    }
+
+                } catch (Exception ignored) {
+                }
+            }
+
+            addresses.add(strAddress);
+
+            desc = ByteBuffer.allocate(1024);
+
+        } while (lib.viFindNext(handle, desc).longValue() == VI_SUCCESS);
+
+
+        lib.viClose(handle);
+
+        return addresses.toArray(new StrAddress[0]);
     }
 
     public class VISAConnection implements Connection {
@@ -424,99 +521,6 @@ public class NIVISADriver implements Driver {
 
         }
 
-    }
-
-    @Override
-    public StrAddress[] search() throws VISAException {
-        return search(true);
-    }
-
-    @Override
-    public boolean worksWith(Address address) {
-
-        switch (address.getType()) {
-
-            case ID:
-            case MODBUS:
-                return false;
-
-            default:
-                return true;
-
-        }
-
-    }
-
-    public StrAddress[] search(boolean changeSerial) throws VISAException {
-
-        // VISA RegEx for "Anything" (should be .* but they seem to use their own standard)
-        ByteBuffer            expr       = stringToByteBuffer("?*");
-        ByteBuffer            desc       = ByteBuffer.allocate(1024);
-        NativeLongByReference listHandle = new NativeLongByReference();
-        NativeLongByReference listCount  = new NativeLongByReference();
-
-        // Perform the native call
-        NativeLong status = lib.viFindRsrc(
-                visaResourceManagerHandle,
-                expr,
-                listHandle,
-                listCount,
-                desc
-        );
-
-        if (status.longValue() == VI_ERROR_RSRC_NFOUND) {
-            lib.viClose(listHandle.getValue());
-            return new StrAddress[0];
-        }
-
-        if (status.longValue() != VI_SUCCESS) {
-            lib.viClose(listHandle.getValue());
-            throw new VISAException("Error searching for devices.");
-        }
-
-        int                   count     = listCount.getValue().intValue();
-        ArrayList<StrAddress> addresses = new ArrayList<>();
-        NativeLong            handle    = listHandle.getValue();
-        String                address;
-        Pattern               dfind     = Pattern.compile("(COM([0-9]*))|(/dev/tty((S)|(USB))([0-9]*))");
-        do {
-
-            try {
-                address = new String(desc.array(), 0, 1024, responseEncoding);
-            } catch (UnsupportedEncodingException e) {
-                throw new VISAException("Unable to encode address!");
-            }
-
-            StrAddress strAddress = new StrAddress(address);
-
-            if (changeSerial && address.contains("ASRL")) {
-
-                try {
-
-                    VISAConnection c    = (VISAConnection) open(strAddress);
-                    String         intf = c.getAttributeString(VI_ATTR_INTF_INST_NAME);
-                    c.close();
-                    Matcher matcher = dfind.matcher(intf);
-
-                    if (matcher.find()) {
-                        String port = matcher.group(0);
-                        strAddress = new StrAddress(String.format("ASRL::%s::INSTR", port.trim()));
-                    }
-
-                } catch (Exception ignored) {
-                }
-            }
-
-            addresses.add(strAddress);
-
-            desc = ByteBuffer.allocate(1024);
-
-        } while (lib.viFindNext(handle, desc).longValue() == VI_SUCCESS);
-
-
-        lib.viClose(handle);
-
-        return addresses.toArray(new StrAddress[0]);
     }
 
 }

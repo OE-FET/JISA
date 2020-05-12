@@ -120,7 +120,7 @@ public class K236 extends VISADevice implements SMU {
     public K236(Address address) throws IOException, DeviceException {
 
         super(address);
-        setTerminator(C_TRIGGER + C_EXECUTE);
+        setWriteTerminator(C_TRIGGER + C_EXECUTE);
         write(C_RESET);
         write(C_NO_TERM);
         turnOff();

@@ -12,13 +12,17 @@ public class ADRelay extends VISADevice implements MSwitch {
     private final int NUM_CHANNELS;
 
     public ADRelay(Address address) throws IOException, DeviceException {
-        super(address);
-        setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
-        setReadTerminationCharacter(LF_TERMINATOR);
-        setRemoveTerminator("\r\n");
-        setTerminator("\n");
 
-        Util.sleep(1500);
+        super(address);
+
+        setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
+
+        setReadTerminator(LF_TERMINATOR);
+        setWriteTerminator("\n");
+        addAutoRemove("\r");
+        addAutoRemove("\n");
+
+        Util.sleep(1500); // Need to wait for Arduino to initialise serial routines.
 
         String idn = getIDN().trim();
 
