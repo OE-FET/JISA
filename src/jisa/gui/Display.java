@@ -1,16 +1,12 @@
 package jisa.gui;
 
-import javafx.beans.binding.DoubleBinding;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
 
-import javax.print.DocFlavor;
-
-public class Display extends JFXWindow {
+public class Display extends JFXElement {
 
     @FXML
     protected TableView<Parameter> table;

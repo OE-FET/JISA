@@ -8,7 +8,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
-public class Progress extends JFXWindow implements Element {
+public class Progress extends JFXElement implements Element {
 
     public  Label       titleText;
     public  ProgressBar progressBar;
@@ -57,7 +57,7 @@ public class Progress extends JFXWindow implements Element {
         Platform.runLater(() -> statusText.setText(text));
     }
 
-    public Pane getPane() {
+    public Pane getTabPane() {
         return pane;
     }
 

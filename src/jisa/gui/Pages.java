@@ -2,22 +2,23 @@ package jisa.gui;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
+import javafx.scene.control.ToolBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
 import jisa.Util;
-import jnr.ffi.annotations.In;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Pages extends JFXWindow implements Element, Container {
+public class Pages extends JFXElement implements Element, Container {
 
     public  BorderPane          pane;
     public  VBox                sidebar;
@@ -38,6 +39,8 @@ public class Pages extends JFXWindow implements Element, Container {
      */
     public Pages(String title, Element... toAdd) {
         super(title, Pages.class.getResource("fxml/TabWindow.fxml"));
+        BorderPane.setMargin(getNode().getTop(), new Insets(0, 0, 5, 0));
+        BorderPane.setMargin(getNode().getCenter(), new Insets(0));
         this.title = title;
         addAll(toAdd);
     }
@@ -92,7 +95,7 @@ public class Pages extends JFXWindow implements Element, Container {
 
         };
 
-        final Pane pane = element.getPane();
+        final Node pane = element.getNode();
 
         Runnable onClick = () -> {
 
@@ -252,11 +255,6 @@ public class Pages extends JFXWindow implements Element, Container {
             select(added.indexOf(element));
         }
 
-    }
-
-    @Override
-    public Pane getPane() {
-        return pane;
     }
 
     @Override

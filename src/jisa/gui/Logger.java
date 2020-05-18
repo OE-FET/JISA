@@ -7,7 +7,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Font;
 
 
-public class Logger extends JFXWindow {
+public class Logger extends JFXElement {
 
     public  BorderPane     pane;
     public  ListView<Node> list;

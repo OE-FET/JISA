@@ -10,18 +10,8 @@
 
     <center>
         <GridPane fx:id="list" vgap="15.0" hgap="15.0" BorderPane.alignment="TOP_LEFT">
-            <padding>
-                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
-            </padding>
+
         </GridPane>
     </center>
-
-    <bottom>
-        <ButtonBar visible="false" managed="false" fx:id="buttonBar">
-            <padding>
-                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
-            </padding>
-        </ButtonBar>
-    </bottom>
 
 </BorderPane>

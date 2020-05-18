@@ -20,6 +20,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import jisa.Util;
 import jisa.control.SRunnable;
@@ -34,7 +35,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Plot extends JFXWindow implements Element, Clearable {
+public class Plot extends JFXElement implements Element, Clearable {
 
     public  BorderPane pane;
     public  ToolBar    toolbar;
@@ -145,7 +146,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         });
 
-        pane.needsLayoutProperty().addListener((observableValue, aBoolean, t1) -> chart.updateAxisRange());
+        getNode().needsLayoutProperty().addListener((observableValue, aBoolean, t1) -> chart.updateAxisRange());
 
     }
 
@@ -272,91 +273,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
         return addToolbarButton(text, this::showSaveDialog);
     }
 
-    public jisa.gui.Button addToolbarButton(String text, ClickHandler onClick) {
-
-        Button button = new Button(text);
-        button.setOnMouseClicked(mouseEvent -> new Thread(() -> {
-            try {
-                onClick.click();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start());
-
-        GUI.runNow(() -> toolbar.getItems().add(button));
-
-        return new jisa.gui.Button() {
-            @Override
-            public boolean isDisabled() {
-                return button.isDisabled();
-            }
-
-            @Override
-            public void setDisabled(boolean disabled) {
-                GUI.runNow(() -> button.setDisable(disabled));
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    button.setVisible(visible);
-                    button.setManaged(visible);
-                });
-
-            }
-
-            @Override
-            public boolean isVisible() { return button.isVisible(); }
-
-            @Override
-            public void setText(String text) { GUI.runNow(() -> button.setText(text)); }
-
-            @Override
-            public String getText() { return button.getText(); }
-
-            @Override
-            public void setOnClick(SRunnable onClick) {
-                button.setOnMouseClicked(event -> onClick.start());
-            }
-
-            @Override
-            public void remove() {
-                GUI.runNow(() -> toolbar.getItems().remove(button));
-            }
-
-        };
-
-    }
-
-    public jisa.gui.Separator addToolbarSeparator() {
-
-        javafx.scene.control.Separator separator = new javafx.scene.control.Separator();
-
-        GUI.runNow(() -> toolbar.getItems().add(separator));
-
-        return new Separator() {
-            @Override
-            public void remove() {
-                GUI.runNow(() -> toolbar.getItems().remove(separator));
-            }
-
-            @Override
-            public boolean isVisible() {
-                return separator.isVisible();
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-                GUI.runNow(() -> {
-                    separator.setVisible(visible);
-                    separator.setManaged(visible);
-                });
-            }
-        };
-
-    }
-
     public void setLegendColumns(int columns) {
         chart.getChartLegend().setMaxColumns(columns);
     }
@@ -381,9 +297,9 @@ public class Plot extends JFXWindow implements Element, Clearable {
         Field<Integer> height = save.addIntegerField("Height", 400);
         Field<String>  file   = save.addFileSave("Path");
 
-        save.addButton("Cancel", save::close);
+        save.addDialogButton("Cancel", save::close);
 
-        save.addButton("Save", () -> {
+        save.addDialogButton("Save", () -> {
 
             if (!file.get().trim().equals("")) {
 
@@ -1130,6 +1046,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         GUI.runNow(() -> {
 
+            Stage stage = getStage();
+
             double width  = stage.getWidth();
             double height = stage.getHeight();
 
@@ -1144,12 +1062,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         });
 
-    }
-
-    @Override
-    public Pane getPane() {
-
-        return pane;
     }
 
 

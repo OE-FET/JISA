@@ -1,5 +1,7 @@
 package jisa.enums;
 
+import javafx.scene.image.Image;
+import jisa.Util;
 import jisa.gui.GUI;
 
 import java.net.URL;
@@ -27,13 +29,25 @@ public enum Icon {
     RESISTOR("images/resistor.png");
 
     private String path;
+    private Image white = null;
+    private Image black = null;
 
     Icon(String path) {
         this.path = path;
     }
 
-    public URL getImage() {
+    public URL getURL() {
         return GUI.class.getResource(path);
+    }
+
+    public Image getWhiteImage() {
+        if (white == null) white = new Image(GUI.class.getResource(path).toExternalForm());
+        return white;
+    }
+
+    public Image getBlackImage() {
+        if (black == null) black = Util.invertImage(getWhiteImage());
+        return black;
     }
 
 }

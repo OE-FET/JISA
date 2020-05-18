@@ -20,30 +20,17 @@ import jisa.Util;
 import java.net.URL;
 import java.util.concurrent.Semaphore;
 
-public class Doc extends JFXWindow {
+public class Doc extends JFXElement {
 
-    public BorderPane pane;
     public ScrollPane scroll;
     public VBox       list;
     public BorderPane container;
-    public ButtonBar  buttonBar;
 
     public Doc(String title) {
 
-        super(title, JFXWindow.class.getResource("fxml/DocWindow.fxml"));
-
-        buttonBar.setVisible(false);
-        buttonBar.setManaged(false);
-
-        buttonBar.getButtons().addListener((ListChangeListener<? super Node>) l -> {
-
-            buttonBar.setVisible(!buttonBar.getButtons().isEmpty());
-            buttonBar.setManaged(!buttonBar.getButtons().isEmpty());
-
-        });
-
-        scroll.applyCss();
-        scroll.lookup(".viewport").setStyle("-fx-background-color: white;");
+        super(title, JFXElement.class.getResource("fxml/DocWindow.fxml"));
+        BorderPane.setMargin(getNode().getCenter(), Insets.EMPTY);
+        scroll.widthProperty().addListener((o) -> scroll.lookup(".viewport").setStyle("-fx-background-color: white;"));
 
     }
 
@@ -328,8 +315,8 @@ public class Doc extends JFXWindow {
         ImageView imageView = new ImageView(image);
         imageView.setPreserveRatio(true);
         imageView.setSmooth(true);
-        stage.widthProperty().addListener((observableValue, number, t1) -> imageView.maxWidth(stage.getWidth() - 35));
-        stage.heightProperty().addListener((observableValue, number, t1) -> imageView.maxHeight(stage.getHeight() - 35));
+        scroll.widthProperty().addListener((observableValue, number, t1) -> imageView.maxWidth(scroll.getWidth() - 35));
+        scroll.heightProperty().addListener((observableValue, number, t1) -> imageView.maxHeight(scroll.getHeight() - 35));
         BorderPane pane = new BorderPane(imageView);
         GUI.runNow(() -> list.getChildren().add(pane));
 
@@ -418,6 +405,9 @@ public class Doc extends JFXWindow {
             }
 
             @Override
+            public void remove() {
+                GUI.runNow(() -> list.getChildren().remove(label));
+            }            @Override
             public void setVisible(boolean visible) {
                 GUI.runNow(() -> {
                     label.setVisible(visible);
@@ -425,15 +415,12 @@ public class Doc extends JFXWindow {
                 });
             }
 
-            @Override
-            public void remove() {
-                GUI.runNow(() -> list.getChildren().remove(label));
-            }
+
         };
 
     }
 
-    public Pane getPane() {
+    public Pane getTabPane() {
         return container;
     }
 
@@ -505,6 +492,9 @@ public class Doc extends JFXWindow {
             }
 
             @Override
+            public void remove() {
+                GUI.runNow(() -> list.getChildren().remove(container));
+            }            @Override
             public void setVisible(boolean visible) {
                 GUI.runNow(() -> {
                     container.setVisible(visible);
@@ -512,37 +502,9 @@ public class Doc extends JFXWindow {
                 });
             }
 
-            @Override
-            public void remove() {
-                GUI.runNow(() -> list.getChildren().remove(container));
-            }
+
 
         };
-
-    }
-
-    public void showAndWait() {
-
-        final Semaphore s = new Semaphore(0);
-
-        stage.setOnCloseRequest(we -> s.release());
-
-        javafx.scene.control.Button okay = new Button("OK");
-        okay.setOnAction(ae -> s.release());
-
-        GUI.runNow(() -> buttonBar.getButtons().add(okay));
-
-        show();
-
-        try {
-            s.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        close();
-
-        GUI.runNow(() -> buttonBar.getButtons().remove(okay));
 
     }
 

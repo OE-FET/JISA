@@ -27,10 +27,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class GUI extends Application {
 
-    private static boolean   done   = false;
-    private static File      file;
-    private static Semaphore s      = new Semaphore(0);
-    private static boolean   loaded = false;
+    public static final double    SPACING = 10.0;
+    private static      boolean   done    = false;
+    private static      File      file;
+    private static      Semaphore s       = new Semaphore(0);
+    private static      boolean   loaded  = false;
 
     /*
      * When first accessing the GUI class, all needed JavaFx native libraries must be extracted and added to
@@ -73,13 +74,13 @@ public class GUI extends Application {
 
             if (osName.contains("win")) {
                 extension = ".dll";
-                libSep = ";";
+                libSep    = ";";
             } else if (osName.contains("mac")) {
                 extension = ".dylib";
-                libSep = ":";
+                libSep    = ":";
             } else {
                 extension = ".so";
-                libSep = ":";
+                libSep    = ":";
             }
 
             // Run through each library listed in the file, extracting it if it's for this platform

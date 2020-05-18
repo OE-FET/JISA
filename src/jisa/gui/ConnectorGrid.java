@@ -3,7 +3,6 @@ package jisa.gui;
 import javafx.scene.layout.Pane;
 import jisa.Util;
 import jisa.control.ConfigBlock;
-import jisa.control.ConfigStore;
 import jisa.control.SRunnable;
 import jisa.devices.*;
 
@@ -40,7 +39,7 @@ public class ConnectorGrid extends Grid {
 
         try {
             Connector<T> conf = new Connector<>(name, type, config.subBlock(name));
-            addPane(conf.getPane());
+            add(conf);
             configs.add(conf);
             return conf;
         } catch (Exception e) {

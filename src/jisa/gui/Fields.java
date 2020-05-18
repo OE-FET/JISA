@@ -4,6 +4,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.geometry.HPos;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -13,16 +14,16 @@ import javafx.scene.layout.*;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
+import jnr.ffi.annotations.In;
 
 import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class Fields extends JFXWindow implements Element, Iterable<Field<?>> {
+public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
     public  BorderPane                          pane;
     public  GridPane                            list;
-    public  ButtonBar                           buttonBar;
     private Map<Field<?>, ConfigBlock.Value<?>> links  = new HashMap<>();
     private List<Field<?>>                      fields = new LinkedList<>();
     private ConfigBlock                         config = null;
@@ -35,12 +36,8 @@ public class Fields extends JFXWindow implements Element, Iterable<Field<?>> {
      * @param title Title of the window/grid-element.
      */
     public Fields(String title) {
+
         super(title, Fields.class.getResource("fxml/InputWindow.fxml"));
-        buttonBar.getButtons().addListener((InvalidationListener) change -> GUI.runNow(() -> {
-            boolean show = !buttonBar.getButtons().isEmpty();
-            buttonBar.setVisible(show);
-            buttonBar.setManaged(show);
-        }));
 
         Util.addShutdownHook(() -> {
             if (config != null) {
@@ -48,6 +45,8 @@ public class Fields extends JFXWindow implements Element, Iterable<Field<?>> {
                 config.save();
             }
         });
+
+        BorderPane.setMargin(getNode().getCenter(), new Insets(15.0));
 
     }
 
@@ -1360,12 +1359,6 @@ public class Fields extends JFXWindow implements Element, Iterable<Field<?>> {
         return addChoice(name, 0, options);
     }
 
-    @Override
-    public Pane getPane() {
-
-        return pane;
-    }
-
 
     public jisa.gui.Separator addSeparator() {
 
@@ -1399,139 +1392,11 @@ public class Fields extends JFXWindow implements Element, Iterable<Field<?>> {
 
     }
 
-    /**
-     * Add a button to the bottom of the fields group.
-     *
-     * @param text    Text to display in the button
-     * @param onClick Action to perform when clicked
-     */
-    public jisa.gui.Button addButton(String text, ClickHandler onClick) {
-
-        Button button = new Button(text);
-
-        button.setOnAction((ae) -> (new Thread(() -> {
-            try {
-                onClick.click();
-            } catch (Exception e) {
-                Util.exceptionHandler(e);
-            }
-        })).start());
-
-        GUI.runNow(() -> buttonBar.getButtons().add(button));
-
-        return new jisa.gui.Button() {
-
-            @Override
-            public boolean isDisabled() {
-
-                return button.isDisabled();
-            }
-
-            @Override
-            public boolean isVisible() {
-
-                return button.isVisible();
-            }
-
-            @Override
-            public String getText() {
-
-                return button.getText();
-            }
-
-            @Override
-            public void setOnClick(SRunnable onClick) {
-
-                GUI.runNow(() -> button.setOnAction(event -> onClick.start()));
-
-            }
-
-            @Override
-            public void remove() {
-
-                GUI.runNow(() -> buttonBar.getButtons().remove(button));
-            }
-
-            @Override
-            public void setDisabled(boolean disabled) {
-
-                GUI.runNow(() -> button.setDisable(disabled));
-            }
-
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    button.setVisible(visible);
-                    button.setManaged(visible);
-                });
-            }
-
-
-            @Override
-            public void setText(String text) {
-
-                GUI.runNow(() -> button.setText(text));
-            }
-
-
-        };
-
-    }
-
     public void setFieldsDisabled(boolean flag) {
 
         for (Field<?> f : fields) {
             f.setDisabled(flag);
         }
-
-    }
-
-    /**
-     * Shows the fields as its own window, with an "OK" and "Cancel" button. Does not return until the window has been
-     * closed either by clicking "OK" or "Cancel" or closing the window. Returns a boolean indicating whether "OK" was
-     * clicked or not.
-     *
-     * @return Was "OK" clicked?
-     */
-    public boolean showAndWait() {
-
-        final Semaphore     semaphore = new Semaphore(0);
-        final AtomicBoolean result    = new AtomicBoolean(false);
-
-        Button okay   = new Button("OK");
-        Button cancel = new Button("Cancel");
-
-        okay.setOnAction(ae -> {
-            result.set(true);
-            semaphore.release();
-        });
-
-        cancel.setOnAction(ae -> {
-            result.set(false);
-            semaphore.release();
-        });
-
-        GUI.runNow(() -> buttonBar.getButtons().addAll(cancel, okay));
-
-        stage.setOnCloseRequest(we -> {
-            result.set(false);
-            semaphore.release();
-        });
-
-        show();
-
-        try {
-            semaphore.acquire();
-        } catch (Exception ignored) {
-        }
-
-        close();
-
-        GUI.runNow(() -> buttonBar.getButtons().removeAll(cancel, okay));
-
-        return result.get();
 
     }
 

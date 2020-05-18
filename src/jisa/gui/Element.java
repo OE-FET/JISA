@@ -1,7 +1,15 @@
 package jisa.gui;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
+import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 
 /**
  * Base class to represent all GUI elements.
@@ -9,14 +17,14 @@ import javafx.scene.layout.Pane;
 public interface Element {
 
     /**
-     * Returns the base pane of the element, to be used when adding to visual containers such as Grid elements.
+     * Returns the JavaFX node of the element.
      *
-     * @return Base pane
+     * @return
      */
-    Pane getPane();
+    Node getNode();
 
-    default Pane getBorderedPane() {
-        return Grid.makePane(this);
+    default Node getBorderedNode() {
+        return new ElementBorder(titleProperty(), getNode());
     }
 
     /**
@@ -33,13 +41,22 @@ public interface Element {
      */
     void setTitle(String title);
 
+    ObjectProperty<String> titleProperty();
+
+    /**
+     * Returns any icon being used by this element.
+     *
+     * @return Icon
+     */
+    Image getIcon();
+
     /**
      * Returns whether this element is currently visible or not.
      *
      * @return Is it visible?
      */
     default boolean isVisible() {
-        return getPane().isVisible();
+        return getNode().isVisible();
     }
 
     /**
@@ -48,15 +65,27 @@ public interface Element {
      * @param visible Should it be visible?
      */
     default void setVisible(boolean visible) {
-        getPane().setVisible(visible);
-        getPane().setManaged(visible);
+        getNode().setVisible(visible);
+        getNode().setManaged(visible);
     }
 
-    /**
-     * Returns any icon being used by this element.
-     *
-     * @return Icon
-     */
-    Image getIcon();
+    class ElementBorder extends TitledPane {
+
+        private final BorderPane container = new BorderPane();
+
+        public ElementBorder(ObjectProperty<String> title, Node content) {
+
+            setMaxHeight(Double.MAX_VALUE);
+            setMaxWidth(Double.MAX_VALUE);
+            setCollapsible(false);
+            setContent(container);
+            textProperty().bind(title);
+            container.setCenter(content);
+            container.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
+            container.setPadding(new Insets(-10));
+
+        }
+
+    }
 
 }

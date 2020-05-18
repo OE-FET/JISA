@@ -10,7 +10,7 @@ import javafx.scene.text.Font;
 
 import java.io.IOException;
 
-public class DeviceShell extends JFXWindow {
+public class DeviceShell extends JFXElement {
 
     public  ListView   terminal;
     public  TextField  input;
@@ -25,7 +25,7 @@ public class DeviceShell extends JFXWindow {
 
         GUI.runNow(() -> {
             input.setDisable(true);
-            this.stage.setOnCloseRequest((we) -> {
+            this.getStage().setOnCloseRequest((we) -> {
                 if (device != null) {
                     addStatusLine("Closing connection...");
                     try {
@@ -35,7 +35,7 @@ public class DeviceShell extends JFXWindow {
                         addErrorLine(e.getMessage());
                     }
                 }
-                stage.close();
+                close();
             });
         });
 
@@ -147,28 +147,8 @@ public class DeviceShell extends JFXWindow {
 
     }
 
-    public void show() {
-        GUI.runNow(() -> {
-            stage.show();
-        });
-    }
-
     public void showAndWait() {
-        GUI.runNow(() -> {
-            stage.showAndWait();
-        });
-    }
-
-    public void hide() {
-        GUI.runNow(() -> {
-            stage.hide();
-        });
-    }
-
-    public void close() {
-        GUI.runNow(() -> {
-            stage.close();
-        });
+        GUI.runNow(() -> getStage().showAndWait());
     }
 
 }

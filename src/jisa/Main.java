@@ -2,19 +2,11 @@ package jisa;
 
 import javafx.application.Platform;
 import jisa.addresses.Address;
-import jisa.addresses.GPIBAddress;
 import jisa.addresses.StrAddress;
-import jisa.devices.K1234;
-import jisa.devices.SMU;
-import jisa.experiment.Combination;
 import jisa.gui.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class Main {
 
@@ -96,7 +88,7 @@ public class Main {
 
                     case CHOICE_HELP:
 
-                        doc.showAndWait();
+                        doc.showAsAlert();
                         break;
 
                     case CHOICE_EXIT:
@@ -116,6 +108,7 @@ public class Main {
             w.append(e.getMessage());
             w.append("\n\n");
             e.printStackTrace(new PrintWriter(w));
+            e.printStackTrace();
             GUI.errorAlert("JISA Library", "Exception Encountered", w.toString(), 800);
             Platform.exit();
             System.exit(0);

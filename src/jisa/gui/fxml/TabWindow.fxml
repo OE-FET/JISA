@@ -9,6 +9,6 @@
       <VBox fx:id="sidebar" prefWidth="200.0" style="-fx-background-color: #4c4c4c;" BorderPane.alignment="CENTER" />
    </left>
    <center>
-      <ScrollPane fx:id="scrollPane" fitToHeight="true" fitToWidth="true" style="-fx-background-color: transparent;" BorderPane.alignment="CENTER" />
+      <ScrollPane fx:id="scrollPane" fitToHeight="true" fitToWidth="true" style="-fx-background-color: transparent;" BorderPane.alignment="CENTER"/>
    </center>
 </BorderPane>

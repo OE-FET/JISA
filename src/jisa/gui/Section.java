@@ -2,19 +2,17 @@ package jisa.gui;
 
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TitledPane;
-import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
 
 /**
  * A collapsible section box that surrounds one GUI element.
  */
-public class Section extends JFXWindow implements NotBordered {
+public class Section extends JFXElement {
 
     public  Pane       pane;
     public  TitledPane titled;
@@ -53,12 +51,21 @@ public class Section extends JFXWindow implements NotBordered {
         this(title, null);
     }
 
+    public String getTitle() {
+        return title.getText();
+    }
+
     public void setTitle(String title) {
         GUI.runNow(() -> this.title.setText(title));
     }
 
-    public String getTitle() {
-        return title.getText();
+    public Node getBorderedNode() {
+
+        BorderPane border = new BorderPane();
+        border.setCenter(getNode());
+        border.setPadding(new Insets(-GUI.SPACING));
+
+        return border;
     }
 
     /**
@@ -71,7 +78,7 @@ public class Section extends JFXWindow implements NotBordered {
         if (element == null) {
             clear();
         } else {
-            GUI.runNow(() -> titled.setContent(element instanceof NotBordered ? ((NotBordered) element).getNoBorderPane(false) : element.getPane()));
+            GUI.runNow(() -> titled.setContent(element instanceof NotBordered ? ((NotBordered) element).getNoBorderPane(false) : element.getNode()));
         }
 
     }
@@ -83,25 +90,20 @@ public class Section extends JFXWindow implements NotBordered {
         GUI.runNow(() -> titled.setContent(null));
     }
 
-    @Override
-    public Pane getNoBorderPane(boolean strip) {
-        return getPane();
+    public boolean isExpanded() {
+        return titled.isExpanded();
     }
 
     public void setExpanded(boolean expanded) {
         GUI.runNow(() -> titled.setExpanded(expanded));
     }
 
-    public boolean isExpanded() {
-        return titled.isExpanded();
+    public boolean isExpandable() {
+        return titled.isCollapsible();
     }
 
     public void setExpandable(boolean expanded) {
         GUI.runNow(() -> titled.setCollapsible(expanded));
-    }
-
-    public boolean isExpandable() {
-        return titled.isCollapsible();
     }
 
     public Button addTitleButton(String text, ClickHandler onClick) {

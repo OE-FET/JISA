@@ -1,7 +1,9 @@
 package jisa.gui;
 
 import javafx.geometry.HPos;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
@@ -23,31 +25,31 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 
 @SuppressWarnings("rawtypes")
-public class Connector<T extends Instrument> extends JFXWindow implements Element, IConf<T> {
-
-    // Elements
-    public ChoiceBox<String> driverChoice;
-    public ChoiceBox<String> protChoice;
-    public Button            browseButton;
-    public Button            applyButton;
-    public TitledPane        titled;
-    public ImageView         image;
-    public StackPane         pane;
-    public GridPane          parameters;
+public class Connector<T extends Instrument> extends JFXElement implements Element, IConf<T> {
 
     // Properties
-    private Class<T>                    deviceType;
-    private List<Class>                 possibleDrivers   = new ArrayList<>();
-    private List<Class>                 possibleAddresses = new ArrayList<>();
-    private Class<? extends VISADevice> driver;
-    private Address                     address           = null;
-    private T                           instrument        = null;
-    private String                      realTitle;
-    private ConfigBlock                 config;
-    private ConfigBlock.Value<String>   driverSave;
-    private ConfigBlock.Value<String>   addressSave;
-    private List<Runnable>              onApply           = new LinkedList<>();
-    private AddressParams<?>            currentParams     = null;
+    private final Class<T>                    deviceType;
+    private final List<Class>                 possibleDrivers   = new ArrayList<>();
+    private final List<Class>                 possibleAddresses = new ArrayList<>();
+    private final String                      realTitle;
+    private final ConfigBlock                 config;
+    private final List<Runnable>              onApply           = new LinkedList<>();
+    private final List<Runnable>              titleActions      = new LinkedList<>();
+    public        ChoiceBox<String>           driverChoice;
+    public        ChoiceBox<String>           protChoice;
+    public        Button                      browseButton;
+    public        Button                      applyButton;
+    public        TitledPane                  titled;
+    public        ImageView                   image;
+    public        StackPane                   pane;
+    public        GridPane                    parameters;
+    private       Pane                        title             = null;
+    private       Class<? extends VISADevice> driver;
+    private       Address                     address           = null;
+    private       T                           instrument        = null;
+    private       ConfigBlock.Value<String>   driverSave;
+    private       ConfigBlock.Value<String>   addressSave;
+    private       AddressParams<?>            currentParams     = null;
 
     public Connector(String title, Class<T> type, ConfigBlock c) {
 
@@ -56,7 +58,15 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
         realTitle  = title;
         deviceType = type;
 
-        this.titled.setText(title);
+        this.titled.textProperty().bind(titleProperty());
+
+        titled.widthProperty().addListener(o -> {
+            this.title = (Pane) titled.lookup(".title");
+            titleActions.forEach(Runnable::run);
+            titleActions.clear();
+        });
+
+        titled.setTextFill(Colour.WHITE);
 
         updateDrivers();
         updateProtocols();
@@ -228,35 +238,35 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
     }
 
     private void makeRed() {
-        GUI.runNow(() -> {
-            titled.applyCss();
-            titled.layout();
-            titled.lookup(".title").setStyle(
-                    "-fx-background-color: brown; -fx-background-radius: 5px 5px 0 0; -fx-text-fill: white;");
-            titled.setTextFill(Color.WHITE);
-            titled.setText(realTitle);
-        });
+        setTitleColour(Colour.BROWN);
     }
 
     private void makeAmber() {
-        GUI.runNow(() -> {
-            titled.applyCss();
-            titled.layout();
-            titled.lookup(".title").setStyle(
-                    "-fx-background-color: #D9A200; -fx-background-radius: 5px 5px 0 0; -fx-text-fill: white;");
-            titled.setTextFill(Color.WHITE);
-            titled.setText(realTitle + " (Connecting...)");
-        });
+        setTitleColour(Colour.string("#D9A200"));
     }
 
     private void makeGreen() {
+        setTitleColour(Colour.TEAL);
+    }
+
+    private void setTitleColour(Color colour) {
+
         GUI.runNow(() -> {
-            titled.applyCss();
-            titled.layout();
-            titled.lookup(".title").setStyle("-fx-background-color: teal; -fx-background-radius: 5px 5px 0 0;");
-            titled.setTextFill(Color.WHITE);
-            titled.setText(realTitle);
+
+            Runnable listener = () -> title.setBackground(
+                    new Background(
+                            new BackgroundFill(colour, new CornerRadii(5, 5, 0, 0, false), null)
+                    )
+            );
+
+            if (title == null) {
+                titleActions.add(listener);
+            } else {
+                listener.run();
+            }
+
         });
+
     }
 
     private void updateAddress() {
@@ -335,8 +345,14 @@ public class Connector<T extends Instrument> extends JFXWindow implements Elemen
 
     }
 
-    public Pane getPane() {
-        return pane;
+    public Node getBorderedNode() {
+
+        BorderPane border = new BorderPane();
+        border.setCenter(getNode());
+        border.setPadding(new Insets(-GUI.SPACING));
+
+        return border;
+
     }
 
     @Override

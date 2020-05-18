@@ -21,14 +21,12 @@ import jisa.experiment.ActionQueue.Action;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ActionQueueDisplay extends JFXWindow {
+public class ActionQueueDisplay extends JFXElement {
 
     @FXML
     protected BorderPane        pane;
     @FXML
     protected ListView<HBox>    list;
-    @FXML
-    protected ToolBar           toolBar;
     private   ActionQueue       queue;
     private   Map<Action, HBox> listItems     = new HashMap<>();
     private   int               scrollTo      = 0;
@@ -40,12 +38,6 @@ public class ActionQueueDisplay extends JFXWindow {
         super(title, ActionQueueDisplay.class.getResource("fxml/ActionQueueWindow.fxml"));
 
         this.queue = queue;
-
-        toolBar.getItems().addListener((ListChangeListener<? super Node>) change -> {
-            boolean show = !toolBar.getItems().isEmpty();
-            toolBar.setVisible(show);
-            toolBar.setManaged(show);
-        });
 
         for (Action action : queue) add(action);
 
@@ -149,94 +141,6 @@ public class ActionQueueDisplay extends JFXWindow {
 
     public void setOnDoubleClick(ActionRunnable onDoubleClick) {
         this.onDoubleClick = onDoubleClick;
-    }
-
-    public jisa.gui.Button addToolbarButton(String name, ClickHandler onClick) {
-
-        Button button = new Button(name);
-        button.setOnMouseClicked(event -> onClick.start());
-        GUI.runNow(() -> toolBar.getItems().add(button));
-
-        return new jisa.gui.Button() {
-            @Override
-            public boolean isDisabled() {
-                return button.isDisabled();
-            }
-
-            @Override
-            public void setDisabled(boolean disabled) {
-                GUI.runNow(() -> button.setDisable(disabled));
-            }
-
-            @Override
-            public boolean isVisible() {
-                return button.isVisible();
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    button.setVisible(visible);
-                    button.setManaged(visible);
-                });
-
-            }
-
-            @Override
-            public String getText() {
-                return button.getText();
-            }
-
-            @Override
-            public void setText(String text) {
-                GUI.runNow(() -> button.setText(text));
-            }
-
-            @Override
-            public void setOnClick(SRunnable onClick) {
-                button.setOnMouseClicked(event -> onClick.start());
-            }
-
-            @Override
-            public void remove() {
-                GUI.runNow(() -> toolBar.getItems().remove(button));
-            }
-
-        };
-
-    }
-
-    public MenuButton addToolbarMenuButton(String text) {
-
-        javafx.scene.control.MenuButton button = new javafx.scene.control.MenuButton(text);
-        GUI.runNow(() -> toolBar.getItems().add(button));
-
-        return new MenuButton.MenuButtonWrapper(button) {
-
-            @Override
-            public void remove() {
-                GUI.runNow(() -> toolBar.getItems().remove(button));
-            }
-
-        };
-
-    }
-
-    public Separator addToolbarSeparator() {
-
-        javafx.scene.control.Separator separator = new javafx.scene.control.Separator();
-        GUI.runNow(() -> toolBar.getItems().add(separator));
-
-        return new Separator.SeparatorWrapper(separator) {
-
-            @Override
-            public void remove() {
-                GUI.runNow(() -> toolBar.getItems().remove(separator));
-            }
-
-        };
-
     }
 
     public interface ActionRunnable {

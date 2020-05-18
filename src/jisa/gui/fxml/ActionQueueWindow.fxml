@@ -1,18 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
 
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.BorderPane?>
+<ListView xmlns="http://javafx.com/javafx/10.0.2-internal"
+          xmlns:fx="http://javafx.com/fxml/1" fx:id="list" BorderPane.alignment="CENTER" prefWidth="400"/>
 
-<BorderPane fx:id="pane" style="-fx-background-color: white;" prefHeight="350" minHeight="200.0" minWidth="400.0" xmlns="http://javafx.com/javafx/10.0.2-internal"
-            xmlns:fx="http://javafx.com/fxml/1">
-
-    <top>
-        <ToolBar style="-fx-background-color: white; -fx-padding: 0 0 5 0;" fx:id="toolBar" visible="false" managed="false"/>
-    </top>
-
-    <center>
-        <ListView fx:id="list" BorderPane.alignment="CENTER"/>
-    </center>
-
-</BorderPane>

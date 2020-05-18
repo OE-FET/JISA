@@ -1,9 +1,12 @@
 package jisa.gui;
 
+import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Side;
+import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.ToolBar;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import jisa.Util;
@@ -14,15 +17,21 @@ import java.util.List;
 /**
  * A GUI container element for displaying multiple other elements as traditional-style tabs.
  */
-public class Tabs extends JFXWindow implements Container, NotBordered {
+public class Tabs extends JFXElement implements Container {
 
-    public  TabPane       pane;
-    private List<Element> elements = new LinkedList<>();
+    private final List<Element> elements = new LinkedList<>();
+    @FXML
+    protected     BorderPane    pane;
+    @FXML
+    protected     TabPane       tabPane;
+    @FXML
+    protected     ToolBar       toolBar;
 
     public Tabs(String title) {
 
         super(title, Tabs.class.getResource("fxml/TabGroup.fxml"));
-        GUI.runNow(() -> pane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE));
+        GUI.runNow(() -> tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE));
+        BorderPane.setMargin(getNode().getCenter(), new Insets(0));
 
     }
 
@@ -31,16 +40,16 @@ public class Tabs extends JFXWindow implements Container, NotBordered {
         addAll(elements);
     }
 
-    public Pane getPane() {
-        return new Pane(pane);
+    public Pane getTabPane() {
+        return new Pane(tabPane);
     }
 
     @Override
     public synchronized void add(Element element) {
 
         GUI.runNow(() -> {
-            Tab tab = new Tab(element.getTitle(), element.getPane());
-            pane.getTabs().add(tab);
+            Tab tab = new Tab(element.getTitle(), element.getNode());
+            tabPane.getTabs().add(tab);
             elements.add(element);
         });
 
@@ -53,8 +62,8 @@ public class Tabs extends JFXWindow implements Container, NotBordered {
 
             int index = elements.indexOf(element);
 
-            if (Util.isBetween(index, 0, pane.getTabs().size() - 1)) {
-                pane.getTabs().remove(index);
+            if (Util.isBetween(index, 0, tabPane.getTabs().size() - 1)) {
+                tabPane.getTabs().remove(index);
                 elements.remove(element);
             }
 
@@ -66,7 +75,7 @@ public class Tabs extends JFXWindow implements Container, NotBordered {
     public synchronized void clear() {
 
         GUI.runNow(() -> {
-            pane.getTabs().clear();
+            tabPane.getTabs().clear();
             elements.clear();
         });
 
@@ -78,7 +87,7 @@ public class Tabs extends JFXWindow implements Container, NotBordered {
     }
 
     public Side getTabsPosition() {
-        return pane.getSide();
+        return tabPane.getSide();
     }
 
     /**
@@ -87,7 +96,7 @@ public class Tabs extends JFXWindow implements Container, NotBordered {
      * @param side LEFT, RIGHT, TOP or BOTTOM
      */
     public void setTabsPosition(Side side) {
-        GUI.runNow(() -> pane.setSide(side));
+        GUI.runNow(() -> tabPane.setSide(side));
     }
 
     /**
@@ -96,7 +105,7 @@ public class Tabs extends JFXWindow implements Container, NotBordered {
      * @param index Tab index
      */
     public void select(int index) {
-        GUI.runNow(() -> pane.getSelectionModel().select(index));
+        GUI.runNow(() -> tabPane.getSelectionModel().select(index));
     }
 
     /**
@@ -108,7 +117,7 @@ public class Tabs extends JFXWindow implements Container, NotBordered {
 
         int index = elements.indexOf(select);
 
-        if (Util.isBetween(index, 0, pane.getTabs().size() - 1)) {
+        if (Util.isBetween(index, 0, tabPane.getTabs().size() - 1)) {
             select(index);
         }
 
@@ -120,7 +129,7 @@ public class Tabs extends JFXWindow implements Container, NotBordered {
      * @return Tab index
      */
     public int getSelectedIndex() {
-        return pane.getSelectionModel().getSelectedIndex();
+        return tabPane.getSelectionModel().getSelectedIndex();
     }
 
     /**
@@ -132,18 +141,12 @@ public class Tabs extends JFXWindow implements Container, NotBordered {
         return elements.get(getSelectedIndex());
     }
 
-    @Override
-    public Pane getNoBorderPane(boolean stripPadding) {
-
-        BorderPane parent = new BorderPane(pane);
-        parent.setStyle("-fx-background-color: transparent");
-        parent.setBorder(new Border(new BorderStroke(Color.web("#c8c8c8"), BorderStrokeStyle.SOLID, new CornerRadii(0.0), new BorderWidths(1.0))));
-
-        if (stripPadding) {
-            parent.setPadding(new Insets(0,0,0,0));
-        }
-
-        return parent;
-
+    public Node getBorderedNode() {
+        BorderPane border = new BorderPane();
+        border.setCenter(getNode());
+        border.setBackground(Background.EMPTY);
+        border.setBorder(new Border(new BorderStroke(Color.web("#c8c8c8"), BorderStrokeStyle.SOLID, new CornerRadii(0.0), new BorderWidths(1.0))));
+        return border;
     }
+
 }

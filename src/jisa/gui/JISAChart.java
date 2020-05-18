@@ -769,6 +769,7 @@ public class JISAChart extends XYChart<Double, Double> {
         public void setMarkerVisible(boolean flag) {
 
             style.put("visibility", flag ? "visible" : "hidden");
+            this.errorBar.setVisible(flag);
             this.visible = flag;
 
             if (isLegend && !isMarkerVisible()) {

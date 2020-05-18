@@ -22,7 +22,7 @@ import jisa.visa.VISAException;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class BrowseVISA extends JFXWindow {
+public class BrowseVISA extends JFXElement {
 
     public  VBox                  list;
     public  Label                 searching;

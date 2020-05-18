@@ -17,15 +17,11 @@ import jisa.control.SRunnable;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ListDisplay<T> extends JFXWindow {
+public class ListDisplay<T> extends JFXElement {
 
     private final List<DefaultMenuItem<T>> defaultMenuItems = new LinkedList<>();
     @FXML
-    protected     BorderPane               pane;
-    @FXML
     protected     ListView<ListItem>       list;
-    @FXML
-    protected     ToolBar                  toolBar;
     private       SRunnable                onChange         = null;
 
     public ListDisplay(String title) {
@@ -35,12 +31,6 @@ public class ListDisplay<T> extends JFXWindow {
             triggerOnChange();
             ((ListItem) getSelected()).triggerOnSelected();
         });
-
-        toolBar.getItems().addListener((InvalidationListener) observable -> GUI.runNow(() -> {
-            boolean show = !toolBar.getItems().isEmpty();
-            toolBar.setVisible(show);
-            toolBar.setManaged(show);
-        }));
 
     }
 
@@ -96,29 +86,6 @@ public class ListDisplay<T> extends JFXWindow {
         for (ListItem item : list.getItems()) {
             item.addMenuItem(text, () -> action.run(item));
         }
-
-    }
-
-    /**
-     * Adds a button to the toolbar of the ListDisplay element.
-     *
-     * @param text    Text to display on the button
-     * @param onClick Action to perform when clicked
-     *
-     * @return Button sub-element object representing the newly added button
-     */
-    public Button addToolbarButton(String text, ClickHandler onClick) {
-
-        javafx.scene.control.Button button = new javafx.scene.control.Button(text);
-        button.setOnMouseClicked(event -> onClick.start());
-        GUI.runNow(() -> toolBar.getItems().add(button));
-
-        return new Button.ButtonWrapper(button) {
-            @Override
-            public void remove() {
-                GUI.runNow(() -> toolBar.getItems().remove(button));
-            }
-        };
 
     }
 

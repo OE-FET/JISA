@@ -16,11 +16,9 @@ import jisa.experiment.ResultTable;
 
 import java.util.Arrays;
 
-public class Table extends JFXWindow implements Element, Clearable {
+public class Table extends JFXElement implements Element, Clearable {
 
     public TableView  table;
-    public BorderPane pane;
-    public ToolBar    toolBar;
 
     /**
      * Creates an empty table.
@@ -30,21 +28,6 @@ public class Table extends JFXWindow implements Element, Clearable {
     public Table(String title) {
 
         super(title, Table.class.getResource("fxml/TableWindow.fxml"));
-
-        GUI.runNow(() -> {
-            toolBar.setVisible(false);
-            toolBar.setManaged(false);
-        });
-
-        toolBar.getItems().addListener((InvalidationListener) observable -> {
-
-            GUI.runNow(() -> {
-                boolean flag = !toolBar.getItems().isEmpty();
-                toolBar.setVisible(flag);
-                toolBar.setManaged(flag);
-            });
-
-        });
 
     }
 
@@ -135,48 +118,11 @@ public class Table extends JFXWindow implements Element, Clearable {
 
     }
 
-    public Pane getPane() {
-        return pane;
-    }
-
     @Override
     public synchronized void clear() {
         GUI.runNow(() -> {
             table.getItems().clear();
         });
-    }
-
-    public Button addToolbarButton(String text, SRunnable onClick) {
-
-        javafx.scene.control.Button button = new javafx.scene.control.Button(text);
-        button.setOnAction(event -> onClick.start());
-        GUI.runNow(() -> toolBar.getItems().add(button));
-
-        return new Button.ButtonWrapper(button) {
-
-            @Override
-            public void remove() {
-                GUI.runNow(() -> toolBar.getItems().remove(button));
-            }
-
-        };
-
-    }
-
-    public Separator addToolbarSeparator() {
-
-        javafx.scene.control.Separator separator = new javafx.scene.control.Separator();
-        GUI.runNow(() -> toolBar.getItems().add(separator));
-
-        return new Separator.SeparatorWrapper(separator) {
-
-            @Override
-            public void remove() {
-                GUI.runNow(() -> toolBar.getItems().remove(separator));
-            }
-
-        };
-
     }
 
 }

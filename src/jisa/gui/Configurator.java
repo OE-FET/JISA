@@ -1,5 +1,8 @@
 package jisa.gui;
 
+import javafx.geometry.Insets;
+import javafx.scene.Node;
+import javafx.scene.layout.BorderPane;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.ConfigStore;
