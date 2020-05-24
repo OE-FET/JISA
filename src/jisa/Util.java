@@ -88,9 +88,9 @@ public class Util {
         List<String> parts = new LinkedList<>();
 
 
-        if (h > 0)  parts.add(String.format("%dh", h));
-        if (m > 0)  parts.add(String.format("%dm", m));
-        if (s > 0)  parts.add(String.format("%ds", s));
+        if (h > 0) parts.add(String.format("%dh", h));
+        if (m > 0) parts.add(String.format("%dm", m));
+        if (s > 0) parts.add(String.format("%ds", s));
         if (ms > 0) parts.add(String.format("%dms", ms));
 
         return String.join(" ", parts);
@@ -166,6 +166,34 @@ public class Util {
             for (int y = 0; y < height; y++) {
 
                 writer.setColor(x, y, reader.getColor(x, y).invert());
+
+            }
+
+        }
+
+        return inverted;
+
+    }
+
+    public static Image colourImage(Image toColour, Color colour) {
+
+        int           width      = (int) toColour.getWidth();
+        int           height     = (int) toColour.getHeight();
+        WritableImage inverted   = new WritableImage(width, height);
+        PixelReader   reader     = toColour.getPixelReader();
+        PixelWriter   writer     = inverted.getPixelWriter();
+        double        hue        = colour.getHue();
+        double        saturation = colour.getSaturation();
+        double        brightness = colour.getBrightness();
+
+        for (int x = 0; x < width; x++) {
+
+            for (int y = 0; y < height; y++) {
+
+                Color  pixel   = reader.getColor(x, y);
+                double opacity = pixel.getOpacity();
+
+                writer.setColor(x, y, Color.hsb(hue, saturation, brightness, opacity));
 
             }
 
@@ -260,7 +288,7 @@ public class Util {
         double[] values = new double[numSteps];
         double   step   = (max.doubleValue() - min.doubleValue()) / (numSteps - 1D);
 
-        values[0] = min.doubleValue();
+        values[0]            = min.doubleValue();
         values[numSteps - 1] = max.doubleValue();
 
         for (int i = 1; i < numSteps - 1; i++) {
@@ -400,7 +428,7 @@ public class Util {
         double[] values = new double[numSteps];
         double   step   = Math.pow(max.doubleValue() / min.doubleValue(), 1D / numSteps);
 
-        values[0] = min.doubleValue();
+        values[0]            = min.doubleValue();
         values[numSteps - 1] = max.doubleValue();
 
         for (int i = 1; i < numSteps - 1; i++) {

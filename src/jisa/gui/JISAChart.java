@@ -9,11 +9,15 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Side;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Button;
 import javafx.scene.effect.DropShadow;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import jisa.Util;
 import jisa.experiment.Result;
@@ -28,16 +32,19 @@ import java.util.function.Predicate;
 
 public class JISAChart extends XYChart<Double, Double> {
 
-    private Map<Series, ChartNode> nodeTemplates = new HashMap<>();
-    private Map<Series, Fitter>    fitters       = new HashMap<>();
-    private List<JISASeries>       series        = new LinkedList<>();
-    private Plot.Sort              sorting       = Plot.Sort.X_AXIS;
-    private JISALegend             legend        = new JISALegend();
-    private double                 minX          = Double.POSITIVE_INFINITY;
-    private double                 maxX          = Double.NEGATIVE_INFINITY;
-    private double                 minY          = Double.POSITIVE_INFINITY;
-    private double                 maxY          = Double.NEGATIVE_INFINITY;
-    private List<Node>             newlyAdded    = new ArrayList<>();
+    private final Map<Series, ChartNode> nodeTemplates = new HashMap<>();
+    private final Map<Series, Fitter>    fitters       = new HashMap<>();
+    private final List<JISASeries>       series        = new LinkedList<>();
+    private final JISALegend             legend        = new JISALegend();
+    private final double                 minX          = Double.POSITIVE_INFINITY;
+    private final double                 maxX          = Double.NEGATIVE_INFINITY;
+    private final double                 minY          = Double.POSITIVE_INFINITY;
+    private final double                 maxY          = Double.NEGATIVE_INFINITY;
+    private final List<Node>             newlyAdded    = new ArrayList<>();
+    private final Button                 legendButton  = new Button("...");
+    private final BorderPane             legendPane    = new BorderPane();
+    private       Stage                  legendStage;
+    private       Plot.Sort              sorting       = Plot.Sort.X_AXIS;
     // private ParallelTransition     animation     = new ParallelTransition();
 
     public JISAChart() {
@@ -52,6 +59,14 @@ public class JISAChart extends XYChart<Double, Double> {
         setLegendSide(Side.RIGHT);
 
         setData(FXCollections.observableArrayList());
+
+        GUI.runNow(() -> {
+            legendStage = new Stage();
+            legendStage.setScene(new Scene(legendPane));
+        });
+
+        legendButton.setOnAction(event -> legendStage.show());
+        widthProperty().addListener(o -> layoutLegend());
 
     }
 
@@ -166,7 +181,7 @@ public class JISAChart extends XYChart<Double, Double> {
 
             if (legend.getChildren().size() > 0) {
 
-                if (getLegend() == null) {
+                if (!(getLegend() instanceof JISALegend)) {
                     setLegend(legend);
                 }
 
@@ -177,6 +192,22 @@ public class JISAChart extends XYChart<Double, Double> {
             }
 
         });
+
+    }
+
+    protected void layoutLegend() {
+
+        if (legend.getChildren().size() == 0) {
+            setLegend(null);
+        } else if (legend.prefWidth(-1) > getWidth() / 3) {
+            legendPane.setCenter(legend);
+            setLegend(legendButton);
+        } else {
+            legendPane.setCenter(null);
+            setLegend(legend);
+        }
+
+
     }
 
     @Override
@@ -287,8 +318,8 @@ public class JISAChart extends XYChart<Double, Double> {
                         for (double x : Util.makeLinearArray(start, stop, pixels + 1)) {
 
                             constructedPath.add(new JISALineTo(
-                                x,
-                                getYAxis().getDisplayPosition(fitted.value(getXAxis().getValueForDisplay(x)))
+                                    x,
+                                    getYAxis().getDisplayPosition(fitted.value(getXAxis().getValueForDisplay(x)))
                             ));
 
                         }
@@ -462,10 +493,10 @@ public class JISAChart extends XYChart<Double, Double> {
 
             Timeline timeline = new Timeline();
             timeline.getKeyFrames().addAll(
-                new KeyFrame(Duration.millis(0), new KeyValue(xProperty(), fromX)),
-                new KeyFrame(Duration.millis(0), new KeyValue(yProperty(), fromY)),
-                new KeyFrame(Duration.millis(millis), new KeyValue(xProperty(), getX())),
-                new KeyFrame(Duration.millis(millis), new KeyValue(yProperty(), getY()))
+                    new KeyFrame(Duration.millis(0), new KeyValue(xProperty(), fromX)),
+                    new KeyFrame(Duration.millis(0), new KeyValue(yProperty(), fromY)),
+                    new KeyFrame(Duration.millis(millis), new KeyValue(xProperty(), getX())),
+                    new KeyFrame(Duration.millis(millis), new KeyValue(yProperty(), getY()))
             );
 
             setX(fromX);
@@ -482,13 +513,13 @@ public class JISAChart extends XYChart<Double, Double> {
         public ChartTag() {
 
             setShape(new Path(
-                new MoveTo(0, 0),
-                new LineTo(5, 10),
-                new LineTo(50, 10),
-                new LineTo(50, -10),
-                new LineTo(5, -10),
-                new LineTo(0, 0),
-                new ClosePath()
+                    new MoveTo(0, 0),
+                    new LineTo(5, 10),
+                    new LineTo(50, 10),
+                    new LineTo(50, -10),
+                    new LineTo(5, -10),
+                    new LineTo(0, 0),
+                    new ClosePath()
             ));
 
             setHeight(20);
@@ -502,17 +533,17 @@ public class JISAChart extends XYChart<Double, Double> {
 
     public static class ChartNode extends StackPane {
 
-        private Map<String, String>   style     = new HashMap<>();
-        private jisa.gui.Series.Shape shape     = jisa.gui.Series.Shape.CIRCLE;
-        private Color                 colour    = Color.ORANGERED;
-        private double                size      = 5.0;
-        private boolean               visible   = true;
-        private boolean               isLegend  = false;
-        private List<ChartNode>       clones    = new LinkedList<>();
-        private StackPane             symbol    = new StackPane();
-        private Path                  errorBar  = new Path();
-        private ChartLine             line;
-        private Animation             animation = null;
+        private final Map<String, String>   style     = new HashMap<>();
+        private final List<ChartNode>       clones    = new LinkedList<>();
+        private final StackPane             symbol    = new StackPane();
+        private final Path                  errorBar  = new Path();
+        private final ChartLine             line;
+        private final Animation             animation = null;
+        private       jisa.gui.Series.Shape shape     = jisa.gui.Series.Shape.CIRCLE;
+        private       Color                 colour    = Color.ORANGERED;
+        private       double                size      = 5.0;
+        private       boolean               visible   = true;
+        private       boolean               isLegend  = false;
 
         public ChartNode() {
             this(false, null);
@@ -552,7 +583,7 @@ public class JISAChart extends XYChart<Double, Double> {
 
             if (height > 0 && !isLegend) {
 
-                errorBar.setVisible(true);
+                errorBar.setVisible(isMarkerVisible());
 
                 elements.add(new MoveTo(0, 0));
                 elements.add(new LineTo(size * 2, 0));
@@ -794,15 +825,15 @@ public class JISAChart extends XYChart<Double, Double> {
 
     private static class Line {
 
-        private double x1;
-        private double x2;
-        private double y1;
-        private double y2;
-        private double dx;
-        private double dy;
-        private double x1y2;
-        private double x2y1;
-        private double length;
+        private final double x1;
+        private final double x2;
+        private final double y1;
+        private final double y2;
+        private final double dx;
+        private final double dy;
+        private final double x1y2;
+        private final double x2y1;
+        private final double length;
 
         public Line(XYChart.Data<Double, Double> start, XYChart.Data<Double, Double> end) {
 
@@ -830,11 +861,11 @@ public class JISAChart extends XYChart<Double, Double> {
 
     public class ChartLine extends Path {
 
-        private Map<String, String> style   = new HashMap<>();
-        private double              width   = 2.5;
-        private Color               colour  = Colour.ORANGERED;
-        private boolean             visible = true;
-        private List<ChartLine>     clones  = new LinkedList<>();
+        private final List<ChartLine>     clones  = new LinkedList<>();
+        private       Map<String, String> style   = new HashMap<>();
+        private       double              width   = 2.5;
+        private       Color               colour  = Colour.ORANGERED;
+        private       boolean             visible = true;
 
         public ChartLine() {
 
@@ -925,27 +956,27 @@ public class JISAChart extends XYChart<Double, Double> {
 
     public class JISASeries implements jisa.gui.Series {
 
-        private Predicate<Result>          filter         = r -> true;
-        private Series<Double, Double>     series;
-        private double                     xTrack         = Double.POSITIVE_INFINITY;
-        private double                     yTrack         = Double.POSITIVE_INFINITY;
-        private double                     maxX           = Double.NEGATIVE_INFINITY;
-        private double                     maxY           = Double.NEGATIVE_INFINITY;
-        private List<Data<Double, Double>> data;
-        private ChartNode                  template;
-        private ChartLine                  line;
-        private Dash                       dash           = Dash.SOLID;
-        private ResultHandler              handler;
-        private List<jisa.gui.Series>      subSeries      = new ArrayList<>();
-        private ResultTable.Evaluable      xData          = null;
-        private ResultTable.Evaluable      yData          = null;
-        private ResultTable.Evaluable      eData          = null;
-        private ResultTable                watching       = null;
-        private ResultTable.OnUpdate       rtListener     = null;
-        private Color[]                    defaultColours = jisa.gui.Series.defaultColours;
-        private int                        maxPoints      = Integer.MAX_VALUE;
-        private int                        redPoints      = Integer.MAX_VALUE;
-        private DataHandler                click          = (x, y, e) -> {
+        private final Series<Double, Double>     series;
+        private final List<Data<Double, Double>> data;
+        private final ChartNode                  template;
+        private final ChartLine                  line;
+        private final List<jisa.gui.Series>      subSeries      = new ArrayList<>();
+        private       Predicate<Result>          filter         = r -> true;
+        private       double                     xTrack         = Double.POSITIVE_INFINITY;
+        private       double                     yTrack         = Double.POSITIVE_INFINITY;
+        private       double                     maxX           = Double.NEGATIVE_INFINITY;
+        private       double                     maxY           = Double.NEGATIVE_INFINITY;
+        private       Dash                       dash           = Dash.SOLID;
+        private       ResultHandler              handler;
+        private       ResultTable.Evaluable      xData          = null;
+        private       ResultTable.Evaluable      yData          = null;
+        private       ResultTable.Evaluable      eData          = null;
+        private       ResultTable                watching       = null;
+        private       ResultTable.OnUpdate       rtListener     = null;
+        private       Color[]                    defaultColours = jisa.gui.Series.defaultColours;
+        private       int                        maxPoints      = Integer.MAX_VALUE;
+        private       int                        redPoints      = Integer.MAX_VALUE;
+        private       DataHandler                click          = (x, y, e) -> {
         };
 
         public JISASeries(Series<Double, Double> series) {
@@ -1057,14 +1088,14 @@ public class JISAChart extends XYChart<Double, Double> {
                 if (!map.containsKey(value)) {
 
                     jisa.gui.Series series = createSeries()
-                        .setName(formatter.getName(r))
-                        .setColour(defaultColours[subSeries.size() % defaultColours.length])
-                        .showLine(isShowingLine())
-                        .showMarkers(isShowingMarkers())
-                        .setMarkerShape(getMarkerShape())
-                        .setLineDash(getLineDash())
-                        .setLineWidth(getLineWidth())
-                        .setMarkerSize(getMarkerSize());
+                            .setName(formatter.getName(r))
+                            .setColour(defaultColours[subSeries.size() % defaultColours.length])
+                            .showLine(isShowingLine())
+                            .showMarkers(isShowingMarkers())
+                            .setMarkerShape(getMarkerShape())
+                            .setLineDash(getLineDash())
+                            .setLineWidth(getLineWidth())
+                            .setMarkerSize(getMarkerSize());
 
                     if (isFitted()) {
                         series.fit(getFitter());
@@ -1109,8 +1140,8 @@ public class JISAChart extends XYChart<Double, Double> {
                 }
 
                 jisa.gui.Series series = createSeries()
-                    .setName(list.getTitle(i))
-                    .setColour(defaultColours[subSeries.size() % defaultColours.length]);
+                        .setName(list.getTitle(i))
+                        .setColour(defaultColours[subSeries.size() % defaultColours.length]);
 
                 if (isFitted()) {
                     series.fit(getFitter());

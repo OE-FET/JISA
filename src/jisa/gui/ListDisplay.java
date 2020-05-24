@@ -29,7 +29,8 @@ public class ListDisplay<T> extends JFXElement {
         super(title, ListDisplay.class.getResource("fxml/ActionQueueWindow.fxml"));
         list.getSelectionModel().selectedIndexProperty().addListener((a, b, c) -> {
             triggerOnChange();
-            ((ListItem) getSelected()).triggerOnSelected();
+            ListItem selected = (ListItem) getSelected();
+            if (selected != null) selected.triggerOnSelected();
         });
 
     }

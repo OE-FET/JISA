@@ -315,9 +315,9 @@ public class Doc extends JFXElement {
         ImageView imageView = new ImageView(image);
         imageView.setPreserveRatio(true);
         imageView.setSmooth(true);
-        scroll.widthProperty().addListener((observableValue, number, t1) -> imageView.maxWidth(scroll.getWidth() - 35));
-        scroll.heightProperty().addListener((observableValue, number, t1) -> imageView.maxHeight(scroll.getHeight() - 35));
         BorderPane pane = new BorderPane(imageView);
+        list.widthProperty().addListener(o -> pane.maxWidth(scroll.getWidth() - 35));
+        list.heightProperty().addListener(o -> pane.maxHeight(scroll.getHeight() - 35));
         GUI.runNow(() -> list.getChildren().add(pane));
 
         return new Image() {

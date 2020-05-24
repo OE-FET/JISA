@@ -31,7 +31,7 @@ public interface Container {
      *
      * @param elements Elements to add.
      */
-    default void addAll(Collection<Element> elements) {
+    default void addAll(Collection<? extends Element> elements) {
         for (Element e : elements) {
             add(e);
         }
@@ -60,7 +60,7 @@ public interface Container {
      *
      * @param elements Elements to remove
      */
-    default void removeAll(Collection<Element> elements) {
+    default void removeAll(Collection<? extends Element> elements) {
         for (Element e : elements) {
             remove(e);
         }

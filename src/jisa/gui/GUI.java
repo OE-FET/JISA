@@ -523,21 +523,7 @@ public class GUI extends Application {
      */
     public static Address browseVISA() {
 
-        AtomicReference<Address> ref       = new AtomicReference<>();
-        BrowseVISA               browse    = new BrowseVISA("Find Instrument");
-        Semaphore                semaphore = new Semaphore(0);
-
-        GUI.runNow(() -> browse.search((a) -> {
-            ref.set(a);
-            semaphore.release();
-        }));
-
-        try {
-            semaphore.acquire();
-        } catch (InterruptedException ignored) {
-        }
-
-        return ref.get();
+        return (new VISABrowser("Browse Instruments")).selectAddress();
 
     }
 

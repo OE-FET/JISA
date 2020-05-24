@@ -21,6 +21,8 @@ public class Display extends JFXElement {
 
         super(title, Table.class.getResource("fxml/TableWindow.fxml"));
 
+        table.setPrefWidth(300);
+
         name.setCellValueFactory(row -> row.getValue().name);
         value.setCellValueFactory(row -> row.getValue().value);
 

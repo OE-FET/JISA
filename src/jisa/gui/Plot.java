@@ -23,7 +23,6 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import jisa.Util;
-import jisa.control.SRunnable;
 import jisa.experiment.ResultTable;
 import jisa.gui.svg.*;
 import jisa.maths.fits.Fit;
@@ -32,22 +31,23 @@ import jisa.maths.functions.Function;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 public class Plot extends JFXElement implements Element, Clearable {
 
-    public  BorderPane pane;
-    public  ToolBar    toolbar;
-    public  Pane       stack;
-    public  JISAChart  chart;
-    public  SmartAxis  xAxis;
-    public  SmartAxis  yAxis;
-    public  Button     autoButton;
-    public  HBox       sliderBox;
-    public  Slider     rangeSliderX;
-    private Rectangle  rect;
-    private Series     autoSeries = null;
+    public  BorderPane   pane;
+    public  ToolBar      toolbar;
+    public  Pane         stack;
+    public  JISAChart    chart;
+    public  SmartAxis    xAxis;
+    public  SmartAxis    yAxis;
+    public  Button       autoButton;
+    public  HBox         sliderBox;
+    public  Slider       rangeSliderX;
+    private Rectangle    rect;
+    private Series       autoSeries = null;
 
     /**
      * Creates an empty plot from the given title, x-axis label, and y-axis label.
@@ -96,7 +96,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
             AnchorPane canvas = new AnchorPane();
             canvas.setStyle(
-                "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
+                    "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
             canvas.setMouseTransparent(true);
             canvas.getChildren().add(rect);
             canvas.setManaged(false);
@@ -170,6 +170,10 @@ public class Plot extends JFXElement implements Element, Clearable {
         this(title);
         autoSeries = createSeries().watchAll(toWatch, xData);
 
+    }
+
+    public List<Series> getSeries() {
+        return new ArrayList<>(chart.getSeries());
     }
 
 
@@ -273,20 +277,20 @@ public class Plot extends JFXElement implements Element, Clearable {
         return addToolbarButton(text, this::showSaveDialog);
     }
 
-    public void setLegendColumns(int columns) {
-        chart.getChartLegend().setMaxColumns(columns);
-    }
-
-    public void setLegendRows(int rows) {
-        chart.getChartLegend().setMaxRows(rows);
-    }
-
     public int getLegendColumns() {
         return chart.getChartLegend().getMaxColumns();
     }
 
+    public void setLegendColumns(int columns) {
+        chart.getChartLegend().setMaxColumns(columns);
+    }
+
     public int getLegendRows() {
         return chart.getChartLegend().getMaxRows();
+    }
+
+    public void setLegendRows(int rows) {
+        chart.getChartLegend().setMaxRows(rows);
     }
 
     public void showSaveDialog() {
@@ -863,10 +867,10 @@ public class Plot extends JFXElement implements Element, Clearable {
 
             SVGElement legendCircle = makeMarker(s.isShowingMarkers() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
             SVGText legendText = new SVGText(
-                legendX + 15.0 + 5 + 3 + 10,
-                legendY + (25 * i) + 15.0 + 5,
-                "beginning",
-                s.getName()
+                    legendX + 15.0 + 5 + 3 + 10,
+                    legendY + (25 * i) + 15.0 + 5,
+                    "beginning",
+                    s.getName()
             );
 
             legendText.setAttribute("font-size", "16px");
@@ -985,16 +989,16 @@ public class Plot extends JFXElement implements Element, Clearable {
             case TRIANGLE:
 
                 marker = new SVGTriangle(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(Color.WHITE)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setFillColour(Color.WHITE)
+                        .setStrokeWidth(2);
                 break;
 
             case DASH:
 
                 marker = new SVGLine(x - m, y, x + m, y)
-                    .setStrokeColour(c)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setStrokeWidth(2);
                 break;
 
             default:
@@ -1002,18 +1006,18 @@ public class Plot extends JFXElement implements Element, Clearable {
             case DOT:
 
                 marker = new SVGCircle(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
+                        .setStrokeWidth(2);
                 break;
 
             case SQUARE:
             case DIAMOND:
 
                 marker = new SVGSquare(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(Color.WHITE)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setFillColour(Color.WHITE)
+                        .setStrokeWidth(2);
 
                 if (p == Series.Shape.DIAMOND) {
                     marker.setAttribute("transform", "rotate(45 " + x + " " + y + ")");
@@ -1024,9 +1028,9 @@ public class Plot extends JFXElement implements Element, Clearable {
             case CROSS:
 
                 marker = new SVGCross(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(c)
-                    .setStrokeWidth(1);
+                        .setStrokeColour(c)
+                        .setFillColour(c)
+                        .setStrokeWidth(1);
 
                 break;
 

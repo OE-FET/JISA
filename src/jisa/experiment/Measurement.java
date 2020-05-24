@@ -1,6 +1,12 @@
 package jisa.experiment;
 
+import jisa.gui.Field;
+import jisa.gui.Fields;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Abstract class for implementing measurement routines. Allows for procedures that can be easily and safely
@@ -8,10 +14,11 @@ import java.io.IOException;
  */
 public abstract class Measurement {
 
-    private boolean     running   = false;
-    private boolean     stopped   = false;
-    private ResultTable results   = null;
-    private Thread      runThread = Thread.currentThread();
+    private boolean            running    = false;
+    private boolean            stopped    = false;
+    private ResultTable        results    = null;
+    private Thread             runThread  = Thread.currentThread();
+    private List<Parameter<?>> parameters = new LinkedList<>();
 
     /**
      * Returns the name of this measurement.
@@ -19,6 +26,20 @@ public abstract class Measurement {
      * @return Name of the measurement
      */
     public abstract String getName();
+
+    /**
+     * Returns a user-given label for this measurement instance.
+     *
+     * @return Label
+     */
+    public abstract String getLabel();
+
+    /**
+     * Sets the user-given label for this measurement instance.
+     *
+     * @param value Label to set
+     */
+    public abstract void setLabel(String value);
 
     /**
      * This method should perform the measurement itself and throw and exception if either something is wrong (ie
@@ -130,6 +151,10 @@ public abstract class Measurement {
 
     }
 
+    public List<Parameter<?>> getParameters() {
+        return new ArrayList<>(parameters);
+    }
+
     /**
      * Returns whether this measurement is currently running.
      *
@@ -185,6 +210,114 @@ public abstract class Measurement {
 
         if (stopped) {
             throw new InterruptedException();
+        }
+
+    }
+
+    public abstract class Parameter<T> {
+
+        private final String   section;
+        private final String   name;
+        private final String   units;
+        private       T        value;
+        private       Field<T> field = null;
+
+        public Parameter(String section, String name, String units, T defaultValue) {
+
+            this.section = section;
+            this.name    = name;
+            this.units   = units;
+            this.value   = defaultValue;
+
+            parameters.add(this);
+
+        }
+
+        public String getSection() {
+            return section;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getUnits() {
+            return units;
+        }
+
+        public String getTitle() {
+            return units == null ? getName() : String.format("%s [%s]", name, units);
+        }
+
+        public T getValue() {
+            return value;
+        }
+
+        public void setValue(T value) {
+            this.value = value;
+        }
+
+        protected abstract Field<T> makeField(Fields fields);
+
+        public Field<T> createField(Fields fields) {
+            field = makeField(fields);
+            return field;
+        }
+
+        public void update() {
+            setValue(field.get());
+        }
+
+    }
+
+    public class DoubleParameter extends Parameter<Double> {
+
+        public DoubleParameter(String section, String name, String units, Double defaultValue) {
+            super(section, name, units, defaultValue);
+        }
+
+        @Override
+        protected Field<Double> makeField(Fields fields) {
+            return fields.addDoubleField(getTitle(), getValue());
+        }
+
+    }
+
+    public class IntegerParameter extends Parameter<Integer> {
+
+        public IntegerParameter(String section, String name, String units, Integer defaultValue) {
+            super(section, name, units, defaultValue);
+        }
+
+        @Override
+        protected Field<Integer> makeField(Fields fields) {
+            return fields.addIntegerField(getTitle(), getValue());
+        }
+
+    }
+
+    public class BooleanParameter extends Parameter<Boolean> {
+
+        public BooleanParameter(String section, String name, String units, Boolean defaultValue) {
+            super(section, name, units, defaultValue);
+        }
+
+        @Override
+        protected Field<Boolean> makeField(Fields fields) {
+            return fields.addCheckBox(getTitle(), getValue());
+        }
+
+    }
+
+    public class StringParameter extends Parameter<String> {
+
+        public StringParameter(String section, String name, String units, String defaultValue) {
+            super(section, name, units, defaultValue);
+        }
+
+        @Override
+        protected Field<String> makeField(Fields fields) {
+            return fields.addTextField(getTitle(), getValue());
         }
 
     }
