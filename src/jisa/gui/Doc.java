@@ -1,13 +1,12 @@
 package jisa.gui;
 
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.ListChangeListener;
+import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.ImageView;
@@ -18,20 +17,43 @@ import javafx.scene.text.TextAlignment;
 import jisa.Util;
 
 import java.net.URL;
-import java.util.concurrent.Semaphore;
 
 public class Doc extends JFXElement {
 
-    public ScrollPane scroll;
-    public VBox       list;
-    public BorderPane container;
+    private final ObjectProperty<Region>     viewport   = new SimpleObjectProperty<>(null);
+    private final ObjectProperty<Background> background = new SimpleObjectProperty<>(new Background(new BackgroundFill(Colour.WHITE, null, null)));
+    @FXML
+    protected     ScrollPane                 scroll;
+    @FXML
+    protected     VBox                       list;
 
     public Doc(String title) {
 
         super(title, JFXElement.class.getResource("fxml/DocWindow.fxml"));
         BorderPane.setMargin(getNode().getCenter(), Insets.EMPTY);
-        scroll.widthProperty().addListener((o) -> scroll.lookup(".viewport").setStyle("-fx-background-color: white;"));
+        viewport.addListener(o -> updateBG());
+        background.addListener(o -> updateBG());
 
+        scroll.widthProperty().addListener(o -> {
+            if (viewport.get() == null) viewport.set((Region) scroll.lookup(".viewport"));
+        });
+
+    }
+
+    private void updateBG() {
+
+        if (viewport.get() != null) {
+            GUI.runNow(() -> viewport.get().setBackground(background.get()));
+        }
+
+    }
+
+    public void setBackgroundColour(Color colour) {
+        background.set(new Background(new BackgroundFill(colour, null, null)));
+    }
+
+    public Color getBackgroundColour() {
+        return (Color) background.get().getFills().get(0).getFill();
     }
 
     public Heading addHeading(String text) {
@@ -407,7 +429,9 @@ public class Doc extends JFXElement {
             @Override
             public void remove() {
                 GUI.runNow(() -> list.getChildren().remove(label));
-            }            @Override
+            }
+
+            @Override
             public void setVisible(boolean visible) {
                 GUI.runNow(() -> {
                     label.setVisible(visible);
@@ -418,10 +442,6 @@ public class Doc extends JFXElement {
 
         };
 
-    }
-
-    public Pane getTabPane() {
-        return container;
     }
 
     public Value addValue(String name, String initial) {
@@ -494,14 +514,15 @@ public class Doc extends JFXElement {
             @Override
             public void remove() {
                 GUI.runNow(() -> list.getChildren().remove(container));
-            }            @Override
+            }
+
+            @Override
             public void setVisible(boolean visible) {
                 GUI.runNow(() -> {
                     container.setVisible(visible);
                     container.setManaged(visible);
                 });
             }
-
 
 
         };

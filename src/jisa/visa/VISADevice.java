@@ -48,15 +48,15 @@ public class VISADevice implements Instrument {
 
     }
 
-    private Connection   connection;
-    private Address      address;
-    private String       terminator     = "";
-    private List<String> toRemove       = new LinkedList<>();
-    private String       lastCommand    = null;
-    private String       lastRead       = null;
-    private int          readBufferSize = 1024;
-    private int          retryCount     = 3;
-    private int          timeout        = 2000;
+    private final List<String> toRemove       = new LinkedList<>();
+    private       Connection   connection;
+    private       Address      address;
+    private       String       terminator     = "";
+    private       String       lastCommand    = null;
+    private       String       lastRead       = null;
+    private       int          readBufferSize = 1024;
+    private       int          retryCount     = 3;
+    private       int          timeout        = 2000;
 
     public VISADevice(Address address) throws IOException {
 

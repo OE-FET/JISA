@@ -3,12 +3,11 @@ package jisa.gui;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Priority;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -215,6 +214,52 @@ public class Grid extends JFXElement implements Element, Container {
         });
 
         updateGridding();
+
+    }
+
+    public void slideOutElement(Element toRemove) {
+
+        int index = added.indexOf(toRemove);
+
+        if (index < 0) {
+            return;
+        }
+
+        Timeline animation = new Timeline();
+        Pane     child     = (Pane) pane.getChildren().get(index);
+
+        animation.getKeyFrames().addAll(
+                new KeyFrame(Duration.ZERO, new KeyValue(child.maxWidthProperty(), child.getWidth()), new KeyValue(child.opacityProperty(), 1.0)),
+                new KeyFrame(Duration.millis(250), new KeyValue(child.maxWidthProperty(), 0.0), new KeyValue(child.opacityProperty(), 0.0))
+        );
+
+        animation.setOnFinished(event -> {
+            remove(toRemove);
+            child.setOpacity(1.0);
+            child.setMaxWidth(Region.USE_PREF_SIZE);
+        });
+
+        Platform.runLater(animation::playFromStart);
+
+    }
+
+    public void slideInElement(Element toAdd) {
+
+        Timeline animation = new Timeline();
+        Pane     child     = (Pane) toAdd.getBorderedNode();
+
+        child.setMaxWidth(0.0);
+        child.setOpacity(0.0);
+
+        animation.getKeyFrames().addAll(
+                new KeyFrame(Duration.ZERO, new KeyValue(child.maxWidthProperty(), 0.0), new KeyValue(child.opacityProperty(), 0.0)),
+                new KeyFrame(Duration.millis(250), new KeyValue(child.maxWidthProperty(), Region.USE_PREF_SIZE), new KeyValue(child.opacityProperty(), 1.0))
+        );
+
+        added.add(toAdd);
+        addPane(child);
+
+        Platform.runLater(animation::playFromStart);
 
     }
 

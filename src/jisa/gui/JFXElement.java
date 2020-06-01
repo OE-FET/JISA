@@ -1,5 +1,8 @@
 package jisa.gui;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -8,6 +11,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBar;
@@ -17,6 +21,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import jisa.control.SRunnable;
 import jisa.enums.Icon;
 
@@ -36,6 +41,26 @@ public class JFXElement implements Element {
     private final ButtonBar              buttonBar;
     private final Scene                  scene;
     private       Stage                  stage  = null;
+
+    public JFXElement(String title, Node centre) {
+
+        // Make sure the GUI thread has started
+        GUI.touch();
+        this.title.set(title);
+
+        borderPane = new BorderPane();
+        scene      = new Scene(borderPane);
+        scene.setFill(Colour.string("#f4f4f4"));
+        borderPane.setBackground(Background.EMPTY);
+        borderPane.setCenter(centre);
+
+        toolBar   = new ToolBar();
+        buttonBar = new ButtonBar();
+
+        setUpBars();
+
+
+    }
 
     /**
      * Creates a GUI window using the specified FXML file.
