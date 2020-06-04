@@ -23,7 +23,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     private static final String                         LIBRARY_NAME                 = "usbtc08";
     private static final Class<USBTC08.NativeInterface> LIBRARY_CLASS                = USBTC08.NativeInterface.class;
     private static final int                            SENSORS_PER_UNIT             = 9;
-    private static final short                          ERROR_OK                     = 0;
+    private static final short                          ACTION_FAILED                = 0;
+    private static final short                          ERROR_NONE                   = 0;
     private static final short                          ERROR_OS_NOT_SUPPORTED       = 1;
     private static final short                          ERROR_NO_CHANNELS_SET        = 2;
     private static final short                          ERROR_INVALID_PARAMETER      = 3;
@@ -31,9 +32,10 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     private static final short                          ERROR_INCORRECT_MODE         = 5;
     private static final short                          ERROR_ENUMERATION_INCOMPLETE = 6;
     private static final short                          UNITS_KELVIN                 = 2;
-    private static       USBTC08.NativeInterface        INSTANCE;
 
-    // Load native library first time this class is accessed
+    /** Static instance of loaded library */
+    private static USBTC08.NativeInterface INSTANCE;
+
     static {
 
         try {
@@ -45,7 +47,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     private final short          handle;
-    private final Thermocouple[] types         = {
+    private final Thermocouple[] types = {
             Thermocouple.NONE,
             Thermocouple.NONE,
             Thermocouple.NONE,
@@ -56,9 +58,10 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             Thermocouple.NONE,
             Thermocouple.NONE
     };
-    private       float[]        lastValues    = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-    private       long           lastTime      = 0;
-    private       Frequency      lineFrequency = Frequency.FIFTY_HERTZ;
+
+    private float[]   lastValues    = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    private long      lastTime      = 0;
+    private Frequency lineFrequency = Frequency.FIFTY_HERTZ;
 
     /**
      * Connects to the first USB-TC08 unit found connected to the system.
@@ -79,7 +82,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         if (handle > 0) {
             this.handle = handle;
-        } else if (handle == 0) {
+        } else if (handle == ACTION_FAILED) {
             throw new IOException("No USB TC-08 unit found!");
         } else {
             throw new DeviceException(getLastError((short) 0));
@@ -186,7 +189,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         byte[] read   = new byte[256];
         short  result = lib.usb_tc08_get_unit_info2(handle, read, (short) 256, NativeInterface.USBTC08LINE_BATCH_AND_SERIAL);
 
-        if (result == 0) {
+        if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
         }
 
@@ -221,7 +224,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         int result = lib.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), UNITS_KELVIN);
 
         // If zero, then something's gone wrong.
-        if (result == 0) {
+        if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
         }
 
@@ -275,7 +278,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         int result = lib.usb_tc08_set_channel(handle, (short) sensor, type.getCode());
 
-        if (result == 0) {
+        if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
         } else {
             types[sensor] = type;
@@ -321,7 +324,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         int result = lib.usb_tc08_set_mains(handle, (short) frequency.ordinal());
 
-        if (result == 0) {
+        if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
         } else {
             lineFrequency = frequency;
@@ -340,7 +343,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         int result = lib.usb_tc08_close_unit(handle);
 
-        if (result == 0) {
+        if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
         }
 
@@ -363,7 +366,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         switch (error) {
 
-            case ERROR_OK:
+            case ERROR_NONE:
                 return "None";
 
             case ERROR_OS_NOT_SUPPORTED:
