@@ -207,7 +207,13 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
-    private void updateReadings() throws DeviceException {
+    /**
+     * Updates the currently held temperature readings for each sensor. This should be updated at most every minimum
+     * measurement interval, as calculated by the USB-TC08 unit.
+     *
+     * @throws DeviceException Upon instrument error
+     */
+    private synchronized void updateReadings() throws DeviceException {
 
         // Need a pointer to some memory to store our returned values
         Memory tempPointer = new Memory(9 * Native.getNativeSize(Float.TYPE));
