@@ -1,8 +1,5 @@
 package jisa.gui;
 
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -12,7 +9,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ToolBar;
@@ -21,7 +17,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-import javafx.util.Duration;
+import javafx.stage.StageStyle;
 import jisa.control.SRunnable;
 import jisa.enums.Icon;
 
@@ -472,6 +468,10 @@ public class JFXElement implements Element {
 
     }
 
+    public boolean isMaximised() {
+        return stage != null && stage.isMaximized();
+    }
+
     /**
      * Sets whether the window is maximised or not.
      *
@@ -479,6 +479,25 @@ public class JFXElement implements Element {
      */
     public void setMaximised(boolean flag) {
         GUI.runNow(() -> getStage().setMaximized(flag));
+    }
+
+    /**
+     * Returns whether the element is set to be shown with window decorations (title bar + frame) when shown as window.
+     *
+     * @return Show window decorations?
+     */
+    public boolean isDecorated() {
+        return stage == null || stage.getStyle() == StageStyle.DECORATED;
+    }
+
+    /**
+     * Sets whether a title bar + frame should be drawn around this element when shown as a window or not. Can only be
+     * called before the window is shown for the first time.
+     *
+     * @param decorated Show window decorations?
+     */
+    public void setDecorated(boolean decorated) {
+        GUI.runNow((() -> getStage().initStyle(decorated ? StageStyle.DECORATED : StageStyle.UNDECORATED)));
     }
 
     @Override

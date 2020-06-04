@@ -10,26 +10,30 @@ import jisa.enums.Thermocouple;
 import jisa.visa.NativeDevice;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Driver class for Picotech USB-TC08 thermocouple data loggers. Requires proprietary usbtc08 library to be installed.
+ */
 public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MSTMeter {
 
-    public static final String                         LIBRARY_NAME     = "usbtc08";
-    public static final Class<USBTC08.NativeInterface> LIBRARY_CLASS    = USBTC08.NativeInterface.class;
-    public static final int                            SENSORS_PER_UNIT = 9;
+    // Constants
+    private static final String                         LIBRARY_NAME                 = "usbtc08";
+    private static final Class<USBTC08.NativeInterface> LIBRARY_CLASS                = USBTC08.NativeInterface.class;
+    private static final int                            SENSORS_PER_UNIT             = 9;
+    private static final short                          ERROR_OK                     = 0;
+    private static final short                          ERROR_OS_NOT_SUPPORTED       = 1;
+    private static final short                          ERROR_NO_CHANNELS_SET        = 2;
+    private static final short                          ERROR_INVALID_PARAMETER      = 3;
+    private static final short                          ERROR_VARIANT_NOT_SUPPORTED  = 4;
+    private static final short                          ERROR_INCORRECT_MODE         = 5;
+    private static final short                          ERROR_ENUMERATION_INCOMPLETE = 6;
+    private static final short                          UNITS_KELVIN                 = 2;
+    private static       USBTC08.NativeInterface        INSTANCE;
 
-    private static final short ERROR_OK                     = 0;
-    private static final short ERROR_OS_NOT_SUPPORTED       = 1;
-    private static final short ERROR_NO_CHANNELS_SET        = 2;
-    private static final short ERROR_INVALID_PARAMETER      = 3;
-    private static final short ERROR_VARIANT_NOT_SUPPORTED  = 4;
-    private static final short ERROR_INCORRECT_MODE         = 5;
-    private static final short ERROR_ENUMERATION_INCOMPLETE = 6;
-    private static final short UNITS_KELVIN                 = 2;
-
-    private static USBTC08.NativeInterface INSTANCE;
-
+    // Load native library first time this class is accessed
     static {
 
         try {
@@ -41,7 +45,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     private final short          handle;
-    private final Thermocouple[] types = {
+    private final Thermocouple[] types         = {
             Thermocouple.NONE,
             Thermocouple.NONE,
             Thermocouple.NONE,
@@ -52,10 +56,16 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             Thermocouple.NONE,
             Thermocouple.NONE
     };
+    private       float[]        lastValues    = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    private       long           lastTime      = 0;
+    private       Frequency      lineFrequency = Frequency.FIFTY_HERTZ;
 
-    private float[] lastValues = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-    private long    lastTime   = 0;
-
+    /**
+     * Connects to the first USB-TC08 unit found connected to the system.
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon instrument error
+     */
     public USBTC08() throws IOException, DeviceException {
 
         // Load native library
@@ -77,6 +87,14 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
+    /**
+     * Connects to the first USB-TC08 unit with matching serial number, given in the form of an IDAddress object.
+     *
+     * @param address Serial number, as IDAddress object
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon instrument error
+     */
     public USBTC08(Address address) throws IOException, DeviceException {
 
         // Load native library
@@ -92,6 +110,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             throw new IOException("Error loading usbtc08 library!");
         }
 
+        // Search for all connected units
         List<USBTC08> found = find();
 
         if (found.isEmpty()) {
@@ -102,6 +121,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         for (USBTC08 unit : found) {
 
+            // If it's the one we want, give this instance the handle, otherwise close the connection
             if (unit.getSerial().toLowerCase().equals(serial.toLowerCase().trim())) {
                 value = unit.handle;
             } else {
@@ -110,6 +130,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         }
 
+        // If nothing was found, then the serial number is wrong
         if (value == null) {
             throw new IOException(String.format("No USB TC-08 unit with serial number \"%s\" was found.", serial));
         }
@@ -118,10 +139,23 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
+    /**
+     * Connects to the first USB-TC08 unit with matching serial number, given as a String.
+     *
+     * @param serial Serial number, as a String
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon instrument error
+     */
     public USBTC08(String serial) throws IOException, DeviceException {
         this(new IDAddress(serial));
     }
 
+    /**
+     * Returns a list of all USB-TC08 units found connected to this computer.
+     *
+     * @return List of USBTC08 objects representing the found units
+     */
     public static List<USBTC08> find() {
 
         List<USBTC08> devices = new LinkedList<>();
@@ -140,6 +174,13 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
+    /**
+     * Returns the serial number of this unit.
+     *
+     * @return Serial number
+     *
+     * @throws DeviceException Upon instrument error.
+     */
     public String getSerial() throws DeviceException {
 
         byte[] read   = new byte[256];
@@ -162,7 +203,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             updateReadings();
         }
 
-        return (double) lastValues[sensor];
+        return lastValues[sensor];
 
     }
 
@@ -175,8 +216,6 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         // If zero, then something's gone wrong.
         if (result == 0) {
-            ;
-
             throw new DeviceException(getLastError(handle));
         }
 
@@ -193,11 +232,11 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     @Override
     public List<Double> getTemperatures() throws DeviceException {
 
-        List<Double> temperatures = new LinkedList<>();
+        List<Double> temperatures = new ArrayList<>(lastValues.length);
 
         updateReadings();
 
-        // Convert to doubles
+        // Convert to list of doubles
         for (float value : lastValues) {
             temperatures.add((double) value);
         }
@@ -209,7 +248,6 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     @Override
     public void setTemperatureRange(int sensor, double range) throws DeviceException, IOException {
         checkSensor(sensor);
-        // No ranging options
     }
 
     @Override
@@ -223,7 +261,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      * @param sensor Sensor number
      * @param type   Thermocouple type
      *
-     * @throws DeviceException Upon device error
+     * @throws DeviceException Upon instrument error
      */
     public void setSensorType(int sensor, Thermocouple type) throws DeviceException, IOException {
 
@@ -239,6 +277,16 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
+    /**
+     * Returns the sensor type that the given channel is configured for.
+     *
+     * @param sensor Sensor number
+     *
+     * @return Sensor type
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon instrument error
+     */
     public Thermocouple getSensorType(int sensor) throws DeviceException, IOException {
 
         checkSensor(sensor);
@@ -247,11 +295,20 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     /**
-     * Sets the line-frequency rejection.
+     * Returns the line-frequency rejection mode currently in use.
+     *
+     * @return Frequency, 50 Hz or 60 Hz.
+     */
+    public Frequency getLineFrequency() {
+        return lineFrequency;
+    }
+
+    /**
+     * Sets the line-frequency rejection mode to be used.
      *
      * @param frequency 50 Hz or 60 Hz
      *
-     * @throws DeviceException Upon device error
+     * @throws DeviceException Upon instrument error
      */
     public void setLineFrequency(Frequency frequency) throws DeviceException {
 
@@ -260,6 +317,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         if (result == 0) {
             throw new DeviceException(getLastError(handle));
+        } else {
+            lineFrequency = frequency;
         }
 
 
@@ -283,7 +342,13 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     @Override
     public Address getAddress() {
-        return null;
+
+        try {
+            return new IDAddress(getSerial());
+        } catch (Exception e) {
+            return null;
+        }
+
     }
 
     private String getLastError(short handle) {
@@ -328,6 +393,9 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         SIXTY_HERTZ
     }
 
+    /**
+     * Interface corresponding to native usbtc08 library methods.
+     */
     protected interface NativeInterface extends Library {
 
         int   USBTC08_MAX_CHANNELS         = 8;
