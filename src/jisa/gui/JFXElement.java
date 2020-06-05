@@ -211,6 +211,14 @@ public class JFXElement implements Element {
 
     }
 
+    public double getMaxWidth() {
+        return borderPane.getMaxWidth();
+    }
+
+    public void setMaxWidth(double maxWidth) {
+        GUI.runNow(() -> borderPane.setMaxWidth(maxWidth));
+    }
+
     /**
      * Adds a separator to the toolbar at the top of this element.
      *
@@ -342,17 +350,32 @@ public class JFXElement implements Element {
 
     }
 
+    public double getWindowWidth() {
+        return isShowing() ? getStage().getWidth() : width.get();
+    }
+
+    public void setWindowWidth(double width) {
+        GUI.runNow(() -> this.width.set(width));
+    }
+
+    public double getWindowHeight() {
+        return isShowing() ? getStage().getHeight() : height.get();
+    }
+
+    public void setWindowHeight(double height) {
+        GUI.runNow(() -> this.height.set(height));
+    }
+
     public void autoSizeWindow() {
 
         GUI.runNow(() -> {
+
             this.width.set(-1);
             this.height.set(-1);
+
+            if (isShowing()) stage.sizeToScene();
+
         });
-
-        if (isShowing()) {
-            GUI.runNow(() -> stage.sizeToScene());
-        }
-
     }
 
     public Stage getStage() {
@@ -365,33 +388,37 @@ public class JFXElement implements Element {
                 stage.setScene(scene);
                 stage.titleProperty().bind(this.title);
 
-                width.addListener(observable -> {
-                    if (width.get() >= 0) stage.setWidth(width.get());
-                });
+                width.addListener(observable -> updateWidth());
+                height.addListener(observable -> updateHeight());
+                icon.addListener(observable -> updateIcon());
 
-                height.addListener(observable -> {
-                    if (height.get() >= 0) stage.setHeight(height.get());
-                });
-
-                icon.addListener(observable -> {
-
-                    if (icon.get() == null) {
-                        stage.getIcons().clear();
-                    } else {
-                        stage.getIcons().setAll(icon.get());
-                    }
-
-                });
-
-                width.set(width.get());
-                height.set(height.get());
-                icon.set(icon.get());
+                updateWidth();
+                updateHeight();
+                updateIcon();
 
             });
 
         }
 
         return stage;
+
+    }
+
+    private void updateWidth() {
+        if (width.get() >= 0) stage.setWidth(width.get());
+    }
+
+    private void updateHeight() {
+        if (height.get() >= 0) stage.setHeight(height.get());
+    }
+
+    private void updateIcon() {
+
+        if (icon.get() == null) {
+            stage.getIcons().clear();
+        } else {
+            stage.getIcons().setAll(icon.get());
+        }
 
     }
 

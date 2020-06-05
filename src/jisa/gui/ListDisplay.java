@@ -14,10 +14,12 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import jisa.control.SRunnable;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class ListDisplay<T> extends JFXElement {
+public class ListDisplay<T> extends JFXElement implements Iterable<ListDisplay.Item<T>> {
 
     private final List<DefaultMenuItem<T>> defaultMenuItems = new LinkedList<>();
     @FXML
@@ -135,8 +137,25 @@ public class ListDisplay<T> extends JFXElement {
         this.onChange = onChange;
     }
 
+    public List<Item<T>> getItems() {
+        return new ArrayList<>(list.getItems());
+    }
+
+    public int size() {
+        return list.getItems().size();
+    }
+
+    public boolean isEmpty() {
+        return size() == 0;
+    }
+
     protected void triggerOnChange() {
         if (onChange != null) onChange.start();
+    }
+
+    @Override
+    public Iterator<Item<T>> iterator() {
+        return getItems().iterator();
     }
 
     public interface Item<T> extends SubElement {

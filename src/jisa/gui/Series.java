@@ -287,14 +287,14 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    Series showMarkers(boolean show);
+    Series setMarkersVisible(boolean show);
 
     /**
      * Returns whether markers are being shown at each data point or not in this series.
      *
      * @return Markers showing?
      */
-    boolean isShowingMarkers();
+    boolean isMarkersVisible();
 
     /**
      * Returns the marker shape currently being used by this series.
@@ -408,14 +408,14 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    Series showLine(boolean show);
+    Series setLineVisible(boolean show);
 
     /**
      * Returns whether the series line is visible or not.
      *
      * @return Line visible?
      */
-    boolean isShowingLine();
+    boolean isLineVisible();
 
     /**
      * Sets the series to automatically reduce the number of data points to the specified number when exceeding the specified limit.

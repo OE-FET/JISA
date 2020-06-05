@@ -14,10 +14,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
 import javafx.scene.control.ToolBar;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
@@ -37,17 +34,17 @@ import java.util.List;
 
 public class Plot extends JFXElement implements Element, Clearable {
 
-    public  BorderPane   pane;
-    public  ToolBar      toolbar;
-    public  Pane         stack;
-    public  JISAChart    chart;
-    public  SmartAxis    xAxis;
-    public  SmartAxis    yAxis;
-    public  Button       autoButton;
-    public  HBox         sliderBox;
-    public  Slider       rangeSliderX;
-    private Rectangle    rect;
-    private Series       autoSeries = null;
+    public  BorderPane pane;
+    public  Pane       stack;
+    public  JISAChart  chart;
+    public  SmartAxis  xAxis;
+    public  SmartAxis  yAxis;
+    public  Button     autoButton;
+    public  HBox       sliderBox;
+    public  Slider     rangeSliderX;
+    private Rectangle  rect;
+    private Series     autoSeries    = null;
+    private boolean    mouseCommands = false;
 
     /**
      * Creates an empty plot from the given title, x-axis label, and y-axis label.
@@ -101,14 +98,6 @@ public class Plot extends JFXElement implements Element, Clearable {
             canvas.getChildren().add(rect);
             canvas.setManaged(false);
             stack.getChildren().add(canvas);
-            toolbar.setVisible(false);
-            toolbar.setManaged(false);
-
-            toolbar.getItems().addListener((ListChangeListener<? super Node>) change -> {
-                boolean show = !toolbar.getItems().isEmpty();
-                toolbar.setVisible(show);
-                toolbar.setManaged(show);
-            });
 
             rangeSliderX.setValue(100.0);
             sliderBox.setVisible(false);
@@ -121,7 +110,7 @@ public class Plot extends JFXElement implements Element, Clearable {
             double value = rangeSliderX.getValue() / 100.0;
 
             if (value >= 1.0) {
-                useAutoXLimits();
+                autoLimitsX();
             } else {
 
                 double min = Double.POSITIVE_INFINITY;
@@ -140,7 +129,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
                 double range = Math.abs(max - min) * value;
 
-                setXAutoTrack(range);
+                autoTrackX(range);
 
             }
 
@@ -172,11 +161,6 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
-    public List<Series> getSeries() {
-        return new ArrayList<>(chart.getSeries());
-    }
-
-
     public Plot(String title, ResultTable toWatch, int xData, int yData) {
 
         this(title);
@@ -190,6 +174,10 @@ public class Plot extends JFXElement implements Element, Clearable {
         this(title);
         autoSeries = createSeries().watch(toWatch, xData, yData).split(sData);
 
+    }
+
+    public List<Series> getSeries() {
+        return new ArrayList<>(chart.getSeries());
     }
 
     /**
@@ -241,6 +229,15 @@ public class Plot extends JFXElement implements Element, Clearable {
     }
 
     /**
+     * Returns how line-segnments connecting plotted points are ordered.
+     *
+     * @return X_AXIS, Y_AXIS or ORDER_ADDED
+     */
+    public Sort getPointOrdering() {
+        return chart.getAxisSortingPolicy();
+    }
+
+    /**
      * Sets how line-segments connecting plotted points should be ordered.
      *
      * @param ordering X_AXIS, Y_AXIS or ORDER_ADDED
@@ -277,22 +274,46 @@ public class Plot extends JFXElement implements Element, Clearable {
         return addToolbarButton(text, this::showSaveDialog);
     }
 
+    /**
+     * Returns the number of columns used for laying-out the plot legend. A value of 0 indicates no limit.
+     *
+     * @return Max columns
+     */
     public int getLegendColumns() {
         return chart.getChartLegend().getMaxColumns();
     }
 
+    /**
+     * Sets the number of columns to use for laying-out the plot legend.
+     *
+     * @param columns Max columns
+     */
     public void setLegendColumns(int columns) {
         chart.getChartLegend().setMaxColumns(columns);
     }
 
+    /**
+     * Returns the number of rows used for laying-out the plot legend. A value of 0 indicates no limit.
+     *
+     * @return Max rows
+     */
     public int getLegendRows() {
         return chart.getChartLegend().getMaxRows();
     }
 
+    /**
+     * Sets the number of rows to use for laying-out the plot legend.
+     *
+     * @param rows Max rows
+     */
     public void setLegendRows(int rows) {
         chart.getChartLegend().setMaxRows(rows);
     }
 
+    /**
+     * Shows a dialogue allowing the user to save this plot as an image, with user-alterable parameters of format, width
+     * and height.
+     */
     public void showSaveDialog() {
 
         Fields         save   = new Fields("Save Plot");
@@ -340,11 +361,20 @@ public class Plot extends JFXElement implements Element, Clearable {
     }
 
     /**
+     * Returns whether the x-axis range slider is visible or not.
+     *
+     * @return Visible?
+     */
+    public boolean isSliderVisible() {
+        return sliderBox.isVisible();
+    }
+
+    /**
      * Sets whether the x-axis range slider is visible or not.
      *
      * @param flag Visible?
      */
-    public void showSlider(boolean flag) {
+    public void setSliderVisible(boolean flag) {
 
         GUI.runNow(() -> {
 
@@ -397,12 +427,16 @@ public class Plot extends JFXElement implements Element, Clearable {
         GUI.runNow(() -> yAxis.setLabelText(label));
     }
 
+    public boolean isMouseEnabled() {
+        return mouseCommands;
+    }
+
     /**
      * Sets whether
      *
      * @param flag
      */
-    public void useMouseCommands(boolean flag) {
+    public void setMouseEnabled(boolean flag) {
 
         if (flag) {
 
@@ -435,8 +469,8 @@ public class Plot extends JFXElement implements Element, Clearable {
                     startMax.set(new Point2D(xAxis.getUpperBound(), yAxis.getUpperBound()));
                     start.set(new Point2D(pointX.getX(), pointY.getY()));
                 } else if (event.getClickCount() >= 2) {
-                    useAutoXLimits();
-                    useAutoYLimits();
+                    autoLimitsX();
+                    autoLimitsY();
                 }
 
             });
@@ -526,16 +560,17 @@ public class Plot extends JFXElement implements Element, Clearable {
 
         }
 
+        mouseCommands = flag;
 
     }
 
     /**
      * Use auto-ranging for both X and Y limits
      */
-    public void useAutoLimits() {
+    public void autoLimits() {
 
-        useAutoXLimits();
-        useAutoYLimits();
+        autoLimitsX();
+        autoLimitsY();
 
     }
 
@@ -586,11 +621,19 @@ public class Plot extends JFXElement implements Element, Clearable {
         });
     }
 
+    public Side getLegendPosition() {
+        return chart.getLegendSide();
+    }
+
     public void setLegendPosition(Side position) {
         GUI.runNow(() -> chart.setLegendSide(position));
     }
 
-    public void showLegend(boolean show) {
+    public boolean isLegendVisible() {
+        return chart.isLegendVisible();
+    }
+
+    public void setLegendVisible(boolean show) {
 
         GUI.runNow(() -> chart.setLegendVisible(show));
     }
@@ -598,7 +641,7 @@ public class Plot extends JFXElement implements Element, Clearable {
     /**
      * Sets the x-axis to automatically choose its bounds.
      */
-    public void useAutoXLimits() {
+    public void autoLimitsX() {
         GUI.runNow(() -> {
             xAxis.setMaxRange(Double.POSITIVE_INFINITY);
             xAxis.setAutoRanging(true);
@@ -608,21 +651,21 @@ public class Plot extends JFXElement implements Element, Clearable {
     /**
      * Sets the y-axis to automatically choose its bounds.
      */
-    public void useAutoYLimits() {
+    public void autoLimitsY() {
         GUI.runNow(() -> {
             yAxis.setMaxRange(Double.POSITIVE_INFINITY);
             yAxis.setAutoRanging(true);
         });
     }
 
-    public void setXAutoTrack(double range) {
+    public void autoTrackX(double range) {
         GUI.runNow(() -> {
             xAxis.setMaxRange(range);
             xAxis.setAutoRanging(true);
         });
     }
 
-    public void setYAutoTrack(double range) {
+    public void autoTrackY(double range) {
         GUI.runNow(() -> {
             yAxis.setMaxRange(range);
             yAxis.setAutoRanging(true);
@@ -633,9 +676,11 @@ public class Plot extends JFXElement implements Element, Clearable {
 
         super.show();
         adjustSize();
+        GUI.runNow(() -> getStage().getScene().setFill(Colour.WHITE));
+
     }
 
-    public void savePNG(String path, double w, double h) {
+    public Plot copy() {
 
         Plot plot = new Plot(getTitle(), getXLabel(), getYLabel());
 
@@ -653,8 +698,8 @@ public class Plot extends JFXElement implements Element, Clearable {
                 .setLineWidth(series.getLineWidth())
                 .setMarkerShape(series.getMarkerShape())
                 .setMarkerSize(series.getMarkerSize())
-                .showMarkers(series.isShowingMarkers())
-                .showLine(series.isShowingLine());
+                .setMarkersVisible(series.isMarkersVisible())
+                .setLineVisible(series.isLineVisible());
 
             if (series.isFitted()) copy.fit(series.getFitter());
 
@@ -672,8 +717,27 @@ public class Plot extends JFXElement implements Element, Clearable {
 
         plot.xAxis.setMode(xAxis.getMode());
         plot.yAxis.setMode(yAxis.getMode());
-        plot.setXLimits(getXLowerLimit(), getXUpperLimit());
-        plot.setYLimits(getYLowerLimit(), getYUpperLimit());
+        plot.setPointOrdering(getPointOrdering());
+        plot.setLegendVisible(isLegendVisible());
+
+        if (getLegendColumns() == 0) {
+            plot.setLegendRows(getLegendRows());
+        } else {
+            plot.setLegendColumns(getLegendColumns());
+        }
+
+        plot.setMouseEnabled(isMouseEnabled());
+
+        if (!xAxis.isAutoRanging()) plot.setXLimits(getXLowerLimit(), getXUpperLimit());
+        if (!yAxis.isAutoRanging()) plot.setYLimits(getYLowerLimit(), getYUpperLimit());
+
+        return plot;
+
+    }
+
+    public void savePNG(String path, double w, double h) {
+
+        Plot plot = copy();
 
         plot.setWindowSize(w, h);
         plot.show();
@@ -865,7 +929,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
             List<String> terms = new LinkedList<>();
 
-            SVGElement legendCircle = makeMarker(s.isShowingMarkers() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
+            SVGElement legendCircle = makeMarker(s.isMarkersVisible() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
             SVGText legendText = new SVGText(
                     legendX + 15.0 + 5 + 3 + 10,
                     legendY + (25 * i) + 15.0 + 5,
@@ -898,7 +962,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
                 terms.add(String.format("%s%s %s", first ? "M" : "L", x, y));
 
-                if (s.isShowingMarkers()) {
+                if (s.isMarkersVisible()) {
 
                     if (point.getExtraValue() != null && (double) point.getExtraValue() > 0) {
 
@@ -962,7 +1026,7 @@ public class Plot extends JFXElement implements Element, Clearable {
                 .setDash(s.getLineDash().getArray())
                 .setStyle("fill", "none");
 
-            if (s.isShowingLine()) {
+            if (s.isLineVisible()) {
                 main.add(path);
             }
 

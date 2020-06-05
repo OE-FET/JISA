@@ -1090,8 +1090,8 @@ public class JISAChart extends XYChart<Double, Double> {
                     jisa.gui.Series series = createSeries()
                             .setName(formatter.getName(r))
                             .setColour(defaultColours[subSeries.size() % defaultColours.length])
-                            .showLine(isShowingLine())
-                            .showMarkers(isShowingMarkers())
+                            .setLineVisible(isLineVisible())
+                            .setMarkersVisible(isMarkersVisible())
                             .setMarkerShape(getMarkerShape())
                             .setLineDash(getLineDash())
                             .setLineWidth(getLineWidth())
@@ -1277,20 +1277,20 @@ public class JISAChart extends XYChart<Double, Double> {
         }
 
         @Override
-        public JISASeries showMarkers(boolean show) {
+        public JISASeries setMarkersVisible(boolean show) {
 
             GUI.runNow(() -> {
                 template.setMarkerVisible(show);
             });
 
-            subSeries.forEach(s -> s.showMarkers(show));
+            subSeries.forEach(s -> s.setMarkersVisible(show));
 
             return this;
 
         }
 
         @Override
-        public boolean isShowingMarkers() {
+        public boolean isMarkersVisible() {
             return template.isMarkerVisible();
         }
 
@@ -1401,17 +1401,17 @@ public class JISAChart extends XYChart<Double, Double> {
         }
 
         @Override
-        public JISASeries showLine(boolean show) {
+        public JISASeries setLineVisible(boolean show) {
 
             GUI.runNow(() -> line.setLineVisible(show));
 
-            subSeries.forEach(s -> s.showLine(show));
+            subSeries.forEach(s -> s.setLineVisible(show));
             return this;
 
         }
 
         @Override
-        public boolean isShowingLine() {
+        public boolean isLineVisible() {
             return line.isLineVisible();
         }
 

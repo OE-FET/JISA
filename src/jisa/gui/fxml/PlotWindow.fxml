@@ -8,9 +8,7 @@
 
 
     <center>
-        <AnchorPane fx:id="stack" style="-fx-background-color: transparent;" BorderPane.alignment="CENTER">
-
-        </AnchorPane>
+        <AnchorPane fx:id="stack" style="-fx-background-color: transparent;" BorderPane.alignment="CENTER"/>
     </center>
 
     <bottom>
@@ -19,15 +17,5 @@
             <Slider fx:id="rangeSliderX" max="100.0" min="0.01" HBox.hgrow="ALWAYS" />
         </HBox>
     </bottom>
-   <top>
-        <ToolBar fx:id="toolbar" style="-fx-background-color: white; -fx-border-color: rgba(0,0,0,0.1); -fx-border-width: 0 0 1 0;" BorderPane.alignment="CENTER">
-         <opaqueInsets>
-            <Insets />
-         </opaqueInsets>
-         <BorderPane.margin>
-            <Insets left="5.0" right="5.0" />
-         </BorderPane.margin>
-      </ToolBar>
-   </top>
 
 </BorderPane>
