@@ -29,6 +29,7 @@ import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -951,7 +952,26 @@ public class Plot extends JFXElement implements Element, Clearable {
             double lastX = -1;
             double lastY = -1;
 
-            for (XYChart.Data<Double, Double> point : s.getXYChartSeries().getData()) {
+            List<XYChart.Data<Double, Double>> data;
+
+            switch (getPointOrdering()) {
+
+                case X_AXIS:
+                    data = s.getXYChartSeries().getData().sorted(Comparator.comparingDouble(XYChart.Data::getXValue));
+                    break;
+
+                case Y_AXIS:
+                    data = s.getXYChartSeries().getData().sorted(Comparator.comparingDouble(XYChart.Data::getYValue));
+                    break;
+
+                default:
+                    data = s.getXYChartSeries().getData();
+                    break;
+
+
+            }
+
+            for (XYChart.Data<Double, Double> point : data) {
 
                 double x = aStartX + xScale * this.xAxis.getDisplayPosition(point.getXValue());
                 double y = aEndY - yScale * this.yAxis.getDisplayPosition(point.getYValue());

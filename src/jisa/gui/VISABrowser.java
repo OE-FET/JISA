@@ -18,6 +18,7 @@ public class VISABrowser extends ListDisplay<Address> {
     public void updateList() {
 
         refresh.setDisabled(true);
+        clear();
 
         try {
 
