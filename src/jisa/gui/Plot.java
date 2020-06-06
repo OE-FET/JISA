@@ -1,20 +1,20 @@
 package jisa.gui;
 
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.ListChangeListener;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
-import javafx.scene.control.ToolBar;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.*;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
@@ -27,7 +27,9 @@ import jisa.maths.functions.Function;
 
 import javax.imageio.ImageIO;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -318,7 +320,7 @@ public class Plot extends JFXElement implements Element, Clearable {
     public void showSaveDialog() {
 
         Fields         save   = new Fields("Save Plot");
-        Field<Integer> format = save.addChoice("Format", 1, "svg", "png");
+        Field<Integer> format = save.addChoice("Format", 1, "svg", "png", "tex");
         Field<Integer> width  = save.addIntegerField("Width", 600);
         Field<Integer> height = save.addIntegerField("Height", 400);
         Field<String>  file   = save.addFileSave("Path");
@@ -347,6 +349,15 @@ public class Plot extends JFXElement implements Element, Clearable {
                         }
 
                         savePNG(file.get(), width.get(), height.get());
+                        break;
+
+                    case 2:
+
+                        if (!file.get().endsWith(".tex")) {
+                            file.set(file.get() + ".tex");
+                        }
+
+                        saveTex(file.get());
                         break;
 
                 }
@@ -699,7 +710,7 @@ public class Plot extends JFXElement implements Element, Clearable {
                 .setLineWidth(series.getLineWidth())
                 .setMarkerShape(series.getMarkerShape())
                 .setMarkerSize(series.getMarkerSize())
-                .setMarkersVisible(series.isMarkersVisible())
+                .setMarkerVisible(series.isMarkerVisible())
                 .setLineVisible(series.isLineVisible());
 
             if (series.isFitted()) copy.fit(series.getFitter());
@@ -745,9 +756,16 @@ public class Plot extends JFXElement implements Element, Clearable {
 
         Util.sleep(250);
 
+        double diffH = h - plot.chart.getHeight();
+        double diffW = w - plot.chart.getWidth();
+
+        plot.setWindowSize(w + diffW, h + diffH);
+
+        Util.sleep(250);
+
         GUI.runNow(() -> {
 
-            WritableImage image = plot.chart.snapshot(new SnapshotParameters(), null);
+            WritableImage image = plot.chart.snapshot(null, null);
             try {
                 ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", new File(path));
             } catch (IOException e) {
@@ -930,7 +948,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
             List<String> terms = new LinkedList<>();
 
-            SVGElement legendCircle = makeMarker(s.isMarkersVisible() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
+            SVGElement legendCircle = makeMarker(s.isMarkerVisible() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
             SVGText legendText = new SVGText(
                     legendX + 15.0 + 5 + 3 + 10,
                     legendY + (25 * i) + 15.0 + 5,
@@ -982,7 +1000,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
                 terms.add(String.format("%s%s %s", first ? "M" : "L", x, y));
 
-                if (s.isMarkersVisible()) {
+                if (s.isMarkerVisible()) {
 
                     if (point.getExtraValue() != null && (double) point.getExtraValue() > 0) {
 
@@ -1122,6 +1140,164 @@ public class Plot extends JFXElement implements Element, Clearable {
         }
 
         return marker;
+
+    }
+
+    public void saveTex(String path) throws IOException {
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("\\begin{tikzpicture}\n");
+
+
+        builder.append("\\begin{axis}[\n")
+               .append("\txmode             = ").append(xAxis.getMode() == SmartAxis.Mode.LOGARITHMIC ? "log" : "normal").append(",\n")
+               .append("\tymode             = ").append(yAxis.getMode() == SmartAxis.Mode.LOGARITHMIC ? "log" : "normal").append(",\n")
+               .append("\tgrid,\n")
+               .append("\tgrid style        = {dotted},\n")
+               .append("\tlegend pos        = outer north east,\n")
+               .append("\twidth             = 0.7 * \\linewidth,\n")
+               .append("\ttitle             = {\\textbf{").append(getTitle().replace("^", "\\^{}")).append("}},\n")
+               .append("\txlabel            = {").append(getXLabel().replace("^", "\\^{}")).append("},\n")
+               .append("\tylabel            = {").append(getYLabel().replace("^", "\\^{}")).append("},\n")
+               .append("\tlegend cell align = left\n")
+               .append("]\n");
+
+        List<String> legend = new LinkedList<>();
+
+        for (JISAChart.JISASeries series : chart.getSeries()) {
+
+            if (!chart.getData().contains(series.getXYChartSeries())) {
+                continue;
+            }
+
+            String symbol;
+
+            switch (series.getMarkerShape()) {
+
+                case CIRCLE:
+                    symbol = "o";
+                    break;
+
+                case DOT:
+                    symbol = "*";
+                    break;
+
+                case SQUARE:
+                    symbol = "square";
+                    break;
+
+                case DIAMOND:
+                    symbol = "diamond";
+                    break;
+
+                case CROSS:
+                    symbol = "x";
+                    break;
+
+                case TRIANGLE:
+                    symbol = "triangle";
+                    break;
+
+                case STAR:
+                    symbol = "star";
+                    break;
+
+                case DASH:
+                    symbol = "-";
+                    break;
+
+                default:
+                    symbol = "none";
+
+            }
+
+            if (!series.isMarkerVisible()) symbol = "none";
+
+            String onlyMarks = series.isLineVisible() ? "" : "only marks,\n";
+
+
+            String lineType;
+
+            switch (series.getLineDash()) {
+                case DOTTED:
+                    lineType = ",\n\tdotted";
+                    break;
+
+                case DASHED:
+                case TWO_DASH:
+                case DOT_DASH:
+                case LONG_DASH:
+                    lineType = ",\n\tdashed";
+                    break;
+
+                default:
+                case SOLID:
+                    lineType = "";
+                    break;
+
+            }
+
+            int red   = (int) (series.getColour().getRed() * 255);
+            int green = (int) (series.getColour().getGreen() * 255);
+            int blue  = (int) (series.getColour().getBlue() * 255);
+
+            builder.append("\\addplot[\n");
+
+            if (!series.isLineVisible()) builder.append("\tonly marks,\n");
+
+            builder.append("\tmark       = ").append(symbol).append(",\n")
+                   .append("\tcolor      = {rgb,255:red,").append(red).append(";green,").append(green).append(";blue,").append(blue).append("},\n")
+                   .append("\tline width = ").append(series.getLineWidth() / 2.0)
+                   .append(lineType).append("\n")
+                   .append("]\n")
+                   .append("table {\n");
+
+
+            List<XYChart.Data<Double, Double>> data;
+
+            switch (getPointOrdering()) {
+
+                case X_AXIS:
+                    data = series.getXYChartSeries().getData().sorted(Comparator.comparingDouble(XYChart.Data::getXValue));
+                    break;
+
+                case Y_AXIS:
+                    data = series.getXYChartSeries().getData().sorted(Comparator.comparingDouble(XYChart.Data::getYValue));
+                    break;
+
+                default:
+                    data = series.getXYChartSeries().getData();
+                    break;
+
+
+            }
+
+            for (XYChart.Data<Double, Double> point : data) {
+
+                builder.append(String.format("\t%.04e\t%.04e\t%.04e\n", point.getXValue(), point.getYValue(), point.getExtraValue() instanceof Double ? (Double) point.getExtraValue() : 0.0));
+
+            }
+
+            builder.append("};\n");
+
+            legend.add("\t{" + series.getName().replace("^", "\\^{}") + "}");
+
+        }
+
+        if (isLegendVisible()) {
+            builder.append(String.format("\\legend{\n%s\n}\n", String.join(",\n", legend)));
+        }
+
+        builder.append("\\end{axis}\n");
+
+        builder.append("\\end{tikzpicture}");
+
+        FileOutputStream writer = new FileOutputStream(path);
+        PrintStream      stream = new PrintStream(writer);
+
+        stream.print(builder.toString());
+
+        stream.close();
 
     }
 

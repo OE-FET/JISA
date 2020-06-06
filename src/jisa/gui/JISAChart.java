@@ -1091,7 +1091,7 @@ public class JISAChart extends XYChart<Double, Double> {
                             .setName(formatter.getName(r))
                             .setColour(defaultColours[subSeries.size() % defaultColours.length])
                             .setLineVisible(isLineVisible())
-                            .setMarkersVisible(isMarkersVisible())
+                            .setMarkerVisible(isMarkerVisible())
                             .setMarkerShape(getMarkerShape())
                             .setLineDash(getLineDash())
                             .setLineWidth(getLineWidth())
@@ -1277,20 +1277,20 @@ public class JISAChart extends XYChart<Double, Double> {
         }
 
         @Override
-        public JISASeries setMarkersVisible(boolean show) {
+        public JISASeries setMarkerVisible(boolean show) {
 
             GUI.runNow(() -> {
                 template.setMarkerVisible(show);
             });
 
-            subSeries.forEach(s -> s.setMarkersVisible(show));
+            subSeries.forEach(s -> s.setMarkerVisible(show));
 
             return this;
 
         }
 
         @Override
-        public boolean isMarkersVisible() {
+        public boolean isMarkerVisible() {
             return template.isMarkerVisible();
         }
 

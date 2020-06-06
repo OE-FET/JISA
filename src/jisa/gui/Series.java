@@ -287,14 +287,14 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    Series setMarkersVisible(boolean show);
+    Series setMarkerVisible(boolean show);
 
     /**
      * Returns whether markers are being shown at each data point or not in this series.
      *
      * @return Markers showing?
      */
-    boolean isMarkersVisible();
+    boolean isMarkerVisible();
 
     /**
      * Returns the marker shape currently being used by this series.

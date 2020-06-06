@@ -127,7 +127,7 @@ public class Dashboard extends Grid {
                                 .watch(stream, 0, j)
                                 .setName("Data")
                                 .setColour(Series.defaultColours[(j - 1) % Series.defaultColours.length])
-                                .setMarkersVisible(false);
+                                .setMarkerVisible(false);
 
                     System.out.println(Series.defaultColours[(j - 1) % Series.defaultColours.length].toString());
 

@@ -3,7 +3,11 @@ package jisa;
 import javafx.application.Platform;
 import jisa.addresses.Address;
 import jisa.addresses.StrAddress;
-import jisa.gui.*;
+import jisa.experiment.ResultList;
+import jisa.gui.DeviceShell;
+import jisa.gui.Doc;
+import jisa.gui.GUI;
+import jisa.gui.Plot;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -18,6 +22,19 @@ public class Main {
     public static void main(String[] args) {
 
         try {
+
+            Plot plot = new Plot("Plot Title", "SG Voltage [V]", "Drain Current [A]");
+
+            plot.setPointOrdering(Plot.Sort.ORDER_ADDED);
+
+            plot.createSeries()
+                .setMarkerVisible(false)
+                .watch(ResultList.loadFile("/home/william/Desktop/RealFET/D1_70um_no3-Output.csv"), r -> r.get(2), r -> Math.abs(r.get(3)))
+                .split(1, "$V_{SD}$ = %s V");
+
+            plot.showAsAlert();
+
+            plot.saveTex("/home/william/Documents/AC Hall/Hall Paper 2020/test.tex");
 
             Doc doc = new Doc("Help");
 
@@ -43,13 +60,13 @@ public class Main {
 
                 // Ask the user if they want to perform a test
                 int result = GUI.choiceWindow(
-                    "JISA",
-                    "JISA Library - William Wood - 2018-2020",
-                    "What would you like to do?",
-                    "Scan for Instruments",
-                    "Enter Address Manually",
-                    "Help",
-                    "Exit"
+                        "JISA",
+                        "JISA Library - William Wood - 2018-2020",
+                        "What would you like to do?",
+                        "Scan for Instruments",
+                        "Enter Address Manually",
+                        "Help",
+                        "Exit"
                 );
 
                 switch (result) {
@@ -71,10 +88,10 @@ public class Main {
                     case CHOICE_ADDR:
 
                         String[] values = GUI.inputWindow(
-                            "JISA",
-                            "Input Address",
-                            "Please type the VISA address to connect to...",
-                            "Address"
+                                "JISA",
+                                "Input Address",
+                                "Please type the VISA address to connect to...",
+                                "Address"
                         );
 
                         if (values == null) {
