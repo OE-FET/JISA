@@ -7,6 +7,7 @@ import jisa.maths.functions.Function;
 import jisa.maths.functions.PFunction;
 import jisa.maths.matrices.Matrix;
 import jisa.maths.matrices.RealMatrix;
+import org.json.JSONObject;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -33,6 +34,20 @@ public abstract class ResultTable implements Iterable<Result> {
         }
 
     }
+
+    public abstract void setAttribute(String name, String value);
+
+    public void setAttribute(String name, double value) {
+        setAttribute(name, String.format("%s", value));
+    }
+
+    public abstract String getAttribute(String name);
+
+    public double getAttributeDouble(String name) {
+        return Double.parseDouble(getAttribute(name));
+    }
+
+    public abstract Map<String, String> getAttributes();
 
     public int getColumnFromString(String name) {
 
@@ -151,8 +166,9 @@ public abstract class ResultTable implements Iterable<Result> {
 
         addRow(row);
 
-        for (OnUpdate r : (List<OnUpdate>) onUpdate.clone()) {
-            r.run(row);
+        int size = onUpdate.size();
+        for (int k = 0; k < size; k++) {
+            onUpdate.get(k).run(row);
         }
 
     }
@@ -248,7 +264,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
         }
 
-        stream.print("\n");
+        stream.println();
         stream.print("|");
 
         for (int i = 0; i < cols; i++) {
@@ -277,7 +293,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
         }
 
-        stream.print("\n");
+        stream.println();
 
         for (Result r : this) {
 
@@ -297,7 +313,8 @@ public abstract class ResultTable implements Iterable<Result> {
 
             }
 
-            stream.print("\n+");
+            stream.println();
+            stream.print("+");
 
             for (int w : widths) {
 
@@ -309,7 +326,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
             }
 
-            stream.print("\n");
+            stream.println();
 
         }
 
@@ -365,9 +382,9 @@ public abstract class ResultTable implements Iterable<Result> {
     public void output(String delim, PrintStream stream) {
 
 
-        String[] titles = getNames();
-        stream.print(String.join(delim, titles));
-        stream.print("\n");
+        String[]   titles = getNames();
+        stream.println("% ATTRIBUTES: " + (new JSONObject(getAttributes())).toString());
+        stream.println(String.join(delim, titles));
 
         for (Result r : this) {
             r.output(stream, delim);
@@ -434,6 +451,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public void finalise() {
         open = false;
+        onUpdate.clear();
         close();
     }
 
@@ -531,10 +549,6 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public double getMean(Evaluable value) {
 
-        if (getNumRows() < 1) {
-            throw new IllegalStateException("Cannot find mean in empty table!");
-        }
-
         double sum   = 0;
         int    count = 0;
 
@@ -561,6 +575,85 @@ public abstract class ResultTable implements Iterable<Result> {
                 newCopy.addRow(row);
             }
 
+        }
+
+        return newCopy;
+
+    }
+
+    public ResultTable sortedCopy(Evaluable sortBy) {
+
+        List<Map.Entry<Integer, Double>> toSort = new ArrayList<>(getNumRows());
+
+        int i = 0;
+        for (Result row : this) {
+            toSort.add(Map.entry(i++, sortBy.evaluate(row)));
+        }
+
+        toSort.sort(Map.Entry.comparingByValue());
+
+        ResultTable newCopy = new ResultList(columns.toArray(new Col[0]));
+
+        for (Map.Entry<Integer, Double> entry : toSort) {
+            newCopy.addRow(getRow(entry.getKey()));
+        }
+
+        return newCopy;
+
+    }
+
+    public FwdBwd splitTwoWaySweep(Evaluable swept) {
+
+        int         mode      = -2;
+        double      lastValue = swept.evaluate(getRow(0));
+        ResultTable forward   = new ResultList(columns.toArray(new Col[0]));
+        ResultTable backward  = new ResultList(columns.toArray(new Col[0]));
+
+        ResultTable current = forward;
+
+        current.addRow(getRow(0));
+
+        for (int i = 1; i < getNumRows(); i++) {
+
+            Result row   = getRow(i);
+            double value = swept.evaluate(row);
+
+            if (mode == -2) {
+
+                mode = Double.compare(value, lastValue);
+                current.addRow(row);
+
+            } else {
+
+                int newMode = Double.compare(value, lastValue);
+
+                if (newMode != mode) {
+                    current = backward;
+                }
+
+                current.addRow(row);
+                mode = newMode;
+
+            }
+
+            lastValue = value;
+
+        }
+
+        return new FwdBwd(forward, backward);
+
+    }
+
+    public ResultTable sortedCopy(int column) {
+        return sortedCopy(r -> r.get(column));
+    }
+
+    public ResultTable flippedCopy() {
+
+        ResultTable newCopy = new ResultList(columns.toArray(new Col[0]));
+
+        for (int i = getNumRows() - 1; i >= 0; i--) {
+            newCopy.addRow(getRow(i));
         }
 
         return newCopy;
@@ -611,6 +704,19 @@ public abstract class ResultTable implements Iterable<Result> {
     public interface Evaluable {
 
         double evaluate(Result r);
+
+    }
+
+    public static class FwdBwd {
+
+        public final ResultTable forward;
+        public final ResultTable backward;
+
+
+        public FwdBwd(ResultTable forward, ResultTable backward) {
+            this.forward  = forward;
+            this.backward = backward;
+        }
 
     }
 

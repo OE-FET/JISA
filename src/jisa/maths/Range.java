@@ -47,6 +47,8 @@ public class Range<T extends Number> implements Iterable<T> {
 
         if (numSteps < 1) {
             throw new IllegalArgumentException("You cannot have fewer than 1 step.");
+        } else if (numSteps == 1) {
+            return new Range<>(new Double[]{start.doubleValue()});
         }
 
         if (start.intValue() == start.doubleValue() && stop.intValue() == stop.doubleValue() && (stop.intValue() - start.intValue() + 1) == numSteps) {
@@ -125,6 +127,12 @@ public class Range<T extends Number> implements Iterable<T> {
      * @return
      */
     public static Range<Double> exponential(Number start, Number stop, int noSteps) {
+
+        if (noSteps < 1) {
+            throw new IllegalArgumentException("You cannot have fewer than 1 step.");
+        } else if (noSteps == 1) {
+            return new Range<>(new Double[]{start.doubleValue()});
+        }
 
         BigDecimal a = BigDecimal.valueOf(start.doubleValue());
         BigDecimal b = BigDecimal.valueOf(stop.doubleValue());

@@ -65,7 +65,7 @@ public class SR830 extends VISADevice implements DPLockIn {
 
         super(address);
 
-        clearRead();
+        clearReadBuffer();
 
         try {
 

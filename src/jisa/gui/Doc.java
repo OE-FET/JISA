@@ -1,12 +1,12 @@
 package jisa.gui;
 
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.ListChangeListener;
+import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.ImageView;
@@ -16,35 +16,44 @@ import javafx.scene.shape.Circle;
 import javafx.scene.text.TextAlignment;
 import jisa.Util;
 
-import java.awt.*;
-import java.io.IOException;
-import java.net.URI;
-import java.util.concurrent.Semaphore;
+import java.net.URL;
 
-public class Doc extends JFXWindow {
+public class Doc extends JFXElement {
 
-    public BorderPane pane;
-    public ScrollPane scroll;
-    public VBox       list;
-    public ButtonBar  buttonBar;
+    private final ObjectProperty<Region>     viewport   = new SimpleObjectProperty<>(null);
+    private final ObjectProperty<Background> background = new SimpleObjectProperty<>(new Background(new BackgroundFill(Colour.WHITE, null, null)));
+    @FXML
+    protected     ScrollPane                 scroll;
+    @FXML
+    protected     VBox                       list;
 
     public Doc(String title) {
 
-        super(title, JFXWindow.class.getResource("fxml/DocWindow.fxml"));
+        super(title, JFXElement.class.getResource("fxml/DocWindow.fxml"));
+        BorderPane.setMargin(getNode().getCenter(), Insets.EMPTY);
+        viewport.addListener(o -> updateBG());
+        background.addListener(o -> updateBG());
 
-        buttonBar.setVisible(false);
-        buttonBar.setManaged(false);
-
-        buttonBar.getButtons().addListener((ListChangeListener<? super Node>) l -> {
-
-            buttonBar.setVisible(!buttonBar.getButtons().isEmpty());
-            buttonBar.setManaged(!buttonBar.getButtons().isEmpty());
-
+        scroll.widthProperty().addListener(o -> {
+            if (viewport.get() == null) viewport.set((Region) scroll.lookup(".viewport"));
         });
 
-        scroll.applyCss();
-        scroll.lookup(".viewport").setStyle("-fx-background-color: white;");
+    }
 
+    private void updateBG() {
+
+        if (viewport.get() != null) {
+            GUI.runNow(() -> viewport.get().setBackground(background.get()));
+        }
+
+    }
+
+    public void setBackgroundColour(Color colour) {
+        background.set(new Background(new BackgroundFill(colour, null, null)));
+    }
+
+    public Color getBackgroundColour() {
+        return (Color) background.get().getFills().get(0).getFill();
     }
 
     public Heading addHeading(String text) {
@@ -55,6 +64,7 @@ public class Doc extends JFXWindow {
         label.setMaxWidth(Double.MAX_VALUE);
         label.setStyle("-fx-font-size: 2em; -fx-font-weight: bold;");
         label.setWrapText(true);
+        label.setTextFill(Colour.BLACK);
 
         GUI.runNow(() -> list.getChildren().add(label));
 
@@ -110,6 +120,8 @@ public class Doc extends JFXWindow {
         label.setMaxWidth(Double.MAX_VALUE);
         label.setStyle("-fx-font-size: 1.5em; -fx-font-weight: bold");
         label.setWrapText(true);
+        label.setTextFill(Colour.BLACK);
+
         GUI.runNow(() -> list.getChildren().add(label));
 
         return new Heading() {
@@ -162,6 +174,8 @@ public class Doc extends JFXWindow {
         label.setMinHeight(Region.USE_PREF_SIZE);
         label.setMaxWidth(Double.MAX_VALUE);
         label.setWrapText(true);
+        label.setTextFill(Colour.BLACK);
+
         GUI.runNow(() -> list.getChildren().add(label));
 
         return new Paragraph() {
@@ -227,6 +241,7 @@ public class Doc extends JFXWindow {
         GridPane grid = new GridPane();
         grid.setHgap(5);
         grid.setVgap(5);
+        grid.setPadding(new Insets(0, 0, 0, 15));
 
         GUI.runNow(() -> list.getChildren().add(grid));
 
@@ -246,7 +261,7 @@ public class Doc extends JFXWindow {
                     ((Label) bullet).setMinWidth(Region.USE_PREF_SIZE);
                     ((Label) bullet).setMinHeight(Region.USE_PREF_SIZE);
                 } else {
-                    bullet = new Circle(3, colour.get());
+                    bullet = new Circle(2, colour.get());
                     ((Circle) bullet).fillProperty().bind(colour);
                 }
 
@@ -305,14 +320,26 @@ public class Doc extends JFXWindow {
 
     }
 
-    public Image addImage(String url) {
+    public Image addImage(URL url) {
+        try {
+            return addImage(new javafx.scene.image.Image(url.openStream()));
+        } catch (Exception e) {
+            return addImage(Doc.class.getResource("images/jisa.png"));
+        }
+    }
 
-        ImageView imageView = new ImageView(new javafx.scene.image.Image(url));
+    public Image addImage(String url) {
+        return addImage(new javafx.scene.image.Image(url));
+    }
+
+    public Image addImage(javafx.scene.image.Image image) {
+
+        ImageView imageView = new ImageView(image);
         imageView.setPreserveRatio(true);
         imageView.setSmooth(true);
-        stage.widthProperty().addListener((observableValue, number, t1) -> imageView.maxWidth(stage.getWidth() - 35));
-        stage.heightProperty().addListener((observableValue, number, t1) -> imageView.maxHeight(stage.getHeight() - 35));
         BorderPane pane = new BorderPane(imageView);
+        list.widthProperty().addListener(o -> pane.maxWidth(scroll.getWidth() - 35));
+        list.heightProperty().addListener(o -> pane.maxHeight(scroll.getHeight() - 35));
         GUI.runNow(() -> list.getChildren().add(pane));
 
         return new Image() {
@@ -400,6 +427,11 @@ public class Doc extends JFXWindow {
             }
 
             @Override
+            public void remove() {
+                GUI.runNow(() -> list.getChildren().remove(label));
+            }
+
+            @Override
             public void setVisible(boolean visible) {
                 GUI.runNow(() -> {
                     label.setVisible(visible);
@@ -407,10 +439,7 @@ public class Doc extends JFXWindow {
                 });
             }
 
-            @Override
-            public void remove() {
-                GUI.runNow(() -> list.getChildren().remove(label));
-            }
+
         };
 
     }
@@ -428,6 +457,9 @@ public class Doc extends JFXWindow {
         container.setSpacing(15);
         HBox.setHgrow(title, Priority.NEVER);
         HBox.setHgrow(value, Priority.ALWAYS);
+
+        title.setTextFill(Colour.BLACK);
+        value.setTextFill(Colour.BLACK);
 
         GUI.runNow(() -> list.getChildren().add(container));
 
@@ -480,6 +512,11 @@ public class Doc extends JFXWindow {
             }
 
             @Override
+            public void remove() {
+                GUI.runNow(() -> list.getChildren().remove(container));
+            }
+
+            @Override
             public void setVisible(boolean visible) {
                 GUI.runNow(() -> {
                     container.setVisible(visible);
@@ -487,37 +524,8 @@ public class Doc extends JFXWindow {
                 });
             }
 
-            @Override
-            public void remove() {
-                GUI.runNow(() -> list.getChildren().remove(container));
-            }
 
         };
-
-    }
-
-    public void showAndWait() {
-
-        final Semaphore s = new Semaphore(0);
-
-        stage.setOnCloseRequest(we -> s.release());
-
-        javafx.scene.control.Button okay = new Button("OK");
-        okay.setOnAction(ae -> s.release());
-
-        GUI.runNow(() -> buttonBar.getButtons().add(okay));
-
-        show();
-
-        try {
-            s.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        close();
-
-        GUI.runNow(() -> buttonBar.getButtons().remove(okay));
 
     }
 
@@ -608,6 +616,28 @@ public class Doc extends JFXWindow {
         Link setAlignment(Align alignment);
 
         Link setColour(Color colour);
+
+    }
+
+    public interface Table extends SubElement {
+
+        TableRow addRow();
+
+    }
+
+    public interface TableRow extends SubElement {
+
+        TableCell addCell();
+
+    }
+
+    public interface TableCell extends SubElement {
+
+        TableCell setText(String text);
+
+        TableCell setAlignment(Align alignment);
+
+        TableCell setColour(Color colour);
 
     }
 

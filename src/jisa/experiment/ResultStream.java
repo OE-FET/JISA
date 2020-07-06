@@ -1,12 +1,12 @@
 package jisa.experiment;
 
 import jisa.Util;
+import org.json.JSONObject;
 
-import java.io.*;
-import java.nio.file.Files;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,46 +16,9 @@ public class ResultStream extends ResultTable {
     private   String           path;
     private   String[]         names;
     private   String[]         units       = null;
+    private   JSONObject       attributes  = new JSONObject();
     private   int              cols;
     private   int              currentLine = 0;
-
-    /**
-     * Creates a ResultStream from a previously written CSV backing file.
-     *
-     * @param path Path to CSV file.
-     *
-     * @return ResultStream created from column headers in file.
-     *
-     * @throws IOException
-     */
-    public static ResultStream loadFile(String path) throws IOException {
-
-        RandomAccessFile file = new RandomAccessFile(path, "rw");
-        file.seek(0);
-
-        String   header  = file.readLine();
-        String[] columns = header.split(",");
-        Col[]    cols    = new Col[columns.length];
-
-        Pattern pattern = Pattern.compile("(.*)\\s\\[(.*)\\]");
-
-        for (int i = 0; i < cols.length; i++) {
-
-            Matcher matcher = pattern.matcher(columns[i]);
-            Col     col;
-            if (matcher.find()) {
-                col = new Col(matcher.group(1), matcher.group(2));
-            } else {
-                col = new Col(columns[i]);
-            }
-
-            cols[i] = col;
-
-        }
-
-        return new ResultStream(path, file, cols);
-
-    }
 
     public ResultStream(String path, Col... columns) throws IOException {
         super(columns);
@@ -67,7 +30,7 @@ public class ResultStream extends ResultTable {
         init(path);
     }
 
-    public ResultStream(String path, RandomAccessFile file, Col... columns) throws IOException {
+    public ResultStream(String path, RandomAccessFile file, JSONObject attributes, Col... columns) throws IOException {
         super(columns);
         this.path = path;
         this.file = file;
@@ -84,7 +47,74 @@ public class ResultStream extends ResultTable {
 
     }
 
-    private void init(String path) throws IOException {
+    /**
+     * Creates a ResultStream from a previously written CSV backing file.
+     *
+     * @param path Path to CSV file.
+     *
+     * @return ResultStream created from column headers in file.
+     *
+     * @throws IOException
+     */
+    public static ResultStream loadFile(String path) throws IOException {
+
+        RandomAccessFile file = new RandomAccessFile(path, "rw");
+        file.seek(0);
+
+        String     header     = file.readLine();
+        JSONObject attributes = header.startsWith("% ATTRIBUTES: ") ? new JSONObject(header.replaceFirst("% ATTRIBUTES: ", "")) : null;
+
+        String[] columns = header.split(",");
+        Col[]    cols    = new Col[columns.length];
+
+        Pattern pattern = Pattern.compile("(.*)\\s\\[(.*)\\]");
+
+        for (int i = 0; i < cols.length; i++) {
+
+            Matcher matcher = pattern.matcher(columns[i]);
+            Col     col     = matcher.find() ? new Col(matcher.group(1), matcher.group(2)) : new Col(columns[i]);
+
+            cols[i] = col;
+
+        }
+
+        if (attributes == null) {
+
+            ResultStream stream = new ResultStream(path, file, new JSONObject(), cols);
+            stream.addBefore(0, "% ATTRIBUTES: {}");
+            return stream;
+
+        } else {
+            return new ResultStream(path, file, attributes, cols);
+        }
+
+    }
+
+    @Override
+    public void setAttribute(String name, String value) {
+        attributes.put(name, value);
+        replaceLine(0, "% ATTRIBUTES: " + attributes.toString());
+    }
+
+    @Override
+    public String getAttribute(String name) {
+        return attributes.has(name) ? attributes.getString(name) : null;
+    }
+
+    @Override
+    public Map<String, String> getAttributes() {
+
+        HashMap<String, String> entries = new HashMap<>(attributes.length());
+
+        for (String key : attributes.keySet()) {
+            entries.put(key, attributes.getString(key));
+        }
+
+        return entries;
+
+    }
+
+    private synchronized void init(String path) throws IOException {
 
         // Make sure the directory we're wanting to write into exists.
         new File(path).getParentFile().mkdirs();
@@ -93,32 +123,33 @@ public class ResultStream extends ResultTable {
         file = new RandomAccessFile(path, "rw");
         file.setLength(0);
         file.seek(0);
+        file.writeBytes("% ATTRIBUTES: " + attributes.toString() + "\n");
         file.writeBytes(String.join(",", getNames()));
         file.writeBytes("\n");
 
     }
 
     @Override
-    public void updateColumns() {
+    public synchronized void updateColumns() {
 
         if (!open) {
             throw new IllegalStateException("You cannot alter a finalised ResultTable");
         }
 
-        replaceLine(0, String.join(",", String.join(",", getNames())));
+        replaceLine(1, String.join(",", String.join(",", getNames())));
 
     }
 
-    protected void replaceLine(int lineNo, String newLine) {
+    protected synchronized void replaceLine(int lineNo, String newLine) {
 
         StringBuilder newFile = new StringBuilder();
 
         try {
 
-            file.seek(0);
+            resetPosition();
 
             int    i    = 0;
-            String line = file.readLine();
+            String line = getLine();
 
             do {
 
@@ -130,12 +161,14 @@ public class ResultStream extends ResultTable {
 
                 newFile.append("\n");
 
-                line = file.readLine();
+                line = getLine();
 
             } while (line != null);
 
             file.setLength(0);
             file.writeBytes(newFile.toString());
+
+            resetPosition();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -143,16 +176,16 @@ public class ResultStream extends ResultTable {
 
     }
 
-    protected void removeLine(int lineNo) {
+    protected synchronized void removeLine(int lineNo) {
 
         StringBuilder newFile = new StringBuilder();
 
         try {
 
-            file.seek(0);
+            resetPosition();
 
             int    i    = 0;
-            String line = file.readLine();
+            String line = getLine();
 
             do {
 
@@ -161,12 +194,14 @@ public class ResultStream extends ResultTable {
                     newFile.append("\n");
                 }
 
-                line = file.readLine();
+                line = getLine();
 
             } while (line != null);
 
             file.setLength(0);
             file.writeBytes(newFile.toString());
+
+            resetPosition();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -174,16 +209,16 @@ public class ResultStream extends ResultTable {
 
     }
 
-    protected void addBefore(int lineNo, String newLine) {
+    protected synchronized void addBefore(int lineNo, String newLine) {
 
         StringBuilder newFile = new StringBuilder();
 
         try {
 
-            file.seek(0);
+            resetPosition();
 
             int    i    = 0;
-            String line = file.readLine();
+            String line = getLine();
 
             do {
 
@@ -202,13 +237,15 @@ public class ResultStream extends ResultTable {
                 newFile.append("\n");
                 i++;
 
-                line = file.readLine();
+                line = getLine();
 
             } while (line != null);
 
             file.setLength(0);
             file.writeBytes(newFile.toString());
 
+            resetPosition();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -216,12 +253,14 @@ public class ResultStream extends ResultTable {
     }
 
     @Override
-    protected void addRow(Result row) {
+    protected synchronized void addRow(Result row) {
 
         try {
 
+            long current = file.getFilePointer();
             file.seek(file.length());
             file.writeBytes(row.getOutput(","));
+            file.seek(current);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -230,7 +269,7 @@ public class ResultStream extends ResultTable {
     }
 
     @Override
-    protected void clearData() {
+    protected synchronized void clearData() {
 
         try {
 
@@ -245,6 +284,9 @@ public class ResultStream extends ResultTable {
             file.writeBytes(String.join(",", titles));
             file.writeBytes("\n");
 
+            resetPosition();
+
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -252,15 +294,15 @@ public class ResultStream extends ResultTable {
     }
 
     @Override
-    public int getNumRows() {
+    public synchronized int getNumRows() {
 
         int count = 0;
 
         try {
 
-            file.seek(0);
+            resetPosition();
 
-            while (file.readLine() != null) {
+            while (getLine() != null) {
                 count++;
             }
 
@@ -268,23 +310,40 @@ public class ResultStream extends ResultTable {
             e.printStackTrace();
         }
 
-        return count - 1;
+        return count - 2;
 
     }
 
+    protected synchronized void resetPosition() throws IOException {
+        file.seek(0);
+        currentLine = 0;
+    }
+
+    protected synchronized String getLine(int no) throws IOException {
+
+        if (no < currentLine) {
+            resetPosition();
+        }
+
+        for (int i = currentLine; i < no; i++) {
+            getLine();
+        }
+
+        return getLine();
+
+    }
+
+    protected synchronized String getLine() throws IOException {
+        currentLine++;
+        return file.readLine();
+    }
+
     @Override
-    public Result getRow(int i) {
+    public synchronized Result getRow(int i) {
 
         try {
 
-            file.seek(0);
-            file.readLine();
-
-            for (int j = 0; j < i; j++) {
-                file.readLine();
-            }
-
-            String[] values = file.readLine().split(",");
+            String[] values = getLine(i + 2).split(",");
             double[] dVals  = new double[values.length];
 
             for (int j = 0; j < values.length; j++) {
@@ -301,7 +360,7 @@ public class ResultStream extends ResultTable {
         }
     }
 
-    public Set<Double> getValueSet(int column) {
+    public synchronized Set<Double> getValueSet(int column) {
 
         Set<Double> set = new HashSet<>();
         getColumns(column).forEach(set::add);
@@ -310,12 +369,12 @@ public class ResultStream extends ResultTable {
     }
 
     @Override
-    public void removeRow(int i) {
+    public synchronized void removeRow(int i) {
         removeLine(i);
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
 
         try {
             file.close();

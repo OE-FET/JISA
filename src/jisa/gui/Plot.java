@@ -1,18 +1,15 @@
 package jisa.gui;
 
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.ListChangeListener;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Slider;
-import javafx.scene.control.ToolBar;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
@@ -20,23 +17,27 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import jisa.Util;
-import jisa.maths.functions.Function;
 import jisa.experiment.ResultTable;
 import jisa.gui.svg.*;
 import jisa.maths.fits.Fit;
+import jisa.maths.functions.Function;
 
 import javax.imageio.ImageIO;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-public class Plot extends JFXWindow implements Element, Clearable {
+public class Plot extends JFXElement implements Element, Clearable {
 
     public  BorderPane pane;
-    public  ToolBar    toolbar;
     public  Pane       stack;
     public  JISAChart  chart;
     public  SmartAxis  xAxis;
@@ -45,7 +46,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
     public  HBox       sliderBox;
     public  Slider     rangeSliderX;
     private Rectangle  rect;
-    private Series     autoSeries = null;
+    private Series     autoSeries    = null;
+    private boolean    mouseCommands = false;
 
     /**
      * Creates an empty plot from the given title, x-axis label, and y-axis label.
@@ -94,19 +96,11 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             AnchorPane canvas = new AnchorPane();
             canvas.setStyle(
-                "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
+                    "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
             canvas.setMouseTransparent(true);
             canvas.getChildren().add(rect);
             canvas.setManaged(false);
             stack.getChildren().add(canvas);
-            toolbar.setVisible(false);
-            toolbar.setManaged(false);
-
-            toolbar.getItems().addListener((ListChangeListener<? super Node>) change -> {
-                boolean show = !toolbar.getItems().isEmpty();
-                toolbar.setVisible(show);
-                toolbar.setManaged(show);
-            });
 
             rangeSliderX.setValue(100.0);
             sliderBox.setVisible(false);
@@ -119,7 +113,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
             double value = rangeSliderX.getValue() / 100.0;
 
             if (value >= 1.0) {
-                autoXLimits();
+                autoLimitsX();
             } else {
 
                 double min = Double.POSITIVE_INFINITY;
@@ -138,21 +132,21 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
                 double range = Math.abs(max - min) * value;
 
-                setXAutoTrack(range);
+                autoTrackX(range);
 
             }
 
         });
 
+        getNode().needsLayoutProperty().addListener((observableValue, aBoolean, t1) -> chart.updateAxisRange());
+
     }
 
     public Plot(String title, String xLabel) {
-
         this(title, xLabel, "");
     }
 
     public Plot(String title) {
-
         this(title, "", "");
     }
 
@@ -170,7 +164,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
-
     public Plot(String title, ResultTable toWatch, int xData, int yData) {
 
         this(title);
@@ -184,6 +177,10 @@ public class Plot extends JFXWindow implements Element, Clearable {
         this(title);
         autoSeries = createSeries().watch(toWatch, xData, yData).split(sData);
 
+    }
+
+    public List<Series> getSeries() {
+        return new ArrayList<>(chart.getSeries());
     }
 
     /**
@@ -204,6 +201,9 @@ public class Plot extends JFXWindow implements Element, Clearable {
                 break;
 
         }
+
+        GUI.runNow(chart::updateAxes);
+        GUI.runNow(pane::requestLayout);
 
     }
 
@@ -226,6 +226,18 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         }
 
+        GUI.runNow(chart::updateAxes);
+        GUI.runNow(pane::requestLayout);
+
+    }
+
+    /**
+     * Returns how line-segnments connecting plotted points are ordered.
+     *
+     * @return X_AXIS, Y_AXIS or ORDER_ADDED
+     */
+    public Sort getPointOrdering() {
+        return chart.getAxisSortingPolicy();
     }
 
     /**
@@ -265,115 +277,87 @@ public class Plot extends JFXWindow implements Element, Clearable {
         return addToolbarButton(text, this::showSaveDialog);
     }
 
-    public jisa.gui.Button addToolbarButton(String text, ClickHandler onClick) {
-
-        Button button = new Button(text);
-        button.setOnMouseClicked(mouseEvent -> new Thread(() -> {
-            try {
-                onClick.click();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start());
-
-        GUI.runNow(() -> toolbar.getItems().add(button));
-
-        return new jisa.gui.Button() {
-            @Override
-            public void setDisabled(boolean disabled) { GUI.runNow(() -> button.setDisable(disabled)); }
-
-            @Override
-            public boolean isDisabled() { return button.isDisabled(); }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    button.setVisible(visible);
-                    button.setManaged(visible);
-                });
-
-            }
-
-            @Override
-            public boolean isVisible() { return button.isVisible(); }
-
-            @Override
-            public void setText(String text) { GUI.runNow(() -> button.setText(text)); }
-
-            @Override
-            public String getText() { return button.getText(); }
-
-            @Override
-            public void setOnClick(ClickHandler onClick) {
-                button.setOnMouseClicked(mouseEvent -> new Thread(() -> {
-                    try {
-                        onClick.click();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }).start());
-            }
-
-            @Override
-            public void remove() {
-                GUI.runNow(() -> toolbar.getItems().remove(button));
-            }
-
-        };
-
+    /**
+     * Returns the number of columns used for laying-out the plot legend. A value of 0 indicates no limit.
+     *
+     * @return Max columns
+     */
+    public int getLegendColumns() {
+        return chart.getChartLegend().getMaxColumns();
     }
 
-    public jisa.gui.Separator addToolbarSeparator() {
-
-        javafx.scene.control.Separator separator = new javafx.scene.control.Separator();
-
-        GUI.runNow(() -> toolbar.getItems().add(separator));
-
-        return new Separator() {
-            @Override
-            public void remove() {
-                GUI.runNow(() -> toolbar.getItems().remove(separator));
-            }
-
-            @Override
-            public boolean isVisible() {
-                return separator.isVisible();
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-                GUI.runNow(() -> {
-                    separator.setVisible(visible);
-                    separator.setManaged(visible);
-                });
-            }
-        };
-
+    /**
+     * Sets the number of columns to use for laying-out the plot legend.
+     *
+     * @param columns Max columns
+     */
+    public void setLegendColumns(int columns) {
+        chart.getChartLegend().setMaxColumns(columns);
     }
 
+    /**
+     * Returns the number of rows used for laying-out the plot legend. A value of 0 indicates no limit.
+     *
+     * @return Max rows
+     */
+    public int getLegendRows() {
+        return chart.getChartLegend().getMaxRows();
+    }
+
+    /**
+     * Sets the number of rows to use for laying-out the plot legend.
+     *
+     * @param rows Max rows
+     */
+    public void setLegendRows(int rows) {
+        chart.getChartLegend().setMaxRows(rows);
+    }
+
+    /**
+     * Shows a dialogue allowing the user to save this plot as an image, with user-alterable parameters of format, width
+     * and height.
+     */
     public void showSaveDialog() {
 
         Fields         save   = new Fields("Save Plot");
-        Field<Integer> format = save.addChoice("Format", "svg", "png");
+        Field<Integer> format = save.addChoice("Format", 1, "svg", "png", "tex");
         Field<Integer> width  = save.addIntegerField("Width", 600);
         Field<Integer> height = save.addIntegerField("Height", 400);
         Field<String>  file   = save.addFileSave("Path");
 
-        save.addButton("Cancel", save::close);
+        save.addDialogButton("Cancel", save::close);
 
-        save.addButton("Save", () -> {
+        save.addDialogButton("Save", () -> {
 
             if (!file.get().trim().equals("")) {
 
                 switch (format.get()) {
 
                     case 0:
+
+                        if (!file.get().endsWith(".svg")) {
+                            file.set(file.get() + ".svg");
+                        }
+
                         saveSVG(file.get(), width.get(), height.get());
                         break;
 
                     case 1:
+
+                        if (!file.get().endsWith(".png")) {
+                            file.set(file.get() + ".png");
+                        }
+
                         savePNG(file.get(), width.get(), height.get());
+                        break;
+
+                    case 2:
+
+                        if (!file.get().endsWith(".tex")) {
+                            file.set(file.get() + ".tex");
+                        }
+
+                        saveTex(file.get());
                         break;
 
                 }
@@ -389,11 +373,20 @@ public class Plot extends JFXWindow implements Element, Clearable {
     }
 
     /**
+     * Returns whether the x-axis range slider is visible or not.
+     *
+     * @return Visible?
+     */
+    public boolean isSliderVisible() {
+        return sliderBox.isVisible();
+    }
+
+    /**
      * Sets whether the x-axis range slider is visible or not.
      *
      * @param flag Visible?
      */
-    public void showSlider(boolean flag) {
+    public void setSliderVisible(boolean flag) {
 
         GUI.runNow(() -> {
 
@@ -425,7 +418,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
      * @param label New x-axis label text
      */
     public void setXLabel(String label) {
-        xAxis.setLabelText(label);
+        GUI.runNow(() -> xAxis.setLabelText(label));
     }
 
     /**
@@ -443,58 +436,11 @@ public class Plot extends JFXWindow implements Element, Clearable {
      * @param label New y-axis label text
      */
     public void setYLabel(String label) {
-        yAxis.setLabelText(label);
+        GUI.runNow(() -> yAxis.setLabelText(label));
     }
 
-
-    public void setZoomMode() {
-
-        XYChart.Series<Double, Double> series = new XYChart.Series<>();
-
-        final Node                          background = chart.lookup(".chart-plot-background");
-        final SimpleObjectProperty<Point2D> start      = new SimpleObjectProperty<>();
-        final SimpleObjectProperty<Point2D> first      = new SimpleObjectProperty<>();
-
-        chart.setOnMousePressed(event -> {
-            Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-            Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-            start.set(new Point2D(event.getX(), event.getY()));
-            first.set(new Point2D(pointX.getX(), pointY.getY()));
-            rect.setVisible(true);
-            rect.setManaged(true);
-        });
-
-        chart.setOnMouseDragged(event -> {
-
-            final double x = Math.max(0, Math.min(stack.getWidth(), event.getX()));
-            final double y = Math.max(0, Math.min(stack.getHeight(), event.getY()));
-            rect.setX(Math.min(x, start.get().getX()));
-            rect.setY(Math.min(y, start.get().getY()));
-            rect.setWidth(Math.abs(x - start.get().getX()));
-            rect.setHeight(Math.abs(y - start.get().getY()));
-
-        });
-
-        chart.setOnMouseReleased(event -> {
-
-            final Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-            final Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-
-            final double minX = xAxis.getValueForDisplay(Math.min(first.get().getX(), pointX.getX()));
-            final double maxX = xAxis.getValueForDisplay(Math.max(first.get().getX(), pointX.getX()));
-            final double minY = yAxis.getValueForDisplay(Math.min(first.get().getY(), pointY.getY()));
-            final double maxY = yAxis.getValueForDisplay(Math.max(first.get().getY(), pointY.getY()));
-
-            setXLimits(Math.min(minX, maxX), Math.max(minX, maxX));
-            setYLimits(Math.min(minY, maxY), Math.max(minY, maxY));
-
-            rect.setWidth(0);
-            rect.setHeight(0);
-            rect.setVisible(false);
-            rect.setManaged(false);
-
-        });
-
+    public boolean isMouseEnabled() {
+        return mouseCommands;
     }
 
     /**
@@ -502,7 +448,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
      *
      * @param flag
      */
-    public void useMouseCommands(boolean flag) {
+    public void setMouseEnabled(boolean flag) {
 
         if (flag) {
 
@@ -535,8 +481,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
                     startMax.set(new Point2D(xAxis.getUpperBound(), yAxis.getUpperBound()));
                     start.set(new Point2D(pointX.getX(), pointY.getY()));
                 } else if (event.getClickCount() >= 2) {
-                    autoXLimits();
-                    autoYLimits();
+                    autoLimitsX();
+                    autoLimitsY();
                 }
 
             });
@@ -557,17 +503,31 @@ public class Plot extends JFXWindow implements Element, Clearable {
                     Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
                     Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
 
-                    final double diffX = xAxis.getValueForDisplay(pointX.getX()) - xAxis.getValueForDisplay(start.get().getX());
-                    final double diffY = yAxis.getValueForDisplay(pointY.getY()) - yAxis.getValueForDisplay(start.get().getY());
 
-                    final double minX = startMin.get().getX() - diffX;
-                    final double minY = startMin.get().getY() - diffY;
+                    if (xAxis.getMode() == SmartAxis.Mode.LINEAR) {
+                        final double diff = xAxis.getValueForDisplay(pointX.getX()) - xAxis.getValueForDisplay(start.get().getX());
+                        final double min  = startMin.get().getX() - diff;
+                        final double max  = startMax.get().getX() - diff;
+                        setXLimits(Math.min(min, max), Math.max(min, max));
+                    } else {
+                        final double diff10 = Math.log10(xAxis.getValueForDisplay(pointX.getX())) - Math.log10(xAxis.getValueForDisplay(start.get().getX()));
+                        final double min    = Math.pow(10, Math.log10(startMin.get().getX()) - diff10);
+                        final double max    = Math.pow(10, Math.log10(startMax.get().getX()) - diff10);
+                        setXLimits(Math.min(min, max), Math.max(min, max));
+                    }
 
-                    final double maxX = startMax.get().getX() - diffX;
-                    final double maxY = startMax.get().getY() - diffY;
 
-                    setXLimits(Math.min(minX, maxX), Math.max(minX, maxX));
-                    setYLimits(Math.min(minY, maxY), Math.max(minY, maxY));
+                    if (yAxis.getMode() == SmartAxis.Mode.LINEAR) {
+                        final double diff = yAxis.getValueForDisplay(pointY.getY()) - yAxis.getValueForDisplay(start.get().getY());
+                        final double min  = startMin.get().getY() - diff;
+                        final double max  = startMax.get().getY() - diff;
+                        setYLimits(Math.min(min, max), Math.max(min, max));
+                    } else {
+                        final double diff10 = Math.log10(yAxis.getValueForDisplay(pointY.getY())) - Math.log10(yAxis.getValueForDisplay(start.get().getY()));
+                        final double min    = Math.pow(10, Math.log10(startMin.get().getY()) - diff10);
+                        final double max    = Math.pow(10, Math.log10(startMax.get().getY()) - diff10);
+                        setYLimits(Math.min(min, max), Math.max(min, max));
+                    }
 
                 }
 
@@ -612,56 +572,17 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         }
 
+        mouseCommands = flag;
 
     }
 
-    public void setDragMode() {
+    /**
+     * Use auto-ranging for both X and Y limits
+     */
+    public void autoLimits() {
 
-        final Node                          background = chart.lookup(".chart-plot-background");
-        final SimpleObjectProperty<Point2D> start      = new SimpleObjectProperty<>();
-        final SimpleObjectProperty<Point2D> startMax   = new SimpleObjectProperty<>();
-        final SimpleObjectProperty<Point2D> startMin   = new SimpleObjectProperty<>();
-
-
-        chart.setOnMousePressed(event -> {
-            Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-            Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-            startMin.set(new Point2D(xAxis.getLowerBound(), yAxis.getLowerBound()));
-            startMax.set(new Point2D(xAxis.getUpperBound(), yAxis.getUpperBound()));
-            start.set(new Point2D(pointX.getX(), pointY.getY()));
-        });
-
-        chart.setOnMouseDragged(event -> {
-
-            Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-            Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-
-            final double diffX = xAxis.getValueForDisplay(pointX.getX()) - xAxis.getValueForDisplay(start.get().getX());
-            final double diffY = yAxis.getValueForDisplay(pointY.getY()) - yAxis.getValueForDisplay(start.get().getY());
-
-            final double minX = startMin.get().getX() - diffX;
-            final double minY = startMin.get().getY() - diffY;
-
-            final double maxX = startMax.get().getX() - diffX;
-            final double maxY = startMax.get().getY() - diffY;
-
-            setXLimits(Math.min(minX, maxX), Math.max(minX, maxX));
-            setYLimits(Math.min(minY, maxY), Math.max(minY, maxY));
-
-        });
-
-        chart.setOnMouseReleased(null);
-
-    }
-
-    public void setAutoMode() {
-
-        chart.setOnMousePressed(null);
-        chart.setOnMouseDragged(null);
-        chart.setOnMouseReleased(null);
-
-        autoXLimits();
-        autoYLimits();
+        autoLimitsX();
+        autoLimitsY();
 
     }
 
@@ -681,6 +602,22 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
     }
 
+    public double getXLowerLimit() {
+        return xAxis.getLowerBound();
+    }
+
+    public double getXUpperLimit() {
+        return xAxis.getUpperBound();
+    }
+
+    public double getYLowerLimit() {
+        return yAxis.getLowerBound();
+    }
+
+    public double getYUpperLimit() {
+        return yAxis.getUpperBound();
+    }
+
     /**
      * Sets the bounds on the y-axis.
      *
@@ -696,11 +633,19 @@ public class Plot extends JFXWindow implements Element, Clearable {
         });
     }
 
+    public Side getLegendPosition() {
+        return chart.getLegendSide();
+    }
+
     public void setLegendPosition(Side position) {
         GUI.runNow(() -> chart.setLegendSide(position));
     }
 
-    public void showLegend(boolean show) {
+    public boolean isLegendVisible() {
+        return chart.isLegendVisible();
+    }
+
+    public void setLegendVisible(boolean show) {
 
         GUI.runNow(() -> chart.setLegendVisible(show));
     }
@@ -708,7 +653,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
     /**
      * Sets the x-axis to automatically choose its bounds.
      */
-    public void autoXLimits() {
+    public void autoLimitsX() {
         GUI.runNow(() -> {
             xAxis.setMaxRange(Double.POSITIVE_INFINITY);
             xAxis.setAutoRanging(true);
@@ -718,21 +663,21 @@ public class Plot extends JFXWindow implements Element, Clearable {
     /**
      * Sets the y-axis to automatically choose its bounds.
      */
-    public void autoYLimits() {
+    public void autoLimitsY() {
         GUI.runNow(() -> {
             yAxis.setMaxRange(Double.POSITIVE_INFINITY);
             yAxis.setAutoRanging(true);
         });
     }
 
-    public void setXAutoTrack(double range) {
+    public void autoTrackX(double range) {
         GUI.runNow(() -> {
             xAxis.setMaxRange(range);
             xAxis.setAutoRanging(true);
         });
     }
 
-    public void setYAutoTrack(double range) {
+    public void autoTrackY(double range) {
         GUI.runNow(() -> {
             yAxis.setMaxRange(range);
             yAxis.setAutoRanging(true);
@@ -743,27 +688,84 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         super.show();
         adjustSize();
+        GUI.runNow(() -> getStage().getScene().setFill(Colour.WHITE));
+
+    }
+
+    public Plot copy() {
+
+        Plot plot = new Plot(getTitle(), getXLabel(), getYLabel());
+
+        for (JISAChart.JISASeries series : chart.getSeries()) {
+
+            if (!chart.getData().contains(series.getXYChartSeries())) {
+                continue;
+            }
+
+            Series copy = plot.createSeries();
+
+            copy.setName(series.getName())
+                .setColour(series.getColour())
+                .setLineDash(series.getLineDash())
+                .setLineWidth(series.getLineWidth())
+                .setMarkerShape(series.getMarkerShape())
+                .setMarkerSize(series.getMarkerSize())
+                .setMarkerVisible(series.isMarkerVisible())
+                .setLineVisible(series.isLineVisible());
+
+            if (series.isFitted()) copy.fit(series.getFitter());
+
+            for (XYChart.Data<Double, Double> point : series.getPoints()) {
+
+                if (point.getExtraValue() instanceof Double) {
+                    copy.addPoint(point.getXValue(), point.getYValue(), (Double) point.getExtraValue());
+                } else {
+                    copy.addPoint(point.getXValue(), point.getYValue());
+                }
+
+            }
+
+        }
+
+        plot.xAxis.setMode(xAxis.getMode());
+        plot.yAxis.setMode(yAxis.getMode());
+        plot.setPointOrdering(getPointOrdering());
+        plot.setLegendVisible(isLegendVisible());
+
+        if (getLegendColumns() == 0) {
+            plot.setLegendRows(getLegendRows());
+        } else {
+            plot.setLegendColumns(getLegendColumns());
+        }
+
+        plot.setMouseEnabled(isMouseEnabled());
+
+        if (!xAxis.isAutoRanging()) plot.setXLimits(getXLowerLimit(), getXUpperLimit());
+        if (!yAxis.isAutoRanging()) plot.setYLimits(getYLowerLimit(), getYUpperLimit());
+
+        return plot;
+
     }
 
     public void savePNG(String path, double w, double h) {
 
-        Util.sleep(500);
+        Plot plot = copy();
 
-        double height = stage.getHeight();
-        double width  = stage.getWidth();
+        plot.setWindowSize(w, h);
+        plot.show();
+
+        Util.sleep(250);
+
+        double diffH = h - plot.chart.getHeight();
+        double diffW = w - plot.chart.getWidth();
+
+        plot.setWindowSize(w + diffW, h + diffH);
+
+        Util.sleep(250);
 
         GUI.runNow(() -> {
 
-            stage.setWidth(w);
-            stage.setHeight(h);
-
-        });
-
-        Util.sleep(100);
-
-        GUI.runNow(() -> {
-
-            WritableImage image = chart.snapshot(new SnapshotParameters(), null);
+            WritableImage image = plot.chart.snapshot(null, null);
             try {
                 ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", new File(path));
             } catch (IOException e) {
@@ -772,12 +774,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         });
 
-        Util.sleep(100);
-
-        GUI.runNow(() -> {
-            stage.setWidth(width);
-            stage.setHeight(height);
-        });
+        plot.close();
 
     }
 
@@ -826,10 +823,10 @@ public class Plot extends JFXWindow implements Element, Clearable {
              .setStrokeColour(Color.GREY);
 
         xAxisBox.setStrokeWidth(1)
-             .setStrokeColour(Color.GREY);
+                .setStrokeColour(Color.GREY);
 
         yAxisBox.setStrokeWidth(1)
-             .setStrokeColour(Color.GREY);
+                .setStrokeColour(Color.GREY);
 
         List<Double> xTicks = this.xAxis.getMajorTicks();
         List<Double> yTicks = this.yAxis.getMajorTicks();
@@ -951,12 +948,12 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
             List<String> terms = new LinkedList<>();
 
-            SVGElement legendCircle = makeMarker(s.isShowingMarkers() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
+            SVGElement legendCircle = makeMarker(s.isMarkerVisible() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
             SVGText legendText = new SVGText(
-                legendX + 15.0 + 5 + 3 + 10,
-                legendY + (25 * i) + 15.0 + 5,
-                "beginning",
-                s.getName()
+                    legendX + 15.0 + 5 + 3 + 10,
+                    legendY + (25 * i) + 15.0 + 5,
+                    "beginning",
+                    s.getName()
             );
 
             legendText.setAttribute("font-size", "16px");
@@ -973,7 +970,26 @@ public class Plot extends JFXWindow implements Element, Clearable {
             double lastX = -1;
             double lastY = -1;
 
-            for (XYChart.Data<Double, Double> point : s.getXYChartSeries().getData()) {
+            List<XYChart.Data<Double, Double>> data;
+
+            switch (getPointOrdering()) {
+
+                case X_AXIS:
+                    data = s.getXYChartSeries().getData().sorted(Comparator.comparingDouble(XYChart.Data::getXValue));
+                    break;
+
+                case Y_AXIS:
+                    data = s.getXYChartSeries().getData().sorted(Comparator.comparingDouble(XYChart.Data::getYValue));
+                    break;
+
+                default:
+                    data = s.getXYChartSeries().getData();
+                    break;
+
+
+            }
+
+            for (XYChart.Data<Double, Double> point : data) {
 
                 double x = aStartX + xScale * this.xAxis.getDisplayPosition(point.getXValue());
                 double y = aEndY - yScale * this.yAxis.getDisplayPosition(point.getYValue());
@@ -984,7 +1000,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
                 terms.add(String.format("%s%s %s", first ? "M" : "L", x, y));
 
-                if (s.isShowingMarkers()) {
+                if (s.isMarkerVisible()) {
 
                     if (point.getExtraValue() != null && (double) point.getExtraValue() > 0) {
 
@@ -1048,7 +1064,7 @@ public class Plot extends JFXWindow implements Element, Clearable {
                 .setDash(s.getLineDash().getArray())
                 .setStyle("fill", "none");
 
-            if (s.isShowingLine()) {
+            if (s.isLineVisible()) {
                 main.add(path);
             }
 
@@ -1075,16 +1091,16 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case TRIANGLE:
 
                 marker = new SVGTriangle(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(Color.WHITE)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setFillColour(Color.WHITE)
+                        .setStrokeWidth(2);
                 break;
 
             case DASH:
 
                 marker = new SVGLine(x - m, y, x + m, y)
-                    .setStrokeColour(c)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setStrokeWidth(2);
                 break;
 
             default:
@@ -1092,18 +1108,18 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case DOT:
 
                 marker = new SVGCircle(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
+                        .setStrokeWidth(2);
                 break;
 
             case SQUARE:
             case DIAMOND:
 
                 marker = new SVGSquare(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(Color.WHITE)
-                    .setStrokeWidth(2);
+                        .setStrokeColour(c)
+                        .setFillColour(Color.WHITE)
+                        .setStrokeWidth(2);
 
                 if (p == Series.Shape.DIAMOND) {
                     marker.setAttribute("transform", "rotate(45 " + x + " " + y + ")");
@@ -1114,9 +1130,9 @@ public class Plot extends JFXWindow implements Element, Clearable {
             case CROSS:
 
                 marker = new SVGCross(x, y, m)
-                    .setStrokeColour(c)
-                    .setFillColour(c)
-                    .setStrokeWidth(1);
+                        .setStrokeColour(c)
+                        .setFillColour(c)
+                        .setStrokeWidth(1);
 
                 break;
 
@@ -1124,6 +1140,164 @@ public class Plot extends JFXWindow implements Element, Clearable {
         }
 
         return marker;
+
+    }
+
+    public void saveTex(String path) throws IOException {
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("\\begin{tikzpicture}\n");
+
+
+        builder.append("\\begin{axis}[\n")
+               .append("\txmode             = ").append(xAxis.getMode() == SmartAxis.Mode.LOGARITHMIC ? "log" : "normal").append(",\n")
+               .append("\tymode             = ").append(yAxis.getMode() == SmartAxis.Mode.LOGARITHMIC ? "log" : "normal").append(",\n")
+               .append("\tgrid,\n")
+               .append("\tgrid style        = {dotted},\n")
+               .append("\tlegend pos        = outer north east,\n")
+               .append("\twidth             = 0.7 * \\linewidth,\n")
+               .append("\ttitle             = {\\textbf{").append(getTitle().replace("^", "\\^{}")).append("}},\n")
+               .append("\txlabel            = {").append(getXLabel().replace("^", "\\^{}")).append("},\n")
+               .append("\tylabel            = {").append(getYLabel().replace("^", "\\^{}")).append("},\n")
+               .append("\tlegend cell align = left\n")
+               .append("]\n");
+
+        List<String> legend = new LinkedList<>();
+
+        for (JISAChart.JISASeries series : chart.getSeries()) {
+
+            if (!chart.getData().contains(series.getXYChartSeries())) {
+                continue;
+            }
+
+            String symbol;
+
+            switch (series.getMarkerShape()) {
+
+                case CIRCLE:
+                    symbol = "o";
+                    break;
+
+                case DOT:
+                    symbol = "*";
+                    break;
+
+                case SQUARE:
+                    symbol = "square";
+                    break;
+
+                case DIAMOND:
+                    symbol = "diamond";
+                    break;
+
+                case CROSS:
+                    symbol = "x";
+                    break;
+
+                case TRIANGLE:
+                    symbol = "triangle";
+                    break;
+
+                case STAR:
+                    symbol = "star";
+                    break;
+
+                case DASH:
+                    symbol = "-";
+                    break;
+
+                default:
+                    symbol = "none";
+
+            }
+
+            if (!series.isMarkerVisible()) symbol = "none";
+
+            String onlyMarks = series.isLineVisible() ? "" : "only marks,\n";
+
+
+            String lineType;
+
+            switch (series.getLineDash()) {
+                case DOTTED:
+                    lineType = ",\n\tdotted";
+                    break;
+
+                case DASHED:
+                case TWO_DASH:
+                case DOT_DASH:
+                case LONG_DASH:
+                    lineType = ",\n\tdashed";
+                    break;
+
+                default:
+                case SOLID:
+                    lineType = "";
+                    break;
+
+            }
+
+            int red   = (int) (series.getColour().getRed() * 255);
+            int green = (int) (series.getColour().getGreen() * 255);
+            int blue  = (int) (series.getColour().getBlue() * 255);
+
+            builder.append("\\addplot[\n");
+
+            if (!series.isLineVisible()) builder.append("\tonly marks,\n");
+
+            builder.append("\tmark       = ").append(symbol).append(",\n")
+                   .append("\tcolor      = {rgb,255:red,").append(red).append(";green,").append(green).append(";blue,").append(blue).append("},\n")
+                   .append("\tline width = ").append(series.getLineWidth() / 2.0)
+                   .append(lineType).append("\n")
+                   .append("]\n")
+                   .append("table {\n");
+
+
+            List<XYChart.Data<Double, Double>> data;
+
+            switch (getPointOrdering()) {
+
+                case X_AXIS:
+                    data = series.getXYChartSeries().getData().sorted(Comparator.comparingDouble(XYChart.Data::getXValue));
+                    break;
+
+                case Y_AXIS:
+                    data = series.getXYChartSeries().getData().sorted(Comparator.comparingDouble(XYChart.Data::getYValue));
+                    break;
+
+                default:
+                    data = series.getXYChartSeries().getData();
+                    break;
+
+
+            }
+
+            for (XYChart.Data<Double, Double> point : data) {
+
+                builder.append(String.format("\t%.04e\t%.04e\t%.04e\n", point.getXValue(), point.getYValue(), point.getExtraValue() instanceof Double ? (Double) point.getExtraValue() : 0.0));
+
+            }
+
+            builder.append("};\n");
+
+            legend.add("\t{" + series.getName().replace("^", "\\^{}") + "}");
+
+        }
+
+        if (isLegendVisible()) {
+            builder.append(String.format("\\legend{\n%s\n}\n", String.join(",\n", legend)));
+        }
+
+        builder.append("\\end{axis}\n");
+
+        builder.append("\\end{tikzpicture}");
+
+        FileOutputStream writer = new FileOutputStream(path);
+        PrintStream      stream = new PrintStream(writer);
+
+        stream.print(builder.toString());
+
+        stream.close();
 
     }
 
@@ -1135,6 +1309,8 @@ public class Plot extends JFXWindow implements Element, Clearable {
     private void adjustSize() {
 
         GUI.runNow(() -> {
+
+            Stage stage = getStage();
 
             double width  = stage.getWidth();
             double height = stage.getHeight();
@@ -1150,12 +1326,6 @@ public class Plot extends JFXWindow implements Element, Clearable {
 
         });
 
-    }
-
-    @Override
-    public Pane getPane() {
-
-        return pane;
     }
 
 

@@ -1,5 +1,6 @@
 package jisa.devices;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.enums.AMode;
 import jisa.enums.Source;
@@ -7,16 +8,18 @@ import jisa.enums.TType;
 import jisa.enums.Terminals;
 
 import java.io.IOException;
+import java.lang.ref.Cleaner;
 import java.util.Random;
 
 public class DummyMCSMU implements MCSMU {
 
-    private Random    random  = new Random();
-    private Double[]  current = {null, null, null, null};
-    private Double[]  voltage = {null, null, null, null};
-    private Source[]  mode    = {Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE};
-    private boolean[] probes  = {true, true, true, true};
-    private double[]  R       = {random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500};
+    private        Random    random  = new Random();
+    private        Double[]  current = {null, null, null, null};
+    private        Double[]  voltage = {null, null, null, null};
+    private        Source[]  mode    = {Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE};
+    private        boolean[] probes  = {true, true, true, true};
+    private        double[]  R       = {random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500};
+    private static Cleaner   cleaner = Cleaner.create();
 
     @Override
     public double getVoltage(int channel) throws DeviceException, IOException {
@@ -311,4 +314,5 @@ public class DummyMCSMU implements MCSMU {
     public Address getAddress() {
         return null;
     }
+
 }

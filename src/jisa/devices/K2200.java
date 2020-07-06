@@ -21,7 +21,7 @@ public class K2200 extends VISADevice implements DCPower {
 
         super(address);
 
-        clearRead();
+        clearReadBuffer();
 
         try {
 

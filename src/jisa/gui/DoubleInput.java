@@ -73,7 +73,7 @@ public class DoubleInput extends HBox {
     }
 
     public double getValue() {
-        return getMantissa() * Math.pow(10.0, getExponent());
+        return Double.parseDouble(String.format("%sE%s", mantissa.getText(), exponent.getText()));
     }
 
     public double getMantissa() {

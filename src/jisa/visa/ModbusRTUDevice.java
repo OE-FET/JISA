@@ -15,7 +15,6 @@ import jssc.SerialPortList;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 public class ModbusRTUDevice implements Instrument {
 
@@ -192,16 +191,6 @@ public class ModbusRTUDevice implements Instrument {
                 throw new IOException(e.getMessage());
             }
 
-        }
-
-    }
-
-    public void finalize() {
-
-        try {
-            close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
     }

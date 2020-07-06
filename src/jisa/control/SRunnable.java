@@ -14,4 +14,12 @@ public interface SRunnable {
 
     }
 
+    default void start() {
+        (new Thread(this::runRegardless)).start();
+    }
+
+    static SRunnable fromJProxy(Runnable runnable) {
+        return runnable::run;
+    }
+
 }

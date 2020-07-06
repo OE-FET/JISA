@@ -60,6 +60,10 @@ public class Fitting {
 
     }
 
+    public static LinearFit linearFitWeighted(Iterable<Double> x, Iterable<Double> y, Iterable<Double> w) {
+        PolyFit fit = polyFitWeighted(x, y, w, 1);
+        return fit == null ? null : new LinearFit(fit);
+    }
 
     public static LinearFit linearFit(Iterable<Double> x, Iterable<Double> y) {
 
@@ -77,6 +81,60 @@ public class Fitting {
 
     public static LinearFit linearFit(ResultTable data, int xCol, int yCol) {
         return linearFit(data.getColumns(xCol), data.getColumns(yCol));
+    }
+
+    /**
+     * Fit a polynomial of given degree to the data provided as two column matrices x and y.
+     *
+     * @param xData  X-Data
+     * @param yData  Y-Data
+     * @param degree Degree of polynomial to fit
+     *
+     * @return Polynomial function representing the fit
+     */
+    public static PolyFit polyFitWeighted(Iterable<Double> xData, Iterable<Double> yData, Iterable<Double> weights, final int degree) {
+
+        RealMatrix x = RealMatrix.iterableToCol(xData);
+        RealMatrix y = RealMatrix.iterableToCol(yData);
+        RealMatrix w = RealMatrix.iterableToCol(weights);
+
+        try {
+
+            RealMatrix V = new RealMatrix(x.size(), degree + 1);
+
+            for (int i = 0; i < x.size(); i++) {
+                V.set(i, degree, w.get(i, 0));
+            }
+
+            for (int j = degree - 1; j >= 0; j--) {
+
+                Iterator<Double> ittr = x.iterator();
+
+                for (int i = 0; ittr.hasNext(); i++) {
+                    V.set(i, j, ittr.next() * V.get(i, j + 1));
+                }
+
+            }
+
+            RealMatrix.QR decomp = V.getQR();
+            RealMatrix    Q      = decomp.getQ();
+            RealMatrix    R      = decomp.getR();
+            RealMatrix    subR   = R.getSubMatrix(0, R.cols() - 1, 0, R.cols() - 1);
+            RealMatrix    denom  = Q.transpose().multiply(y.elementMultiply(w)).getSubMatrix(0, subR.cols() - 1, 0, 0);
+            double[]      p      = Util.reverseArray(subR.leftDivide(denom).getCol(0));
+            Function      fitted = new Function.WrappedFunction(new PolynomialFunction(p));
+            double        norm   = y.subtract(fitted.value(x)).elementMultiply(w).getNorm();
+            RealMatrix    covb   = R.transpose().multiply(R).leftDivide(RealMatrix.identity(R.cols())).multiply(norm * norm / (x.size() - degree));
+            RealMatrix    se     = covb.getDiagonal().map(Math::sqrt);
+            double[]      errors = Util.reverseArray(se.getCol(0));
+
+            return new PolyFit(p, errors);
+
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return null;
+        }
+
     }
 
     /**
@@ -117,7 +175,7 @@ public class Fitting {
             RealMatrix    subR   = R.getSubMatrix(0, R.cols() - 1, 0, R.cols() - 1);
             RealMatrix    denom  = Q.transpose().multiply(y).getSubMatrix(0, subR.cols() - 1, 0, 0);
             double[]      p      = Util.reverseArray(subR.leftDivide(denom).getCol(0));
-            Function   fitted = new Function.WrappedFunction(new PolynomialFunction(p));
+            Function      fitted = new Function.WrappedFunction(new PolynomialFunction(p));
             double        norm   = y.subtract(fitted.value(x)).getNorm();
             RealMatrix    covb   = R.transpose().multiply(R).leftDivide(RealMatrix.identity(R.cols())).multiply(norm * norm / (x.size() - degree));
             RealMatrix    se     = covb.getDiagonal().map(Math::sqrt);

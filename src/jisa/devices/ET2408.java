@@ -1,11 +1,13 @@
 package jisa.devices;
 
-import jisa.addresses.Address;
-import jisa.Util;
-import jisa.visa.ModbusRTUDevice;
 import com.intelligt.modbus.jlibmodbus.serial.SerialPort;
+import jisa.Util;
+import jisa.addresses.Address;
+import jisa.visa.ModbusRTUDevice;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 public class ET2408 extends ModbusRTUDevice implements TC {
 
@@ -19,10 +21,6 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     private static final int DEC_PLACES_0     = 0;
     private static final int DEC_PLACES_1     = 1;
     private static final int DEC_PLACES_2     = 2;
-
-    // Auto-zoner
-    private Zoner zoner = null;
-
     // Registers and Coils
     private final RORegister sensor    = new RORegister(1);
     private final RWRegister setPoint  = new RWRegister(2);
@@ -34,6 +32,9 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     private final RWRegister units     = new RWRegister(516);
     private final RWRegister manual    = new RWRegister(273);
     private final RWRegister decPlaces = new RWRegister(525);
+
+    private boolean   autoPID = false;
+    private PIDZone[] zones   = new PIDZone[0];
 
     public ET2408(Address address, SerialPort.BaudRate baud, int dataBits, int stopBits, SerialPort.Parity parity) throws IOException, DeviceException {
 
@@ -64,11 +65,6 @@ public class ET2408 extends ModbusRTUDevice implements TC {
         this(address, SerialPort.BaudRate.BAUD_RATE_9600, 8, 1, SerialPort.Parity.NONE);
     }
 
-    @Override
-    public void setTargetTemperature(double temperature) throws IOException {
-        setPoint.set((int) (temperature * getScale()));
-    }
-
     private double getScale() throws IOException {
 
         switch (decPlaces.get()) {
@@ -93,19 +89,6 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
-    public void setTemperatureRange(double range) throws IOException {
-
-        if (range < 100) {
-            decPlaces.set(DEC_PLACES_2);
-        } else if (range < 1000) {
-            decPlaces.set(DEC_PLACES_1);
-        } else {
-            decPlaces.set(DEC_PLACES_0);
-        }
-
-    }
-
-    @Override
     public double getTemperatureRange() throws IOException {
 
         switch (decPlaces.get()) {
@@ -127,8 +110,29 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
+    public void setTemperatureRange(double range) throws IOException {
+
+        if (range < 100) {
+            decPlaces.set(DEC_PLACES_2);
+        } else if (range < 1000) {
+            decPlaces.set(DEC_PLACES_1);
+        } else {
+            decPlaces.set(DEC_PLACES_0);
+        }
+
+    }
+
+    @Override
     public double getTargetTemperature() throws IOException {
         return (double) setPoint.get() / getScale();
+    }
+
+    @Override
+    public void setTargetTemperature(double temperature) throws IOException, DeviceException {
+
+        setPoint.set((int) (temperature * getScale()));
+        updateAutoPID();
+
     }
 
     @Override
@@ -137,19 +141,21 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
-    public double getGasFlow() {
+    public void setHeaterPower(double powerPCT) throws IOException {
+
+        manual.set(1);
+        output.set((int) (powerPCT * 10.0));
+
+    }
+
+    @Override
+    public double getFlow() {
         return 0.0;
     }
 
     @Override
     public void useAutoHeater() throws IOException {
         manual.set(0);
-    }
-
-    @Override
-    public void setManualHeater(double powerPCT) throws IOException {
-        manual.set(1);
-        output.set((int) (powerPCT * 10.0));
     }
 
     @Override
@@ -163,28 +169,13 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
-    public void setManualFlow(double outputPCT) {
+    public void setFlow(double outputPCT) {
 
     }
 
     @Override
-    public boolean isFlowAuto() {
+    public boolean isUsingAutoFlow() {
         return false;
-    }
-
-    @Override
-    public void setPValue(double value) throws IOException {
-        P.set((int) (value * 10.0));
-    }
-
-    @Override
-    public void setIValue(double value) throws IOException {
-        I.set((int) (value * 10.0));
-    }
-
-    @Override
-    public void setDValue(double value) throws IOException {
-        D.set((int) (value * 10.0));
     }
 
     @Override
@@ -193,8 +184,40 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
+    public void setPValue(double value) throws IOException {
+        P.set((int) (value * 10.0));
+    }
+
+    @Override
     public double getIValue() throws IOException {
         return (double) I.get() / 10.0;
+    }
+
+    @Override
+    public void setIValue(double value) throws IOException {
+        I.set((int) (value * 10.0));
+    }
+
+    @Override
+    public void useAutoPID(boolean flag) throws IOException, DeviceException {
+        autoPID = flag;
+        updateAutoPID();
+    }
+
+    @Override
+    public boolean isUsingAutoPID() {
+        return autoPID;
+    }
+
+    @Override
+    public List<PIDZone> getAutoPIDZones() {
+        return Arrays.asList(zones);
+    }
+
+    @Override
+    public void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+        this.zones = zones;
+        updateAutoPID();
     }
 
     @Override
@@ -203,8 +226,8 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
-    public void setHeaterRange(double rangePCT) {
-
+    public void setDValue(double value) throws IOException {
+        D.set((int) (value * 10.0));
     }
 
     @Override
@@ -213,12 +236,8 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
-    public Zoner getZoner() {
-        return zoner;
+    public void setHeaterRange(double rangePCT) {
+
     }
 
-    @Override
-    public void setZoner(Zoner zoner) {
-        this.zoner = zoner;
-    }
 }

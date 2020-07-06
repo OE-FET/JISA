@@ -73,8 +73,8 @@ public class K2600B extends VISADevice implements MCSMU {
 
         // Connect and set-up terminators
         super(address, RawTCPIPDriver.class);
-        setReadTerminationCharacter(LF_TERMINATOR);
-        setTerminator("\n");
+        setReadTerminator(LF_TERMINATOR);
+        setWriteTerminator("\n");
         addAutoRemove("\n");
 
         // Check that this is a Keithley 2600B series

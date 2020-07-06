@@ -5,6 +5,7 @@ import jisa.Util;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
@@ -227,6 +228,75 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
     }
 
     /**
+     * Sets whether auto PID-zoning should be used.
+     *
+     * @param flag Should it be used?
+     */
+    void useAutoPID(int output, boolean flag) throws IOException, DeviceException;
+
+    default void useAutoPID(boolean flag) throws IOException, DeviceException {
+
+        for (int i = 0; i < getNumOutputs(); i++) {
+            useAutoPID(i, flag);
+        }
+
+    }
+
+    /**
+     * Returns whether auto PID-zoning is being used currently.
+     *
+     * @return Is it being used?
+     */
+    boolean isUsingAutoPID(int output) throws IOException, DeviceException;
+
+    default boolean isUsingAutoPID() throws IOException, DeviceException {
+        return isUsingAutoPID(0);
+    }
+
+    /**
+     * Returns a list of all PID zones currently set.
+     *
+     * @return List of zones
+     */
+    List<PIDZone> getAutoPIDZones(int output) throws IOException, DeviceException;
+
+    default List<PIDZone> getAutoPIDZones() throws IOException, DeviceException {
+        return getAutoPIDZones(0);
+    }
+
+    /**
+     * Sets the PID zones to use for auto-zoning.
+     *
+     * @param zones Zones to use
+     */
+    void setAutoPIDZones(int output, PIDZone... zones) throws IOException, DeviceException;
+
+    default void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+
+        for (int i = 0; i < getNumOutputs(); i++) {
+            setAutoPIDZones(i, zones);
+        }
+
+    }
+
+    /**
+     * Sets the PID zones to use for auto-zoning.
+     *
+     * @param zones Zones to use
+     */
+    default void setAutoPIDZones(int output, Collection<PIDZone> zones) throws IOException, DeviceException {
+        setAutoPIDZones(output, zones.toArray(new PIDZone[0]));
+    }
+
+    default void setAutoPIDZones(Collection<PIDZone> zones) throws IOException, DeviceException {
+
+        for (int i = 0; i < getNumOutputs(); i++) {
+            setAutoPIDZones(i, zones);
+        }
+
+    }
+
+    /**
      * Sets the maximum output power of the heater, as a percentage of its absolute maximum, for the specified output.
      *
      * @param output Output number
@@ -340,7 +410,7 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    double getGasFlow(int output) throws IOException, DeviceException;
+    double getFlow(int output) throws IOException, DeviceException;
 
     /**
      * Returns the gas flow rate for the default output/control-loop.
@@ -350,8 +420,8 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    default double getGasFlow() throws IOException, DeviceException {
-        return getGasFlow(0);
+    default double getFlow() throws IOException, DeviceException {
+        return getFlow(0);
     }
 
     /**
@@ -432,7 +502,7 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    boolean isFlowAuto(int output) throws IOException, DeviceException;
+    boolean isUsingAutoFlow(int output) throws IOException, DeviceException;
 
     /**
      * Returns whether the controller is automatically controlling the gas flow on the default output/control-loop.
@@ -442,8 +512,8 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    default boolean isFlowAuto() throws IOException, DeviceException {
-        return isFlowAuto(0);
+    default boolean isUsingAutoFlow() throws IOException, DeviceException {
+        return isUsingAutoFlow(0);
     }
 
     /**
@@ -468,7 +538,7 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    void setManualHeater(int output, double powerPCT) throws IOException, DeviceException;
+    void setHeaterPower(int output, double powerPCT) throws IOException, DeviceException;
 
     /**
      * Manually sets the heater output power for all outputs/control-loops.
@@ -478,9 +548,9 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    default void setManualHeater(double powerPCT) throws IOException, DeviceException {
+    default void setHeaterPower(double powerPCT) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
-            setManualHeater(onum, powerPCT);
+            setHeaterPower(onum, powerPCT);
         }
     }
 
@@ -493,7 +563,7 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    void setManualFlow(int output, double outputPCT) throws IOException, DeviceException;
+    void setFlow(int output, double outputPCT) throws IOException, DeviceException;
 
     /**
      * Manually sets the flow rate for all outputs/control-loops.
@@ -503,125 +573,44 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    default void setManualFlow(double outputPCT) throws IOException, DeviceException {
+    default void setFlow(double outputPCT) throws IOException, DeviceException {
         for (int onum = 0; onum < getNumOutputs(); onum++) {
-            setManualFlow(onum, outputPCT);
+            setFlow(onum, outputPCT);
         }
     }
 
-    Zoner getZoner(int output);
+    default void updateAutoPID(int output) throws IOException, DeviceException {
 
-    void setZoner(int output, Zoner zoner);
+        if (isUsingAutoPID()) {
 
-    default void setAutoPIDZones(int output, PIDZone... zones) throws IOException, DeviceException {
+            double temp = getTargetTemperature(output);
 
-        checkOutput(output);
+            for (PIDZone zone : getAutoPIDZones(output)) {
 
-        Zoner zoner = getZoner(output);
+                if (zone.matches(temp)) {
+                    usePIDZone(zone);
+                    break;
+                }
 
-        if (getZoner(output) != null && zoner.isRunning()) {
-            zoner.stop();
-            zoner = new Zoner(this, output, zones);
-            zoner.start();
-            setZoner(output, zoner);
+            }
+
+        }
+
+    }
+
+    default void usePIDZone(int output, PIDZone zone) throws IOException, DeviceException {
+
+        setPValue(output, zone.getP());
+        setIValue(output, zone.getI());
+        setDValue(output, zone.getD());
+        setHeaterRange(output, zone.getRange());
+
+        if (zone.isAuto()) {
+            useAutoHeater(output);
         } else {
-            zoner = new Zoner(this, output, zones);
-            setZoner(output, zoner);
+            setHeaterPower(output, zone.getPower());
         }
 
-    }
-
-    default void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
-        for (int onum = 0; onum < getNumOutputs(); onum++) {
-            setAutoPIDZones(onum, zones);
-        }
-    }
-
-    default PIDZone[] getAutoPIDZones(int output) throws IOException, DeviceException {
-
-        checkOutput(output);
-
-        Zoner zoner = getZoner(output);
-
-        if (zoner == null) {
-            return new PIDZone[0];
-        } else {
-            return zoner.getZones();
-        }
-
-    }
-
-    default PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
-        return getAutoPIDZones(0);
-    }
-
-    /**
-     * Sets whether the controller should use automatic PID control on the specified output/control-loop.
-     *
-     * @param output Output number
-     * @param auto   Should it be automatic?
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default void useAutoPID(int output, boolean auto) throws IOException, DeviceException {
-
-        checkOutput(output);
-
-        Zoner zoner = getZoner(output);
-
-        if (auto && zoner == null) {
-            throw new DeviceException("You must set PID zones before using this feature.");
-        }
-
-        if (auto && !zoner.isRunning()) {
-            zoner.start();
-        } else if (zoner != null && zoner.isRunning()) {
-            zoner.stop();
-        }
-
-    }
-
-    /**
-     * Sets whether the controller should use automatic PID control on all outputs/control-loops.
-     *
-     * @param auto Should it be automatic?
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default void useAutoPID(boolean auto) throws IOException, DeviceException {
-        for (int onum = 0; onum < getNumOutputs(); onum++) {
-            useAutoPID(onum, auto);
-        }
-    }
-
-    /**
-     * Returns whether the controller is automatically selecting PID values on the specified output/control-loop.
-     *
-     * @param output Output number
-     *
-     * @return Is it automatic?
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default boolean isUsingAutoPID(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        Zoner zoner = getZoner(output);
-        return zoner != null && zoner.isRunning();
-    }
-
-    /**
-     * Returns whether the controller is automatically selecting PID values on the default output/control-loop.
-     *
-     * @return Is it automatic?
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default boolean isUsingAutoPID() throws IOException, DeviceException {
-        return isUsingAutoPID(0);
     }
 
     /**
@@ -687,8 +676,8 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
             }
 
             @Override
-            public double getGasFlow() throws IOException, DeviceException {
-                return MSMOTC.this.getGasFlow(output);
+            public double getFlow() throws IOException, DeviceException {
+                return MSMOTC.this.getFlow(output);
             }
 
             @Override
@@ -697,8 +686,8 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
             }
 
             @Override
-            public void setManualHeater(double powerPCT) throws IOException, DeviceException {
-                MSMOTC.this.setManualHeater(output, powerPCT);
+            public void setHeaterPower(double powerPCT) throws IOException, DeviceException {
+                MSMOTC.this.setHeaterPower(output, powerPCT);
             }
 
             @Override
@@ -712,13 +701,13 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
             }
 
             @Override
-            public void setManualFlow(double outputPCT) throws IOException, DeviceException {
-                MSMOTC.this.setManualFlow(output, outputPCT);
+            public void setFlow(double outputPCT) throws IOException, DeviceException {
+                MSMOTC.this.setFlow(output, outputPCT);
             }
 
             @Override
-            public boolean isFlowAuto() throws IOException, DeviceException {
-                return MSMOTC.this.isFlowAuto(output);
+            public boolean isUsingAutoFlow() throws IOException, DeviceException {
+                return MSMOTC.this.isUsingAutoFlow(output);
             }
 
             @Override
@@ -729,6 +718,26 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
             @Override
             public void setIValue(double value) throws IOException, DeviceException {
                 MSMOTC.this.setIValue(output, value);
+            }
+
+            @Override
+            public void useAutoPID(boolean flag) throws IOException, DeviceException {
+                MSMOTC.this.useAutoPID(output, flag);
+            }
+
+            @Override
+            public boolean isUsingAutoPID() throws IOException, DeviceException {
+                return MSMOTC.this.isUsingAutoPID(output);
+            }
+
+            @Override
+            public List<PIDZone> getAutoPIDZones() throws IOException, DeviceException {
+                return MSMOTC.this.getAutoPIDZones(output);
+            }
+
+            @Override
+            public void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+                MSMOTC.this.setAutoPIDZones(output, zones);
             }
 
             @Override
@@ -762,16 +771,6 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
             }
 
             @Override
-            public Zoner getZoner() {
-                return null;
-            }
-
-            @Override
-            public void setZoner(Zoner zoner) {
-
-            }
-
-            @Override
             public String getIDN() throws IOException, DeviceException {
                 return MSMOTC.this.getIDN();
             }
@@ -786,150 +785,8 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
                 return MSMOTC.this.getAddress();
             }
 
-            @Override
-            public void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
-                MSMOTC.this.setAutoPIDZones(output, zones);
-            }
-
-            @Override
-            public PIDZone[] getAutoPIDZones() throws IOException, DeviceException {
-                return MSMOTC.this.getAutoPIDZones(output);
-            }
-
-            @Override
-            public void useAutoPID(boolean auto) throws IOException, DeviceException {
-                MSMOTC.this.useAutoPID(output, auto);
-            }
-
-            @Override
-            public boolean isUsingAutoPID() throws IOException, DeviceException {
-                return MSMOTC.this.isUsingAutoPID(output);
-            }
 
         };
-    }
-
-    class Zoner implements Runnable {
-
-        private final PIDZone[] zones;
-        private final int       output;
-        private       PIDZone   currentZone;
-        private       boolean   running = false;
-        private       PIDZone   minZone;
-        private       PIDZone   maxZone;
-        private       Thread    thread;
-        private       MSMOTC    tc;
-
-        public Zoner(MSMOTC tc, int output, PIDZone[] zones) {
-
-            this.tc = tc;
-
-            this.zones = zones;
-            this.output = output;
-            currentZone = zones[0];
-            minZone = zones[0];
-            maxZone = zones[0];
-
-            for (PIDZone zone : zones) {
-
-                if (zone.getMinT() < minZone.getMinT()) {
-                    minZone = zone;
-                }
-
-                if (zone.getMaxT() > maxZone.getMaxT()) {
-                    maxZone = zone;
-                }
-
-            }
-
-        }
-
-        public PIDZone[] getZones() {
-            return zones.clone();
-        }
-
-        @Override
-        public void run() {
-
-            try {
-                applyZone(currentZone);
-            } catch (Exception e) {
-                Util.errLog.printf("Error in starting auto-PID control: \"%s\"\n", e.getMessage());
-            }
-
-            while (running) {
-
-                try {
-
-                    double T = tc.getTemperature(tc.getUsedSensor(output));
-
-                    if (!currentZone.matches(T)) {
-
-                        boolean found = false;
-                        for (PIDZone zone : zones) {
-                            if (zone.matches(T)) {
-                                currentZone = zone;
-                                found = true;
-                                break;
-                            }
-                        }
-
-                        if (!found) {
-
-                            if (T <= minZone.getMinT()) {
-                                currentZone = minZone;
-                            } else {
-                                currentZone = maxZone;
-                            }
-
-                        }
-
-                        applyZone(currentZone);
-
-                    }
-
-                } catch (Exception e) {
-                    Util.errLog.printf("Error in auto-PID control: \"%s\"\n", e.getMessage());
-                }
-
-                if (!running) {
-                    break;
-                }
-
-                Util.sleep(1000);
-            }
-
-        }
-
-        private void applyZone(PIDZone zone) throws IOException, DeviceException {
-
-            if (zone.isAuto()) {
-                tc.setHeaterRange(output, zone.getRange());
-                tc.setPValue(output, zone.getP());
-                tc.setIValue(output, zone.getI());
-                tc.setDValue(output, zone.getD());
-            } else {
-                tc.setHeaterRange(output, zone.getRange());
-                tc.setManualHeater(output, zone.getPower());
-            }
-
-        }
-
-        public void start() {
-            running = true;
-            thread = new Thread(this);
-            thread.start();
-        }
-
-        public void stop() {
-            running = false;
-            thread.interrupt();
-        }
-
-        public boolean isRunning() {
-            return running;
-        }
-
     }
 
 }

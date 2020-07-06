@@ -16,7 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.Semaphore;
 
-public class MarkDown extends JFXWindow {
+public class MarkDown extends JFXElement {
 
     public WebView   web;
     public VBox      pane;
@@ -84,7 +84,7 @@ public class MarkDown extends JFXWindow {
 
         final Semaphore s = new Semaphore(0);
 
-        stage.setOnCloseRequest(we -> s.release());
+        getStage().setOnCloseRequest(we -> s.release());
 
         Button okay = new Button("OK");
         okay.setOnAction(ae -> s.release());

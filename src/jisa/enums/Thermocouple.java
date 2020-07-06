@@ -1,7 +1,7 @@
 package jisa.enums;
 
 /**
- * Enumeration of TC-08 thermocouple types
+ * Enumeration of standard thermocouple types
  */
 public enum Thermocouple {
 

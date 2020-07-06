@@ -1,16 +1,13 @@
 package jisa.devices;
 
+import jisa.Util;
 import jisa.enums.AMode;
 import jisa.enums.Source;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
 import jisa.experiment.IVPoint;
-import jisa.experiment.ResultList;
-import jisa.Util;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.concurrent.Semaphore;
 
 public interface SMU extends IVMeter, IVSource {
 
@@ -25,16 +22,6 @@ public interface SMU extends IVMeter, IVSource {
     double getVoltage() throws DeviceException, IOException;
 
     /**
-     * Returns the current either being injected or measured by the SMU.
-     *
-     * @return Current value
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    double getCurrent() throws DeviceException, IOException;
-
-    /**
      * Sets the voltage value to be applied by the SMU (switching to voltage source mode if not already)
      *
      * @param voltage Value to set
@@ -45,6 +32,16 @@ public interface SMU extends IVMeter, IVSource {
     void setVoltage(double voltage) throws DeviceException, IOException;
 
     /**
+     * Returns the current either being injected or measured by the SMU.
+     *
+     * @return Current value
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    double getCurrent() throws DeviceException, IOException;
+
+    /**
      * Sets the current value to be applied by the SMU (switching to current source mode if not already)
      *
      * @param current Value to set
@@ -53,6 +50,44 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     void setCurrent(double current) throws DeviceException, IOException;
+
+    /**
+     * Pulses the voltage output of the SMU, returning the measured current value after a set amount of time before returning voltage to base.
+     * By default controlled and timed by computer but should be overridden in SMUs that support internal timing mechanisms.
+     * <p>
+     * 1. Turn off voltage output
+     * 2. Wait for offTime seconds
+     * 3. V set to puleVoltage
+     * 4. Wait for measureDelay seconds
+     * 5. I measured
+     * 6. V set to baseVoltage
+     * 7. Turn off voltage output
+     * 8. Return previously measured current value
+     *
+     * @param pulseVoltage Voltage to pulse
+     * @param offTime      Time to wait at base voltage before pulse
+     * @param measureDelay Time to wait at pulse voltage before current measurement
+     *
+     * @return Current measurement taken during pulse
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default double pulseVoltage(double pulseVoltage, double offTime, double measureDelay) throws DeviceException, IOException {
+
+        int base    = (int) (offTime * 1000);
+        int measure = (int) (measureDelay * 1000);
+
+        turnOff();
+        setVoltage(pulseVoltage);
+        Util.sleep(base);
+        turnOn();
+        Util.sleep(measure);
+        double current = getCurrent();
+        turnOff();
+        return current;
+
+    }
 
     /**
      * Turns the output of the SMU on
@@ -81,16 +116,6 @@ public interface SMU extends IVMeter, IVSource {
     boolean isOn() throws DeviceException, IOException;
 
     /**
-     * Sets the source mode of the SMU (VOLTAGE or CURRENT)
-     *
-     * @param source Source mode to set
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setSource(Source source) throws DeviceException, IOException;
-
-    /**
      * Returns the current source mode of the SMU (VOLTAGE OR CURRENT)
      *
      * @return Source mode
@@ -99,6 +124,16 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     Source getSource() throws DeviceException, IOException;
+
+    /**
+     * Sets the source mode of the SMU (VOLTAGE or CURRENT)
+     *
+     * @param source Source mode to set
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setSource(Source source) throws DeviceException, IOException;
 
     /**
      * Sets the value for whichever parameter is currently being sourced
@@ -152,26 +187,6 @@ public interface SMU extends IVMeter, IVSource {
     boolean isUsingFourProbe() throws DeviceException, IOException;
 
     /**
-     * Sets the averaging mode of the SMU.
-     *
-     * @param mode Mode to use
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setAverageMode(AMode mode) throws DeviceException, IOException;
-
-    /**
-     * Sets how many measurements the SMU should average over.
-     *
-     * @param count Number of measurements
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setAverageCount(int count) throws DeviceException, IOException;
-
-    /**
      * Sets both the averaging mode and count together.
      *
      * @param mode  Averaging mode
@@ -196,6 +211,16 @@ public interface SMU extends IVMeter, IVSource {
     AMode getAverageMode() throws DeviceException, IOException;
 
     /**
+     * Sets the averaging mode of the SMU.
+     *
+     * @param mode Mode to use
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setAverageMode(AMode mode) throws DeviceException, IOException;
+
+    /**
      * Returns the number of measurements used for averaging by the SMU.
      *
      * @return Number of measurements
@@ -206,15 +231,14 @@ public interface SMU extends IVMeter, IVSource {
     int getAverageCount() throws DeviceException, IOException;
 
     /**
-     * Sets the range of allowed values for the quantity being sourced by the SMU.
-     * A value of n indicates a range of -n to +n.
+     * Sets how many measurements the SMU should average over.
      *
-     * @param value Range value, in Volts or Amps
+     * @param count Number of measurements
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void setSourceRange(double value) throws DeviceException, IOException;
+    void setAverageCount(int count) throws DeviceException, IOException;
 
     /**
      * Returns the range of allowed values for the quantity being sourced by the SMU.
@@ -226,6 +250,17 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     double getSourceRange() throws DeviceException, IOException;
+
+    /**
+     * Sets the range of allowed values for the quantity being sourced by the SMU.
+     * A value of n indicates a range of -n to +n.
+     *
+     * @param value Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setSourceRange(double value) throws DeviceException, IOException;
 
     /**
      * Sets the SMU to automatically determine the source range to use.
@@ -246,17 +281,6 @@ public interface SMU extends IVMeter, IVSource {
     boolean isAutoRangingSource() throws DeviceException, IOException;
 
     /**
-     * Sets the range of allowed values for the quantity being measured by the SMU.
-     *
-     * @param value Range value, in Volts or Amps
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setMeasureRange(double value) throws DeviceException, IOException;
-
-
-    /**
      * Returns the range of allowed values for the quantity being measured by the SMU.
      *
      * @return Range value, in Volts or Amps
@@ -265,6 +289,16 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     double getMeasureRange() throws DeviceException, IOException;
+
+    /**
+     * Sets the range of allowed values for the quantity being measured by the SMU.
+     *
+     * @param value Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setMeasureRange(double value) throws DeviceException, IOException;
 
     /**
      * Tells the SMU to automatically determine the range to use for the measured quantity.
@@ -285,17 +319,6 @@ public interface SMU extends IVMeter, IVSource {
     boolean isAutoRangingMeasure() throws DeviceException, IOException;
 
     /**
-     * Sets the range of allowed values for voltages being sourced or measured by the SMU.
-     * A value of n indicates a range of -n to +n.
-     *
-     * @param value Range value, in Volts
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setVoltageRange(double value) throws DeviceException, IOException;
-
-    /**
      * Returns the range of allowed values for voltages being sourced or measured by the SMU.
      * A value of n indicates a range of -n to +n.
      *
@@ -305,6 +328,17 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     double getVoltageRange() throws DeviceException, IOException;
+
+    /**
+     * Sets the range of allowed values for voltages being sourced or measured by the SMU.
+     * A value of n indicates a range of -n to +n.
+     *
+     * @param value Range value, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setVoltageRange(double value) throws DeviceException, IOException;
 
     /**
      * Tells the SMU to automatically determine the range it uses for voltages.
@@ -325,17 +359,6 @@ public interface SMU extends IVMeter, IVSource {
     boolean isAutoRangingVoltage() throws DeviceException, IOException;
 
     /**
-     * Sets the range of allowed values for currents being sourced or measured by the SMU.
-     *
-     * @param value Range value, in Amps
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setCurrentRange(double value) throws DeviceException, IOException;
-
-
-    /**
      * Returns the range of allowed values for currents being sourced or measured by the SMU.
      *
      * @return Range value, inAmps
@@ -344,6 +367,16 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     double getCurrentRange() throws DeviceException, IOException;
+
+    /**
+     * Sets the range of allowed values for currents being sourced or measured by the SMU.
+     *
+     * @param value Range value, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setCurrentRange(double value) throws DeviceException, IOException;
 
     /**
      * Tells the SMU to automatically determine the range to use for current values.
@@ -364,16 +397,6 @@ public interface SMU extends IVMeter, IVSource {
     boolean isAutoRangingCurrent() throws DeviceException, IOException;
 
     /**
-     * Sets the limit for the measured quantity (ie compliance value).
-     *
-     * @param value The limit to use, in Volts or Amps
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setOutputLimit(double value) throws DeviceException, IOException;
-
-    /**
      * Returns the limit for the measured quantity (compliance value).
      *
      * @return The limit, in Volts or Amps
@@ -384,14 +407,14 @@ public interface SMU extends IVMeter, IVSource {
     double getOutputLimit() throws DeviceException, IOException;
 
     /**
-     * Sets the limit for voltages output when sourcing current (compliance value).
+     * Sets the limit for the measured quantity (ie compliance value).
      *
-     * @param voltage The limit, in Volts
+     * @param value The limit to use, in Volts or Amps
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void setVoltageLimit(double voltage) throws DeviceException, IOException;
+    void setOutputLimit(double value) throws DeviceException, IOException;
 
     /**
      * Returns the limit on voltages output when sourcing current (compliance value).
@@ -404,14 +427,14 @@ public interface SMU extends IVMeter, IVSource {
     double getVoltageLimit() throws DeviceException, IOException;
 
     /**
-     * Sets the limit for currents output when sourcing voltage (compliance value).
+     * Sets the limit for voltages output when sourcing current (compliance value).
      *
-     * @param current The limit, in Amps
+     * @param voltage The limit, in Volts
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void setCurrentLimit(double current) throws DeviceException, IOException;
+    void setVoltageLimit(double voltage) throws DeviceException, IOException;
 
     /**
      * Returns the limit for currents output when sourcing voltage (compliance value).
@@ -424,14 +447,14 @@ public interface SMU extends IVMeter, IVSource {
     double getCurrentLimit() throws DeviceException, IOException;
 
     /**
-     * Sets the integration time for each individual measurement, or closest over-estimate possible.
+     * Sets the limit for currents output when sourcing voltage (compliance value).
      *
-     * @param time Integration time, in seconds
+     * @param current The limit, in Amps
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void setIntegrationTime(double time) throws DeviceException, IOException;
+    void setCurrentLimit(double current) throws DeviceException, IOException;
 
     /**
      * Returns the integration time used for each individual measurement.
@@ -443,6 +466,15 @@ public interface SMU extends IVMeter, IVSource {
      */
     double getIntegrationTime() throws DeviceException, IOException;
 
+    /**
+     * Sets the integration time for each individual measurement, or closest over-estimate possible.
+     *
+     * @param time Integration time, in seconds
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setIntegrationTime(double time) throws DeviceException, IOException;
 
     /**
      * Returns what type of connector is used for the given terminal.
@@ -457,6 +489,16 @@ public interface SMU extends IVMeter, IVSource {
     TType getTerminalType(Terminals terminals) throws DeviceException, IOException;
 
     /**
+     * Returns the type of the set of terminals currently being used on the SMU.
+     *
+     * @return The type of terminals being used
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    Terminals getTerminals() throws DeviceException, IOException;
+
+    /**
      * Sets which set of terminals should be used on the SMU.
      *
      * @param terminals Which type of terminals to use
@@ -467,18 +509,24 @@ public interface SMU extends IVMeter, IVSource {
     void setTerminals(Terminals terminals) throws DeviceException, IOException;
 
     /**
-     * Returns the type of the set of terminals currently being used on the SMU.
+     * Returns the mode used by the SMU channel when turned off.
      *
-     * @return The type of terminals being used
+     * @return Mode being used
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    Terminals getTerminals() throws DeviceException, IOException;
-
-    void setOffMode(OffMode mode) throws DeviceException, IOException;
-
     OffMode getOffMode() throws DeviceException, IOException;
+
+    /**
+     * Sets which mode the SMU channel should use when turned off.
+     *
+     * @param mode Mode to use
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setOffMode(OffMode mode) throws DeviceException, IOException;
 
     /**
      * Returns a combined voltage and current measurement.
@@ -563,377 +611,11 @@ public interface SMU extends IVMeter, IVSource {
         setCurrentLimit(currentLimit);
     }
 
-    /**
-     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of IVPoint objects
-     *
-     * @param source    VOLTAGE or CURRENT
-     * @param min       Minimum source value
-     * @param max       Maximum source value
-     * @param numSteps  Number of steps in sweep
-     * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
-     * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     *
-     * @return Array of IVPoint objects containing I-V data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric) throws DeviceException, IOException {
-        return doLinearSweep(source, min, max, numSteps, delay, symmetric, (i, point) -> {
-        });
-    }
-
-    /**
-     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of IVPoint objects
-     * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
-     *
-     * @param source    VOLTAGE or CURRENT
-     * @param min       Minimum source value
-     * @param max       Maximum source value
-     * @param numSteps  Number of steps in sweep
-     * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
-     * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @param onUpdate  Method to run each time a new measurement is completed
-     *
-     * @return Array of IVPoint objects containing I-V data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
-
-        return doSweep(
-                source,
-                Util.makeLinearArray(min, max, numSteps),
-                delay,
-                symmetric,
-                onUpdate
-        );
-
-    }
-
-    /**
-     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of IVPoint objects
-     * and adding each point of data to the given ResultList object as it is acquired.
-     *
-     * @param source    VOLTAGE or CURRENT
-     * @param min       Minimum source value
-     * @param max       Maximum source value
-     * @param numSteps  Number of steps in sweep
-     * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
-     * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @param list      ResultList to update with data points column 0: Voltage, column 1: Current
-     *
-     * @return Array of IVPoint objects containing I-V data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default IVPoint[] doLinearSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ResultList list) throws DeviceException, IOException {
-        return doLinearSweep(source, min, max, numSteps, delay, symmetric, (i, p) -> list.addData(p.voltage, p.current));
-    }
-
-    /**
-     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of IVPoint objects.
-     *
-     * @param source    VOLTAGE or CURRENT
-     * @param min       Minimum source value
-     * @param max       Maximum source value
-     * @param numSteps  Number of steps in sweep
-     * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
-     * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     *
-     * @return Array of IVPoint objects containing V-I data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric) throws DeviceException, IOException {
-
-        return doLogarithmicSweep(source, min, max, numSteps, delay, symmetric, (i, p) -> {
-        });
-
-    }
-
-    /**
-     * Performs a logarithmic sweep of either VOLTAGE or CURRENT, returning V-I data points as an array of IVPoint objects
-     * whilst allowing you to keep track of the sweep's progress via a ProgressMonitor object.
-     *
-     * @param source    VOLTAGE or CURRENT
-     * @param min       Minimum source value
-     * @param max       Maximum source value
-     * @param numSteps  Number of steps in sweep
-     * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
-     * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @param onUpdate  Method ot run each time a new measurement is completed
-     *
-     * @return Array of IVPoint objects containing V-I data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
-
-        return doSweep(
-                source,
-                Util.makeLogarithmicArray(min, max, numSteps),
-                delay,
-                symmetric,
-                onUpdate
-        );
-
-    }
-
-    /**
-     * Performs a linear sweep of either VOLTAGE or CURRENT, returning the V-I data points as an array of IVPoint objects
-     * and adding each point of data to the given ResultList object as it is acquired.
-     *
-     * @param source    VOLTAGE or CURRENT
-     * @param min       Minimum source value
-     * @param max       Maximum source value
-     * @param numSteps  Number of steps in sweep
-     * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
-     * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @param list      ResultList to update with data points column 0: Voltage, column 1: Current
-     *
-     * @return Array of IVPoint objects containing I-V data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default IVPoint[] doLogarithmicSweep(Source source, double min, double max, int numSteps, long delay, boolean symmetric, ResultList list) throws DeviceException, IOException {
-        return doLogarithmicSweep(source, min, max, numSteps, delay, symmetric, (i, p) -> list.addData(p.voltage, p.current));
-    }
-
-    class Updater implements Runnable {
-
-        private int                i    = 0;
-        private Semaphore          semaphore;
-        private ArrayList<IVPoint> points;
-        private ProgressMonitor    onUpdate;
-        private boolean            exit = false;
-
-        public Updater(ArrayList<IVPoint> p, ProgressMonitor o) {
-            semaphore = new Semaphore(0);
-            points = p;
-            onUpdate = o;
-        }
-
-        public void runUpdate() {
-            semaphore.release();
-        }
-
-        public void end() {
-            exit = true;
-            semaphore.release();
-        }
-
-        @Override
-        public void run() {
-
-            while (true) {
-                try {
-                    semaphore.acquire();
-                } catch (InterruptedException ignored) {
-                }
-
-                if (exit) {
-                    break;
-                }
-
-                try {
-                    onUpdate.update(i, points.get(i));
-                    i++;
-                } catch (Exception e) {
-                    Util.exceptionHandler(e);
-                }
-
-            }
-
-        }
-    }
-
-    /**
-     * Performs a sweep of either VOLTAGE or CURRENT using specific values, returning data as an array of IVPoint objects.
-     *
-     * @param source    VOLTAGE or CURRENT
-     * @param values    Array of values to use in the sweep
-     * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
-     * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @param onUpdate  Method to run each time a new measurement is completed (on separate thread)
-     *
-     * @return Array of IVPoint objects containing V-I data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default IVPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
-
-        final ArrayList<IVPoint> points  = new ArrayList<>();
-        IVPoint                  point;
-        Updater                  updater = new Updater(points, onUpdate);
-
-
-        // Run updater on a new thread
-        (new Thread(updater)).start();
-
-        if (symmetric) {
-            values = Util.symArray(values);
-        }
-
-        turnOff();
-        setSource(source);
-        setBias(values[0]);
-
-        turnOn();
-        for (double b : values) {
-
-            setBias(b);
-            try {
-                Thread.sleep(delay);
-            } catch (Exception e) {
-                throw new DeviceException("Couldn't sleep!");
-            }
-
-            point = new IVPoint(getVoltage(), getCurrent());
-            points.add(point);
-
-            updater.runUpdate();
-
-        }
-
-        // Unblock updater thread so that it will end
-        updater.end();
-
-        return points.toArray(new IVPoint[0]);
-
-    }
-
-    default IVPoint[] doPulsedSweep(Source source, double baseLevel, double[] values, long delay, long timeOn, long timeOff, boolean symmetric, ProgressMonitor onUpdate) throws DeviceException, IOException {
-
-        // The delay time must be smaller than the on and off time.
-        if (delay > timeOn || delay > timeOff) {
-            throw new DeviceException("Delay time cannot be larger than either time on or time off for a pulsed sweep.");
-        }
-
-        final ArrayList<IVPoint> points  = new ArrayList<>();
-        IVPoint                  point1;
-        IVPoint                  point2;
-        long                     lastTime;
-        Updater                  updater = new Updater(points, onUpdate);
-
-        // If they want to go forwards then backwards, generate the extra data-points
-        if (symmetric) {
-            values = Util.symArray(values);
-        }
-
-        // Make sure the SMU is not outputting anything right now, set the source mode and initial bias
-        turnOff();
-        setSource(source);
-        setBias(baseLevel);
-
-
-        // Begin!
-        turnOn();
-        for (double b : values) {
-
-            // Set output to the value of the current step and record the time
-            setBias(b);
-            lastTime = System.nanoTime();
-
-            // Wait the specified time before measuring
-            Util.sleep(delay);
-            point1 = new IVPoint(getVoltage(), getCurrent());
-
-            // Store measurement, trigger the onUpdate method
-            points.add(point1);
-            updater.runUpdate();
-
-            // Work out how much time has passed and how much longer we need to wait before switching off
-            lastTime = (System.nanoTime() - lastTime) / 1000;
-            Util.sleep(Math.max(0, timeOn - lastTime));
-
-            // "Switch off" by returning to base level, recording the current time
-            setBias(baseLevel);
-            lastTime = System.nanoTime();
-
-            // Wait the specified time before measuring
-            Util.sleep(delay);
-            point2 = new IVPoint(getVoltage(), getCurrent());
-
-            // Store measurement, trigger the onUpdate method
-            points.add(point2);
-            updater.runUpdate();
-
-            // Work out how much time has passed and how much longer we need to wait before switching on again
-            lastTime = System.nanoTime() - lastTime;
-            Util.sleep(Math.max(0, timeOn - lastTime));
-
-        }
-
-        updater.end();
-
-        return points.toArray(new IVPoint[0]);
-
-    }
-
-    /**
-     * Performs a sweep of either VOLTAGE or CURRENT using specific values, returning data as an array of IVPoint objects.
-     *
-     * @param source    VOLTAGE or CURRENT
-     * @param values    Array of values to use in the sweep
-     * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
-     * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     *
-     * @return Array of IVPoint objects containing V-I data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default IVPoint[] doSweep(Source source, double[] values, boolean symmetric, long delay) throws IOException, DeviceException {
-        return doSweep(source, values, delay, symmetric, (i, p) -> {
-        });
-    }
-
-    /**
-     * Performs a sweep of either VOLTAGE or CURRENT using specific values, returning data as an array of IVPoint objects.
-     *
-     * @param source    VOLTAGE or CURRENT
-     * @param values    Array of values to use in the sweep
-     * @param delay     Amount of time, in milliseconds, to wait before taking each measurement
-     * @param symmetric Should we sweep back to starting point after sweeping forwards?
-     * @param list      ResultList object to update with measurements, column 0: Voltage, column 1: Current.
-     *
-     * @return Array of IVPoint objects containing V-I data points
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default IVPoint[] doSweep(Source source, double[] values, long delay, boolean symmetric, ResultList list) throws DeviceException, IOException {
-        return doSweep(source, values, delay, symmetric, (i, p) -> list.addData(p.voltage, p.current));
-    }
-
-    default ResultList createSweepList() {
-        ResultList list = new ResultList("Voltage", "Current");
-        list.setUnits("V", "A");
-        return list;
-    }
-
     enum OffMode {
         NORMAL,
         ZERO,
         HIGH_IMPEDANCE,
         GUARD
-    }
-
-
-    /**
-     * Structure for defining what to do on each update
-     */
-    interface ProgressMonitor {
-
-        void update(int i, IVPoint point) throws IOException, DeviceException;
-
     }
 
 }

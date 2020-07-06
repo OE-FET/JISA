@@ -61,7 +61,7 @@ public class SerialDriver implements Driver {
 
     }
 
-    public class SerialConnection implements Connection {
+    public static class SerialConnection implements Connection {
 
         private SerialPort port;
         private int        tmo;
@@ -260,6 +260,11 @@ public class SerialDriver implements Driver {
 
         return addresses.toArray(new StrAddress[0]);
 
+    }
+
+    @Override
+    public boolean worksWith(Address address) {
+        return address.getType() == Address.Type.SERIAL;
     }
 
 }

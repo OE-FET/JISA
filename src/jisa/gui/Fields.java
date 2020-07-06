@@ -1,36 +1,34 @@
 package jisa.gui;
 
-import jisa.control.ConfigStore;
-import jisa.control.SRunnable;
-import jisa.Util;
+import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.geometry.HPos;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.control.Separator;
 import javafx.scene.control.Button;
+import javafx.scene.control.Separator;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import jisa.Util;
+import jisa.control.ConfigBlock;
+import jisa.control.SRunnable;
+import jnr.ffi.annotations.In;
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class Fields extends JFXWindow implements Element, Iterable<Field> {
+public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
-    public  BorderPane                       pane;
-    public  GridPane                         list;
-    public  ButtonBar                        buttonBar;
-    private LinkedHashMap<String, TextField> map    = new LinkedHashMap<>();
-    private List<Field>                      fields = new LinkedList<>();
-    private ConfigStore                      config = null;
-    private String                           tag    = null;
-    private int                              rows   = 0;
+    public  BorderPane                          pane;
+    public  GridPane                            list;
+    private Map<Field<?>, ConfigBlock.Value<?>> links  = new HashMap<>();
+    private List<Field<?>>                      fields = new LinkedList<>();
+    private ConfigBlock                         config = null;
+    private String                              tag    = null;
+    private int                                 rows   = 0;
 
     /**
      * Creates a input fields group for user-input.
@@ -40,11 +38,60 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
     public Fields(String title) {
 
         super(title, Fields.class.getResource("fxml/InputWindow.fxml"));
+
+        Util.addShutdownHook(() -> {
+            if (config != null) {
+                links.forEach((field, value) -> value.set(field.get()));
+                config.save();
+            }
+        });
+
+        BorderPane.setMargin(getNode().getCenter(), new Insets(15.0));
+
     }
 
-    public void loadFromConfig(String tag, ConfigStore configStore) {
+    @SuppressWarnings("unchecked")
+    public void linkConfig(ConfigBlock config) {
 
-        loadFromConfig(tag, configStore, true);
+        links.clear();
+        this.config = config;
+
+        int i = 0;
+        for (Field<?> field : this) {
+
+            String name = field.getText().replace(" ", "-");
+            switch (field.get().getClass().getSimpleName()) {
+
+                case "String":
+                    links.put(field, config.stringValue(name));
+                    ((Field<String>) field).set(((ConfigBlock.Value<String>) links.get(field)).getOrDefault(((Field<String>) field).get()));
+                    break;
+
+                case "Double":
+                    links.put(field, config.doubleValue(name));
+                    ((Field<Double>) field).set(((ConfigBlock.Value<Double>) links.get(field)).getOrDefault(((Field<Double>) field).get()));
+                    break;
+
+                case "Integer":
+                    links.put(field, config.intValue(name));
+                    ((Field<Integer>) field).set(((ConfigBlock.Value<Integer>) links.get(field)).getOrDefault(((Field<Integer>) field).get()));
+                    break;
+
+                case "Boolean":
+                    links.put(field, config.booleanValue(name));
+                    ((Field<Boolean>) field).set(((ConfigBlock.Value<Boolean>) links.get(field)).getOrDefault(((Field<Boolean>) field).get()));
+                    break;
+
+            }
+
+        }
+
+    }
+
+    public void writeToConfig() {
+
+        links.forEach((field, value) -> value.set(field.get()));
+
     }
 
     public void updateGridding() {
@@ -67,29 +114,6 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             }
 
         });
-
-    }
-
-    public void loadFromConfig(String tag, ConfigStore configStore, boolean save) {
-
-        configStore.loadFields(tag, this);
-
-        if (save) {
-
-            this.config = configStore;
-            this.tag    = tag;
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-
-                try {
-                    configStore.saveFields(tag, Fields.this);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-            }));
-
-        }
 
     }
 
@@ -116,7 +140,7 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
 
         GUI.runNow(() -> list.addRow(rows++, label, field));
 
-        Field<String> f = new Field<String>() {
+        Field<String> f = new Field<>() {
 
             private ChangeListener<String> list = null;
 
@@ -139,15 +163,13 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
                     field.textProperty().removeListener(list);
                 }
 
-                list = (observable, oldValue, newValue) -> {
-                    (new Thread(() -> {
-                        try {
-                            onChange.run();
-                        } catch (Exception e) {
-                            Util.exceptionHandler(e);
-                        }
-                    })).start();
-                };
+                list = (observable, oldValue, newValue) -> (new Thread(() -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                })).start();
                 field.textProperty().addListener(list);
 
             }
@@ -160,18 +182,6 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             @Override
             public boolean isDisabled() {
                 return field.isDisabled();
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    label.setVisible(visible);
-                    label.setManaged(visible);
-                    field.setVisible(visible);
-                    field.setManaged(visible);
-                });
-
             }
 
             @Override
@@ -191,16 +201,30 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             }
 
             @Override
+            public String getText() {
+
+                return label.getText();
+            }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    label.setManaged(visible);
+                    field.setVisible(visible);
+                    field.setManaged(visible);
+                });
+
+            }
+
+
+            @Override
             public void setText(String text) {
 
                 GUI.runNow(() -> label.setText(text));
             }
 
-            @Override
-            public String getText() {
-
-                return label.getText();
-            }
 
             @Override
             public void setDisabled(boolean disabled) {
@@ -259,7 +283,7 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
         GUI.runNow(() -> list.addRow(rows++, label, field));
 
 
-        Field<Boolean> f = new Field<Boolean>() {
+        Field<Boolean> f = new Field<>() {
 
             private ChangeListener<Boolean> list = null;
 
@@ -282,15 +306,13 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
                     field.selectedProperty().removeListener(list);
                 }
 
-                list = (observable, oldValue, newValue) -> {
-                    (new Thread(() -> {
-                        try {
-                            onChange.run();
-                        } catch (Exception e) {
-                            Util.exceptionHandler(e);
-                        }
-                    })).start();
-                };
+                list = (observable, oldValue, newValue) -> (new Thread(() -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                })).start();
 
                 field.selectedProperty().addListener(list);
             }
@@ -304,18 +326,6 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             public boolean isDisabled() {
 
                 return field.isDisabled();
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    label.setVisible(visible);
-                    label.setManaged(visible);
-                    field.setVisible(visible);
-                    label.setManaged(visible);
-                });
-
             }
 
             @Override
@@ -334,14 +344,28 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             }
 
             @Override
+            public String getText() {
+                return field.getText();
+            }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    label.setManaged(visible);
+                    field.setVisible(visible);
+                    label.setManaged(visible);
+                });
+
+            }
+
+
+            @Override
             public void setText(String text) {
                 GUI.runNow(() -> field.setText(text));
             }
 
-            @Override
-            public String getText() {
-                return field.getText();
-            }
 
             @Override
             public void setDisabled(boolean disabled) {
@@ -408,7 +432,7 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
         GUI.runNow(() -> list.addRow(rows++, label, inner));
 
 
-        Field<String> f = new Field<String>() {
+        Field<String> f = new Field<>() {
 
             private ChangeListener<String> list = null;
 
@@ -431,15 +455,13 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
                     field.textProperty().removeListener(list);
                 }
 
-                list = (observable, oldValue, newValue) -> {
-                    (new Thread(() -> {
-                        try {
-                            onChange.run();
-                        } catch (Exception e) {
-                            Util.exceptionHandler(e);
-                        }
-                    })).start();
-                };
+                list = (observable, oldValue, newValue) -> (new Thread(() -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                })).start();
 
                 field.textProperty().addListener(list);
             }
@@ -452,18 +474,6 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             @Override
             public boolean isDisabled() {
                 return field.isDisabled();
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    label.setVisible(visible);
-                    label.setManaged(visible);
-                    inner.setVisible(visible);
-                    inner.setManaged(visible);
-                });
-
             }
 
             @Override
@@ -482,14 +492,28 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             }
 
             @Override
+            public String getText() {
+                return label.getText();
+            }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    label.setManaged(visible);
+                    inner.setVisible(visible);
+                    inner.setManaged(visible);
+                });
+
+            }
+
+
+            @Override
             public void setText(String text) {
                 GUI.runNow(() -> label.setText(text));
             }
 
-            @Override
-            public String getText() {
-                return label.getText();
-            }
 
             @Override
             public void setDisabled(boolean disabled) {
@@ -522,7 +546,7 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
 
         GUI.runNow(() -> list.addRow(rows++, label, field));
 
-        Field<Double> f = new Field<Double>() {
+        Field<Double> f = new Field<>() {
 
             private double value = initialValue;
             private ChangeListener<String> list = null;
@@ -561,18 +585,6 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             }
 
             @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    label.setVisible(visible);
-                    label.setManaged(visible);
-                    field.setVisible(visible);
-                    field.setManaged(visible);
-                });
-
-            }
-
-            @Override
             public boolean isVisible() {
                 return field.isVisible();
             }
@@ -588,11 +600,6 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             }
 
             @Override
-            public void setText(String text) {
-                GUI.runNow(() -> label.setText(text));
-            }
-
-            @Override
             public String getText() {
                 return label.getText();
             }
@@ -601,6 +608,25 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             public boolean isDisabled() {
                 return field.isDisabled();
             }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    label.setManaged(visible);
+                    field.setVisible(visible);
+                    field.setManaged(visible);
+                });
+
+            }
+
+
+            @Override
+            public void setText(String text) {
+                GUI.runNow(() -> label.setText(text));
+            }
+
 
             @Override
             public void setDisabled(boolean disabled) {
@@ -659,7 +685,7 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
         GUI.runNow(() -> list.addRow(rows++, label, inner));
 
 
-        Field<String> f = new Field<String>() {
+        Field<String> f = new Field<>() {
 
             private ChangeListener<String> list = null;
 
@@ -682,33 +708,19 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
                     field.textProperty().removeListener(list);
                 }
 
-                list = (observable, oldValue, newValue) -> {
-                    (new Thread(() -> {
-                        try {
-                            onChange.run();
-                        } catch (Exception e) {
-                            Util.exceptionHandler(e);
-                        }
-                    })).start();
-                };
+                list = (observable, oldValue, newValue) -> (new Thread(() -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                })).start();
 
                 field.textProperty().addListener(list);
             }
 
             @Override
             public void editValues(String... values) {
-
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    label.setVisible(visible);
-                    label.setManaged(visible);
-                    inner.setVisible(visible);
-                    inner.setManaged(visible);
-                });
 
             }
 
@@ -728,11 +740,6 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             }
 
             @Override
-            public void setText(String text) {
-                GUI.runNow(() -> label.setText(text));
-            }
-
-            @Override
             public String getText() {
                 return label.getText();
             }
@@ -741,6 +748,25 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             public boolean isDisabled() {
                 return field.isDisabled();
             }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    label.setManaged(visible);
+                    inner.setVisible(visible);
+                    inner.setManaged(visible);
+                });
+
+            }
+
+
+            @Override
+            public void setText(String text) {
+                GUI.runNow(() -> label.setText(text));
+            }
+
 
             @Override
             public void setDisabled(boolean disabled) {
@@ -799,7 +825,7 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
 
         GUI.runNow(() -> list.addRow(rows++, label, inner));
 
-        Field<String> f = new Field<String>() {
+        Field<String> f = new Field<>() {
 
             private ChangeListener<String> list = null;
 
@@ -822,33 +848,19 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
                     field.textProperty().removeListener(list);
                 }
 
-                list = (observable, oldValue, newValue) -> {
-                    (new Thread(() -> {
-                        try {
-                            onChange.run();
-                        } catch (Exception e) {
-                            Util.exceptionHandler(e);
-                        }
-                    })).start();
-                };
+                list = (observable, oldValue, newValue) -> (new Thread(() -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                })).start();
 
                 field.textProperty().addListener(list);
             }
 
             @Override
             public void editValues(String... values) {
-
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    label.setVisible(visible);
-                    label.setManaged(visible);
-                    inner.setVisible(visible);
-                    inner.setManaged(visible);
-                });
 
             }
 
@@ -868,11 +880,6 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             }
 
             @Override
-            public void setText(String text) {
-                GUI.runNow(() -> label.setText(text));
-            }
-
-            @Override
             public String getText() {
                 return label.getText();
             }
@@ -881,6 +888,25 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             public boolean isDisabled() {
                 return field.isDisabled();
             }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    label.setManaged(visible);
+                    inner.setVisible(visible);
+                    inner.setManaged(visible);
+                });
+
+            }
+
+
+            @Override
+            public void setText(String text) {
+                GUI.runNow(() -> label.setText(text));
+            }
+
 
             @Override
             public void setDisabled(boolean disabled) {
@@ -935,7 +961,7 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
 
         GUI.runNow(() -> list.addRow(rows++, label, field));
 
-        Field<Integer> f = new Field<Integer>() {
+        Field<Integer> f = new Field<>() {
 
             private ChangeListener<String> list = null;
 
@@ -958,33 +984,19 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
                     field.textProperty().removeListener(list);
                 }
 
-                list = (observable, oldValue, newValue) -> {
-                    (new Thread(() -> {
-                        try {
-                            onChange.run();
-                        } catch (Exception e) {
-                            Util.exceptionHandler(e);
-                        }
-                    })).start();
-                };
+                list = (observable, oldValue, newValue) -> (new Thread(() -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                })).start();
 
                 field.textProperty().addListener(list);
             }
 
             @Override
             public void editValues(String... values) {
-
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    label.setVisible(visible);
-                    label.setManaged(visible);
-                    field.setVisible(visible);
-                    field.setManaged(visible);
-                });
 
             }
 
@@ -1004,11 +1016,6 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             }
 
             @Override
-            public void setText(String text) {
-                GUI.runNow(() -> label.setText(text));
-            }
-
-            @Override
             public String getText() {
                 return label.getText();
             }
@@ -1018,6 +1025,25 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
 
                 return field.isDisabled();
             }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    label.setManaged(visible);
+                    field.setVisible(visible);
+                    field.setManaged(visible);
+                });
+
+            }
+
+
+            @Override
+            public void setText(String text) {
+                GUI.runNow(() -> label.setText(text));
+            }
+
 
             @Override
             public void setDisabled(boolean disabled) {
@@ -1072,7 +1098,7 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
 
         GUI.runNow(() -> list.addRow(rows++, label, field));
 
-        Field<Double> f = new Field<Double>() {
+        Field<Double> f = new Field<>() {
 
             private ChangeListener<String> list = null;
 
@@ -1091,31 +1117,17 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             @Override
             public void setOnChange(SRunnable onChange) {
 
-                field.setOnChange((v) -> {
-                    (new Thread(() -> {
-                        try {
-                            onChange.run();
-                        } catch (Exception e) {
-                            Util.exceptionHandler(e);
-                        }
-                    })).start();
-                });
+                field.setOnChange((v) -> (new Thread(() -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                })).start());
             }
 
             @Override
             public void editValues(String... values) {
-
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    label.setVisible(visible);
-                    label.setManaged(visible);
-                    field.setVisible(visible);
-                    field.setManaged(visible);
-                });
 
             }
 
@@ -1135,11 +1147,6 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             }
 
             @Override
-            public void setText(String text) {
-                GUI.runNow(() -> label.setText(text));
-            }
-
-            @Override
             public String getText() {
                 return label.getText();
             }
@@ -1149,6 +1156,25 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
 
                 return field.disabled();
             }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    label.setManaged(visible);
+                    field.setVisible(visible);
+                    field.setManaged(visible);
+                });
+
+            }
+
+
+            @Override
+            public void setText(String text) {
+                GUI.runNow(() -> label.setText(text));
+            }
+
 
             @Override
             public void setDisabled(boolean disabled) {
@@ -1206,7 +1232,7 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
         field.getItems().addAll(options);
         field.getSelectionModel().select(initialValue);
 
-        Field<Integer> f = new Field<Integer>() {
+        Field<Integer> f = new Field<>() {
 
             private ChangeListener<Number> list = null;
 
@@ -1229,15 +1255,13 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
                     field.getSelectionModel().selectedIndexProperty().removeListener(list);
                 }
 
-                list = (observable, oldValue, newValue) -> {
-                    (new Thread(() -> {
-                        try {
-                            onChange.run();
-                        } catch (Exception e) {
-                            Util.exceptionHandler(e);
-                        }
-                    })).start();
-                };
+                list = (observable, oldValue, newValue) -> (new Thread(() -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                })).start();
 
                 field.getSelectionModel().selectedIndexProperty().addListener(list);
             }
@@ -1249,29 +1273,18 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
 
                     int selected = field.getSelectionModel().getSelectedIndex();
 
+                    int min = Math.min(values.length - 1, Math.max(0, selected));
                     if (list != null) {
                         field.getSelectionModel().selectedIndexProperty().removeListener(list);
                         field.setItems(FXCollections.observableArrayList(values));
-                        field.getSelectionModel().select(Math.min(values.length - 1, Math.max(0, selected)));
+                        field.getSelectionModel().select(min);
                         field.getSelectionModel().selectedIndexProperty().addListener(list);
                     } else {
                         field.setItems(FXCollections.observableArrayList(values));
-                        field.getSelectionModel().select(Math.min(values.length - 1, Math.max(0, selected)));
+                        field.getSelectionModel().select(min);
                     }
 
                 });
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    label.setVisible(visible);
-                    label.setManaged(visible);
-                    field.setVisible(visible);
-                    field.setManaged(visible);
-                });
-
             }
 
             @Override
@@ -1290,11 +1303,6 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             }
 
             @Override
-            public void setText(String text) {
-                GUI.runNow(() -> label.setText(text));
-            }
-
-            @Override
             public String getText() {
                 return label.getText();
             }
@@ -1304,6 +1312,25 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
 
                 return field.isDisabled();
             }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    label.setManaged(visible);
+                    field.setVisible(visible);
+                    field.setManaged(visible);
+                });
+
+            }
+
+
+            @Override
+            public void setText(String text) {
+                GUI.runNow(() -> label.setText(text));
+            }
+
 
             @Override
             public void setDisabled(boolean disabled) {
@@ -1332,12 +1359,6 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
         return addChoice(name, 0, options);
     }
 
-    @Override
-    public Pane getPane() {
-
-        return pane;
-    }
-
 
     public jisa.gui.Separator addSeparator() {
 
@@ -1357,104 +1378,15 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
             }
 
             @Override
-            public void setVisible(boolean visible) {
-                GUI.runNow(() -> separator.setVisible(visible));
-            }
-
-            @Override
             public boolean isVisible() {
                 return separator.isVisible();
             }
 
-        };
-
-    }
-
-    /**
-     * Add a button to the bottom of the fields group.
-     *
-     * @param text    Text to display in the button
-     * @param onClick Action to perform when clicked
-     */
-    public jisa.gui.Button addButton(String text, ClickHandler onClick) {
-
-        Button button = new Button(text);
-
-        button.setOnAction((ae) -> (new Thread(() -> {
-            try {
-                onClick.click();
-            } catch (Exception e) {
-                Util.exceptionHandler(e);
-            }
-        })).start());
-
-        GUI.runNow(() -> buttonBar.getButtons().add(button));
-
-        return new jisa.gui.Button() {
-
-            @Override
-            public void setDisabled(boolean disabled) {
-
-                GUI.runNow(() -> button.setDisable(disabled));
-            }
-
-            @Override
-            public boolean isDisabled() {
-
-                return button.isDisabled();
-            }
-
             @Override
             public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    button.setVisible(visible);
-                    button.setManaged(visible);
-                });
+                GUI.runNow(() -> separator.setVisible(visible));
             }
 
-            @Override
-            public boolean isVisible() {
-
-                return button.isVisible();
-            }
-
-            @Override
-            public void setText(String text) {
-
-                GUI.runNow(() -> button.setText(text));
-            }
-
-            @Override
-            public String getText() {
-
-                return button.getText();
-            }
-
-            @Override
-            public void setOnClick(ClickHandler onClick) {
-
-                GUI.runNow(() -> button.setOnAction(
-                    (actionEvent) -> {
-                        Thread t = new Thread(() -> {
-                            try {
-                                onClick.click();
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
-                        t.setDaemon(true);
-                        t.start();
-                    }
-                ));
-
-            }
-
-            @Override
-            public void remove() {
-
-                GUI.runNow(() -> buttonBar.getButtons().remove(button));
-            }
 
         };
 
@@ -1462,61 +1394,14 @@ public class Fields extends JFXWindow implements Element, Iterable<Field> {
 
     public void setFieldsDisabled(boolean flag) {
 
-        for (Field f : fields) {
+        for (Field<?> f : fields) {
             f.setDisabled(flag);
         }
 
     }
 
-    /**
-     * Shows the fields as its own window, with an "OK" and "Cancel" button. Does not return until the window has been
-     * closed either by clicking "OK" or "Cancel" or closing the window. Returns a boolean indicating whether "OK" was
-     * clicked or not.
-     *
-     * @return Was "OK" clicked?
-     */
-    public boolean showAndWait() {
-
-        final Semaphore     semaphore = new Semaphore(0);
-        final AtomicBoolean result    = new AtomicBoolean(false);
-
-        Button okay   = new Button("OK");
-        Button cancel = new Button("Cancel");
-
-        okay.setOnAction(ae -> {
-            result.set(true);
-            semaphore.release();
-        });
-
-        cancel.setOnAction(ae -> {
-            result.set(false);
-            semaphore.release();
-        });
-
-        GUI.runNow(() -> buttonBar.getButtons().addAll(cancel, okay));
-
-        stage.setOnCloseRequest(we -> {
-            result.set(false);
-            semaphore.release();
-        });
-
-        show();
-
-        try {
-            semaphore.acquire();
-        } catch (Exception ignored) {
-        }
-
-        close();
-
-        GUI.runNow(() -> buttonBar.getButtons().removeAll(cancel, okay));
-
-        return result.get();
-
-    }
-
     @Override
-    public Iterator<Field> iterator() {
+    public Iterator<Field<?>> iterator() {
 
         return fields.iterator();
     }

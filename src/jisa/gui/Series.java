@@ -6,10 +6,12 @@ import jisa.Util;
 import jisa.experiment.Col;
 import jisa.experiment.Result;
 import jisa.experiment.ResultTable;
+import jisa.experiment.RowValue;
 import jisa.maths.matrices.Matrix;
 import jisa.maths.fits.Fit;
 import jisa.maths.fits.Fitting;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -101,7 +103,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    Series split(ResultTable.Evaluable splitBy, SeriesFormatter pattern);
+    Series split(RowValue splitBy, SeriesFormatter pattern);
 
     /**
      * Cause the series to automatically split into a set of sub-series based on a value in each result.
@@ -111,7 +113,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    default Series split(ResultTable.Evaluable splitBy, String pattern) {
+    default Series split(RowValue splitBy, String pattern) {
         return split(splitBy, r -> String.format(pattern, splitBy.evaluate(r)));
     }
 
@@ -122,7 +124,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    default Series split(ResultTable.Evaluable splitBy) {
+    default Series split(RowValue splitBy) {
         return split(splitBy, "%s");
     }
 
@@ -228,6 +230,20 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
     }
 
+    default Series addPoints(Iterable<Double> x, Iterable<Double> y, Iterable<Double> e) {
+
+        Iterator<Double> xI = x.iterator();
+        Iterator<Double> yI = y.iterator();
+        Iterator<Double> eI = e.iterator();
+
+        while (xI.hasNext() && yI.hasNext() && eI.hasNext()) {
+            addPoint(xI.next(), yI.next(), eI.next());
+        }
+
+        return this;
+
+    }
+
     default Series addPoints(Matrix<Double> data) {
 
         if (data.cols() == 2) {
@@ -271,14 +287,14 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    Series showMarkers(boolean show);
+    Series setMarkerVisible(boolean show);
 
     /**
      * Returns whether markers are being shown at each data point or not in this series.
      *
      * @return Markers showing?
      */
-    boolean isShowingMarkers();
+    boolean isMarkerVisible();
 
     /**
      * Returns the marker shape currently being used by this series.
@@ -392,14 +408,14 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    Series showLine(boolean show);
+    Series setLineVisible(boolean show);
 
     /**
      * Returns whether the series line is visible or not.
      *
      * @return Line visible?
      */
-    boolean isShowingLine();
+    boolean isLineVisible();
 
     /**
      * Sets the series to automatically reduce the number of data points to the specified number when exceeding the specified limit.

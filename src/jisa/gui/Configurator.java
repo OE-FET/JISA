@@ -1,6 +1,10 @@
 package jisa.gui;
 
+import javafx.geometry.Insets;
+import javafx.scene.Node;
+import javafx.scene.layout.BorderPane;
 import jisa.Util;
+import jisa.control.ConfigBlock;
 import jisa.control.ConfigStore;
 import jisa.control.IConf;
 import jisa.devices.*;
@@ -11,16 +15,13 @@ import java.io.IOException;
 
 public abstract class Configurator<I extends Instrument> extends Fields implements IConf<I> {
 
-    private   ConfigStore    configStore;
     private   JSONObject     data       = null;
-    private   String         configKey;
     protected Connector<I>[] instruments;
+    protected Field<Boolean> enabled    = addCheckBox("Enabled", true);
     protected Field<Integer> instrument = addChoice("Instrument");
 
-    public Configurator(String title, String configKey, ConfigStore configStore, Connector<I>... instruments) {
+    public Configurator(String title, ConfigBlock configBlock, Connector<I>... instruments) {
         super(title);
-        this.configKey   = configKey;
-        this.configStore = configStore;
         this.instruments = instruments;
 
         makeFields();
@@ -31,18 +32,19 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             config.setOnConnect(this::connect);
         }
 
-        if (hasConfigStore()) {
-            loadFromConfig("JISA-instrument-config-" + this.configKey, this.configStore);
-        }
+        if (configBlock != null) linkConfig(configBlock);
 
         connect();
 
-        instrument.setOnChange(this::update);
+        instrument.setOnChange(this::updateGUI);
+        enabled.setOnChange(this::updateGUI);
+
+        updateGUI();
 
     }
 
     public Configurator(String title, Connector<I>... instruments) {
-        this(title, null, null, instruments);
+        this(title, null, instruments);
     }
 
     protected void connect() {
@@ -58,7 +60,7 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         }
 
         instrument.editValues(names);
-        update();
+        updateGUI();
 
     }
 
@@ -66,8 +68,16 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
     protected abstract void update();
 
-    public boolean hasConfigStore() {
-        return configStore != null && configKey != null;
+    protected void updateGUI() {
+        
+        if (!enabled.get()) {
+            setFieldsDisabled(true);
+            enabled.setDisabled(false);
+        } else {
+            setFieldsDisabled(false);
+            update();
+        }
+        
     }
 
     public static class SMU extends Configurator<jisa.devices.SMU> {
@@ -82,12 +92,12 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         private Field<Double>  irn;
         private Field<Boolean> fpp;
 
-        public SMU(String title, String configKey, ConfigStore configStore, Connector<jisa.devices.SMU>... instruments) {
-            super(title, configKey, configStore, instruments);
+        public SMU(String title, ConfigBlock config, Connector<jisa.devices.SMU>... instruments) {
+            super(title, config, instruments);
         }
 
         public SMU(String title, Connector<jisa.devices.SMU>... instruments) {
-            this(title, null, null, instruments);
+            this(title, null, instruments);
         }
 
         @Override
@@ -108,20 +118,17 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             iar = addCheckBox("Auto Current Range", true);
             irn = addDoubleField("Current Range [A]", 200e-3);
 
+            var.setOnChange(this::updateGUI);
+            iar.setOnChange(this::updateGUI);
+
             addSeparator();
 
             fpp = addCheckBox("Four-Wire Measurements", false);
 
-            var.setOnChange(() -> vrn.setDisabled(var.get()));
-            iar.setOnChange(() -> irn.setDisabled(iar.get()));
-
-            vrn.setDisabled(var.get());
-            irn.setDisabled(iar.get());
-
         }
 
-        public SMU(String title, String configKey, ConfigStore configStore, ConnectorGrid grid) {
-            this(title, configKey, configStore, grid.getInstrumentsByType(jisa.devices.SMU.class));
+        public SMU(String title, ConfigBlock config, ConnectorGrid grid) {
+            this(title, config, grid.getInstrumentsByType(jisa.devices.SMU.class));
         }
 
         public SMU(String title, ConnectorGrid grid) {
@@ -140,6 +147,8 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
             chn.setDisabled(false);
 
+            fpp.setDisabled(smu instanceof SPA);
+
             if (smu == null) {
                 chn.editValues("Channel 0", "Channel 1", "Channel 2", "Channel 3");
             } else if (smu instanceof MultiChannel) {
@@ -148,6 +157,7 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
                 chn.editValues("N/A");
                 chn.setDisabled(true);
             }
+
 
             try {
 
@@ -169,10 +179,19 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
                 );
             }
 
+
+            vrn.setDisabled(var.get());
+            irn.setDisabled(iar.get());
+
+
         }
 
         @Override
         public jisa.devices.SMU get() {
+
+            if (!enabled.get()) {
+                return null;
+            }
 
             int n = instrument.get();
 
@@ -240,14 +259,14 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         private Field<Boolean> manI;
         private Field<Double>  iValue;
 
-        public VMeter(String title, String configKey, ConfigStore configStore, Connector<jisa.devices.VMeter>... instruments) {
-            super(title, configKey, configStore, instruments);
+        public VMeter(String title, ConfigBlock config, Connector<jisa.devices.VMeter>... instruments) {
+            super(title, config, instruments);
             var.setOnChange(() -> vrn.setDisabled(var.get()));
             iar.setOnChange(() -> irn.setDisabled(iar.isDisabled() || iar.get()));
         }
 
         public VMeter(String title, Connector<jisa.devices.VMeter>... instruments) {
-            this(title, null, null, instruments);
+            this(title, null, instruments);
         }
 
         @Override
@@ -260,6 +279,8 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
             var = addCheckBox("Auto Voltage Range", true);
             vrn = addDoubleField("Voltage Range [V]", 20.0);
+            vrn.setDisabled(true);
+
             iar = addCheckBox("Auto Current Range", false);
             irn = addDoubleField("Current Range [A]", 100e-3);
 
@@ -270,15 +291,12 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             addSeparator();
 
             fourPP = addCheckBox("Four-Wire Measurements");
-
-            iValue.setDisabled(!manI.get() || manI.isDisabled());
-
-            manI.setOnChange(() -> iValue.setDisabled(!manI.get() || manI.isDisabled()));
+            manI.setOnChange(this::updateGUI);
 
         }
 
-        public VMeter(String title, String configKey, ConfigStore configStore, ConnectorGrid grid) {
-            this(title, configKey, configStore, grid.getInstrumentsByType(jisa.devices.VMeter.class));
+        public VMeter(String title, ConfigBlock config, ConnectorGrid grid) {
+            this(title, config, grid.getInstrumentsByType(jisa.devices.VMeter.class));
         }
 
         public VMeter(String title, ConnectorGrid grid) {
@@ -348,12 +366,18 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             }
 
             fourPP.setDisabled(!(vMeter instanceof jisa.devices.SMU));
+            iValue.setDisabled(!manI.get() || manI.isDisabled());
+
 
         }
 
 
         @Override
         public jisa.devices.VMeter get() {
+
+            if (!enabled.get()) {
+                return null;
+            }
 
             try {
 
@@ -420,8 +444,8 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         private Field<Integer> chn;
         private Field<Double>  rng;
 
-        public TMeter(String title, String configKey, ConfigStore configStore, Connector<jisa.devices.TMeter>... instruments) {
-            super(title, configKey, configStore, instruments);
+        public TMeter(String title, ConfigBlock config, Connector<jisa.devices.TMeter>... instruments) {
+            super(title, config, instruments);
         }
 
         public TMeter(String title, Connector<jisa.devices.TMeter>... instruments) {
@@ -434,8 +458,8 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             rng = addDoubleField("Range [K]", 500.0);
         }
 
-        public TMeter(String title, String configKey, ConfigStore configStore, ConnectorGrid grid) {
-            this(title, configKey, configStore, grid.getInstrumentsByType(jisa.devices.TMeter.class));
+        public TMeter(String title, ConfigBlock config, ConnectorGrid grid) {
+            this(title, config, grid.getInstrumentsByType(jisa.devices.TMeter.class));
         }
 
         public TMeter(String title, ConnectorGrid grid) {
@@ -475,10 +499,16 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
             }
 
+
+
         }
 
         @Override
         public jisa.devices.TMeter get() {
+
+            if (!enabled.get()) {
+                return null;
+            }
 
             int n = instrument.get();
 
@@ -526,8 +556,8 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         private Field<Double>  iValue;
         private Field<Double>  dValue;
 
-        public TC(String title, String configKey, ConfigStore configStore, Connector<jisa.devices.TC>... instruments) {
-            super(title, configKey, configStore, instruments);
+        public TC(String title, ConfigBlock config, Connector<jisa.devices.TC>... instruments) {
+            super(title, config, instruments);
         }
 
         public TC(String title, Connector<jisa.devices.TC>... instruments) {
@@ -592,10 +622,12 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             } catch (Exception ignored) {
             }
 
+
+
         }
 
-        public TC(String title, String configKey, ConfigStore configStore, ConnectorGrid grid) {
-            this(title, configKey, configStore, grid.getInstrumentsByType(jisa.devices.TC.class));
+        public TC(String title, ConfigBlock config, ConnectorGrid grid) {
+            this(title, config, grid.getInstrumentsByType(jisa.devices.TC.class));
         }
 
         public TC(String title, ConnectorGrid grid) {
@@ -604,6 +636,10 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
         @Override
         public jisa.devices.TC get() {
+
+            if (!enabled.get()) {
+                return null;
+            }
 
             try {
 

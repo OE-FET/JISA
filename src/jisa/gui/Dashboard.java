@@ -14,13 +14,13 @@ import java.util.List;
 
 public class Dashboard extends Grid {
 
-    private final Grid           topRow      = new Grid(4);
-    private final Grid           plots       = new Grid(3);
-    private final List<Category> categories  = new LinkedList<>();
-    private       ResultStream   stream      = null;
-    private       RTask          logger      = null;
-    private       int            interval;
-    private final Button         startButton = addToolbarButton("Start", () -> {
+    private final Grid                                 topRow      = new Grid(4);
+    private final Grid                                 plots       = new Grid(3);
+    private final List<Category<? extends Instrument>> categories  = new LinkedList<>();
+    private       ResultStream                         stream      = null;
+    private       RTask                                logger      = null;
+    private       int                                  interval;
+    private final Button                               startButton = addToolbarButton("Start", () -> {
 
         String file = GUI.saveFileSelect();
 
@@ -48,9 +48,7 @@ public class Dashboard extends Grid {
     }
 
     public <T extends Instrument> Category<T> addInstrument(String name, IConf<T> conf) {
-
         return new Category<>(name, conf);
-
     }
 
     public <T extends Instrument> Category<T> addInstrument(String name, T instrument) {
@@ -75,10 +73,11 @@ public class Dashboard extends Grid {
 
         }
 
-        public void addMeasurement(String name, String unit, Measurable<T> measurement) {
+        public Category<T> addMeasurement(String name, String unit, Measurable<T> measurement) {
 
             Plotted<T> plotted = new Plotted<>(new Col(name, unit), measurement, fields.addCheckBox(name, false));
             list.add(plotted);
+            return this;
 
         }
 
@@ -95,19 +94,19 @@ public class Dashboard extends Grid {
 
         columns.add(new Col("Time", "mins"));
 
-        for (Category<Instrument> cat : categories) {
+        for (Category<? extends Instrument> cat : categories) {
 
             Instrument instrument = cat.conf.get();
 
             int i = 1;
-            for (Plotted<Instrument> plotted : cat.list) {
+            for (Plotted<? extends Instrument> plotted : cat.list) {
 
                 columns.add(plotted.header);
 
                 if (instrument == null || !(plotted.checkBox.get())) {
                     toMeasure.add(() -> 0.0);
                 } else {
-                    toMeasure.add(() -> plotted.measurable.get(instrument));
+                    toMeasure.add(() -> plotted.measurable.getGeneric(instrument));
                 }
 
             }
@@ -123,16 +122,16 @@ public class Dashboard extends Grid {
 
                 if (plotted.checkBox.get()) {
 
-//                    plotted.plot.clear();
-//                    plotted.plot.createSeries()
-//                                .watch(stream, 0, j)
-//                                .setName("Data")
-//                                .setColour(Series.defaultColours[(j - 1) % Series.defaultColours.length])
-//                                .showMarkers(false);
+                    plotted.plot.clear();
+                    plotted.plot.createSeries()
+                                .watch(stream, 0, j)
+                                .setName("Data")
+                                .setColour(Series.defaultColours[(j - 1) % Series.defaultColours.length])
+                                .setMarkerVisible(false);
 
                     System.out.println(Series.defaultColours[(j - 1) % Series.defaultColours.length].toString());
 
-                    plotted.plot.showLegend(false);
+                    plotted.plot.setLegendVisible(false);
 
                 }
 
@@ -207,6 +206,10 @@ public class Dashboard extends Grid {
     public interface Measurable<T extends Instrument> {
 
         double get(T device) throws DeviceException, IOException;
+
+        default double getGeneric(Instrument device) throws DeviceException, IOException {
+            return get((T) device);
+        }
 
     }
 

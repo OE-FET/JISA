@@ -1,33 +1,39 @@
 package jisa.devices;
 
-import jisa.addresses.Address;
-import jisa.addresses.IDAddress;
-import jisa.enums.Thermocouple;
-import jisa.visa.NativeDevice;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.ptr.ShortByReference;
+import jisa.addresses.Address;
+import jisa.addresses.IDAddress;
+import jisa.enums.Thermocouple;
+import jisa.visa.NativeDevice;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Driver class for Picotech USB-TC08 thermocouple data loggers. Requires proprietary usbtc08 library to be installed.
+ */
 public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MSTMeter {
 
-    public static final String                         LIBRARY_NAME     = "usbtc08";
-    public static final Class<USBTC08.NativeInterface> LIBRARY_CLASS    = USBTC08.NativeInterface.class;
-    public static final int                            SENSORS_PER_UNIT = 9;
+    // Constants
+    private static final String                         LIBRARY_NAME                 = "usbtc08";
+    private static final Class<USBTC08.NativeInterface> LIBRARY_CLASS                = USBTC08.NativeInterface.class;
+    private static final int                            SENSORS_PER_UNIT             = 9;
+    private static final short                          ACTION_FAILED                = 0;
+    private static final short                          ERROR_NONE                   = 0;
+    private static final short                          ERROR_OS_NOT_SUPPORTED       = 1;
+    private static final short                          ERROR_NO_CHANNELS_SET        = 2;
+    private static final short                          ERROR_INVALID_PARAMETER      = 3;
+    private static final short                          ERROR_VARIANT_NOT_SUPPORTED  = 4;
+    private static final short                          ERROR_INCORRECT_MODE         = 5;
+    private static final short                          ERROR_ENUMERATION_INCOMPLETE = 6;
+    private static final short                          UNITS_KELVIN                 = 2;
 
-    private static final short ERROR_OK                     = 0;
-    private static final short ERROR_OS_NOT_SUPPORTED       = 1;
-    private static final short ERROR_NO_CHANNELS_SET        = 2;
-    private static final short ERROR_INVALID_PARAMETER      = 3;
-    private static final short ERROR_VARIANT_NOT_SUPPORTED  = 4;
-    private static final short ERROR_INCORRECT_MODE         = 5;
-    private static final short ERROR_ENUMERATION_INCOMPLETE = 6;
-    private static final short UNITS_KELVIN                 = 2;
-
+    /** Static instance of loaded library */
     private static USBTC08.NativeInterface INSTANCE;
 
     static {
@@ -53,9 +59,106 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             Thermocouple.NONE
     };
 
-    private float[] lastValues = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-    private long    lastTime   = 0;
+    private float[]   lastValues    = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+    private long      lastTime      = 0;
+    private Frequency lineFrequency = Frequency.FIFTY_HERTZ;
 
+    /**
+     * Connects to the first USB-TC08 unit found connected to the system.
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon instrument error
+     */
+    public USBTC08() throws IOException, DeviceException {
+
+        // Load native library
+        super(LIBRARY_NAME, INSTANCE);
+
+        if (INSTANCE == null) {
+            throw new IOException("Error loading usbtc08 library!");
+        }
+
+        short handle = lib.usb_tc08_open_unit();
+
+        if (handle > 0) {
+            this.handle = handle;
+        } else if (handle == ACTION_FAILED) {
+            throw new IOException("No USB TC-08 unit found!");
+        } else {
+            throw new DeviceException(getLastError((short) 0));
+        }
+
+    }
+
+    /**
+     * Connects to the first USB-TC08 unit with matching serial number, given in the form of an IDAddress object.
+     *
+     * @param address Serial number, as IDAddress object
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon instrument error
+     */
+    public USBTC08(Address address) throws IOException, DeviceException {
+
+        // Load native library
+        super(LIBRARY_NAME, INSTANCE);
+
+        if (address.toIDAddress() == null) {
+            throw new DeviceException("This driver requires a serial number address.");
+        }
+
+        String serial = address.toIDAddress().getID();
+
+        if (INSTANCE == null) {
+            throw new IOException("Error loading usbtc08 library!");
+        }
+
+        // Search for all connected units
+        List<USBTC08> found = find();
+
+        if (found.isEmpty()) {
+            throw new IOException("No USB TC-08 unit found!");
+        }
+
+        Short value = null;
+
+        for (USBTC08 unit : found) {
+
+            // If it's the one we want, give this instance the handle, otherwise close the connection
+            if (unit.getSerial().toLowerCase().equals(serial.toLowerCase().trim())) {
+                value = unit.handle;
+            } else {
+                unit.close();
+            }
+
+        }
+
+        // If nothing was found, then the serial number is wrong
+        if (value == null) {
+            throw new IOException(String.format("No USB TC-08 unit with serial number \"%s\" was found.", serial));
+        }
+
+        handle = value;
+
+    }
+
+    /**
+     * Connects to the first USB-TC08 unit with matching serial number, given as a String.
+     *
+     * @param serial Serial number, as a String
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon instrument error
+     */
+    public USBTC08(String serial) throws IOException, DeviceException {
+        this(new IDAddress(serial));
+    }
+
+    /**
+     * Returns a list of all USB-TC08 units found connected to this computer.
+     *
+     * @return List of USBTC08 objects representing the found units
+     */
     public static List<USBTC08> find() {
 
         List<USBTC08> devices = new LinkedList<>();
@@ -74,78 +177,19 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
-    public USBTC08() throws IOException, DeviceException {
-
-        // Load native library
-        super(LIBRARY_NAME, LIBRARY_CLASS, INSTANCE);
-
-        if (INSTANCE == null) {
-            throw new IOException("Error loading usbtc08 library!");
-        }
-
-        short handle = lib.usb_tc08_open_unit();
-
-        if (handle > 0) {
-            this.handle = handle;
-        } else if (handle == 0) {
-            throw new IOException("No USB TC-08 unit found!");
-        } else {
-            throw new DeviceException(getLastError((short) 0));
-        }
-
-    }
-
-    public USBTC08(Address address) throws IOException, DeviceException {
-
-        // Load native library
-        super(LIBRARY_NAME, LIBRARY_CLASS, INSTANCE);
-
-        if (address.toIDAddress() == null) {
-            throw new DeviceException("This driver requires a serial number address.");
-        }
-
-        String serial = address.toIDAddress().getID();
-
-        if (INSTANCE == null) {
-            throw new IOException("Error loading usbtc08 library!");
-        }
-
-        List<USBTC08> found = find();
-
-        if (found.isEmpty()) {
-            throw new IOException("No USB TC-08 unit found!");
-        }
-
-        Short value = null;
-
-        for (USBTC08 unit : found) {
-
-            if (unit.getSerial().toLowerCase().equals(serial.toLowerCase().trim())) {
-                value = unit.handle;
-            } else {
-                unit.close();
-            }
-
-        }
-
-        if (value == null) {
-            throw new IOException(String.format("No USB TC-08 unit with serial number \"%s\" was found.", serial));
-        }
-
-        handle = value;
-
-    }
-
-    public USBTC08(String serial) throws IOException, DeviceException {
-        this(new IDAddress(serial));
-    }
-
+    /**
+     * Returns the serial number of this unit.
+     *
+     * @return Serial number
+     *
+     * @throws DeviceException Upon instrument error.
+     */
     public String getSerial() throws DeviceException {
 
         byte[] read   = new byte[256];
         short  result = lib.usb_tc08_get_unit_info2(handle, read, (short) 256, NativeInterface.USBTC08LINE_BATCH_AND_SERIAL);
 
-        if (result == 0) {
+        if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
         }
 
@@ -162,11 +206,17 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             updateReadings();
         }
 
-        return (double) lastValues[sensor];
+        return lastValues[sensor];
 
     }
 
-    private void updateReadings() throws DeviceException {
+    /**
+     * Updates the currently held temperature readings for each sensor. This should be updated at most every minimum
+     * measurement interval, as calculated by the USB-TC08 unit.
+     *
+     * @throws DeviceException Upon instrument error
+     */
+    private synchronized void updateReadings() throws DeviceException {
 
         // Need a pointer to some memory to store our returned values
         Memory tempPointer = new Memory(9 * Native.getNativeSize(Float.TYPE));
@@ -174,7 +224,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         int result = lib.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), UNITS_KELVIN);
 
         // If zero, then something's gone wrong.
-        if (result == 0) {
+        if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
         }
 
@@ -191,11 +241,11 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     @Override
     public List<Double> getTemperatures() throws DeviceException {
 
-        List<Double> temperatures = new LinkedList<>();
+        List<Double> temperatures = new ArrayList<>(lastValues.length);
 
         updateReadings();
 
-        // Convert to doubles
+        // Convert to list of doubles
         for (float value : lastValues) {
             temperatures.add((double) value);
         }
@@ -207,7 +257,6 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     @Override
     public void setTemperatureRange(int sensor, double range) throws DeviceException, IOException {
         checkSensor(sensor);
-        // No ranging options
     }
 
     @Override
@@ -221,7 +270,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      * @param sensor Sensor number
      * @param type   Thermocouple type
      *
-     * @throws DeviceException Upon device error
+     * @throws DeviceException Upon instrument error
      */
     public void setSensorType(int sensor, Thermocouple type) throws DeviceException, IOException {
 
@@ -229,7 +278,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         int result = lib.usb_tc08_set_channel(handle, (short) sensor, type.getCode());
 
-        if (result == 0) {
+        if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
         } else {
             types[sensor] = type;
@@ -237,6 +286,16 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
+    /**
+     * Returns the sensor type that the given channel is configured for.
+     *
+     * @param sensor Sensor number
+     *
+     * @return Sensor type
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon instrument error
+     */
     public Thermocouple getSensorType(int sensor) throws DeviceException, IOException {
 
         checkSensor(sensor);
@@ -245,19 +304,30 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     /**
-     * Sets the line-frequency rejection.
+     * Returns the line-frequency rejection mode currently in use.
+     *
+     * @return Frequency, 50 Hz or 60 Hz.
+     */
+    public Frequency getLineFrequency() {
+        return lineFrequency;
+    }
+
+    /**
+     * Sets the line-frequency rejection mode to be used.
      *
      * @param frequency 50 Hz or 60 Hz
      *
-     * @throws DeviceException Upon device error
+     * @throws DeviceException Upon instrument error
      */
     public void setLineFrequency(Frequency frequency) throws DeviceException {
 
 
         int result = lib.usb_tc08_set_mains(handle, (short) frequency.ordinal());
 
-        if (result == 0) {
+        if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
+        } else {
+            lineFrequency = frequency;
         }
 
 
@@ -273,7 +343,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         int result = lib.usb_tc08_close_unit(handle);
 
-        if (result == 0) {
+        if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
         }
 
@@ -281,7 +351,13 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     @Override
     public Address getAddress() {
-        return null;
+
+        try {
+            return new IDAddress(getSerial());
+        } catch (Exception e) {
+            return null;
+        }
+
     }
 
     private String getLastError(short handle) {
@@ -290,7 +366,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         switch (error) {
 
-            case ERROR_OK:
+            case ERROR_NONE:
                 return "None";
 
             case ERROR_OS_NOT_SUPPORTED:
@@ -326,88 +402,42 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         SIXTY_HERTZ
     }
 
+    /**
+     * Interface corresponding to native usbtc08 library methods.
+     */
     protected interface NativeInterface extends Library {
 
+        int   USBTC08_MAX_CHANNELS         = 8;
+        short USBTC08LINE_BATCH_AND_SERIAL = 4;
+        byte  USB_TC08_THERMOCOUPLE_TYPE_B = (byte) 'B';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_E = (byte) 'E';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_J = (byte) 'J';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_K = (byte) 'K';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_N = (byte) 'N';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_R = (byte) 'R';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_S = (byte) 'S';
+        byte  USB_TC08_THERMOCOUPLE_TYPE_T = (byte) 'T';
+        byte  USB_TC08_VOLTAGE_READINGS    = (byte) 'X';
+        byte  USB_TC08_DISABLE_CHANNEL     = (byte) ' ';
 
-        // Method definitions from usbtc08.h C header file
-        // ===============================================
-
-        // C prototype definition :
-        // int16_t (usb_tc08_open_unit) (void);
         short usb_tc08_open_unit();
 
-        // C prototype definition :
-        // int16_t (usb_tc08_close_unit) (int16_t handle);
         short usb_tc08_close_unit(short handle);
 
-        // C prototype definition :
-        // int16_t (usb_tc08_set_mains) (int16_t handle, int16_t sixty_hertz);
         short usb_tc08_set_mains(short handle, short sixty_hertz);
 
-        // C prototype definition :
-        // int16_t (usb_tc08_set_channel) (int16_t handle, int16_t channel, int8_t  tc_type);
         short usb_tc08_set_channel(short handle, short channel, byte tc_type);
 
-        // C prototype definition :
-        // int32_t (usb_tc08_get_minimum_interval_ms) (int16_t handle);
         int usb_tc08_get_minimum_interval_ms(short handle);
 
-        // C prototype definition :
-        // int16_t (usb_tc08_get_formatted_info) (int16_t  handle, int8_t  *unit_info, int16_t  string_length);
         short usb_tc08_get_formatted_info(short handle, byte[] unitInfo, short stringLength);
 
         short usb_tc08_get_unit_info2(short handle, byte[] unitInfo, short stringLength, short line);
 
-        // C prototype definition :
-        // int16_t (usb_tc08_get_single) (int16_t handle, float * temp, int16_t * overflow_flags, int16_t units);
         short usb_tc08_get_single(short handle, Memory temp, ShortByReference overflowFlags, short units);
 
         short usb_tc08_get_last_error(short handle);
 
-        // Constants
-        // =========
-        int USBTC08_MAX_CHANNELS = 8;
-
-        byte USB_TC08_THERMOCOUPLE_TYPE_B = (byte) 'B';
-        byte USB_TC08_THERMOCOUPLE_TYPE_E = (byte) 'E';
-        byte USB_TC08_THERMOCOUPLE_TYPE_J = (byte) 'J';
-        byte USB_TC08_THERMOCOUPLE_TYPE_K = (byte) 'K';
-        byte USB_TC08_THERMOCOUPLE_TYPE_N = (byte) 'N';
-        byte USB_TC08_THERMOCOUPLE_TYPE_R = (byte) 'R';
-        byte USB_TC08_THERMOCOUPLE_TYPE_S = (byte) 'S';
-        byte USB_TC08_THERMOCOUPLE_TYPE_T = (byte) 'T';
-        byte USB_TC08_VOLTAGE_READINGS    = (byte) 'X';
-        byte USB_TC08_DISABLE_CHANNEL     = (byte) ' ';
-
-        short USBTC08LINE_BATCH_AND_SERIAL = 4;
-
-
-        // Enumerations
-        // ============
-
-        enum USBTC08Channels {
-            USBTC08_CHANNEL_CJC,
-            USBTC08_CHANNEL_1,
-            USBTC08_CHANNEL_2,
-            USBTC08_CHANNEL_3,
-            USBTC08_CHANNEL_4,
-            USBTC08_CHANNEL_5,
-            USBTC08_CHANNEL_6,
-            USBTC08_CHANNEL_7,
-            USBTC08_CHANNEL_8
-        }
-
-        enum USBTC08Units {
-            USBTC08_UNITS_CENTIGRADE,
-            USBTC08_UNITS_FAHRENHEIT,
-            USBTC08_UNITS_KELVIN,
-            USBTC08_UNITS_RANKINE
-        }
-
-        enum USBTC08MainsFrequency {
-            USBTC08_FIFTY_HERTZ,
-            USBTC08_SIXTY_HERTZ
-        }
     }
 
 }

@@ -1,5 +1,8 @@
 package jisa.enums;
 
+import javafx.scene.image.Image;
+import javafx.scene.paint.Color;
+import jisa.Util;
 import jisa.gui.GUI;
 
 import java.net.URL;
@@ -24,16 +27,35 @@ public enum Icon {
     TRANSISTOR("images/transistor.png"),
     RHEOSTAT("images/rheostat.png"),
     LED("images/led.png"),
-    RESISTOR("images/resistor.png");
+    RESISTOR("images/resistor.png"),
+    HALL("images/hall.png"),
+    ELECTRICITY("images/electricity.png"),
+    CIRCLES("images/circles.png");
 
     private String path;
+    private Image white = null;
+    private Image black = null;
 
     Icon(String path) {
         this.path = path;
     }
 
-    public URL getImage() {
+    public URL getURL() {
         return GUI.class.getResource(path);
+    }
+
+    public Image getWhiteImage() {
+        if (white == null) white = new Image(GUI.class.getResource(path).toExternalForm());
+        return white;
+    }
+
+    public Image getBlackImage() {
+        if (black == null) black = Util.invertImage(getWhiteImage());
+        return black;
+    }
+
+    public Image getColouredImage(Color colour) {
+        return Util.colourImage(getWhiteImage(), colour);
     }
 
 }

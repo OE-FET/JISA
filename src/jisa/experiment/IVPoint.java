@@ -8,12 +8,12 @@ public class IVPoint {
     /**
      * Voltage value of I-V data-point
      */
-    public double voltage;
+    public final double voltage;
 
     /**
      * Current value of I-V data-point
      */
-    public double current;
+    public final double current;
 
     /**
      * Creates an IVPoint object with voltage V and current I.

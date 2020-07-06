@@ -5,7 +5,6 @@ import jisa.maths.functions.GFunction;
 import jisa.maths.matrices.MatrixFactory.Copier;
 import jisa.maths.matrices.MatrixFactory.Operation;
 import jisa.maths.matrices.exceptions.*;
-import org.apache.commons.math.complex.Complex;
 import org.apache.commons.math.linear.FieldLUDecomposition;
 import org.apache.commons.math.linear.FieldLUDecompositionImpl;
 import org.apache.commons.math.linear.FieldMatrix;

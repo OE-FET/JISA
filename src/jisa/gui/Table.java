@@ -1,22 +1,24 @@
 package jisa.gui;
 
-import jisa.experiment.Result;
-import jisa.experiment.ResultTable;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.ToolBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import jisa.control.SRunnable;
+import jisa.experiment.Result;
+import jisa.experiment.ResultTable;
 
 import java.util.Arrays;
 
-public class Table extends JFXWindow implements Element, Clearable {
+public class Table extends JFXElement implements Element, Clearable {
 
     public TableView  table;
-    public BorderPane pane;
 
     /**
      * Creates an empty table.
@@ -24,7 +26,9 @@ public class Table extends JFXWindow implements Element, Clearable {
      * @param title Window title
      */
     public Table(String title) {
+
         super(title, Table.class.getResource("fxml/TableWindow.fxml"));
+
     }
 
     /**
@@ -62,38 +66,36 @@ public class Table extends JFXWindow implements Element, Clearable {
 
     private synchronized void setUp(ResultTable list) {
 
-        Platform.runLater(() -> {
-
+        GUI.runNow(() -> {
             table.getItems().clear();
             table.getColumns().clear();
+        });
 
-            int numCols = list.getNumCols();
+        int numCols = list.getNumCols();
 
-            for (int i = 0; i < numCols; i++) {
-                final int                                   finalI = i;
-                TableColumn<ObservableList<Double>, Double> col    = new TableColumn(list.getTitle(i));
-                col.setCellValueFactory(param ->
-                        new ReadOnlyObjectWrapper<>(param.getValue().get(finalI))
-                );
-                table.getColumns().add(col);
+        for (int i = 0; i < numCols; i++) {
+            final int                                   finalI = i;
+            TableColumn<ObservableList<Double>, Double> col    = new TableColumn(list.getTitle(i));
+            col.setCellValueFactory(param ->
+                    new ReadOnlyObjectWrapper<>(param.getValue().get(finalI))
+            );
+            GUI.runNow(() -> table.getColumns().add(col));
+        }
+
+        for (Result row : list) {
+
+            double[] data  = row.getData();
+            Double[] oData = new Double[data.length];
+
+            for (int j = 0; j < data.length; j++) {
+                oData[j] = data[j];
             }
 
             GUI.runNow(() -> {
-                for (Result row : list) {
-
-                    double[] data = row.getData();
-                    Double[] oData = new Double[data.length];
-
-                    for (int j = 0; j < data.length; j++) {
-                        oData[j] = data[j];
-                    }
-
-                    table.getItems().add(FXCollections.observableArrayList(Arrays.asList(oData)));
-                    table.scrollTo(table.getItems().size() - 1);
-                }
+                table.getItems().add(FXCollections.observableArrayList(Arrays.asList(oData)));
+                table.scrollTo(table.getItems().size() - 1);
             });
-
-        });
+        }
 
 
     }
@@ -102,7 +104,7 @@ public class Table extends JFXWindow implements Element, Clearable {
 
         Platform.runLater(() -> {
 
-            double[] data = row.getData();
+            double[] data  = row.getData();
             Double[] oData = new Double[data.length];
 
             for (int j = 0; j < data.length; j++) {
@@ -116,14 +118,11 @@ public class Table extends JFXWindow implements Element, Clearable {
 
     }
 
-    public Pane getPane() {
-        return pane;
-    }
-
     @Override
     public synchronized void clear() {
         GUI.runNow(() -> {
             table.getItems().clear();
         });
     }
+
 }

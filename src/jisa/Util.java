@@ -78,6 +78,25 @@ public class Util {
 
     }
 
+    public static String msToString(long millis) {
+
+        long ms = millis % 1000;
+        long s  = (millis / 1000) % 60;
+        long m  = (millis / (1000 * 60)) % 60;
+        long h  = (millis / (1000 * 60 * 60));
+
+        List<String> parts = new LinkedList<>();
+
+
+        if (h > 0) parts.add(String.format("%dh", h));
+        if (m > 0) parts.add(String.format("%dm", m));
+        if (s > 0) parts.add(String.format("%ds", s));
+        if (ms > 0) parts.add(String.format("%dms", ms));
+
+        return String.join(" ", parts);
+
+    }
+
     public static String joinPath(String first, String... more) {
 
         return Paths.get(first, more).toString();
@@ -87,11 +106,11 @@ public class Util {
     public static String colourToCSS(Color colour) {
 
         return String.format(
-            "rgba(%s,%s,%s,%s)",
-            colour.getRed() * 255,
-            colour.getGreen() * 255,
-            colour.getBlue() * 255,
-            colour.getOpacity()
+                "rgba(%s,%s,%s,%s)",
+                colour.getRed() * 255,
+                colour.getGreen() * 255,
+                colour.getBlue() * 255,
+                colour.getOpacity()
         );
 
     }
@@ -147,6 +166,34 @@ public class Util {
             for (int y = 0; y < height; y++) {
 
                 writer.setColor(x, y, reader.getColor(x, y).invert());
+
+            }
+
+        }
+
+        return inverted;
+
+    }
+
+    public static Image colourImage(Image toColour, Color colour) {
+
+        int           width      = (int) toColour.getWidth();
+        int           height     = (int) toColour.getHeight();
+        WritableImage inverted   = new WritableImage(width, height);
+        PixelReader   reader     = toColour.getPixelReader();
+        PixelWriter   writer     = inverted.getPixelWriter();
+        double        hue        = colour.getHue();
+        double        saturation = colour.getSaturation();
+        double        brightness = colour.getBrightness();
+
+        for (int x = 0; x < width; x++) {
+
+            for (int y = 0; y < height; y++) {
+
+                Color  pixel   = reader.getColor(x, y);
+                double opacity = pixel.getOpacity();
+
+                writer.setColor(x, y, Color.hsb(hue, saturation, brightness, opacity));
 
             }
 
@@ -270,6 +317,19 @@ public class Util {
 
         for (int i = 0; i < ints.length; i++) {
             parts[i] = String.format("%d", ints[i]);
+        }
+
+        return String.join(delim, parts);
+
+    }
+
+    public static String joinDoubles(String delim, Collection<Double> doubles) {
+
+        String[] parts = new String[doubles.size()];
+
+        int i = 0;
+        for (double d : doubles) {
+            parts[i++] = String.format("%s", d);
         }
 
         return String.join(delim, parts);
@@ -465,8 +525,8 @@ public class Util {
         }
 
         return Math.floor(value.doubleValue() / Math.pow(
-            10,
-            Math.floor(Math.log10(Math.abs(value.doubleValue())))
+                10,
+                Math.floor(Math.log10(Math.abs(value.doubleValue())))
         )) * Math.pow(10, Math.floor(Math.log10(Math.abs(value.doubleValue()))));
     }
 
@@ -484,8 +544,8 @@ public class Util {
         }
 
         return Math.ceil(value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))))) * Math.pow(
-            10,
-            Math.floor(Math.log10(Math.abs(value)))
+                10,
+                Math.floor(Math.log10(Math.abs(value)))
         );
     }
 

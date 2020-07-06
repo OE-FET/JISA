@@ -21,18 +21,17 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class GUI extends Application {
 
-    private static boolean   done   = false;
-    private static File      file;
-    private static Semaphore s      = new Semaphore(0);
-    private static boolean   loaded = false;
+    public static final double    SPACING = 10.0;
+    private static      boolean   done    = false;
+    private static      File      file;
+    private static      Semaphore s       = new Semaphore(0);
+    private static      boolean   loaded  = false;
 
     /*
      * When first accessing the GUI class, all needed JavaFx native libraries must be extracted and added to
@@ -75,13 +74,13 @@ public class GUI extends Application {
 
             if (osName.contains("win")) {
                 extension = ".dll";
-                libSep = ";";
+                libSep    = ";";
             } else if (osName.contains("mac")) {
                 extension = ".dylib";
-                libSep = ":";
+                libSep    = ":";
             } else {
                 extension = ".so";
-                libSep = ":";
+                libSep    = ":";
             }
 
             // Run through each library listed in the file, extracting it if it's for this platform
@@ -323,6 +322,34 @@ public class GUI extends Application {
     }
 
     /**
+     * Opens a file-select dialogue box for choosing an already existing file to open.
+     *
+     * @return Selected file path, null if cancelled
+     */
+    public static List<String> openFileMultipleSelect() {
+
+        AtomicReference<List<File>> file = new AtomicReference<>();
+
+        GUI.runNow(() -> {
+            FileChooser chooser = new FileChooser();
+            file.set(chooser.showOpenMultipleDialog(new Stage()));
+        });
+
+        List<File> list = file.get();
+
+        if (list == null) {
+            return null;
+        }
+
+        List<String> paths = new LinkedList<>();
+
+        list.forEach(f -> paths.add(f.getAbsolutePath()));
+
+        return paths;
+
+    }
+
+    /**
      * Opens a confirmation dialogue, returning the users response as a boolean.
      *
      * @param title  Window title
@@ -496,21 +523,7 @@ public class GUI extends Application {
      */
     public static Address browseVISA() {
 
-        AtomicReference<Address> ref       = new AtomicReference<>();
-        BrowseVISA               browse    = new BrowseVISA("Find Instrument");
-        Semaphore                semaphore = new Semaphore(0);
-
-        GUI.runNow(() -> browse.search((a) -> {
-            ref.set(a);
-            semaphore.release();
-        }));
-
-        try {
-            semaphore.acquire();
-        } catch (InterruptedException ignored) {
-        }
-
-        return ref.get();
+        return (new VISABrowser("Browse Instruments")).selectAddress();
 
     }
 
@@ -527,6 +540,16 @@ public class GUI extends Application {
 
         s = new Semaphore(0);
 
+
+    }
+
+    public static void waitForExit() {
+
+        try {
+            (new Semaphore(0)).acquire();
+        } catch (InterruptedException ignored) {
+
+        }
 
     }
 
@@ -574,7 +597,7 @@ public class GUI extends Application {
 
         try {
 
-            measurement.performMeasurement();
+            measurement.start();
 
             if (measurement.wasStopped()) {
 

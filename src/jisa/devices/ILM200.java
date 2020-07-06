@@ -23,11 +23,11 @@ public class ILM200 extends VISADevice {
         super(address);
         setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
         setEOI(false);
-        setTerminator(TERMINATOR);
+        setWriteTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);
-        setReadTerminationCharacter(EOS_RETURN);
+        setReadTerminator(EOS_RETURN);
 
-        clearRead();
+        clearReadBuffer();
 
         setMode(Mode.REMOTE_UNLOCKED);
 

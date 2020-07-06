@@ -1,19 +1,23 @@
 package jisa.devices;
 
-import jisa.addresses.Address;
 import jisa.Util;
-import jisa.visa.Connection;
+import jisa.addresses.Address;
+import jisa.visa.Connection.Flow;
+import jisa.visa.Connection.Parity;
+import jisa.visa.Connection.StopBits;
 import jisa.visa.RawTCPIPDriver;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
 /**
  * Class for controlling Lake Shore Model 336 temperature controllers.
- *
+ * <p>
  * They are generally annoying with a shoddy communications implementation. Hooray!
  */
 public class LS336 extends VISADevice implements MSMOTC {
@@ -36,22 +40,23 @@ public class LS336 extends VISADevice implements MSMOTC {
     private static final String          TERMINATOR           = "\r\n";
     private              Semaphore       timingControl        = new Semaphore(1);
     private              ExecutorService timingService        = Executors.newFixedThreadPool(1);
-    private              boolean[]       nativeAPID           = {false, false};
-    private              Zoner[]         zoner                = {null, null};
+    private              boolean[]       autoPID              = {false, false};
+    private              PIDZone[][]     zones                = new PIDZone[2][0];
 
     public LS336(Address address) throws IOException, DeviceException {
 
         super(address, RawTCPIPDriver.class);
 
         if (address.getType() == Address.Type.SERIAL) {
-            setSerialParameters(57600, 7, Connection.Parity.ODD, Connection.StopBits.ONE, Connection.Flow.NONE);
+            setSerialParameters(57600, 7, Parity.ODD, StopBits.ONE, Flow.NONE);
         }
 
-        setReadTerminationCharacter(LF_TERMINATOR);
-        setTerminator(TERMINATOR);
-        setRemoveTerminator(TERMINATOR);
+        setReadTerminator(LF_TERMINATOR);
+        setWriteTerminator(TERMINATOR);
+        addAutoRemove("\r");
+        addAutoRemove("\n");
 
-        clearRead();
+        clearReadBuffer();
 
         try {
 
@@ -146,21 +151,21 @@ public class LS336 extends VISADevice implements MSMOTC {
     public void setPValue(int output, double value) throws IOException, DeviceException {
         checkOutput(output);
         PID pid = getPID(output);
-        setPID(output, value, pid.I, pid.D);
+        setPID(output, value, pid.iValue, pid.dValue);
     }
 
     @Override
     public void setIValue(int output, double value) throws IOException, DeviceException {
         checkOutput(output);
         PID pid = getPID(output);
-        setPID(output, pid.P, value, pid.D);
+        setPID(output, pid.pValue, value, pid.dValue);
     }
 
     @Override
     public void setDValue(int output, double value) throws IOException, DeviceException {
         checkOutput(output);
         PID pid = getPID(output);
-        setPID(output, pid.P, pid.I, value);
+        setPID(output, pid.pValue, pid.iValue, value);
     }
 
     private void setPID(int output, double P, double I, double D) throws IOException {
@@ -170,19 +175,45 @@ public class LS336 extends VISADevice implements MSMOTC {
     @Override
     public double getPValue(int output) throws IOException, DeviceException {
         checkOutput(output);
-        return getPID(output).P;
+        return getPID(output).pValue;
     }
 
     @Override
     public double getIValue(int output) throws IOException, DeviceException {
         checkOutput(output);
-        return getPID(output).I;
+        return getPID(output).iValue;
     }
 
     @Override
     public double getDValue(int output) throws IOException, DeviceException {
         checkOutput(output);
-        return getPID(output).D;
+        return getPID(output).dValue;
+    }
+
+    @Override
+    public void useAutoPID(int output, boolean flag) throws DeviceException, IOException {
+        checkOutput(output);
+        autoPID[output] = flag;
+        updateAutoPID(output);
+    }
+
+    @Override
+    public boolean isUsingAutoPID(int output) throws DeviceException {
+        checkOutput(output);
+        return autoPID[output];
+    }
+
+    @Override
+    public List<PIDZone> getAutoPIDZones(int output) throws DeviceException {
+        checkOutput(output);
+        return Arrays.asList(zones[output]);
+    }
+
+    @Override
+    public void setAutoPIDZones(int output, PIDZone... zones) throws IOException, DeviceException {
+        checkOutput(output);
+        this.zones[output] = zones;
+        updateAutoPID(output);
     }
 
     @Override
@@ -201,6 +232,7 @@ public class LS336 extends VISADevice implements MSMOTC {
     public void setTargetTemperature(int output, double temperature) throws IOException, DeviceException {
         checkOutput(output);
         write(C_SET_SET_POINT, output + 1, temperature);
+        updateAutoPID(output);
     }
 
     @Override
@@ -216,7 +248,7 @@ public class LS336 extends VISADevice implements MSMOTC {
     }
 
     @Override
-    public double getGasFlow(int output) {
+    public double getFlow(int output) {
         Util.errLog.println("LakeShore 336 does not control gas flow.");
         return 0;
     }
@@ -239,73 +271,20 @@ public class LS336 extends VISADevice implements MSMOTC {
     }
 
     @Override
-    public boolean isFlowAuto(int output) {
+    public boolean isUsingAutoFlow(int output) {
         Util.errLog.println("WARNING: LakeShore 336 does not control gas flow.");
         return false;
     }
 
     @Override
-    public void setManualHeater(int output, double powerPCT) throws IOException, DeviceException {
+    public void setHeaterPower(int output, double powerPCT) throws IOException, DeviceException {
         checkOutput(output);
         write(C_SET_HEATER, output + 1, powerPCT);
     }
 
     @Override
-    public void setManualFlow(int output, double outputPCT) throws DeviceException {
+    public void setFlow(int output, double outputPCT) throws DeviceException {
         throw new DeviceException("LS336 does not control gas flow.");
-    }
-
-    @Override
-    public Zoner getZoner(int output) {
-        return zoner[output];
-    }
-
-    @Override
-    public void setZoner(int output, Zoner zoner) {
-        this.zoner[output] = zoner;
-    }
-
-    @Override
-    public TC.Zoner getZoner() {
-        return null;
-    }
-
-    @Override
-    public void setZoner(TC.Zoner zoner) {
-
-    }
-
-    private static class OutMode {
-
-        public int     mode;
-        public int     input;
-        public boolean powerUp;
-
-        public OutMode(String response) {
-
-            String[] vals = response.trim().split(",");
-
-            mode = Integer.valueOf(vals[0].trim());
-            input = Integer.valueOf(vals[1].trim());
-            powerUp = vals[2].trim().equals("1");
-
-        }
-
-    }
-
-    private static class PID {
-        public double P;
-        public double I;
-        public double D;
-
-        public PID(String response) {
-
-            String[] vals = response.trim().split(",");
-            P = Double.valueOf(vals[0].trim());
-            I = Double.valueOf(vals[1].trim());
-            D = Double.valueOf(vals[2].trim());
-
-        }
     }
 
     private enum HRange {
@@ -315,6 +294,10 @@ public class LS336 extends VISADevice implements MSMOTC {
         HIGH(100.0);
 
         private double pct;
+
+        HRange(double factorPCT) {
+            pct = factorPCT;
+        }
 
         public static HRange fromDouble(double pct) {
 
@@ -332,14 +315,44 @@ public class LS336 extends VISADevice implements MSMOTC {
 
         }
 
-        HRange(double factorPCT) {
-            pct = factorPCT;
-        }
-
         public double getPCT() {
             return pct;
         }
 
+    }
+
+    private static class OutMode {
+
+        public int     mode;
+        public int     input;
+        public boolean powerUp;
+
+        public OutMode(String response) {
+
+            String[] vals = response.trim().split(",");
+
+            mode    = Integer.parseInt(vals[0].trim());
+            input   = Integer.parseInt(vals[1].trim());
+            powerUp = vals[2].trim().equals("1");
+
+        }
+
+    }
+
+    private static class PID {
+
+        public final double pValue;
+        public final double iValue;
+        public final double dValue;
+
+        public PID(String response) {
+
+            String[] vals = response.trim().split(",");
+            pValue = Double.parseDouble(vals[0].trim());
+            iValue = Double.parseDouble(vals[1].trim());
+            dValue = Double.parseDouble(vals[2].trim());
+
+        }
     }
 
 }
