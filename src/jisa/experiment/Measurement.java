@@ -1,5 +1,6 @@
 package jisa.experiment;
 
+import jisa.control.RTask;
 import jisa.gui.Field;
 import jisa.gui.Fields;
 
@@ -17,6 +18,8 @@ public abstract class Measurement {
     private boolean            running    = false;
     private boolean            stopped    = false;
     private ResultTable        results    = null;
+    private ResultTable        log        = null;
+    private RTask              logger     = null;
     private Thread             runThread  = Thread.currentThread();
     private List<Parameter<?>> parameters = new LinkedList<>();
 
@@ -52,6 +55,16 @@ public abstract class Measurement {
     protected abstract void run(ResultTable results) throws Exception;
 
     /**
+     * This method is called on at every log interval to update the log ResultTable.
+     *
+     * @param task The RTask that the log is running in.
+     * @param log  The ResultTable to be used for logging.
+     *
+     * @throws Exception Upon error
+     */
+    protected abstract void log(RTask task, ResultTable log) throws Exception;
+
+    /**
      * This method is always called whenever the measurement is ended prematurely by stop() (or other interrupt).
      * This method in most cases can be left empty, as it would only really serve a purpose for logging an interrupted measurement.
      *
@@ -74,6 +87,13 @@ public abstract class Measurement {
      * @return Array of columns
      */
     public abstract Col[] getColumns();
+
+    /**
+     * This method should return an array of columns to be used when generator a new log ResultTable for logging.
+     *
+     * @return Array of columns.
+     */
+    public abstract Col[] getLogColumns();
 
     /**
      * Generates a new ResultTable for storing results, in memory.
@@ -151,6 +171,60 @@ public abstract class Measurement {
 
     }
 
+    /**
+     * Starts the measurements logging procedure (if it has one), writing the log file to the given path at the
+     * specified interval.
+     *
+     * @param path         Path to write log to
+     * @param intervalMSec Interval to log, in milliseconds
+     *
+     * @throws IOException Upon Read/Write error
+     */
+    public ResultTable startLogging(String path, int intervalMSec) throws IOException {
+
+        log    = new ResultStream(path, getLogColumns());
+        logger = new RTask(intervalMSec, (task) -> {
+
+            try {
+                log(task, log);
+            } catch (Exception e) {
+                System.err.printf("Error logging: %s", e.getMessage());
+            }
+
+        });
+
+        logger.start();
+
+        return log;
+
+    }
+
+    /**
+     * Returns whichever ResultTable object is currently being used for logging purposes.
+     *
+     * @return The log ResultTable
+     */
+    public ResultTable getLog() {
+        return log;
+    }
+
+    /**
+     * Returns whether the measurement's logger is currently running or not.
+     *
+     * @return Is it logging?
+     */
+    public boolean isLogging() {
+        return logger != null && logger.isRunning();
+    }
+
+    /**
+     * Stops any currently running logger for this measurement.
+     */
+    public void stopLogging() {
+        if (logger != null) logger.stop();
+        if (log != null)    log.finalise();
+    }
+
     public List<Parameter<?>> getParameters() {
         return new ArrayList<>(parameters);
     }
@@ -206,7 +280,7 @@ public abstract class Measurement {
      *
      * @throws InterruptedException If stop() has indeed been called.
      */
-    public void checkPoint() throws InterruptedException {
+    protected void checkPoint() throws InterruptedException {
 
         if (stopped) {
             throw new InterruptedException();

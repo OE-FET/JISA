@@ -23,6 +23,24 @@ public interface DCPower extends IVSource {
     void turnOff() throws IOException, DeviceException;
 
     /**
+     * Enables or disables output of the power supply
+     *
+     * @param on Output enabled?
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon device compatibility error
+     */
+    default void setOn(boolean on) throws IOException, DeviceException {
+
+        if (on) {
+            turnOn();
+        } else {
+            turnOff();
+        }
+
+    }
+
+    /**
      * Returns whether the output of the supply is enabled or not
      *
      * @return Is it enabled?
@@ -105,10 +123,10 @@ public interface DCPower extends IVSource {
 
 
         Synch.waitForParamStable(
-            this::getVoltage,
-            pctError,
-            100,
-            time
+                this::getVoltage,
+                pctError,
+                100,
+                time
         );
 
 
@@ -126,10 +144,10 @@ public interface DCPower extends IVSource {
     default void waitForStableCurrent(double pctError, long time) throws IOException, DeviceException, InterruptedException {
 
         Synch.waitForParamStable(
-            this::getCurrent,
-            pctError,
-            100,
-            time
+                this::getCurrent,
+                pctError,
+                100,
+                time
         );
 
     }
