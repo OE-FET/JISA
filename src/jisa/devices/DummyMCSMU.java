@@ -23,12 +23,24 @@ public class DummyMCSMU implements MCSMU {
 
     @Override
     public double getVoltage(int channel) throws DeviceException, IOException {
+
+        if (voltage[channel] == null && current[channel] == null) {
+            setVoltage(channel, 0.0);
+        }
+
         return voltage[channel] == null ? getCurrent(channel) * (R[channel] + (1 - 2 * random.nextDouble()) * 0.05 * R[channel]) : voltage[channel];
+
     }
 
     @Override
     public double getCurrent(int channel) throws DeviceException, IOException {
+
+        if (voltage[channel] == null && current[channel] == null) {
+            setVoltage(channel, 0.0);
+        }
+
         return current[channel] == null ? getVoltage(channel) / (R[channel] + (1 - 2 * random.nextDouble()) * 0.05 * R[channel]) : current[channel];
+
     }
 
     @Override
