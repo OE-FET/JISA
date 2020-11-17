@@ -1009,7 +1009,11 @@ public class JISAChart extends XYChart<Double, Double> {
             this.xData = xData;
             this.yData = yData;
             this.eData = eData;
-            handler    = (r, x, y, e) -> addPoint(x, y, e);
+            handler    = (r, x, y, e) -> {
+                if (!Double.isNaN(x) && !Double.isNaN(y) && !Double.isNaN(e)) {
+                    addPoint(x, y, e);
+                }
+            };
             rtListener = list.addOnUpdate(r -> {
 
                 if (filter.test(r)) {
@@ -1083,30 +1087,34 @@ public class JISAChart extends XYChart<Double, Double> {
 
             handler = (r, x, y, e) -> {
 
-                Object value = splitBy.evaluate(r);
+                if (!Double.isNaN(x) && !Double.isNaN(y) && !Double.isNaN(e)) {
 
-                if (!map.containsKey(value)) {
+                    Object value = splitBy.evaluate(r);
 
-                    jisa.gui.Series series = createSeries()
-                            .setName(formatter.getName(r))
-                            .setColour(defaultColours[subSeries.size() % defaultColours.length])
-                            .setLineVisible(isLineVisible())
-                            .setMarkerVisible(isMarkerVisible())
-                            .setMarkerShape(getMarkerShape())
-                            .setLineDash(getLineDash())
-                            .setLineWidth(getLineWidth())
-                            .setMarkerSize(getMarkerSize());
+                    if (!map.containsKey(value)) {
 
-                    if (isFitted()) {
-                        series.fit(getFitter());
+                        jisa.gui.Series series = createSeries()
+                                .setName(formatter.getName(r))
+                                .setColour(defaultColours[subSeries.size() % defaultColours.length])
+                                .setLineVisible(isLineVisible())
+                                .setMarkerVisible(isMarkerVisible())
+                                .setMarkerShape(getMarkerShape())
+                                .setLineDash(getLineDash())
+                                .setLineWidth(getLineWidth())
+                                .setMarkerSize(getMarkerSize());
+
+                        if (isFitted()) {
+                            series.fit(getFitter());
+                        }
+
+                        map.put(value, series);
+                        subSeries.add(series);
+
                     }
 
-                    map.put(value, series);
-                    subSeries.add(series);
+                    map.get(value).addPoint(x, y, e);
 
                 }
-
-                map.get(value).addPoint(x, y, e);
 
             };
 
@@ -1162,7 +1170,9 @@ public class JISAChart extends XYChart<Double, Double> {
                         continue;
                     }
 
-                    map.get(i).addPoint(data[xData], data[i]);
+                    if (!Double.isNaN(data[xData]) && !Double.isNaN(data[i])) {
+                        map.get(i).addPoint(data[xData], data[i]);
+                    }
 
                 }
 
@@ -1277,6 +1287,11 @@ public class JISAChart extends XYChart<Double, Double> {
         }
 
         @Override
+        public boolean isMarkerVisible() {
+            return template.isMarkerVisible();
+        }
+
+        @Override
         public JISASeries setMarkerVisible(boolean show) {
 
             GUI.runNow(() -> {
@@ -1287,11 +1302,6 @@ public class JISAChart extends XYChart<Double, Double> {
 
             return this;
 
-        }
-
-        @Override
-        public boolean isMarkerVisible() {
-            return template.isMarkerVisible();
         }
 
         @Override
@@ -1401,6 +1411,11 @@ public class JISAChart extends XYChart<Double, Double> {
         }
 
         @Override
+        public boolean isLineVisible() {
+            return line.isLineVisible();
+        }
+
+        @Override
         public JISASeries setLineVisible(boolean show) {
 
             GUI.runNow(() -> line.setLineVisible(show));
@@ -1408,11 +1423,6 @@ public class JISAChart extends XYChart<Double, Double> {
             subSeries.forEach(s -> s.setLineVisible(show));
             return this;
 
-        }
-
-        @Override
-        public boolean isLineVisible() {
-            return line.isLineVisible();
         }
 
         @Override

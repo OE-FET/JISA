@@ -42,6 +42,10 @@ public interface TC extends TMeter {
      */
     void setTargetTemperature(double temperature) throws IOException, DeviceException;
 
+    default void setTemperature(double temperature) throws IOException, DeviceException {
+        setTargetTemperature(temperature);
+    }
+
     /**
      * Returns the heater output power percentage.
      *

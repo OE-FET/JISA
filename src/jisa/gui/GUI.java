@@ -21,17 +21,20 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Scanner;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class GUI extends Application {
 
-    public static final double    SPACING = 10.0;
-    private static      boolean   done    = false;
-    private static      File      file;
-    private static      Semaphore s       = new Semaphore(0);
-    private static      boolean   loaded  = false;
+    public static final double SPACING = 10.0;
+
+    private static final FileChooser      FILE_CHOOSER      = new FileChooser();
+    private static final DirectoryChooser DIRECTORY_CHOOSER = new DirectoryChooser();
 
     /*
      * When first accessing the GUI class, all needed JavaFx native libraries must be extracted and added to
@@ -52,7 +55,7 @@ public class GUI extends Application {
             // Make sure we clean up when we exit.
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 
-                File   directory = new File(tempDir.toString());
+                File   directory = new File(tempDir.getAbsolutePath());
                 File[] contents  = directory.listFiles();
 
                 if (contents != null) {
@@ -276,12 +279,17 @@ public class GUI extends Application {
 
         AtomicReference<File> file = new AtomicReference<>();
 
-        GUI.runNow(() -> {
-            FileChooser chooser = new FileChooser();
-            file.set(chooser.showSaveDialog(new Stage()));
-        });
+        GUI.runNow(() -> file.set(FILE_CHOOSER.showSaveDialog(new Stage())));
 
-        return (file.get() == null ? null : file.get().getAbsolutePath());
+        File chosen = file.get();
+
+        if (chosen == null) {
+            return null;
+        } else {
+            FILE_CHOOSER.setInitialDirectory(chosen.getParentFile());
+            DIRECTORY_CHOOSER.setInitialDirectory(chosen.getParentFile());
+            return chosen.getAbsolutePath();
+        }
 
     }
 
@@ -293,13 +301,17 @@ public class GUI extends Application {
     public static String directorySelect() {
 
         AtomicReference<File> file = new AtomicReference<>();
+        GUI.runNow(() -> file.set(DIRECTORY_CHOOSER.showDialog(new Stage())));
 
-        GUI.runNow(() -> {
-            DirectoryChooser chooser = new DirectoryChooser();
-            file.set(chooser.showDialog(new Stage()));
-        });
+        File chosen = file.get();
 
-        return (file.get() == null ? null : file.get().getAbsolutePath());
+        if (chosen == null) {
+            return null;
+        } else {
+            DIRECTORY_CHOOSER.setInitialDirectory(chosen);
+            FILE_CHOOSER.setInitialDirectory(chosen);
+            return chosen.getAbsolutePath();
+        }
 
     }
 
@@ -311,13 +323,17 @@ public class GUI extends Application {
     public static String openFileSelect() {
 
         AtomicReference<File> file = new AtomicReference<>();
+        GUI.runNow(() -> file.set(FILE_CHOOSER.showOpenDialog(new Stage())));
 
-        GUI.runNow(() -> {
-            FileChooser chooser = new FileChooser();
-            file.set(chooser.showOpenDialog(new Stage()));
-        });
+        File chosen = file.get();
 
-        return (file.get() == null ? null : file.get().getAbsolutePath());
+        if (chosen == null) {
+            return null;
+        } else {
+            FILE_CHOOSER.setInitialDirectory(chosen.getParentFile());
+            DIRECTORY_CHOOSER.setInitialDirectory(chosen.getParentFile());
+            return chosen.getAbsolutePath();
+        }
 
     }
 
@@ -330,22 +346,18 @@ public class GUI extends Application {
 
         AtomicReference<List<File>> file = new AtomicReference<>();
 
-        GUI.runNow(() -> {
-            FileChooser chooser = new FileChooser();
-            file.set(chooser.showOpenMultipleDialog(new Stage()));
-        });
+        GUI.runNow(() -> file.set(FILE_CHOOSER.showOpenMultipleDialog(new Stage())));
 
         List<File> list = file.get();
 
-        if (list == null) {
+        if (list == null || list.isEmpty()) {
             return null;
+        } else {
+            List<String> paths = list.stream().map(File::getAbsolutePath).collect(Collectors.toList());
+            FILE_CHOOSER.setInitialDirectory(list.get(0).getParentFile());
+            DIRECTORY_CHOOSER.setInitialDirectory(list.get(0).getParentFile());
+            return paths;
         }
-
-        List<String> paths = new LinkedList<>();
-
-        list.forEach(f -> paths.add(f.getAbsolutePath()));
-
-        return paths;
 
     }
 
@@ -524,22 +536,6 @@ public class GUI extends Application {
     public static Address browseVISA() {
 
         return (new VISABrowser("Browse Instruments")).selectAddress();
-
-    }
-
-    /**
-     * Starts the GUI thread so that GUI elements can be used.
-     */
-    public static void startGUI() {
-
-        if (loaded) {
-            return;
-        }
-
-        loaded = true;
-
-        s = new Semaphore(0);
-
 
     }
 

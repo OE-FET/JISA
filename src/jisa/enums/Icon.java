@@ -32,9 +32,9 @@ public enum Icon {
     ELECTRICITY("images/electricity.png"),
     CIRCLES("images/circles.png");
 
-    private String path;
-    private Image white = null;
-    private Image black = null;
+    private final String path;
+    private       Image  white = null;
+    private       Image  black = null;
 
     Icon(String path) {
         this.path = path;

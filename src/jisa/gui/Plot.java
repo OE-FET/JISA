@@ -1151,8 +1151,18 @@ public class Plot extends JFXElement implements Element, Clearable {
 
         builder.append("\\begin{axis}[\n")
                .append("\txmode             = ").append(xAxis.getMode() == SmartAxis.Mode.LOGARITHMIC ? "log" : "normal").append(",\n")
-               .append("\tymode             = ").append(yAxis.getMode() == SmartAxis.Mode.LOGARITHMIC ? "log" : "normal").append(",\n")
-               .append("\tgrid,\n")
+               .append("\tymode             = ").append(yAxis.getMode() == SmartAxis.Mode.LOGARITHMIC ? "log" : "normal").append(",\n");
+
+        if (!xAxis.isAutoRanging()) {
+            builder.append("\txmin              = ").append(xAxis.getLowerBound()).append(",\n")
+                   .append("\txmax              = ").append(xAxis.getUpperBound()).append(",\n");
+        }
+        if (!yAxis.isAutoRanging()) {
+            builder.append("\tymin              = ").append(yAxis.getLowerBound()).append(",\n")
+                   .append("\tymax              = ").append(yAxis.getUpperBound()).append(",\n");
+        }
+
+        builder.append("\tgrid,\n")
                .append("\tgrid style        = {dotted},\n")
                .append("\tlegend pos        = outer north east,\n")
                .append("\twidth             = 0.7 * \\linewidth,\n")
@@ -1166,48 +1176,62 @@ public class Plot extends JFXElement implements Element, Clearable {
 
         for (JISAChart.JISASeries series : chart.getSeries()) {
 
+            int red   = (int) (series.getColour().getRed() * 255);
+            int green = (int) (series.getColour().getGreen() * 255);
+            int blue  = (int) (series.getColour().getBlue() * 255);
+
             if (!chart.getData().contains(series.getXYChartSeries())) {
                 continue;
             }
 
             String symbol;
+            String fill;
 
             switch (series.getMarkerShape()) {
 
                 case CIRCLE:
-                    symbol = "o";
+                    symbol = "*";
+                    fill = "white";
                     break;
 
                 case DOT:
                     symbol = "*";
+                    fill = String.format("{rgb,255:red,%d;green,%d;blue,%d}", red, green, blue);
                     break;
 
                 case SQUARE:
-                    symbol = "square";
+                    symbol = "square*";
+                    fill = "white";
                     break;
 
                 case DIAMOND:
                     symbol = "diamond";
+                    fill = "white";
                     break;
 
                 case CROSS:
                     symbol = "x";
+                    fill = "none";
                     break;
 
                 case TRIANGLE:
                     symbol = "triangle";
+                    fill = "none";
                     break;
 
                 case STAR:
                     symbol = "star";
+                    fill = "none";
                     break;
 
                 case DASH:
                     symbol = "-";
+                    fill = "none";
                     break;
 
                 default:
                     symbol = "none";
+                    fill = "none";
 
             }
 
@@ -1237,20 +1261,22 @@ public class Plot extends JFXElement implements Element, Clearable {
 
             }
 
-            int red   = (int) (series.getColour().getRed() * 255);
-            int green = (int) (series.getColour().getGreen() * 255);
-            int blue  = (int) (series.getColour().getBlue() * 255);
-
             builder.append("\\addplot[\n");
 
             if (!series.isLineVisible()) builder.append("\tonly marks,\n");
 
-            builder.append("\tmark       = ").append(symbol).append(",\n")
-                   .append("\tcolor      = {rgb,255:red,").append(red).append(";green,").append(green).append(";blue,").append(blue).append("},\n")
-                   .append("\tline width = ").append(series.getLineWidth() / 2.0)
-                   .append(lineType).append("\n")
+            builder.append("\tmark               = ").append(symbol).append(",\n")
+                   .append("\tmark options       = { fill = ").append(fill).append(", scale=1.25 },\n")
+                   .append("\tcolor              = {rgb,255:red,").append(red).append(";green,").append(green).append(";blue,").append(blue).append("},\n")
+                   .append("\tline width         = ").append(series.getLineWidth() / 2.0)
+                   .append(lineType).append(",\n")
+                   .append("\terror bars/.cd,\n")
+                   .append("\ty dir              = both,\n")
+                   .append("\ty explicit,\n")
+                   .append("\terror bar style    = { line width = ").append(series.getLineWidth() / 2.0).append(" },\n")
+                   .append("\terror mark options = { rotate = 90, mark size = 3, line width = ").append(series.getLineWidth() / 2.0).append(" },\n")
                    .append("]\n")
-                   .append("table {\n");
+                   .append("table[x index = 0, y index = 1, y error index = 2] {\n");
 
 
             List<XYChart.Data<Double, Double>> data;
@@ -1274,7 +1300,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
             for (XYChart.Data<Double, Double> point : data) {
 
-                builder.append(String.format("\t%.04e\t%.04e\t%.04e\n", point.getXValue(), point.getYValue(), point.getExtraValue() instanceof Double ? (Double) point.getExtraValue() : 0.0));
+                builder.append(String.format("\t%.04e\t%.04e\t%.04e\n", point.getXValue(), point.getYValue(), point.getExtraValue() instanceof Double && ((Double) point.getExtraValue()) != 0 ? (Double) point.getExtraValue()  : Double.NaN));
 
             }
 

@@ -1,22 +1,34 @@
 package jisa.gui;
 
 import jisa.control.ConfigBlock;
+import jisa.control.IConf;
+import jisa.devices.Instrument;
 import jisa.experiment.Measurement;
 import jisa.experiment.Measurement.Parameter;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class MeasurementFields extends Grid {
+public class MeasurementConfigurator extends Tabs {
 
     private final Measurement           measurement;
     private final Map<String, Fields>   sections          = new LinkedHashMap<>();
     private final Map<Parameter, Field> parameterFieldMap = new HashMap<>();
+    private final Grid                  parameterGrid     = new Grid("Parameters", 1);
+    private final Grid                  instrumentGrid    = new Grid("Instruments", 2);
     private       int                   numColumns        = 2;
     private       boolean               colSpanning       = true;
 
-    public MeasurementFields(String title, Measurement measurement) {
+    public MeasurementConfigurator(String title, Measurement measurement) {
 
-        super(title, 1);
+        super(title);
+
+        parameterGrid.setGrowth(true, false);
+        instrumentGrid.setGrowth(true, false);
+
+        add(parameterGrid);
+        add(instrumentGrid);
+        select(parameterGrid);
 
         this.measurement = measurement;
 
@@ -31,6 +43,13 @@ public class MeasurementFields extends Grid {
 
         }
 
+        instrumentGrid.addAll(
+                measurement.getInstruments().stream()
+                           .filter(i -> i instanceof Element)
+                           .map(i -> (Element) i)
+                           .collect(Collectors.toList())
+        );
+
         updateLayout();
 
     }
@@ -42,6 +61,11 @@ public class MeasurementFields extends Grid {
         for (Fields fields : sections.values()) {
             fields.linkConfig(block.subBlock(fields.getTitle()));
         }
+
+        measurement.getInstruments().stream()
+                   .filter(i -> i instanceof Configurator)
+                   .map(i -> (Configurator) i)
+                   .forEach(i -> i.linkConfig(block.subBlock("Instruments").subBlock(i.getTitle())));
 
     }
 
@@ -69,7 +93,7 @@ public class MeasurementFields extends Grid {
 
     private void updateLayout() {
 
-        clear();
+        parameterGrid.clear();
 
         int          remainder = colSpanning ? sections.size() % numColumns : 0;
         List<Fields> fields    = new ArrayList<>(sections.values());
@@ -79,8 +103,8 @@ public class MeasurementFields extends Grid {
         for (int i = 0; i < remainder; i++) firstRow.add(fields.get(i));
         for (int i = remainder; i < fields.size(); i++) otherRows.add(fields.get(i));
 
-        if (!firstRow.getElements().isEmpty()) add(firstRow);
-        add(otherRows);
+        if (!firstRow.getElements().isEmpty()) parameterGrid.add(firstRow);
+        parameterGrid.add(otherRows);
 
     }
 
@@ -91,6 +115,7 @@ public class MeasurementFields extends Grid {
         if (showAsConfirmation()) {
             measurement.getParameters().forEach(Parameter::update);
             sections.values().forEach(Fields::writeToConfig);
+            measurement.getInstruments().stream().filter(i -> i instanceof Configurator).forEach(i -> ((Configurator) i).writeToConfig());
             return true;
         } else {
             return false;

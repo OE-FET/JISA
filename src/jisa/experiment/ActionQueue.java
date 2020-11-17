@@ -1,17 +1,11 @@
 package jisa.experiment;
 
-import javafx.beans.InvalidationListener;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
 import jisa.Util;
 import jisa.control.SRunnable;
 import jisa.gui.GUI;
 
-import java.io.InputStream;
-import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -109,7 +103,9 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     }
 
     public synchronized MeasureAction addMeasurement(String name, Measurement measurement) {
-        return addMeasurement(name, measurement, a -> {}, a -> {});
+        return addMeasurement(name, measurement, a -> {
+        }, a -> {
+        });
     }
 
     /**
@@ -229,16 +225,9 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
     public int getMeasurementCount(Class<? extends Measurement> mClass) {
 
-        int total = 0;
-        for (Action action : queue) {
-
-            if (action instanceof MeasureAction && ((MeasureAction) action).measurement.getClass().equals(mClass)) {
-                total++;
-            }
-
-        }
-
-        return total;
+        return (int) queue.stream()
+                          .filter(a -> a instanceof MeasureAction && ((MeasureAction) a).measurement.getClass().equals(mClass))
+                          .count();
 
     }
 
@@ -281,6 +270,20 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
     public interface ListListener<T> {
         void updated(List<T> added, List<T> removed);
+
+    }
+
+    public interface ARunnable {
+
+        void run(MeasureAction action) throws Exception;
+
+        default void runRegardless(MeasureAction action) {
+            try {
+                run(action);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
     }
 
@@ -445,12 +448,12 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         }
 
-        public void setResultsPath(String path) {
-            resultPath = path;
-        }
-
         public String getResultsPath() {
             return resultPath;
+        }
+
+        public void setResultsPath(String path) {
+            resultPath = path;
         }
 
         public void doNotOutputResults() {
@@ -475,15 +478,15 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
                 try {
 
-                    String path;
+                    String resPath;
 
                     if (resultPath.contains("%s")) {
-                        path = String.format(resultPath, getVariablePathString());
+                        resPath = String.format(resultPath, getVariablePathString());
                     } else {
-                        path = resultPath;
+                        resPath = resultPath;
                     }
 
-                    setData(measurement.newResults(path));
+                    setData(measurement.newResults(resPath));
 
                 } catch (Exception e) {
                     setData(measurement.newResults());
@@ -492,7 +495,6 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             }
 
             attributes.forEach((k, v) -> getData().setAttribute(k, v));
-
             before.runRegardless(this);
 
         }
@@ -533,16 +535,6 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         public WaitAction(long millis) {
 
             super(String.format("Wait %s", Util.msToString(millis)), () -> Thread.sleep(millis));
-        }
-
-    }
-
-    public interface ARunnable {
-
-        void run(MeasureAction action) throws Exception;
-
-        default void runRegardless(MeasureAction action) {
-            try { run(action); } catch (Exception e) { e.printStackTrace(); }
         }
 
     }
