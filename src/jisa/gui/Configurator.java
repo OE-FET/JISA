@@ -298,8 +298,8 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
             addSeparator();
 
-            fourPP     = addCheckBox("Four-Wire Measurements");
             lineFilter = addCheckBox("Line Filtering");
+            fourPP     = addCheckBox("Four-Wire Measurements");
 
             manI.setOnChange(this::updateGUI);
 
