@@ -269,7 +269,7 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
-    public void useFourProbe(int channel, boolean fourProbes) throws DeviceException, IOException {
+    public void setFourProbeEnabled(int channel, boolean fourProbes) throws DeviceException, IOException {
 
         checkChannel(channel);
 
@@ -278,7 +278,7 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
-    public boolean isUsingFourProbe(int channel) throws DeviceException, IOException {
+    public boolean isFourProbeEnabled(int channel) throws DeviceException, IOException {
 
         checkChannel(channel);
 
@@ -721,6 +721,16 @@ public class K2600B extends VISADevice implements MCSMU {
                 return OffMode.NORMAL;
 
         }
+    }
+
+    @Override
+    public boolean isLineFilterEnabled(int channel) throws DeviceException, IOException {
+        return false;
+    }
+
+    @Override
+    public void setLineFilterEnabled(int channel, boolean enabled) throws DeviceException, IOException {
+
     }
 
     private enum SFunc {

@@ -132,12 +132,12 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
         this(address, null);
     }
 
-    public void useFourProbe(boolean fourProbe) throws IOException {
+    public void setFourProbeEnabled(boolean fourProbe) throws IOException {
         write("VOLT:RSEN %s", fourProbe ? OUTPUT_ON : OUTPUT_OFF);
         write("CURR:RSEN %s", fourProbe ? OUTPUT_ON : OUTPUT_OFF);
     }
 
-    public boolean isUsingFourProbe() throws IOException {
+    public boolean isFourProbeEnabled() throws IOException {
         return query(C_QUERY_PROBE_MODE).trim().equals(OUTPUT_ON);
     }
 

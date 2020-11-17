@@ -124,6 +124,16 @@ public class K2450 extends KeithleySCPI {
 
     }
 
+    @Override
+    public boolean isLineFilterEnabled() {
+        return false;
+    }
+
+    @Override
+    public void setLineFilterEnabled(boolean enabled) {
+        System.err.println("Keithley 2450s do not have a line-filter feature.");
+    }
+
     public boolean isLimitTripped() throws IOException {
         boolean iTrip = query(":SOUR:VOLT:iLIM:TRIP?").equals(OUTPUT_ON);
         boolean vTrip = query(":SOUR:CURR:vLIM:TRIP?").equals(OUTPUT_ON);

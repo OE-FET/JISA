@@ -142,6 +142,26 @@ public interface IMeter extends Instrument {
      */
     boolean isOn() throws IOException, DeviceException;
 
+    /**
+     * Returns whether the voltmeter is using any line-frequency filtering
+     *
+     * @return Using line filter?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    boolean isLineFilterEnabled() throws DeviceException, IOException;
+
+    /**
+     * Sets whether the voltmeter should use any line-frequency filtering (if available)
+     *
+     * @param enabled Use line filter?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setLineFilterEnabled(boolean enabled) throws DeviceException, IOException;
+
 
     default void waitForStableCurrent(double pctMargin, int duration) throws IOException, DeviceException, InterruptedException {
 

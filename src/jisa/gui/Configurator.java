@@ -1,11 +1,7 @@
 package jisa.gui;
 
-import javafx.geometry.Insets;
-import javafx.scene.Node;
-import javafx.scene.layout.BorderPane;
 import jisa.Util;
 import jisa.control.ConfigBlock;
-import jisa.control.ConfigStore;
 import jisa.control.IConf;
 import jisa.devices.*;
 import jisa.enums.Terminals;
@@ -15,10 +11,10 @@ import java.io.IOException;
 
 public abstract class Configurator<I extends Instrument> extends Fields implements IConf<I> {
 
-    private   JSONObject     data       = null;
     protected Connector<I>[] instruments;
     protected Field<Boolean> enabled    = addCheckBox("Enabled", true);
     protected Field<Integer> instrument = addChoice("Instrument");
+    private   JSONObject     data       = null;
 
     public Configurator(String title, ConfigBlock configBlock, Connector<I>... instruments) {
         super(title);
@@ -53,9 +49,9 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
         for (int i = 0; i < instruments.length; i++) {
             names[i] = String.format(
-                "%s (%s)",
-                instruments[i].getTitle(),
-                instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED"
+                    "%s (%s)",
+                    instruments[i].getTitle(),
+                    instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED"
             );
         }
 
@@ -69,7 +65,7 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
     protected abstract void update();
 
     protected void updateGUI() {
-        
+
         if (!enabled.get()) {
             setFieldsDisabled(true);
             enabled.setDisabled(false);
@@ -77,7 +73,7 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             setFieldsDisabled(false);
             update();
         }
-        
+
     }
 
     public static class SMU extends Configurator<jisa.devices.SMU> {
@@ -90,6 +86,7 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         private Field<Double>  vrn;
         private Field<Boolean> iar;
         private Field<Double>  irn;
+        private Field<Boolean> lft;
         private Field<Boolean> fpp;
 
         public SMU(String title, ConfigBlock config, Connector<jisa.devices.SMU>... instruments) {
@@ -98,6 +95,14 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
         public SMU(String title, Connector<jisa.devices.SMU>... instruments) {
             this(title, null, instruments);
+        }
+
+        public SMU(String title, ConfigBlock config, ConnectorGrid grid) {
+            this(title, config, grid.getInstrumentsByType(jisa.devices.SMU.class));
+        }
+
+        public SMU(String title, ConnectorGrid grid) {
+            this(title, grid.getInstrumentsByType(jisa.devices.SMU.class));
         }
 
         @Override
@@ -123,16 +128,9 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
             addSeparator();
 
+            lft = addCheckBox("Line Filtering", false);
             fpp = addCheckBox("Four-Wire Measurements", false);
 
-        }
-
-        public SMU(String title, ConfigBlock config, ConnectorGrid grid) {
-            this(title, config, grid.getInstrumentsByType(jisa.devices.SMU.class));
-        }
-
-        public SMU(String title, ConnectorGrid grid) {
-            this(title, grid.getInstrumentsByType(jisa.devices.SMU.class));
         }
 
         @Override
@@ -163,19 +161,19 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
                 if (smu != null) {
                     trm.editValues(
-                        String.format("Front (%s)", smu.getTerminalType(Terminals.FRONT).name()),
-                        String.format("Rear (%s)", smu.getTerminalType(Terminals.REAR).name())
+                            String.format("Front (%s)", smu.getTerminalType(Terminals.FRONT).name()),
+                            String.format("Rear (%s)", smu.getTerminalType(Terminals.REAR).name())
                     );
                 } else {
                     trm.editValues(
-                        "Front (NONE)",
-                        "Rear (NONE)"
+                            "Front (NONE)",
+                            "Rear (NONE)"
                     );
                 }
             } catch (Exception e) {
                 trm.editValues(
-                    "Front (UNKNOWN)",
-                    "Rear (UNKNOWN)"
+                        "Front (UNKNOWN)",
+                        "Rear (UNKNOWN)"
                 );
             }
 
@@ -236,7 +234,8 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
                     toReturn.setCurrentRange(irn.get());
                 }
 
-                toReturn.useFourProbe(fpp.get());
+                toReturn.setLineFilterEnabled(lft.get());
+                toReturn.setFourProbeEnabled(fpp.get());
 
             } catch (DeviceException | IOException e) {
                 return null;
@@ -256,6 +255,7 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
         private Field<Boolean> iar;
         private Field<Double>  irn;
         private Field<Boolean> fourPP;
+        private Field<Boolean> lineFilter;
         private Field<Boolean> manI;
         private Field<Double>  iValue;
 
@@ -267,6 +267,14 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
         public VMeter(String title, Connector<jisa.devices.VMeter>... instruments) {
             this(title, null, instruments);
+        }
+
+        public VMeter(String title, ConfigBlock config, ConnectorGrid grid) {
+            this(title, config, grid.getInstrumentsByType(jisa.devices.VMeter.class));
+        }
+
+        public VMeter(String title, ConnectorGrid grid) {
+            this(title, grid.getInstrumentsByType(jisa.devices.VMeter.class));
         }
 
         @Override
@@ -290,17 +298,11 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
             addSeparator();
 
-            fourPP = addCheckBox("Four-Wire Measurements");
+            fourPP     = addCheckBox("Four-Wire Measurements");
+            lineFilter = addCheckBox("Line Filtering");
+
             manI.setOnChange(this::updateGUI);
 
-        }
-
-        public VMeter(String title, ConfigBlock config, ConnectorGrid grid) {
-            this(title, config, grid.getInstrumentsByType(jisa.devices.VMeter.class));
-        }
-
-        public VMeter(String title, ConnectorGrid grid) {
-            this(title, grid.getInstrumentsByType(jisa.devices.VMeter.class));
         }
 
         @Override
@@ -424,8 +426,10 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
 
                 // Check if SMU
                 if (vMeter instanceof jisa.devices.SMU) {
-                    ((jisa.devices.SMU) vMeter).useFourProbe(fourPP.get());
+                    ((jisa.devices.SMU) vMeter).setFourProbeEnabled(fourPP.get());
                 }
+
+                vMeter.setLineFilterEnabled(lineFilter.get());
 
                 return vMeter;
 
@@ -452,18 +456,18 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             super(title, instruments);
         }
 
-        @Override
-        protected void makeFields() {
-            chn = addChoice("Sensor", 0, "Sensor 0", "Sensor 1", "Sensor 2", "Sensor 3");
-            rng = addDoubleField("Range [K]", 500.0);
-        }
-
         public TMeter(String title, ConfigBlock config, ConnectorGrid grid) {
             this(title, config, grid.getInstrumentsByType(jisa.devices.TMeter.class));
         }
 
         public TMeter(String title, ConnectorGrid grid) {
             this(title, grid.getInstrumentsByType(jisa.devices.TMeter.class));
+        }
+
+        @Override
+        protected void makeFields() {
+            chn = addChoice("Sensor", 0, "Sensor 0", "Sensor 1", "Sensor 2", "Sensor 3");
+            rng = addDoubleField("Range [K]", 500.0);
         }
 
         @Override
@@ -498,7 +502,6 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
                 chn.setDisabled(true);
 
             }
-
 
 
         }
@@ -564,6 +567,14 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             super(title, instruments);
         }
 
+        public TC(String title, ConfigBlock config, ConnectorGrid grid) {
+            this(title, config, grid.getInstrumentsByType(jisa.devices.TC.class));
+        }
+
+        public TC(String title, ConnectorGrid grid) {
+            this(title, grid.getInstrumentsByType(jisa.devices.TC.class));
+        }
+
         @Override
         protected void makeFields() {
 
@@ -623,15 +634,6 @@ public abstract class Configurator<I extends Instrument> extends Fields implemen
             }
 
 
-
-        }
-
-        public TC(String title, ConfigBlock config, ConnectorGrid grid) {
-            this(title, config, grid.getInstrumentsByType(jisa.devices.TC.class));
-        }
-
-        public TC(String title, ConnectorGrid grid) {
-            this(title, grid.getInstrumentsByType(jisa.devices.TC.class));
         }
 
         @Override

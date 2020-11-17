@@ -5,7 +5,6 @@ import jisa.enums.AMode;
 import jisa.enums.Source;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
-import jisa.experiment.IVPoint;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -172,19 +171,19 @@ public class SMUCluster implements MCSMU {
     }
 
     @Override
-    public void useFourProbe(int channel, boolean fourProbes) throws DeviceException, IOException {
+    public void setFourProbeEnabled(int channel, boolean fourProbes) throws DeviceException, IOException {
         if (devices.size() <= channel) {
             throw new DeviceException("Channel does not exist!");
         }
-        devices.get(channel).useFourProbe(fourProbes);
+        devices.get(channel).setFourProbeEnabled(fourProbes);
     }
 
     @Override
-    public boolean isUsingFourProbe(int channel) throws DeviceException, IOException {
+    public boolean isFourProbeEnabled(int channel) throws DeviceException, IOException {
         if (devices.size() <= channel) {
             throw new DeviceException("Channel does not exist!");
         }
-        return devices.get(channel).isUsingFourProbe();
+        return devices.get(channel).isFourProbeEnabled();
     }
 
     @Override
@@ -389,6 +388,18 @@ public class SMUCluster implements MCSMU {
     @Override
     public OffMode getOffMode(int channel) throws DeviceException, IOException {
         return null;
+    }
+
+    @Override
+    public boolean isLineFilterEnabled(int channel) throws DeviceException, IOException {
+        checkChannel(channel);
+        return devices.get(channel).isLineFilterEnabled();
+    }
+
+    @Override
+    public void setLineFilterEnabled(int channel, boolean enabled) throws DeviceException, IOException {
+        checkChannel(channel);
+        devices.get(channel).setLineFilterEnabled(enabled);
     }
 
     public Iterator<SMU> iterator() {

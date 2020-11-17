@@ -356,12 +356,12 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
     }
 
     @Override
-    public void useFourProbe(int channel, boolean fourProbes) throws DeviceException, IOException {
+    public void setFourProbeEnabled(int channel, boolean fourProbes) throws DeviceException, IOException {
         checkChannel(channel);
     }
 
     @Override
-    public boolean isUsingFourProbe(int channel) throws DeviceException, IOException {
+    public boolean isFourProbeEnabled(int channel) throws DeviceException, IOException {
         checkChannel(channel);
         return false;
     }

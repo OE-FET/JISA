@@ -72,6 +72,16 @@ public class K6430 extends KeithleySCPI {
 
     }
 
+    @Override
+    public boolean isLineFilterEnabled() throws DeviceException, IOException {
+        return false;
+    }
+
+    @Override
+    public void setLineFilterEnabled(boolean enabled) throws DeviceException, IOException {
+
+    }
+
     protected double measureVoltage() throws IOException {
         write(":SENS:FUNC \"VOLT\"");
         write(":FORMAT:ELEMENTS VOLT");
@@ -98,11 +108,11 @@ public class K6430 extends KeithleySCPI {
         write(":NPLC %e", seconds * LINE_FREQUENCY);
     }
 
-    public void useFourProbe(boolean flag) throws IOException {
+    public void setFourProbeEnabled(boolean flag) throws IOException {
         write(":SYST:RSENSE %s", flag ? OUTPUT_ON : OUTPUT_OFF);
     }
 
-    public boolean isUsingFourProbe() throws IOException {
+    public boolean isFourProbeEnabled() throws IOException {
         return query(":SYST:RSENSE?").equals(OUTPUT_ON);
     }
 

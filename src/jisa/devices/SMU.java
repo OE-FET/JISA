@@ -174,7 +174,7 @@ public interface SMU extends IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void useFourProbe(boolean fourProbes) throws DeviceException, IOException;
+    void setFourProbeEnabled(boolean fourProbes) throws DeviceException, IOException;
 
     /**
      * Returns whether the device is currently configured to use all four probes.
@@ -184,7 +184,7 @@ public interface SMU extends IVMeter, IVSource {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    boolean isUsingFourProbe() throws DeviceException, IOException;
+    boolean isFourProbeEnabled() throws DeviceException, IOException;
 
     /**
      * Sets both the averaging mode and count together.
@@ -527,6 +527,26 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     void setOffMode(OffMode mode) throws DeviceException, IOException;
+
+    /**
+     * Returns whether the voltmeter is using any line-frequency filtering
+     *
+     * @return Using line filter?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    boolean isLineFilterEnabled() throws DeviceException, IOException;
+
+    /**
+     * Sets whether the voltmeter should use any line-frequency filtering (if available)
+     *
+     * @param enabled Use line filter?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setLineFilterEnabled(boolean enabled) throws DeviceException, IOException;
 
     /**
      * Returns a combined voltage and current measurement.

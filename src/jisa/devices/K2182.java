@@ -168,6 +168,31 @@ public class K2182 extends VISADevice implements VMeter {
     }
 
     @Override
+    public boolean isLineFilterEnabled() throws IOException {
+
+        switch (query(":SENSE:VOLT:LPASS?")) {
+
+            case "1":
+            case "ON":
+                return true;
+
+            case "0":
+            case "OFF":
+                return false;
+
+            default:
+                throw new IOException("Invalid response from Keithley 2182 Voltmeter.");
+
+        }
+
+    }
+
+    @Override
+    public void setLineFilterEnabled(boolean enabled) throws IOException {
+        write(":SENSE:VOLT:LPASS %s", enabled ? "ON" : "OFF");
+    }
+
+    @Override
     public Terminals getTerminals() {
         return Terminals.FRONT;
     }

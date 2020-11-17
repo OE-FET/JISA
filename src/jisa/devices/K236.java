@@ -213,13 +213,13 @@ public class K236 extends VISADevice implements SMU {
     }
 
     @Override
-    public void useFourProbe(boolean fourProbes) throws IOException {
+    public void setFourProbeEnabled(boolean fourProbes) throws IOException {
         write(C_SET_SENSE, fourProbes ? SENSE_REMOTE : SENSE_LOCAL);
         remote = fourProbes;
     }
 
     @Override
-    public boolean isUsingFourProbe() throws IOException {
+    public boolean isFourProbeEnabled() throws IOException {
         return getMeasureParams().fourProbe;
     }
 
@@ -641,6 +641,16 @@ public class K236 extends VISADevice implements SMU {
     @Override
     public void setOffMode(OffMode mode) {
         Util.errLog.println("WARNING: Keithley 236 SMUs do not have configurable off states.");
+    }
+
+    @Override
+    public boolean isLineFilterEnabled() throws DeviceException, IOException {
+        return false;
+    }
+
+    @Override
+    public void setLineFilterEnabled(boolean enabled) throws DeviceException, IOException {
+        System.err.println("Keithley 236 SMUs do not have line-filters.");
     }
 
     @Override

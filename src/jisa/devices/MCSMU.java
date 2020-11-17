@@ -1,5 +1,6 @@
 package jisa.devices;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.enums.AMode;
 import jisa.enums.Source;
@@ -7,14 +8,11 @@ import jisa.enums.TType;
 import jisa.enums.Terminals;
 import jisa.experiment.IVPoint;
 import jisa.experiment.MCIVPoint;
-import jisa.experiment.ResultList;
-import jisa.Util;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.Semaphore;
 
 /**
  * Abstract class defining the standard interface for controller Multiple-Channel SMUs.
@@ -47,6 +45,20 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     }
 
     /**
+     * Sets the default channel to source the given voltage (when turned on)
+     *
+     * @param voltage Voltage to source, in Volts
+     *
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    default void setVoltage(double voltage) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setVoltage(cn, voltage);
+        }
+    }
+
+    /**
      * Returns the current of the specified channel
      *
      * @param channel Channel number
@@ -71,42 +83,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     }
 
     /**
-     * Sets the specified channel to source the given voltage (when turned on)
-     *
-     * @param channel Channel number
-     * @param voltage Voltage to source, in Volts
-     *
-     * @throws DeviceException Upon device compatibility error
-     * @throws IOException     Upon communications error
-     */
-    void setVoltage(int channel, double voltage) throws DeviceException, IOException;
-
-    /**
-     * Sets the default channel to source the given voltage (when turned on)
-     *
-     * @param voltage Voltage to source, in Volts
-     *
-     * @throws DeviceException Upon device compatibility error
-     * @throws IOException     Upon communications error
-     */
-    default void setVoltage(double voltage) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setVoltage(cn, voltage);
-        }
-    }
-
-    /**
-     * Sets the specified channel to source the given current (when turned on)
-     *
-     * @param channel Channel number
-     * @param current Current to source, in Amps
-     *
-     * @throws DeviceException Upon device compatibility error
-     * @throws IOException     Upon communications error
-     */
-    void setCurrent(int channel, double current) throws DeviceException, IOException;
-
-    /**
      * Sets the default channel to source the given current (when turned on)
      *
      * @param current Current to source, in Amps
@@ -119,6 +95,28 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
             setCurrent(cn, current);
         }
     }
+
+    /**
+     * Sets the specified channel to source the given voltage (when turned on)
+     *
+     * @param channel Channel number
+     * @param voltage Voltage to source, in Volts
+     *
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    void setVoltage(int channel, double voltage) throws DeviceException, IOException;
+
+    /**
+     * Sets the specified channel to source the given current (when turned on)
+     *
+     * @param channel Channel number
+     * @param current Current to source, in Amps
+     *
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    void setCurrent(int channel, double current) throws DeviceException, IOException;
 
     /**
      * Enables output on the specified channel
@@ -200,20 +198,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     void setSource(int channel, Source source) throws DeviceException, IOException;
 
     /**
-     * Sets the source mode of all channels
-     *
-     * @param source VOLTAGE or CURRENT
-     *
-     * @throws DeviceException Upon device compatibility error
-     * @throws IOException     Upon communications error
-     */
-    default void setSource(Source source) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setSource(cn, source);
-        }
-    }
-
-    /**
      * Returns the source mode of the specified channel
      *
      * @param channel Channel number
@@ -235,6 +219,20 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      */
     default Source getSource() throws DeviceException, IOException {
         return getSource(0);
+    }
+
+    /**
+     * Sets the source mode of all channels
+     *
+     * @param source VOLTAGE or CURRENT
+     *
+     * @throws DeviceException Upon device compatibility error
+     * @throws IOException     Upon communications error
+     */
+    default void setSource(Source source) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setSource(cn, source);
+        }
     }
 
     /**
@@ -327,7 +325,7 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void useFourProbe(int channel, boolean fourProbes) throws DeviceException, IOException;
+    void setFourProbeEnabled(int channel, boolean fourProbes) throws DeviceException, IOException;
 
     /**
      * Sets whether the SMU should apply source using FORCE probes and measure using separate SENSE probes or whether is should
@@ -338,10 +336,10 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    default void useFourProbe(boolean fourProbes) throws DeviceException, IOException {
+    default void setFourProbeEnabled(boolean fourProbes) throws DeviceException, IOException {
 
         for (int cn = 0; cn < getNumChannels(); cn++) {
-            useFourProbe(cn, fourProbes);
+            setFourProbeEnabled(cn, fourProbes);
         }
 
     }
@@ -356,7 +354,7 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    boolean isUsingFourProbe(int channel) throws DeviceException, IOException;
+    boolean isFourProbeEnabled(int channel) throws DeviceException, IOException;
 
     /**
      * Returns whether the device is currently configured to use all four probes on the default channel.
@@ -366,8 +364,8 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    default boolean isUsingFourProbe() throws DeviceException, IOException {
-        return isUsingFourProbe(0);
+    default boolean isFourProbeEnabled() throws DeviceException, IOException {
+        return isFourProbeEnabled(0);
     }
 
     /**
@@ -382,20 +380,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     void setAverageMode(int channel, AMode mode) throws DeviceException, IOException;
 
     /**
-     * Sets which type of averaging the SMU should use when making a measurement on all channels.
-     *
-     * @param mode Averaging mode
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default void setAverageMode(AMode mode) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setAverageMode(cn, mode);
-        }
-    }
-
-    /**
      * Sets how many measurements to use when averaging on the specified channel.
      *
      * @param channel Channel number
@@ -405,21 +389,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      * @throws IOException     Upon communications error
      */
     void setAverageCount(int channel, int count) throws DeviceException, IOException;
-
-    /**
-     * Sets how many measurements to use when averaging on all channels.
-     *
-     * @param count Averaging count
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default void setAverageCount(int count) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setAverageCount(cn, count);
-        }
-    }
-
 
     /**
      * Sets both the averaging mode and count together for the specified channel.
@@ -476,6 +445,20 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     }
 
     /**
+     * Sets how many measurements to use when averaging on all channels.
+     *
+     * @param count Averaging count
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default void setAverageCount(int count) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setAverageCount(cn, count);
+        }
+    }
+
+    /**
      * Returns which averaging mode the SMU is currently using for measurements on the specified channel.
      *
      * @param channel Channel number
@@ -500,6 +483,20 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     }
 
     /**
+     * Sets which type of averaging the SMU should use when making a measurement on all channels.
+     *
+     * @param mode Averaging mode
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default void setAverageMode(AMode mode) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setAverageMode(cn, mode);
+        }
+    }
+
+    /**
      * Sets the range (and thus precision) to use for the sourced quantity on the given channel.
      *
      * @param channel Channel number
@@ -509,20 +506,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      * @throws IOException     Upon communications error
      */
     void setSourceRange(int channel, double value) throws DeviceException, IOException;
-
-    /**
-     * Sets the range (and thus precision) to use for the sourced quantity on all channels.
-     *
-     * @param value Range value, in Volts or Amps
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default void setSourceRange(double value) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setSourceRange(cn, value);
-        }
-    }
 
     /**
      * Returns the range being used for the sourced quantity on the specified channel.
@@ -546,6 +529,20 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      */
     default double getSourceRange() throws DeviceException, IOException {
         return getSourceRange(0);
+    }
+
+    /**
+     * Sets the range (and thus precision) to use for the sourced quantity on all channels.
+     *
+     * @param value Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default void setSourceRange(double value) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setSourceRange(cn, value);
+        }
     }
 
     /**
@@ -606,20 +603,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     void setMeasureRange(int channel, double value) throws DeviceException, IOException;
 
     /**
-     * Sets the range (and thus precision) to use for the measured quantity on all channels.
-     *
-     * @param value Range value, in Volts or Amps
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default void setMeasureRange(double value) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setMeasureRange(cn, value);
-        }
-    }
-
-    /**
      * Returns the range being used for the measured quantity on the specified channel.
      *
      * @param channel Channel number
@@ -641,6 +624,20 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      */
     default double getMeasureRange() throws DeviceException, IOException {
         return getMeasureRange(0);
+    }
+
+    /**
+     * Sets the range (and thus precision) to use for the measured quantity on all channels.
+     *
+     * @param value Range value, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default void setMeasureRange(double value) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setMeasureRange(cn, value);
+        }
     }
 
     /**
@@ -701,20 +698,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     void setVoltageRange(int channel, double value) throws DeviceException, IOException;
 
     /**
-     * Sets the range (and thus precision) to use for voltage values on all channels.
-     *
-     * @param value Range, in Volts
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default void setVoltageRange(double value) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setVoltageRange(cn, value);
-        }
-    }
-
-    /**
      * Returns the range being used for voltage values on the specified channel.
      *
      * @param channel Channel number
@@ -736,6 +719,20 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      */
     default double getVoltageRange() throws DeviceException, IOException {
         return getVoltageRange(0);
+    }
+
+    /**
+     * Sets the range (and thus precision) to use for voltage values on all channels.
+     *
+     * @param value Range, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default void setVoltageRange(double value) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setVoltageRange(cn, value);
+        }
     }
 
     /**
@@ -796,20 +793,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     void setCurrentRange(int channel, double value) throws DeviceException, IOException;
 
     /**
-     * Sets the range (and thus precision) to use for current values on all channels.
-     *
-     * @param value Range, in Amps
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default void setCurrentRange(double value) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setCurrentRange(cn, value);
-        }
-    }
-
-    /**
      * Returns the range being used for current values on the specified channel.
      *
      * @param channel Channel number
@@ -831,6 +814,20 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      */
     default double getCurrentRange() throws DeviceException, IOException {
         return getCurrentRange(0);
+    }
+
+    /**
+     * Sets the range (and thus precision) to use for current values on all channels.
+     *
+     * @param value Range, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default void setCurrentRange(double value) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setCurrentRange(cn, value);
+        }
     }
 
     /**
@@ -891,20 +888,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     void setOutputLimit(int channel, double value) throws DeviceException, IOException;
 
     /**
-     * Sets the limit (compliance) on whichever quantity is not being sourced on all channels.
-     *
-     * @param value Limit, in Volts or Amps
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default void setOutputLimit(double value) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setOutputLimit(cn, value);
-        }
-    }
-
-    /**
      * Returns the limit (compliance) on whichever quantity is not being sourced on the specified channel.
      *
      * @param channel Channel number
@@ -929,6 +912,20 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     }
 
     /**
+     * Sets the limit (compliance) on whichever quantity is not being sourced on all channels.
+     *
+     * @param value Limit, in Volts or Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default void setOutputLimit(double value) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setOutputLimit(cn, value);
+        }
+    }
+
+    /**
      * Sets the limit (compliance) on voltage values when not being sourced on the specified channel.
      *
      * @param channel Channel number
@@ -938,20 +935,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      * @throws IOException     Upon communications error
      */
     void setVoltageLimit(int channel, double value) throws DeviceException, IOException;
-
-    /**
-     * Sets the limit (compliance) on voltage when not being sourced on all channels.
-     *
-     * @param value Limit, in Volts
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default void setVoltageLimit(double value) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setVoltageLimit(cn, value);
-        }
-    }
 
     /**
      * Returns the limit (compliance) on voltage when not being sourced on the specified channel.
@@ -978,6 +961,20 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     }
 
     /**
+     * Sets the limit (compliance) on voltage when not being sourced on all channels.
+     *
+     * @param value Limit, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default void setVoltageLimit(double value) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setVoltageLimit(cn, value);
+        }
+    }
+
+    /**
      * Sets the limit (compliance) on current when not being sourced on the specified channel.
      *
      * @param channel Channel number
@@ -987,20 +984,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      * @throws IOException     Upon communications error
      */
     void setCurrentLimit(int channel, double value) throws DeviceException, IOException;
-
-    /**
-     * Sets the limit (compliance) on current when not being sourced on the all channels.
-     *
-     * @param value Limit, in Amps
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default void setCurrentLimit(double value) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setCurrentLimit(cn, value);
-        }
-    }
 
     /**
      * Returns the limit (compliance) on current when not being sourced on the specified channel.
@@ -1027,6 +1010,20 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
     }
 
     /**
+     * Sets the limit (compliance) on current when not being sourced on the all channels.
+     *
+     * @param value Limit, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default void setCurrentLimit(double value) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setCurrentLimit(cn, value);
+        }
+    }
+
+    /**
      * Sets the integration time to use for measurements on the specified channel.
      *
      * @param channel Channel number
@@ -1036,20 +1033,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      * @throws IOException     Upon communications error
      */
     void setIntegrationTime(int channel, double time) throws DeviceException, IOException;
-
-    /**
-     * Sets the integration time to use for measurements on all channels.
-     *
-     * @param time Integration time, in seconds
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    default void setIntegrationTime(double time) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setIntegrationTime(cn, time);
-        }
-    }
 
     /**
      * Returns the integration time used for measurements on the specified channel.
@@ -1075,6 +1058,20 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         return getIntegrationTime(0);
     }
 
+    /**
+     * Sets the integration time to use for measurements on all channels.
+     *
+     * @param time Integration time, in seconds
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default void setIntegrationTime(double time) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setIntegrationTime(cn, time);
+        }
+    }
+
     TType getTerminalType(int channel, Terminals terminals) throws DeviceException, IOException;
 
     default TType getTerminalType(Terminals terminals) throws DeviceException, IOException {
@@ -1083,20 +1080,25 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
 
     void setTerminals(int channel, Terminals terminals) throws DeviceException, IOException;
 
-    default void setTerminals(Terminals terminals) throws DeviceException, IOException {
-        for (int cn = 0; cn < getNumChannels(); cn++) {
-            setTerminals(cn, terminals);
-        }
-    }
-
     Terminals getTerminals(int channel) throws DeviceException, IOException;
 
     default Terminals getTerminals() throws DeviceException, IOException {
         return getTerminals(0);
     }
 
+    default void setTerminals(Terminals terminals) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setTerminals(cn, terminals);
+        }
+    }
 
     void setOffMode(int channel, OffMode mode) throws DeviceException, IOException;
+
+    OffMode getOffMode(int channel) throws DeviceException, IOException;
+
+    default OffMode getOffMode() throws DeviceException, IOException {
+        return getOffMode(0);
+    }
 
     default void setOffMode(OffMode mode) throws DeviceException, IOException {
         for (int cn = 0; cn < getNumChannels(); cn++) {
@@ -1104,10 +1106,54 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         }
     }
 
-    OffMode getOffMode(int channel) throws DeviceException, IOException;
+    /**
+     * Returns whether the voltmeter is using any line-frequency filtering
+     *
+     * @param channel Channel number
+     *
+     * @return Using line filter?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    boolean isLineFilterEnabled(int channel) throws DeviceException, IOException;
 
-    default OffMode getOffMode() throws DeviceException, IOException {
-        return getOffMode(0);
+    /**
+     * Sets whether the voltmeter should use any line-frequency filtering (if available)
+     *
+     * @param channel Channel number
+     * @param enabled Use line filter?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setLineFilterEnabled(int channel, boolean enabled) throws DeviceException, IOException;
+    /**
+     * Returns whether the voltmeter is using any line-frequency filtering
+     *
+     * @return Using line filter?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default boolean isLineFilterEnabled() throws DeviceException, IOException {
+        return isLineFilterEnabled(0);
+    }
+
+    /**
+     * Sets whether the voltmeter should use any line-frequency filtering (if available)
+     *
+     * @param enabled Use line filter?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default void setLineFilterEnabled(boolean enabled) throws DeviceException, IOException {
+
+        for (int i = 0; i < getNumChannels(); i++) {
+            setLineFilterEnabled(i, enabled);
+        }
+
     }
 
     /**
@@ -1277,12 +1323,26 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
 
         if (!Util.isBetween(channel, 0, getNumChannels() - 1)) {
             throw new DeviceException(
-                "Invalid channel, %d, specified for %s SMU (valid range: 0 to %d)",
-                channel,
-                getClass().getSimpleName(),
-                getNumChannels() - 1
+                    "Invalid channel, %d, specified for %s SMU (valid range: 0 to %d)",
+                    channel,
+                    getClass().getSimpleName(),
+                    getNumChannels() - 1
             );
         }
+
+    }
+
+    default Iterator<SMU> iterator() {
+
+        ArrayList<SMU> list = new ArrayList<>();
+        for (int i = 0; i < getNumChannels(); i++) {
+            try {
+                list.add(getChannel(i));
+            } catch (DeviceException ignored) {
+            }
+        }
+
+        return list.iterator();
 
     }
 
@@ -1305,13 +1365,13 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         }
 
         @Override
-        public double getCurrent() throws DeviceException, IOException {
-            return smu.getCurrent(channel);
+        public void setVoltage(double voltage) throws DeviceException, IOException {
+            smu.setVoltage(channel, voltage);
         }
 
         @Override
-        public void setVoltage(double voltage) throws DeviceException, IOException {
-            smu.setVoltage(channel, voltage);
+        public double getCurrent() throws DeviceException, IOException {
+            return smu.getCurrent(channel);
         }
 
         @Override
@@ -1335,13 +1395,13 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         }
 
         @Override
-        public void setSource(Source source) throws DeviceException, IOException {
-            smu.setSource(channel, source);
+        public Source getSource() throws DeviceException, IOException {
+            return smu.getSource(channel);
         }
 
         @Override
-        public Source getSource() throws DeviceException, IOException {
-            return smu.getSource(channel);
+        public void setSource(Source source) throws DeviceException, IOException {
+            smu.setSource(channel, source);
         }
 
         @Override
@@ -1360,23 +1420,13 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         }
 
         @Override
-        public void useFourProbe(boolean fourProbes) throws DeviceException, IOException {
-            smu.useFourProbe(channel, fourProbes);
+        public void setFourProbeEnabled(boolean fourProbes) throws DeviceException, IOException {
+            smu.setFourProbeEnabled(channel, fourProbes);
         }
 
         @Override
-        public boolean isUsingFourProbe() throws DeviceException, IOException {
-            return smu.isUsingFourProbe(channel);
-        }
-
-        @Override
-        public void setAverageMode(AMode mode) throws DeviceException, IOException {
-            smu.setAverageMode(channel, mode);
-        }
-
-        @Override
-        public void setAverageCount(int count) throws DeviceException, IOException {
-            smu.setAverageCount(channel, count);
+        public boolean isFourProbeEnabled() throws DeviceException, IOException {
+            return smu.isFourProbeEnabled(channel);
         }
 
         @Override
@@ -1385,18 +1435,28 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         }
 
         @Override
+        public void setAverageMode(AMode mode) throws DeviceException, IOException {
+            smu.setAverageMode(channel, mode);
+        }
+
+        @Override
         public int getAverageCount() throws DeviceException, IOException {
             return smu.getAverageCount(channel);
         }
 
         @Override
-        public void setSourceRange(double value) throws DeviceException, IOException {
-            smu.setSourceRange(channel, value);
+        public void setAverageCount(int count) throws DeviceException, IOException {
+            smu.setAverageCount(channel, count);
         }
 
         @Override
         public double getSourceRange() throws DeviceException, IOException {
             return smu.getSourceRange(channel);
+        }
+
+        @Override
+        public void setSourceRange(double value) throws DeviceException, IOException {
+            smu.setSourceRange(channel, value);
         }
 
         @Override
@@ -1410,13 +1470,13 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         }
 
         @Override
-        public void setMeasureRange(double value) throws DeviceException, IOException {
-            smu.setMeasureRange(channel, value);
+        public double getMeasureRange() throws DeviceException, IOException {
+            return smu.getMeasureRange(channel);
         }
 
         @Override
-        public double getMeasureRange() throws DeviceException, IOException {
-            return smu.getMeasureRange(channel);
+        public void setMeasureRange(double value) throws DeviceException, IOException {
+            smu.setMeasureRange(channel, value);
         }
 
         @Override
@@ -1430,13 +1490,13 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         }
 
         @Override
-        public void setVoltageRange(double value) throws DeviceException, IOException {
-            smu.setVoltageRange(channel, value);
+        public double getVoltageRange() throws DeviceException, IOException {
+            return smu.getVoltageRange(channel);
         }
 
         @Override
-        public double getVoltageRange() throws DeviceException, IOException {
-            return smu.getVoltageRange(channel);
+        public void setVoltageRange(double value) throws DeviceException, IOException {
+            smu.setVoltageRange(channel, value);
         }
 
         @Override
@@ -1450,13 +1510,13 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         }
 
         @Override
-        public void setCurrentRange(double value) throws DeviceException, IOException {
-            smu.setCurrentRange(channel, value);
+        public double getCurrentRange() throws DeviceException, IOException {
+            return smu.getCurrentRange(channel);
         }
 
         @Override
-        public double getCurrentRange() throws DeviceException, IOException {
-            return smu.getCurrentRange(channel);
+        public void setCurrentRange(double value) throws DeviceException, IOException {
+            smu.setCurrentRange(channel, value);
         }
 
         @Override
@@ -1470,18 +1530,13 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         }
 
         @Override
-        public void setOutputLimit(double value) throws DeviceException, IOException {
-            smu.setOutputLimit(channel, value);
-        }
-
-        @Override
         public double getOutputLimit() throws DeviceException, IOException {
             return smu.getOutputLimit(channel);
         }
 
         @Override
-        public void setVoltageLimit(double voltage) throws DeviceException, IOException {
-            smu.setVoltageLimit(channel, voltage);
+        public void setOutputLimit(double value) throws DeviceException, IOException {
+            smu.setOutputLimit(channel, value);
         }
 
         @Override
@@ -1490,8 +1545,8 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         }
 
         @Override
-        public void setCurrentLimit(double current) throws DeviceException, IOException {
-            smu.setCurrentLimit(channel, current);
+        public void setVoltageLimit(double voltage) throws DeviceException, IOException {
+            smu.setVoltageLimit(channel, voltage);
         }
 
         @Override
@@ -1500,8 +1555,8 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         }
 
         @Override
-        public void setIntegrationTime(double time) throws DeviceException, IOException {
-            smu.setIntegrationTime(channel, time);
+        public void setCurrentLimit(double current) throws DeviceException, IOException {
+            smu.setCurrentLimit(channel, current);
         }
 
         @Override
@@ -1509,13 +1564,13 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
             return smu.getIntegrationTime(channel);
         }
 
-        public TType getTerminalType(Terminals terminals) throws DeviceException, IOException {
-            return smu.getTerminalType(channel, terminals);
+        @Override
+        public void setIntegrationTime(double time) throws DeviceException, IOException {
+            smu.setIntegrationTime(channel, time);
         }
 
-        @Override
-        public void setTerminals(Terminals terminals) throws DeviceException, IOException {
-            smu.setTerminals(channel, terminals);
+        public TType getTerminalType(Terminals terminals) throws DeviceException, IOException {
+            return smu.getTerminalType(channel, terminals);
         }
 
         @Override
@@ -1524,13 +1579,28 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         }
 
         @Override
-        public void setOffMode(OffMode mode) throws DeviceException, IOException {
-            smu.setOffMode(channel, mode);
+        public void setTerminals(Terminals terminals) throws DeviceException, IOException {
+            smu.setTerminals(channel, terminals);
         }
 
         @Override
         public OffMode getOffMode() throws DeviceException, IOException {
             return smu.getOffMode(channel);
+        }
+
+        @Override
+        public void setOffMode(OffMode mode) throws DeviceException, IOException {
+            smu.setOffMode(channel, mode);
+        }
+
+        @Override
+        public boolean isLineFilterEnabled() throws DeviceException, IOException {
+            return smu.isLineFilterEnabled(channel);
+        }
+
+        @Override
+        public void setLineFilterEnabled(boolean enabled) throws DeviceException, IOException {
+            smu.setLineFilterEnabled(channel, enabled);
         }
 
         @Override
@@ -1547,20 +1617,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         public Address getAddress() {
             return smu.getAddress();
         }
-
-    }
-
-    default Iterator<SMU> iterator() {
-
-        ArrayList<SMU> list = new ArrayList<>();
-        for (int i = 0; i < getNumChannels(); i++) {
-            try {
-                list.add(getChannel(i));
-            } catch (DeviceException ignored) {
-            }
-        }
-
-        return list.iterator();
 
     }
 

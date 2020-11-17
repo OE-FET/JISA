@@ -30,6 +30,16 @@ public class Agilent4156X extends Agilent415XX {
         return CurrRange.fromCurrent(UnitType.SMU, current);
     }
 
+    @Override
+    public boolean isLineFilterEnabled(int channel) {
+        return false;
+    }
+
+    @Override
+    public void setLineFilterEnabled(int channel, boolean enabled) {
+        System.err.println("Agilent 4155X SPAs have no line-filters.");
+    }
+
     protected enum VoltRange implements AgilentRange {
 
         // Ranges for normal SMU units

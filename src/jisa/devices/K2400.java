@@ -53,4 +53,14 @@ public class K2400 extends KeithleySCPI {
 
     }
 
+    @Override
+    public boolean isLineFilterEnabled() throws DeviceException, IOException {
+        return false;
+    }
+
+    @Override
+    public void setLineFilterEnabled(boolean enabled) throws DeviceException, IOException {
+
+    }
+
 }
