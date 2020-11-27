@@ -54,8 +54,6 @@ public class AgilentE3644A extends VISADevice implements DCPower {
 
         if (voltage > 8.0) {
             write("VOLTAGE:RANGE HIGH");
-        } else {
-            write("VOLTAGE:RANGE LOW");
         }
 
         write("VOLTAGE %e", voltage);
@@ -66,8 +64,6 @@ public class AgilentE3644A extends VISADevice implements DCPower {
 
         if (current > 4.0) {
             write("VOLTAGE:RANGE LOW");
-        } else {
-            write("VOLTAGE:RANGE HIGH");
         }
 
         write("CURRENT %e", current);
