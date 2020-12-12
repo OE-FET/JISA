@@ -6,6 +6,8 @@ import jisa.Util;
 import jisa.control.SRunnable;
 import jisa.gui.GUI;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -416,7 +418,13 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         private       ARunnable           before;
         private       ARunnable           after;
         private       String              name;
-        private       String              resultPath = null;
+        private       StringReturnable    resultPath = null;
+
+        public interface StringReturnable {
+
+            String getValue();
+
+        }
 
         public MeasureAction(String name, Measurement measurement, ARunnable before, ARunnable after) {
 
@@ -449,12 +457,14 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         }
 
         public String getResultsPath() {
-            return resultPath;
+            return resultPath.getValue();
         }
 
         public void setResultsPath(String path) {
-            resultPath = path;
+            resultPath = () -> path;
         }
+
+        public void setResultsPath(StringReturnable pathGenerator) { resultPath = pathGenerator; }
 
         public void doNotOutputResults() {
             resultPath = null;
@@ -472,6 +482,8 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         public void prepare() {
 
+            String resultPath = this.resultPath.getValue();
+
             if (resultPath == null) {
                 setData(measurement.newResults());
             } else {
@@ -484,6 +496,12 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
                         resPath = String.format(resultPath, getVariablePathString());
                     } else {
                         resPath = resultPath;
+                    }
+
+                    String[] parts = resPath.split("\\.");
+
+                    for (int i = 1; Files.exists(Path.of(resPath)); i++) {
+                        resPath = String.format("%s-repeat%d.%s", parts[0], i, parts[1]);
                     }
 
                     setData(measurement.newResults(resPath));
