@@ -1,5 +1,6 @@
 package jisa.experiment;
 
+import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.image.Image;
 import jisa.Util;
@@ -295,14 +296,14 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         private final SimpleObjectProperty<Status> status    = new SimpleObjectProperty<>(Status.NOT_STARTED);
         private final List<Listener<Status>>       listeners = new LinkedList<>();
         private final Map<String, String>          variables = new LinkedHashMap<>();
-        private       String                       name;
+        private final Property<String>             name      = new SimpleObjectProperty<>();
         private       Exception                    exception;
         private       Thread                       runThread;
         private       ResultTable                  data      = null;
 
         public Action(String name, SRunnable runnable) {
 
-            this.name     = name;
+            this.name.setValue(name);
             this.runnable = runnable;
 
             status.addListener((v, o, n) -> statusExecutor.submit(() -> {
@@ -311,12 +312,17 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         }
 
-        public String getName() {
+
+        public Property<String> nameProperty() {
             return name;
         }
 
+        public String getName() {
+            return name.getValue();
+        }
+
         public void setName(String name) {
-            this.name = name;
+            this.name.setValue(name);
         }
 
         public ResultTable getData() {
@@ -417,7 +423,6 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         private final Map<String, String> attributes = new HashMap<>();
         private       ARunnable           before;
         private       ARunnable           after;
-        private       String              name;
         private       StringReturnable    resultPath = null;
 
         public interface StringReturnable {
@@ -433,16 +438,15 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             this.measurement = measurement;
             this.before      = before;
             this.after       = after;
-            this.name        = name;
 
         }
 
         public String getName() {
 
             if (getVariables().isEmpty()) {
-                return String.format("%s (%s)", measurement.getName(), name);
+                return String.format("%s (%s)", measurement.getName(), super.getName());
             } else {
-                return String.format("%s (%s) (%s)", measurement.getName(), name, getVariableString());
+                return String.format("%s (%s) (%s)", measurement.getName(), super.getName(), getVariableString());
             }
 
         }
@@ -464,7 +468,9 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             resultPath = () -> path;
         }
 
-        public void setResultsPath(StringReturnable pathGenerator) { resultPath = pathGenerator; }
+        public void setResultsPath(StringReturnable pathGenerator) {
+            resultPath = pathGenerator;
+        }
 
         public void doNotOutputResults() {
             resultPath = null;
@@ -501,7 +507,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
                     String[] parts = resPath.split("\\.");
 
                     for (int i = 1; Files.exists(Path.of(resPath)); i++) {
-                        resPath = String.format("%s-repeat%d.%s", parts[0], i, parts[1]);
+                        resPath = String.format("%s (%d).%s", parts[0], i, parts[1]);
                     }
 
                     setData(measurement.newResults(resPath));
@@ -538,7 +544,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         public MeasureAction copy() {
 
-            MeasureAction action = new MeasureAction(name, measurement, before, after);
+            MeasureAction action = new MeasureAction(nameProperty().getValue(), measurement, before, after);
             action.attributes.putAll(attributes);
             action.getVariables().putAll(getVariables());
             action.resultPath = resultPath;

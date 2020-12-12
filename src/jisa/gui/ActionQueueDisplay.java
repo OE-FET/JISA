@@ -1,11 +1,9 @@
 package jisa.gui;
 
-import javafx.collections.ListChangeListener;
+import javafx.beans.InvalidationListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.control.Button;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -14,7 +12,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
-import jisa.control.SRunnable;
 import jisa.experiment.ActionQueue;
 import jisa.experiment.ActionQueue.Action;
 
@@ -76,6 +73,8 @@ public class ActionQueueDisplay extends JFXElement {
         Label     name   = new Label(action.getName());
         Label     status = new Label(action.getStatus().getText());
         name.setFont(Font.font(name.getFont().getName(), FontWeight.BOLD, 16));
+
+        action.nameProperty().addListener((o) -> GUI.runNow(() -> name.setText(action.getName())));
 
         action.addStatusListener((old, value) -> GUI.runNow(() -> {
 
