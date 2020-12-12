@@ -41,7 +41,10 @@ public interface DPLockIn extends LockIn {
 
     void autoOffsetY() throws IOException, DeviceException;
 
+    void autoOffsetAmplitude() throws IOException, DeviceException;
+
     default void autoOffset() throws IOException, DeviceException {
+        autoOffsetAmplitude();
         autoOffsetX();
         autoOffsetY();
     }

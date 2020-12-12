@@ -362,6 +362,14 @@ public class SR830 extends VISADevice implements DPLockIn {
     }
 
     @Override
+    public void autoOffsetAmplitude() throws IOException {
+
+        write("AOFF 3");
+        Util.sleep(100);
+
+    }
+
+    @Override
     public void autoRange() throws IOException, DeviceException {
 
         double timeConst = getTimeConstant();
