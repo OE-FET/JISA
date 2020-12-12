@@ -7,10 +7,8 @@ import jisa.Util;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SR830 extends VISADevice implements DPLockIn {
 
@@ -348,28 +346,47 @@ public class SR830 extends VISADevice implements DPLockIn {
     }
 
     @Override
-    public void autoOffset() throws IOException {
+    public void autoOffsetX() throws IOException {
 
-        write("AOFF 3");
+        write("AOFF 1");
+        Util.sleep(100);
 
-        while (isWorking()) {
-            Util.sleep(500);
-        }
+    }
+
+    @Override
+    public void autoOffsetY() throws IOException {
+
+        write("AOFF 2");
+        Util.sleep(100);
 
     }
 
     @Override
     public void autoRange() throws IOException, DeviceException {
 
-        setOffsetExpansion(0.0, 0.0);
-
         double timeConst = getTimeConstant();
-
         setTimeConstant(100e-6);
-        setRange(1.0);
-        Util.sleep(1000);
-        double voltage = getLockedAmplitude();
-        setRange(voltage);
+
+        Sensitivity found = Sensitivity.S_1V_uA;
+
+        for (Sensitivity sensitivity : Arrays.stream(Sensitivity.values()).sorted(Comparator.comparingDouble(Sensitivity::toDouble)).collect(Collectors.toList())) {
+
+            setRange(sensitivity.toDouble());
+            Util.sleep(100);
+            autoOffset();
+            Util.sleep(100);
+
+            if (Math.abs(getLockedX()) < sensitivity.toDouble() && Math.abs(getLockedY()) < sensitivity.toDouble()) {
+                found = sensitivity;
+                break;
+            }
+
+        }
+
+        setRange(found.toDouble());
+        Util.sleep(100);
+        autoOffset();
+        Util.sleep(100);
         setTimeConstant(timeConst);
 
     }

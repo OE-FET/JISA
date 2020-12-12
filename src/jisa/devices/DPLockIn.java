@@ -37,4 +37,13 @@ public interface DPLockIn extends LockIn {
      */
     double getLockedPhase() throws IOException, DeviceException;
 
+    void autoOffsetX() throws IOException, DeviceException;
+
+    void autoOffsetY() throws IOException, DeviceException;
+
+    default void autoOffset() throws IOException, DeviceException {
+        autoOffsetX();
+        autoOffsetY();
+    }
+
 }
