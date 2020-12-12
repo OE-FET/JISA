@@ -412,7 +412,7 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         Button button = new Button("Browse...");
         button.setMinWidth(Region.USE_PREF_SIZE);
         button.setOnAction(actionEvent -> {
-            String file = GUI.saveFileSelect();
+            String file = GUI.saveFileSelect(field.getText().isBlank() ? null : field.getText());
             if (file != null) {
                 field.setText(file);
             }
@@ -665,7 +665,7 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         Button button = new Button("Browse...");
         button.setMinWidth(Region.USE_PREF_SIZE);
         button.setOnAction(actionEvent -> {
-            String file = GUI.directorySelect();
+            String file = GUI.directorySelect(field.getText().isBlank() ? null : field.getText());
             if (file != null) {
                 field.setText(file);
             }
@@ -806,7 +806,7 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         Button button = new Button("Browse...");
         button.setMinWidth(Region.USE_PREF_SIZE);
         button.setOnAction(actionEvent -> {
-            String file = GUI.openFileSelect();
+            String file = GUI.openFileSelect(field.getText().isBlank() ? null : field.getText());
             if (file != null) {
                 field.setText(file);
             }

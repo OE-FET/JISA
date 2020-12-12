@@ -20,6 +20,7 @@ import jisa.experiment.Measurement;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -275,9 +276,19 @@ public class GUI extends Application {
      *
      * @return Selected file path, null if cancelled
      */
-    public static String saveFileSelect() {
+    public static String saveFileSelect(String startPath) {
 
         AtomicReference<File> file = new AtomicReference<>();
+
+        if (startPath != null) {
+
+            File start = new File(startPath);
+
+            if (start.exists()) {
+                FILE_CHOOSER.setInitialDirectory(start);
+            }
+
+        }
 
         GUI.runNow(() -> file.set(FILE_CHOOSER.showSaveDialog(new Stage())));
 
@@ -293,14 +304,29 @@ public class GUI extends Application {
 
     }
 
+    public static String saveFileSelect() {
+        return saveFileSelect(null);
+    }
+
     /**
      * Opens a file-select dialogue box for choosing a file path to write to.
      *
      * @return Selected file path, null if cancelled
      */
-    public static String directorySelect() {
+    public static String directorySelect(String startPath) {
 
         AtomicReference<File> file = new AtomicReference<>();
+
+        if (startPath != null) {
+
+            File start = new File(startPath);
+
+            if (start.exists()) {
+                DIRECTORY_CHOOSER.setInitialDirectory(start);
+            }
+
+        }
+
         GUI.runNow(() -> file.set(DIRECTORY_CHOOSER.showDialog(new Stage())));
 
         File chosen = file.get();
@@ -315,14 +341,29 @@ public class GUI extends Application {
 
     }
 
+    public static String directorySelect() {
+        return directorySelect(null);
+    }
+
     /**
      * Opens a file-select dialogue box for choosing an already existing file to open.
      *
      * @return Selected file path, null if cancelled
      */
-    public static String openFileSelect() {
+    public static String openFileSelect(String startPath) {
 
         AtomicReference<File> file = new AtomicReference<>();
+
+        if (startPath != null) {
+
+            File start = new File(startPath);
+
+            if (start.exists()) {
+                FILE_CHOOSER.setInitialDirectory(start);
+            }
+
+        }
+
         GUI.runNow(() -> file.set(FILE_CHOOSER.showOpenDialog(new Stage())));
 
         File chosen = file.get();
@@ -337,14 +378,28 @@ public class GUI extends Application {
 
     }
 
+    public static String openFileSelect() {
+        return openFileSelect(null);
+    }
+
     /**
      * Opens a file-select dialogue box for choosing an already existing file to open.
      *
      * @return Selected file path, null if cancelled
      */
-    public static List<String> openFileMultipleSelect() {
+    public static List<String> openFileMultipleSelect(String startPath) {
 
         AtomicReference<List<File>> file = new AtomicReference<>();
+
+        if (startPath != null) {
+
+            File start = new File(startPath);
+
+            if (start.exists()) {
+                FILE_CHOOSER.setInitialDirectory(start);
+            }
+
+        }
 
         GUI.runNow(() -> file.set(FILE_CHOOSER.showOpenMultipleDialog(new Stage())));
 
@@ -359,6 +414,10 @@ public class GUI extends Application {
             return paths;
         }
 
+    }
+
+    public static List<String> openFileMultipleSelect() {
+        return openFileMultipleSelect(null);
     }
 
     /**
