@@ -1,85 +1,33 @@
 package jisa.devices;
 
-import jisa.addresses.Address;
 import jisa.Util;
+import jisa.addresses.Address;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class IPS120 extends VISADevice {
+public class IPS120 extends VISADevice implements EMController {
 
-    private static final String TERMINATOR       = "\r";
-    private static final String C_SET_COMM_MODE  = "Q2";
-    private static final String C_READ_CHANNEL   = "R%d";
-    //private static final String C_SET_LOC_REM_STATUS            = "C%d";
-    private static final String C_SET_REM_STATUS = "C%d";
-
-    private static final String C_SET_ACTIVITY           = "A%d";
-    private static final String C_SET_MODE               = "M%d";
-    private static final String C_SET_POLARITY           = "P%d";
-    private static final String C_SET_CURRENT_SWEEP_RATE = "S%f";
-    private static final String C_SET_FIELD_SWEEP_RATE   = "T%f";
-    private static final String C_SET_TARGET_CURRENT     = "I%f";
-    private static final String C_SET_TARGET_FIELD       = "J%f";
-    private static final String C_SET_SWITCH_HEATER      = "H%d";
-    private static final String C_QUERY_STATUS           = "X";
-
-    private static final int MODE_AMPS  = 8;
-    private static final int MODE_TESLA = 9;
-
-    public enum Activity {
-        HOLD,
-        GO_SETPOINT,
-        GO_ZERO,
-        UNK,
-        CLAMP
-    }
-
-    public enum CStatus {
-        LOCAL_LOCKED,
-        REMOTE_LOCKED,
-        LOCAL_UNLOCKED,
-        REMOTE_UNLOCKED
-    }
-
-
-    public enum HeaterState {
-        OFF_ZERO(0),
-        ON(1),
-        OFF_NOT_ZERO(2),
-        HEATER_FAULT(5),
-        NO_SWITCH_FITTED(8);
-
-        public int code;
-
-        public static HeaterState fromCode(int code) {
-
-            for (HeaterState h : values()) {
-
-                if (h.code == code) {
-                    return h;
-                }
-
-            }
-
-            return null;
-
-        }
-
-        HeaterState(int c) {
-            code = c;
-        }
-
-        public int getCode() {
-            return code;
-        }
-
-    }
-
+    private static final String TERMINATOR                        = "\r";
+    private static final String C_SET_COMM_MODE                   = "Q2";
+    private static final String C_READ_CHANNEL                    = "R%d";
+    private static final String C_SET_REM_STATUS                  = "C%d";
+    private static final String C_SET_ACTIVITY                    = "A%d";
+    private static final String C_SET_MODE                        = "M%d";
+    private static final String C_SET_POLARITY                    = "P%d";
+    private static final String C_SET_CURRENT_SWEEP_RATE          = "S%f";
+    private static final String C_SET_FIELD_SWEEP_RATE            = "T%f";
+    private static final String C_SET_TARGET_CURRENT              = "I%f";
+    private static final String C_SET_TARGET_FIELD                = "J%f";
+    private static final String C_SET_SWITCH_HEATER               = "H%d";
+    private static final String C_QUERY_STATUS                    = "X";
+    private static final int    MODE_AMPS                         = 8;
+    private static final int    MODE_TESLA                        = 9;
     private static final int    CHANNEL_DEMAND_CURRENT            = 0;
     private static final int    CHANNEL_POWER_SUPPLY_VOLTAGE      = 1;
     private static final int    CHANNEL_DEMAND_CURRENT_SET_POINT  = 5;
@@ -91,21 +39,14 @@ public class IPS120 extends VISADevice {
     private static final int    CHANNEL_PERSISTENT_MAGNET_CURRENT = 16;
     private static final double AMPS_PER_TESLA                    = 9.8793;
 
-    public static final RampRates SUPER_CON_SLOW = new RampRates(
-            new Ramp(-98.8, -80, 1),
-            new Ramp(-80, -65, 2),
-            new Ramp(-65, 0, 6),
-            new Ramp(0, 65, 6),
-            new Ramp(65, 80, 2),
-            new Ramp(80, 98.8, 1)
+    private final List<Ramp> ramps = Arrays.asList(
+        new Ramp(-98.8, -80, 1),
+        new Ramp(-80, -65, 2),
+        new Ramp(-65, 0, 6),
+        new Ramp(0, 65, 6),
+        new Ramp(65, 80, 2),
+        new Ramp(80, 98.8, 1)
     );
-
-    public static final RampRates SUPER_CON_FAST = new RampRates(
-            new Ramp(-98.8, 0, 9.88),
-            new Ramp(0, 98.8, 9.88)
-    );
-
-    private RampRates rampRates = SUPER_CON_SLOW;
 
     /**
      * Opens the device at the specified address
@@ -141,25 +82,25 @@ public class IPS120 extends VISADevice {
 
     }
 
-    private void setRampRates(RampRates rates) {
-        rampRates = rates;
-    }
-
     private double readChannel(int channel) throws IOException {
         String response = query(C_READ_CHANNEL, channel);
-        return Double.valueOf(response.substring(1));
+        return Double.parseDouble(response.substring(1));
     }
 
     public double getField() throws IOException {
         return readChannel(CHANNEL_DEMAND_FIELD);
     }
 
-    public void setActivity(Activity activity) throws IOException {
-        query(C_SET_ACTIVITY, activity.ordinal());
+    public void setField(double field) throws IOException, DeviceException, InterruptedException {
+        rampToCurrent(AMPS_PER_TESLA * field);
     }
 
     public Activity getActivity() throws IOException {
         return examineStatus().activity;
+    }
+
+    public void setActivity(Activity activity) throws IOException {
+        query(C_SET_ACTIVITY, activity.ordinal());
     }
 
     public void turnOff() throws IOException, DeviceException, InterruptedException {
@@ -167,11 +108,27 @@ public class IPS120 extends VISADevice {
         setHeater(false);
     }
 
-    public void rampToField(double field) throws IOException, DeviceException, InterruptedException {
-        rampToCurrent(AMPS_PER_TESLA * field);
+    @Override
+    public List<Ramp> getRampRates() {
+        return ramps;
     }
 
-    public void rampToCurrent(double current) throws IOException, DeviceException, InterruptedException {
+    public void setRampRates(Ramp... rates) {
+        ramps.clear();
+        ramps.addAll(Arrays.asList(rates));
+    }
+
+    @Override
+    public double getCurrent() throws IOException, DeviceException {
+        return readChannel(CHANNEL_DEMAND_CURRENT);
+    }
+
+    @Override
+    public void setCurrent(double current) throws IOException, DeviceException, InterruptedException {
+        rampToCurrent(current);
+    }
+
+    private void rampToCurrent(double current) throws IOException, DeviceException, InterruptedException {
 
         try {
 
@@ -194,17 +151,17 @@ public class IPS120 extends VISADevice {
 
             setActivity(Activity.HOLD);
 
-            Ramp[] legs = rampRates.getLegs(getMagnetCurrent(), current);
+            List<Ramp> legs = getRampLegs(getMagnetCurrent(), current);
 
             for (Ramp leg : legs) {
-                System.out.printf("Will Do: From: %s A, To: %s A, Rate: %s A/min\n", leg.minI, leg.maxI, leg.rate);
+                System.out.printf("Will Do: From: %s A, To: %s A, Rate: %s A/min\n", leg.getMinI(), leg.getMaxI(), leg.getRate());
             }
 
             for (Ramp leg : legs) {
 
-                System.out.printf("Now: From: %s A, To: %s A, Rate: %s A/min\n", leg.minI, leg.maxI, leg.rate);
-                setTargetCurrent(leg.maxI);
-                setCurrentRamp(leg.rate);
+                System.out.printf("Now: From: %s A, To: %s A, Rate: %s A/min\n", leg.getMinI(), leg.getMaxI(), leg.getRate());
+                setTargetCurrent(leg.getMaxI());
+                setCurrentRamp(leg.getRate());
                 setActivity(Activity.GO_SETPOINT);
                 Util.sleep(1000);
                 waitUntilStable();
@@ -246,11 +203,7 @@ public class IPS120 extends VISADevice {
 
     public void waitUntilStable() throws IOException, InterruptedException {
 
-        while (true) {
-
-            if (isStable()) {
-                break;
-            }
+        while (!isStable()) {
 
             Thread.sleep(1000);
 
@@ -266,6 +219,59 @@ public class IPS120 extends VISADevice {
         query(C_SET_REM_STATUS, mode.toInt());
     }
 
+    public enum Activity {
+
+        HOLD,
+        GO_SETPOINT,
+        GO_ZERO,
+        UNK,
+        CLAMP
+
+    }
+
+    public enum CStatus {
+
+        LOCAL_LOCKED,
+        REMOTE_LOCKED,
+        LOCAL_UNLOCKED,
+        REMOTE_UNLOCKED
+
+    }
+
+    public enum HeaterState {
+
+        OFF_ZERO(0),
+        ON(1),
+        OFF_NOT_ZERO(2),
+        HEATER_FAULT(5),
+        NO_SWITCH_FITTED(8);
+
+        public int code;
+
+        HeaterState(int c) {
+            code = c;
+        }
+
+        public static HeaterState fromCode(int code) {
+
+            for (HeaterState h : values()) {
+
+                if (h.code == code) {
+                    return h;
+                }
+
+            }
+
+            return null;
+
+        }
+
+        public int getCode() {
+            return code;
+        }
+
+    }
+
 
     public enum Mode {
 
@@ -274,21 +280,22 @@ public class IPS120 extends VISADevice {
         LOCAL_UNLOCKED(2),
         REMOTE_UNLOCKED(3);
 
-        private        int                           c;
-        private static HashMap<Integer, ITC503.Mode> lookup = new HashMap<>();
-
-        static ITC503.Mode fromInt(int i) {
-            return lookup.getOrDefault(i, null);
-        }
+        private static final HashMap<Integer, ITC503.Mode> LOOKUP = new HashMap<>();
 
         static {
             for (ITC503.Mode mode : ITC503.Mode.values()) {
-                lookup.put(mode.toInt(), mode);
+                LOOKUP.put(mode.toInt(), mode);
             }
         }
 
+        private final int c;
+
         Mode(int code) {
             c = code;
+        }
+
+        static ITC503.Mode fromInt(int i) {
+            return LOOKUP.getOrDefault(i, null);
         }
 
         int toInt() {
@@ -299,16 +306,15 @@ public class IPS120 extends VISADevice {
 
     private static class Status {
 
-        public int         status1;
-        public int         status2;
-        public Activity    activity;
-        public CStatus     commState;
-        public HeaterState heaterState;
-        public int         mode1;
-        public int         mode2;
-        public int         polarity;
-
-        private static final Pattern PATTERN = Pattern.compile("X([0-8])([0-8])A([0-4])C([0-7])H([0-8])M([0-5])([0-3])P([0-7])([1-4])");
+        private static final Pattern     PATTERN = Pattern.compile("X([0-8])([0-8])A([0-4])C([0-7])H([0-8])M([0-5])([0-3])P([0-7])([1-4])");
+        public               int         status1;
+        public               int         status2;
+        public               Activity    activity;
+        public               CStatus     commState;
+        public               HeaterState heaterState;
+        public               int         mode1;
+        public               int         mode2;
+        public               int         polarity;
 
         public Status(String response) throws IOException {
 
@@ -318,99 +324,15 @@ public class IPS120 extends VISADevice {
                 throw new IOException("Improperly formatted response from IPS120");
             }
 
-            status1 = Integer.valueOf(match.group(1));
-            status2 = Integer.valueOf(match.group(2));
-            activity = Activity.values()[Integer.valueOf(match.group(3))];
-            commState = CStatus.values()[Integer.valueOf(match.group(4))];
-            heaterState = HeaterState.fromCode(Integer.valueOf(match.group(5)));
-            status1 = Integer.valueOf(match.group(6));
-            status2 = Integer.valueOf(match.group(7));
+            status1     = Integer.parseInt(match.group(1));
+            status2     = Integer.parseInt(match.group(2));
+            activity    = Activity.values()[Integer.parseInt(match.group(3))];
+            commState   = CStatus.values()[Integer.parseInt(match.group(4))];
+            heaterState = HeaterState.fromCode(Integer.parseInt(match.group(5)));
+            status1     = Integer.parseInt(match.group(6));
+            status2     = Integer.parseInt(match.group(7));
 
         }
-    }
-
-    public static class RampRates {
-
-        private Ramp[] rows;
-
-        public RampRates(Ramp... ramps) {
-            rows = ramps;
-        }
-
-        public Ramp getRamp(double current) {
-            int i = getRampIndex(current);
-            return i > -1 ? rows[i] : null;
-        }
-
-        public int getRampIndex(double current) {
-
-            for (int i = 0; i < rows.length; i++) {
-
-                Ramp r = rows[i];
-
-                if (r.maxI >= current && r.minI <= current) {
-                    return i;
-                }
-
-            }
-
-            return -1;
-        }
-
-        public Ramp[] getLegs(double from, double to) throws DeviceException {
-
-            int              i    = getRampIndex(from);
-            int              d    = to > from ? +1 : -1;
-            LinkedList<Ramp> legs = new LinkedList<>();
-
-            double last = from;
-
-            while (true) {
-
-                if (i == getRampIndex(to)) {
-                    legs.add(new Ramp(last, to, rows[i].rate));
-                    break;
-                }
-
-                int next = i + d;
-                if (next < 0 || next >= rows.length) {
-                    throw new DeviceException("You cannot ramp to that value!");
-                }
-
-                Ramp r = rows[next];
-
-                double border = d > 0 ? (r.minI) : (r.maxI);
-
-                if (d > 0 ? (border < to) : (border > to)) {
-                    legs.add(new Ramp(last, border, rows[i].rate));
-                    i = next;
-                    last = border;
-                } else {
-                    legs.add(new Ramp(last, to, rows[i].rate));
-                    break;
-                }
-
-
-            }
-
-            return legs.toArray(new Ramp[0]);
-
-        }
-
-    }
-
-    public static class Ramp {
-
-        public double minI;
-        public double maxI;
-        public double rate;
-
-        public Ramp(double minCurrent, double maxCurrent, double rampRate) {
-            minI = minCurrent;
-            maxI = maxCurrent;
-            rate = rampRate;
-        }
-
     }
 
 }

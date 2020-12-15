@@ -308,7 +308,7 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
     @Override
     public double getTemperature(int sensor) throws IOException, DeviceException {
         checkSensor(sensor);
-        return queryDouble("INPUT %s:TEMPERATURE?", SENSORS.get(sensor));
+        return queryDouble("INPUT %s?", SENSORS.get(sensor));
     }
 
     @Override
