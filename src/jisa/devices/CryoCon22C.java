@@ -48,8 +48,8 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
             throw new DeviceException("The device connected on \"%s\" is not a Cryo-Con 22C.", address.toString());
         }
 
-        write("INPUT A:UNITS K");
-        write("INPUT B:UNITS K");
+        query("INPUT A:UNITS K");
+        query("INPUT B:UNITS K");
 
     }
 
@@ -65,32 +65,45 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
         checkOutput(output);
         checkSensor(sensor);
 
-        write("LOOP %d:SOURCE %s", output + 1, SENSORS.get(sensor));
+        query("LOOP %d:SOURCE %s", output + 1, SENSORS.get(sensor));
 
     }
 
     @Override
     public int getUsedSensor(int output) throws IOException, DeviceException {
         checkOutput(output);
-        return SENSORS.indexOf(query("LOOP %d:SOURCE?", output + 1));
+
+        switch(query("LOOP %d:SOURCE?", output+1)) {
+
+            case "CHA":
+                return 0;
+
+            case "CHB":
+                return 1;
+
+            default:
+                throw new IOException("Unexpected response from Cryo-Con 22C.");
+
+        }
+
     }
 
     @Override
     public void setPValue(int output, double value) throws IOException, DeviceException {
         checkOutput(output);
-        write("LOOP %d:PGAIN %e", output + 1, value);
+        query("LOOP %d:PGAIN %e", output + 1, value);
     }
 
     @Override
     public void setIValue(int output, double value) throws IOException, DeviceException {
         checkOutput(output);
-        write("LOOP %d:IGAIN %e", output + 1, value);
+        query("LOOP %d:IGAIN %e", output + 1, value);
     }
 
     @Override
     public void setDValue(int output, double value) throws IOException, DeviceException {
         checkOutput(output);
-        write("LOOP %d:DGAIN %e", output + 1, value);
+        query("LOOP %d:DGAIN %e", output + 1, value);
     }
 
     @Override
@@ -169,7 +182,7 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
 
         }
 
-        write("LOOP %d:RANGE %s", output + 1, value);
+        query("LOOP %d:RANGE %s", output + 1, value);
 
     }
 
@@ -248,14 +261,14 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
     @Override
     public void setTargetTemperature(int output, double temperature) throws IOException, DeviceException {
         checkOutput(output);
-        write("LOOP %d:SETPT %e", output + 1, temperature);
+        query("LOOP %d:SETPT %e", output + 1, temperature);
         updateAutoPID(output);
     }
 
     @Override
     public double getTargetTemperature(int output) throws IOException, DeviceException {
         checkOutput(output);
-        return queryDouble("LOOP %d:SETPT?", output + 1);
+        return Double.parseDouble(query("LOOP %d:SETPT?", output + 1).replace("K", ""));
     }
 
     @Override
@@ -273,13 +286,13 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
     @Override
     public void useAutoHeater(int output) throws IOException, DeviceException {
         checkOutput(output);
-        write("LOOP %d:TYPE PID", output + 1);
+        query("LOOP %d:TYPE PID", output + 1);
     }
 
     @Override
     public boolean isUsingAutoHeater(int output) throws IOException, DeviceException {
         checkOutput(output);
-        return query("LOOP %d:TYPE?").equals("PID");
+        return query("LOOP %d:TYPE?").trim().equals("PID");
     }
 
     @Override
@@ -296,8 +309,8 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
     @Override
     public void setHeaterPower(int output, double powerPCT) throws IOException, DeviceException {
         checkOutput(output);
-        write("LOOP %d:TYPE MAN");
-        write("LOOP %d:PMANUAL %e", powerPCT);
+        query("LOOP %d:TYPE MAN");
+        query("LOOP %d:PMANUAL %e", powerPCT);
     }
 
     @Override
@@ -308,7 +321,7 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
     @Override
     public double getTemperature(int sensor) throws IOException, DeviceException {
         checkSensor(sensor);
-        return queryDouble("INPUT %s?", SENSORS.get(sensor));
+        return queryDouble("INPUT? %s", SENSORS.get(sensor));
     }
 
     @Override
