@@ -258,9 +258,9 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      *
      * @return List of zones
      */
-    List<PIDZone> getAutoPIDZones(int output) throws IOException, DeviceException;
+    List<PID.Zone> getAutoPIDZones(int output) throws IOException, DeviceException;
 
-    default List<PIDZone> getAutoPIDZones() throws IOException, DeviceException {
+    default List<PID.Zone> getAutoPIDZones() throws IOException, DeviceException {
         return getAutoPIDZones(0);
     }
 
@@ -269,9 +269,9 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      *
      * @param zones Zones to use
      */
-    void setAutoPIDZones(int output, PIDZone... zones) throws IOException, DeviceException;
+    void setAutoPIDZones(int output, PID.Zone... zones) throws IOException, DeviceException;
 
-    default void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+    default void setAutoPIDZones(PID.Zone... zones) throws IOException, DeviceException {
 
         for (int i = 0; i < getNumOutputs(); i++) {
             setAutoPIDZones(i, zones);
@@ -284,11 +284,11 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
      *
      * @param zones Zones to use
      */
-    default void setAutoPIDZones(int output, Collection<PIDZone> zones) throws IOException, DeviceException {
-        setAutoPIDZones(output, zones.toArray(new PIDZone[0]));
+    default void setAutoPIDZones(int output, Collection<PID.Zone> zones) throws IOException, DeviceException {
+        setAutoPIDZones(output, zones.toArray(new PID.Zone[0]));
     }
 
-    default void setAutoPIDZones(Collection<PIDZone> zones) throws IOException, DeviceException {
+    default void setAutoPIDZones(Collection<PID.Zone> zones) throws IOException, DeviceException {
 
         for (int i = 0; i < getNumOutputs(); i++) {
             setAutoPIDZones(i, zones);
@@ -581,11 +581,11 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
 
     default void updateAutoPID(int output) throws IOException, DeviceException {
 
-        if (isUsingAutoPID()) {
+        if (isUsingAutoPID(output)) {
 
             double temp = getTargetTemperature(output);
 
-            for (PIDZone zone : getAutoPIDZones(output)) {
+            for (PID.Zone zone : getAutoPIDZones(output)) {
 
                 if (zone.matches(temp)) {
                     usePIDZone(zone);
@@ -598,7 +598,7 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
 
     }
 
-    default void usePIDZone(int output, PIDZone zone) throws IOException, DeviceException {
+    default void usePIDZone(int output, PID.Zone zone) throws IOException, DeviceException {
 
         setPValue(output, zone.getP());
         setIValue(output, zone.getI());
@@ -731,12 +731,12 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
             }
 
             @Override
-            public List<PIDZone> getAutoPIDZones() throws IOException, DeviceException {
+            public List<PID.Zone> getAutoPIDZones() throws IOException, DeviceException {
                 return MSMOTC.this.getAutoPIDZones(output);
             }
 
             @Override
-            public void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+            public void setAutoPIDZones(PID.Zone... zones) throws IOException, DeviceException {
                 MSMOTC.this.setAutoPIDZones(output, zones);
             }
 

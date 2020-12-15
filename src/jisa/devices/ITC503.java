@@ -49,8 +49,8 @@ public class ITC503 extends VISADevice implements MSTC {
     private static final int    STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
     private static final double STANDARD_ERROR_PERC           = 10;
 
-    private boolean   autoPID = false;
-    private PIDZone[] zones   = new PIDZone[0];
+    private boolean    autoPID = false;
+    private PID.Zone[] zones   = new PID.Zone[0];
 
     /**
      * Open the ITC503 device at the given bus and address
@@ -175,12 +175,12 @@ public class ITC503 extends VISADevice implements MSTC {
     }
 
     @Override
-    public List<PIDZone> getAutoPIDZones() throws IOException, DeviceException {
+    public List<PID.Zone> getAutoPIDZones() throws IOException, DeviceException {
         return Arrays.asList(zones);
     }
 
     @Override
-    public void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+    public void setAutoPIDZones(PID.Zone... zones) throws IOException, DeviceException {
         this.zones = zones;
         updateAutoPID();
     }

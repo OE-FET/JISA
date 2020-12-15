@@ -262,43 +262,30 @@ public class JISAChart extends XYChart<Double, Double> {
                     Fit      fit    = fitters.containsKey(series) ? fitters.get(series).getFit(series.getData()) : null;
                     Function fitted = fit == null ? null : fit.getFunction();
 
-                    double minX = Double.POSITIVE_INFINITY;
-                    double maxX = Double.NEGATIVE_INFINITY;
-
-                    List<LineTo> toAnimate = new ArrayList<>();
-
                     for (int j = 0; j < series.getData().size(); j++) {
 
                         Data<Double, Double> data = series.getData().get(j);
 
-                        double x = getXAxis().getDisplayPosition(data.getXValue());
-                        double y = getYAxis().getDisplayPosition(data.getYValue());
-
-                        double e = data.getExtraValue() == null ? 0.0 : getYAxis().getDisplayPosition((Double) data.getExtraValue()) - getYAxis().getDisplayPosition(0.0);
+                        double x  = getXAxis().getDisplayPosition(data.getXValue());
+                        double y  = getYAxis().getDisplayPosition(data.getYValue());
+                        double eP = data.getExtraValue() == null ? 0.0 : getYAxis().getDisplayPosition(y + (Double) data.getExtraValue()) - getYAxis().getDisplayPosition(y);
+                        double eN = data.getExtraValue() == null ? 0.0 : getYAxis().getDisplayPosition((y - (Double) data.getExtraValue())) - getYAxis().getDisplayPosition(y);
                         if (Double.isNaN(x) || Double.isNaN(y)) {
                             continue;
                         }
-
-                        minX = Math.min(x, minX);
-                        maxX = Math.max(x, maxX);
 
                         Node symbol = data.getNode();
 
                         if (fitted == null) {
 
                             JISALineTo element = new JISALineTo(x, y);
-
-                            if (symbol != null && newlyAdded.contains(symbol)) {
-                                toAnimate.add(element);
-                            }
-
                             constructedPath.add(element);
 
                         }
 
                         if (symbol != null) {
 
-                            ((ChartNode) symbol).setErrorBar(2.0 * e);
+                            ((ChartNode) symbol).setErrorBar(eP, eN);
 
                             final double w = symbol.prefWidth(-1);
                             final double h = symbol.prefHeight(-1);
@@ -342,29 +329,6 @@ public class JISAChart extends XYChart<Double, Double> {
 
                     }
 
-//                    for (int j = 0; j < sorted.size(); j++) {
-//
-//                        ChartNode symbol = (ChartNode) sorted.get(j).getNode();
-//
-//                        if (newlyAdded.contains(symbol)) {
-//                            newlyAdded.remove(symbol);
-//                            Animation anim = symbol.animate(j > 0 ? sorted.get(j - 1).getNode() : null, j + 1 < sorted.size() ? sorted.get(j + 1).getNode() : null);
-//                            animation.getChildren().add(anim);
-//                        }
-//
-//                    }
-
-//                    for (int n = 0; n < constructedPath.size(); n++) {
-//
-//                        JISALineTo element = constructedPath.get(n);
-//
-//                        if (toAnimate.contains(element)) {
-//                            Timeline trans = element.animate(n > 0 ? constructedPath.get(n - 1) : null, (n + 1) < constructedPath.size() ? constructedPath.get(n + 1) : null);
-//                            if (trans != null) { animation.getChildren().add(trans); }
-//                        }
-//
-//                    }
-
                     if (!constructedPath.isEmpty()) {
 
                         LineTo first = constructedPath.get(0);
@@ -376,8 +340,6 @@ public class JISAChart extends XYChart<Double, Double> {
                 }
 
             }
-            // this.animation = animation;
-            // animation.play();
 
         });
 
@@ -556,7 +518,7 @@ public class JISAChart extends XYChart<Double, Double> {
             getChildren().addAll(errorBar, symbol);
             setStyle(shape, colour, size);
             setLineWidth(2.5);
-            setErrorBar(0.0);
+            setErrorBar(0.0, 0.0);
 
         }
 
@@ -574,9 +536,9 @@ public class JISAChart extends XYChart<Double, Double> {
 
         }
 
-        public void setErrorBar(double height) {
+        public void setErrorBar(double positive, double negative) {
 
-            height = Math.abs(height);
+            double height = Math.abs(positive - negative);
 
             List<PathElement> elements = errorBar.getElements();
             elements.clear();
@@ -592,53 +554,13 @@ public class JISAChart extends XYChart<Double, Double> {
                 elements.add(new MoveTo(0, height));
                 elements.add(new LineTo(size * 2, height));
 
-                errorBar.resizeRelocate(-size, -height / 2, errorBar.prefWidth(-1), errorBar.prefHeight(-1));
+                errorBar.resizeRelocate(-size, -negative, errorBar.prefWidth(-1), errorBar.prefHeight(-1));
 
             } else {
                 errorBar.setVisible(false);
             }
 
         }
-
-//        public Animation animate(Node lastNode, Node nextNode) {
-//
-//            double x;
-//            double y;
-//
-//            if (lastNode != null && nextNode != null) {
-//                x = (lastNode.getLayoutX() + nextNode.getLayoutX()) / 2;
-//                y = (lastNode.getLayoutY() + nextNode.getLayoutY()) / 2;
-//            } else if (lastNode != null) {
-//                x = lastNode.getLayoutX();
-//                y = lastNode.getLayoutY();
-//            } else if (nextNode != null) {
-//                x = nextNode.getLayoutX();
-//                y = nextNode.getLayoutY();
-//            } else {
-//                x = getLayoutX();
-//                y = getLayoutY();
-//            }
-//
-//            Timeline movement = new Timeline();
-//
-//            movement.getKeyFrames().addAll(
-//                new KeyFrame(Duration.millis(0), new KeyValue(layoutXProperty(), x)),
-//                new KeyFrame(Duration.millis(0), new KeyValue(layoutYProperty(), y)),
-//                new KeyFrame(Duration.millis(250), new KeyValue(layoutXProperty(), getLayoutX())),
-//                new KeyFrame(Duration.millis(250), new KeyValue(layoutYProperty(), getLayoutY()))
-//            );
-//
-//            FadeTransition fade = new FadeTransition();
-//            fade.setNode(this);
-//            fade.setFromValue(0.0);
-//            fade.setToValue(1.0);
-//            fade.setDuration(Duration.millis(500));
-//
-//            animation = new ParallelTransition(fade, movement);
-//
-//            return animation;
-//
-//        }
 
         public synchronized void updateStyle() {
 

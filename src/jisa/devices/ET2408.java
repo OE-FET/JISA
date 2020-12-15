@@ -33,8 +33,8 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     private final RWRegister manual    = new RWRegister(273);
     private final RWRegister decPlaces = new RWRegister(525);
 
-    private boolean   autoPID = false;
-    private PIDZone[] zones   = new PIDZone[0];
+    private boolean    autoPID = false;
+    private PID.Zone[] zones   = new PID.Zone[0];
 
     public ET2408(Address address, SerialPort.BaudRate baud, int dataBits, int stopBits, SerialPort.Parity parity) throws IOException, DeviceException {
 
@@ -210,12 +210,12 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
-    public List<PIDZone> getAutoPIDZones() {
+    public List<PID.Zone> getAutoPIDZones() {
         return Arrays.asList(zones);
     }
 
     @Override
-    public void setAutoPIDZones(PIDZone... zones) throws IOException, DeviceException {
+    public void setAutoPIDZones(PID.Zone... zones) throws IOException, DeviceException {
         this.zones = zones;
         updateAutoPID();
     }

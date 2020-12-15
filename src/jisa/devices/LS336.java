@@ -40,8 +40,8 @@ public class LS336 extends VISADevice implements MSMOTC {
     private static final String          TERMINATOR           = "\r\n";
     private              Semaphore       timingControl        = new Semaphore(1);
     private              ExecutorService timingService        = Executors.newFixedThreadPool(1);
-    private              boolean[]       autoPID              = {false, false};
-    private              PIDZone[][]     zones                = new PIDZone[2][0];
+    private              boolean[]                 autoPID = {false, false};
+    private              jisa.devices.PID.Zone[][] zones   = new jisa.devices.PID.Zone[2][0];
 
     public LS336(Address address) throws IOException, DeviceException {
 
@@ -204,13 +204,13 @@ public class LS336 extends VISADevice implements MSMOTC {
     }
 
     @Override
-    public List<PIDZone> getAutoPIDZones(int output) throws DeviceException {
+    public List<jisa.devices.PID.Zone> getAutoPIDZones(int output) throws DeviceException {
         checkOutput(output);
         return Arrays.asList(zones[output]);
     }
 
     @Override
-    public void setAutoPIDZones(int output, PIDZone... zones) throws IOException, DeviceException {
+    public void setAutoPIDZones(int output, jisa.devices.PID.Zone... zones) throws IOException, DeviceException {
         checkOutput(output);
         this.zones[output] = zones;
         updateAutoPID(output);

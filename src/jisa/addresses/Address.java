@@ -1,5 +1,6 @@
 package jisa.addresses;
 
+import java.nio.channels.Pipe;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -35,6 +36,8 @@ public interface Address {
             type = Type.ID;
         } else if (parts[0].contains("SERIAL")) {
             type = Type.COM;
+        } else if (parts[0].contains("PIPE")) {
+            type = Type.PIPE;
         }
 
         return type;
@@ -47,8 +50,8 @@ public interface Address {
         Matcher matcher = pattern.matcher(toString().trim());
 
         if (matcher.matches()) {
-            int board   = Integer.valueOf(matcher.group(1));
-            int address = Integer.valueOf(matcher.group(2));
+            int board   = Integer.parseInt(matcher.group(1));
+            int address = Integer.parseInt(matcher.group(2));
             return new GPIBAddress(board, address);
         } else {
             return null;
@@ -76,7 +79,7 @@ public interface Address {
         Matcher matcher = pattern.matcher(toString().trim());
 
         if (matcher.matches()) {
-            int    board = matcher.group(1).equals("") ? -1 : Integer.valueOf(matcher.group(1));
+            int    board = matcher.group(1).equals("") ? -1 : Integer.parseInt(matcher.group(1));
             String host  = matcher.group(2);
             return new TCPIPAddress(board, host);
         } else {
@@ -92,9 +95,9 @@ public interface Address {
         Matcher matcher = pattern.matcher(toString().trim());
 
         if (matcher.matches()) {
-            int    board = matcher.group(1).equals("") ? -1 : Integer.valueOf(matcher.group(1));
+            int    board = matcher.group(1).equals("") ? -1 : Integer.parseInt(matcher.group(1));
             String host  = matcher.group(2);
-            int    port  = Integer.valueOf(matcher.group(3));
+            int    port  = Integer.parseInt(matcher.group(3));
             return new TCPIPSocketAddress(board, host, port);
         } else {
             return null;
@@ -109,11 +112,11 @@ public interface Address {
         Matcher matcher = pattern.matcher(toString().trim());
 
         if (matcher.matches()) {
-            int    board   = matcher.group(1).equals("") ? -1 : Integer.valueOf(matcher.group(1));
+            int    board   = matcher.group(1).equals("") ? -1 : Integer.parseInt(matcher.group(1));
             int    vendor  = Integer.decode(matcher.group(2));
             int    product = Integer.decode(matcher.group(3));
             String serial  = matcher.group(4);
-            int    intfce  = matcher.groupCount() <= 5 ? -1 : Integer.valueOf(matcher.group(5));
+            int    intfce  = matcher.groupCount() <= 5 ? -1 : Integer.parseInt(matcher.group(5));
             return new USBAddress(board, vendor, product, serial, intfce);
         } else {
             return null;
@@ -129,7 +132,7 @@ public interface Address {
 
         if (matcher.matches()) {
             String port    = matcher.group(1);
-            int    address = Integer.valueOf(matcher.group(2));
+            int    address = Integer.parseInt(matcher.group(2));
             return new ModbusAddress(port, address);
         } else {
             return null;
@@ -145,6 +148,20 @@ public interface Address {
         if (matcher.matches()) {
             String sn = matcher.group(1);
             return new IDAddress(sn);
+        } else {
+            return null;
+        }
+
+    }
+
+    default PipeAddress toPipeAddress() {
+
+        Pattern pattern = Pattern.compile("PIPE::(.*?)::INSTR");
+        Matcher matcher = pattern.matcher(toString().trim());
+
+        if (matcher.matches()) {
+            String sn = matcher.group(1);
+            return new PipeAddress(sn);
         } else {
             return null;
         }
@@ -176,6 +193,9 @@ public interface Address {
             case ID:
                 return toIDAddress().createParams();
 
+            case PIPE:
+                return toPipeAddress().createParams();
+
             default:
             case UNKOWN:
                 StrAddress.StrParams p = new StrAddress.StrParams();
@@ -194,6 +214,7 @@ public interface Address {
         MODBUS,
         ID,
         COM,
+        PIPE,
         UNKOWN
     }
 
