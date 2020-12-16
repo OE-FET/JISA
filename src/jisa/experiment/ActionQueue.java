@@ -505,9 +505,11 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
                     }
 
                     String[] parts = resPath.split("\\.");
+                    String   last  = parts[parts.length - 2];
 
                     for (int i = 1; Files.exists(Path.of(resPath)); i++) {
-                        resPath = String.format("%s (%d).%s", parts[0], i, parts[1]);
+                        parts[parts.length - 2] = String.format("%s (%d)", last, i);
+                        resPath = String.join(".", parts);
                     }
 
                     setData(measurement.newResults(resPath));
