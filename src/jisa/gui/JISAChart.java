@@ -259,8 +259,12 @@ public class JISAChart extends XYChart<Double, Double> {
                     constructedPath.clear();
                     seriesLine.clear();
 
-                    Fit      fit    = fitters.containsKey(series) ? fitters.get(series).getFit(series.getData()) : null;
-                    Function fitted = fit == null ? null : fit.getFunction();
+                    Function fitted = null;
+
+                    try {
+                        Fit fit = fitters.containsKey(series) ? fitters.get(series).getFit(series.getData()) : null;
+                        fitted = fit == null ? null : fit.getFunction();
+                    } catch (Throwable ignored) {}
 
                     for (int j = 0; j < series.getData().size(); j++) {
 
@@ -574,13 +578,14 @@ public class JISAChart extends XYChart<Double, Double> {
 
             style.clear();
 
+            style.put("-fx-max-width", 2 * size + "px");
+            style.put("-fx-max-height", 2 * size + "px");
+
             switch (shape) {
 
                 case CIRCLE:
 
                     style.put("-fx-background-radius", size + "px");
-                    style.put("-fx-max-width", 2 * size + "px");
-                    style.put("-fx-max-height", 2 * size + "px");
                     style.put("-fx-padding", size + "px");
                     style.put("-fx-background-insets", "0, 2px");
                     style.put("-fx-background-color", Util.colourToCSS(colour) + ", white");
