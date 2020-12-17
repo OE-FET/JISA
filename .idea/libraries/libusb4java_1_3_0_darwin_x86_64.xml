@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="libusb4java-1.3.0-darwin-x86-64">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/libusb4java-1.3.0-darwin-x86-64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/libusb4java-1.3.0-linux-x86-64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/libusb4java-1.3.0-win32-x86-64.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/usb4java-1.3.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/usb4java-javax-1.3.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/usb-api-1.0.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ideaLibSources/usb-api-1.0.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
