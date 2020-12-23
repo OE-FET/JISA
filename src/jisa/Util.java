@@ -115,6 +115,10 @@ public class Util {
 
     }
 
+    public static void runAsync(Runnable toRun) {
+        (new Thread(toRun)).start();
+    }
+
     public static String pathToSVG(Path path) {
 
         List<String> list = new LinkedList<>();

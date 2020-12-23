@@ -2,681 +2,340 @@ package jisa.gui;
 
 import jisa.Util;
 import jisa.control.ConfigBlock;
-import jisa.control.IConf;
-import jisa.devices.*;
-import jisa.enums.Terminals;
-import org.json.JSONObject;
+import jisa.control.Connection;
+import jisa.control.SRunnable;
+import jisa.devices.Configuration;
+import jisa.devices.Instrument;
+import jisa.devices.Instrument.AutoQuantity;
+import jisa.devices.Instrument.OptionalQuantity;
 
-import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
-public abstract class Configurator<I extends Instrument> extends Fields implements IConf<I> {
+public class Configurator<I extends Instrument> extends Fields {
 
-    protected Connector<I>[] instruments;
-    protected Field<Boolean> enabled    = addCheckBox("Enabled", true);
-    protected Field<Integer> instrument = addChoice("Instrument");
-    private   JSONObject     data       = null;
+    private final Configuration<I> configuration;
+    private       Connection<?>    connection = null;
+    private       boolean          sepLast    = false;
 
-    public Configurator(String title, ConfigBlock configBlock, Connector<I>... instruments) {
-        super(title);
-        this.instruments = instruments;
 
-        makeFields();
+    public Configurator(Configuration<I> configuration) {
 
-        connect();
+        super(configuration.getName());
+        this.configuration = configuration;
+        update();
 
-        for (Connector<I> config : this.instruments) {
-            config.setOnConnect(this::connect);
-        }
-
-        if (configBlock != null) linkConfig(configBlock);
-
-        connect();
-
-        instrument.setOnChange(this::updateGUI);
-        enabled.setOnChange(this::updateGUI);
-
-        updateGUI();
-
-    }
-
-    public Configurator(String title, Connector<I>... instruments) {
-        this(title, null, instruments);
-    }
-
-    protected void connect() {
-
-        String[] names = new String[instruments.length];
-
-        for (int i = 0; i < instruments.length; i++) {
-            names[i] = String.format(
-                    "%s (%s)",
-                    instruments[i].getTitle(),
-                    instruments[i].isConnected() ? instruments[i].getDriver().getSimpleName() : "NOT CONNECTED"
-            );
-        }
-
-        instrument.editValues(names);
-        updateGUI();
-
-    }
-
-    protected abstract void makeFields();
-
-    protected abstract void update();
-
-    protected void updateGUI() {
-
-        if (!enabled.get()) {
-            setFieldsDisabled(true);
-            enabled.setDisabled(false);
-        } else {
-            setFieldsDisabled(false);
+        Connection.addListener(() -> {
+            configuration.setInputInstrument(connection == null ? null : connection.getInstrument());
             update();
+        });
+
+    }
+
+    public Configurator(String name, Class<I> target) {
+        this(new Configuration<>(name, target));
+    }
+
+    public void loadFromConfig(ConfigBlock block) {
+
+        if (!block.hasValue("Instrument")) {
+            return;
+        }
+
+        ConfigBlock.Value<Integer> instrument  = block.intValue("Instrument");
+        int                        iValue      = instrument.get();
+        List<Connection<?>>        connections = Connection.getConnectionsByTarget(configuration.getTarget());
+
+        if (iValue < 1 || iValue >= connections.size() + 1) {
+            connection = null;
+        } else {
+            connection = connections.get(instrument.get() - 1);
+        }
+
+        configuration.setInputInstrument(connection != null ? connection.getInstrument() : null);
+        configuration.loadFromConfig(block.subBlock("Configuration"));
+
+        update();
+
+    }
+
+    public void writeToConfig(ConfigBlock block) {
+
+        block.intValue("Instrument").set(connection == null ? 0 : Connection.getConnectionsByTarget(configuration.getTarget()).indexOf(connection) + 1);
+        configuration.writeToConfig(block.subBlock("Configuration"));
+
+    }
+
+    public void linkToConfig(ConfigBlock block) {
+        loadFromConfig(block);
+        Util.addShutdownHook(() -> writeToConfig(block));
+    }
+
+    private synchronized void update() {
+
+        clear();
+
+        List<Connection<?>> connections = new LinkedList<>();
+        connections.add(null);
+        connections.addAll(Connection.getConnectionsByTarget(configuration.getTarget()));
+        String[] names = connections.stream().map(c -> {
+            if (c == null) { return "None"; } else {
+                return String.format("%s (%s)", c.getName(), c.isConnected() ? c.getInstrument().getClass().getSimpleName() : "Disconnected");
+            }
+        }).toArray(String[]::new);
+        Field<Integer> instruments = addChoice("Instrument", connection != null ? connections.indexOf(connection) : 0, names);
+
+        instruments.setOnChange(() -> {
+
+            connection = connections.get(instruments.get());
+            configuration.setInputInstrument(connection != null ? connection.getInstrument() : null);
+            update();
+
+        });
+
+        if (configuration.isChoice()) {
+
+            Field<Integer> choice = addChoice(configuration.getChoiceName(), configuration.getChoice(), configuration.getChoices().toArray(new String[0]));
+
+            choice.setOnChange(() -> {
+                configuration.selectChoice(choice.get());
+                update();
+            });
+
+        }
+
+        for (Configuration.Parameter parameter : configuration.getParameters()) {
+            makeField(parameter);
         }
 
     }
 
-    public static class SMU extends Configurator<jisa.devices.SMU> {
+    private Field makeField(Configuration.Parameter parameter) {
 
-        private Field<Integer> chn;
-        private Field<Integer> trm;
-        private Field<Double>  vlm;
-        private Field<Double>  ilm;
-        private Field<Boolean> var;
-        private Field<Double>  vrn;
-        private Field<Boolean> iar;
-        private Field<Double>  irn;
-        private Field<Boolean> lft;
-        private Field<Boolean> fpp;
+        if (AutoQuantity.class.isAssignableFrom(parameter.getType())) {
 
-        public SMU(String title, ConfigBlock config, Connector<jisa.devices.SMU>... instruments) {
-            super(title, config, instruments);
-        }
+            Object  value = ((AutoQuantity) parameter.getValue()).getValue();
+            boolean auto  = ((AutoQuantity) parameter.getValue()).isAuto();
 
-        public SMU(String title, Connector<jisa.devices.SMU>... instruments) {
-            this(title, null, instruments);
-        }
+            Configuration.Parameter quantity = new Configuration.Parameter(new Instrument.Parameter(parameter.getName(), value, i -> {}, parameter.getChoices().toArray()));
 
-        public SMU(String title, ConfigBlock config, ConnectorGrid grid) {
-            this(title, config, grid.getInstrumentsByType(jisa.devices.SMU.class));
-        }
-
-        public SMU(String title, ConnectorGrid grid) {
-            this(title, grid.getInstrumentsByType(jisa.devices.SMU.class));
-        }
-
-        @Override
-        protected void makeFields() {
-
-            chn = addChoice("Channel", 0, Util.makeCountingString(0, 4, "Channel %d"));
-            trm = addChoice("Terminals", 0, "Front (NONE)", "Rear (NONE)");
-
-            addSeparator();
-
-            vlm = addDoubleField("Voltage Limit [V]", 200.0);
-            ilm = addDoubleField("Current Limit [A]", 0.02);
-
-            addSeparator();
-
-            var = addCheckBox("Auto Voltage Range", true);
-            vrn = addDoubleField("Voltage Range [V]", 20.0);
-            iar = addCheckBox("Auto Current Range", true);
-            irn = addDoubleField("Current Range [A]", 200e-3);
-
-            var.setOnChange(this::updateGUI);
-            iar.setOnChange(this::updateGUI);
-
-            addSeparator();
-
-            lft = addCheckBox("Line Filtering", false);
-            fpp = addCheckBox("Four-Wire Measurements", false);
-
-        }
-
-        @Override
-        protected void update() {
-
-            int              n   = instrument.get();
-            jisa.devices.SMU smu = null;
-
-            if (Util.isValidIndex(n, instruments)) {
-                smu = instruments[n].get();
-            }
-
-            chn.setDisabled(false);
-
-            fpp.setDisabled(smu instanceof SPA);
-
-            if (smu == null) {
-                chn.editValues("Channel 0", "Channel 1", "Channel 2", "Channel 3");
-            } else if (smu instanceof MultiChannel) {
-                chn.editValues(Util.makeCountingString(0, ((MultiChannel) smu).getNumChannels(), "Channel %d"));
-            } else {
-                chn.editValues("N/A");
-                chn.setDisabled(true);
-            }
+            Separator s1 = addSeparator();
+            if (sepLast) { s1.remove(); }
+            Field          qField    = makeField(quantity);
+            Field<Boolean> autoCheck = addCheckBox("Auto", auto);
+            Separator      s2        = addSeparator();
 
 
-            try {
+            autoCheck.setOnChange(() -> {
+                qField.setDisabled(autoCheck.get());
+                parameter.setValue(new AutoQuantity<>(autoCheck.get(), qField.get()));
+            });
 
-                if (smu != null) {
-                    trm.editValues(
-                            String.format("Front (%s)", smu.getTerminalType(Terminals.FRONT).name()),
-                            String.format("Rear (%s)", smu.getTerminalType(Terminals.REAR).name())
-                    );
-                } else {
-                    trm.editValues(
-                            "Front (NONE)",
-                            "Rear (NONE)"
-                    );
-                }
-            } catch (Exception e) {
-                trm.editValues(
-                        "Front (UNKNOWN)",
-                        "Rear (UNKNOWN)"
-                );
-            }
+            qField.setOnChange(() -> parameter.setValue(new AutoQuantity<>(autoCheck.get(), qField.get())));
 
+            qField.setDisabled(autoCheck.get());
 
-            vrn.setDisabled(var.get());
-            irn.setDisabled(iar.get());
+            sepLast = true;
 
+            return new Field<AutoQuantity>() {
 
-        }
-
-        @Override
-        public jisa.devices.SMU get() {
-
-            if (!enabled.get()) {
-                return null;
-            }
-
-            int n = instrument.get();
-
-            if (!Util.isBetween(n, 0, instruments.length - 1)) {
-                return null;
-            }
-
-            jisa.devices.SMU smu = instruments[n].get();
-
-            if (smu == null) {
-                return null;
-            }
-
-            jisa.devices.SMU toReturn;
-
-            if (smu instanceof MultiChannel) {
-
-                try {
-                    toReturn = (jisa.devices.SMU) ((MultiChannel) smu).getChannel(chn.get());
-                } catch (Exception e) {
-                    return null;
+                @Override
+                public void set(AutoQuantity value) {
+                    autoCheck.set(value.isAuto());
+                    qField.set(value.getValue());
                 }
 
-            } else {
-                toReturn = smu;
-            }
-
-            try {
-
-                toReturn.setLimits(vlm.get(), ilm.get());
-                toReturn.setTerminals(Terminals.values()[trm.get()]);
-
-                if (var.get()) {
-                    toReturn.useAutoVoltageRange();
-                } else {
-                    toReturn.setVoltageRange(vrn.get());
+                @Override
+                public AutoQuantity get() {
+                    return new AutoQuantity(autoCheck.get(), qField.get());
                 }
 
-                if (iar.get()) {
-                    toReturn.useAutoCurrentRange();
-                } else {
-                    toReturn.setCurrentRange(irn.get());
+                @Override
+                public void setOnChange(SRunnable onChange) {
+
                 }
 
-                toReturn.setLineFilterEnabled(lft.get());
-                toReturn.setFourProbeEnabled(fpp.get());
+                @Override
+                public void editValues(String... values) {
 
-            } catch (DeviceException | IOException e) {
-                return null;
-            }
+                }
 
-            return toReturn;
+                @Override
+                public boolean isDisabled() {
+                    return autoCheck.isDisabled();
+                }
+
+                @Override
+                public boolean isVisible() {
+                    return autoCheck.isVisible();
+                }
+
+                @Override
+                public void remove() {
+                    qField.remove();
+                    autoCheck.remove();
+                    s1.remove();
+                    s2.remove();
+                }
+
+                @Override
+                public String getText() {
+                    return parameter.getName();
+                }
+
+                @Override
+                public void setDisabled(boolean disabled) {
+                    autoCheck.setDisabled(disabled);
+                    qField.setDisabled(autoCheck.get() || disabled);
+                }
+
+
+                @Override
+                public void setVisible(boolean visible) {
+                    qField.setVisible(visible);
+                    autoCheck.setVisible(visible);
+                    s1.setVisible(visible);
+                    s2.setVisible(visible);
+                }
+
+                @Override
+                public void setText(String text) {
+
+                }
+
+            };
+
+        } else if (OptionalQuantity.class.isAssignableFrom(parameter.getType())) {
+
+            Object  value = ((OptionalQuantity) parameter.getValue()).getValue();
+            boolean auto  = ((OptionalQuantity) parameter.getValue()).isUsed();
+
+            Configuration.Parameter quantity = new Configuration.Parameter(new Instrument.Parameter(parameter.getName(), value, i -> {}, parameter.getChoices().toArray()));
+
+
+            Separator s1 = addSeparator();
+            if (sepLast) { s1.remove(); }
+            Field          qField    = makeField(quantity);
+            Field<Boolean> autoCheck = addCheckBox("Use", auto);
+            Separator      s2        = addSeparator();
+
+
+            autoCheck.setOnChange(() -> {
+                qField.setDisabled(!autoCheck.get());
+                parameter.setValue(new OptionalQuantity<>(autoCheck.get(), qField.get()));
+            });
+
+            qField.setOnChange(() -> parameter.setValue(new OptionalQuantity<>(autoCheck.get(), qField.get())));
+
+            qField.setDisabled(!autoCheck.get());
+
+            sepLast = true;
+
+            return new Field<OptionalQuantity>() {
+
+                @Override
+                public void set(OptionalQuantity value) {
+                    autoCheck.set(value.isUsed());
+                    qField.set(value.getValue());
+                }
+
+                @Override
+                public OptionalQuantity get() {
+                    return new OptionalQuantity(autoCheck.get(), qField.get());
+                }
+
+                @Override
+                public void setOnChange(SRunnable onChange) {
+
+                }
+
+                @Override
+                public void editValues(String... values) {
+
+                }
+
+                @Override
+                public boolean isDisabled() {
+                    return autoCheck.isDisabled();
+                }
+
+                @Override
+                public boolean isVisible() {
+                    return autoCheck.isVisible();
+                }
+
+                @Override
+                public void remove() {
+                    qField.remove();
+                    autoCheck.remove();
+                    s1.remove();
+                    s2.remove();
+                }
+
+                @Override
+                public String getText() {
+                    return qField.getText();
+                }
+
+                @Override
+                public void setDisabled(boolean disabled) {
+                    autoCheck.setDisabled(disabled);
+                    qField.setDisabled(!autoCheck.get() || disabled);
+                }
+
+                @Override
+                public void setVisible(boolean visible) {
+                    qField.setVisible(visible);
+                    autoCheck.setVisible(visible);
+                    s1.setVisible(visible);
+                    s2.setVisible(visible);
+                }
+
+                @Override
+                public void setText(String text) {
+
+                }
+
+            };
+
+        }
+
+        if (parameter.isChoice()) {
+
+            String[]       options = (String[]) parameter.getChoices().stream().map(Object::toString).toArray(String[]::new);
+            Field<Integer> field   = addChoice(parameter.getName(), parameter.getChoices().indexOf(parameter.getValue()), options);
+            field.setOnChange(() -> parameter.setValue(parameter.getChoices().get(field.get())));
+
+            sepLast = false;
+
+            return field;
+
+        } else if (parameter.getType() == Double.class) {
+            Field<Double> field = addDoubleField(parameter.getName(), (Double) parameter.getValue());
+            field.setOnChange(() -> parameter.setValue(field.get()));
+            sepLast = false;
+            return field;
+        } else if (parameter.getType() == Integer.class) {
+            Field<Integer> field = addIntegerField(parameter.getName(), (Integer) parameter.getValue());
+            field.setOnChange(() -> parameter.setValue(field.get()));
+            sepLast = false;
+            return field;
+        } else if (parameter.getType() == Boolean.class) {
+            Field<Boolean> field = addCheckBox(parameter.getName(), (Boolean) parameter.getValue());
+            field.setOnChange(() -> parameter.setValue(field.get()));
+            sepLast = false;
+            return field;
+        } else {
+            Field<String> field = addTextField(parameter.getName(), parameter.getValue().toString());
+            field.setOnChange(() -> parameter.setValue(field.get()));
+            sepLast = false;
+            return field;
         }
 
     }
 
-    public static class VMeter extends Configurator<jisa.devices.VMeter> {
-
-        private Field<Integer> channel;
-        private Field<Integer> terminals;
-        private Field<Boolean> var;
-        private Field<Double>  vrn;
-        private Field<Boolean> iar;
-        private Field<Double>  irn;
-        private Field<Boolean> fourPP;
-        private Field<Boolean> lineFilter;
-        private Field<Boolean> manI;
-        private Field<Double>  iValue;
-
-        public VMeter(String title, ConfigBlock config, Connector<jisa.devices.VMeter>... instruments) {
-            super(title, config, instruments);
-            var.setOnChange(() -> vrn.setDisabled(var.get()));
-            iar.setOnChange(() -> irn.setDisabled(iar.isDisabled() || iar.get()));
-        }
-
-        public VMeter(String title, Connector<jisa.devices.VMeter>... instruments) {
-            this(title, null, instruments);
-        }
-
-        public VMeter(String title, ConfigBlock config, ConnectorGrid grid) {
-            this(title, config, grid.getInstrumentsByType(jisa.devices.VMeter.class));
-        }
-
-        public VMeter(String title, ConnectorGrid grid) {
-            this(title, grid.getInstrumentsByType(jisa.devices.VMeter.class));
-        }
-
-        @Override
-        protected void makeFields() {
-
-            channel   = addChoice("Channel", Util.makeCountingString(0, 4, "Channel %d"));
-            terminals = addChoice("Terminals", "Front (NONE)", "Rear (NONE)");
-
-            addSeparator();
-
-            var = addCheckBox("Auto Voltage Range", true);
-            vrn = addDoubleField("Voltage Range [V]", 20.0);
-            vrn.setDisabled(true);
-
-            iar = addCheckBox("Auto Current Range", false);
-            irn = addDoubleField("Current Range [A]", 100e-3);
-
-            addSeparator();
-            manI   = addCheckBox("Set Current (SMU)", true);
-            iValue = addDoubleField("Manual Current [A]", 0.0);
-
-            addSeparator();
-
-            lineFilter = addCheckBox("Line Filtering");
-            fourPP     = addCheckBox("Four-Wire Measurements");
-
-            manI.setOnChange(this::updateGUI);
-
-        }
-
-        @Override
-        protected void update() {
-
-            int n = instrument.get();
-
-            jisa.devices.VMeter vMeter = null;
-
-            if (Util.isBetween(n, 0, instruments.length - 1)) {
-                vMeter = instruments[n].get();
-            }
-
-            channel.setDisabled(false);
-
-            if (vMeter == null) {
-
-                channel.editValues(Util.makeCountingString(0, 4, "Channel %d"));
-                terminals.editValues("Front (NONE)", "Rear (NONE)");
-
-            } else {
-
-                String front;
-                String rear;
-
-                try {
-                    front = vMeter.getTerminalType(Terminals.FRONT).name();
-                } catch (Exception e) {
-                    front = "NONE";
-                }
-
-                try {
-                    rear = vMeter.getTerminalType(Terminals.REAR).name();
-                } catch (Exception e) {
-                    rear = "NONE";
-                }
-
-                terminals.editValues(String.format("Front (%s)", front), String.format("Rear (%s)", rear));
-
-            }
-
-            if (vMeter instanceof MultiChannel) {
-                channel.editValues(Util.makeCountingString(0, ((MultiChannel) vMeter).getNumChannels(), "Channel %d"));
-            } else {
-                channel.editValues("N/A");
-                channel.setDisabled(true);
-            }
-
-            if (vMeter instanceof IMeter) {
-                iar.setDisabled(false);
-                irn.setDisabled(iar.get());
-            } else {
-                iar.setDisabled(true);
-                irn.setDisabled(true);
-            }
-
-            if (vMeter instanceof ISource) {
-                manI.setDisabled(false);
-                iValue.setDisabled(!manI.get());
-            } else {
-                manI.setDisabled(true);
-                iValue.setDisabled(true);
-            }
-
-            fourPP.setDisabled(!(vMeter instanceof jisa.devices.SMU));
-            iValue.setDisabled(!manI.get() || manI.isDisabled());
-
-
-        }
-
-
-        @Override
-        public jisa.devices.VMeter get() {
-
-            if (!enabled.get()) {
-                return null;
-            }
-
-            try {
-
-                int n = instrument.get();
-
-                if (!Util.isValidIndex(n, instruments)) {
-                    return null;
-                }
-
-                jisa.devices.VMeter vMeter = instruments[n].get();
-
-                if (vMeter == null) {
-                    return null;
-                }
-
-                vMeter.setTerminals(Terminals.values()[terminals.get()]);
-
-                if (var.get()) {
-                    vMeter.useAutoVoltageRange();
-                } else {
-                    vMeter.setVoltageRange(vrn.get());
-                }
-
-                // Check for multi-channel meter
-                if (vMeter instanceof MultiChannel) {
-                    vMeter = (jisa.devices.VMeter) ((MultiChannel) vMeter).getChannel(channel.get());
-                }
-
-                // Check for current sourcing capability
-                if (vMeter instanceof ISource && manI.get()) {
-                    ((ISource) vMeter).setCurrent(iValue.get());
-                }
-
-                // Check for current measuring capability
-                if (vMeter instanceof IMeter) {
-
-                    if (iar.get()) {
-                        ((IMeter) vMeter).useAutoCurrentRange();
-                    } else {
-                        ((IMeter) vMeter).setCurrentRange(irn.get());
-                    }
-
-                }
-
-                // Check if SMU
-                if (vMeter instanceof jisa.devices.SMU) {
-                    ((jisa.devices.SMU) vMeter).setFourProbeEnabled(fourPP.get());
-                }
-
-                vMeter.setLineFilterEnabled(lineFilter.get());
-
-                return vMeter;
-
-            } catch (Exception e) {
-
-                return null;
-
-            }
-
-        }
-
-    }
-
-    public static class TMeter extends Configurator<jisa.devices.TMeter> {
-
-        private Field<Integer> chn;
-        private Field<Double>  rng;
-
-        public TMeter(String title, ConfigBlock config, Connector<jisa.devices.TMeter>... instruments) {
-            super(title, config, instruments);
-        }
-
-        public TMeter(String title, Connector<jisa.devices.TMeter>... instruments) {
-            super(title, instruments);
-        }
-
-        public TMeter(String title, ConfigBlock config, ConnectorGrid grid) {
-            this(title, config, grid.getInstrumentsByType(jisa.devices.TMeter.class));
-        }
-
-        public TMeter(String title, ConnectorGrid grid) {
-            this(title, grid.getInstrumentsByType(jisa.devices.TMeter.class));
-        }
-
-        @Override
-        protected void makeFields() {
-            chn = addChoice("Sensor", 0, "Sensor 0", "Sensor 1", "Sensor 2", "Sensor 3");
-            rng = addDoubleField("Range [K]", 500.0);
-        }
-
-        @Override
-        protected void update() {
-
-            int n = instrument.get();
-
-            jisa.devices.TMeter tm;
-            if (!Util.isBetween(n, 0, instruments.length - 1)) {
-
-                tm = null;
-
-            } else {
-
-                tm = instruments[n].get();
-
-            }
-
-            if (tm == null) {
-
-                chn.editValues("Sensor 0", "Sensor 1", "Sensor 2", "Sensor 3");
-                chn.setDisabled(false);
-
-            } else if (tm instanceof MultiSensor) {
-
-                chn.editValues(Util.makeCountingString(0, ((MultiSensor) tm).getNumSensors(), "Sensor %d"));
-                chn.setDisabled(false);
-
-            } else {
-
-                chn.editValues("N/A");
-                chn.setDisabled(true);
-
-            }
-
-
-        }
-
-        @Override
-        public jisa.devices.TMeter get() {
-
-            if (!enabled.get()) {
-                return null;
-            }
-
-            int n = instrument.get();
-
-            if (!Util.isBetween(n, 0, instruments.length - 1)) {
-                return null;
-            }
-
-            jisa.devices.TMeter tm = instruments[n].get();
-
-            if (tm == null) {
-                return null;
-            }
-
-            jisa.devices.TMeter toReturn;
-
-            if (tm instanceof MultiSensor) {
-
-                try {
-                    toReturn = (jisa.devices.TMeter) ((MultiSensor) tm).getSensor(chn.get());
-                } catch (Exception e) {
-                    return null;
-                }
-
-            } else {
-                toReturn = tm;
-            }
-
-            try {
-                toReturn.setTemperatureRange(rng.get());
-            } catch (Exception e) {
-                return toReturn;
-            }
-
-            return toReturn;
-
-        }
-
-    }
-
-    public static class TC extends Configurator<jisa.devices.TC> {
-
-        private Field<Integer> output;
-        private Field<Integer> sensor;
-        private Field<Double>  pValue;
-        private Field<Double>  iValue;
-        private Field<Double>  dValue;
-
-        public TC(String title, ConfigBlock config, Connector<jisa.devices.TC>... instruments) {
-            super(title, config, instruments);
-        }
-
-        public TC(String title, Connector<jisa.devices.TC>... instruments) {
-            super(title, instruments);
-        }
-
-        public TC(String title, ConfigBlock config, ConnectorGrid grid) {
-            this(title, config, grid.getInstrumentsByType(jisa.devices.TC.class));
-        }
-
-        public TC(String title, ConnectorGrid grid) {
-            this(title, grid.getInstrumentsByType(jisa.devices.TC.class));
-        }
-
-        @Override
-        protected void makeFields() {
-
-            output = addChoice("Output", 0, Util.makeCountingString(0, 4, "Output %d"));
-            sensor = addChoice("Sensor", 0, Util.makeCountingString(0, 4, "Sensor %d"));
-
-            addSeparator();
-
-            pValue = addDoubleField("P", 20.0);
-            iValue = addDoubleField("I", 10.0);
-            dValue = addDoubleField("D", 0.0);
-
-        }
-
-        @Override
-        protected void update() {
-
-            int n = instrument.get();
-
-            jisa.devices.TC tc;
-
-            if (!Util.isBetween(n, 0, instruments.length - 1)) {
-                tc = null;
-            } else {
-                tc = instruments[n].get();
-            }
-
-            if (tc == null) {
-                output.editValues(Util.makeCountingString(0, 4, "Output %d"));
-                sensor.editValues(Util.makeCountingString(0, 4, "Sensor %d"));
-                output.setDisabled(false);
-                sensor.setDisabled(false);
-                return;
-            }
-
-            if (tc instanceof MultiOutput) {
-                output.editValues(Util.makeCountingString(0, ((MultiOutput) tc).getNumOutputs(), "Output %d"));
-                output.setDisabled(false);
-            } else {
-                output.editValues("N/A");
-                output.setDisabled(true);
-            }
-
-            if (tc instanceof MultiSensor) {
-                sensor.editValues(Util.makeCountingString(0, ((MultiSensor) tc).getNumSensors(), "Sensor %d"));
-                sensor.setDisabled(false);
-            } else {
-                sensor.editValues("N/A");
-                sensor.setDisabled(true);
-            }
-
-            try {
-                pValue.set(tc.getPValue());
-                iValue.set(tc.getIValue());
-                dValue.set(tc.getDValue());
-            } catch (Exception ignored) {
-            }
-
-
-        }
-
-        @Override
-        public jisa.devices.TC get() {
-
-            if (!enabled.get()) {
-                return null;
-            }
-
-            try {
-
-                int n = instrument.get();
-
-                if (!Util.isBetween(n, 0, instruments.length - 1)) {
-                    return null;
-                }
-
-                jisa.devices.TC tc = instruments[n].get();
-
-                if (tc == null) {
-                    return null;
-                }
-
-                if (tc instanceof MultiOutput) {
-                    tc = (jisa.devices.TC) ((MultiOutput) tc).getOutput(output.get());
-                }
-
-                if (tc instanceof MSTC) {
-                    ((MSTC) tc).useSensor(sensor.get());
-                }
-
-                tc.setPValue(pValue.get());
-                tc.setIValue(iValue.get());
-                tc.setDValue(dValue.get());
-
-                return tc;
-
-            } catch (Exception e) {
-                return null;
-            }
-
-        }
-
+    public Configuration<I> getConfiguration() {
+        return configuration;
     }
 
 }

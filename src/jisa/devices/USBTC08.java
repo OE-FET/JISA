@@ -239,6 +239,11 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     @Override
+    public String getSensorName(int sensorNumber) {
+        return String.format("Channel %d", sensorNumber);
+    }
+
+    @Override
     public List<Double> getTemperatures() throws DeviceException {
 
         List<Double> temperatures = new ArrayList<>(lastValues.length);
@@ -392,6 +397,11 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         }
 
+    }
+
+    @Override
+    public String getSensorName() {
+        return getSensorName(0);
     }
 
     /**

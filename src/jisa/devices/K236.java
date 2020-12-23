@@ -658,6 +658,11 @@ public class K236 extends VISADevice implements SMU {
         return OffMode.NORMAL;
     }
 
+    @Override
+    public String getChannelName() {
+        return "Main Channel";
+    }
+
     public double getVoltage() throws IOException, DeviceException {
 
         switch (source) {

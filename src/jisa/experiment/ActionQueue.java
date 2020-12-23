@@ -242,7 +242,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         COMPLETED("Completed", "complete"),
         ERROR("Error Encountered", "error");
 
-        private final Image  image;
+        private final Image     image;
         private final String text;
 
         Status(String text, String imageName) {

@@ -1,10 +1,13 @@
 package jisa.devices;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.control.Synch;
-import jisa.Util;
+import jisa.maths.Range;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 public interface MSTC extends TC, MSTMeter {
 
@@ -75,18 +78,23 @@ public interface MSTC extends TC, MSTMeter {
         return new TMeter() {
 
             @Override
+            public String getSensorName() {
+                return MSTC.this.getSensorName(sensor);
+            }
+
+            @Override
             public double getTemperature() throws IOException, DeviceException {
                 return MSTC.this.getTemperature(sensor);
             }
 
             @Override
-            public void setTemperatureRange(double range) throws IOException, DeviceException {
-                MSTC.this.setTemperatureRange(sensor, range);
+            public double getTemperatureRange() throws IOException, DeviceException {
+                return MSTC.this.getTemperatureRange(sensor);
             }
 
             @Override
-            public double getTemperatureRange() throws IOException, DeviceException {
-                return MSTC.this.getTemperatureRange(sensor);
+            public void setTemperatureRange(double range) throws IOException, DeviceException {
+                MSTC.this.setTemperatureRange(sensor, range);
             }
 
             @Override
@@ -96,7 +104,7 @@ public interface MSTC extends TC, MSTMeter {
 
             @Override
             public void close() throws IOException, DeviceException {
-                 MSTC.this.close();
+                MSTC.this.close();
             }
 
             @Override
@@ -138,13 +146,28 @@ public interface MSTC extends TC, MSTMeter {
         checkSensor(sensor);
 
         Synch.waitForStableTarget(
-                () -> getTemperature(sensor),
-                temperature,
-                pctMargin,
-                100,
-                time
+            () -> getTemperature(sensor),
+            temperature,
+            pctMargin,
+            100,
+            time
         );
 
+    }
+
+    default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+
+        LinkedList<Parameter<?>> parameters = new LinkedList<>();
+
+        parameters.add(new Parameter<>("Sensor", 0, this::useSensor, Range.count(0, getNumSensors() - 1).array()));
+        parameters.addAll(TC.super.getConfigurationParameters(target));
+
+        return parameters;
+
+    }
+
+    default Class<TMeter> getSensorType() {
+        return TMeter.class;
     }
 
 }

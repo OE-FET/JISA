@@ -7,8 +7,12 @@ public interface MultiOutput<T> {
 
     int getNumOutputs();
 
-    List<T> getOutputs() throws DeviceException, IOException;
+    List<T> getOutputs();
 
     T getOutput(int outputNumber) throws IOException, DeviceException;
+
+    String getOutputName(int outputNumber);
+
+    Class<T> getOutputType();
 
 }

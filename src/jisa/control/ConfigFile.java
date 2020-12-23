@@ -8,6 +8,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ConfigFile implements ConfigBlock {
 
@@ -21,7 +25,7 @@ public class ConfigFile implements ConfigBlock {
 
         file = new File(filePath);
 
-        if (!Files.exists(Paths.get(directory))) Files.createDirectory(Paths.get(directory));
+        if (!Files.exists(Paths.get(directory))) { Files.createDirectory(Paths.get(directory)); }
 
         if (file.exists()) {
 
@@ -38,6 +42,15 @@ public class ConfigFile implements ConfigBlock {
         }
 
         Util.addShutdownHook(this::save);
+
+    }
+
+    public void clear() {
+
+        List<String> keys = List.copyOf(root.keySet());
+        for (String key : keys) {
+            root.remove(key);
+        }
 
     }
 
@@ -84,7 +97,7 @@ public class ConfigFile implements ConfigBlock {
     public Value<Double> doubleValue(String name) {
 
         if (!root.has(name)) {
-            root.put(name, "");
+            root.put(name, 0.0);
         }
 
         return new Value<>() {
@@ -110,6 +123,10 @@ public class ConfigFile implements ConfigBlock {
 
     public Value<Integer> intValue(String name) {
 
+        if (!root.has(name)) {
+            root.put(name, 0);
+        }
+
         return new Value<>() {
 
             @Override
@@ -134,7 +151,7 @@ public class ConfigFile implements ConfigBlock {
     public Value<Boolean> booleanValue(String name) {
 
         if (!root.has(name)) {
-            root.put(name, "");
+            root.put(name, false);
         }
 
         return new Value<>() {
@@ -159,6 +176,15 @@ public class ConfigFile implements ConfigBlock {
     }
 
     @Override
+    public boolean hasValue(String name) {
+        return root.has(name);
+    }
+
+    public boolean hasBlock(String name) {
+        return getSubBlocks().containsKey(name);
+    }
+
+    @Override
     public ConfigBlock subBlock(String name) {
 
         JSONObject object;
@@ -174,12 +200,36 @@ public class ConfigFile implements ConfigBlock {
 
     }
 
+    @Override
+    public Map<String, ConfigBlock> getSubBlocks() {
+
+        return root.keySet().stream()
+                   .filter(k -> root.get(k) instanceof JSONObject)
+                   .map(k -> Map.entry(k, (JSONObject) root.get(k)))
+                   .collect(Collectors.toMap(Map.Entry::getKey, o -> new Sub(o.getValue())));
+
+    }
+
     protected class Sub implements ConfigBlock {
 
         private final JSONObject sub;
 
         Sub(JSONObject sub) {
             this.sub = sub;
+        }
+
+        public void clear() {
+
+            List<String> keys = List.copyOf(sub.keySet());
+            for (String key : keys) {
+                sub.remove(key);
+            }
+
+        }
+
+        @Override
+        public boolean hasValue(String name) {
+            return sub.has(name);
         }
 
         @Override
@@ -204,6 +254,10 @@ public class ConfigFile implements ConfigBlock {
 
             };
 
+        }
+
+        public boolean hasBlock(String name) {
+            return getSubBlocks().containsKey(name);
         }
 
         @Override
@@ -292,6 +346,15 @@ public class ConfigFile implements ConfigBlock {
 
             return new Sub(object);
 
+        }
+
+        @Override
+        public Map<String, ConfigBlock> getSubBlocks() {
+
+            return sub.keySet().stream()
+                       .filter(k -> sub.get(k) instanceof JSONObject)
+                       .map(k -> Map.entry(k, (JSONObject) sub.get(k)))
+                       .collect(Collectors.toMap(Map.Entry::getKey, o -> new Sub(o.getValue())));
         }
 
         @Override

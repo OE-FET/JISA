@@ -88,6 +88,19 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
 
     }
 
+    public String getChannelName(int channel) {
+        try {
+            checkChannel(channel);
+            return String.format("SMU %d", channel + 1);
+        } catch (Exception e) {
+            return "Unknown Channel";
+        }
+    }
+
+    public String getChannelName() {
+        return "Agilent SPA";
+    }
+
     protected abstract AgilentRange rangeFromVoltage(int channel, double voltage);
 
     protected abstract AgilentRange rangeFromCurrent(int channel, double current);

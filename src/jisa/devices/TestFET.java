@@ -49,6 +49,24 @@ public class TestFET implements MCSMU {
     }
 
     @Override
+    public String getChannelName(int channel) {
+
+        switch (channel) {
+
+            case 0:
+                return "Source-Drain Channel";
+
+            case 1:
+                return "Source-Gate Channel";
+
+            default:
+                return "Unknown Channel";
+
+        }
+
+    }
+
+    @Override
     public double getVoltage(int channel) throws DeviceException {
 
         switch (channel) {
@@ -355,4 +373,8 @@ public class TestFET implements MCSMU {
         return null;
     }
 
+    @Override
+    public String getChannelName() {
+        return "Test FET SMU";
+    }
 }

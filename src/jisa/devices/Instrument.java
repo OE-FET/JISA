@@ -3,6 +3,8 @@ package jisa.devices;
 import jisa.addresses.Address;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Interface for defining the base functionality of all instruments.
@@ -43,6 +45,92 @@ public interface Instrument {
      * @throws IOException     Upon communications error
      */
     default void setTimeout(int msec) throws IOException {
+
+    }
+
+    default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+        return Collections.emptyList();
+    }
+
+    interface Setter<S> {
+
+        void set(S value) throws IOException, DeviceException;
+
+    }
+
+    class Parameter<S> {
+
+        private final String    name;
+        private final S         defaultValue;
+        private final Setter<S> setter;
+        private final List<S>   options;
+
+        public Parameter(String name, S defaultValue, Setter<S> setter, S... options) {
+            this.name         = name;
+            this.defaultValue = defaultValue;
+            this.setter       = setter;
+            this.options      = options.length > 0 ? List.of(options) : Collections.emptyList();
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void set(S value) throws IOException, DeviceException {
+            setter.set(value);
+        }
+
+        public S getDefaultValue() {
+            return defaultValue;
+        }
+
+        public boolean isChoice() {
+            return !options.isEmpty();
+        }
+
+        public List<S> getChoices() {
+            return options;
+        }
+
+    }
+
+    class AutoQuantity<S> {
+
+        private final boolean auto;
+        private final S       otherwise;
+
+        public AutoQuantity(boolean auto, S otherwise) {
+            this.auto      = auto;
+            this.otherwise = otherwise;
+        }
+
+        public boolean isAuto() {
+            return auto;
+        }
+
+        public S getValue() {
+            return otherwise;
+        }
+
+    }
+
+    class OptionalQuantity<S> {
+
+        private final boolean used;
+        private final S       otherwise;
+
+        public OptionalQuantity(boolean used, S otherwise) {
+            this.used      = used;
+            this.otherwise = otherwise;
+        }
+
+        public boolean isUsed() {
+            return used;
+        }
+
+        public S getValue() {
+            return otherwise;
+        }
 
     }
 

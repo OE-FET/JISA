@@ -24,6 +24,11 @@ public class K2400 extends KeithleySCPI {
     }
 
     @Override
+    public String getChannelName() {
+        return "Keithley 2400 SMU";
+    }
+
+    @Override
     public TType getTerminalType(Terminals terminals) {
         return TType.BANANA;
     }

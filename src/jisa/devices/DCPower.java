@@ -3,8 +3,23 @@ package jisa.devices;
 import jisa.control.Synch;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 public interface DCPower extends IVSource {
+
+    @Override
+    default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+
+        List<Parameter<?>> parameters = new LinkedList<>();
+
+        parameters.add(new Parameter<>("Voltage Limit [V]", 10.0, this::setVoltageLimit));
+        parameters.add(new Parameter<>("Set Voltage [V]", new OptionalQuantity<>(false, 10.0), o -> {if (o.isUsed()) setVoltage(o.getValue());}));
+        parameters.add(new Parameter<>("Set Current [A]", new OptionalQuantity<>(false, 10.0), o -> {if (o.isUsed()) setCurrent(o.getValue());}));
+
+        return parameters;
+
+    }
 
     /**
      * Enables the output of the power supply

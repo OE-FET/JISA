@@ -1,8 +1,6 @@
 package jisa.gui;
 
 import jisa.control.ConfigBlock;
-import jisa.control.IConf;
-import jisa.devices.Instrument;
 import jisa.experiment.Measurement;
 import jisa.experiment.Measurement.Parameter;
 
@@ -16,6 +14,7 @@ public class MeasurementConfigurator extends Tabs {
     private final Map<Parameter, Field> parameterFieldMap = new HashMap<>();
     private final Grid                  parameterGrid     = new Grid("Parameters", 1);
     private final Grid                  instrumentGrid    = new Grid("Instruments", 2);
+    private       ConfigBlock           config            = null;
     private       int                   numColumns        = 2;
     private       boolean               colSpanning       = true;
 
@@ -34,38 +33,34 @@ public class MeasurementConfigurator extends Tabs {
 
         for (Parameter<?> parameter : measurement.getParameters()) {
 
-            if (!sections.containsKey(parameter.getSection())) sections.put(
+            if (!sections.containsKey(parameter.getSection())) {
+                sections.put(
                     parameter.getSection(),
                     new Fields(parameter.getSection())
-            );
+                );
+            }
 
             parameterFieldMap.put(parameter, parameter.createField(sections.get(parameter.getSection())));
 
         }
 
-        instrumentGrid.addAll(
-                measurement.getInstruments().stream()
-                           .filter(i -> i instanceof Element)
-                           .map(i -> (Element) i)
-                           .collect(Collectors.toList())
-        );
+        instrumentGrid.addAll(measurement.getInstruments().stream().map(Configurator::new).collect(Collectors.toList()));
 
         updateLayout();
 
     }
 
-    public void linkConfig(ConfigBlock config) {
+    public void linkToConfig(ConfigBlock config) {
+
+        this.config = config;
 
         ConfigBlock block = config.subBlock(measurement.getClass().getName());
 
         for (Fields fields : sections.values()) {
-            fields.linkConfig(block.subBlock(fields.getTitle()));
+            fields.loadFromConfig(block.subBlock(fields.getTitle()));
         }
 
-        measurement.getInstruments().stream()
-                   .filter(i -> i instanceof Configurator)
-                   .map(i -> (Configurator) i)
-                   .forEach(i -> i.linkConfig(block.subBlock("Instruments").subBlock(i.getTitle())));
+        instrumentGrid.getElements().forEach(c -> ((Configurator) c).loadFromConfig(block.subBlock("Instrument Configs").subBlock(c.getTitle())));
 
     }
 
@@ -100,10 +95,10 @@ public class MeasurementConfigurator extends Tabs {
         Grid         firstRow  = new Grid(remainder);
         Grid         otherRows = new Grid(numColumns);
 
-        for (int i = 0; i < remainder; i++) firstRow.add(fields.get(i));
-        for (int i = remainder; i < fields.size(); i++) otherRows.add(fields.get(i));
+        for (int i = 0; i < remainder; i++) { firstRow.add(fields.get(i)); }
+        for (int i = remainder; i < fields.size(); i++) { otherRows.add(fields.get(i)); }
 
-        if (!firstRow.getElements().isEmpty()) parameterGrid.add(firstRow);
+        if (!firstRow.getElements().isEmpty()) { parameterGrid.add(firstRow); }
         parameterGrid.add(otherRows);
 
     }
@@ -114,8 +109,8 @@ public class MeasurementConfigurator extends Tabs {
 
         if (showAsConfirmation()) {
             measurement.getParameters().forEach(Parameter::update);
-            sections.values().forEach(Fields::writeToConfig);
-            measurement.getInstruments().stream().filter(i -> i instanceof Configurator).forEach(i -> ((Configurator) i).writeToConfig());
+            sections.values().forEach(f -> f.writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock(f.getTitle())));
+            if (config != null) instrumentGrid.getElements().forEach(c -> ((Configurator) c).writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock("Instrument Configs").subBlock(c.getTitle())));
             return true;
         } else {
             return false;

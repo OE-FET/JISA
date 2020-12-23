@@ -1,5 +1,7 @@
 package jisa.control;
 
+import java.util.Map;
+
 public interface ConfigBlock {
 
     ConfigFile.Value<String> stringValue(String name);
@@ -10,9 +12,17 @@ public interface ConfigBlock {
 
     ConfigFile.Value<Boolean> booleanValue(String name);
 
+    boolean hasValue(String name);
+
+    boolean hasBlock(String name);
+
     ConfigBlock subBlock(String name);
 
+    Map<String, ConfigBlock> getSubBlocks();
+
     void save();
+
+    void clear();
 
     interface Value<T> {
 

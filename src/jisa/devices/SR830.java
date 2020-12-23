@@ -109,8 +109,8 @@ public class SR830 extends VISADevice implements DPLockIn {
         write(C_SET_INT_AMP, amp);
     }
 
-    public RefMode getRefMode() throws IOException {
-        return RefMode.fromInt(queryInt(C_QUERY_REF));
+    public LockIn.RefMode getRefMode() throws IOException {
+        return RefMode.fromInt(queryInt(C_QUERY_REF)).getRefMode();
     }
 
     @Override
@@ -167,12 +167,12 @@ public class SR830 extends VISADevice implements DPLockIn {
     }
 
     @Override
-    public void useSyncFiltering(boolean flag) throws IOException {
+    public void setSyncFilterEnabled(boolean flag) throws IOException {
         write(C_SET_SYNC, flag ? 1 : 0);
     }
 
     @Override
-    public boolean isUsingSyncFiltering() throws IOException {
+    public boolean isSyncFilterEnabled() throws IOException {
         return queryInt(C_QUERY_SYNC) == 1;
     }
 

@@ -6,8 +6,9 @@ import jisa.visa.VISADevice;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 
-public class ILM200 extends VISADevice {
+public class ILM200 extends VISADevice implements LevelMeter {
 
     private static final String TERMINATOR       = "\r";
     private static final String C_SET_COMM_MODE  = "Q2";
@@ -65,6 +66,21 @@ public class ILM200 extends VISADevice {
 
         query(fast ? C_SET_FAST : C_SET_SLOW, channel + 1);
 
+    }
+
+    @Override
+    public int getNumChannels() {
+        return 2;
+    }
+
+    @Override
+    public String getChannelName(int channelNumber) {
+        return String.format("Channel %d", channelNumber + 1);
+    }
+
+    @Override
+    public List<LevelMeter> getChannels() {
+        return List.of(getChannel(0), getChannel(1));
     }
 
     public enum Mode {

@@ -19,6 +19,8 @@ import java.util.List;
  */
 public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
 
+    String getChannelName(int channel);
+
     /**
      * Returns the voltage of the specified channel
      *
@@ -1297,8 +1299,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
      */
     default SMU getChannel(int channel) throws DeviceException {
 
-        checkChannel(channel);
-
         try {
             return new VirtualSMU(this, channel);
         } catch (Exception e) {
@@ -1307,12 +1307,18 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
 
     }
 
-    default List<SMU> getChannels() throws DeviceException {
+    default List<SMU> getChannels() {
 
         List<SMU> list = new ArrayList<>();
 
         for (int i = 0; i < getNumChannels(); i++) {
-            list.add(getChannel(i));
+
+            try {
+                list.add(getChannel(i));
+            } catch (DeviceException e) {
+                e.printStackTrace();
+            }
+
         }
 
         return list;
@@ -1346,6 +1352,10 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
 
     }
 
+    default Class<SMU> getChannelType() {
+        return SMU.class;
+    }
+
     /**
      * Class for controlling an MCSMU channel as if it were a separate SMU
      */
@@ -1357,6 +1367,11 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
         public VirtualSMU(MCSMU smu, int channel) {
             this.smu     = smu;
             this.channel = channel;
+        }
+
+        @Override
+        public String getChannelName() {
+            return smu.getChannelName(channel);
         }
 
         @Override

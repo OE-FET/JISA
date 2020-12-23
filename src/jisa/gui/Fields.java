@@ -51,46 +51,56 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    public void linkConfig(ConfigBlock config) {
+    public void linkToConfig(ConfigBlock config) {
 
-        links.clear();
-        this.config = config;
+        loadFromConfig(config);
+        Util.addShutdownHook(() -> writeToConfig(config));
 
-        int i = 0;
-        for (Field<?> field : this) {
+    }
 
-            String name = field.getText().replace(" ", "-");
-            switch (field.get().getClass().getSimpleName()) {
+    public void writeToConfig(ConfigBlock block) {
 
-                case "String":
-                    links.put(field, config.stringValue(name));
-                    ((Field<String>) field).set(((ConfigBlock.Value<String>) links.get(field)).getOrDefault(((Field<String>) field).get()));
-                    break;
+        for (Field field : fields) {
 
-                case "Double":
-                    links.put(field, config.doubleValue(name));
-                    ((Field<Double>) field).set(((ConfigBlock.Value<Double>) links.get(field)).getOrDefault(((Field<Double>) field).get()));
-                    break;
+            Class type = field.get().getClass();
 
-                case "Integer":
-                    links.put(field, config.intValue(name));
-                    ((Field<Integer>) field).set(((ConfigBlock.Value<Integer>) links.get(field)).getOrDefault(((Field<Integer>) field).get()));
-                    break;
-
-                case "Boolean":
-                    links.put(field, config.booleanValue(name));
-                    ((Field<Boolean>) field).set(((ConfigBlock.Value<Boolean>) links.get(field)).getOrDefault(((Field<Boolean>) field).get()));
-                    break;
-
+            if (type == Double.class) {
+                block.doubleValue(field.getText()).set(field.getValue());
+            } else if (type == Integer.class) {
+                block.intValue(field.getText()).set(field.getValue());
+            } else if (type == Boolean.class) {
+                block.booleanValue(field.getText()).set(field.getValue());
+            } else if (type == String.class) {
+                block.stringValue(field.getText()).set(field.getValue());
             }
 
         }
 
+        block.save();
+
     }
 
-    public void writeToConfig() {
+    public void loadFromConfig(ConfigBlock block) {
 
-        links.forEach((field, value) -> value.set(field.get()));
+        for (Field field : fields) {
+
+            if (!block.hasValue(field.getText())) {
+                continue;
+            }
+
+            Class type = field.get().getClass();
+
+            if (type == Double.class) {
+                field.set(block.doubleValue(field.getText()).get());
+            } else if (type == Integer.class) {
+                field.set(block.intValue(field.getText()).get());
+            } else if (type == Boolean.class) {
+                field.set(block.booleanValue(field.getText()).get());
+            } else if (type == String.class) {
+                field.set(block.stringValue(field.getText()).get());
+            }
+
+        }
 
     }
 
@@ -638,6 +648,17 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
         fields.add(f);
         return f;
+
+    }
+
+    public void clear() {
+
+        GUI.runNow(() -> {
+            list.getChildren().clear();
+            fields.clear();
+            links.clear();
+            rows = 0;
+        });
 
     }
 

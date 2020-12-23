@@ -3,8 +3,12 @@ package jisa.devices;
 import jisa.control.Synch;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 public interface TMeter extends Instrument {
+
+    String getSensorName();
 
     /**
      * Returns the temperature being reported by the thermometer.
@@ -64,6 +68,16 @@ public interface TMeter extends Instrument {
      */
     default void waitForStableTemperature(double pctMargin, long duration) throws IOException, DeviceException, InterruptedException {
         Synch.waitForParamStable(this::getTemperature, pctMargin, 1000, duration);
+    }
+
+    default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+
+        List<Parameter<?>> parameters = new LinkedList<>();
+
+        parameters.add(new Parameter<>("Sensor Range [K]", 999.9, this::setTemperatureRange));
+
+        return parameters;
+
     }
 
 }

@@ -12,7 +12,7 @@ public class TSX3510P extends VISADevice implements DCPower {
 
     private boolean on = false;
 
-    private TSX3510P(Address address) throws IOException, DeviceException {
+    public TSX3510P(Address address) throws IOException, DeviceException {
 
         super(address);
         setWriteTerminator("\n");

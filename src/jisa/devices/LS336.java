@@ -22,26 +22,26 @@ import java.util.concurrent.Semaphore;
  */
 public class LS336 extends VISADevice implements MSMOTC {
 
-    private static final String[]        CHANNELS             = {"A", "B", "C", "D"};
-    private static final String          C_QUERY_SENSOR       = "KRDG? %s";
-    private static final String          C_SET_SET_POINT      = "SETP %d,%f";
-    private static final String          C_QUERY_SET_POINT    = "SETP? %d";
-    private static final String          C_QUERY_PID          = "PID? %d";
-    private static final String          C_SET_PID            = "PID %d,%f,%f,%f";
-    private static final String          C_SET_OUT_MODE       = "OUTMODE %d,%d,%d,%d";
-    private static final String          C_QUERY_OUT_MODE     = "OUTMODE? %d";
-    private static final String          C_QUERY_HEATER       = "HTR? %d";
-    private static final String          C_SET_HEATER         = "MOUT %d,%f";
-    private static final String          C_QUERY_M_HEATER     = "MOUT? %d";
-    private static final String          C_SET_HEATER_RANGE   = "RANGE %d,%d";
-    private static final String          C_QUERY_HEATER_RANGE = "RANGE? %d";
-    private static final String          C_SET_ZONE           = "ZONE %d,%d,%f,%f,%f,%f,%f,%d,0,0";
-    private static final String          C_QUERY_ZONE         = "ZONE? %d,%d";
-    private static final String          TERMINATOR           = "\r\n";
-    private              Semaphore       timingControl        = new Semaphore(1);
-    private              ExecutorService timingService        = Executors.newFixedThreadPool(1);
-    private              boolean[]                 autoPID = {false, false};
-    private              jisa.devices.PID.Zone[][] zones   = new jisa.devices.PID.Zone[2][0];
+    private static final String[]                  CHANNELS             = {"A", "B", "C", "D"};
+    private static final String                    C_QUERY_SENSOR       = "KRDG? %s";
+    private static final String                    C_SET_SET_POINT      = "SETP %d,%f";
+    private static final String                    C_QUERY_SET_POINT    = "SETP? %d";
+    private static final String                    C_QUERY_PID          = "PID? %d";
+    private static final String                    C_SET_PID            = "PID %d,%f,%f,%f";
+    private static final String                    C_SET_OUT_MODE       = "OUTMODE %d,%d,%d,%d";
+    private static final String                    C_QUERY_OUT_MODE     = "OUTMODE? %d";
+    private static final String                    C_QUERY_HEATER       = "HTR? %d";
+    private static final String                    C_SET_HEATER         = "MOUT %d,%f";
+    private static final String                    C_QUERY_M_HEATER     = "MOUT? %d";
+    private static final String                    C_SET_HEATER_RANGE   = "RANGE %d,%d";
+    private static final String                    C_QUERY_HEATER_RANGE = "RANGE? %d";
+    private static final String                    C_SET_ZONE           = "ZONE %d,%d,%f,%f,%f,%f,%f,%d,0,0";
+    private static final String                    C_QUERY_ZONE         = "ZONE? %d,%d";
+    private static final String                    TERMINATOR           = "\r\n";
+    private              Semaphore                 timingControl        = new Semaphore(1);
+    private              ExecutorService           timingService        = Executors.newFixedThreadPool(1);
+    private              boolean[]                 autoPID              = {false, false};
+    private              jisa.devices.PID.Zone[][] zones                = new jisa.devices.PID.Zone[2][0];
 
     public LS336(Address address) throws IOException, DeviceException {
 
@@ -108,6 +108,18 @@ public class LS336 extends VISADevice implements MSMOTC {
     }
 
     @Override
+    public String getSensorName(int sensorNumber) {
+
+        try {
+            checkSensor(sensorNumber);
+            return String.format("%s (%s)", CHANNELS[sensorNumber], query("INNAME? %s", CHANNELS[sensorNumber]));
+        } catch (Exception e) {
+            return "Unknown Sensor";
+        }
+
+    }
+
+    @Override
     public void setTemperatureRange(int sensor, double range) throws DeviceException {
         checkSensor(sensor);
         // No range options
@@ -122,6 +134,11 @@ public class LS336 extends VISADevice implements MSMOTC {
     @Override
     public int getNumOutputs() {
         return 2;
+    }
+
+    @Override
+    public String getOutputName(int outputNumber) {
+        return String.format("Output %d", outputNumber + 1);
     }
 
     private OutMode getOutMode(int output) throws IOException {
@@ -285,6 +302,21 @@ public class LS336 extends VISADevice implements MSMOTC {
     @Override
     public void setFlow(int output, double outputPCT) throws DeviceException {
         throw new DeviceException("LS336 does not control gas flow.");
+    }
+
+    @Override
+    public String getOutputName() {
+        return null;
+    }
+
+    @Override
+    public String getSensorName() {
+
+        try {
+            return getSensorName(getUsedSensor());
+        } catch (Exception e) {
+            return "Unknown Sensor";
+        }
     }
 
     private enum HRange {

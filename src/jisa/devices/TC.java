@@ -3,13 +3,15 @@ package jisa.devices;
 import jisa.control.Synch;
 
 import java.io.IOException;
-import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
  * Abstract class to define the standard functionality of temperature controllers
  */
 public interface TC extends PID, TMeter {
+
+    String getOutputName();
 
     @Override
     default String getInputName() throws IOException, DeviceException {
@@ -76,6 +78,10 @@ public interface TC extends PID, TMeter {
      */
     double getTemperature() throws IOException, DeviceException;
 
+    default void setTemperature(double temperature) throws IOException, DeviceException {
+        setTargetTemperature(temperature);
+    }
+
     /**
      * Returns the target temperature set on the controller.
      *
@@ -96,10 +102,6 @@ public interface TC extends PID, TMeter {
      */
     void setTargetTemperature(double temperature) throws IOException, DeviceException;
 
-    default void setTemperature(double temperature) throws IOException, DeviceException {
-        setTargetTemperature(temperature);
-    }
-
     /**
      * Returns the heater output power percentage.
      *
@@ -109,6 +111,16 @@ public interface TC extends PID, TMeter {
      * @throws DeviceException Upon compatibility error
      */
     double getHeaterPower() throws IOException, DeviceException;
+
+    /**
+     * Sets the heater to be operated manually with the specified power output percentage
+     *
+     * @param powerPCT Output power (percentage of max)
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    void setHeaterPower(double powerPCT) throws IOException, DeviceException;
 
     /**
      * Returns the gas flow in whatever units the controller uses
@@ -121,22 +133,22 @@ public interface TC extends PID, TMeter {
     double getFlow() throws IOException, DeviceException;
 
     /**
+     * Sets the gas flow to be controlled manually with the specified output
+     *
+     * @param outputPCT Output
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    void setFlow(double outputPCT) throws IOException, DeviceException;
+
+    /**
      * Sets the heater to be operated automatically
      *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
     void useAutoHeater() throws IOException, DeviceException;
-
-    /**
-     * Sets the heater to be operated manually with the specified power output percentage
-     *
-     * @param powerPCT Output power (percentage of max)
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setHeaterPower(double powerPCT) throws IOException, DeviceException;
 
     /**
      * Returns whether the heater is currently operating automatically or manually
@@ -155,16 +167,6 @@ public interface TC extends PID, TMeter {
      * @throws DeviceException Upon compatibility error
      */
     void useAutoFlow() throws IOException, DeviceException;
-
-    /**
-     * Sets the gas flow to be controlled manually with the specified output
-     *
-     * @param outputPCT Output
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setFlow(double outputPCT) throws IOException, DeviceException;
 
     /**
      * Returns whether the gas flow is currently controlled automatically or manually
@@ -198,12 +200,27 @@ public interface TC extends PID, TMeter {
     default void waitForStableTemperature(double temperature, double pctMargin, long time) throws IOException, DeviceException, InterruptedException {
 
         Synch.waitForStableTarget(
-                this::getTemperature,
-                temperature,
-                pctMargin,
-                100,
-                time
+            this::getTemperature,
+            temperature,
+            pctMargin,
+            100,
+            time
         );
+
+    }
+
+    default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+
+        LinkedList<Parameter<?>> parameters = new LinkedList<>();
+
+        parameters.add(new Parameter<>("P", 70.0, this::setPValue));
+        parameters.add(new Parameter<>("I", 30.0, this::setIValue));
+        parameters.add(new Parameter<>("D", 00.0, this::setDValue));
+        parameters.add(new Parameter<>("Heater Range [%]", 100.0, this::setHeaterRange));
+
+        parameters.addAll(TMeter.super.getConfigurationParameters(target));
+
+        return parameters;
 
     }
 

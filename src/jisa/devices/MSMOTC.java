@@ -10,6 +10,10 @@ import java.util.List;
 
 public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
 
+    default Class<MSTC> getOutputType() {
+        return MSTC.class;
+    }
+
     /**
      * Returns the number of outputs the controller has
      *
@@ -18,12 +22,18 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
     int getNumOutputs();
 
     @Override
-    default List<MSTC> getOutputs() throws DeviceException {
+    default List<MSTC> getOutputs() {
 
         List<MSTC> list = new ArrayList<>();
 
         for (int i = 0; i < getNumOutputs(); i++) {
-            list.add(getOutput(i));
+
+            try {
+                list.add(getOutput(i));
+            } catch (DeviceException e) {
+                e.printStackTrace();
+            }
+
         }
 
         return list;
@@ -631,6 +641,17 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
         return new MSTC() {
 
             @Override
+            public String getSensorName() {
+
+                try {
+                    return getSensorName(getUsedSensor());
+                } catch (Exception e) {
+                    return "Unknown Sensor";
+                }
+
+            }
+
+            @Override
             public void setTargetTemperature(double temperature) throws IOException, DeviceException {
                 MSMOTC.this.setTargetTemperature(output, temperature);
             }
@@ -656,6 +677,11 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
             }
 
             @Override
+            public String getSensorName(int sensorNumber) {
+                return MSMOTC.this.getSensorName(sensorNumber);
+            }
+
+            @Override
             public void setTemperatureRange(int sensor, double range) throws IOException, DeviceException {
                 MSMOTC.this.setTemperatureRange(sensor, range);
             }
@@ -663,6 +689,11 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
             @Override
             public double getTemperatureRange(int sensor) throws IOException, DeviceException {
                 return MSMOTC.this.getTemperatureRange(sensor);
+            }
+
+            @Override
+            public String getOutputName() {
+                return MSMOTC.this.getOutputName(output);
             }
 
             @Override

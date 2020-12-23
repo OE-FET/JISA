@@ -1,128 +1,188 @@
 package jisa.gui;
 
-import javafx.scene.layout.Pane;
 import jisa.Util;
 import jisa.control.ConfigBlock;
-import jisa.control.SRunnable;
-import jisa.devices.*;
+import jisa.control.Connection;
+import jisa.devices.Instrument;
+import jisa.experiment.ActionQueue;
+import org.reflections.Reflections;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.concurrent.Semaphore;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class ConnectorGrid extends Grid {
 
-    public  Pane                 pane;
-    private String               title;
-    private ArrayList<Connector> configs = new ArrayList<>();
-    private ConfigBlock          config  = null;
-    private String               key     = "";
+    private final List<Connector<?>> connectors = new LinkedList<>();
 
-    public ConnectorGrid(String title) {
-        super(title);
-        this.title = title;
-        addToolbarButton("Connect All", this::connectAll);
+    public ConnectorGrid(String title, int numCols) {
+        super(title, numCols);
         setGrowth(true, false);
+        addToolbarButton("Add Connection", this::addConnector);
+        addToolbarButton("Remove Connection", this::removeConnectors);
     }
 
-    public ConnectorGrid(String title, ConfigBlock c) {
-        this(title, "ConGrid", c);
+    public <T extends Instrument> Connector<T> addConnector(Connector<T> connector) {
+
+        connectors.add(connector);
+        add(connector);
+        return connector;
+
     }
 
-    public ConnectorGrid(String title, String key, ConfigBlock c) {
-        this(title);
-        this.key = key;
-        setConfigStore(c);
-    }
+    public Connector<?> addConnector() {
 
-    public <T extends Instrument> Connector<T> addInstrument(String name, Class<T> type) {
+        Fields input = new Fields("Add Connector");
 
-        try {
-            Connector<T> conf = new Connector<>(name, type, config.subBlock(name));
-            add(conf);
-            configs.add(conf);
-            return conf;
-        } catch (Exception e) {
-            e.printStackTrace();
-            Util.errLog.println(e.getMessage());
+        Reflections reflections = new Reflections("jisa.devices");
+
+        List<Class>    classes = List.copyOf(reflections.getSubTypesOf(Instrument.class).stream().filter(Class::isInterface).sorted(Comparator.comparing(Class::getSimpleName)).collect(Collectors.toUnmodifiableList()));
+        Field<String>  name    = input.addTextField("Name");
+        Field<Integer> type    = input.addChoice("Type", classes.stream().map(Class::getSimpleName).toArray(String[]::new));
+
+        if (input.showAsConfirmation()) {
+            return addConnector(name.get(), classes.get(type.get()));
+        } else {
             return null;
         }
 
     }
 
-    public Connector<SMU> addSMU(String name) {
-        return addInstrument(name, SMU.class);
+    public void removeConnectors() {
+
+        Fields                         input     = new Fields("Remove Connectors");
+        Map<Connector, Field<Boolean>> selection = new HashMap<>();
+
+        for (Connector connector : getConnectors()) {
+            Field<Boolean> selected = input.addCheckBox(connector.getConnection().getName(), false);
+            selection.put(connector, selected);
+        }
+
+        if (input.showAsConfirmation()) {
+
+            selection.forEach((c, r) -> {
+                if (r.get()) {
+                    removeConnector(c);
+                }
+            });
+
+        }
+
     }
 
-    public Connector<TC> addTC(String name) {
-        return addInstrument(name, TC.class);
+    public void removeConnector(Connector connector) {
+        connectors.remove(connector);
+        remove(connector);
+        connector.getConnection().delete();
     }
 
-    public Connector<LockIn> addLockIn(String name) {
-        return addInstrument(name, LockIn.class);
-    }
+    public void loadFromConfig(ConfigBlock block) {
 
-    public Connector<DPLockIn> addDPLockIn(String name) {
-        return addInstrument(name, DPLockIn.class);
-    }
+        for (ConfigBlock sub : block.getSubBlocks().entrySet().stream().sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue).collect(Collectors.toUnmodifiableList())) {
 
-    public Connector<DCPower> addDCPower(String name) {
-        return addInstrument(name, DCPower.class);
-    }
-
-    public Connector<VPreAmp> addVPreAmp(String name) {
-        return addInstrument(name, VPreAmp.class);
-    }
-
-    @SuppressWarnings("unchecked")
-    public <T extends Instrument> Connector<T>[] getInstrumentsByType(Class<T> type) {
-
-        LinkedList<Connector<T>> list = new LinkedList<>();
-
-        for (Connector c : configs) {
-
-            if (type.isAssignableFrom(c.getDeviceType())) {
-                list.add(c);
+            try {
+                Connector connector = addConnector(sub.stringValue("Name").get(), (Class<? extends Instrument>) Class.forName(sub.stringValue("Target").get()));
+                connector.loadFromConfig(sub.subBlock("Configuration"));
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
         }
 
-        return list.toArray(new Connector[0]);
+    }
 
+    public void writeToConfig(ConfigBlock block) {
+
+        block.clear();
+
+        int i = 0;
+        for (Connector connector : getConnectors()) {
+
+            ConfigBlock sub = block.subBlock(String.format("Connection %d", i++));
+            sub.stringValue("Name").set(connector.connection.getName());
+            sub.stringValue("Target").set(connector.getConnection().getType().getName());
+            connector.writeToConfig(sub.subBlock("Configuration"));
+
+        }
+
+        block.save();
+
+    }
+
+    public void linkToConfig(ConfigBlock block) {
+        loadFromConfig(block);
+        Util.addShutdownHook(() -> writeToConfig(block));
+    }
+
+    public <T extends Instrument> Connector<T> addConnector(Connection<T> connection) {
+        return addConnector(new Connector<>(connection));
+    }
+
+
+    public <T extends Instrument> Connector<T> addConnector(String name, Class<T> target) {
+        return addConnector(new Connection<>(name, target));
+    }
+
+    public List<Connector<?>> getConnectors() {
+        return List.copyOf(connectors);
+    }
+
+    public List<Connection<?>> getConnections() {
+        return connectors.stream().map(Connector::getConnection).collect(Collectors.toUnmodifiableList());
     }
 
     public void connectAll() {
-        for (Connector config : configs) {
-            (new Thread(() -> config.connect(false))).start();
+        getConnectors().forEach(Connector::connect);
+    }
+
+    public Element connectAllWithList() {
+
+        ListDisplay<Connector> display = new ListDisplay<>("Connecting...");
+
+        display.setWindowWidth(800.0);
+        display.setWindowHeight(500.0);
+
+        for (Connector connector : getConnectors()) {
+            ListDisplay.Item<Connector> item = display.add(connector, String.format("Connect to \"%s\" (%s)", connector.getTitle(), connector.getConnection().getDriver().getSimpleName()), "Waiting...", ActionQueue.Status.NOT_STARTED.getImage());
+            connector.getConnection().addChangeListener(() -> {
+
+                switch (connector.getConnection().getStatus()) {
+
+                    case CONNECTING:
+                        item.setImage(ActionQueue.Status.RUNNING.getImage());
+                        item.setSubTitle("Connecting...");
+                        item.select();
+                        break;
+
+                    case CONNECTED:
+                        item.setImage(ActionQueue.Status.COMPLETED.getImage());
+                        item.setSubTitle("Connection Successful");
+                        break;
+
+                    case ERROR:
+                        item.setImage(ActionQueue.Status.ERROR.getImage());
+                        item.setSubTitle("Connection Error");
+                        break;
+
+                    default:
+                        item.setImage(ActionQueue.Status.NOT_STARTED.getImage());
+                        item.setSubTitle("Waiting...");
+                        break;
+
+                }
+
+            });
         }
-    }
 
-    public void connectAll(SRunnable onComplete) {
+        display.show();
 
-        Semaphore s = new Semaphore(0);
+        for (Connector connector : getConnectors()) {
 
-        for (Connector config : configs) {
-            (new Thread(() -> {
-                config.connect(false);
-                s.release();
-            })).start();
+            connector.connect();
+
         }
 
-        try {
-            s.acquire(configs.size());
-            onComplete.run();
-        } catch (Exception e) {
-            Util.exceptionHandler(e);
-        }
+        return display;
 
     }
 
-    public void setConfigStore(ConfigBlock c) {
-        config = c;
-    }
-
-    @Override
-    public String getTitle() {
-        return title;
-    }
 }

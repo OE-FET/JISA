@@ -101,6 +101,11 @@ public class ITC503 extends VISADevice implements MSTC {
         }
     }
 
+    @Override
+    public String getOutputName() {
+        return "Main Loop";
+    }
+
     /**
      * Returns the temperature that the ITC is currently programmed to reach.
      *
@@ -277,6 +282,11 @@ public class ITC503 extends VISADevice implements MSTC {
         return 3;
     }
 
+    @Override
+    public String getSensorName(int sensorNumber) {
+        return String.format("Sensor %d", sensorNumber + 1);
+    }
+
     public String getIDN() throws IOException {
         return query("V").replace("\n", "").replace("\r", "");
     }
@@ -305,6 +315,11 @@ public class ITC503 extends VISADevice implements MSTC {
     public double getTemperatureRange(int sensor) throws DeviceException {
         checkSensor(sensor);
         return 999.9;
+    }
+
+    @Override
+    public String getSensorName() {
+        return getSensorName(0);
     }
 
 

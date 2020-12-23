@@ -22,6 +22,11 @@ public class DummyMCSMU implements MCSMU {
     private static Cleaner   cleaner = Cleaner.create();
 
     @Override
+    public String getChannelName(int channel) {
+        return "Channel " + channel;
+    }
+
+    @Override
     public double getVoltage(int channel) throws DeviceException, IOException {
 
         if (voltage[channel] == null && current[channel] == null) {
@@ -337,4 +342,8 @@ public class DummyMCSMU implements MCSMU {
         return null;
     }
 
+    @Override
+    public String getChannelName() {
+        return "Dummy MCSMU";
+    }
 }

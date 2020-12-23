@@ -54,6 +54,11 @@ public class K2450 extends KeithleySCPI {
     }
 
     @Override
+    public String getChannelName() {
+        return "Main Channel";
+    }
+
+    @Override
     public double getOutputLimit() throws IOException {
         return queryDouble(C_QUERY_LIMIT_2450, getSourceMode().getTag(), getMeasureMode().getSymbol());
     }

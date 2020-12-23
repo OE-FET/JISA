@@ -70,6 +70,16 @@ public class SMUCluster implements MCSMU {
     }
 
     @Override
+    public String getChannelName(int channel) {
+        try {
+            checkChannel(channel);
+            return devices.get(channel).getChannelName();
+        } catch (Exception e) {
+            return "Unknown Channel";
+        }
+    }
+
+    @Override
     public double getVoltage(int channel) throws DeviceException, IOException {
         if (devices.size() <= channel) {
             throw new DeviceException("Channel does not exist!");
@@ -419,5 +429,10 @@ public class SMUCluster implements MCSMU {
     @Override
     public Address getAddress() {
         return null;
+    }
+
+    @Override
+    public String getChannelName() {
+        return getChannelName(0);
     }
 }

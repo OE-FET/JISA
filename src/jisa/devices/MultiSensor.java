@@ -7,8 +7,12 @@ public interface MultiSensor<T> {
 
     int getNumSensors();
 
-    List<T> getSensors() throws DeviceException, IOException;
+    String getSensorName(int sensorNumber);
+
+    List<T> getSensors();
 
     T getSensor(int sensorNumber) throws IOException, DeviceException;
+
+    Class<T> getSensorType();
 
 }

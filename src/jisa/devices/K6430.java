@@ -108,6 +108,11 @@ public class K6430 extends KeithleySCPI {
         write(":NPLC %e", seconds * LINE_FREQUENCY);
     }
 
+    @Override
+    public String getChannelName() {
+        return "Keithley 6430 SMU";
+    }
+
     public void setFourProbeEnabled(boolean flag) throws IOException {
         write(":SYST:RSENSE %s", flag ? OUTPUT_ON : OUTPUT_OFF);
     }

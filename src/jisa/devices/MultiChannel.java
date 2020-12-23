@@ -7,8 +7,12 @@ public interface MultiChannel<T> {
 
     int getNumChannels();
 
-    List<T> getChannels() throws DeviceException, IOException;
+    String getChannelName(int channelNumber);
+
+    List<T> getChannels();
 
     T getChannel(int channelNumber) throws IOException, DeviceException;
+
+    Class<T> getChannelType();
 
 }

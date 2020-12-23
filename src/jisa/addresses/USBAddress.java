@@ -1,5 +1,7 @@
 package jisa.addresses;
 
+import javax.usb.UsbDevice;
+import javax.usb.UsbDeviceDescriptor;
 import java.util.ArrayList;
 
 public class USBAddress implements Address {
@@ -11,10 +13,10 @@ public class USBAddress implements Address {
     private int    interfaceNumber;
 
     public USBAddress(int board, int manufacturer, int model, String serialNumber, int interfaceNumber) {
-        this.board = board;
-        this.manufacturer = manufacturer;
-        this.model = model;
-        this.serialNumber = serialNumber;
+        this.board           = board;
+        this.manufacturer    = manufacturer;
+        this.model           = model;
+        this.serialNumber    = serialNumber;
         this.interfaceNumber = interfaceNumber;
     }
 
@@ -32,6 +34,21 @@ public class USBAddress implements Address {
 
     public USBAddress(int manufacturer, int model) {
         this(-1, manufacturer, model, null);
+    }
+
+    public static USBAddress fromUSBDevice(UsbDevice device) {
+
+        UsbDeviceDescriptor descriptor = device.getUsbDeviceDescriptor();
+        String              serialNumber;
+
+        try {
+            serialNumber = device.getSerialNumberString();
+        } catch (Exception e) {
+            serialNumber = String.valueOf(descriptor.iSerialNumber());
+        }
+
+        return new USBAddress(descriptor.idVendor(), descriptor.idProduct(), serialNumber);
+
     }
 
     public int getBoard() {
@@ -84,7 +101,6 @@ public class USBAddress implements Address {
     public USBAddress toUSBAddress() {
         return this;
     }
-
 
 
     public AddressParams createParams() {

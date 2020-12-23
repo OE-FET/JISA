@@ -1,5 +1,6 @@
 package jisa.devices;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.visa.Connection;
 import jisa.visa.VISADevice;
@@ -57,6 +58,11 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
     @Override
     public int getNumOutputs() {
         return 4;
+    }
+
+    @Override
+    public String getOutputName(int outputNumber) {
+        return String.format("Loop %d", outputNumber + 1);
     }
 
     @Override
@@ -330,6 +336,18 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
     }
 
     @Override
+    public String getSensorName(int sensorNumber) {
+
+        try {
+            checkSensor(sensorNumber);
+            return String.format("%s (%s)", SENSORS.get(sensorNumber), query("INPUT %s:NAME?", SENSORS.get(sensorNumber)));
+        } catch (Exception e) {
+            return "Unknown Sensor";
+        }
+
+    }
+
+    @Override
     public void setTemperatureRange(int sensor, double range) throws IOException, DeviceException {
         checkSensor(sensor);
     }
@@ -338,5 +356,21 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
     public double getTemperatureRange(int sensor) throws IOException, DeviceException {
         checkSensor(sensor);
         return 999.999;
+    }
+
+    @Override
+    public String getOutputName() {
+        return getOutputName(0);
+    }
+
+    @Override
+    public String getSensorName() {
+
+        try {
+            return getSensorName(getUsedSensor());
+        } catch (IOException | DeviceException e) {
+            return "Unknown Sensor";
+        }
+
     }
 }

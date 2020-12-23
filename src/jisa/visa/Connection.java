@@ -62,7 +62,9 @@ public interface Connection {
      *
      * @throws VISAException Upon something going wrong
      */
-    void setEOI(boolean set) throws VISAException;
+    default void setEOI(boolean set) throws VISAException {
+
+    }
 
     /**
      * Sets the "End of String" terminator, in numerical form. This is the terminator used for reading from the
@@ -127,7 +129,9 @@ public interface Connection {
      *
      * @throws VISAException Upon something going wrong
      */
-    void setSerial(int baud, int data, Parity parity, StopBits stop, Flow flow) throws VISAException;
+    default void setSerial(int baud, int data, Parity parity, StopBits stop, Flow flow) throws VISAException {
+
+    }
 
     /**
      * Closes the connection, freeing up the resources used by it.

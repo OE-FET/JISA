@@ -11,6 +11,10 @@ import java.util.List;
 
 public interface MSTMeter extends TMeter, MultiSensor<TMeter> {
 
+    default Class<TMeter> getSensorType() {
+        return TMeter.class;
+    }
+
     /**
      * Returns the temperature being reported by the specified sensor.
      *
@@ -116,6 +120,11 @@ public interface MSTMeter extends TMeter, MultiSensor<TMeter> {
         return new TMeter() {
 
             @Override
+            public String getSensorName() {
+                return MSTMeter.this.getSensorName(sensor);
+            }
+
+            @Override
             public double getTemperature() throws IOException, DeviceException {
                 return MSTMeter.this.getTemperature(sensor);
             }
@@ -151,12 +160,16 @@ public interface MSTMeter extends TMeter, MultiSensor<TMeter> {
 
 
     @Override
-    default List<TMeter> getSensors() throws DeviceException, IOException {
+    default List<TMeter> getSensors() {
 
         List<TMeter> list = new ArrayList<>();
 
         for (int i = 0; i < getNumSensors(); i++) {
-            list.add(getSensor(i));
+            try {
+                list.add(getSensor(i));
+            } catch (IOException | DeviceException e) {
+                e.printStackTrace();
+            }
         }
 
         return list;

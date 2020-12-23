@@ -1,13 +1,13 @@
 package jisa.experiment;
 
 import jisa.control.IConf;
+import jisa.devices.Configuration;
 import jisa.devices.Instrument;
 import jisa.gui.Field;
 import jisa.gui.Fields;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -16,12 +16,21 @@ import java.util.List;
  */
 public abstract class Measurement {
 
-    private final List<Parameter<?>> parameters  = new ArrayList<>();
-    private final List<IConf<?>>     instruments = new ArrayList<>();
-    private       boolean            running     = false;
-    private       boolean            stopped     = false;
-    private       ResultTable        results     = null;
-    private       Thread             runThread   = Thread.currentThread();
+    private final List<Parameter<?>>     parameters  = new ArrayList<>();
+    private final List<Configuration<?>> instruments = new ArrayList<>();
+    private       boolean                running     = false;
+    private       boolean                stopped     = false;
+    private       ResultTable            results     = null;
+    private       Thread                 runThread   = Thread.currentThread();
+
+    public <T extends Instrument> Configuration<T> addInstrument(Configuration<T> configuration) {
+        instruments.add(configuration);
+        return configuration;
+    }
+
+    public <T extends Instrument> Configuration<T> addInstrument(String name, Class<T> type) {
+        return addInstrument(new Configuration<>(name, type));
+    }
 
     /**
      * Returns the name of this measurement.
@@ -158,12 +167,7 @@ public abstract class Measurement {
         return new ArrayList<>(parameters);
     }
 
-    public List<IConf<?>> getInstruments() { return new ArrayList<>(instruments); }
-
-    public <T extends Instrument> IConf<T> addInstrument(IConf<T> conf) {
-        instruments.add(conf);
-        return conf;
-    }
+    public List<Configuration<? extends Instrument>> getInstruments() { return new ArrayList<>(instruments); }
 
     /**
      * Returns whether this measurement is currently running.

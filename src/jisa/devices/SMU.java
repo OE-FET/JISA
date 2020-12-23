@@ -8,8 +8,12 @@ import jisa.enums.Terminals;
 import jisa.experiment.IVPoint;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 public interface SMU extends IVMeter, IVSource {
+
+    String getChannelName();
 
     /**
      * Returns the voltage either being applied or measured by the SMU.
@@ -166,6 +170,16 @@ public interface SMU extends IVMeter, IVSource {
     double getMeasureValue() throws DeviceException, IOException;
 
     /**
+     * Returns whether the device is currently configured to use all four probes.
+     *
+     * @return Are all probes to be used?
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    boolean isFourProbeEnabled() throws DeviceException, IOException;
+
+    /**
      * Sets whether the SMU should apply source using FORCE probes and measure using separate SENSE probes or whether is should
      * do both with the FORCE probes.
      *
@@ -175,16 +189,6 @@ public interface SMU extends IVMeter, IVSource {
      * @throws IOException     Upon communications error
      */
     void setFourProbeEnabled(boolean fourProbes) throws DeviceException, IOException;
-
-    /**
-     * Returns whether the device is currently configured to use all four probes.
-     *
-     * @return Are all probes to be used?
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    boolean isFourProbeEnabled() throws DeviceException, IOException;
 
     /**
      * Sets both the averaging mode and count together.
@@ -629,6 +633,31 @@ public interface SMU extends IVMeter, IVSource {
     default void setLimits(double voltageLimit, double currentLimit) throws DeviceException, IOException {
         setVoltageLimit(voltageLimit);
         setCurrentLimit(currentLimit);
+    }
+
+    @Override
+    default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+
+        List<Parameter<?>> parameters = new LinkedList<>();
+
+        parameters.add(new Parameter<>("Terminals", Terminals.FRONT, this::setTerminals, Terminals.values()));
+        parameters.add(new Parameter<>("Voltage Limit [V]", 200.0, this::setVoltageLimit));
+        parameters.add(new Parameter<>("Current Limit [A]", 200e-3, this::setCurrentLimit));
+        parameters.add(new Parameter<>("Voltage Range [V]", new AutoQuantity<>(true, 0.0), q -> { if (q.isAuto()) this.useAutoVoltageRange(); else this.setVoltageRange(q.getValue()); }));
+        parameters.add(new Parameter<>("Current Range [A]", new AutoQuantity<>(true, 0.0), q -> { if (q.isAuto()) this.useAutoCurrentRange(); else this.setCurrentRange(q.getValue()); }));
+        parameters.add(new Parameter<>("Line Filtering", false, this::setLineFilterEnabled));
+        parameters.add(new Parameter<>("Four Point Probe", false, this::setFourProbeEnabled));
+
+        if (target.equals(IMeter.class)) {
+            parameters.add(new Parameter<>("Set Voltage [V]", new OptionalQuantity<>(false, 0.0), q -> { if (q.isUsed()) this.setVoltage(q.getValue()); }));
+        }
+
+        if (target.equals(VMeter.class)) {
+            parameters.add(new Parameter<>("Set Current [A]", new OptionalQuantity<>(false, 0.0), q -> { if (q.isUsed()) this.setCurrent(q.getValue()); }));
+        }
+
+        return parameters;
+
     }
 
     enum OffMode {

@@ -21,6 +21,13 @@ public class PipeAddress implements Address {
         return this;
     }
 
+    public PipeParams createParams() {
+        PipeParams pipeParams = new PipeParams();
+        pipeParams.set(0, getPipeName());
+        return pipeParams;
+    }
+
+
     public static class PipeParams extends AddressParams<PipeAddress> {
 
         public PipeParams() {

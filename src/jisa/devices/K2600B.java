@@ -96,6 +96,24 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
+    public String getChannelName(int channel) {
+
+        switch (channel) {
+
+            case 0:
+                return "SMU A";
+
+            case 1:
+                return "SMU B";
+
+            default:
+                return "Unknown Channel";
+
+        }
+
+    }
+
+    @Override
     public double getVoltage(int channel) throws DeviceException, IOException {
 
         checkChannel(channel);
@@ -731,6 +749,11 @@ public class K2600B extends VISADevice implements MCSMU {
     @Override
     public void setLineFilterEnabled(int channel, boolean enabled) throws DeviceException, IOException {
 
+    }
+
+    @Override
+    public String getChannelName() {
+        return "Keithley 2600B Series SMU";
     }
 
     private enum SFunc {

@@ -168,6 +168,12 @@ public class ListDisplay<T> extends JFXElement implements Iterable<ListDisplay.I
 
         T getObject();
 
+        void setImage(Image image);
+
+        void setTitle(String title);
+
+        void setSubTitle(String subTitle);
+
     }
 
     public interface ItemRunnable<T> {
@@ -273,6 +279,19 @@ public class ListDisplay<T> extends JFXElement implements Iterable<ListDisplay.I
         @Override
         public T getObject() {
             return object;
+        }
+
+        @Override
+        public void setImage(Image image) {
+            GUI.runNow(() -> imageView.setImage(image));
+        }
+
+        public void setTitle(String title) {
+            GUI.runNow(() -> this.title.setText(title));
+        }
+
+        public void setSubTitle(String subTitle) {
+            GUI.runNow(() -> this.subTitle.setText(subTitle));
         }
 
         protected void triggerOnSelected() {

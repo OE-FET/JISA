@@ -4,12 +4,42 @@ import jisa.control.Synch;
 import jisa.enums.*;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
  * Abstract class to define the standard functionality of lock-in amplifiers
  */
 public interface LockIn extends Instrument {
+
+    @Override
+    default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+
+        List<Parameter<?>> parameters = new LinkedList<>();
+
+        parameters.add(new Parameter<>("Reference", RefMode.EXTERNAL, this::setRefMode, RefMode.values()));
+        parameters.add(new Parameter<>("Input", Input.DIFF, this::setInput, Input.values()));
+        parameters.add(new Parameter<>("Range", 1.0, this::setRange));
+        parameters.add(new Parameter<>("Time Constant", 1.0, this::setTimeConstant));
+        parameters.add(new Parameter<>("Coupling", Coupling.AC, this::setCoupling, Coupling.values()));
+        parameters.add(new Parameter<>("Shielding", Shield.GROUND, this::setShielding, Shield.values()));
+        parameters.add(new Parameter<>("Filter Roll-Off", 24.0, this::setFilterRollOff));
+        parameters.add(new Parameter<>("Sync Filter", true, this::setSyncFilterEnabled));
+        parameters.add(new Parameter<>("Line Filter", true, b -> setLineFilterHarmonics(b ? new int[]{1, 2} : new int[0])));
+
+        return parameters;
+
+    }
+
+    /**
+     * Returns whether the lock-in amplifier is using an internal or external reference signal.
+     *
+     * @return INTERNAL or EXTERNAL
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    RefMode getRefMode() throws IOException, DeviceException;
 
     /**
      * Sets whether the lock-in amplifier is to use an internal or external reference signal
@@ -133,16 +163,6 @@ public interface LockIn extends Instrument {
     void setRange(double range) throws IOException, DeviceException;
 
     /**
-     * Instructs the lock-in to use synchronous filtering (removes higher harmonics of reference frequency from signal).
-     *
-     * @param flag Should this feature be enabled?
-     *
-     * @throws IOException     Upon communication error
-     * @throws DeviceException Upon compatibility error
-     */
-    void useSyncFiltering(boolean flag) throws IOException, DeviceException;
-
-    /**
      * Returns whether the lock-in is currently using synchronous filtering.
      *
      * @return Enabled?
@@ -150,7 +170,17 @@ public interface LockIn extends Instrument {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    boolean isUsingSyncFiltering() throws IOException, DeviceException;
+    boolean isSyncFilterEnabled() throws IOException, DeviceException;
+
+    /**
+     * Instructs the lock-in to use synchronous filtering (removes higher harmonics of reference frequency from signal).
+     *
+     * @param flag Should this feature be enabled?
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    void setSyncFilterEnabled(boolean flag) throws IOException, DeviceException;
 
     /**
      * Returns the filter roll-off used by the lock-in.
@@ -213,16 +243,6 @@ public interface LockIn extends Instrument {
     void setShielding(Shield mode) throws IOException, DeviceException;
 
     /**
-     * Sets which input the lock-in should use.
-     *
-     * @param source Input: A, B or DIFF (A - B)
-     *
-     * @throws IOException     Upon communication error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setInput(Input source) throws IOException, DeviceException;
-
-    /**
      * Returns which input is currently being used by the lock-in.
      *
      * @return Input: A, B or DIFF (A - B)
@@ -233,14 +253,14 @@ public interface LockIn extends Instrument {
     Input getInput() throws IOException, DeviceException;
 
     /**
-     * Sets which source quantity to be using for measurement (voltage or current).
+     * Sets which input the lock-in should use.
      *
-     * @param source Source.VOLTAGE or Source.CURRENT
+     * @param source Input: A, B or DIFF (A - B)
      *
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    void setSource(Source source) throws IOException, DeviceException;
+    void setInput(Input source) throws IOException, DeviceException;
 
     /**
      * Returns which quantity is being used for measurement (voltage or current).
@@ -253,14 +273,14 @@ public interface LockIn extends Instrument {
     Source getSource() throws IOException, DeviceException;
 
     /**
-     * Sets whether to use HIGH or LOW impedance mode for input signals.
+     * Sets which source quantity to be using for measurement (voltage or current).
      *
-     * @param mode Impedance.HIGH or Impedance.LOW
+     * @param source Source.VOLTAGE or Source.CURRENT
      *
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    void setImpedanceMode(Impedance mode) throws IOException, DeviceException;
+    void setSource(Source source) throws IOException, DeviceException;
 
     /**
      * Returns whether HIGH or LOW impedance mode is currently in use.
@@ -271,6 +291,16 @@ public interface LockIn extends Instrument {
      * @throws DeviceException Upon compatibility error
      */
     Impedance getImpedanceMode() throws IOException, DeviceException;
+
+    /**
+     * Sets whether to use HIGH or LOW impedance mode for input signals.
+     *
+     * @param mode Impedance.HIGH or Impedance.LOW
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    void setImpedanceMode(Impedance mode) throws IOException, DeviceException;
 
     /**
      * Returns a list of all harmonics of the powerline frequency being filtered by the lock-in.

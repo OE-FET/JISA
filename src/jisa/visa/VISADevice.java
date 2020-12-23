@@ -6,6 +6,7 @@ import jisa.devices.Instrument;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 

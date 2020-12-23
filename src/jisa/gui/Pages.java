@@ -131,6 +131,7 @@ public class Pages extends JFXElement implements Element, Container {
         });
 
         GUI.runNow(() -> sidebar.getChildren().add(tab));
+        added.add(element);
         tabs.add(tab);
         switchers.add(onClick);
         reseters.add(onReset);
