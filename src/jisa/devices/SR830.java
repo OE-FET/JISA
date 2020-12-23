@@ -183,7 +183,7 @@ public class SR830 extends VISADevice implements DPLockIn {
 
     @Override
     public void setFilterRollOff(double dBperOct) throws IOException {
-        write(C_SET_FILTER, FilterRO.fromDouble(dBperOct));
+        write(C_SET_FILTER, FilterRO.fromDouble(dBperOct).toInt());
     }
 
     @Override
