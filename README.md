@@ -7,20 +7,39 @@
 
 In essence then, the purpose of `JISA` is to act as an alternative (and actually decent) means of creating experimental control systems. It comprises, largely, of three sections:
 ### 1. Standardised Instrument Control
+
+`JISA` implements standard interfaces for each "type" of instrument, meaning that instruments are easily interchangeable. If we connect to a Keithley SMU and an Agilent SPA
+
 ```kotlin
 // Connect to instruments
-val smu1 = K2450( TCPIPAddress("192.168.0.2") )  // Keithley 2450
-val smu2 = K236( GPIBAdrress(0,17) )             // Keithley 236
+val keithley = K2600B(TCPIPAddress("192.168.0.5"))
+val agilent  = Agilent4155X(GPIBAddress(20))
+```
 
-smu1.useAutoRanges()
-smu1.setCurrentLimit(10e-3)
-smu1.setVoltage(5.0)
-smu1.turnOn()
+then `JISA` simply represents them as collections of `SMU` channels
 
-smu2.useAutoRanges()           // Same code, despite different SMU
-smu2.setCurrentLimit(10e-3)
-smu2.setVoltage(5.0)
-smu2.turnOn()
+```kotlin
+// Get first channel from both instruments
+val smuK = keithley.getChannel(0)
+val smuA = agilent.getChannel(0)
+```
+
+meaning that operating them is done exactly the same way in JISA regardless of which make/model of instsrument they are from
+
+```kotlin
+smuK.setIntegrationTime(0.1)     // Set the integration time
+smuK.useAutoRanges()             // Use auto ranging on current and voltage
+smuK.setVoltage(5.0)             // Set to source 5.0 V
+smuK.turnOn()                    // Enable output of channel
+val currentK = smuK.getCurrent() // Measure current
+smuK.turnOff()                   // Disable output of channel
+
+smuA.setIntegrationTime(0.1)     // Set the integration time
+smuA.useAutoRanges()             // Use auto ranging on current and voltage
+smuA.setVoltage(5.0)             // Set to source 5.0 V
+smuA.turnOn()                    // Enable output of channel
+val currentA = smuA.getCurrent() // Measure current
+smuA.turnOff()                   // Disable output of channel
 ```
 ### 2. Data Handling
 ```kotlin
