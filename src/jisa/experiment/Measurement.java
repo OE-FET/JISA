@@ -5,6 +5,7 @@ import jisa.devices.Configuration;
 import jisa.devices.Instrument;
 import jisa.gui.Field;
 import jisa.gui.Fields;
+import jisa.maths.Range;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -332,6 +333,20 @@ public abstract class Measurement {
         @Override
         protected Field<String> makeField(Fields fields) {
             return fields.addTextField(getTitle(), getValue());
+        }
+
+    }
+
+    public class RangeParameter extends Parameter<Range.DoubleRange> {
+
+        public RangeParameter(String section, String name, String units, double min, double max, int steps, Range.Type type, int order) {
+            super(section, name, units, new Range.DoubleRange(Range.linear(min, max, steps), type, order));
+        }
+
+        protected Field<Range.DoubleRange> makeField(Fields fields) {
+            Field<Range.DoubleRange> f = fields.addDoubleRange(getTitle(), 0, 1, 2);
+            f.set(getValue());
+            return f;
         }
 
     }

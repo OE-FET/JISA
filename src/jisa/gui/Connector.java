@@ -17,13 +17,10 @@ import jisa.control.ConfigBlock;
 import jisa.control.Connection;
 import jisa.devices.Instrument;
 import jisa.devices.SMUCluster;
-import org.python.antlr.op.Add;
 import org.reflections.Reflections;
 
 import java.lang.reflect.Modifier;
 import java.util.Comparator;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public class Connector<T extends Instrument> extends JFXElement {
@@ -159,18 +156,22 @@ public class Connector<T extends Instrument> extends JFXElement {
 
     private synchronized void update() {
 
-        if (!connecting) {
+        GUI.runNow(() -> {
 
-            driverChoice.setValue(connection.getDriver());
+            if (!connecting) {
 
-            if (connection.getAddress() != null) {
-                addressParams = connection.getAddress().createParams();
-                protocolChoice.setValue(addressParams.getClass());
+                driverChoice.setValue(connection.getDriver());
+
+                if (connection.getAddress() != null) {
+                    addressParams = connection.getAddress().createParams();
+                    protocolChoice.setValue(addressParams.getClass());
+                }
+
             }
 
-        }
+            icon.setImage(connection.getStatus().getImage());
 
-        icon.setImage(connection.getStatus().getImage());
+        });
 
     }
 

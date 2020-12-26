@@ -59,8 +59,8 @@ public class Range<T extends Number> implements Iterable<T> {
         BigDecimal stopV       = BigDecimal.valueOf(stop.doubleValue());
         BigDecimal denominator = BigDecimal.valueOf(numSteps - 1);
 
-        BigDecimal[] values  = new BigDecimal[numSteps];
-        BigDecimal   step    = stopV.subtract(startV, CONTEXT).divide(denominator, CONTEXT);
+        BigDecimal[] values = new BigDecimal[numSteps];
+        BigDecimal   step   = stopV.subtract(startV, CONTEXT).divide(denominator, CONTEXT);
         values[0]            = startV;
         values[numSteps - 1] = stopV;
 
@@ -214,6 +214,23 @@ public class Range<T extends Number> implements Iterable<T> {
         }
 
         return toDoubleRange(values.toArray(new BigDecimal[0]));
+
+    }
+
+    public static Range<Double> polynomial(Number start, Number stop, int noSteps, int order) {
+
+        BigDecimal    startBD = BigDecimal.valueOf(start.doubleValue()).abs().pow(order).multiply(BigDecimal.valueOf(Math.signum(start.doubleValue())));
+        BigDecimal    stopBD  = BigDecimal.valueOf(stop.doubleValue()).abs().pow(order).multiply(BigDecimal.valueOf(Math.signum(stop.doubleValue())));
+        Range<Double> linear  = Range.linear(startBD, stopBD, noSteps);
+        BigDecimal[]  values  = new BigDecimal[noSteps];
+
+        for (int i = 0; i < values.length; i++) {
+            values[i] = BigDecimal.valueOf(linear.get(i));
+        }
+
+        BigDecimal[] roots = Arrays.stream(values).map(v -> v.abs().doubleValue() > 0 ? nthRoot(v.abs(), order, CONTEXT).multiply(BigDecimal.valueOf(v.signum())) : BigDecimal.ZERO).toArray(BigDecimal[]::new);
+
+        return toDoubleRange(roots);
 
     }
 
@@ -512,4 +529,33 @@ public class Range<T extends Number> implements Iterable<T> {
         };
 
     }
+
+
+    public enum Type {
+        LINEAR,
+        EXPONENTIAL,
+        POLYNOMIAL;
+    }
+
+    public static class DoubleRange extends Range<Double> {
+
+        private final Type type;
+        private final int  order;
+
+        public DoubleRange(Range<Double> range, Type type, int order) {
+            super(range.data);
+            this.type  = type;
+            this.order = order;
+        }
+
+        public Type getType() {
+            return type;
+        }
+
+        public int getOrder() {
+            return order;
+        }
+
+    }
+
 }

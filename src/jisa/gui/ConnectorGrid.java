@@ -150,7 +150,6 @@ public class ConnectorGrid extends Grid {
                     case CONNECTING:
                         item.setImage(ActionQueue.Status.RUNNING.getImage());
                         item.setSubTitle("Connecting...");
-                        item.select();
                         break;
 
                     case CONNECTED:
@@ -175,11 +174,7 @@ public class ConnectorGrid extends Grid {
 
         display.show();
 
-        for (Connector connector : getConnectors()) {
-
-            connector.connect();
-
-        }
+        getConnectors().parallelStream().forEach(Connector::connect);
 
         return display;
 

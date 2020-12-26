@@ -1,6 +1,5 @@
 package jisa.gui;
 
-import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.geometry.HPos;
@@ -14,11 +13,10 @@ import javafx.scene.layout.*;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
-import jnr.ffi.annotations.In;
+import jisa.maths.Range;
 
 import java.util.*;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
@@ -72,6 +70,14 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
                 block.booleanValue(field.getText()).set(field.getValue());
             } else if (type == String.class) {
                 block.stringValue(field.getText()).set(field.getValue());
+            } else if (type == Range.DoubleRange.class) {
+                Range.DoubleRange range = (Range.DoubleRange) field.getValue();
+                ConfigBlock       sub   = block.subBlock(field.getText());
+                sub.stringValue("Type").set(range.getType().toString());
+                sub.intValue("Order").set(range.getOrder());
+                sub.doubleValue("Start").set(range.get(0));
+                sub.doubleValue("Stop").set(range.get(range.size() - 1));
+                sub.intValue("Steps").set(range.size());
             }
 
         }
@@ -98,6 +104,18 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
                 field.set(block.booleanValue(field.getText()).get());
             } else if (type == String.class) {
                 field.set(block.stringValue(field.getText()).get());
+            } else if (type == Range.DoubleRange.class && block.hasBlock(field.getText())) {
+
+                ConfigBlock sub = block.subBlock(field.getText());
+
+                if (sub.hasValue("Type") && sub.hasValue("Order") && sub.hasValue("Start") && sub.hasValue("Stop") && sub.hasValue("Steps")) {
+                    field.set(new Range.DoubleRange(
+                        Range.linear(sub.doubleValue("Start").get(), sub.doubleValue("Stop").get(), sub.intValue("Steps").get()),
+                        Range.Type.valueOf(sub.stringValue("Type").get()),
+                        sub.intValue("Order").get()
+                    ));
+                }
+
             }
 
         }
@@ -242,6 +260,140 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
                 field.setDisable(disabled);
             }
 
+
+        };
+
+        fields.add(f);
+        return f;
+
+    }
+
+    public Field<Range.DoubleRange> addDoubleRange(String name, double defaultMin, double defaultMax, int defaultSteps) {
+
+        AtomicReference<SRunnable> onChange = new AtomicReference<>(() -> {});
+
+        Field<Double>  start = addDoubleField("Start " + name, defaultMin);
+        Field<Double>  stop  = addDoubleField("Stop " + name, defaultMax);
+        Field<Integer> steps = addIntegerField("No. Steps", defaultSteps);
+        Field<Integer> type  = addChoice("Scaling", "Linear", "Exponential", "Polynomial");
+        Field<Integer> order = addIntegerField("Order", 2);
+
+        order.setVisible(false);
+        type.setOnChange(() -> {
+            order.setVisible(type.get() == 2 && type.isVisible());
+            onChange.get().run();
+        });
+
+        Field<Range.DoubleRange> f = new Field<>() {
+
+            @Override
+            public void set(Range.DoubleRange value) {
+
+                start.set(value.get(0));
+                stop.set(value.get(value.size() - 1));
+                steps.set(value.size());
+
+                switch (value.getType()) {
+
+                    case LINEAR:
+                        type.set(0);
+                        break;
+
+                    case EXPONENTIAL:
+                        type.set(1);
+                        break;
+
+                    case POLYNOMIAL:
+                        type.set(2);
+
+                }
+
+                order.set(value.getOrder());
+
+            }
+
+            @Override
+            public Range.DoubleRange get() {
+
+                switch (type.get()) {
+
+                    case 0:
+                        return new Range.DoubleRange(Range.linear(start.get(), stop.get(), steps.get()), Range.Type.LINEAR, 0);
+
+                    case 1:
+                        return new Range.DoubleRange(Range.exponential(start.get(), stop.get(), steps.get()), Range.Type.EXPONENTIAL, 0);
+
+                    case 2:
+                        return new Range.DoubleRange(Range.polynomial(start.get(), stop.get(), steps.get(), order.get()), Range.Type.POLYNOMIAL, order.get());
+
+                    default:
+                        return null;
+
+                }
+
+            }
+
+            @Override
+            public void setOnChange(SRunnable change) {
+                onChange.set(change);
+            }
+
+            @Override
+            public void editValues(String... values) {
+
+            }
+
+            @Override
+            public boolean isDisabled() {
+                return type.isDisabled();
+            }
+
+            @Override
+            public boolean isVisible() {
+                return type.isVisible();
+            }
+
+            @Override
+            public void remove() {
+                type.remove();
+                order.remove();
+                start.remove();
+                stop.remove();
+                steps.remove();
+                fields.remove(this);
+            }
+
+            @Override
+            public String getText() {
+                return start.getText().substring(6);
+            }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+                type.setDisabled(disabled);
+                order.setDisabled(disabled);
+                start.setDisabled(disabled);
+                stop.setDisabled(disabled);
+                steps.setDisabled(disabled);
+            }
+
+
+            @Override
+            public void setVisible(boolean visible) {
+                type.setVisible(visible);
+                order.setVisible(type.get() == 2 && visible);
+                start.setVisible(visible);
+                stop.setVisible(visible);
+                steps.setVisible(visible);
+
+            }
+
+
+            @Override
+            public void setText(String text) {
+                start.setText("Start " + text);
+                stop.setText("Stop " + text);
+            }
 
         };
 
@@ -1423,7 +1575,6 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
     @Override
     public Iterator<Field<?>> iterator() {
-
         return fields.iterator();
     }
 

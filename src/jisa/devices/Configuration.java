@@ -16,7 +16,7 @@ public class Configuration<T extends Instrument> {
     private final List<String>       names      = new LinkedList<>();
     private final List<Parameter<?>> parameters = new LinkedList<>();
     private       String             choiceName = null;
-    private       Instrument         instrument = null;
+    private       Instrument         input      = null;
     private       T                  choice     = null;
 
     public Configuration(String name, Class<T> target) {
@@ -173,7 +173,7 @@ public class Configuration<T extends Instrument> {
         choices.clear();
         names.clear();
 
-        this.instrument = instrument;
+        this.input = instrument;
 
         if (instrument == null) {
             parameters.clear();
@@ -264,7 +264,7 @@ public class Configuration<T extends Instrument> {
 
     public T configure() throws IOException, DeviceException {
 
-        if (instrument == null || choice == null) {
+        if (input == null || choice == null) {
             return null;
         }
 
@@ -274,6 +274,10 @@ public class Configuration<T extends Instrument> {
 
         return choice;
 
+    }
+
+    public Instrument getInputInstrument() {
+        return input;
     }
 
     public T getInstrument() throws IOException, DeviceException {

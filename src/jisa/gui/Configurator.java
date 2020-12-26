@@ -23,6 +23,7 @@ public class Configurator<I extends Instrument> extends Fields {
 
         super(configuration.getName());
         this.configuration = configuration;
+        this.connection    = Connection.findConnectionFor(configuration.getInputInstrument());
         update();
 
         Connection.addListener(() -> {
@@ -49,7 +50,7 @@ public class Configurator<I extends Instrument> extends Fields {
         if (iValue < 1 || iValue >= connections.size() + 1) {
             connection = null;
         } else {
-            connection = connections.get(instrument.get() - 1);
+            connection = connections.get(iValue - 1);
         }
 
         configuration.setInputInstrument(connection != null ? connection.getInstrument() : null);
@@ -78,12 +79,18 @@ public class Configurator<I extends Instrument> extends Fields {
         List<Connection<?>> connections = new LinkedList<>();
         connections.add(null);
         connections.addAll(Connection.getConnectionsByTarget(configuration.getTarget()));
+
         String[] names = connections.stream().map(c -> {
-            if (c == null) { return "None"; } else {
+
+            if (c == null) {
+                return "None";
+            } else {
                 return String.format("%s (%s)", c.getName(), c.isConnected() ? c.getInstrument().getClass().getSimpleName() : "Disconnected");
             }
+
         }).toArray(String[]::new);
-        Field<Integer> instruments = addChoice("Instrument", connection != null ? connections.indexOf(connection) : 0, names);
+
+        Field<Integer> instruments = addChoice("Instrument", connections.indexOf(connection), names);
 
         instruments.setOnChange(() -> {
 

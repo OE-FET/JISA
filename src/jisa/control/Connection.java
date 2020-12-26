@@ -33,6 +33,10 @@ public class Connection<T extends Instrument> {
         registerConnection(this);
     }
 
+    public static Connection<?> findConnectionFor(Instrument instrument) {
+        return getAllConnections().stream().filter(con -> con.isConnected() && con.getInstrument() == instrument).findAny().orElse(null);
+    }
+
     public static List<Connection<?>> getAllConnections() {
         return List.copyOf(ALL_CONNECTIONS);
     }

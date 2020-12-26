@@ -10,6 +10,8 @@ import java.net.URL;
 public enum Icon {
 
     FLASK("images/experiment.png"),
+    CLOCK("images/clock.png"),
+    REPEAT("images/repeat.png"),
     DEVICE("images/devices.png"),
     DASHBOARD("images/dashboard.png"),
     PLOT("images/results.png"),
