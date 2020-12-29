@@ -11,6 +11,10 @@ import java.util.List;
 
 public interface MSTC extends TC, MSTMeter {
 
+    public static String getDescription() {
+        return "Multi-Sensor Temperature Controller";
+    }
+
     /**
      * Returns the temperature reported by the specified sensor
      *

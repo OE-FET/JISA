@@ -15,6 +15,10 @@ import java.util.regex.Pattern;
 
 public class K236 extends VISADevice implements SMU {
 
+    public static String getDescription() {
+        return "Kiethley 236";
+    }
+
     // == CONSTANTS ====================================================================================================
     private static final String C_SET_SRC_FUNC   = "F%d,%d";
     private static final String C_SET_BIAS       = "B%f,%d,%d";

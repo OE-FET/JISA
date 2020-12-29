@@ -11,6 +11,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import javax.naming.event.NamingEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -304,6 +305,20 @@ public class Grid extends JFXElement implements Element, Container {
                 GridPane.setHgrow(node, hGrow ? Priority.ALWAYS : Priority.NEVER);
                 GridPane.setVgrow(node, vGrow ? Priority.ALWAYS : Priority.NEVER);
 
+            }
+
+        });
+
+    }
+
+    public void setGrowth(Element element, boolean horizontal, boolean vertical) {
+
+        GUI.runNow(() -> {
+
+            int index = added.indexOf(element);
+            if (index != -1) {
+                GridPane.setHgrow(pane.getChildren().get(index), horizontal ? Priority.ALWAYS : Priority.NEVER);
+                GridPane.setVgrow(pane.getChildren().get(index), vertical ? Priority.ALWAYS : Priority.NEVER);
             }
 
         });

@@ -10,6 +10,10 @@ import java.util.List;
 
 public class ILM200 extends VISADevice implements LevelMeter {
 
+    public static String getDescription() {
+        return "Oxford Instruments ILM-200";
+    }
+
     private static final String TERMINATOR       = "\r";
     private static final String C_SET_COMM_MODE  = "Q2";
     private static final String C_READ_CHANNEL   = "R%d";

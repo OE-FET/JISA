@@ -12,6 +12,10 @@ import java.util.List;
  */
 public interface LockIn extends Instrument {
 
+    public static String getDescription() {
+        return "Lock-In Amplifier";
+    }
+
     @Override
     default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
 

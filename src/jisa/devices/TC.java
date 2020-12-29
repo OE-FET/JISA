@@ -11,6 +11,10 @@ import java.util.List;
  */
 public interface TC extends PID, TMeter {
 
+    public static String getDescription() {
+        return "Temperature Controller";
+    }
+
     String getOutputName();
 
     @Override

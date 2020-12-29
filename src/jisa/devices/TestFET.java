@@ -11,12 +11,16 @@ import java.util.Random;
 
 public class TestFET implements MCSMU {
 
+    public static String getDescription() {
+        return "Virtual FET Simulator";
+    }
+
     private static final double VT     = 1.0;
     private static final double MU     = 1.0;
     private static final double C      = 100e-6;
     private static final double W      = 105e-6;
     private static final double L      = 240e-6;
-    private static       Random random = new Random();
+    private static final Random random = new Random();
 
     private double vSD = 0;
     private double iSD = 0;

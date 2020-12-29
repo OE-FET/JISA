@@ -10,6 +10,10 @@ import java.util.List;
 
 public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
 
+    public static String getDescription() {
+        return "Multi-Sensor Multi-Output Temperature Controller";
+    }
+
     default Class<MSTC> getOutputType() {
         return MSTC.class;
     }

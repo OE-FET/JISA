@@ -12,6 +12,10 @@ import java.util.List;
 
 public class CryoCon22C extends VISADevice implements MSMOTC {
 
+    public static String getDescription() {
+        return "Cryo-Con 22C";
+    }
+
     public static final List<String> SENSORS = List.of("A", "B");
 
     private final List<List<Zone>> pidZones = List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());

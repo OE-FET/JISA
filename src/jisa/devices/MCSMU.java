@@ -19,6 +19,10 @@ import java.util.List;
  */
 public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
 
+    public static String getDescription() {
+        return "Multi-Channel Source Measure Unit";
+    }
+
     String getChannelName(int channel);
 
     /**

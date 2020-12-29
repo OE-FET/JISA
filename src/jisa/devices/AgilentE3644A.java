@@ -7,6 +7,10 @@ import java.io.IOException;
 
 public class AgilentE3644A extends VISADevice implements DCPower {
 
+    public static String getDescription() {
+        return "Agilent E3644A";
+    }
+
     public AgilentE3644A(Address address) throws IOException, DeviceException {
 
         super(address);

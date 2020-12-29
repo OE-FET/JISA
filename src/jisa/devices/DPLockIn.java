@@ -7,6 +7,10 @@ import java.io.IOException;
  */
 public interface DPLockIn extends LockIn {
 
+    public static String getDescription() {
+        return "Dual-Phase Lock-In Amplifier";
+    }
+
     /**
      * Returns the amplitude of the component of the signal in-phase with the reference signal
      *

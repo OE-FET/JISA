@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
@@ -14,6 +15,7 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import jisa.Main;
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.experiment.Measurement;
 
@@ -502,6 +504,7 @@ public class GUI extends Application {
                 box.getChildren().addAll(fieldName, fieldInput);
                 list.getChildren().add(box);
 
+
             }
 
             dialog.getDialogPane().setContent(list);
@@ -522,6 +525,7 @@ public class GUI extends Application {
 
             });
 
+            Util.runAsync(() -> GUI.runNow(() -> tFields.stream().findFirst().ifPresent(Node::requestFocus)));
             Optional<String[]> values = dialog.showAndWait();
             toReturn.set(values.orElse(null));
 

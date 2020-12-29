@@ -8,6 +8,10 @@ import java.io.IOException;
 
 public interface VPreAmp extends Instrument {
 
+    public static String getDescription() {
+        return "Voltage Pre-Amplifier";
+    }
+
     /**
      * Sets the gain to the given value, or as close to it as possible.
      *

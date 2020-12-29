@@ -9,6 +9,10 @@ import java.io.IOException;
  */
 public interface IVMeter extends VMeter, IMeter {
 
+    public static String getDescription() {
+        return "Multimeter";
+    }
+
     /**
      * Returns a combined current and voltage measurement as an IVPoint object.
      *

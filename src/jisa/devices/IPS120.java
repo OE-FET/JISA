@@ -13,6 +13,10 @@ import java.util.regex.Pattern;
 
 public class IPS120 extends VISADevice implements EMController {
 
+    public static String getDescription() {
+        return "Oxford Instruments IPS-120";
+    }
+
     private static final String TERMINATOR                        = "\r";
     private static final String C_SET_COMM_MODE                   = "Q2";
     private static final String C_READ_CHANNEL                    = "R%d";

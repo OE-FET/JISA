@@ -4,6 +4,10 @@ import java.io.IOException;
 
 public interface Switch extends Instrument {
 
+    public static String getDescription() {
+        return "Switch";
+    }
+
     void turnOn() throws IOException, DeviceException;
 
     void turnOff() throws IOException, DeviceException;

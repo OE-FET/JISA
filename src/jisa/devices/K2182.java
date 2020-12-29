@@ -12,6 +12,10 @@ import java.io.IOException;
 
 public class K2182 extends VISADevice implements VMeter {
 
+    public static String getDescription() {
+        return "Kiethley 2182";
+    }
+
     private ReadFilter filter      = new BypassFilter(this::measureVoltage, (c) -> disableAveraging());
     private AMode      filterMode  = AMode.NONE;
     private int        filterCount = 1;

@@ -7,6 +7,7 @@ import jisa.devices.Instrument;
 import jisa.experiment.ActionQueue;
 import org.reflections.Reflections;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -15,32 +16,52 @@ public class ConnectorGrid extends Grid {
     private final List<Connector<?>> connectors = new LinkedList<>();
 
     public ConnectorGrid(String title, int numCols) {
+
         super(title, numCols);
         setGrowth(true, false);
-        addToolbarButton("Add Connection", this::addConnector);
-        addToolbarButton("Remove Connection", this::removeConnectors);
+
+        MenuButton button = addToolbarMenuButton("Add...");
+        button.addItem("Driver Interface:", () -> {}).setDisabled(true);
+        button.addSeparator();
+
+        (new Reflections("jisa.devices"))
+            .getSubTypesOf(Instrument.class).stream()
+            .filter(Class::isInterface)
+            .sorted(Comparator.comparing(Class::getSimpleName))
+            .forEach(c -> {
+                String name;
+                try {
+                    name = String.format("%s (%s)", c.getMethod("getDescription").invoke(null), c.getSimpleName());
+                } catch (Exception e){
+                    name = c.getSimpleName();
+                }
+                button.addItem(name, () -> addConnector(c));
+            });
+
+        addToolbarButton("Connect All", () -> {
+            Element list = connectAllWithList();
+            Util.sleep(1000);
+            list.close();
+        });
+
     }
 
     public <T extends Instrument> Connector<T> addConnector(Connector<T> connector) {
 
+        connector.setRemoveButton(() -> removeConnector(connector));
         connectors.add(connector);
         add(connector);
+
         return connector;
 
     }
 
-    public Connector<?> addConnector() {
+    public Connector<?> addConnector(Class type) {
 
-        Fields input = new Fields("Add Connector");
+        String[] input = GUI.inputWindow("Add Instrument", "Add Instrument", "Please enter a name for the connection...", "Name");
 
-        Reflections reflections = new Reflections("jisa.devices");
-
-        List<Class>    classes = List.copyOf(reflections.getSubTypesOf(Instrument.class).stream().filter(Class::isInterface).sorted(Comparator.comparing(Class::getSimpleName)).collect(Collectors.toUnmodifiableList()));
-        Field<String>  name    = input.addTextField("Name");
-        Field<Integer> type    = input.addChoice("Type", classes.stream().map(Class::getSimpleName).toArray(String[]::new));
-
-        if (input.showAsConfirmation()) {
-            return addConnector(name.get(), classes.get(type.get()));
+        if (input != null) {
+            return addConnector(input[0], type);
         } else {
             return null;
         }
@@ -136,13 +157,20 @@ public class ConnectorGrid extends Grid {
 
     public Element connectAllWithList() {
 
-        ListDisplay<Connector> display = new ListDisplay<>("Connecting...");
+        ListDisplay<Connector> list = new ListDisplay<>("Connections");
 
-        display.setWindowWidth(800.0);
-        display.setWindowHeight(500.0);
+        list.setWindowWidth(800.0);
+        list.setWindowHeight(500.0);
 
         for (Connector connector : getConnectors()) {
-            ListDisplay.Item<Connector> item = display.add(connector, String.format("Connect to \"%s\" (%s)", connector.getTitle(), connector.getConnection().getDriver().getSimpleName()), "Waiting...", ActionQueue.Status.NOT_STARTED.getImage());
+
+            ListDisplay.Item<Connector> item = list.add(
+                connector,
+                String.format("Connect to \"%s\" (%s)", connector.getTitle(), connector.getConnection().getDriver() != null ? connector.getConnection().getDriver().getSimpleName() : "None"),
+                connector.getConnection().getDriver() != null ? "Waiting..." : "Not Configured",
+                connector.getConnection().getDriver() != null ? ActionQueue.Status.NOT_STARTED.getImage() : ActionQueue.Status.INTERRUPTED.getImage()
+            );
+
             connector.getConnection().addChangeListener(() -> {
 
                 switch (connector.getConnection().getStatus()) {
@@ -170,13 +198,14 @@ public class ConnectorGrid extends Grid {
                 }
 
             });
+
         }
 
-        display.show();
+        list.show();
 
         getConnectors().parallelStream().forEach(Connector::connect);
 
-        return display;
+        return list;
 
     }
 

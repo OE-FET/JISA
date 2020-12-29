@@ -7,6 +7,10 @@ import java.util.List;
 
 public interface LevelMeter extends Instrument, MultiChannel<LevelMeter> {
 
+    public static String getDescription() {
+        return "Level Meter";
+    }
+
     default Class<LevelMeter> getChannelType() {
         return LevelMeter.class;
     }

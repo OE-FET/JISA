@@ -10,6 +10,10 @@ import java.io.IOException;
  */
 public class TSX3510P extends VISADevice implements DCPower {
 
+    public static String getDescription() {
+        return "AIM-TTI TSX3510P";
+    }
+
     private boolean on = false;
 
     public TSX3510P(Address address) throws IOException, DeviceException {

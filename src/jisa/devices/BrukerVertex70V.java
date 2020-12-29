@@ -11,6 +11,10 @@ import java.util.List;
 
 public class BrukerVertex70V extends PipeDevice implements Spectrometer {
 
+    public static String getDescription() {
+        return "Bruker Vetex 70v";
+    }
+
     private double integrationTime = 100e-3;
     private double minFrequency = 100e-9;
     private double maxFrequency = 900e-9;

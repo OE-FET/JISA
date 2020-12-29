@@ -7,6 +7,10 @@ import java.util.List;
 
 public interface PID extends Instrument {
 
+    public static String getDescription() {
+        return "PID Controller";
+    }
+
     /**
      * Returns the set-point of the PID controller (i.e. the "target" value).
      *

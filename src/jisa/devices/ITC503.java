@@ -18,6 +18,10 @@ import java.util.regex.Pattern;
  */
 public class ITC503 extends VISADevice implements MSTC {
 
+    public static String getDescription() {
+        return "Oxford Instruments ITC-503";
+    }
+
     private static final String TERMINATOR         = "\r";
     private static final String C_SET_COMM_MODE    = "Q2";
     private static final String C_READ             = "R%d";

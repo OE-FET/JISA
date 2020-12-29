@@ -7,6 +7,10 @@ import java.io.IOException;
 
 public interface MSwitch extends Switch {
 
+    public static String getDescription() {
+        return "Multi-Channel Switch";
+    }
+
     void turnOn(int channel) throws IOException, DeviceException;
 
     default void turnOn() throws IOException, DeviceException {

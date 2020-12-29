@@ -9,7 +9,8 @@
             xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
 
     <top>
-        <Label fx:id="errorText" visible="false" managed="false" maxWidth="Infinity" style="-fx-background-color: brown; -fx-text-fill: white; -fx-padding: 15px;"/>
+        <Label fx:id="errorText" managed="false" maxWidth="Infinity"
+               style="-fx-background-color: brown; -fx-text-fill: white; -fx-padding: 15px;" visible="false"/>
     </top>
 
     <center>
@@ -42,14 +43,18 @@
         </ImageView>
     </left>
     <bottom>
-        <ButtonBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <ButtonBar HBox.hgrow="NEVER">
             <buttons>
-                <Button fx:id="browseButton" layoutX="313.0" layoutY="10.0" mnemonicParsing="false" onAction="#browse" text="Browse..."/>
-                <Button fx:id="applyButton" layoutX="313.0" layoutY="10.0" mnemonicParsing="false" onAction="#apply" text="Apply"/>
+                <Button visible="false" ButtonBar.buttonData="LEFT" fx:id="removeButton" layoutX="313.0" layoutY="10.0" mnemonicParsing="false" text="Remove"/>
+                <Button ButtonBar.buttonData="RIGHT" fx:id="browseButton" layoutX="313.0" layoutY="10.0" mnemonicParsing="false" onAction="#browse" text="Browse..."/>
+                <Button ButtonBar.buttonData="RIGHT" fx:id="applyButton" layoutX="313.0" layoutY="10.0" mnemonicParsing="false" onAction="#apply" text="Apply"/>
             </buttons>
             <padding>
                 <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>
             </padding>
+            <HBox.margin>
+                <Insets/>
+            </HBox.margin>
         </ButtonBar>
     </bottom>
 </BorderPane>

@@ -18,6 +18,10 @@ import static jisa.enums.Source.*;
 
 public abstract class Agilent415XX extends VISADevice implements SPA {
 
+    public static String getDescription() {
+        return "Agilent 415XX Series SPA";
+    }
+
     public static final String C_RESET = "*RST";
     public static final String C_FLEX  = "US";
     public static final String C_FMT   = "FMT 2";

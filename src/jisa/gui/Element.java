@@ -85,4 +85,10 @@ public interface Element {
 
     }
 
+    void show();
+
+    void hide();
+
+    void close();
+
 }

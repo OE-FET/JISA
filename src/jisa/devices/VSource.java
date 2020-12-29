@@ -7,6 +7,10 @@ import java.io.IOException;
  */
 public interface VSource extends Instrument {
 
+    public static String getDescription() {
+        return "Voltage Source";
+    }
+
     /**
      * Set the voltage to output.
      *

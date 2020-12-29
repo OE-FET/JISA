@@ -6,6 +6,10 @@ import java.io.IOException;
 
 public class Agilent4155X extends Agilent415XX {
 
+    public static String getDescription() {
+        return "Agilent 4155X Series SPA";
+    }
+
     public Agilent4155X(Address address) throws IOException, DeviceException {
 
         super(address);

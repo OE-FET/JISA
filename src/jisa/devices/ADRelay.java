@@ -9,6 +9,10 @@ import java.io.IOException;
 
 public class ADRelay extends VISADevice implements MSwitch {
 
+    public static String getDescription() {
+        return "Arduino-Controlled Relay";
+    }
+
     private final int NUM_CHANNELS;
 
     public ADRelay(Address address) throws IOException, DeviceException {

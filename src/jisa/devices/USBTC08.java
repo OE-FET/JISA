@@ -19,6 +19,10 @@ import java.util.List;
  */
 public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MSTMeter {
 
+    public static String getDescription() {
+        return "PicoTech USB-TC08";
+    }
+
     // Constants
     private static final String                         LIBRARY_NAME                 = "usbtc08";
     private static final Class<USBTC08.NativeInterface> LIBRARY_CLASS                = USBTC08.NativeInterface.class;

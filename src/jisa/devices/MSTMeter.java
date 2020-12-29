@@ -11,6 +11,10 @@ import java.util.List;
 
 public interface MSTMeter extends TMeter, MultiSensor<TMeter> {
 
+    public static String getDescription() {
+        return "Multi-Sensor Thermometer";
+    }
+
     default Class<TMeter> getSensorType() {
         return TMeter.class;
     }

@@ -6,6 +6,10 @@ import java.io.IOException;
 
 public interface Spectrometer extends Instrument {
 
+    public static String getDescription() {
+        return "Spectrometer";
+    }
+
     /**
      * Returns the integration time currently being used by the spectrometer when measuring.
      *

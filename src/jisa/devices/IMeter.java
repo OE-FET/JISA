@@ -6,6 +6,10 @@ import jisa.enums.AMode;
 import java.io.IOException;
 
 public interface IMeter extends Instrument {
+
+    public static String getDescription() {
+        return "Ammeter";
+    }
     
     /**
      * Takes a current measurement and returns the value.

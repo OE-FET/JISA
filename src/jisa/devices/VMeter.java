@@ -9,6 +9,10 @@ import java.io.IOException;
 
 public interface VMeter extends Instrument {
 
+    public static String getDescription() {
+        return "Voltmeter";
+    }
+
     /**
      * Takes a voltage measurement and returns the value.
      *

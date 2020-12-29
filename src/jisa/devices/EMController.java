@@ -8,6 +8,10 @@ import java.util.List;
 
 public interface EMController extends Instrument {
 
+    public static String getDescription() {
+        return "Electromagnet Controller";
+    }
+
     /**
      * Returns the current field being produced by the electromagnet.
      *

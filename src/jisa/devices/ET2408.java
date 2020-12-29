@@ -11,6 +11,10 @@ import java.util.List;
 
 public class ET2408 extends ModbusRTUDevice implements TC {
 
+    public static String getDescription() {
+        return "EuroTherm 2408";
+    }
+
     // Constants
     private static final int UNITS_CELSIUS    = 0;
     private static final int UNITS_FAHRENHEIT = 1;

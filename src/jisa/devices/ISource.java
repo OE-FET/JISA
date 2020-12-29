@@ -7,6 +7,10 @@ import java.io.IOException;
  */
 public interface ISource extends Instrument {
 
+    public static String getDescription() {
+        return "Current Source";
+    }
+
     /**
      * Sets the current to output.
      *

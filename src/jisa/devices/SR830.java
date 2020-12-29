@@ -12,6 +12,10 @@ import java.util.stream.Collectors;
 
 public class SR830 extends VISADevice implements DPLockIn {
 
+    public static String getDescription() {
+        return "Stanford Research Systems SR830";
+    }
+
     private static final String C_QUERY_FREQ         = "FREQ?";
     private static final String C_SET_FREQ           = "FREQ %f";
     private static final String C_QUERY_PHASE        = "PHAS?";

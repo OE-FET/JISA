@@ -11,6 +11,10 @@ import java.io.IOException;
 
 public class SR560 extends VISADevice implements VPreAmp {
 
+    public static String getDescription() {
+        return "Stanford Research Systems SR560";
+    }
+
     private static final String C_LISTEN      = "LALL";
     private static final String C_COUPLING    = "CPLG %d";
     private static final String C_FILTER_MODE = "FLTM %d";

@@ -14,6 +14,10 @@ import java.util.HashMap;
 
 public class K2600B extends VISADevice implements MCSMU {
 
+    public static String getDescription() {
+        return "Kiethley 2600B Series";
+    }
+
     private static final String[] CHANNELS                   = {"smua", "smub"};
     private static final String   C_QUERY_VOLT               = "print(%s.measure.v())";
     private static final String   C_QUERY_CURR               = "print(%s.measure.i())";

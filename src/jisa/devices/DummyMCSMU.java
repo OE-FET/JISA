@@ -13,6 +13,10 @@ import java.util.Random;
 
 public class DummyMCSMU implements MCSMU {
 
+    public static String getDescription() {
+        return "Dummy SMU";
+    }
+
     private        Random    random  = new Random();
     private        Double[]  current = {null, null, null, null};
     private        Double[]  voltage = {null, null, null, null};

@@ -15,6 +15,10 @@ import java.util.Iterator;
  */
 public class SMUCluster implements MCSMU {
 
+    public static String getDescription() {
+        return "SMU Cluster";
+    }
+
     private ArrayList<SMU> devices = new ArrayList<>();
 
     /**

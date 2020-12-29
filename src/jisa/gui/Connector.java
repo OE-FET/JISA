@@ -2,6 +2,7 @@ package jisa.gui;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -15,6 +16,7 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.control.ConfigBlock;
 import jisa.control.Connection;
+import jisa.control.SRunnable;
 import jisa.devices.Instrument;
 import jisa.devices.SMUCluster;
 import org.reflections.Reflections;
@@ -35,7 +37,9 @@ public class Connector<T extends Instrument> extends JFXElement {
     @FXML
     protected GridPane                                          parameters;
     @FXML
-    protected ImageView                                         icon;
+    protected ImageView icon;
+    @FXML
+    protected Button    removeButton;
 
     protected Connection<T>            connection;
     protected Address.AddressParams<?> addressParams = null;
@@ -47,6 +51,26 @@ public class Connector<T extends Instrument> extends JFXElement {
         super(connection.getName(), Connector.class.getResource("fxml/Connector.fxml"));
 
         Reflections reflections = new Reflections("jisa");
+
+        driverChoice.setConverter(new StringConverter<>() {
+
+            @Override
+            public String toString(Class<? extends T> aClass) {
+
+                try {
+                    return String.format("%s (%s)", aClass.getMethod("getDescription").invoke(null), aClass.getSimpleName());
+                } catch (Exception e) {
+                    return aClass.getSimpleName();
+                }
+
+            }
+
+            @Override
+            public Class<? extends T> fromString(String s) {
+                return null;
+            }
+
+        });
 
         driverChoice.getItems().setAll((reflections.getSubTypesOf(connection.getType()).stream().filter(driver ->
             !(
@@ -63,20 +87,6 @@ public class Connector<T extends Instrument> extends JFXElement {
                                                     .stream()
                                                     .sorted(Comparator.comparing(Class::getSimpleName))
                                                     .collect(Collectors.toList()));
-
-        driverChoice.setConverter(new StringConverter<>() {
-
-            @Override
-            public String toString(Class<? extends T> aClass) {
-                return aClass.getSimpleName();
-            }
-
-            @Override
-            public Class<? extends T> fromString(String s) {
-                return null;
-            }
-
-        });
 
         protocolChoice.setConverter(new StringConverter<>() {
 
@@ -119,6 +129,25 @@ public class Connector<T extends Instrument> extends JFXElement {
 
         this.connection = connection;
 
+    }
+
+    public void setRemoveButton(SRunnable onClick) {
+
+        GUI.runNow(() -> {
+
+            if (onClick == null) {
+                removeButton.setVisible(false);
+            } else {
+                removeButton.setOnAction(event -> onClick.start());
+                removeButton.setVisible(true);
+            }
+
+        });
+
+    }
+
+    public void removeRemoveButton() {
+        setRemoveButton(null);
     }
 
     public Connector(String name, Class<T> target) {

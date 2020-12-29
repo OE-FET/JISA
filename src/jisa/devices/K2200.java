@@ -7,6 +7,10 @@ import java.io.IOException;
 
 public class K2200 extends VISADevice implements DCPower {
 
+    public static String getDescription() {
+        return "Kiethley 2200";
+    }
+
     private static final String C_QUERY_VOLTAGE = "MEASURE:VOLTAGE:DC?";
     private static final String C_QUERY_CURRENT = "MEASURE:CURRENT:DC?";
     private static final String C_SET_VOLTAGE   = "VOLTAGE %f";
