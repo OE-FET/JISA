@@ -164,9 +164,17 @@ public class ConnectorGrid extends Grid {
 
         for (Connector connector : getConnectors()) {
 
+            String name;
+
+            try {
+                name = (String) connector.getConnection().getDriver().getMethod("getDescription").invoke(null);
+            } catch (Exception e) {
+                name = connector.getConnection().getDriver() != null ? connector.getConnection().getDriver().getSimpleName() : "None";
+            }
+
             ListDisplay.Item<Connector> item = list.add(
                 connector,
-                String.format("Connect to \"%s\" (%s)", connector.getTitle(), connector.getConnection().getDriver() != null ? connector.getConnection().getDriver().getSimpleName() : "None"),
+                String.format("Connect to \"%s\" (%s)", connector.getTitle(), name),
                 connector.getConnection().getDriver() != null ? "Waiting..." : "Not Configured",
                 connector.getConnection().getDriver() != null ? ActionQueue.Status.NOT_STARTED.getImage() : ActionQueue.Status.INTERRUPTED.getImage()
             );

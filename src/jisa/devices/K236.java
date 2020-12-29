@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
 public class K236 extends VISADevice implements SMU {
 
     public static String getDescription() {
-        return "Kiethley 236";
+        return "Keithley 236";
     }
 
     // == CONSTANTS ====================================================================================================

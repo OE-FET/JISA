@@ -9,7 +9,7 @@ import java.io.IOException;
 public class K2450 extends KeithleySCPI {
 
     public static String getDescription() {
-        return "Kiethley 2450";
+        return "Keithley 2450";
     }
 
     protected static final String C_SET_LIMIT_2450   = ":SOUR:%s:%sLIM %e";

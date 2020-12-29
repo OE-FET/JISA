@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 public class K2400 extends KeithleySCPI {
 
     public static String getDescription() {
-        return "Kiethley 2400";
+        return "Keithley 2400";
     }
 
     public K2400(Address address) throws IOException, DeviceException {

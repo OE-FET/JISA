@@ -15,7 +15,7 @@ import java.util.HashMap;
 public class K2600B extends VISADevice implements MCSMU {
 
     public static String getDescription() {
-        return "Kiethley 2600B Series";
+        return "Keithley 2600B Series";
     }
 
     private static final String[] CHANNELS                   = {"smua", "smub"};
