@@ -29,8 +29,8 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
     private final boolean[] states = {false, false, false, false, false, false};
     private final Source[]  modes  = {VOLTAGE, VOLTAGE, VOLTAGE, VOLTAGE, VOLTAGE, VOLTAGE};
 
-    private final AgilentRange[] voltageRange = {AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING};
-    private final AgilentRange[] currentRange = {AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING};
+    protected final AgilentRange[] voltageRange = {AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING};
+    protected final AgilentRange[] currentRange = {AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING, AUTO_RANGING};
 
     private final OffMode[] offModes = {HIGH_IMPEDANCE, HIGH_IMPEDANCE, HIGH_IMPEDANCE, HIGH_IMPEDANCE, HIGH_IMPEDANCE, HIGH_IMPEDANCE};
 
@@ -65,6 +65,10 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
     private final double[] values     = {0, 0, 0, 0, 0, 0};
 
     public Agilent415XX(Address address) throws IOException, DeviceException {
+        this(address, true);
+    }
+
+    public Agilent415XX(Address address, boolean setUS) throws IOException, DeviceException {
 
         super(address);
 
@@ -72,17 +76,17 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
         setReadTerminator("\r");
 
         write(C_RESET);
-        write(C_FLEX);
+        if (setUS) write(C_FLEX);
         write(C_FMT);
 
         String[] idn = getIDN().split(",");
 
         try {
-            if (!idn[1].contains("415")) {
+            if (!idn[1].contains("415") && !idn[1].contains("B1500A")) {
                 throw new Exception();
             }
         } catch (Exception e) {
-            throw new DeviceException("Device at %s is not an Agilent 415XX series.", address.toString());
+            throw new DeviceException("Device at %s is not an Agilent 415XX or B1500A series.", address.toString());
         }
 
         for (int i = 0; i < getNumChannels(); i++) {
