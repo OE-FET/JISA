@@ -27,7 +27,8 @@ public class DummyMCSMU implements MCSMU {
 
     @Override
     public String getChannelName(int channel) {
-        return "Channel " + channel;
+        String[] values = {"A", "B", "C", "D"};
+        return "SMU " + values[channel];
     }
 
     @Override
@@ -143,7 +144,7 @@ public class DummyMCSMU implements MCSMU {
 
     @Override
     public int getNumChannels() {
-        return 4;
+        return 2;
     }
 
     @Override

@@ -649,7 +649,6 @@ public interface SMU extends IVMeter, IVSource {
         parameters.add(new Parameter<>("Current Limit [A]", 200e-3, this::setCurrentLimit));
         parameters.add(new Parameter<>("Voltage Range [V]", new AutoQuantity<>(true, 0.0), q -> { if (q.isAuto()) this.useAutoVoltageRange(); else this.setVoltageRange(q.getValue()); }));
         parameters.add(new Parameter<>("Current Range [A]", new AutoQuantity<>(true, 0.0), q -> { if (q.isAuto()) this.useAutoCurrentRange(); else this.setCurrentRange(q.getValue()); }));
-        parameters.add(new Parameter<>("Line Filtering", false, this::setLineFilterEnabled));
         parameters.add(new Parameter<>("Four Point Probe", false, this::setFourProbeEnabled));
 
         if (target.equals(IMeter.class)) {

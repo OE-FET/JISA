@@ -9,6 +9,7 @@ import jisa.visa.Driver;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
+import java.util.List;
 
 public class K2182 extends VISADevice implements VMeter {
 
@@ -201,4 +202,12 @@ public class K2182 extends VISADevice implements VMeter {
         return Terminals.FRONT;
     }
 
+    @Override
+    public List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+
+        List<Parameter<?>> parameters = super.getConfigurationParameters(target);
+        parameters.add(new Parameter<>("Line Filtering", false, this::setLineFilterEnabled));
+        return parameters;
+
+    }
 }

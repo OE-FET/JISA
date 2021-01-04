@@ -285,6 +285,9 @@ public class Connector<T extends Instrument> extends JFXElement {
 
     public void apply() {
 
+        if (driverChoice.getValue() == null || protocolChoice.getValue() == null || addressParams == null) {
+            return;
+        }
 
         GUI.runNow(() -> {
             errorText.setVisible(false);
@@ -315,6 +318,22 @@ public class Connector<T extends Instrument> extends JFXElement {
             }
 
         });
+
+
+    }
+
+    public void applySettings() {
+
+        if (driverChoice.getValue() == null || protocolChoice.getValue() == null || addressParams == null) {
+            return;
+        }
+
+        Address address = addressParams.createAddress();
+
+        connecting = true;
+        connection.setDriver(driverChoice.getValue());
+        connection.setAddress(address);
+        connecting = false;
 
 
     }

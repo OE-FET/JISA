@@ -164,6 +164,8 @@ public class ConnectorGrid extends Grid {
 
         for (Connector connector : getConnectors()) {
 
+            connector.applySettings();
+
             String name;
 
             try {

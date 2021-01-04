@@ -330,7 +330,7 @@ public class SR830 extends VISADevice implements DPLockIn {
 
     @Override
     public double getOffset() throws IOException {
-        return Double.valueOf(query("OEXP? 3").split(",")[0]);
+        return Double.parseDouble(query("OEXP? 3").split(",")[0]);
     }
 
     @Override
@@ -341,7 +341,7 @@ public class SR830 extends VISADevice implements DPLockIn {
     @Override
     public double getExpansion() throws IOException {
         double[] values = {1, 10, 100};
-        return values[Integer.valueOf(query("OEXP? 3").split(",")[1])];
+        return values[Integer.parseInt(query("OEXP? 3").split(",")[1])];
     }
 
     @Override
