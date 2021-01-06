@@ -69,6 +69,14 @@ public class Util {
         }
     }
 
+    public static String pluralise(String word, Number value) {
+        return pluralise(word, word + "s", value);
+    }
+
+    public static String pluralise(String word, String plural, Number value) {
+        return (value.doubleValue() == 1.0) ? word : plural;
+    }
+
     public static void runRegardless(SRunnable toRun) {
 
         try {
