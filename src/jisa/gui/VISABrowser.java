@@ -13,17 +13,18 @@ public class VISABrowser extends ListDisplay<Address> {
 
     public VISABrowser(String title) {
         super(title);
+        setWindowSize(800, 600);
     }
 
     public void updateList() {
 
         refresh.setDisabled(true);
+        refresh.setText("Scanning...");
         clear();
 
         try {
 
             Address[] addresses = VISA.getInstruments();
-
 
             for (Address address : addresses) {
 
@@ -40,11 +41,8 @@ public class VISABrowser extends ListDisplay<Address> {
                         break;
 
                     case TCPIP:
-                        icon = VISABrowser.class.getResource("images/tcpip.png");
-                        break;
-
                     case TCPIP_SOCKET:
-                        icon = VISABrowser.class.getResource("images/tpcip.png");
+                        icon = VISABrowser.class.getResource("images/tcpip.png");
                         break;
 
                     case SERIAL:
@@ -81,6 +79,7 @@ public class VISABrowser extends ListDisplay<Address> {
             GUI.errorAlert(e.getMessage());
         } finally {
             refresh.setDisabled(false);
+            refresh.setText("Refresh");
         }
 
     }
