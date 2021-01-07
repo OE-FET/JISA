@@ -160,7 +160,7 @@ public class SMUCluster implements MCSMU {
         if (devices.size() <= channel) {
             throw new DeviceException("Channel does not exist!");
         }
-        devices.get(channel).setBias(level);
+        devices.get(channel).setSourceValue(level);
     }
 
     @Override

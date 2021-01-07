@@ -52,6 +52,7 @@ public class K236 extends VISADevice implements SMU {
     private static final double MAX_VOLTAGE      = +110;
 
     private double lineFrequency;
+    private double lastBias = 0.0;
 
     // == FILTERS ======================================================================================================
     private final MedianRepeatFilter MEDIAN_REPEAT_S = new MedianRepeatFilter(
@@ -127,13 +128,14 @@ public class K236 extends VISADevice implements SMU {
         setWriteTerminator(C_TRIGGER + C_EXECUTE);
         write(C_RESET);
         write(C_NO_TERM);
-        turnOff();
+        write(C_OPERATE, OPERATE_OFF);
         setSourceFunction(Source.VOLTAGE, Function.DC);
         useAutoSourceRange();
         useAutoMeasureRange();
         setVoltageLimit(110);
         setCurrentLimit(0.1);
         setAverageMode(AMode.NONE);
+        turnOff();
 
         for (int i = 0; i < 10; i++) {
             read();
@@ -141,7 +143,7 @@ public class K236 extends VISADevice implements SMU {
 
         try {
 
-            if (!getIDN().trim().substring(0, 3).equals("236")) {
+            if (!getIDN().trim().startsWith("236")) {
                 throw new DeviceException("Device at address %s is not a Keithley 236!", address.toString());
             }
 
@@ -151,7 +153,7 @@ public class K236 extends VISADevice implements SMU {
 
     }
 
-    public void setBias(double level) throws IOException, DeviceException {
+    public void setSourceValue(double level) throws IOException, DeviceException {
 
         switch (source) {
 
@@ -698,7 +700,12 @@ public class K236 extends VISADevice implements SMU {
         if (!source.equals(Source.VOLTAGE)) {
             setSourceFunction(Source.VOLTAGE, getFunction());
         }
-        setBias(voltage);
+
+        if (isOn()) {
+            setSourceValue(voltage);
+        }
+
+        lastBias = voltage;
 
     }
 
@@ -708,18 +715,26 @@ public class K236 extends VISADevice implements SMU {
         if (!source.equals(Source.CURRENT)) {
             setSourceFunction(Source.CURRENT, getFunction());
         }
-        setBias(current);
+
+        if (isOn()) {
+            setSourceValue(current);
+        }
+
+        lastBias = current;
 
     }
 
     @Override
-    public void turnOn() throws IOException {
+    public void turnOn() throws IOException, DeviceException {
+        setSourceValue(lastBias);
         write(C_OPERATE, OPERATE_ON);
         on = true;
     }
 
     @Override
-    public void turnOff() throws IOException {
+    public void turnOff() throws IOException, DeviceException {
+        lastBias = getSourceValue();
+        setSourceValue(0.0);
         write(C_OPERATE, OPERATE_OFF);
         on = false;
     }

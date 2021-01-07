@@ -540,7 +540,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
         return query(C_QUERY_OUTPUT_STATE).equals(OUTPUT_ON);
     }
 
-    public void setBias(double value) throws IOException, DeviceException {
+    public void setSourceValue(double value) throws IOException, DeviceException {
 
         switch (getSourceMode()) {
 

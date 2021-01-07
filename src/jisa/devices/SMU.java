@@ -155,7 +155,7 @@ public interface SMU extends IVMeter, IVSource, Channel<SMU> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void setBias(double level) throws DeviceException, IOException;
+    void setSourceValue(double level) throws DeviceException, IOException;
 
     /**
      * Returns the value of whichever parameter is set as source currently

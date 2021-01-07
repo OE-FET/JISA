@@ -260,7 +260,7 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
      * @throws DeviceException Upon device compatibility error
      * @throws IOException     Upon communications error
      */
-    default void setBias(double level) throws DeviceException, IOException {
+    default void setSourceValue(double level) throws DeviceException, IOException {
         for (int cn = 0; cn < getNumChannels(); cn++) {
             setBias(cn, level);
         }
@@ -1410,7 +1410,7 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
         }
 
         @Override
-        public void setBias(double level) throws DeviceException, IOException {
+        public void setSourceValue(double level) throws DeviceException, IOException {
             smu.setBias(channel, level);
         }
 
