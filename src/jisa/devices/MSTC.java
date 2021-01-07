@@ -6,10 +6,18 @@ import jisa.control.Synch;
 import jisa.maths.Range;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public interface MSTC extends TC, MSTMeter {
+public interface MSTC extends TC, MSTMeter, Output<MSTC> {
+
+    String getOutputName();
+
+    default Class<MSTC> getOutputType() {
+        return MSTC.class;
+    }
 
     public static String getDescription() {
         return "Multi-Sensor Temperature Controller";
@@ -163,7 +171,8 @@ public interface MSTC extends TC, MSTMeter {
 
         LinkedList<Parameter<?>> parameters = new LinkedList<>();
 
-        parameters.add(new Parameter<>("Sensor", 0, this::useSensor, Range.count(0, getNumSensors() - 1).array()));
+        List<String> names = getSensors().stream().map(Sensor::getSensorName).collect(Collectors.toUnmodifiableList());
+        parameters.add(new Parameter<>("Sensor", getSensorName(0), n -> useSensor(names.indexOf(n)), names.toArray(String[]::new)));
         parameters.addAll(TC.super.getConfigurationParameters(target));
 
         return parameters;

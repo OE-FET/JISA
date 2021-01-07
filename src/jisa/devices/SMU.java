@@ -11,13 +11,17 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-public interface SMU extends IVMeter, IVSource {
+public interface SMU extends IVMeter, IVSource, Channel<SMU> {
 
     public static String getDescription() {
         return "Source Measure Unit";
     }
 
     String getChannelName();
+
+    default Class<SMU> getChannelType() {
+        return SMU.class;
+    }
 
     /**
      * Returns the voltage either being applied or measured by the SMU.

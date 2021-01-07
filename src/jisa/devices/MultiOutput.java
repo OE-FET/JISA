@@ -3,7 +3,7 @@ package jisa.devices;
 import java.io.IOException;
 import java.util.List;
 
-public interface MultiOutput<T> {
+public interface MultiOutput<T extends Output<T>> {
 
     int getNumOutputs();
 

@@ -3,7 +3,7 @@ package jisa.devices;
 import java.io.IOException;
 import java.util.List;
 
-public interface MultiSensor<T> {
+public interface MultiSensor<T extends Sensor<T>> {
 
     int getNumSensors();
 

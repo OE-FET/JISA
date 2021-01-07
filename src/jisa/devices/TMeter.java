@@ -6,13 +6,17 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-public interface TMeter extends Instrument {
+public interface TMeter extends Instrument, Sensor<TMeter> {
 
     public static String getDescription() {
         return "Thermometer";
     }
 
     String getSensorName();
+
+    default Class<TMeter> getSensorType() {
+        return TMeter.class;
+    }
 
     /**
      * Returns the temperature being reported by the thermometer.

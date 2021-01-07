@@ -1,9 +1,10 @@
 package jisa.devices;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 
-public interface MultiChannel<T> {
+public interface MultiChannel<T extends Channel<T>> extends Iterable<T> {
 
     int getNumChannels();
 
@@ -14,5 +15,9 @@ public interface MultiChannel<T> {
     T getChannel(int channelNumber) throws IOException, DeviceException;
 
     Class<T> getChannelType();
+
+    default Iterator<T> iterator() {
+        return getChannels().iterator();
+    }
 
 }

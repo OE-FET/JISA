@@ -88,11 +88,6 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
-    public String getOutputName() {
-        return "Main Loop";
-    }
-
-    @Override
     public String getSensorName() {
         return "Main Sensor";
     }

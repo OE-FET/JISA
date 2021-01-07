@@ -184,7 +184,7 @@ public class Configuration<T extends Instrument> {
 
             choiceName = "Channel";
 
-            choices.addAll(((MultiChannel<T>) instrument).getChannels());
+            choices.addAll(((MultiChannel) instrument).getChannels());
 
             for (int i = 0; i < choices.size(); i++) {
                 names.add(String.format("%d: %s", i, ((MultiChannel<?>) instrument).getChannelName(i)));
@@ -194,7 +194,7 @@ public class Configuration<T extends Instrument> {
 
             choiceName = "Output";
 
-            choices.addAll(((MultiOutput<T>) instrument).getOutputs());
+            choices.addAll(((MultiOutput) instrument).getOutputs());
 
             for (int i = 0; i < choices.size(); i++) {
                 names.add(String.format("%d: %s", i, ((MultiOutput<?>) instrument).getOutputName(i)));
@@ -204,7 +204,7 @@ public class Configuration<T extends Instrument> {
 
             choiceName = "Sensor";
 
-            choices.addAll(((MultiSensor<T>) instrument).getSensors());
+            choices.addAll(((MultiSensor) instrument).getSensors());
 
             for (int i = 0; i < choices.size(); i++) {
                 names.add(String.format("%d: %s", i, ((MultiSensor<?>) instrument).getSensorName(i)));

@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Abstract class defining the standard interface for controller Multiple-Channel SMUs.
  */
-public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
+public interface MCSMU extends SMU, MultiChannel<SMU> {
 
     public static String getDescription() {
         return "Multi-Channel Source Measure Unit";
@@ -1339,20 +1339,6 @@ public interface MCSMU extends SMU, Iterable<SMU>, MultiChannel<SMU> {
                     getNumChannels() - 1
             );
         }
-
-    }
-
-    default Iterator<SMU> iterator() {
-
-        ArrayList<SMU> list = new ArrayList<>();
-        for (int i = 0; i < getNumChannels(); i++) {
-            try {
-                list.add(getChannel(i));
-            } catch (DeviceException ignored) {
-            }
-        }
-
-        return list.iterator();
 
     }
 

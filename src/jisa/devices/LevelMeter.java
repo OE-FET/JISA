@@ -5,7 +5,7 @@ import jisa.addresses.Address;
 import java.io.IOException;
 import java.util.List;
 
-public interface LevelMeter extends Instrument, MultiChannel<LevelMeter> {
+public interface LevelMeter extends Instrument, MultiChannel<LevelMeter>, Channel<LevelMeter> {
 
     public static String getDescription() {
         return "Level Meter";
@@ -21,9 +21,18 @@ public interface LevelMeter extends Instrument, MultiChannel<LevelMeter> {
         return getLevel(0);
     }
 
+    default String getChannelName() {
+        return getChannelName(0);
+    }
+
     default LevelMeter getChannel(int channelNo) {
 
         return new LevelMeter() {
+            @Override
+            public String getChannelName() {
+                return LevelMeter.this.getChannelName(channelNo);
+            }
+
             @Override
             public int getNumChannels() {
                 return 1;
