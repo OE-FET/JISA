@@ -3,7 +3,7 @@ package jisa.visa;
 import jisa.addresses.Address;
 import jisa.addresses.ModbusAddress;
 import jisa.devices.DeviceException;
-import jisa.devices.Instrument;
+import jisa.devices.interfaces.Instrument;
 import com.intelligt.modbus.jlibmodbus.ModbusMaster;
 import com.intelligt.modbus.jlibmodbus.ModbusMasterFactory;
 import com.intelligt.modbus.jlibmodbus.exception.ModbusIOException;

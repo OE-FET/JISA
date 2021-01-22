@@ -1,8 +1,8 @@
 package jisa.control;
 
-import jisa.devices.DCPower;
+import jisa.devices.interfaces.DCPower;
 import jisa.devices.DeviceException;
-import jisa.devices.LockIn;
+import jisa.devices.interfaces.LockIn;
 
 import java.io.IOException;
 

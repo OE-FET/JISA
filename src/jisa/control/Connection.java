@@ -5,6 +5,10 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.StrAddress;
 import jisa.devices.*;
+import jisa.devices.interfaces.Instrument;
+import jisa.devices.interfaces.MultiChannel;
+import jisa.devices.interfaces.MultiOutput;
+import jisa.devices.interfaces.MultiSensor;
 import jisa.experiment.ActionQueue;
 
 import java.io.IOException;

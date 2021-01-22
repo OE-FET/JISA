@@ -3,11 +3,10 @@ package jisa.gui;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.Connection;
-import jisa.devices.Instrument;
+import jisa.devices.interfaces.Instrument;
 import jisa.experiment.ActionQueue;
 import org.reflections.Reflections;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.stream.Collectors;
 

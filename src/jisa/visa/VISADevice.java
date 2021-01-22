@@ -2,11 +2,10 @@ package jisa.visa;
 
 import jisa.Util;
 import jisa.addresses.Address;
-import jisa.devices.Instrument;
+import jisa.devices.interfaces.Instrument;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 

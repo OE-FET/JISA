@@ -4,7 +4,7 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import jisa.Util;
 import jisa.devices.DeviceException;
-import jisa.devices.Instrument;
+import jisa.devices.interfaces.Instrument;
 import org.reflections.Reflections;
 
 import java.io.IOException;

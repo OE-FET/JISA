@@ -4,7 +4,7 @@ import jisa.control.IConf;
 import jisa.control.RTask;
 import jisa.control.Returnable;
 import jisa.devices.DeviceException;
-import jisa.devices.Instrument;
+import jisa.devices.interfaces.Instrument;
 import jisa.experiment.Col;
 import jisa.experiment.ResultStream;
 

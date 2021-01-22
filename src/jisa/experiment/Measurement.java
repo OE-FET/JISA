@@ -1,8 +1,7 @@
 package jisa.experiment;
 
-import jisa.control.IConf;
 import jisa.devices.Configuration;
-import jisa.devices.Instrument;
+import jisa.devices.interfaces.Instrument;
 import jisa.gui.Field;
 import jisa.gui.Fields;
 import jisa.maths.Range;

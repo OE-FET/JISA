@@ -3,12 +3,11 @@ package jisa.visa;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.PipeAddress;
-import jisa.devices.Instrument;
+import jisa.devices.interfaces.Instrument;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
 
 /**
  * Abstract base class for creating device drivers that communicate using Windows Named Pipes (eugh).

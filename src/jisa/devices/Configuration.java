@@ -1,6 +1,10 @@
 package jisa.devices;
 
 import jisa.control.ConfigBlock;
+import jisa.devices.interfaces.Instrument;
+import jisa.devices.interfaces.MultiChannel;
+import jisa.devices.interfaces.MultiOutput;
+import jisa.devices.interfaces.MultiSensor;
 
 import java.io.IOException;
 import java.util.Arrays;

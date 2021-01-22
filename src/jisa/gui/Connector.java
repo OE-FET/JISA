@@ -17,8 +17,8 @@ import jisa.addresses.Address;
 import jisa.control.ConfigBlock;
 import jisa.control.Connection;
 import jisa.control.SRunnable;
-import jisa.devices.Instrument;
-import jisa.devices.SMUCluster;
+import jisa.devices.interfaces.Instrument;
+import jisa.devices.smu.SMUCluster;
 import org.reflections.Reflections;
 
 import java.lang.reflect.Modifier;

@@ -5,9 +5,9 @@ import jisa.control.ConfigBlock;
 import jisa.control.Connection;
 import jisa.control.SRunnable;
 import jisa.devices.Configuration;
-import jisa.devices.Instrument;
-import jisa.devices.Instrument.AutoQuantity;
-import jisa.devices.Instrument.OptionalQuantity;
+import jisa.devices.interfaces.Instrument;
+import jisa.devices.interfaces.Instrument.AutoQuantity;
+import jisa.devices.interfaces.Instrument.OptionalQuantity;
 
 import java.util.LinkedList;
 import java.util.List;
