@@ -211,7 +211,6 @@ public class ITC503 extends VISADevice implements MSTC {
     @Override
     public void setIValue(double value) throws IOException {
         query(C_SET_I, value);
-
     }
 
     @Override
@@ -325,6 +324,11 @@ public class ITC503 extends VISADevice implements MSTC {
         return getSensorName(0);
     }
 
+    public List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+        List<Parameter<?>> parameters = MSTC.super.getConfigurationParameters(target);
+        parameters.add(new Parameter<>("Use Internal PID Table", false, v -> query(C_SET_AUTO_PID, v ? 1 : 0)));
+        return parameters;
+    }
 
     public enum Mode {
 
