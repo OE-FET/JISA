@@ -240,6 +240,7 @@ public interface TC extends PID, TMeter {
         parameters.add(new Parameter<>("I", 30.0, this::setIValue));
         parameters.add(new Parameter<>("D", 00.0, this::setDValue));
         parameters.add(new Parameter<>("Heater Range [%]", 100.0, this::setHeaterRange));
+        parameters.add(new Parameter<>("Ramp Rate [K/min]", 0.0, this::setTemperatureRampRate));
 
         parameters.addAll(TMeter.super.getConfigurationParameters(target));
 
