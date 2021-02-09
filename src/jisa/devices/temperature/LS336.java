@@ -24,31 +24,28 @@ import java.util.concurrent.Semaphore;
  */
 public class LS336 extends VISADevice implements MSMOTC {
 
-    public static String getDescription() {
-        return "LakeShore 336";
-    }
-
-    private static final String[]                             CHANNELS          = {"A", "B", "C", "D"};
-    private static final String                               C_QUERY_SENSOR    = "KRDG? %s";
-    private static final String                               C_SET_SET_POINT   = "SETP %d,%f";
-    private static final String                               C_QUERY_SET_POINT = "SETP? %d";
-    private static final String                               C_QUERY_PID       = "PID? %d";
-    private static final String                    C_SET_PID            = "PID %d,%f,%f,%f";
-    private static final String                    C_SET_OUT_MODE       = "OUTMODE %d,%d,%d,%d";
-    private static final String                    C_QUERY_OUT_MODE     = "OUTMODE? %d";
-    private static final String                    C_QUERY_HEATER       = "HTR? %d";
-    private static final String                    C_SET_HEATER         = "MOUT %d,%f";
-    private static final String                    C_QUERY_M_HEATER     = "MOUT? %d";
-    private static final String                    C_SET_HEATER_RANGE   = "RANGE %d,%d";
-    private static final String                    C_QUERY_HEATER_RANGE = "RANGE? %d";
-    private static final String                    C_SET_ZONE           = "ZONE %d,%d,%f,%f,%f,%f,%f,%d,0,0";
-    private static final String                    C_QUERY_ZONE         = "ZONE? %d,%d";
-    private static final String                    TERMINATOR           = "\r\n";
-    private              Semaphore                 timingControl        = new Semaphore(1);
-    private              ExecutorService           timingService        = Executors.newFixedThreadPool(1);
-    private              boolean[]                            autoPID           = {false, false};
-    private              jisa.devices.interfaces.PID.Zone[][] zones             = new jisa.devices.interfaces.PID.Zone[2][0];
-
+    private static final String[]                             CHANNELS             = {"A", "B", "C", "D"};
+    private static final String                               C_QUERY_SENSOR       = "KRDG? %s";
+    private static final String                               C_SET_SET_POINT      = "SETP %d,%f";
+    private static final String                               C_QUERY_SET_POINT    = "SETP? %d";
+    private static final String                               C_SET_RAMP           = "RAMP %d,%d,%f";
+    private static final String                               C_QUERY_RAMP         = "RAMP? %d";
+    private static final String                               C_QUERY_PID          = "PID? %d";
+    private static final String                               C_SET_PID            = "PID %d,%f,%f,%f";
+    private static final String                               C_SET_OUT_MODE       = "OUTMODE %d,%d,%d,%d";
+    private static final String                               C_QUERY_OUT_MODE     = "OUTMODE? %d";
+    private static final String                               C_QUERY_HEATER       = "HTR? %d";
+    private static final String                               C_SET_HEATER         = "MOUT %d,%f";
+    private static final String                               C_QUERY_M_HEATER     = "MOUT? %d";
+    private static final String                               C_SET_HEATER_RANGE   = "RANGE %d,%d";
+    private static final String                               C_QUERY_HEATER_RANGE = "RANGE? %d";
+    private static final String                               C_SET_ZONE           = "ZONE %d,%d,%f,%f,%f,%f,%f,%d,0,0";
+    private static final String                               C_QUERY_ZONE         = "ZONE? %d,%d";
+    private static final String                               TERMINATOR           = "\r\n";
+    private              Semaphore                            timingControl        = new Semaphore(1);
+    private              ExecutorService                      timingService        = Executors.newFixedThreadPool(1);
+    private              boolean[]                            autoPID              = {false, false};
+    private              jisa.devices.interfaces.PID.Zone[][] zones                = new jisa.devices.interfaces.PID.Zone[2][0];
     public LS336(Address address) throws IOException, DeviceException {
 
         super(address, RawTCPIPDriver.class);
@@ -76,6 +73,10 @@ public class LS336 extends VISADevice implements MSMOTC {
 
         write("MODE 1");
 
+    }
+
+    public static String getDescription() {
+        return "LakeShore 336";
     }
 
     public synchronized void write(String command, Object... args) throws IOException {
@@ -262,6 +263,34 @@ public class LS336 extends VISADevice implements MSMOTC {
     public double getTargetTemperature(int output) throws IOException, DeviceException {
         checkOutput(output);
         return queryDouble(C_QUERY_SET_POINT, output + 1);
+    }
+
+    @Override
+    public void setTemperatureRampRate(int output, double kPerMin) throws IOException, DeviceException {
+
+        checkOutput(output);
+
+        if (kPerMin == 0) {
+            write(C_SET_RAMP, output + 1, 0, 0.0);
+        } else {
+            write(C_SET_RAMP, output + 1, 1, Math.abs(kPerMin));
+        }
+
+    }
+
+    @Override
+    public double getTemperatureRampRate(int output) throws IOException, DeviceException {
+
+        checkOutput(output);
+
+        String[] response = query(C_QUERY_RAMP, output + 1).split(",");
+
+        if (response[0].equals("0")) {
+            return 0.0;
+        } else {
+            return Double.parseDouble(response[1]);
+        }
+
     }
 
     @Override

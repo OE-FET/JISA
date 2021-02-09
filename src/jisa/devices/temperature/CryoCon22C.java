@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 public class CryoCon22C extends VISADevice implements MSMOTC {
 
@@ -19,8 +20,8 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
 
     public static final List<String> SENSORS = List.of("A", "B");
 
-    private final List<List<Zone>> pidZones = List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-    private final boolean[]        autoPID  = {false, false, false, false};
+    private final List<List<Zone>> pidZones  = List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+    private final boolean[]        autoPID   = {false, false, false, false};
 
     public CryoCon22C(Address address) throws IOException, DeviceException {
 
@@ -283,6 +284,27 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
     }
 
     @Override
+    public void setTemperatureRampRate(int output, double kPerMin) throws IOException, DeviceException {
+
+        checkOutput(output);
+
+        query("LOOP %d:RATE %f", output + 1, kPerMin);
+
+        if (kPerMin == 0 && isUsingAutoHeater(output)) {
+            query("LOOP %d:TYPE PID", output + 1);
+        } else if (isUsingAutoHeater(output)) {
+            query("LOOP %d:TYPE RAMPP", output + 1);
+        }
+
+    }
+
+    @Override
+    public double getTemperatureRampRate(int output) throws IOException, DeviceException {
+        checkOutput(output);
+        return queryDouble("LOOP %d:RATE?", output);
+    }
+
+    @Override
     public double getHeaterPower(int output) throws IOException, DeviceException {
         checkOutput(output);
         return queryDouble("LOOP %d:OUTPWR?", output + 1);
@@ -296,14 +318,22 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
 
     @Override
     public void useAutoHeater(int output) throws IOException, DeviceException {
+
         checkOutput(output);
-        query("LOOP %d:TYPE PID", output + 1);
+
+        if (getTemperatureRampRate(output) == 0) {
+            query("LOOP %d:TYPE PID", output + 1);
+        } else {
+            query("LOOP %d:TYPE RAMPP", output + 1);
+        }
+
     }
 
     @Override
     public boolean isUsingAutoHeater(int output) throws IOException, DeviceException {
         checkOutput(output);
-        return query("LOOP %d:TYPE?").trim().equals("PID");
+        String response = query("LOOP %d:TYPE?").trim().toUpperCase();
+        return response.equals("PID") || response.equals("RAMPP");
     }
 
     @Override

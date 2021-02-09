@@ -148,6 +148,16 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
+    public double getTemperatureRampRate() throws IOException, DeviceException {
+        return 0.0;
+    }
+
+    @Override
+    public void setTemperatureRampRate(double kPerMin) throws IOException, DeviceException {
+
+    }
+
+    @Override
     public double getHeaterPower() throws IOException {
         return (double) output.get() / 10.0;
     }

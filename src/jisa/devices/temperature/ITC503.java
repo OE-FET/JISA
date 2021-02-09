@@ -21,36 +21,38 @@ import java.util.regex.Pattern;
  */
 public class ITC503 extends VISADevice implements MSTC {
 
-    private static final String TERMINATOR         = "\r";
-    private static final String C_SET_COMM_MODE    = "Q2";
-    private static final String C_READ             = "R%d";
-    private static final String C_SET_MODE         = "C%d";
-    private static final String C_SET_TEMP         = "T%f";
-    private static final String C_SET_AUTO         = "A%d";
-    private static final String C_SET_SENSOR       = "H%d";
-    private static final String C_SET_AUTO_PID     = "L%d";
-    private static final String C_SET_P            = "P%f";
-    private static final String C_SET_I            = "I%f";
-    private static final String C_SET_D            = "D%f";
-    private static final String C_SET_HEATER       = "O%.01f";
-    private static final String C_SET_FLOW         = "G%f";
-    private static final String C_SET_HEATER_LIM   = "M%.01f";
-    private static final String C_QUERY_STATUS     = "X";
-    private static final int    SET_TEMP_CHANNEL   = 0;
-    private static final int    TEMP_ERROR_CHANNEL = 4;
-    private static final int    HEATER_OP_PERC     = 5;
-    private static final int    HEATER_OP_VOLTS    = 6;
-    private static final int    GAS_OP             = 7;
-    private static final int    PROP_BAND          = 8;
-    private static final int    INT_ACTION_TIME    = 9;
-    private static final int    DER_ACTION_TIME    = 10;
-    private static final int    FREQ_CHAN_OFFSET   = 10;
-    private static final double MAX_HEATER_VOLTAGE = 40.0;
-    private static final long   STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
-    private static final int    STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
-    private static final double STANDARD_ERROR_PERC           = 10;
-    private boolean    autoPID = false;
-    private PID.Zone[] zones   = new PID.Zone[0];
+    private static final String     TERMINATOR                    = "\r";
+    private static final String     C_SET_COMM_MODE               = "Q2";
+    private static final String     C_READ                        = "R%d";
+    private static final String     C_SET_MODE                    = "C%d";
+    private static final String     C_SET_TEMP                    = "T%f";
+    private static final String     C_SET_AUTO                    = "A%d";
+    private static final String     C_SET_SENSOR                  = "H%d";
+    private static final String     C_SET_AUTO_PID                = "L%d";
+    private static final String     C_SET_P                       = "P%f";
+    private static final String     C_SET_I                       = "I%f";
+    private static final String     C_SET_D                       = "D%f";
+    private static final String     C_SET_HEATER                  = "O%.01f";
+    private static final String     C_SET_FLOW                    = "G%f";
+    private static final String     C_SET_HEATER_LIM              = "M%.01f";
+    private static final String     C_QUERY_STATUS                = "X";
+    private static final int        SET_TEMP_CHANNEL              = 0;
+    private static final int        TEMP_ERROR_CHANNEL            = 4;
+    private static final int        HEATER_OP_PERC                = 5;
+    private static final int        HEATER_OP_VOLTS               = 6;
+    private static final int        GAS_OP                        = 7;
+    private static final int        PROP_BAND                     = 8;
+    private static final int        INT_ACTION_TIME               = 9;
+    private static final int        DER_ACTION_TIME               = 10;
+    private static final int        FREQ_CHAN_OFFSET              = 10;
+    private static final double     MAX_HEATER_VOLTAGE            = 40.0;
+    private static final long       STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
+    private static final int        STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
+    private static final double     STANDARD_ERROR_PERC           = 10;
+    private              boolean    autoPID                       = false;
+    private              PID.Zone[] zones                         = new PID.Zone[0];
+    private              double     rampRate                      = 0.0;
+
     /**
      * Open the ITC503 device at the given bus and address
      *
@@ -121,8 +123,41 @@ public class ITC503 extends VISADevice implements MSTC {
     }
 
     public void setTargetTemperature(double temperature) throws IOException, DeviceException {
-        query(C_SET_TEMP, temperature);
-        updateAutoPID();
+
+        query("S0");
+
+        if (rampRate == 0) {
+
+            query(C_SET_TEMP, temperature);
+            updateAutoPID();
+
+        } else {
+
+            for (int i = 1; i <= 16; i++) {
+                query("x%d", i);
+                query("s0.0");
+            }
+
+            query("x1");
+            query("y1");
+            query("s%f", temperature);
+            query("y2");
+            query("s%.1f", Math.abs(temperature - getTemperature()) / Math.abs(rampRate));
+
+            query("S1");
+
+        }
+
+    }
+
+    @Override
+    public double getTemperatureRampRate() throws IOException, DeviceException {
+        return rampRate;
+    }
+
+    @Override
+    public void setTemperatureRampRate(double kPerMin) throws IOException, DeviceException {
+        rampRate = kPerMin;
     }
 
     @Override

@@ -391,6 +391,22 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
         return getTargetTemperature(0);
     }
 
+    void setTemperatureRampRate(int output, double kPerMin) throws IOException, DeviceException;
+
+    default void setTemperatureRampRate(double kPerMin) throws IOException, DeviceException {
+
+        for (int onum = 0; onum < getNumOutputs(); onum++) {
+            setTemperatureRampRate(onum, kPerMin);
+        }
+
+    }
+
+    double getTemperatureRampRate(int output) throws IOException, DeviceException;
+
+    default double getTemperatureRampRate() throws IOException, DeviceException {
+        return getTemperatureRampRate(0);
+    }
+
     /**
      * Returns the output heater power for the specified output/control-loop.
      *
@@ -659,6 +675,16 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
             @Override
             public void setTargetTemperature(double temperature) throws IOException, DeviceException {
                 MSMOTC.this.setTargetTemperature(output, temperature);
+            }
+
+            @Override
+            public double getTemperatureRampRate() throws IOException, DeviceException {
+                return MSMOTC.this.getTemperatureRampRate(output);
+            }
+
+            @Override
+            public void setTemperatureRampRate(double kPerMin) throws IOException, DeviceException {
+                MSMOTC.this.setTemperatureRampRate(output, kPerMin);
             }
 
             @Override

@@ -106,6 +106,26 @@ public interface TC extends PID, TMeter {
     void setTargetTemperature(double temperature) throws IOException, DeviceException;
 
     /**
+     * Returns the maximum rate at which the temperature controller is set to allow temperature to change.
+     *
+     * @return Maximum rate, in Kelvin per minute
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    double getTemperatureRampRate() throws IOException, DeviceException;
+
+    /**
+     * Sets the maximum rate at which the temperature controller allows temperature to change.
+     *
+     * @param kPerMin Maximum rate, in Kelvin per minute
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    void setTemperatureRampRate(double kPerMin) throws IOException, DeviceException;
+
+    /**
      * Returns the heater output power percentage.
      *
      * @return Heater power, percentage of max
