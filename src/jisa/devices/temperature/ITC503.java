@@ -134,13 +134,18 @@ public class ITC503 extends VISADevice implements MSTC {
         } else {
 
             for (int i = 1; i <= 16; i++) {
+
                 query("x%d", i);
+                query("y1");
+                query("s%f", temperature);
+                query("y2");
                 query("s0.0");
+                query("y3");
+                query("s0.0");
+
             }
 
             query("x1");
-            query("y1");
-            query("s%f", temperature);
             query("y2");
             query("s%.1f", Math.abs(temperature - getTemperature()) / Math.abs(rampRate));
 
