@@ -176,7 +176,7 @@ public class IPS120 extends VISADevice implements EMController {
 
             }
 
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             setActivity(Activity.HOLD);
             throw e;
         }
@@ -191,9 +191,21 @@ public class IPS120 extends VISADevice implements EMController {
         query(C_SET_CURRENT_SWEEP_RATE, rate);
     }
 
-    public void setHeater(boolean on) throws IOException, InterruptedException {
+    public void setHeater(boolean on) throws IOException, InterruptedException, DeviceException {
+
         query(C_SET_SWITCH_HEATER, on ? 1 : 0);
         Thread.sleep(30000);
+
+        HeaterState heaterState = examineStatus().heaterState;
+
+        if (on && heaterState != HeaterState.ON) {
+            throw new DeviceException("Heater failed to engage");
+        }
+
+        if (!on && heaterState != HeaterState.OFF_ZERO && heaterState != HeaterState.OFF_NOT_ZERO) {
+            throw new DeviceException("Heater failed to disengage");
+        }
+
     }
 
     public double getMagnetCurrent() throws IOException {
