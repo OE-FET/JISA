@@ -1,10 +1,14 @@
 package jisa.gui;
 
+import javafx.beans.InvalidationListener;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Separator;
@@ -17,6 +21,7 @@ import jisa.maths.Range;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
@@ -1242,6 +1247,201 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
     public Field<Integer> addIntegerField(String name) {
 
         return addIntegerField(name, 0);
+    }
+
+    public Field<List<List<Double>>> addTable(String name, String... columns) {
+
+        Label                             label     = new Label(name);
+        TableView<ObservableList<Double>> tableView = new TableView<>();
+        Fields                            addNew    = new Fields("Add Row");
+        List<Field<Double>>               addFields = new LinkedList<>();
+
+        int i = 0;
+        for (String colName : columns) {
+
+            final int finalI = i++;
+
+            TableColumn<ObservableList<Double>, Double> column = new TableColumn(colName);
+            column.setCellValueFactory(row -> new ReadOnlyObjectWrapper<>(row.getValue().get(finalI)));
+
+            tableView.getColumns().add(column);
+            addFields.add(addNew.addDoubleField(colName));
+
+        }
+
+        Button addButton = new Button("✚");
+        Button remButton = new Button("⨉");
+        Button mUpButton = new Button("▲");
+        Button mDnButton = new Button("▼");
+
+        addButton.setOnAction(e -> Util.runAsync(() -> {
+
+            if (addNew.showAsConfirmation()) {
+
+                ObservableList<Double> values = FXCollections.observableArrayList(
+                    addFields.stream().map(Field::get).collect(Collectors.toList())
+                );
+
+                GUI.runNow(() -> tableView.getItems().add(values));
+
+            }
+
+        }));
+
+        remButton.setOnAction(e -> {
+
+            int index = tableView.getSelectionModel().getSelectedIndex();
+
+            if (index > -1) {
+                tableView.getItems().remove(index);
+            }
+
+        });
+
+        mUpButton.setOnAction(e -> {
+
+            int index = tableView.getSelectionModel().getSelectedIndex();
+
+            if (index > 0) {
+                    ObservableList<Double> toMove = tableView.getItems().get(index);
+                    tableView.getItems().set(index, tableView.getItems().get(index-1));
+                    tableView.getItems().set(index-1, toMove);
+                    tableView.getSelectionModel().select(index-1);
+            }
+
+        });
+
+        mDnButton.setOnAction(e -> {
+
+            int index = tableView.getSelectionModel().getSelectedIndex();
+
+            if (index < tableView.getItems().size() - 1 && index > -1) {
+                    ObservableList<Double> toMove = tableView.getItems().get(index);
+                    tableView.getItems().set(index, tableView.getItems().get(index+1));
+                    tableView.getItems().set(index+1, toMove);
+                    tableView.getSelectionModel().select(index+1);
+            }
+
+        });
+
+        VBox vBox = new VBox(new ToolBar(addButton, remButton, mUpButton, mDnButton), tableView);
+
+        label.setMinWidth(Region.USE_PREF_SIZE);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(vBox, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(vBox, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
+        GridPane.setValignment(label, VPos.TOP);
+
+        GUI.runNow(() -> list.addRow(rows++, label, vBox));
+
+        Field<List<List<Double>>> f = new Field<>() {
+
+            private InvalidationListener l = null;
+
+            @Override
+            public void set(List<List<Double>> value) {
+
+                GUI.runNow(() -> {
+
+                    tableView.getItems().clear();
+                    tableView.getItems().addAll(
+                        value.stream().map(FXCollections::observableArrayList).collect(Collectors.toUnmodifiableList())
+                    );
+
+                });
+
+            }
+
+            @Override
+            public List<List<Double>> get() {
+                return tableView.getItems().stream().map(i -> (List<Double>) i).collect(Collectors.toUnmodifiableList());
+            }
+
+            @Override
+            public void setOnChange(SRunnable onChange) {
+
+                tableView.getItems().removeListener(l);
+                l = l -> onChange.start();
+                tableView.getItems().addListener(l);
+
+            }
+
+            @Override
+            public void editValues(String... values) {
+
+                if (values.length != tableView.getColumns().size()) {
+                    return;
+                }
+
+                GUI.runNow(() -> {
+                    for (int i = 0; i < values.length; i++) {
+                        tableView.getColumns().get(i).setText(values[i]);
+                    }
+                });
+
+            }
+
+            @Override
+            public boolean isDisabled() {
+                return tableView.isDisabled();
+            }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+
+                GUI.runNow(() -> {
+                    tableView.setDisable(disabled);
+                    addButton.setDisable(disabled);
+                    remButton.setDisable(disabled);
+                    mUpButton.setDisable(disabled);
+                    mDnButton.setDisable(disabled);
+                });
+
+            }
+
+            @Override
+            public boolean isVisible() {
+                return vBox.isVisible();
+            }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    vBox.setVisible(visible);
+                    label.setManaged(visible);
+                    vBox.setManaged(visible);
+                });
+            }
+
+            @Override
+            public void remove() {
+
+                GUI.runNow(() -> {
+                    list.getChildren().removeAll(label, vBox);
+                    updateGridding();
+                });
+
+            }
+
+            @Override
+            public String getText() {
+                return label.getText();
+            }
+
+            @Override
+            public void setText(String text) {
+                GUI.runNow(() -> label.setText(text));
+            }
+
+        };
+
+        fields.add(f);
+        return f;
+
     }
 
     /**

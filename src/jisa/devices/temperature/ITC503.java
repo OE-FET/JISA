@@ -52,6 +52,7 @@ public class ITC503 extends VISADevice implements MSTC {
     private              boolean    autoPID                       = false;
     private              PID.Zone[] zones                         = new PID.Zone[0];
     private              double     rampRate                      = 0.0;
+    private              double     setPoint                      = 0.0;
 
     /**
      * Open the ITC503 device at the given bus and address
@@ -152,6 +153,7 @@ public class ITC503 extends VISADevice implements MSTC {
             query("s%.1f", Math.abs(temperature - currentTemperature) / Math.abs(rampRate));
 
             query(C_SET_TEMP, currentTemperature);
+            updateAutoPID(temperature);
             query("S1");
 
         }

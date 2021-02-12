@@ -135,4 +135,24 @@ public interface Instrument {
 
     }
 
+    class TableQuantity {
+
+        private final String[]           columns;
+        private final List<List<Double>> value;
+
+        public TableQuantity(String[] columns, List<List<Double>> value) {
+            this.columns = columns;
+            this.value   = value;
+        }
+
+        public String[] getColumns() {
+            return columns;
+        }
+
+        public List<List<Double>> getValue() {
+            return value;
+        }
+
+    }
+
 }

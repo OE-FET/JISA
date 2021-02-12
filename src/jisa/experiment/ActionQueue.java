@@ -6,6 +6,8 @@ import javafx.scene.image.Image;
 import jisa.Util;
 import jisa.control.SRunnable;
 import jisa.gui.GUI;
+import jisa.maths.functions.Function;
+import jisa.maths.functions.GFunction;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,6 +73,22 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         for (ListListener<Action> listener : queueListeners) queueExecutor.submit(() -> listener.updated(Collections.singletonList(action), Collections.emptyList()));
 
         return action;
+
+    }
+
+    public synchronized List<Action> addQueue(ActionQueue queue, GFunction<Action, Action> mapping) {
+
+        List<Action> list = new LinkedList<>();
+
+        for (Action action : queue.getQueue()) {
+
+            Action copy = mapping.value(action.copy());
+            addAction(copy);
+            list.add(copy);
+
+        }
+
+        return list;
 
     }
 
@@ -220,6 +238,10 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     @Override
     public Iterator<Action> iterator() {
         return queue.iterator();
+    }
+
+    public List<Action> getQueue() {
+        return List.copyOf(queue);
     }
 
     public int getSize() {

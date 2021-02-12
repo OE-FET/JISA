@@ -215,6 +215,23 @@ public interface PID extends Instrument {
 
     }
 
+    default void updateAutoPID(double set) throws IOException, DeviceException {
+
+        if (isUsingAutoPID()) {
+
+            for (PID.Zone zone : getAutoPIDZones()) {
+
+                if (zone.matches(set)) {
+                    usePIDZone(zone);
+                    break;
+                }
+
+            }
+
+        }
+
+    }
+
     default void usePIDZone(PID.Zone zone) throws IOException, DeviceException {
 
         setPValue(zone.getP());
