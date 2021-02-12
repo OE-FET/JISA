@@ -5,6 +5,7 @@ import jisa.devices.DeviceException;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -50,7 +51,7 @@ public interface Instrument {
     }
 
     default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
-        return Collections.emptyList();
+        return new LinkedList<>();
     }
 
     interface Setter<S> {

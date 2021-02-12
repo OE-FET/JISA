@@ -207,7 +207,7 @@ public class K2182 extends VISADevice implements VMeter {
     @Override
     public List<Parameter<?>> getConfigurationParameters(Class<?> target) {
 
-        List<Parameter<?>> parameters = super.getConfigurationParameters(target);
+        List<Parameter<?>> parameters = VMeter.super.getConfigurationParameters(target);
         parameters.add(new Parameter<>("Line Filtering", false, this::setLineFilterEnabled));
         return parameters;
 

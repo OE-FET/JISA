@@ -7,6 +7,8 @@ import jisa.enums.TType;
 import jisa.enums.Terminals;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 public interface VMeter extends Instrument {
 
@@ -206,5 +208,18 @@ public interface VMeter extends Instrument {
      * @throws IOException     Upon communications error
      */
     void setLineFilterEnabled(boolean enabled) throws DeviceException, IOException;
+
+    default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+
+        List<Parameter<?>> parameters = new LinkedList<>();
+
+        parameters.add(new Parameter<>("Terminals", Terminals.FRONT, this::setTerminals, Terminals.values()));
+        parameters.add(new Parameter<>("Voltage Range [V]", new AutoQuantity<Double>(true, 100.0), q -> {
+            if (q.isAuto()) useAutoVoltageRange(); else setVoltageRange(q.getValue());
+        }));
+
+        return parameters;
+
+    }
 
 }
