@@ -1254,7 +1254,7 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         Label                             label     = new Label(name);
         TableView<ObservableList<Double>> tableView = new TableView<>();
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tableView.setPrefHeight(250.0);
+        tableView.setMinHeight(250.0);
         tableView.setPrefWidth(columns.length * 75.0);
         Fields                            addNew    = new Fields("Add Row");
         List<Field<Double>>               addFields = new LinkedList<>();

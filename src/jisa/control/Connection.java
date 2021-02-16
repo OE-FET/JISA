@@ -81,6 +81,14 @@ public class Connection<T extends Instrument> {
 
     }
 
+    public static <T> List<Connection<?>> getConnectionsOf(Class<T> type) {
+
+        return ALL_CONNECTIONS.stream()
+             .filter(con -> con.isConnected() && type.isAssignableFrom(con.getInstrument().getClass()))
+            .collect(Collectors.toList());
+
+    }
+
     public void writeToConfig(ConfigBlock block) {
 
         block.stringValue("Driver").set(driver == null ? null : driver.getName());

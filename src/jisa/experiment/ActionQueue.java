@@ -376,6 +376,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
                 exception = e;
             } catch (Exception e) {
                 status.set(Status.ERROR);
+                e.printStackTrace();
                 exception = e;
             }
 

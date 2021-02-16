@@ -8,6 +8,7 @@ import jisa.devices.temperature.ITC503;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -46,14 +47,14 @@ public class IPS120 extends VISADevice implements EMController {
     private static final int    CHANNEL_PERSISTENT_MAGNET_CURRENT = 16;
     private static final double AMPS_PER_TESLA                    = 9.8793;
 
-    private final List<Ramp> ramps = Arrays.asList(
-        new Ramp(-98.8, -80, 1),
+    private final List<Ramp> ramps = new ArrayList<>(List.of(
+        new Ramp(-200.0, -80, 1),
         new Ramp(-80, -65, 2),
         new Ramp(-65, 0, 6),
         new Ramp(0, 65, 6),
         new Ramp(65, 80, 2),
-        new Ramp(80, 98.8, 1)
-    );
+        new Ramp(80, 200.0, 1)
+    ));
 
     /**
      * Opens the device at the specified address
@@ -99,6 +100,11 @@ public class IPS120 extends VISADevice implements EMController {
     }
 
     public void setField(double field) throws IOException, DeviceException, InterruptedException {
+
+        if (Math.abs(field) > 10.0) {
+            throw new DeviceException("Valid field values are +/- 10 T");
+        }
+
         rampToCurrent(AMPS_PER_TESLA * field);
     }
 

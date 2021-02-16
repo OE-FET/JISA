@@ -6,6 +6,7 @@ import jisa.devices.DeviceException;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public interface EMController extends Instrument {
 
@@ -83,12 +84,15 @@ public interface EMController extends Instrument {
 
     default Ramp getRampForCurrent(double current) {
 
+        System.out.printf("Finding zone for current: %e A\n", current);
+
         return getRampRates().stream()
                              .filter(r -> Util.isBetween(current, r.getMinI(), r.getMaxI()))
                              .findFirst()
                              .orElse(null);
 
     }
+
 
     default List<Ramp> getRampLegs(double from, double to) throws DeviceException {
 
@@ -129,6 +133,26 @@ public interface EMController extends Instrument {
         }
 
         return legs;
+
+    }
+
+    default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+
+        List<Parameter<?>> list = new LinkedList<>();
+
+        List<List<Double>> def = getRampRates().stream()
+                                               .map(r -> List.of(r.getMinI(), r.getMaxI(), r.getRate()))
+                                               .collect(Collectors.toList());
+
+        list.add(
+            new Parameter<>(
+                "Ramp Zones",
+                new TableQuantity(new String[]{"Min I [A]", "Max I [A]", "Rate [A/min]"}, def),
+                q -> setRampRates(q.getValue().stream().map(r -> new Ramp(r.get(0), r.get(1), r.get(2))).toArray(Ramp[]::new))
+            )
+        );
+
+        return list;
 
     }
 
