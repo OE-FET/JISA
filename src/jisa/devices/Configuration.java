@@ -74,6 +74,29 @@ public class Configuration<T extends Instrument> {
 
                 parameter.setValue(new Instrument.OptionalQuantity<>(use.get(), value.get()));
 
+            } else if (parameter.getType() == Instrument.TableQuantity.class && block.hasBlock(parameter.getName())) {
+
+                ConfigBlock              subBlock = block.subBlock(parameter.getName());
+                Instrument.TableQuantity quantity = (Instrument.TableQuantity) parameter.getValue();
+
+                List<List<Double>> list = new LinkedList<>();
+
+                for (int i = 0; subBlock.hasBlock(String.valueOf(i)); i++) {
+
+                    ConfigBlock  row     = subBlock.subBlock(String.valueOf(i));
+                    List<Double> rowList = new LinkedList<>();
+
+                    for (int j = 0; j < quantity.getColumns().length; j++) {
+                        ConfigBlock.Value<Double> value = row.doubleValue(quantity.getColumns()[j]);
+                        rowList.add(value.getOrDefault(0.0));
+                    }
+
+                    list.add(rowList);
+
+                }
+
+                parameter.setValue(new Instrument.TableQuantity(((Instrument.TableQuantity) parameter.getValue()).getColumns(), list));
+
             } else if (block.hasValue(parameter.getName())) {
 
                 ConfigBlock.Value value = makeValue(block, parameter.getType(), parameter.getName());
@@ -128,6 +151,24 @@ public class Configuration<T extends Instrument> {
                 use.set(((Instrument.OptionalQuantity<?>) parameter.getValue()).isUsed());
                 value.set(((Instrument.OptionalQuantity<?>) parameter.getValue()).getValue());
 
+            } else if (parameter.getType() == Instrument.TableQuantity.class) {
+
+                ConfigBlock              subBlock = block.subBlock(parameter.getName());
+                Instrument.TableQuantity quantity = (Instrument.TableQuantity) parameter.getValue();
+
+                for (int i = 0; i < quantity.getValue().size(); i++) {
+
+                    ConfigBlock row = subBlock.subBlock(String.valueOf(i));
+
+                    for (int j = 0; j < quantity.getValue().get(i).size(); j++) {
+
+                        ConfigBlock.Value<Double> value = row.doubleValue(quantity.getColumns()[j]);
+                        value.set(quantity.getValue().get(i).get(j));
+
+                    }
+
+                }
+
             } else {
 
                 ConfigBlock.Value value = makeValue(block, parameter.getType(), parameter.getName());
@@ -168,58 +209,6 @@ public class Configuration<T extends Instrument> {
 
     public Class<T> getTarget() {
         return target;
-    }
-
-    public void setInputInstrument(Instrument instrument) {
-
-        choiceName = null;
-
-        choices.clear();
-        names.clear();
-
-        this.input = instrument;
-
-        if (instrument == null) {
-            parameters.clear();
-            return;
-        }
-
-        if (instrument instanceof MultiChannel && target.isAssignableFrom(((MultiChannel<?>) instrument).getChannelType())) {
-
-            choiceName = "Channel";
-
-            choices.addAll(((MultiChannel) instrument).getChannels());
-
-            for (int i = 0; i < choices.size(); i++) {
-                names.add(String.format("%d: %s", i, ((MultiChannel<?>) instrument).getChannelName(i)));
-            }
-
-        } else if (instrument instanceof MultiOutput && target.isAssignableFrom(((MultiOutput<?>) instrument).getOutputType())) {
-
-            choiceName = "Output";
-
-            choices.addAll(((MultiOutput) instrument).getOutputs());
-
-            for (int i = 0; i < choices.size(); i++) {
-                names.add(String.format("%d: %s", i, ((MultiOutput<?>) instrument).getOutputName(i)));
-            }
-
-        } else if (instrument instanceof MultiSensor && target.isAssignableFrom(((MultiSensor<?>) instrument).getSensorType())) {
-
-            choiceName = "Sensor";
-
-            choices.addAll(((MultiSensor) instrument).getSensors());
-
-            for (int i = 0; i < choices.size(); i++) {
-                names.add(String.format("%d: %s", i, ((MultiSensor<?>) instrument).getSensorName(i)));
-            }
-
-        } else if (target.isAssignableFrom(instrument.getClass())) {
-            choices.add((T) instrument);
-        }
-
-        selectChoice(0);
-
     }
 
     public void selectChoice(int index) {
@@ -282,6 +271,58 @@ public class Configuration<T extends Instrument> {
 
     public Instrument getInputInstrument() {
         return input;
+    }
+
+    public void setInputInstrument(Instrument instrument) {
+
+        choiceName = null;
+
+        choices.clear();
+        names.clear();
+
+        this.input = instrument;
+
+        if (instrument == null) {
+            parameters.clear();
+            return;
+        }
+
+        if (instrument instanceof MultiChannel && target.isAssignableFrom(((MultiChannel<?>) instrument).getChannelType())) {
+
+            choiceName = "Channel";
+
+            choices.addAll(((MultiChannel) instrument).getChannels());
+
+            for (int i = 0; i < choices.size(); i++) {
+                names.add(String.format("%d: %s", i, ((MultiChannel<?>) instrument).getChannelName(i)));
+            }
+
+        } else if (instrument instanceof MultiOutput && target.isAssignableFrom(((MultiOutput<?>) instrument).getOutputType())) {
+
+            choiceName = "Output";
+
+            choices.addAll(((MultiOutput) instrument).getOutputs());
+
+            for (int i = 0; i < choices.size(); i++) {
+                names.add(String.format("%d: %s", i, ((MultiOutput<?>) instrument).getOutputName(i)));
+            }
+
+        } else if (instrument instanceof MultiSensor && target.isAssignableFrom(((MultiSensor<?>) instrument).getSensorType())) {
+
+            choiceName = "Sensor";
+
+            choices.addAll(((MultiSensor) instrument).getSensors());
+
+            for (int i = 0; i < choices.size(); i++) {
+                names.add(String.format("%d: %s", i, ((MultiSensor<?>) instrument).getSensorName(i)));
+            }
+
+        } else if (target.isAssignableFrom(instrument.getClass())) {
+            choices.add((T) instrument);
+        }
+
+        selectChoice(0);
+
     }
 
     public T getInstrument() throws IOException, DeviceException {

@@ -1253,6 +1253,9 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
         Label                             label     = new Label(name);
         TableView<ObservableList<Double>> tableView = new TableView<>();
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tableView.setPrefHeight(250.0);
+        tableView.setPrefWidth(columns.length * 75.0);
         Fields                            addNew    = new Fields("Add Row");
         List<Field<Double>>               addFields = new LinkedList<>();
 
@@ -1270,7 +1273,7 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         }
 
         Button addButton = new Button("✚");
-        Button remButton = new Button("⨉");
+        Button remButton = new Button("✖");
         Button mUpButton = new Button("▲");
         Button mDnButton = new Button("▼");
 
@@ -1362,7 +1365,10 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
             @Override
             public void setOnChange(SRunnable onChange) {
 
-                tableView.getItems().removeListener(l);
+                if (l != null) {
+                    tableView.getItems().removeListener(l);
+                }
+
                 l = l -> onChange.start();
                 tableView.getItems().addListener(l);
 

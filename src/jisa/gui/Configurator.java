@@ -8,6 +8,7 @@ import jisa.devices.Configuration;
 import jisa.devices.interfaces.Instrument;
 import jisa.devices.interfaces.Instrument.AutoQuantity;
 import jisa.devices.interfaces.Instrument.OptionalQuantity;
+import jisa.devices.interfaces.Instrument.TableQuantity;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -330,6 +331,12 @@ public class Configurator<I extends Instrument> extends Fields {
         } else if (parameter.getType() == Boolean.class) {
             Field<Boolean> field = addCheckBox(parameter.getName(), (Boolean) parameter.getValue());
             field.setOnChange(() -> parameter.setValue(field.get()));
+            sepLast = false;
+            return field;
+        } else if (parameter.getType() == TableQuantity.class) {
+            Field<List<List<Double>>> field = addTable(parameter.getName(), ((TableQuantity) parameter.getValue()).getColumns());
+            field.set(((TableQuantity) parameter.getValue()).getValue());
+            field.setOnChange(() -> parameter.setValue(new TableQuantity(((TableQuantity) parameter.getValue()).getColumns(), field.get())));
             sepLast = false;
             return field;
         } else {
