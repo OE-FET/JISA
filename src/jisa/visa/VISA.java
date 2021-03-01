@@ -1,9 +1,9 @@
 package jisa.visa;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.StrAddress;
 import jisa.gui.GUI;
-import jisa.Util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,7 +17,7 @@ public class VISA {
 
     private static ArrayList<Driver>      drivers = new ArrayList<>();
     private static HashMap<Class, Driver> lookup  = new HashMap<>();
-    private static long              counter = 0;
+    private static long                   counter = 0;
 
     static {
 
@@ -143,6 +143,16 @@ public class VISA {
                 connection = lookup.get(preferredDriver).open(address);
                 return connection;
             } catch (VISAException ignored) { }
+
+        }
+
+        // Workaround to use internal TCP-IP implementation since there seems to be issues with TCP-IP Sockets and NI-VISA
+        if (address.getType() == Address.Type.TCPIP_SOCKET) {
+
+            try {
+                connection = lookup.get(RawTCPIPDriver.class).open(address);
+                return connection;
+            } catch (VISAException ignored) {}
 
         }
 
