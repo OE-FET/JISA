@@ -350,5 +350,20 @@ public abstract class Measurement {
 
     }
 
+    public class ChoiceParameter extends Parameter<Integer> {
+
+        private final String[] options;
+
+        public ChoiceParameter(String section, String name, int defaultValue, String... options) {
+            super(section, name, null, defaultValue);
+            this.options = options;
+        }
+
+        protected Field<Integer> makeField(Fields fields) {
+            return fields.addChoice(getTitle(), getValue(), options);
+        }
+
+    }
+
 }
 

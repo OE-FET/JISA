@@ -119,7 +119,7 @@ public class LS336 extends VISADevice implements MSMOTC {
 
         try {
             checkSensor(sensorNumber);
-            return String.format("%s (%s)", CHANNELS[sensorNumber], query("INNAME? %s", CHANNELS[sensorNumber]));
+            return String.format("%s (%s)", CHANNELS[sensorNumber], query("INNAME? %s", CHANNELS[sensorNumber]).trim());
         } catch (Exception e) {
             return "Unknown Sensor";
         }

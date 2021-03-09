@@ -15,9 +15,8 @@ import java.util.Map;
  */
 public class VISA {
 
-    private static ArrayList<Driver>      drivers = new ArrayList<>();
-    private static HashMap<Class, Driver> lookup  = new HashMap<>();
-    private static long                   counter = 0;
+    private final static ArrayList<Driver>      drivers = new ArrayList<>();
+    private final static HashMap<Class, Driver> lookup  = new HashMap<>();
 
     static {
 
@@ -142,7 +141,7 @@ public class VISA {
             try {
                 connection = lookup.get(preferredDriver).open(address);
                 return connection;
-            } catch (VISAException ignored) { }
+            } catch (Exception ignored) { }
 
         }
 
@@ -152,7 +151,7 @@ public class VISA {
             try {
                 connection = lookup.get(RawTCPIPDriver.class).open(address);
                 return connection;
-            } catch (VISAException ignored) {}
+            } catch (Exception ignored) { }
 
         }
 

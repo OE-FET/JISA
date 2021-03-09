@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 /**
  * Class ITC503
  * <p>
- * GPIBDevice class for controlling mercury ITC503 temperature controllers via GPIB.
+ * VISADevice class for controlling mercury ITC503 temperature controllers.
  */
 public class ITC503 extends VISADevice implements MSTC {
 

@@ -1,9 +1,9 @@
 package jisa.visa;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.StrAddress;
 import jisa.addresses.TCPIPSocketAddress;
-import jisa.Util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +32,17 @@ public class RawTCPIPDriver implements Driver {
 
     }
 
-    public class TCPIPConnection implements Connection {
+    @Override
+    public StrAddress[] search() throws VISAException {
+        return new StrAddress[0];
+    }
+
+    @Override
+    public boolean worksWith(Address address) {
+        return address.getType() == Address.Type.TCPIP_SOCKET;
+    }
+
+    public static class TCPIPConnection implements Connection {
 
         private Socket       socket;
         private OutputStream out;
@@ -41,8 +51,8 @@ public class RawTCPIPDriver implements Driver {
 
         public TCPIPConnection(Socket tcpipSocket) throws IOException {
             socket = tcpipSocket;
-            out = socket.getOutputStream();
-            in = socket.getInputStream();
+            out    = socket.getOutputStream();
+            in     = socket.getInputStream();
         }
 
         @Override
@@ -65,7 +75,7 @@ public class RawTCPIPDriver implements Driver {
 
             try {
 
-                for (int i = 0; i < bufferSize; i ++) {
+                for (int i = 0; i < bufferSize; i++) {
 
                     int readCount = in.read(single);
 
@@ -146,16 +156,6 @@ public class RawTCPIPDriver implements Driver {
                 throw new VISAException(e.getMessage());
             }
         }
-    }
-
-    @Override
-    public StrAddress[] search() throws VISAException {
-        return new StrAddress[0];
-    }
-
-    @Override
-    public boolean worksWith(Address address) {
-        return address.getType() == Address.Type.TCPIP_SOCKET;
     }
 
 }
