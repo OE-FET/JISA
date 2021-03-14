@@ -8,7 +8,7 @@ import java.io.PrintStream;
 public class Result {
 
     private final ResultTable table;
-    private       double[]    data;
+    private final double[]    data;
 
     /**
      * Create a data row with the given data.
@@ -23,11 +23,11 @@ public class Result {
     /**
      * Returns the data as a delimited string.
      *
-     * @param delim Delimiter to use
+     * @param delimiter Delimiter to use
      *
      * @return Delimited string
      */
-    public String getOutput(String delim) {
+    public String getOutput(String delimiter) {
 
         String[] chunks = new String[data.length];
 
@@ -35,18 +35,18 @@ public class Result {
             chunks[i] = String.format("%s", data[i]);
         }
 
-        return String.join(delim, chunks).concat("\n");
+        return String.join(delimiter, chunks).concat("\n");
 
     }
 
     /**
      * Outputs the data as a delimited string.
      *
-     * @param stream Stream to output to
-     * @param delim  Delimiter to use
+     * @param stream    Stream to output to
+     * @param delimiter Delimiter to use
      */
-    public void output(PrintStream stream, String delim) {
-        stream.print(getOutput(delim));
+    public void output(PrintStream stream, String delimiter) {
+        stream.print(getOutput(delimiter));
     }
 
     /**

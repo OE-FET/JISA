@@ -633,10 +633,12 @@ public class GUI extends Application {
         } else {
 
             Semaphore s = new Semaphore(0);
+
             Platform.runLater(() -> {
                 toRun.run();
                 s.release();
             });
+
             try {
                 s.acquire();
             } catch (InterruptedException e) {

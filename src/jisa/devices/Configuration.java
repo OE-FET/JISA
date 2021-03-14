@@ -134,7 +134,6 @@ public class Configuration<T extends Instrument> {
                     continue;
                 }
 
-
                 auto.set(((Instrument.AutoQuantity<?>) parameter.getValue()).isAuto());
                 value.set(((Instrument.AutoQuantity<?>) parameter.getValue()).getValue());
 

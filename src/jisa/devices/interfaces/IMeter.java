@@ -23,6 +23,30 @@ public interface IMeter extends Instrument {
     double getCurrent() throws IOException, DeviceException;
 
     /**
+     * Takes a current measurement using a specified one-off integration time.
+     *
+     * @param integrationTime Integration time to use in seconds
+     *
+     * @return Current measurement value, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default double getCurrent(double integrationTime) throws DeviceException, IOException {
+
+        synchronized (this) {
+
+            double prevTime = getIntegrationTime();
+            setIntegrationTime(integrationTime);
+            double current = getCurrent();
+            setIntegrationTime(prevTime);
+            return current;
+
+        }
+
+    }
+
+    /**
      * Sets the integration time for each measurement.
      *
      * @param time Integration time, in seconds.

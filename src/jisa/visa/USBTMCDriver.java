@@ -226,10 +226,10 @@ public class USBTMCDriver implements Driver {
             ByteBuffer size    = ByteBuffer.allocate(4);
             size.putInt(bufferSize);
 
-            request[0] = DEV_DEP_MSG_OUT;
-            request[1] = (byte) (messageID & 256);
-            request[2] = (byte) ~(messageID & 256);
-            request[3] = 0x00;
+            request[0]  = DEV_DEP_MSG_OUT;
+            request[1]  = (byte) (messageID & 256);
+            request[2]  = (byte) ~(messageID & 256);
+            request[3]  = 0x00;
             size.get(request, 4, 4);
             request[8]  = 0x00;
             request[9]  = 0x00;

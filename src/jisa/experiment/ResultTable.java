@@ -130,7 +130,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
-    public void addData(double... data) {
+    public synchronized void addData(double... data) {
 
         if (!open) {
             throw new IllegalStateException("You cannot add data to a finalised ResultTable");
@@ -150,6 +150,7 @@ public abstract class ResultTable implements Iterable<Result> {
             }
 
         }
+
         Result row = new Result(this, fullData);
 
         for (int j = 0; j < fullData.length; j++) {
@@ -167,9 +168,7 @@ public abstract class ResultTable implements Iterable<Result> {
         addRow(row);
 
         int size = onUpdate.size();
-        for (int k = 0; k < size; k++) {
-            onUpdate.get(k).run(row);
-        }
+        for (OnUpdate u : onUpdate) u.run(row);
 
     }
 

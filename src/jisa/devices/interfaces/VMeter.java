@@ -27,6 +27,30 @@ public interface VMeter extends Instrument {
     double getVoltage() throws IOException, DeviceException;
 
     /**
+     * Takes a voltage measurement using a specified one-off integration time.
+     *
+     * @param integrationTime Integration time to use in seconds
+     *
+     * @return Voltage measurement value, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default double getVoltage(double integrationTime) throws DeviceException, IOException {
+
+        synchronized (this) {
+
+            double prevTime = getIntegrationTime();
+            setIntegrationTime(integrationTime);
+            double voltage = getVoltage();
+            setIntegrationTime(prevTime);
+            return voltage;
+
+        }
+
+    }
+
+    /**
      * Returns the integration time being used for measurements.
      *
      * @return Integration time, in seconds.
@@ -215,8 +239,10 @@ public interface VMeter extends Instrument {
 
         parameters.add(new Parameter<>("Terminals", Terminals.FRONT, this::setTerminals, Terminals.values()));
         parameters.add(new Parameter<>("Voltage Range [V]", new AutoQuantity<Double>(true, 100.0), q -> {
-            if (q.isAuto()) useAutoVoltageRange(); else setVoltageRange(q.getValue());
+            if (q.isAuto()) useAutoVoltageRange();
+            else setVoltageRange(q.getValue());
         }));
+        parameters.add(new Parameter<>("Integration Time [s]", 20e-3, this::setIntegrationTime));
 
         return parameters;
 

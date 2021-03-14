@@ -22,6 +22,7 @@ import javafx.util.StringConverter;
 import jisa.Util;
 import jisa.experiment.ResultTable;
 import jisa.gui.svg.*;
+import jisa.maths.Range;
 import jisa.maths.fits.Fit;
 import jisa.maths.functions.Function;
 
@@ -183,6 +184,21 @@ public class Plot extends JFXElement implements Element, Clearable {
         return new ArrayList<>(chart.getSeries());
     }
 
+    public AxisType getYAxisType() {
+
+        switch (yAxis.getMode()) {
+
+            case LOGARITHMIC:
+                return AxisType.LOGARITHMIC;
+
+            default:
+            case LINEAR:
+                return AxisType.LINEAR;
+
+        }
+
+    }
+
     /**
      * Sets the scaling type to use for the y-axis.
      *
@@ -204,6 +220,21 @@ public class Plot extends JFXElement implements Element, Clearable {
 
         GUI.runNow(chart::updateAxes);
         GUI.runNow(pane::requestLayout);
+
+    }
+
+    public AxisType getXAxisType() {
+
+        switch (xAxis.getMode()) {
+
+            case LOGARITHMIC:
+                return AxisType.LOGARITHMIC;
+
+            default:
+            case LINEAR:
+                return AxisType.LINEAR;
+
+        }
 
     }
 
@@ -790,11 +821,15 @@ public class Plot extends JFXElement implements Element, Clearable {
         double aEndX   = 100.0 + width;
         double aEndY   = 65.0;
 
-        SVGLine xAxis = new SVGLine(aStartX - 0.5, aStartY, aEndX, aStartY);
-        SVGLine yAxis = new SVGLine(aStartX, aStartY + 0.5, aStartX, aEndY);
+        SVGElement axisBox = new SVGElement("rect");
 
-        SVGLine xAxisBox = new SVGLine(aStartX - 0.5, aEndY, aEndX, aEndY);
-        SVGLine yAxisBox = new SVGLine(aEndX, aStartY + 0.5, aEndX, aEndY);
+        axisBox.setAttribute("x", 100.0)
+               .setAttribute("y", 65.0)
+               .setAttribute("width", width)
+               .setAttribute("height", height)
+               .setStrokeWidth(1)
+               .setFillColour("none")
+               .setStrokeColour(Color.BLACK);
 
         SVGElement clip = new SVGElement("clipPath");
         clip.setAttribute("id", "lineClip");
@@ -816,18 +851,6 @@ public class Plot extends JFXElement implements Element, Clearable {
         title.setAttribute("font-size", "20px");
         main.add(title);
 
-        xAxis.setStrokeWidth(1)
-             .setStrokeColour(Color.GREY);
-
-        yAxis.setStrokeWidth(1)
-             .setStrokeColour(Color.GREY);
-
-        xAxisBox.setStrokeWidth(1)
-                .setStrokeColour(Color.GREY);
-
-        yAxisBox.setStrokeWidth(1)
-                .setStrokeColour(Color.GREY);
-
         List<Double> xTicks = this.xAxis.getMajorTicks();
         List<Double> yTicks = this.yAxis.getMajorTicks();
 
@@ -848,7 +871,7 @@ public class Plot extends JFXElement implements Element, Clearable {
             SVGLine tick = new SVGLine(pos, aStartY, pos, aStartY + 10);
 
             tick.setStrokeWidth(1)
-                .setStrokeColour(Colour.GREY);
+                .setStrokeColour(Colour.BLACK);
 
             SVGLine grid = new SVGLine(pos, aStartY, pos, aEndY);
 
@@ -879,7 +902,7 @@ public class Plot extends JFXElement implements Element, Clearable {
             SVGLine tick = new SVGLine(aStartX, pos, aStartX - 10, pos);
 
             tick.setStrokeWidth(1)
-                .setStrokeColour(Colour.GREY);
+                .setStrokeColour(Colour.BLACK);
             SVGLine grid = new SVGLine(aStartX, pos, aEndX, pos);
 
             grid.setStrokeWidth(0.5)
@@ -897,23 +920,18 @@ public class Plot extends JFXElement implements Element, Clearable {
         yLabel.setAttribute("transform", String.format("rotate(-90 %s %s)", aStartX - 75.0, (aEndY + aStartY) / 2))
               .setAttribute("font-size", "16px");
         main.add(yLabel);
-
-        main.add(xAxis);
-        main.add(yAxis);
-
-        main.add(xAxisBox);
-        main.add(yAxisBox);
+        main.add(axisBox);
 
         SVGElement legend = new SVGElement("rect");
 
         legend.setStrokeWidth(1.0)
-              .setStrokeColour(Color.SILVER)
-              .setFillColour(Color.web("#f5f5f5"));
+              .setStrokeColour(Color.BLACK)
+              .setFillColour("none");
 
 
         double legendH = (chart.getData().size() * 25) + 5.0;
         double legendX = aEndX + 25.0;
-        double legendY = ((aEndY + aStartY) / 2) - (legendH / 2);
+        double legendY = aEndY;
 
         double legendW = 0.0;
 
@@ -924,9 +942,7 @@ public class Plot extends JFXElement implements Element, Clearable {
         legend.setAttribute("x", legendX)
               .setAttribute("y", legendY)
               .setAttribute("width", legendW)
-              .setAttribute("height", legendH)
-              .setAttribute("rx", 5)
-              .setAttribute("ry", 5);
+              .setAttribute("height", legendH);
 
         if (chart.isLegendVisible()) {
             main.add(legend);
@@ -1150,26 +1166,27 @@ public class Plot extends JFXElement implements Element, Clearable {
 
 
         builder.append("\\begin{axis}[\n")
-               .append("\txmode             = ").append(xAxis.getMode() == SmartAxis.Mode.LOGARITHMIC ? "log" : "normal").append(",\n")
-               .append("\tymode             = ").append(yAxis.getMode() == SmartAxis.Mode.LOGARITHMIC ? "log" : "normal").append(",\n");
+               .append("\txmode                   = ").append(xAxis.getMode() == SmartAxis.Mode.LOGARITHMIC ? "log" : "normal").append(",\n")
+               .append("\tymode                   = ").append(yAxis.getMode() == SmartAxis.Mode.LOGARITHMIC ? "log" : "normal").append(",\n");
 
         if (!xAxis.isAutoRanging()) {
-            builder.append("\txmin              = ").append(xAxis.getLowerBound()).append(",\n")
-                   .append("\txmax              = ").append(xAxis.getUpperBound()).append(",\n");
+            builder.append("\txmin                    = ").append(xAxis.getLowerBound()).append(",\n")
+                   .append("\txmax                    = ").append(xAxis.getUpperBound()).append(",\n");
         }
         if (!yAxis.isAutoRanging()) {
-            builder.append("\tymin              = ").append(yAxis.getLowerBound()).append(",\n")
-                   .append("\tymax              = ").append(yAxis.getUpperBound()).append(",\n");
+            builder.append("\tymin                    = ").append(yAxis.getLowerBound()).append(",\n")
+                   .append("\tymax                    = ").append(yAxis.getUpperBound()).append(",\n");
         }
 
         builder.append("\tgrid,\n")
-               .append("\tgrid style        = {dotted},\n")
-               .append("\tlegend pos        = outer north east,\n")
-               .append("\twidth             = 0.7 * \\linewidth,\n")
-               .append("\ttitle             = {\\textbf{").append(getTitle().replace("^", "\\^{}")).append("}},\n")
-               .append("\txlabel            = {").append(getXLabel().replace("^", "\\^{}")).append("},\n")
-               .append("\tylabel            = {").append(getYLabel().replace("^", "\\^{}")).append("},\n")
-               .append("\tlegend cell align = left\n")
+               .append("\tgrid style              = {dotted},\n")
+               .append("\tlegend pos              = outer north east,\n")
+               .append("\twidth                   = 0.7 * \\linewidth,\n")
+               .append("\ttitle                   = {\\textbf{").append(getTitle().replace("^", "\\^{}")).append("}},\n")
+               .append("\txlabel                  = {").append(getXLabel().replace("^", "\\^{}")).append("},\n")
+               .append("\tylabel                  = {").append(getYLabel().replace("^", "\\^{}")).append("},\n")
+               .append("\tlegend cell align       = left,\n")
+               .append("\tevery axis title/.style = {at={(0.5, 1.2)}}\n")
                .append("]\n");
 
         List<String> legend = new LinkedList<>();
@@ -1263,7 +1280,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
             builder.append("\\addplot[\n");
 
-            if (!series.isLineVisible()) builder.append("\tonly marks,\n");
+            if (!series.isLineVisible() || series.isFitted()) builder.append("\tonly marks,\n");
 
             builder.append("\tmark               = ").append(symbol).append(",\n")
                    .append("\tmark options       = { fill = ").append(fill).append(", scale=1.25 },\n")
@@ -1299,14 +1316,33 @@ public class Plot extends JFXElement implements Element, Clearable {
             }
 
             for (XYChart.Data<Double, Double> point : data) {
-
-                builder.append(String.format("\t%.04e\t%.04e\t%.04e\n", point.getXValue(), point.getYValue(), point.getExtraValue() instanceof Double && ((Double) point.getExtraValue()) != 0 ? (Double) point.getExtraValue()  : Double.NaN));
-
+                builder.append(String.format("\t%.04e\t%.04e\t%.04e\n", point.getXValue(), point.getYValue(), point.getExtraValue() instanceof Double && ((Double) point.getExtraValue()) != 0 ? (Double) point.getExtraValue() : Double.NaN));
             }
 
-            builder.append("};\n");
+            builder.append("\n};\n");
 
             legend.add("\t{" + series.getName().replace("^", "\\^{}") + "}");
+
+            if (series.isFitted()) {
+
+                Function fit = series.getFit().getFunction();
+
+                builder.append("\\addplot[\n")
+                       .append("\tmark               = none,\n")
+                       .append("\tcolor              = {rgb,255:red,").append(red).append(";green,").append(green).append(";blue,").append(blue).append("},\n")
+                       .append("\tline width         = ").append(series.getLineWidth() / 2.0)
+                       .append(lineType).append(",\n")
+                       .append("\tforget plot\n")
+                       .append("]\n")
+                       .append("table[x index = 0, y index = 1] {\n");
+
+                for (double x : Range.linear(getXLowerLimit(), getXUpperLimit(), 100)) {
+                    builder.append(String.format("\t%.04e\t%.04e\n", x, fit.value(x)));
+                }
+
+                builder.append("\n};\n");
+
+            }
 
         }
 

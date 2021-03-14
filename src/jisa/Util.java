@@ -123,6 +123,10 @@ public class Util {
 
     }
 
+    public static double truncate(Number value, Number max, Number min) {
+        return Math.min(max.doubleValue(), Math.max(min.doubleValue(), value.doubleValue()));
+    }
+
     public static void runAsync(Runnable toRun) {
         (new Thread(toRun)).start();
     }

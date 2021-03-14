@@ -43,6 +43,7 @@ public class NIVISADriver implements Driver {
     public static void init() throws VISAException {
 
         try {
+
             if (OS_NAME.contains("win")) {
                 libName   = "nivisa64";
                 libStatic = Native.loadLibrary(NIVISADriver.libName, VISANativeInterface.class);
@@ -52,6 +53,7 @@ public class NIVISADriver implements Driver {
             } else {
                 throw new VISAException("Platform not yet supported!");
             }
+
         } catch (UnsatisfiedLinkError e) {
             libStatic = null;
         }
@@ -193,7 +195,9 @@ public class NIVISADriver implements Driver {
         Matcher matcher = windows.matcher(raw);
 
         if (matcher.find()) {
+
             return String.format("ASRL%s::INSTR", matcher.group(1));
+
         } else {
 
             Pattern asrl  = Pattern.compile("ASRL([0-9]*?)::INSTR");
@@ -211,10 +215,13 @@ public class NIVISADriver implements Driver {
                     Matcher        portMatcher = dfind.matcher(desc);
 
                     if (portMatcher.find()) {
+
                         String port = portMatcher.group(0);
+
                         if (port.trim().equals(address.getPort().trim())) {
                             return found.toString();
                         }
+
                     }
 
                 }
@@ -304,8 +311,8 @@ public class NIVISADriver implements Driver {
                         strAddress = new StrAddress(String.format("ASRL::%s::INSTR", port.trim()));
                     }
 
-                } catch (Exception ignored) {
-                }
+                } catch (Exception ignored) {}
+
             }
 
             addresses.add(strAddress);
@@ -313,7 +320,6 @@ public class NIVISADriver implements Driver {
             desc = ByteBuffer.allocate(1024);
 
         } while (lib.viFindNext(handle, desc).longValue() == VI_SUCCESS);
-
 
         lib.viClose(handle);
 
@@ -435,6 +441,7 @@ public class NIVISADriver implements Driver {
                         throw new VISAException("Error reading from instrument.");
 
                 }
+
             }
 
             return Util.trimArray(response.array());

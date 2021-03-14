@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 public class JISAChart extends XYChart<Double, Double> {
 
     private final Map<Series, ChartNode> nodeTemplates = new HashMap<>();
+    private final List<ChartNode>        leftOverNodes = new LinkedList<>();
     private final Map<Series, Fitter>    fitters       = new HashMap<>();
     private final List<JISASeries>       series        = new LinkedList<>();
     private final JISALegend             legend        = new JISALegend();
@@ -104,8 +105,16 @@ public class JISAChart extends XYChart<Double, Double> {
     private ChartNode createSymbol(Series<Double, Double> series, Data<Double, Double> item) {
 
         ChartNode symbol;
+
         if (nodeTemplates.containsKey(series)) {
-            symbol = nodeTemplates.get(series).clone();
+
+            if (leftOverNodes.isEmpty()) {
+                symbol = nodeTemplates.get(series).clone();
+            } else {
+                symbol = leftOverNodes.remove(0);
+                symbol.repurpose(nodeTemplates.get(series));
+            }
+
         } else {
             symbol = new ChartNode();
             nodeTemplates.put(series, symbol);
@@ -141,6 +150,8 @@ public class JISAChart extends XYChart<Double, Double> {
         if (symbol != null) {
             GUI.runNow(() -> getPlotChildren().remove(symbol));
         }
+
+        leftOverNodes.add((ChartNode) symbol);
 
     }
 
@@ -264,7 +275,8 @@ public class JISAChart extends XYChart<Double, Double> {
                     try {
                         Fit fit = fitters.containsKey(series) ? fitters.get(series).getFit(series.getData()) : null;
                         fitted = fit == null ? null : fit.getFunction();
-                    } catch (Throwable ignored) {}
+                    } catch (Throwable ignored) {
+                    }
 
                     for (int j = 0; j < series.getData().size(); j++) {
 
@@ -505,6 +517,7 @@ public class JISAChart extends XYChart<Double, Double> {
         private final Path                  errorBar  = new Path();
         private final ChartLine             line;
         private final Animation             animation = null;
+        private       List<ChartNode>       cloneList = null;
         private       jisa.gui.Series.Shape shape     = jisa.gui.Series.Shape.CIRCLE;
         private       Color                 colour    = Color.ORANGERED;
         private       double                size      = 5.0;
@@ -536,7 +549,21 @@ public class JISAChart extends XYChart<Double, Double> {
             node.setStyle(shape, colour, size);
             node.setMarkerVisible(visible);
             clones.add(node);
+            node.cloneList = clones;
             return node;
+
+        }
+
+        public void repurpose(ChartNode template) {
+
+            if (cloneList != null) {
+                cloneList.remove(this);
+            }
+
+            setStyle(template.shape, template.colour, template.size);
+            setMarkerVisible(template.visible);
+            template.clones.add(this);
+            cloneList = template.clones;
 
         }
 

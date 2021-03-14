@@ -35,6 +35,30 @@ public interface SMU extends IVMeter, IVSource, Channel<SMU> {
     double getVoltage() throws DeviceException, IOException;
 
     /**
+     * Takes a voltage measurement using a specified one-off integration time.
+     *
+     * @param integrationTime Integration time to use in seconds
+     *
+     * @return Voltage measurement value, in Volts
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default double getVoltage(double integrationTime) throws DeviceException, IOException {
+
+        synchronized (this) {
+
+            double prevTime = getIntegrationTime();
+            setIntegrationTime(integrationTime);
+            double voltage = getVoltage();
+            setIntegrationTime(prevTime);
+            return voltage;
+
+        }
+
+    }
+
+    /**
      * Sets the voltage value to be applied by the SMU (switching to voltage source mode if not already)
      *
      * @param voltage Value to set
@@ -53,6 +77,30 @@ public interface SMU extends IVMeter, IVSource, Channel<SMU> {
      * @throws IOException     Upon communications error
      */
     double getCurrent() throws DeviceException, IOException;
+
+    /**
+     * Takes a current measurement using a specified one-off integration time.
+     *
+     * @param integrationTime Integration time to use in seconds
+     *
+     * @return Current measurement value, in Amps
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default double getCurrent(double integrationTime) throws DeviceException, IOException {
+
+        synchronized (this) {
+
+            double prevTime = getIntegrationTime();
+            setIntegrationTime(integrationTime);
+            double current = getCurrent();
+            setIntegrationTime(prevTime);
+            return current;
+
+        }
+
+    }
 
     /**
      * Sets the current value to be applied by the SMU (switching to current source mode if not already)
@@ -651,9 +699,10 @@ public interface SMU extends IVMeter, IVSource, Channel<SMU> {
 
         parameters.add(new Parameter<>("Terminals", Terminals.FRONT, this::setTerminals, Terminals.values()));
         parameters.add(new Parameter<>("Voltage Limit [V]", 200.0, this::setVoltageLimit));
-        parameters.add(new Parameter<>("Current Limit [A]", 200e-3, this::setCurrentLimit));
+        parameters.add(new Parameter<>("Current Limit [A]", 100e-3, this::setCurrentLimit));
         parameters.add(new Parameter<>("Voltage Range [V]", new AutoQuantity<>(true, 0.0), q -> { if (q.isAuto()) this.useAutoVoltageRange(); else this.setVoltageRange(q.getValue()); }));
         parameters.add(new Parameter<>("Current Range [A]", new AutoQuantity<>(true, 0.0), q -> { if (q.isAuto()) this.useAutoCurrentRange(); else this.setCurrentRange(q.getValue()); }));
+        parameters.add(new Parameter<>("Integration Time [s]", 20e-3, this::setIntegrationTime));
         parameters.add(new Parameter<>("Four Point Probe", false, this::setFourProbeEnabled));
 
         if (target.equals(IMeter.class)) {
