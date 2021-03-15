@@ -1,16 +1,16 @@
 package jisa.gui.plotting;
 
-import javafx.geometry.Pos;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
 import jisa.maths.Range;
 import jisa.maths.matrices.RealMatrix;
 
-public abstract class JISAPlotPoint extends StackPane {
+public abstract class JISAPlotPoint {
 
     private final JISAPlot plot;
     private final Shape    marker;
+    private final Path     errorXPath = new Path();
+    private final Path     errorYPath = new Path();
     private       double   x          = 0.0;
     private       double   y          = 0.0;
     private       double   errorX     = 0.0;
@@ -24,9 +24,6 @@ public abstract class JISAPlotPoint extends StackPane {
         this.marker = marker;
         this.size   = size;
         this.colour = colour;
-
-        getChildren().add(marker);
-        StackPane.setAlignment(marker, Pos.CENTER);
 
         drawShape();
 
@@ -91,8 +88,66 @@ public abstract class JISAPlotPoint extends StackPane {
         return marker;
     }
 
+    public Path getXErrorBar() {
+        return errorXPath;
+    }
+
+    public Path getYErrorBar() {
+        return errorYPath;
+    }
+
     public JISAPlot getPlot() {
         return plot;
+    }
+
+    public void reposition() {
+
+        double xPos   = plot.getXPosition(x);
+        double yPos   = plot.getYPosition(y);
+        double width  = marker.prefWidth(-1);
+        double height = marker.prefHeight(-1);
+
+        marker.resizeRelocate(xPos - width / 2.0, yPos - height / 2.0, width, height);
+
+        errorX = Math.abs(errorX);
+        errorY = Math.abs(errorY);
+
+        errorXPath.getElements().clear();
+        errorYPath.getElements().clear();
+
+        if (errorX > 0) {
+
+            double minX = plot.getXPosition(x - errorX);
+            double maxX = plot.getXPosition(x + errorX);
+
+            errorXPath.getElements().addAll(
+                    new MoveTo(minX, yPos - size / 2.0),
+                    new LineTo(minX, yPos + size / 2.0),
+                    new MoveTo(minX, yPos),
+                    new LineTo(maxX, yPos),
+                    new MoveTo(maxX, yPos - size / 2.0),
+                    new LineTo(maxX, yPos + size / 2.0)
+            );
+
+        }
+
+        if (errorY > 0) {
+
+            double minY = plot.getYPosition(y - errorY);
+            double maxY = plot.getYPosition(y + errorY);
+
+            errorYPath.getElements().addAll(
+                    new MoveTo(xPos - size / 2.0, minY),
+                    new LineTo(xPos + size / 2.0, minY),
+                    new MoveTo(xPos, minY),
+                    new LineTo(xPos, maxY),
+                    new MoveTo(xPos - size / 2.0, maxY),
+                    new LineTo(xPos + size / 2.0, maxY)
+            );
+
+        }
+
+
     }
 
     public abstract void drawShape();
@@ -104,15 +159,15 @@ public abstract class JISAPlotPoint extends StackPane {
 
         public Circle(JISAPlot plot, double size, Color colour) {
             super(plot, new javafx.scene.shape.Circle(), size, colour);
-            getShape().setFill(Color.WHITE);
-            getShape().setStroke(Color.BLACK);
-            getShape().setStrokeWidth(2.0);
+            getMarker().setFill(Color.WHITE);
+            getMarker().setStroke(Color.BLACK);
+            getMarker().setStrokeWidth(2.0);
         }
 
         @Override
         public void drawShape() {
 
-            javafx.scene.shape.Circle circle = (javafx.scene.shape.Circle) getShape();
+            javafx.scene.shape.Circle circle = (javafx.scene.shape.Circle) getMarker();
             circle.setRadius(getSize() / 2);
             circle.setStroke(getColour());
 
@@ -129,14 +184,14 @@ public abstract class JISAPlotPoint extends StackPane {
 
         public Dot(JISAPlot plot, double size, Color colour) {
             super(plot, new javafx.scene.shape.Circle(5.0), size, colour);
-            getShape().setFill(Color.BLACK);
-            getShape().setStrokeWidth(0.0);
+            getMarker().setFill(Color.BLACK);
+            getMarker().setStrokeWidth(0.0);
         }
 
         @Override
         public void drawShape() {
 
-            javafx.scene.shape.Circle circle = (javafx.scene.shape.Circle) getShape();
+            javafx.scene.shape.Circle circle = (javafx.scene.shape.Circle) getMarker();
             circle.setRadius(getSize() / 2);
             circle.setFill(getColour());
 
@@ -153,15 +208,15 @@ public abstract class JISAPlotPoint extends StackPane {
 
         public Square(JISAPlot plot, double size, Color colour) {
             super(plot, new Rectangle(5.0, 5.0), size, colour);
-            getShape().setFill(Color.WHITE);
-            getShape().setStroke(Color.BLACK);
-            getShape().setStrokeWidth(2.0);
+            getMarker().setFill(Color.WHITE);
+            getMarker().setStroke(Color.BLACK);
+            getMarker().setStrokeWidth(2.0);
         }
 
         @Override
         public void drawShape() {
 
-            Rectangle rectangle = (Rectangle) getShape();
+            Rectangle rectangle = (Rectangle) getMarker();
             rectangle.setWidth(getSize());
             rectangle.setHeight(getSize());
             rectangle.setStroke(getColour());
@@ -179,7 +234,7 @@ public abstract class JISAPlotPoint extends StackPane {
 
         public Diamond(JISAPlot plot, double size, Color colour) {
             super(plot, size, colour);
-            getShape().setRotate(45.0);
+            getMarker().setRotate(45.0);
         }
 
         @Override
@@ -198,7 +253,7 @@ public abstract class JISAPlotPoint extends StackPane {
         @Override
         public void drawShape() {
 
-            Path path = (Path) getShape();
+            Path path = (Path) getMarker();
 
             path.getElements().clear();
             path.getElements().addAll(
@@ -225,16 +280,16 @@ public abstract class JISAPlotPoint extends StackPane {
         public Triangle(JISAPlot plot, double size, Color colour) {
 
             super(plot, new Polygon(0.0, 2.0, 1.0, 0.0, 2.0, 2.0), size, colour);
-            getShape().setFill(Color.WHITE);
-            getShape().setStroke(Color.BLACK);
-            getShape().setStrokeWidth(2.0);
+            getMarker().setFill(Color.WHITE);
+            getMarker().setStroke(Color.BLACK);
+            getMarker().setStrokeWidth(2.0);
 
         }
 
         @Override
         public void drawShape() {
 
-            Polygon triangle = (Polygon) getShape();
+            Polygon triangle = (Polygon) getMarker();
 
             triangle.getPoints().setAll(
                     0.0, getSize(),
@@ -258,16 +313,16 @@ public abstract class JISAPlotPoint extends StackPane {
         public Star(JISAPlot plot, double size, Color colour) {
 
             super(plot, new Polygon(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0), size, colour);
-            getShape().setFill(Color.WHITE);
-            getShape().setStroke(Color.BLACK);
-            getShape().setStrokeWidth(2.0);
+            getMarker().setFill(Color.WHITE);
+            getMarker().setStroke(Color.BLACK);
+            getMarker().setStrokeWidth(2.0);
 
         }
 
         @Override
         public void drawShape() {
 
-            Polygon star = (Polygon) getShape();
+            Polygon star = (Polygon) getMarker();
             star.getPoints().clear();
 
             RealMatrix longMatrix  = RealMatrix.asColumn(0.0, getSize() / 2.0);
@@ -301,15 +356,15 @@ public abstract class JISAPlotPoint extends StackPane {
         public Dash(JISAPlot plot, double size, Color colour) {
 
             super(plot, new Line(0.0, 0.0, 5.0, 0.0), size, colour);
-            getShape().setStroke(Color.BLACK);
-            getShape().setStrokeWidth(2.0);
+            getMarker().setStroke(Color.BLACK);
+            getMarker().setStrokeWidth(2.0);
 
         }
 
         @Override
         public void drawShape() {
 
-            Line line = (Line) getShape();
+            Line line = (Line) getMarker();
             line.setEndX(getSize());
             line.setStroke(getColour());
 

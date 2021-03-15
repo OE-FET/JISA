@@ -13,17 +13,12 @@ import java.util.List;
 
 public class ILM200 extends VISADevice implements LevelMeter {
 
-    public static String getDescription() {
-        return "Oxford Instruments ILM-200";
-    }
-
     private static final String TERMINATOR       = "\r";
     private static final String C_SET_COMM_MODE  = "Q2";
     private static final String C_READ_CHANNEL   = "R%d";
     private static final String C_SET_REM_STATUS = "C%d";
     private static final String C_SET_FAST       = "T%d";
     private static final String C_SET_SLOW       = "S%d";
-
     private static final int CHANNEL_1_LEVEL = 1;
 
     public ILM200(Address address) throws IOException {
@@ -41,14 +36,30 @@ public class ILM200 extends VISADevice implements LevelMeter {
 
     }
 
+    public static String getDescription() {
+        return "Oxford Instruments ILM-200";
+    }
 
     public String getIDN() throws IOException {
         return query("V");
     }
 
     private double readChannel(int channel) throws IOException {
-        String response = query(C_READ_CHANNEL, channel);
-        return Double.valueOf(response.substring(1));
+
+        String response = "";
+        int    count    = 0;
+
+        do {
+            response = query(C_READ_CHANNEL, channel);
+            count ++;
+        } while (count < 3 && !response.startsWith("R"));
+
+        if (response.startsWith("R")) {
+            return Double.parseDouble(response.substring(1));
+        } else {
+            throw new IOException("Invalid response from ILM200!");
+        }
+
     }
 
     public double getLevel(int channel) throws DeviceException, IOException {
@@ -97,12 +108,7 @@ public class ILM200 extends VISADevice implements LevelMeter {
         LOCAL_UNLOCKED(2),
         REMOTE_UNLOCKED(3);
 
-        private        int                           c;
         private static HashMap<Integer, ITC503.Mode> lookup = new HashMap<>();
-
-        static ITC503.Mode fromInt(int i) {
-            return lookup.getOrDefault(i, null);
-        }
 
         static {
             for (ITC503.Mode mode : ITC503.Mode.values()) {
@@ -110,8 +116,14 @@ public class ILM200 extends VISADevice implements LevelMeter {
             }
         }
 
+        private        int                           c;
+
         Mode(int code) {
             c = code;
+        }
+
+        static ITC503.Mode fromInt(int i) {
+            return lookup.getOrDefault(i, null);
         }
 
         int toInt() {

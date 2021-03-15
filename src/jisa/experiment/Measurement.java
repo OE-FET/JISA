@@ -72,6 +72,13 @@ public abstract class Measurement {
     protected abstract void onInterrupt() throws Exception;
 
     /**
+     * This method is always called when a measurement ends in error (but not interrupt).
+     *
+     * @throws Exception This method can throw exceptions
+     */
+    protected abstract void onError() throws Exception;
+
+    /**
      * This method is always called whenever a measurement has ended, regardless of if it was successful, ended in error
      * or was interrupted. This method should therefore contain any clean-up code that should be run at the end of a
      * measurement (for instance turning off any instruments etc).
@@ -149,6 +156,16 @@ public abstract class Measurement {
 
             throw e;
 
+        } catch (Exception e) {
+
+            try {
+                onError();
+            } catch (Exception ee) {
+                ee.printStackTrace();
+            }
+
+            throw e;
+
         } finally {
 
             running = false;
@@ -167,7 +184,9 @@ public abstract class Measurement {
         return new ArrayList<>(parameters);
     }
 
-    public List<Configuration<? extends Instrument>> getInstruments() { return new ArrayList<>(instruments); }
+    public List<Configuration<? extends Instrument>> getInstruments() {
+        return new ArrayList<>(instruments);
+    }
 
     /**
      * Returns whether this measurement is currently running.
@@ -340,6 +359,10 @@ public abstract class Measurement {
 
         public RangeParameter(String section, String name, String units, double min, double max, int steps, Range.Type type, int order) {
             super(section, name, units, new Range.DoubleRange(Range.linear(min, max, steps), type, order));
+        }
+
+        public RangeParameter(String section, String name, String units, double min, double max, int steps) {
+            this(section, name, units, min, max, steps, Range.Type.LINEAR, 1);
         }
 
         protected Field<Range.DoubleRange> makeField(Fields fields) {

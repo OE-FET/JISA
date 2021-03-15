@@ -2,6 +2,7 @@ package jisa.gui.plotting;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
@@ -63,8 +64,6 @@ public class JISAPlotSeries implements Clearable {
         for (Result row : dataTable) {
             if (test(row)) addPoint(row);
         }
-
-        plot.pointsAdded(this, used);
 
     }
 
@@ -261,6 +260,10 @@ public class JISAPlotSeries implements Clearable {
 
     }
 
+    public ObservableList<JISAPlotPoint> getPoints() {
+        return used;
+    }
+
     public String getName() {
         return name;
     }
@@ -348,5 +351,9 @@ public class JISAPlotSeries implements Clearable {
 
     public double getMaxY() {
         return maxY;
+    }
+
+    public Path getLine() {
+        return line;
     }
 }
