@@ -61,11 +61,11 @@ public class Result {
     }
 
     public Double get(String name) {
-        return get(table.getColumnFromString(name));
+        return get(table.findColumn(name));
     }
 
     public Double get(Col column) {
-        return get(table.getColumnFromCol(column));
+        return get(table.findColumn(column));
     }
 
     /**

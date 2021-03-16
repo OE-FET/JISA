@@ -49,24 +49,36 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public abstract Map<String, String> getAttributes();
 
-    public int getColumnFromString(String name) {
+    public int findColumn(String name) {
 
-        name = name.trim();
+        name = name.trim().toLowerCase();
 
-        int i = 0;
-        for (Col col : columns) {
-            if (col.getName().trim().equals(name.trim())) {
+        for (int i = 0; i < columns.size(); i++) {
+
+            if (columns.get(i).getName().trim().toLowerCase().equals(name)) {
                 return i;
             }
-            i++;
+
         }
 
         return -1;
 
     }
 
-    public int getColumnFromCol(Col column) {
-        return columns.indexOf(column);
+    public int findColumn(Col column) {
+
+        String name  = column.getTitle().toLowerCase().trim();
+
+        for (int i = 0; i < columns.size(); i++) {
+
+            if (columns.get(i).getTitle().trim().toLowerCase().equals(name)) {
+                return i;
+            }
+
+        }
+
+        return -1;
+
     }
 
 
