@@ -1,14 +1,20 @@
 package jisa;
 
 import javafx.application.Platform;
-import jisa.addresses.Address;
-import jisa.addresses.StrAddress;
+import jisa.addresses.*;
+import jisa.devices.spectrometer.Bruker70v;
+import jisa.devices.temperature.ITC503;
+import jisa.devices.temperature.MercuryITC;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.Socket;
+import java.util.Scanner;
 
 public class Main {
 

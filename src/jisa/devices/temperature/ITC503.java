@@ -5,6 +5,7 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MSTC;
 import jisa.devices.interfaces.PID;
+import jisa.visa.Connection;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
@@ -67,8 +68,10 @@ public class ITC503 extends VISADevice implements MSTC {
         super(address);
         setEOI(false);
         setWriteTerminator(TERMINATOR);
+        setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.TWO, Connection.Flow.NONE);
         write(C_SET_COMM_MODE);
-        setReadTerminator(EOS_RETURN);
+        setReadTerminator(TERMINATOR);
+        addAutoRemove(TERMINATOR);
 
         clearReadBuffer();
 
