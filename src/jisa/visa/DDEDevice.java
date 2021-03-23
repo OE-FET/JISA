@@ -6,10 +6,12 @@ import jisa.addresses.Address;
 import jisa.addresses.TCPIPAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
+import jisa.gui.GUI;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Scanner;
@@ -92,6 +94,26 @@ public class DDEDevice implements Instrument {
         convo = new DDEClientConversation();
         convo.setTimeout(timeout);
         convo.connect(service, topic);
+    }
+
+    public DDEDevice(Address address) throws Exception {
+        TCPIPAddress tcp_addr = address.toTCPIPAddress();
+
+        try {
+            host = tcp_addr.getHost();
+            InetAddress inet = InetAddress.getByName(host);
+            if (inet.isReachable(5000)){
+                convo = new DDEClientConversation();
+                convo.setTimeout(50000);
+                convo.connect("Opus", "System");
+            }
+            else{
+                throw new Exception("Failed to connect to device IP address");
+            }
+        }
+        catch (Exception e) {
+            throw e;
+        }
     }
 
     @Override
