@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
  */
 public class MercuryITC extends VISADevice implements MSTC {
 
-    private static final String     TERMINATOR                    = "\n";
+    private static final String     TERMINATOR                    = "\r";
     private static final String     C_SET_COMM_MODE               = "Q2";
     private static final String     C_READ                        = "R%d";
     private static final String     C_SET_MODE                    = "C%d";
@@ -71,12 +71,13 @@ public class MercuryITC extends VISADevice implements MSTC {
         setEOI(true);
         setWriteTerminator(TERMINATOR);
         setReadTerminator(TERMINATOR);
+        addAutoRemove(TERMINATOR);
 
         manuallyClearReadBuffer();
 
         try {
             String idn = query("V");
-            if (!idn.split(" ")[0].trim().equals("ITC503")) {
+            if (!idn.contains("ITC503")) {
                 throw new DeviceException("Device at address %s is not a Mercury ITC!", address.toString());
             }
         } catch (IOException e) {
