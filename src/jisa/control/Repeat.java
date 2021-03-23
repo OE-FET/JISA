@@ -73,16 +73,15 @@ public class Repeat implements Iterable<Double> {
      */
     public static void runTogether(Repeat... repeats) throws Exception {
 
-        Stream<Repeat> stream = Arrays.stream(repeats);
-        IntStream      counts = stream.mapToInt(Repeat::getCount).distinct();
-        IntStream      delays = stream.mapToInt(Repeat::getDelay).distinct();
+        IntStream      counts = Arrays.stream(repeats).mapToInt(Repeat::getCount).distinct();
+        IntStream      delays = Arrays.stream(repeats).mapToInt(Repeat::getDelay).distinct();
 
         if (counts.count() > 1 || delays.count() > 1) {
             throw new IllegalArgumentException("To run repeats together they must have matching repeat counts and delays!");
         }
 
-        int delay = delays.findFirst().orElse(0);
-        int count = counts.findFirst().orElse(1);
+        int delay = repeats[0].getDelay();
+        int count = repeats[0].getCount();
 
         if (delay > 0) {
 

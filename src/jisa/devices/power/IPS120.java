@@ -71,7 +71,7 @@ public class IPS120 extends VISADevice implements EMController {
         write(C_SET_COMM_MODE);
         setReadTerminator(EOS_RETURN);
 
-        clearReadBuffer();
+        manuallyClearReadBuffer();
 
         setMode(Mode.REMOTE_UNLOCKED);
 

@@ -373,6 +373,17 @@ public class NIVISADriver implements Driver {
         }
 
         @Override
+        public void clear() throws VISAException {
+
+            NativeLong status = lib.viClear(handle);
+
+            if (status.longValue() != VI_SUCCESS) {
+                throw new VISAException("Unable to clear connection.");
+            }
+
+        }
+
+        @Override
         public void write(String toWrite) throws VISAException {
 
             // Convert string to bytes to send
@@ -454,13 +465,13 @@ public class NIVISADriver implements Driver {
         }
 
         @Override
-        public void setEOS(long character) throws VISAException {
+        public void setReadTerminator(long character) throws VISAException {
             setAttribute(VI_ATTR_TERMCHAR_EN, character != 0 ? VI_TRUE : VI_FALSE);
             setAttribute(VI_ATTR_TERMCHAR, character);
         }
 
         @Override
-        public void setTMO(int duration) throws VISAException {
+        public void setTimeout(int duration) throws VISAException {
             setAttribute(VI_ATTR_TMO_VALUE, duration);
         }
 

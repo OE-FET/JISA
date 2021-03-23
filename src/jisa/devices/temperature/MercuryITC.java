@@ -72,7 +72,7 @@ public class MercuryITC extends VISADevice implements MSTC {
         setWriteTerminator(TERMINATOR);
         setReadTerminator(TERMINATOR);
 
-        clearReadBuffer();
+        manuallyClearReadBuffer();
 
         try {
             String idn = query("V");
@@ -86,7 +86,7 @@ public class MercuryITC extends VISADevice implements MSTC {
         setMode(Mode.REMOTE_UNLOCKED);
         write(C_SET_AUTO_PID, 0);
 
-        clearReadBuffer();
+        manuallyClearReadBuffer();
 
     }
 
@@ -103,7 +103,7 @@ public class MercuryITC extends VISADevice implements MSTC {
             String reply = query(C_READ, channel);
             return Double.parseDouble(reply.substring(1));
         } catch (Exception e) {
-            clearReadBuffer();
+            manuallyClearReadBuffer();
             String reply = query(C_READ, channel);
             return Double.parseDouble(reply.substring(1));
         }

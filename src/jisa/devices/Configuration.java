@@ -153,6 +153,7 @@ public class Configuration<T extends Instrument> {
             } else if (parameter.getType() == Instrument.TableQuantity.class) {
 
                 ConfigBlock              subBlock = block.subBlock(parameter.getName());
+                subBlock.clear();
                 Instrument.TableQuantity quantity = (Instrument.TableQuantity) parameter.getValue();
 
                 for (int i = 0; i < quantity.getValue().size(); i++) {

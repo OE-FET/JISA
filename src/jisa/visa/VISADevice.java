@@ -89,6 +89,16 @@ public class VISADevice implements Instrument {
 
     }
 
+    public synchronized void clearBuffers() throws IOException {
+
+        try {
+            connection.clear();
+        } catch (VISAException e) {
+            throw new IOException(e.getMessage());
+        }
+
+    }
+
 
     /**
      * Continuously reads from the read buffer until there's nothing left to read. (Clears the read buffer for the more
@@ -96,24 +106,24 @@ public class VISADevice implements Instrument {
      *
      * @throws IOException Upon communications error
      */
-    public void clearReadBuffer() throws IOException {
+    public synchronized void manuallyClearReadBuffer() throws IOException {
 
         try {
-            connection.setTMO(250);
+            connection.setTimeout(250);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
 
         while (true) {
             try {
-                read();
-            } catch (IOException e) {
+                connection.readBytes(1);
+            } catch (VISAException e) {
                 break;
             }
         }
 
         try {
-            connection.setTMO(timeout);
+            connection.setTimeout(timeout);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
@@ -125,11 +135,11 @@ public class VISADevice implements Instrument {
      *
      * @param bytes The number of bytes, yikes.
      */
-    public void setReadBufferSize(int bytes) {
+    public synchronized void setReadBufferSize(int bytes) {
         readBufferSize = bytes;
     }
 
-    public void setSerialParameters(int baudRate, int dataBits, Connection.Parity parity, Connection.StopBits stopBits, Connection.Flow flowControl) throws IOException {
+    public synchronized void setSerialParameters(int baudRate, int dataBits, Connection.Parity parity, Connection.StopBits stopBits, Connection.Flow flowControl) throws IOException {
 
         try {
             connection.setSerial(baudRate, dataBits, parity, stopBits, flowControl);
@@ -147,7 +157,7 @@ public class VISADevice implements Instrument {
      *
      * @throws IOException Upon communications error
      */
-    public void setEOI(boolean flag) throws IOException {
+    public synchronized void setEOI(boolean flag) throws IOException {
 
         try {
             connection.setEOI(flag);
@@ -164,10 +174,10 @@ public class VISADevice implements Instrument {
      *
      * @throws IOException Upon communications error
      */
-    public void setReadTerminator(long character) throws IOException {
+    public synchronized void setReadTerminator(long character) throws IOException {
 
         try {
-            connection.setEOS(character);
+            connection.setReadTerminator(character);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
@@ -181,17 +191,17 @@ public class VISADevice implements Instrument {
      *
      * @throws IOException Upon communications error
      */
-    public void setReadTerminator(String character) throws IOException {
+    public synchronized void setReadTerminator(String character) throws IOException {
 
         try {
-            connection.setEOS(character);
+            connection.setReadTerminator(character);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
 
     }
 
-    public void addAutoRemove(String phrase) {
+    public synchronized void addAutoRemove(String phrase) {
         toRemove.add(phrase);
     }
 
@@ -202,10 +212,10 @@ public class VISADevice implements Instrument {
      *
      * @throws IOException Upon communications error
      */
-    public void setTimeout(int timeoutMSec) throws IOException {
+    public synchronized void setTimeout(int timeoutMSec) throws IOException {
 
         try {
-            connection.setTMO(timeoutMSec);
+            connection.setTimeout(timeoutMSec);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
@@ -214,7 +224,7 @@ public class VISADevice implements Instrument {
 
     }
 
-    public void setRetryCount(int count) {
+    public synchronized void setRetryCount(int count) {
         retryCount = count;
     }
 
@@ -232,7 +242,7 @@ public class VISADevice implements Instrument {
      *
      * @param term The character to use (eg "\n" or "\r")
      */
-    public void setWriteTerminator(String term) {
+    public synchronized void setWriteTerminator(String term) {
         terminator = term;
     }
 

@@ -191,6 +191,17 @@ public class GPIBDriver implements Driver {
         }
 
         @Override
+        public void clear() throws VISAException {
+
+            lib.ibclr(handle);
+
+            if (wasError()) {
+                throw new VISAException("Error clearing GPIB device.");
+            }
+
+        }
+
+        @Override
         public void write(String toWrite) throws VISAException {
 
             NativeString nToWrite = new NativeString(toWrite);
@@ -238,7 +249,7 @@ public class GPIBDriver implements Driver {
         }
 
         @Override
-        public void setEOS(long character) throws VISAException {
+        public void setReadTerminator(long character) throws VISAException {
 
             lib.ibconfig(
                     handle,
@@ -253,7 +264,7 @@ public class GPIBDriver implements Driver {
         }
 
         @Override
-        public void setTMO(int duration) throws VISAException {
+        public void setTimeout(int duration) throws VISAException {
 
             lib.ibconfig(
                     handle,

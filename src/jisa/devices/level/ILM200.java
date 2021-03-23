@@ -30,7 +30,7 @@ public class ILM200 extends VISADevice implements LevelMeter {
         write(C_SET_COMM_MODE);
         setReadTerminator(EOS_RETURN);
 
-        clearReadBuffer();
+        manuallyClearReadBuffer();
 
         setMode(Mode.REMOTE_UNLOCKED);
 

@@ -67,6 +67,18 @@ public class RawTCPIPDriver implements Driver {
         }
 
         @Override
+        public void clear() throws VISAException {
+
+            try {
+                out.flush();
+                in.readAllBytes();
+            } catch (IOException e) {
+                throw new VISAException(e.getMessage());
+            }
+
+        }
+
+        @Override
         public byte[] readBytes(int bufferSize) throws VISAException {
 
             ByteBuffer buffer    = ByteBuffer.allocate(bufferSize);
@@ -113,7 +125,7 @@ public class RawTCPIPDriver implements Driver {
         }
 
         @Override
-        public void setEOS(long character) {
+        public void setReadTerminator(long character) {
 
             ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
             buffer.putLong(character);
@@ -133,7 +145,7 @@ public class RawTCPIPDriver implements Driver {
         }
 
         @Override
-        public void setTMO(int duration) throws VISAException {
+        public void setTimeout(int duration) throws VISAException {
             try {
                 socket.setSoTimeout(duration);
             } catch (Exception e) {

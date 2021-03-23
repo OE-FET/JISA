@@ -91,6 +91,17 @@ public class SerialDriver implements Driver {
         }
 
         @Override
+        public void clear() throws VISAException {
+
+            try {
+                port.purgePort(SerialPort.PURGE_TXCLEAR | SerialPort.PURGE_RXCLEAR);
+            } catch (SerialPortException e) {
+                throw new VISAException(e.getMessage());
+            }
+
+        }
+
+        @Override
         public void write(String toWrite) throws VISAException {
 
             boolean result = false;
@@ -154,7 +165,7 @@ public class SerialDriver implements Driver {
         }
 
         @Override
-        public void setEOS(long character) {
+        public void setReadTerminator(long character) {
 
             ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
             buffer.putLong(character);
@@ -174,7 +185,7 @@ public class SerialDriver implements Driver {
         }
 
         @Override
-        public void setTMO(int duration) throws VISAException {
+        public void setTimeout(int duration) throws VISAException {
             tmo = duration;
         }
 

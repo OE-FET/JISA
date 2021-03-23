@@ -220,6 +220,11 @@ public class USBTMCDriver implements Driver {
         }
 
         @Override
+        public void clear() throws VISAException {
+
+        }
+
+        @Override
         public synchronized byte[] readBytes(int bufferSize) throws VISAException {
 
             byte[]     request = new byte[12];
@@ -290,7 +295,7 @@ public class USBTMCDriver implements Driver {
         }
 
         @Override
-        public void setEOS(long character) throws VISAException {
+        public void setReadTerminator(long character) throws VISAException {
 
             ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
             buffer.putLong(character);
@@ -310,7 +315,7 @@ public class USBTMCDriver implements Driver {
         }
 
         @Override
-        public void setTMO(int duration) throws VISAException {
+        public void setTimeout(int duration) throws VISAException {
             timeOut = duration;
         }
 

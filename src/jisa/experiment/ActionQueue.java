@@ -114,6 +114,48 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         return addAction(new Action(name, toRun));
     }
 
+    public synchronized void swapOrder(Action a, Action b) {
+
+        int indA = queue.indexOf(a);
+        int indB = queue.indexOf(b);
+
+        queue.set(indA, b);
+        queue.set(indB, a);
+
+        Map<Integer, Action> changes = new HashMap<>();
+
+        changes.put(indA, b);
+        changes.put(indB, a);
+
+        for (ListListener<Action> listener : queueListeners) queueExecutor.submit(() -> listener.updated(changes));
+
+    }
+
+    public synchronized void swapOrder(int indA, int indB) {
+
+        Action a = queue.get(indA);
+        Action b = queue.get(indB);
+
+        queue.set(indA, b);
+        queue.set(indB, a);
+
+        Map<Integer, Action> changes = new HashMap<>();
+
+        changes.put(indA, b);
+        changes.put(indB, a);
+
+        for (ListListener<Action> listener : queueListeners) queueExecutor.submit(() -> listener.updated(changes));
+
+    }
+
+    public int indexOf(Action a) {
+        return queue.indexOf(a);
+    }
+
+    public List<Action> getActions() {
+        return List.copyOf(queue);
+    }
+
     /**
      * Adds a measurement to run as an action to the queue.
      *
@@ -228,7 +270,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     }
 
     public ListListener<Action> addQueueListener(SRunnable listener) {
-        return addQueueListener(((oldValue, newValue) -> listener.runRegardless()));
+        return addQueueListener(((oldValue, newValue, changes) -> listener.runRegardless()));
     }
 
     public void removeQueueListener(ListListener<Action> listener) {
@@ -294,7 +336,16 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     }
 
     public interface ListListener<T> {
-        void updated(List<T> added, List<T> removed);
+
+        void updated(List<T> added, List<T> removed, Map<Integer, Action> orderChanges);
+
+        default void updated(List<T> added, List<T> removed) {
+            updated(added, removed, Collections.emptyMap());
+        }
+
+        default void updated(Map<Integer, Action> changes) {
+            updated(Collections.emptyList(), Collections.emptyList(), changes);
+        }
 
     }
 

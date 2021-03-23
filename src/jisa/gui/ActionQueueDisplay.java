@@ -1,10 +1,11 @@
 package jisa.gui;
 
-import javafx.beans.InvalidationListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -16,19 +17,23 @@ import jisa.experiment.ActionQueue;
 import jisa.experiment.ActionQueue.Action;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ActionQueueDisplay extends JFXElement {
 
+    private final ActionQueue       queue;
+    private final Map<Action, HBox> listItems     = new HashMap<>();
+    private final Map<HBox, Action> reverseMap = new HashMap<>();
+    private final int               scrollTo      = 0;
     @FXML
-    protected BorderPane        pane;
+    protected     BorderPane        pane;
     @FXML
-    protected ListView<HBox>    list;
-    private   ActionQueue       queue;
-    private   Map<Action, HBox> listItems     = new HashMap<>();
-    private   int               scrollTo      = 0;
-    private   ActionRunnable    onClick       = null;
-    private   ActionRunnable    onDoubleClick = null;
+    protected     ListView<HBox>    list;
+    private       ActionRunnable    onClick       = null;
+    private       ActionRunnable    onDoubleClick = null;
 
     public ActionQueueDisplay(String title, ActionQueue queue) {
 
@@ -36,12 +41,26 @@ public class ActionQueueDisplay extends JFXElement {
 
         this.queue = queue;
 
-        for (Action action : queue) add(action);
+        list.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
-        queue.addQueueListener((added, removed) -> GUI.runNow(() -> {
+        for (Action action : queue) { add(action); }
 
-            for (Action add : added) add(add);
-            for (Action rem : removed) remove(rem);
+        queue.addQueueListener((added, removed, changed) -> GUI.runNow(() -> {
+
+            List<HBox> oldSelected = List.copyOf(list.getSelectionModel().getSelectedItems());
+
+            for (Action add : added) { add(add); }
+            for (Action rem : removed) { remove(rem); }
+
+            changed.forEach((index, action) -> {
+                HBox item = listItems.get(action);
+                list.getItems().set(index, item);
+            });
+
+            if (!oldSelected.isEmpty()) {
+                list.getSelectionModel().clearSelection();
+                oldSelected.forEach(list.getSelectionModel()::select);
+            }
 
         }));
 
@@ -54,7 +73,7 @@ public class ActionQueueDisplay extends JFXElement {
     }
 
     private synchronized void remove(Action action) {
-        if (listItems.containsKey(action)) list.getItems().remove(listItems.get(action));
+        if (listItems.containsKey(action)) { list.getItems().remove(listItems.get(action)); }
     }
 
     private synchronized HBox makeItem(Action action) {
@@ -62,12 +81,6 @@ public class ActionQueueDisplay extends JFXElement {
         HBox container = new HBox();
         container.setSpacing(15);
         container.setAlignment(Pos.CENTER_LEFT);
-
-        MenuItem    remItem = new MenuItem("Remove");
-        ContextMenu menu    = new ContextMenu(remItem);
-
-        remItem.setOnAction(event -> queue.removeAction(action));
-        container.setOnContextMenuRequested(event -> menu.show(container, event.getScreenX(), event.getScreenY()));
 
         ImageView image  = new ImageView(action.getStatus().getImage());
         Label     name   = new Label(action.getName());
@@ -88,7 +101,7 @@ public class ActionQueueDisplay extends JFXElement {
                     Bounds box  = list.localToScene(list.getBoundsInLocal());
                     Bounds item = container.localToScene(container.getBoundsInLocal());
 
-                    if (!box.contains(item)) list.scrollTo(container);
+                    if (!box.contains(item)) { list.scrollTo(container); }
 
                 });
 
@@ -129,9 +142,61 @@ public class ActionQueueDisplay extends JFXElement {
         });
 
         listItems.put(action, container);
+        reverseMap.put(container, action);
 
         return container;
 
+    }
+
+    public int getSelectedIndex() {
+        return list.getSelectionModel().getSelectedIndex();
+    }
+
+    public Action getSelectedAction() {
+        return reverseMap.getOrDefault(list.getSelectionModel().getSelectedItem(), null);
+    }
+
+    public List<Action> getSelectedActions() {
+        return list.getSelectionModel().getSelectedIndices().stream().map(list.getItems()::get).map(reverseMap::get).collect(Collectors.toList());
+    }
+
+    public List<Integer> getSelectedIndices() {
+        return list.getSelectionModel().getSelectedIndices();
+    }
+
+    public void select(int index) {
+
+        GUI.runNow(() -> {
+            list.getSelectionModel().clearSelection();
+            list.getSelectionModel().select(index);
+        });
+
+    }
+
+    public void selectIndices(List<Integer> indices) {
+
+        GUI.runNow(() -> {
+            list.getSelectionModel().clearSelection();
+            indices.forEach(list.getSelectionModel()::select);
+        });
+
+    }
+
+    public void selectActions(List<Action> actions) {
+
+        GUI.runNow(() -> {
+            list.getSelectionModel().clearSelection();
+            actions.forEach(a -> list.getSelectionModel().select(listItems.get(a)));
+        });
+    }
+
+    public void select(Action a) {
+        if (listItems.containsKey(a) && list.getItems().contains(listItems.get(a))) {
+            GUI.runNow(() -> {
+                list.getSelectionModel().clearSelection();
+                list.getSelectionModel().select(listItems.get(a));
+            });
+        }
     }
 
     public void setOnClick(ActionRunnable onClick) {

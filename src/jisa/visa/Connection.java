@@ -6,6 +6,8 @@ public interface Connection {
 
     void writeBytes(byte[] bytes) throws VISAException;
 
+    void clear() throws VISAException;
+
     /**
      * Writes the specified string over the connection.
      *
@@ -78,7 +80,7 @@ public interface Connection {
      *
      * @throws VISAException Upon something going wrong
      */
-    void setEOS(long terminator) throws VISAException;
+    void setReadTerminator(long terminator) throws VISAException;
 
     /**
      * Sets the "End of String" terminator, in String form. This is the terminator used for reading from the connection,
@@ -88,7 +90,7 @@ public interface Connection {
      *
      * @throws VISAException Upon something going wrong
      */
-    default void setEOS(String terminator) throws VISAException {
+    default void setReadTerminator(String terminator) throws VISAException {
 
         byte[] bytes = terminator.getBytes();
 
@@ -104,7 +106,7 @@ public interface Connection {
 
         buffer.put(bytes);
         buffer.rewind();
-        setEOS(buffer.getLong());
+        setReadTerminator(buffer.getLong());
 
     }
 
@@ -115,7 +117,7 @@ public interface Connection {
      *
      * @throws VISAException Upon something going wrong
      */
-    void setTMO(int duration) throws VISAException;
+    void setTimeout(int duration) throws VISAException;
 
     /**
      * Sets the parameters for a serial connection.

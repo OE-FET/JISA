@@ -194,6 +194,7 @@ public class Connector<T extends Instrument> extends JFXElement {
                 if (connection.getAddress() != null) {
                     addressParams = connection.getAddress().createParams();
                     protocolChoice.setValue(addressParams.getClass());
+                    updateAddressParameters();
                 }
 
             }
