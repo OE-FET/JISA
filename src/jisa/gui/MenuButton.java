@@ -1,7 +1,15 @@
 package jisa.gui;
 
+import javafx.geometry.Pos;
+import javafx.scene.control.CustomMenuItem;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.TextAlignment;
 
 public interface MenuButton extends SubElement {
 
@@ -63,6 +71,15 @@ public interface MenuButton extends SubElement {
      * @return Separator object representing the separator
      */
     Separator addSeparator();
+
+    /**
+     * Adds a separator, with heading text, as the next item in the menu.
+     *
+     * @param heading Heading text
+     *
+     * @return Separator object representing the separator
+     */
+    Separator addSeparator(String heading);
 
     abstract class MenuButtonWrapper implements MenuButton {
 
@@ -135,6 +152,28 @@ public interface MenuButton extends SubElement {
                 @Override
                 public void remove() {
                     GUI.runNow(() -> button.getItems().remove(separator));
+                }
+
+            };
+
+        }
+
+        public Separator addSeparator(String heading) {
+
+            Label text = new Label(heading);
+            text.setFont(Font.font(text.getFont().getFamily(), FontWeight.BOLD, text.getFont().getSize()));
+
+            MenuItem          headingItem = new CustomMenuItem(text, false);
+            headingItem.setDisable(true);
+
+            SeparatorMenuItem separator   = new SeparatorMenuItem();
+            GUI.runNow(() -> button.getItems().addAll(headingItem, separator));
+
+            return new Separator.MenuSeparatorWrapper(separator) {
+
+                @Override
+                public void remove() {
+                    GUI.runNow(() -> button.getItems().removeAll(headingItem, separator));
                 }
 
             };

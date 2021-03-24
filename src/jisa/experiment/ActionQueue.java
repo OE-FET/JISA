@@ -6,7 +6,6 @@ import javafx.scene.image.Image;
 import jisa.Util;
 import jisa.control.SRunnable;
 import jisa.gui.GUI;
-import jisa.maths.functions.Function;
 import jisa.maths.functions.GFunction;
 
 import java.nio.file.Files;
@@ -25,13 +24,17 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     private final        SimpleObjectProperty<Action> current          = new SimpleObjectProperty<>(null);
     private final        List<Listener<Action>>       currentListeners = new LinkedList<>();
     private final        List<ListListener<Action>>   queueListeners   = new LinkedList<>();
+    private              boolean                      abortOnError     = false;
+    private              int                          maxAttempts      = 1;
     private              boolean                      isRunning        = false;
     private              boolean                      isStopped        = false;
 
     public ActionQueue() {
 
         current.addListener((o, oldValue, newValue) -> currentExecutor.submit(() -> {
-            for (Listener<Action> listener : currentListeners) listener.updated(oldValue, newValue);
+            for (Listener<Action> listener : currentListeners) {
+                listener.updated(oldValue, newValue);
+            }
         }));
 
     }
@@ -39,7 +42,11 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     public int getVariableCount(String name) {
 
         int count = 0;
-        for (Action action : queue) if (action.variables.containsKey(name)) count++;
+        for (Action action : queue) {
+            if (action.variables.containsKey(name)) {
+                count++;
+            }
+        }
         return count;
 
     }
@@ -51,7 +58,9 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         }
 
         List<Action> removed = new LinkedList<>(queue);
-        for (ListListener<Action> listener : queueListeners) queueExecutor.submit(() -> listener.updated(Collections.emptyList(), removed));
+        for (ListListener<Action> listener : queueListeners) {
+            queueExecutor.submit(() -> listener.updated(Collections.emptyList(), removed));
+        }
 
         queue.clear();
 
@@ -70,7 +79,9 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         queue.add(action);
 
-        for (ListListener<Action> listener : queueListeners) queueExecutor.submit(() -> listener.updated(Collections.singletonList(action), Collections.emptyList()));
+        for (ListListener<Action> listener : queueListeners) {
+            queueExecutor.submit(() -> listener.updated(Collections.singletonList(action), Collections.emptyList()));
+        }
 
         return action;
 
@@ -98,7 +109,9 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             throw new IllegalStateException("Cannot modify action queue while it is running");
         }
 
-        for (ListListener<Action> listener : queueListeners) queueExecutor.submit(() -> listener.updated(Collections.emptyList(), Collections.singletonList(action)));
+        for (ListListener<Action> listener : queueListeners) {
+            queueExecutor.submit(() -> listener.updated(Collections.emptyList(), Collections.singletonList(action)));
+        }
 
         queue.remove(action);
 
@@ -116,6 +129,10 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
     public synchronized void swapOrder(Action a, Action b) {
 
+        if (isRunning) {
+            throw new IllegalStateException("Cannot modify action queue while it is running");
+        }
+
         int indA = queue.indexOf(a);
         int indB = queue.indexOf(b);
 
@@ -127,11 +144,17 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         changes.put(indA, b);
         changes.put(indB, a);
 
-        for (ListListener<Action> listener : queueListeners) queueExecutor.submit(() -> listener.updated(changes));
+        for (ListListener<Action> listener : queueListeners) {
+            queueExecutor.submit(() -> listener.updated(changes));
+        }
 
     }
 
     public synchronized void swapOrder(int indA, int indB) {
+
+        if (isRunning) {
+            throw new IllegalStateException("Cannot modify action queue while it is running");
+        }
 
         Action a = queue.get(indA);
         Action b = queue.get(indB);
@@ -139,12 +162,61 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         queue.set(indA, b);
         queue.set(indB, a);
 
-        Map<Integer, Action> changes = new HashMap<>();
+        Map<Integer, Action> changes = Map.of(indA, b, indB, a);
 
-        changes.put(indA, b);
-        changes.put(indB, a);
+        for (ListListener<Action> listener : queueListeners) {
+            queueExecutor.submit(() -> listener.updated(changes));
+        }
 
-        for (ListListener<Action> listener : queueListeners) queueExecutor.submit(() -> listener.updated(changes));
+    }
+
+    public synchronized void replaceAction(Action toReplace, Action replaceWith) {
+
+        if (isRunning) {
+            throw new IllegalStateException("Cannot modify action queue while it is running");
+        }
+
+        int ind = queue.indexOf(toReplace);
+
+        if (ind > -1) {
+
+            queue.set(ind, replaceWith);
+
+            Map<Integer, Action> changes = Map.of(ind, replaceWith);
+
+            for (ListListener<Action> listener : queueListeners) {
+                queueExecutor.submit(() -> listener.updated(changes));
+            }
+
+        }
+
+    }
+
+    public int getMaxAttempts() {
+        return maxAttempts;
+    }
+
+    public void setMaxAttempts(int maxAttempts) {
+
+        if (isRunning) {
+            throw new IllegalStateException("Cannot max attempts setting while running.");
+        }
+
+        this.maxAttempts = maxAttempts;
+
+    }
+
+    public boolean isAbortOnError() {
+        return abortOnError;
+    }
+
+    public void setAbortOnError(boolean abortOnError) {
+
+        if (isRunning) {
+            throw new IllegalStateException("Cannot change abort on error setting while running.");
+        }
+
+        this.abortOnError = abortOnError;
 
     }
 
@@ -166,9 +238,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     }
 
     public synchronized MeasureAction addMeasurement(String name, Measurement measurement) {
-        return addMeasurement(name, measurement, a -> {
-        }, a -> {
-        });
+        return addMeasurement(name, measurement, a -> {}, a -> {});
     }
 
     /**
@@ -180,13 +250,24 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         return (WaitAction) addAction(new WaitAction(millis));
     }
 
-    /**
-     * Starts the queue running, from the top.
-     */
     public Result start() {
+        return start(0);
+    }
+
+    public Result start(int from) {
+
+        if (queue.size() == 0) {
+            throw new IllegalStateException("There are no actions in this queue.");
+        }
+
+        if (from < 0 || from >= queue.size()) {
+            throw new IndexOutOfBoundsException("There is no action with that index.");
+        }
 
         isStopped = false;
         isRunning = true;
+
+        List<Action> queue = from > 0 ? this.queue.subList(from, this.queue.size()) : this.queue;
 
         for (Action action : queue) {
             action.status.set(Status.NOT_STARTED);
@@ -194,14 +275,23 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         for (Action action : queue) {
 
-            action.prepare();
-            current.set(action);
-            action.start();
-            action.cleanUp();
+            int    count = 0;
+            Status result;
 
-            if (isStopped) {
-                isRunning = false;
-                return Result.INTERRUPTED;
+            do {
+
+                result = runAction(action);
+                count++;
+
+                if (isStopped) {
+                    isRunning = false;
+                    return Result.INTERRUPTED;
+                }
+
+            } while (result != Status.COMPLETED && count < maxAttempts);
+
+            if (abortOnError && result == Status.ERROR) {
+                break;
             }
 
         }
@@ -209,13 +299,22 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         current.set(null);
         isRunning = false;
 
-        for (Action action : queue) {
-            if (action.getStatus() != Status.COMPLETED) {
-                return Result.ERROR;
-            }
+        if (queue.stream().anyMatch(a -> a.getStatus() != Status.COMPLETED)) {
+            return Result.ERROR;
         }
 
         return Result.COMPLETED;
+
+    }
+
+    private Status runAction(Action action) {
+
+        action.prepare();
+        current.set(action);
+        action.start();
+        action.cleanUp();
+
+        return action.getStatus();
 
     }
 
@@ -302,11 +401,12 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         NOT_STARTED("Not Started", "queued"),
         RUNNING("Running", "progress"),
+        RETRY("Running (Retry)", "progress"),
         INTERRUPTED("Interrupted", "cancelled"),
         COMPLETED("Completed", "complete"),
         ERROR("Error Encountered", "error");
 
-        private final Image     image;
+        private final Image  image;
         private final String text;
 
         Status(String text, String imageName) {
@@ -354,11 +454,13 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         void run(MeasureAction action) throws Exception;
 
         default void runRegardless(MeasureAction action) {
+
             try {
                 run(action);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
         }
 
     }
@@ -370,8 +472,8 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         private final List<Listener<Status>>       listeners = new LinkedList<>();
         private final Map<String, String>          variables = new LinkedHashMap<>();
         private final Property<String>             name      = new SimpleObjectProperty<>();
-        private       Exception                    exception;
-        private       Thread                       runThread;
+        private       Exception                    exception = null;
+        private       Thread                       runThread = null;
         private       ResultTable                  data      = null;
 
         public Action(String name, SRunnable runnable) {
@@ -380,7 +482,9 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             this.runnable = runnable;
 
             status.addListener((v, o, n) -> statusExecutor.submit(() -> {
-                for (Listener<Status> listener : listeners) listener.updated(o, n);
+                for (Listener<Status> listener : listeners) {
+                    listener.updated(o, n);
+                }
             }));
 
         }
@@ -419,7 +523,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             runThread = Thread.currentThread();
 
             try {
-                status.set(Status.RUNNING);
+                status.set(getStatus() == Status.NOT_STARTED ? Status.RUNNING : Status.RETRY);
                 runnable.run();
                 status.set(Status.COMPLETED);
             } catch (InterruptedException e) {
@@ -434,7 +538,11 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         }
 
         public void stop() {
-            runThread.interrupt();
+
+            if (runThread != null) {
+                runThread.interrupt();
+            }
+
         }
 
         public Status getStatus() {
@@ -499,12 +607,6 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         private       ARunnable           after;
         private       StringReturnable    resultPath = null;
 
-        public interface StringReturnable {
-
-            String getValue();
-
-        }
-
         public MeasureAction(String name, Measurement measurement, ARunnable before, ARunnable after) {
 
             super(name, measurement::start);
@@ -552,7 +654,9 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         public void setAttribute(String name, Object value) {
             attributes.put(name, value.toString());
-            if (getData() != null) getData().setAttribute(name, value.toString());
+            if (getData() != null) {
+                getData().setAttribute(name, value.toString());
+            }
         }
 
         public void stop() {
@@ -562,11 +666,13 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         public void prepare() {
 
-            String resultPath = this.resultPath.getValue();
-
             if (resultPath == null) {
+
                 setData(measurement.newResults());
+
             } else {
+
+                String resultPath = this.resultPath.getValue();
 
                 try {
 
@@ -583,13 +689,15 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
                     for (int i = 1; Files.exists(Path.of(resPath)); i++) {
                         parts[parts.length - 2] = String.format("%s (%d)", last, i);
-                        resPath = String.join(".", parts);
+                        resPath                 = String.join(".", parts);
                     }
 
                     setData(measurement.newResults(resPath));
 
                 } catch (Exception e) {
+
                     setData(measurement.newResults());
+
                 }
 
             }
@@ -625,6 +733,12 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             action.getVariables().putAll(getVariables());
             action.resultPath = resultPath;
             return action;
+
+        }
+
+        public interface StringReturnable {
+
+            String getValue();
 
         }
 

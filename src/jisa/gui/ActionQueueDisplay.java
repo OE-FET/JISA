@@ -13,27 +13,30 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import jisa.control.SRunnable;
 import jisa.experiment.ActionQueue;
 import jisa.experiment.ActionQueue.Action;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ActionQueueDisplay extends JFXElement {
 
-    private final ActionQueue       queue;
-    private final Map<Action, HBox> listItems     = new HashMap<>();
-    private final Map<HBox, Action> reverseMap = new HashMap<>();
-    private final int               scrollTo      = 0;
     @FXML
-    protected     BorderPane        pane;
+    protected BorderPane     pane;
     @FXML
-    protected     ListView<HBox>    list;
-    private       ActionRunnable    onClick       = null;
-    private       ActionRunnable    onDoubleClick = null;
+    protected ListView<HBox> list;
+
+    private final ActionQueue                 queue;
+    private final Map<Action, HBox>           listItems     = new HashMap<>();
+    private final Map<HBox, Action>           reverseMap    = new HashMap<>();
+    private final Map<Action, SRunnable>      clickers      = new HashMap<>();
+    private final Map<Action, SRunnable>      dblClickers   = new HashMap<>();
+    private final int                         scrollTo      = 0;
+    private       ActionRunnable              onClick       = null;
+    private       ActionRunnable              onDoubleClick = null;
 
     public ActionQueueDisplay(String title, ActionQueue queue) {
 
@@ -53,8 +56,17 @@ public class ActionQueueDisplay extends JFXElement {
             for (Action rem : removed) { remove(rem); }
 
             changed.forEach((index, action) -> {
-                HBox item = listItems.get(action);
+
+                HBox item;
+
+                if (listItems.containsKey(action)) {
+                     item = listItems.get(action);
+                } else {
+                    item = makeItem(action);
+                }
+
                 list.getItems().set(index, item);
+
             });
 
             if (!oldSelected.isEmpty()) {
@@ -128,14 +140,21 @@ public class ActionQueueDisplay extends JFXElement {
 
         container.setOnMouseClicked(event -> {
 
-            if (event.getClickCount() >= 2 && onDoubleClick != null) {
+            if (event.getClickCount() >= 2) {
 
-                onDoubleClick.start(action);
+                if (dblClickers.containsKey(action) && dblClickers.get(action) != null) {
+                    dblClickers.get(action).start();
+                } else if (onDoubleClick != null) {
+                    onDoubleClick.start(action);
+                }
 
+            } else {
 
-            } else if (onClick != null) {
-
-                onClick.start(action);
+                if (clickers.containsKey(action) && clickers.get(action) != null) {
+                    clickers.get(action).start();
+                } else if (onClick != null) {
+                    onClick.start(action);
+                }
 
             }
 
@@ -188,6 +207,7 @@ public class ActionQueueDisplay extends JFXElement {
             list.getSelectionModel().clearSelection();
             actions.forEach(a -> list.getSelectionModel().select(listItems.get(a)));
         });
+
     }
 
     public void select(Action a) {
@@ -203,8 +223,16 @@ public class ActionQueueDisplay extends JFXElement {
         this.onClick = onClick;
     }
 
+    public void setOnClick(Action action, SRunnable onClick) {
+        this.clickers.put(action, onClick);
+    }
+
     public void setOnDoubleClick(ActionRunnable onDoubleClick) {
         this.onDoubleClick = onDoubleClick;
+    }
+
+    public void setOnDoubleClick(Action action, SRunnable onClick) {
+        this.dblClickers.put(action, onClick);
     }
 
     public interface ActionRunnable {
@@ -230,11 +258,13 @@ public class ActionQueueDisplay extends JFXElement {
         void click(Action action) throws Exception;
 
         default void runRegardless(Action action) {
+
             try {
                 click(action);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+
         }
 
         default void start(Action action) {

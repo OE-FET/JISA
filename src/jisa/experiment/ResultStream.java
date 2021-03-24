@@ -388,22 +388,79 @@ public class ResultStream extends ResultTable {
     @Override
     public Iterator<Result> iterator() {
 
-        return new Iterator<Result>() {
+        try {
 
-            int rows = getNumRows();
-            int row = 0;
+            RandomAccessFile file = new RandomAccessFile(ResultStream.this.path, "r");
 
-            @Override
-            public boolean hasNext() {
-                return row < rows;
+            if (file.readLine().startsWith("% ATTRIBUTES")) {
+                file.readLine();
             }
 
-            @Override
-            public Result next() {
-                return getRow(row++);
-            }
+            return new Iterator<Result>() {
 
-        };
+                private final int rows = getNumRows();
+                private int row = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return row < rows;
+                }
+
+                @Override
+                public Result next() {
+
+                    try {
+
+                        return new Result(
+                                ResultStream.this,
+                                Arrays.stream(file.readLine().split(","))
+                                      .mapToDouble(Double::parseDouble)
+                                      .toArray()
+                        );
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return null;
+                    } finally {
+
+                        row++;
+
+                        if (!hasNext()) {
+                            try {
+                                file.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                    }
+
+                }
+
+            };
+
+        } catch (IOException e) {
+
+            e.printStackTrace();
+
+            return new Iterator<Result>() {
+
+                private final int rows = getNumRows();
+                private int row = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return row < rows;
+                }
+
+                @Override
+                public Result next() {
+                    return getRow(row++);
+                }
+
+            };
+
+        }
 
     }
 

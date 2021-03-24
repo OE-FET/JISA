@@ -180,7 +180,9 @@ public abstract class ResultTable implements Iterable<Result> {
         addRow(row);
 
         int size = onUpdate.size();
-        for (OnUpdate u : onUpdate) u.run(row);
+        for (int j = 0; j < size; j++) {
+            onUpdate.get(j).run(row);
+        }
 
     }
 
