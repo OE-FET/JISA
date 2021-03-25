@@ -5,6 +5,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.image.Image;
 import jisa.Util;
 import jisa.control.SRunnable;
+import jisa.gui.ActionQueueDisplay;
 import jisa.gui.GUI;
 import jisa.maths.functions.GFunction;
 
@@ -43,7 +44,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         int count = 0;
         for (Action action : queue) {
-            if (action.variables.containsKey(name)) {
+            if (action.attributes.containsKey(name)) {
                 count++;
             }
         }
@@ -94,6 +95,39 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         for (Action action : queue.getQueue()) {
 
             Action copy = mapping.value(action.copy());
+            addAction(copy);
+            list.add(copy);
+
+        }
+
+        return list;
+
+    }
+
+    public synchronized List<Action> addAlteredQueue(ActionQueue queue, ActionQueueDisplay.ActionRunnable alteration) {
+
+        List<Action> list = new LinkedList<>();
+
+        for (Action action : queue.getQueue()) {
+
+            Action copy = action.copy();
+            alteration.runRegardless(copy);
+            addAction(copy);
+            list.add(copy);
+
+        }
+
+        return list;
+
+    }
+
+    public synchronized List<Action> addQueue(ActionQueue queue) {
+
+        List<Action> list = new LinkedList<>();
+
+        for (Action action : queue.getQueue()) {
+
+            Action copy = action.copy();
             addAction(copy);
             list.add(copy);
 
@@ -254,6 +288,18 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         return start(0);
     }
 
+    public Result start(Action from) {
+
+        int index = queue.indexOf(from);
+
+        if (index == -1) {
+            throw new IllegalArgumentException("Cannot start queue from an action that is not in the queue.");
+        }
+
+        return start(index);
+
+    }
+
     public Result start(int from) {
 
         if (queue.size() == 0) {
@@ -263,6 +309,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         if (from < 0 || from >= queue.size()) {
             throw new IndexOutOfBoundsException("There is no action with that index.");
         }
+
 
         isStopped = false;
         isRunning = true;
@@ -468,13 +515,13 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     public static class Action {
 
         private final SRunnable                    runnable;
-        private final SimpleObjectProperty<Status> status    = new SimpleObjectProperty<>(Status.NOT_STARTED);
-        private final List<Listener<Status>>       listeners = new LinkedList<>();
-        private final Map<String, String>          variables = new LinkedHashMap<>();
-        private final Property<String>             name      = new SimpleObjectProperty<>();
-        private       Exception                    exception = null;
-        private       Thread                       runThread = null;
-        private       ResultTable                  data      = null;
+        private final SimpleObjectProperty<Status> status     = new SimpleObjectProperty<>(Status.NOT_STARTED);
+        private final List<Listener<Status>>       listeners  = new LinkedList<>();
+        private final Map<String, String>          attributes = new LinkedHashMap<>();
+        private final Property<String>             name       = new SimpleObjectProperty<>();
+        private       Exception                    exception  = null;
+        private       Thread                       runThread  = null;
+        private       ResultTable                  data       = null;
 
         public Action(String name, SRunnable runnable) {
 
@@ -566,32 +613,69 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             return exception;
         }
 
-        public void setVariable(String name, String value) {
-            variables.put(name, value);
+        public void setAttribute(String name, String value) {
+            attributes.put(name, value);
         }
 
-        public String getVariable(String name) {
-            return variables.get(name);
+        public void setAttribute(String name, Number value) {
+            setAttribute(name, value.toString());
         }
 
-        public String getVariableOrDefault(String name, String defaultValue) {
-            return variables.getOrDefault(name, defaultValue);
+        public String getAttribute(String name) {
+            return attributes.get(name);
         }
 
-        public Map<String, String> getVariables() {
-            return variables;
+        public String getAttributeOrDefault(String name, String defaultValue) {
+            return attributes.getOrDefault(name, defaultValue);
+        }
+
+        public double getDoubleAttribute(String name) {
+            return Double.parseDouble(getAttribute(name));
+        }
+
+        public double getDoubleAttributeOrDefault(String name, double defaultValue) {
+
+            String value = getAttributeOrDefault(name, null);
+
+            if (value == null) {
+                return defaultValue;
+            } else {
+                return Double.parseDouble(value);
+            }
+
+        }
+
+        public int getIntegerAttribute(String name) {
+            return Integer.parseInt(getAttribute(name));
+        }
+
+        public int getIntegerAttributeOrDefault(String name, int defaultValue) {
+
+            String value = getAttributeOrDefault(name, null);
+
+            if (value == null) {
+                return defaultValue;
+            } else {
+                return Integer.parseInt(value);
+            }
+
+        }
+
+
+        public Map<String, String> getAttributes() {
+            return attributes;
         }
 
         public Action copy() {
             Action action = new Action(getName(), runnable);
-            action.variables.putAll(variables);
+            action.attributes.putAll(attributes);
             return action;
         }
 
-        public String getVariableString() {
+        public String getAttributeString() {
 
             List<String> parts = new LinkedList<>();
-            variables.forEach((name, value) -> parts.add(String.format("%s = %s", name, value)));
+            attributes.forEach((name, value) -> parts.add(String.format("%s = %s", name, value)));
             Collections.reverse(parts);
             return String.join(", ", parts);
 
@@ -602,7 +686,6 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     public static class MeasureAction extends Action {
 
         private final Measurement         measurement;
-        private final Map<String, String> attributes = new HashMap<>();
         private       ARunnable           before;
         private       ARunnable           after;
         private       StringReturnable    resultPath = null;
@@ -619,18 +702,18 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         public String getName() {
 
-            if (getVariables().isEmpty()) {
+            if (getAttributes().isEmpty()) {
                 return String.format("%s (%s)", measurement.getName(), super.getName());
             } else {
-                return String.format("%s (%s) (%s)", measurement.getName(), super.getName(), getVariableString());
+                return String.format("%s (%s) (%s)", measurement.getName(), super.getName(), getAttributeString());
             }
 
         }
 
-        public String getVariablePathString() {
+        public String getAttributePathString() {
 
             List<String> parts = new LinkedList<>();
-            getVariables().forEach((name, value) -> parts.add(String.format("%s=%s", name.replace(" ", ""), value.replace(" ", ""))));
+            getAttributes().forEach((name, value) -> parts.add(String.format("%s=%s", name.replace(" ", ""), value.replace(" ", ""))));
             Collections.reverse(parts);
             return String.join("-", parts);
 
@@ -652,12 +735,16 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             resultPath = null;
         }
 
-        public void setAttribute(String name, Object value) {
-            attributes.put(name, value.toString());
+        public void setAttribute(String name, String value) {
+
+            super.setAttribute(name, value);
+
             if (getData() != null) {
-                getData().setAttribute(name, value.toString());
+                getData().setAttribute(name, value);
             }
+
         }
+
 
         public void stop() {
             measurement.stop();
@@ -679,7 +766,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
                     String resPath;
 
                     if (resultPath.contains("%s")) {
-                        resPath = String.format(resultPath, getVariablePathString());
+                        resPath = String.format(resultPath, getAttributePathString());
                     } else {
                         resPath = resultPath;
                     }
@@ -702,7 +789,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
             }
 
-            attributes.forEach((k, v) -> getData().setAttribute(k, v));
+            getAttributes().forEach((k, v) -> getData().setAttribute(k, v));
             before.runRegardless(this);
 
         }
@@ -729,8 +816,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         public MeasureAction copy() {
 
             MeasureAction action = new MeasureAction(nameProperty().getValue(), measurement, before, after);
-            action.attributes.putAll(attributes);
-            action.getVariables().putAll(getVariables());
+            action.getAttributes().putAll(getAttributes());
             action.resultPath = resultPath;
             return action;
 

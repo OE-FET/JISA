@@ -4,6 +4,14 @@
       <root url="jar://$PROJECT_DIR$/lib/javafx-11-combined.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/javafx-sdk-11.0.2/lib/src.zip!/javafx.base" />
+      <root url="jar://$USER_HOME$/javafx-sdk-11.0.2/lib/src.zip!/javafx.controls" />
+      <root url="jar://$USER_HOME$/javafx-sdk-11.0.2/lib/src.zip!/javafx.fxml" />
+      <root url="jar://$USER_HOME$/javafx-sdk-11.0.2/lib/src.zip!/javafx.graphics" />
+      <root url="jar://$USER_HOME$/javafx-sdk-11.0.2/lib/src.zip!/javafx.media" />
+      <root url="jar://$USER_HOME$/javafx-sdk-11.0.2/lib/src.zip!/javafx.swing" />
+      <root url="jar://$USER_HOME$/javafx-sdk-11.0.2/lib/src.zip!/javafx.web" />
+    </SOURCES>
   </library>
 </component>

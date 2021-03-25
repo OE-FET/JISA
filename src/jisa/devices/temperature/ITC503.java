@@ -72,9 +72,20 @@ public class ITC503 extends VISADevice implements MSTC {
     public ITC503(Address address) throws IOException, DeviceException {
 
         super(address);
-        setEOI(false);
+        
+        switch (address.getType()) {
+            
+            case GPIB:
+                setEOI(false);
+                break;
+                
+            case SERIAL:
+                setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.TWO, Connection.Flow.NONE);
+                break;
+            
+        }
+
         setWriteTerminator(TERMINATOR);
-        setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.TWO, Connection.Flow.NONE);
         write(C_SET_COMM_MODE);
         setReadTerminator(TERMINATOR);
         addAutoRemove(TERMINATOR);

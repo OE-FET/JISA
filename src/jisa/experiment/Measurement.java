@@ -18,6 +18,7 @@ public abstract class Measurement {
 
     private final List<Parameter<?>>     parameters  = new ArrayList<>();
     private final List<Configuration<?>> instruments = new ArrayList<>();
+    private       String                 label       = "";
     private       boolean                running     = false;
     private       boolean                stopped     = false;
     private       ResultTable            results     = null;
@@ -44,14 +45,18 @@ public abstract class Measurement {
      *
      * @return Label
      */
-    public abstract String getLabel();
+    public String getLabel() {
+        return label;
+    }
 
     /**
      * Sets the user-given label for this measurement instance.
      *
      * @param value Label to set
      */
-    public abstract void setLabel(String value);
+    public void setLabel(String value) {
+        label = value;
+    }
 
     /**
      * This method should perform the measurement itself and throw and exception if either something is wrong (ie

@@ -35,8 +35,8 @@ public class MeasurementConfigurator extends Tabs {
 
             if (!sections.containsKey(parameter.getSection())) {
                 sections.put(
-                    parameter.getSection(),
-                    new Fields(parameter.getSection())
+                        parameter.getSection(),
+                        new Fields(parameter.getSection())
                 );
             }
 
@@ -48,6 +48,10 @@ public class MeasurementConfigurator extends Tabs {
 
         updateLayout();
 
+    }
+
+    public MeasurementConfigurator(Measurement measurement) {
+        this(measurement.getName(), measurement);
     }
 
     public void linkToConfig(ConfigBlock config) {
@@ -105,13 +109,17 @@ public class MeasurementConfigurator extends Tabs {
 
     public boolean showInput() {
 
-        boolean result;
-
         if (showAsConfirmation()) {
+
             measurement.getParameters().forEach(Parameter::update);
-            sections.values().forEach(f -> f.writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock(f.getTitle())));
-            if (config != null) instrumentGrid.getElements().forEach(c -> ((Configurator) c).writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock("Instrument Configs").subBlock(c.getTitle())));
+
+            if (config != null) {
+                sections.values().forEach(f -> f.writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock(f.getTitle())));
+                instrumentGrid.getElements().forEach(c -> ((Configurator) c).writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock("Instrument Configs").subBlock(c.getTitle())));
+            }
+
             return true;
+
         } else {
             return false;
         }

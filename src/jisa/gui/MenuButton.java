@@ -161,7 +161,6 @@ public interface MenuButton extends SubElement {
         public Separator addSeparator(String heading) {
 
             Label text = new Label(heading);
-            text.setFont(Font.font(text.getFont().getFamily(), FontWeight.BOLD, text.getFont().getSize()));
 
             MenuItem          headingItem = new CustomMenuItem(text, false);
             headingItem.setDisable(true);
