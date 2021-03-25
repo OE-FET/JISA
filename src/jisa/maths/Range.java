@@ -22,7 +22,7 @@ public class Range<T extends Number> implements Iterable<T> {
 
     public Range(T[] data) {this.data = data;}
 
-    public static Range<Double> toDoubleRange(Number... values) {
+    public static Range<Double> manual(Number... values) {
 
         Double[] toReturn = new Double[values.length];
 
@@ -68,7 +68,7 @@ public class Range<T extends Number> implements Iterable<T> {
             values[i] = values[i - 1].add(step);
         }
 
-        return toDoubleRange(values);
+        return manual(values);
 
     }
 
@@ -148,7 +148,7 @@ public class Range<T extends Number> implements Iterable<T> {
             values[i] = values[i - 1].multiply(s, CONTEXT);
         }
 
-        return toDoubleRange(values);
+        return manual(values);
 
     }
 
@@ -213,7 +213,7 @@ public class Range<T extends Number> implements Iterable<T> {
             values.add(v);
         }
 
-        return toDoubleRange(values.toArray(new BigDecimal[0]));
+        return manual(values.toArray(new BigDecimal[0]));
 
     }
 
@@ -230,7 +230,7 @@ public class Range<T extends Number> implements Iterable<T> {
 
         BigDecimal[] roots = Arrays.stream(values).map(v -> v.abs().doubleValue() > 0 ? nthRoot(v.abs(), order, CONTEXT).multiply(BigDecimal.valueOf(v.signum())) : BigDecimal.ZERO).toArray(BigDecimal[]::new);
 
-        return toDoubleRange(roots);
+        return manual(roots);
 
     }
 
@@ -265,7 +265,7 @@ public class Range<T extends Number> implements Iterable<T> {
             values[i] = values[i - 1].add(stepN, CONTEXT);
         }
 
-        return toDoubleRange(values);
+        return manual(values);
 
     }
 

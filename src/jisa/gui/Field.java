@@ -1,5 +1,6 @@
 package jisa.gui;
 
+import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
 
 public interface Field<T> extends SubElement {
@@ -92,5 +93,9 @@ public interface Field<T> extends SubElement {
      * @param text Text to display
      */
     void setText(String text);
+
+    default void writeOtherDefaults(ConfigBlock block) {}
+
+    default void loadOtherDefaults(ConfigBlock block) {}
 
 }

@@ -11,17 +11,20 @@ import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.MenuButton;
 import javafx.scene.control.Separator;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
 import jisa.maths.Range;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
@@ -75,14 +78,18 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
                 block.booleanValue(field.getText()).set(field.getValue());
             } else if (type == String.class) {
                 block.stringValue(field.getText()).set(field.getValue());
-            } else if (type == Range.DoubleRange.class) {
-                Range.DoubleRange range = (Range.DoubleRange) field.getValue();
-                ConfigBlock       sub   = block.subBlock(field.getText());
-                sub.stringValue("Type").set(range.getType().toString());
-                sub.intValue("Order").set(range.getOrder());
-                sub.doubleValue("Start").set(range.get(0));
-                sub.doubleValue("Stop").set(range.get(range.size() - 1));
-                sub.intValue("Steps").set(range.size());
+            } else if (type == Range.class) {
+
+                Range<Double> range = (Range<Double>) field.getValue();
+                ConfigBlock   sub   = block.subBlock(field.getText());
+                sub.clear();
+
+                for (int i = 0; i < range.size(); i++) {
+                    sub.doubleValue(String.valueOf(i)).set(range.get(i));
+                }
+
+                field.writeOtherDefaults(sub);
+
             }
 
         }
@@ -109,17 +116,17 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
                 field.set(block.booleanValue(field.getText()).get());
             } else if (type == String.class) {
                 field.set(block.stringValue(field.getText()).get());
-            } else if (type == Range.DoubleRange.class && block.hasBlock(field.getText())) {
+            } else if (type == Range.class && block.hasBlock(field.getText())) {
 
-                ConfigBlock sub = block.subBlock(field.getText());
-
-                if (sub.hasValue("Type") && sub.hasValue("Order") && sub.hasValue("Start") && sub.hasValue("Stop") && sub.hasValue("Steps")) {
-                    field.set(new Range.DoubleRange(
-                        Range.linear(sub.doubleValue("Start").get(), sub.doubleValue("Stop").get(), sub.intValue("Steps").get()),
-                        Range.Type.valueOf(sub.stringValue("Type").get()),
-                        sub.intValue("Order").get()
-                    ));
+                ConfigBlock  sub    = block.subBlock(field.getText());
+                List<Double> values = new LinkedList<>();
+                for (int i = 0; sub.hasValue(String.valueOf(i)); i++) {
+                    values.add(sub.doubleValue(String.valueOf(i)).getOrDefault(0.0));
                 }
+
+                field.set(Range.manual(values.toArray(Double[]::new)));
+
+                field.loadOtherDefaults(sub);
 
             }
 
@@ -273,136 +280,337 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
     }
 
-    public Field<Range.DoubleRange> addDoubleRange(String name, double defaultMin, double defaultMax, int defaultSteps) {
+    public Field<Range<Double>> addDoubleRange(String name, Range<Double> defaultValues) {
+        return addDoubleRange(name, defaultValues, 0.0, 10.0, 11, 1.0, 2);
+    }
 
-        AtomicReference<SRunnable> onChange = new AtomicReference<>(() -> {});
+    public Field<Range<Double>> addDoubleRange(String name, Range<Double> defaultValues, double min, double max, int count, double dStep, int dOrder) {
 
-        Field<Double>  start = addDoubleField("Start " + name, defaultMin);
-        Field<Double>  stop  = addDoubleField("Stop " + name, defaultMax);
-        Field<Integer> steps = addIntegerField("No. Steps", defaultSteps);
-        Field<Integer> type  = addChoice("Scaling", "Linear", "Exponential", "Polynomial");
-        Field<Integer> order = addIntegerField("Order", 2);
+        Label                             label     = new Label(name);
+        TableView<ObservableList<Double>> tableView = new TableView<>();
+        tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tableView.setMinHeight(150.0);
+        tableView.setPrefWidth(75.0);
 
-        order.setVisible(false);
-        type.setOnChange(() -> {
-            order.setVisible(type.get() == 2 && type.isVisible());
-            onChange.get().run();
+
+        TableColumn<ObservableList<Double>, Double> column = new TableColumn(name);
+        column.setCellValueFactory(row -> new ReadOnlyObjectWrapper<>(row.getValue().get(0)));
+
+        tableView.getColumns().add(column);
+
+        MenuButton addButton = new MenuButton("✚");
+        Button     remButton = new Button("X");
+        Button     mUpButton = new Button("▲");
+        Button     mDnButton = new Button("▼");
+        Button     clrButton = new Button("Clear");
+
+        remButton.setFont(Font.font(remButton.getFont().getFamily(), FontWeight.BOLD, remButton.getFont().getSize()));
+
+        MenuItem addManual      = new MenuItem("Single Value...");
+        MenuItem addManualList  = new MenuItem("Comma-Separated List...");
+        MenuItem addLinear      = new MenuItem("Linear Range...");
+        MenuItem addStep        = new MenuItem("Equal Space Range...");
+        MenuItem addPoly        = new MenuItem("Polynomial Range...");
+        MenuItem addGeometric   = new MenuItem("Geometric Range...");
+        MenuItem addExponential = new MenuItem("Exponential Range...");
+
+        Fields        manualResponse = new Fields("Add Single Value");
+        Field<Double> manualValue    = manualResponse.addDoubleField("Value");
+
+        Fields         linearResponse = new Fields("Add Linear Range");
+        Field<Double>  linearStart    = linearResponse.addDoubleField("Start", min);
+        Field<Double>  linearStop     = linearResponse.addDoubleField("Stop", max);
+        Field<Integer> linearSteps    = linearResponse.addIntegerField("No. Steps", count);
+
+        Fields         stepResponse = new Fields("Add Equal Space Range");
+        Field<Double>  stepStart    = stepResponse.addDoubleField("Start", min);
+        Field<Double>  stepStop     = stepResponse.addDoubleField("Stop", max);
+        Field<Double>  stepStep     = stepResponse.addDoubleField("Step Size", dStep);
+
+        Fields         polyResponse = new Fields("Add Polynomial Range");
+        Field<Double>  polyStart = polyResponse.addDoubleField("Start", min);
+        Field<Double>  polyStop  = polyResponse.addDoubleField("Stop", max);
+        Field<Integer> polySteps = polyResponse.addIntegerField("No. Steps", count);
+        Field<Integer> polyOrder = polyResponse.addIntegerField("Order", dOrder);
+
+        Fields         geomResponse = new Fields("Add Geometric Range");
+        Field<Double>  geomStart    = geomResponse.addDoubleField("Start", min);
+        Field<Double>  geomStop     = geomResponse.addDoubleField("Stop", max);
+        Field<Double>  geomStep     = geomResponse.addDoubleField("Factor", dStep);
+
+        Fields         expResponse = new Fields("Add Geometric Range");
+        Field<Double>  expStart    = expResponse.addDoubleField("Start", min);
+        Field<Double>  expStop     = expResponse.addDoubleField("Stop", max);
+        Field<Integer> expSteps    = expResponse.addIntegerField("No. Steps", count);
+
+        addManual.setOnAction(e -> Util.runAsync(() -> {
+
+            if (manualResponse.showAsConfirmation()) {
+                tableView.getItems().add(FXCollections.observableArrayList(manualValue.get()));
+            }
+
+        }));
+
+        addManualList.setOnAction(e -> Util.runAsync(() -> {
+
+            String[] raw = GUI.inputWindow("Add", "Add Values", "Please enter your values as a comma-separated list:", "Values");
+
+            if (raw != null) {
+                tableView.getItems().addAll(
+                    Arrays.stream(raw[0].split(","))
+                          .map(String::trim)
+                          .map(v -> FXCollections.observableArrayList(Double.parseDouble(v)))
+                          .collect(Collectors.toList())
+                );
+            }
+
+        }));
+
+        addLinear.setOnAction(e -> Util.runAsync(() -> {
+
+            if (linearResponse.showAsConfirmation()) {
+                tableView.getItems().addAll(
+                    Arrays.stream(Range.linear(linearStart.get(), linearStop.get(), linearSteps.get()).array())
+                          .map(FXCollections::observableArrayList)
+                          .collect(Collectors.toList())
+                );
+            }
+
+        }));
+
+        addStep.setOnAction(e -> Util.runAsync(() -> {
+
+            if (stepResponse.showAsConfirmation()) {
+                tableView.getItems().addAll(
+                    Arrays.stream(Range.step(stepStart.get(), stepStop.get(), stepStep.get()).array())
+                          .map(FXCollections::observableArrayList)
+                          .collect(Collectors.toList())
+                );
+            }
+
+        }));
+
+        addPoly.setOnAction(e -> Util.runAsync(() -> {
+
+            if (polyResponse.showAsConfirmation()) {
+                tableView.getItems().addAll(
+                    Arrays.stream(Range.polynomial(polyStart.get(), polyStop.get(), polySteps.get(), polyOrder.get()).array())
+                          .map(FXCollections::observableArrayList)
+                          .collect(Collectors.toList())
+                );
+            }
+
+        }));
+
+        addGeometric.setOnAction(e -> Util.runAsync(() -> {
+
+            if (geomResponse.showAsConfirmation()) {
+                tableView.getItems().addAll(
+                    Arrays.stream(Range.geometric(geomStart.get(), geomStop.get(), geomStep.get()).array())
+                          .map(FXCollections::observableArrayList)
+                          .collect(Collectors.toList())
+                );
+            }
+
+        }));
+
+        addExponential.setOnAction(e -> Util.runAsync(() -> {
+
+            if (expResponse.showAsConfirmation()) {
+                tableView.getItems().addAll(
+                    Arrays.stream(Range.exponential(expStart.get(), expStop.get(), expSteps.get()).array())
+                          .map(FXCollections::observableArrayList)
+                          .collect(Collectors.toList())
+                );
+            }
+
+        }));
+
+        remButton.setOnAction(e -> {
+
+            int index = tableView.getSelectionModel().getSelectedIndex();
+
+            if (index > -1) {
+                tableView.getItems().remove(index);
+            }
+
         });
 
-        Field<Range.DoubleRange> f = new Field<>() {
+        mUpButton.setOnAction(e -> {
+
+            int index = tableView.getSelectionModel().getSelectedIndex();
+
+            if (index > 0) {
+                ObservableList<Double> toMove = tableView.getItems().get(index);
+                tableView.getItems().set(index, tableView.getItems().get(index - 1));
+                tableView.getItems().set(index - 1, toMove);
+                tableView.getSelectionModel().select(index - 1);
+            }
+
+        });
+
+        mDnButton.setOnAction(e -> {
+
+            int index = tableView.getSelectionModel().getSelectedIndex();
+
+            if (index < tableView.getItems().size() - 1 && index > -1) {
+                ObservableList<Double> toMove = tableView.getItems().get(index);
+                tableView.getItems().set(index, tableView.getItems().get(index + 1));
+                tableView.getItems().set(index + 1, toMove);
+                tableView.getSelectionModel().select(index + 1);
+            }
+
+        });
+
+        clrButton.setOnAction(e -> tableView.getItems().clear());
+
+        addButton.getItems()
+                 .addAll(addManual, addManualList, addLinear, addStep, addPoly, addGeometric, addExponential);
+
+        HBox hBox = new HBox(addButton, remButton, mUpButton, mDnButton, clrButton);
+        VBox vBox = new VBox(hBox, tableView);
+
+        hBox.setSpacing(5.0);
+        vBox.setSpacing(5.0);
+
+        label.setMinWidth(Region.USE_PREF_SIZE);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(vBox, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(vBox, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
+        GridPane.setValignment(label, VPos.TOP);
+
+        GUI.runNow(() -> list.addRow(rows++, label, vBox));
+
+        Field<Range<Double>> f = new Field<>() {
+
+            private InvalidationListener l = null;
 
             @Override
-            public void set(Range.DoubleRange value) {
+            public void set(Range<Double> value) {
 
-                start.set(value.get(0));
-                stop.set(value.get(value.size() - 1));
-                steps.set(value.size());
+                GUI.runNow(() -> {
 
-                switch (value.getType()) {
+                    tableView.getItems().clear();
+                    tableView.getItems().addAll(
+                        Stream.of(value.array()).map(FXCollections::observableArrayList).collect(Collectors.toList())
+                    );
 
-                    case LINEAR:
-                        type.set(0);
-                        break;
-
-                    case EXPONENTIAL:
-                        type.set(1);
-                        break;
-
-                    case POLYNOMIAL:
-                        type.set(2);
-
-                }
-
-                order.set(value.getOrder());
+                });
 
             }
 
             @Override
-            public Range.DoubleRange get() {
-
-                switch (type.get()) {
-
-                    case 0:
-                        return new Range.DoubleRange(Range.linear(start.get(), stop.get(), steps.get()), Range.Type.LINEAR, 0);
-
-                    case 1:
-                        return new Range.DoubleRange(Range.exponential(start.get(), stop.get(), steps.get()), Range.Type.EXPONENTIAL, 0);
-
-                    case 2:
-                        return new Range.DoubleRange(Range.polynomial(start.get(), stop.get(), steps.get(), order.get()), Range.Type.POLYNOMIAL, order.get());
-
-                    default:
-                        return null;
-
-                }
-
+            public Range<Double> get() {
+                return Range.manual(tableView.getItems().stream().map(i -> i.get(0)).toArray(Double[]::new));
             }
 
             @Override
-            public void setOnChange(SRunnable change) {
-                onChange.set(change);
+            public void setOnChange(SRunnable onChange) {
+
+                if (l != null) {
+                    tableView.getItems().removeListener(l);
+                }
+
+                l = l -> onChange.start();
+                tableView.getItems().addListener(l);
+
             }
 
             @Override
             public void editValues(String... values) {
 
+                if (values.length != tableView.getColumns().size()) {
+                    return;
+                }
+
+                GUI.runNow(() -> {
+                    for (int i = 0; i < values.length; i++) {
+                        tableView.getColumns().get(i).setText(values[i]);
+                    }
+                });
+
             }
 
             @Override
             public boolean isDisabled() {
-                return type.isDisabled();
+                return tableView.isDisabled();
             }
 
             @Override
             public boolean isVisible() {
-                return type.isVisible();
+                return vBox.isVisible();
             }
 
             @Override
             public void remove() {
-                type.remove();
-                order.remove();
-                start.remove();
-                stop.remove();
-                steps.remove();
-                fields.remove(this);
+
+                GUI.runNow(() -> {
+                    list.getChildren().removeAll(label, vBox);
+                    updateGridding();
+                });
+
             }
 
             @Override
             public String getText() {
-                return start.getText().substring(6);
+                return label.getText();
             }
 
             @Override
             public void setDisabled(boolean disabled) {
-                type.setDisabled(disabled);
-                order.setDisabled(disabled);
-                start.setDisabled(disabled);
-                stop.setDisabled(disabled);
-                steps.setDisabled(disabled);
+
+                GUI.runNow(() -> {
+                    tableView.setDisable(disabled);
+                    addButton.setDisable(disabled);
+                    remButton.setDisable(disabled);
+                    mUpButton.setDisable(disabled);
+                    mDnButton.setDisable(disabled);
+                });
+
             }
 
 
             @Override
             public void setVisible(boolean visible) {
-                type.setVisible(visible);
-                order.setVisible(type.get() == 2 && visible);
-                start.setVisible(visible);
-                stop.setVisible(visible);
-                steps.setVisible(visible);
 
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    vBox.setVisible(visible);
+                    label.setManaged(visible);
+                    vBox.setManaged(visible);
+                });
             }
 
 
             @Override
             public void setText(String text) {
-                start.setText("Start " + text);
-                stop.setText("Stop " + text);
+                GUI.runNow(() -> label.setText(text));
+            }
+
+            public void writeOtherDefaults(ConfigBlock config) {
+                manualResponse.writeToConfig(config.subBlock("Manual Default"));
+                linearResponse.writeToConfig(config.subBlock("Linear Default"));
+                stepResponse.writeToConfig(config.subBlock("Step Default"));
+                polyResponse.writeToConfig(config.subBlock("Polynomial Default"));
+                geomResponse.writeToConfig(config.subBlock("Geometric Default"));
+                expResponse.writeToConfig(config.subBlock("Exponential Default"));
+            }
+
+            public void loadOtherDefaults(ConfigBlock config) {
+                manualResponse.loadFromConfig(config.subBlock("Manual Default"));
+                linearResponse.loadFromConfig(config.subBlock("Linear Default"));
+                stepResponse.loadFromConfig(config.subBlock("Step Default"));
+                polyResponse.loadFromConfig(config.subBlock("Polynomial Default"));
+                geomResponse.loadFromConfig(config.subBlock("Geometric Default"));
+                expResponse.loadFromConfig(config.subBlock("Exponential Default"));
             }
 
         };
 
         fields.add(f);
+        f.set(defaultValues);
         return f;
 
     }
@@ -1256,8 +1464,8 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         tableView.setMinHeight(250.0);
         tableView.setPrefWidth(columns.length * 75.0);
-        Fields                            addNew    = new Fields("Add Row");
-        List<Field<Double>>               addFields = new LinkedList<>();
+        Fields              addNew    = new Fields("Add Row");
+        List<Field<Double>> addFields = new LinkedList<>();
 
         int i = 0;
         for (String colName : columns) {
@@ -1306,10 +1514,10 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
             int index = tableView.getSelectionModel().getSelectedIndex();
 
             if (index > 0) {
-                    ObservableList<Double> toMove = tableView.getItems().get(index);
-                    tableView.getItems().set(index, tableView.getItems().get(index-1));
-                    tableView.getItems().set(index-1, toMove);
-                    tableView.getSelectionModel().select(index-1);
+                ObservableList<Double> toMove = tableView.getItems().get(index);
+                tableView.getItems().set(index, tableView.getItems().get(index - 1));
+                tableView.getItems().set(index - 1, toMove);
+                tableView.getSelectionModel().select(index - 1);
             }
 
         });
@@ -1319,10 +1527,10 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
             int index = tableView.getSelectionModel().getSelectedIndex();
 
             if (index < tableView.getItems().size() - 1 && index > -1) {
-                    ObservableList<Double> toMove = tableView.getItems().get(index);
-                    tableView.getItems().set(index, tableView.getItems().get(index+1));
-                    tableView.getItems().set(index+1, toMove);
-                    tableView.getSelectionModel().select(index+1);
+                ObservableList<Double> toMove = tableView.getItems().get(index);
+                tableView.getItems().set(index, tableView.getItems().get(index + 1));
+                tableView.getItems().set(index + 1, toMove);
+                tableView.getSelectionModel().select(index + 1);
             }
 
         });
@@ -1395,32 +1603,8 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
             }
 
             @Override
-            public void setDisabled(boolean disabled) {
-
-                GUI.runNow(() -> {
-                    tableView.setDisable(disabled);
-                    addButton.setDisable(disabled);
-                    remButton.setDisable(disabled);
-                    mUpButton.setDisable(disabled);
-                    mDnButton.setDisable(disabled);
-                });
-
-            }
-
-            @Override
             public boolean isVisible() {
                 return vBox.isVisible();
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    label.setVisible(visible);
-                    vBox.setVisible(visible);
-                    label.setManaged(visible);
-                    vBox.setManaged(visible);
-                });
             }
 
             @Override
@@ -1437,6 +1621,32 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
             public String getText() {
                 return label.getText();
             }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+
+                GUI.runNow(() -> {
+                    tableView.setDisable(disabled);
+                    addButton.setDisable(disabled);
+                    remButton.setDisable(disabled);
+                    mUpButton.setDisable(disabled);
+                    mDnButton.setDisable(disabled);
+                });
+
+            }
+
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    vBox.setVisible(visible);
+                    label.setManaged(visible);
+                    vBox.setManaged(visible);
+                });
+            }
+
 
             @Override
             public void setText(String text) {

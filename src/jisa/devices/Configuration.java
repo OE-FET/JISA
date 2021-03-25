@@ -16,12 +16,13 @@ public class Configuration<T extends Instrument> {
 
     private final Class<T>           target;
     private final String             name;
-    private final List<T>            choices    = new LinkedList<>();
-    private final List<String>       names      = new LinkedList<>();
-    private final List<Parameter<?>> parameters = new LinkedList<>();
-    private       String             choiceName = null;
-    private       Instrument         input      = null;
-    private       T                  choice     = null;
+    private final List<T>            choices        = new LinkedList<>();
+    private final List<String>       names          = new LinkedList<>();
+    private final List<Parameter<?>> parameters     = new LinkedList<>();
+    private final List<Parameter<?>> pastParameters = new LinkedList<>();
+    private       String             choiceName     = null;
+    private       Instrument         input          = null;
+    private       T                  choice         = null;
 
     public Configuration(String name, Class<T> target) {
         this.name   = name;
@@ -152,7 +153,7 @@ public class Configuration<T extends Instrument> {
 
             } else if (parameter.getType() == Instrument.TableQuantity.class) {
 
-                ConfigBlock              subBlock = block.subBlock(parameter.getName());
+                ConfigBlock subBlock = block.subBlock(parameter.getName());
                 subBlock.clear();
                 Instrument.TableQuantity quantity = (Instrument.TableQuantity) parameter.getValue();
 
@@ -221,14 +222,23 @@ public class Configuration<T extends Instrument> {
 
         List<Parameter<?>> newParameters = choice.getConfigurationParameters(target).stream().map(Parameter::new).collect(Collectors.toList());
 
+        pastParameters.addAll(parameters);
+
+        List<Parameter<?>> toRemove = new LinkedList<>();
+
         for (Parameter p : newParameters) {
 
-            parameters.stream()
+            pastParameters.stream()
                       .filter(p2 -> p.getType().equals(p2.getType()) && p.getName().equals(p2.getName()))
                       .findFirst()
-                      .ifPresent(found -> p.setValue(found.getValue()));
+                      .ifPresent(found -> {
+                          p.setValue(found.getValue());
+                          toRemove.add(found);
+                      });
 
         }
+
+        pastParameters.removeAll(toRemove);
 
         parameters.clear();
         parameters.addAll(newParameters);

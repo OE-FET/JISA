@@ -360,20 +360,33 @@ public abstract class Measurement {
 
     }
 
-    public class RangeParameter extends Parameter<Range.DoubleRange> {
+    public class RangeParameter extends Parameter<Range<Double>> {
 
-        public RangeParameter(String section, String name, String units, double min, double max, int steps, Range.Type type, int order) {
-            super(section, name, units, new Range.DoubleRange(Range.linear(min, max, steps), type, order));
+        private double min   = 0.0;
+        private double max   = 10.0;
+        private int    count = 11;
+        private double step  = 1.0;
+        private int    order = 2;
+
+        public RangeParameter(String section, String name, String units, Range<Double> defaultRange, double min, double max, int count, double step, int order) {
+            super(section, name, units, defaultRange);
+            this.min   = min;
+            this.max   = max;
+            this.count = count;
+            this.step  = step;
+            this.order = order;
+        }
+
+        public RangeParameter(String section, String name, String units, Range<Double> defaultRange) {
+            super(section, name, units, defaultRange);
         }
 
         public RangeParameter(String section, String name, String units, double min, double max, int steps) {
-            this(section, name, units, min, max, steps, Range.Type.LINEAR, 1);
+            this(section, name, units, Range.linear(min, max, steps), min, max, steps, (max - min) / (steps - 1), 2);
         }
 
-        protected Field<Range.DoubleRange> makeField(Fields fields) {
-            Field<Range.DoubleRange> f = fields.addDoubleRange(getTitle(), 0, 1, 2);
-            f.set(getValue());
-            return f;
+        protected Field<Range<Double>> makeField(Fields fields) {
+            return fields.addDoubleRange(getTitle(), getValue(), min, max, count, step, order);
         }
 
     }
