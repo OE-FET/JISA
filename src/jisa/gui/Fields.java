@@ -1192,7 +1192,16 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         Button button = new Button("Browse...");
         button.setMinWidth(Region.USE_PREF_SIZE);
         button.setOnAction(actionEvent -> {
-            String file = GUI.openFileSelect(field.getText().isBlank() ? null : field.getText());
+            String os = System.getProperty("os.name");
+            String full = field.getText();
+            String folder;
+            if (os.contains("Mac")) {
+                folder = full.substring(0, full.lastIndexOf("/"));
+            }
+            else{
+                folder = full.substring(0, full.lastIndexOf("\\"));
+            }
+            String file = GUI.openFileSelect(folder.isBlank() ? null : folder);
             if (file != null) {
                 field.setText(file);
             }
