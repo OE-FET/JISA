@@ -2,6 +2,7 @@ package jisa;
 
 import javafx.application.Platform;
 import jisa.addresses.*;
+import jisa.devices.interfaces.FTIR;
 import jisa.devices.spectrometer.Bruker70v;
 import jisa.devices.temperature.ITC503;
 import jisa.devices.temperature.MercuryITC;
