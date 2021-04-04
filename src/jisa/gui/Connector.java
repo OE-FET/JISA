@@ -23,6 +23,7 @@ import org.reflections.Reflections;
 
 import java.lang.reflect.Modifier;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class Connector<T extends Instrument> extends JFXElement {
@@ -57,6 +58,10 @@ public class Connector<T extends Instrument> extends JFXElement {
             @Override
             public String toString(Class<? extends T> aClass) {
 
+                if (aClass == null) {
+                    return "Unknown";
+                }
+
                 try {
                     return String.format("%s (%s)", aClass.getMethod("getDescription").invoke(null), aClass.getSimpleName());
                 } catch (Exception e) {
@@ -72,7 +77,7 @@ public class Connector<T extends Instrument> extends JFXElement {
 
         });
 
-        driverChoice.getItems().setAll((reflections.getSubTypesOf(connection.getType()).stream().filter(driver ->
+        driverChoice.getItems().setAll((reflections.getSubTypesOf(connection.getType()).stream().filter(Objects::nonNull).filter(driver ->
             !(
                 Modifier.isAbstract(driver.getModifiers())
                     || Modifier.isInterface(driver.getModifiers())
@@ -85,6 +90,7 @@ public class Connector<T extends Instrument> extends JFXElement {
 
         protocolChoice.getItems().setAll(reflections.getSubTypesOf(Address.AddressParams.class)
                                                     .stream()
+                                                    .filter(Objects::nonNull)
                                                     .sorted(Comparator.comparing(Class::getSimpleName))
                                                     .collect(Collectors.toList()));
 

@@ -2,6 +2,9 @@ package jisa.experiment;
 
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.scene.image.Image;
 import jisa.Util;
 import jisa.control.SRunnable;
@@ -14,6 +17,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class ActionQueue implements Iterable<ActionQueue.Action> {
 
@@ -21,7 +25,6 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     private static final ExecutorService              queueExecutor    = Executors.newSingleThreadExecutor();
     private static final ExecutorService              currentExecutor  = Executors.newSingleThreadExecutor();
     private final        List<Action>                 queue            = new LinkedList<>();
-    private final        List<Action>                 oldList          = new LinkedList<>(queue);
     private final        SimpleObjectProperty<Action> current          = new SimpleObjectProperty<>(null);
     private final        List<Listener<Action>>       currentListeners = new LinkedList<>();
     private final        List<ListListener<Action>>   queueListeners   = new LinkedList<>();
@@ -113,6 +116,22 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             Action copy = action.copy();
             alteration.runRegardless(copy);
             addAction(copy);
+            list.add(copy);
+
+        }
+
+        return list;
+
+    }
+
+    public synchronized List<Action> getAlteredCopy(ActionQueueDisplay.ActionRunnable alteration) {
+
+        List<Action> list = new LinkedList<>();
+
+        for (Action action : this) {
+
+            Action copy = action.copy();
+            alteration.runRegardless(copy);
             list.add(copy);
 
         }
@@ -290,7 +309,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
     public Result start(Action from) {
 
-        int index = queue.indexOf(from);
+        int index = getFlatActionList().indexOf(from);
 
         if (index == -1) {
             throw new IllegalArgumentException("Cannot start queue from an action that is not in the queue.");
@@ -300,13 +319,43 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
     }
 
+    public List<Action> getFlatActionList() {
+        List<Action> output = new LinkedList<>();
+        flatten(queue, output);
+        return output;
+    }
+
+    public Action getInterruptedAction() {
+        return getFlatActionList()
+                .stream()
+                .filter(a -> !(a instanceof MultiAction) && a.getStatus() == Status.INTERRUPTED)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void flatten(List<Action> actions, List<Action> output) {
+
+        for (Action action : actions) {
+
+            output.add(action);
+
+            if (action instanceof MultiAction) {
+                flatten(((MultiAction) action).getActions(), output);
+            }
+
+        }
+
+    }
+
     public Result start(int from) {
 
-        if (queue.size() == 0) {
+        List<Action> flatQueue = getFlatActionList();
+
+        if (flatQueue.size() == 0) {
             throw new IllegalStateException("There are no actions in this queue.");
         }
 
-        if (from < 0 || from >= queue.size()) {
+        if (from < 0 || from >= flatQueue.size()) {
             throw new IndexOutOfBoundsException("There is no action with that index.");
         }
 
@@ -314,20 +363,26 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         isStopped = false;
         isRunning = true;
 
-        List<Action> queue = from > 0 ? this.queue.subList(from, this.queue.size()) : this.queue;
+        List<Action> queue = from > 0 ? flatQueue.subList(from, flatQueue.size()) : flatQueue;
 
         for (Action action : queue) {
             action.status.set(Status.NOT_STARTED);
         }
 
-        for (Action action : queue) {
+        for (Action action : queue.stream().filter(a -> !(a instanceof MultiAction)).toArray(Action[]::new)) {
 
             int    count = 0;
             Status result;
 
             do {
 
-                result = runAction(action);
+                action.prepare();
+                current.set(action);
+                action.start();
+                action.cleanUp();
+
+                result = action.getStatus();
+
                 count++;
 
                 if (isStopped) {
@@ -351,17 +406,6 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
         }
 
         return Result.COMPLETED;
-
-    }
-
-    private Status runAction(Action action) {
-
-        action.prepare();
-        current.set(action);
-        action.start();
-        action.cleanUp();
-
-        return action.getStatus();
 
     }
 
@@ -514,7 +558,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
     public static class Action {
 
-        private final SRunnable                    runnable;
+        private       SRunnable                    runnable;
         private final SimpleObjectProperty<Status> status     = new SimpleObjectProperty<>(Status.NOT_STARTED);
         private final List<Listener<Status>>       listeners  = new LinkedList<>();
         private final Map<String, String>          attributes = new LinkedHashMap<>();
@@ -536,6 +580,13 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
         }
 
+        public void setRunnable(SRunnable runnable) {
+            this.runnable = runnable;
+        }
+
+        public SRunnable getRunnable() {
+            return runnable;
+        }
 
         public Property<String> nameProperty() {
             return name;
@@ -570,18 +621,22 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             runThread = Thread.currentThread();
 
             try {
-                status.set(getStatus() == Status.NOT_STARTED ? Status.RUNNING : Status.RETRY);
+                setStatus(getStatus() == Status.NOT_STARTED ? Status.RUNNING : Status.RETRY);
                 runnable.run();
-                status.set(Status.COMPLETED);
+                setStatus(Status.COMPLETED);
             } catch (InterruptedException e) {
-                status.set(Status.INTERRUPTED);
                 exception = e;
+                setStatus(Status.INTERRUPTED);
             } catch (Exception e) {
-                status.set(Status.ERROR);
-                e.printStackTrace();
                 exception = e;
+                setStatus(Status.ERROR);
+                e.printStackTrace();
             }
 
+        }
+
+        protected synchronized void setStatus(Status status) {
+            this.status.set(status);
         }
 
         public void stop() {
@@ -683,6 +738,84 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
     }
 
+    public static class MultiAction extends Action {
+
+        private final ObservableList<Action> actions = FXCollections.observableArrayList();
+        private final Property<Action>       current = new SimpleObjectProperty<>(null);
+
+        public MultiAction(String name, Action... actions) {
+            super(name, () -> {});
+
+            this.actions.addListener((ListChangeListener<? super Action>) change -> {
+
+                List<Action> added = new LinkedList<>();
+
+                while (change.next()) {
+                    added.addAll(change.getAddedSubList());
+                }
+
+                for (Action a : added) {
+                    a.addStatusListener(this::updateStatus);
+                }
+
+            });
+
+            this.actions.addAll(actions);
+        }
+
+        public void start() {
+
+        }
+
+        public void updateStatus() {
+
+            long    failed      = actions.stream().filter(a -> a.getStatus() == Status.ERROR).count();
+            boolean running     = actions.stream().anyMatch(a -> a.getStatus() == Status.RUNNING);
+            boolean completed   = actions.stream().allMatch(a -> a.getStatus() == Status.COMPLETED);
+            boolean interrupted = actions.stream().anyMatch(a -> a.getStatus() == Status.INTERRUPTED);
+            long    size        = actions.size();
+
+            if (running) {
+                setStatus(Status.RUNNING);
+                current.setValue(actions.stream().filter(a -> a.getStatus() == Status.RUNNING).findFirst().orElse(null));
+            } else if (interrupted) {
+                setStatus(Status.INTERRUPTED);
+            } else if (failed > 0) {
+                setStatus(Status.ERROR);
+            } else if (completed) {
+                setStatus(Status.COMPLETED);
+            } else {
+                setStatus(Status.NOT_STARTED);
+            }
+
+        }
+
+        public Exception getException() {
+            return new Exception(String.format("Errors encountered with %d sub-actions.", actions.stream().filter(a -> a.getStatus() == Status.ERROR).count()));
+        }
+
+        public ObservableList<Action> getActions() {
+            return actions;
+        }
+
+        public Property<Action> currentProperty() {
+            return current;
+        }
+
+        public MultiAction copy() {
+            MultiAction action = new MultiAction(getName());
+            action.getActions().addAll(getActions().stream().map(Action::copy).collect(Collectors.toList()));
+            action.getAttributes().putAll(getAttributes());
+            return action;
+        }
+
+        public void setAttribute(String name, String value) {
+            super.setAttribute(name, value);
+            actions.forEach(a -> a.setAttribute(name, value));
+        }
+
+    }
+
     public static class MeasureAction extends Action {
 
         private final Measurement         measurement;
@@ -744,7 +877,6 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             }
 
         }
-
 
         public void stop() {
             measurement.stop();

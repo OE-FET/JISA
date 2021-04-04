@@ -110,18 +110,21 @@ public class MeasurementConfigurator extends Tabs {
     public boolean showInput() {
 
         if (showAsConfirmation()) {
-
-            measurement.getParameters().forEach(Parameter::update);
-
-            if (config != null) {
-                sections.values().forEach(f -> f.writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock(f.getTitle())));
-                instrumentGrid.getElements().forEach(c -> ((Configurator) c).writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock("Instrument Configs").subBlock(c.getTitle())));
-            }
-
+            update();
             return true;
-
         } else {
             return false;
+        }
+
+    }
+
+    public void update() {
+
+        measurement.getParameters().forEach(Parameter::update);
+
+        if (config != null) {
+            sections.values().forEach(f -> f.writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock(f.getTitle())));
+            instrumentGrid.getElements().forEach(c -> ((Configurator) c).writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock("Instrument Configs").subBlock(c.getTitle())));
         }
 
     }
