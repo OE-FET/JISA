@@ -14,7 +14,7 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/json-20180813.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jlibmodbus-1.2.9.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/commonmark-0.12.1.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/lib/javafx-combined.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/javafx-16-combined.jar" path-in-jar="/" />
       <element id="directory" name="native">
         <element id="dir-copy" path="$PROJECT_DIR$/native" />
       </element>

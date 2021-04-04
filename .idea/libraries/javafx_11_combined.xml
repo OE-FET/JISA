@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="javafx-11-combined">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/javafx-combined.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-16-combined.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
