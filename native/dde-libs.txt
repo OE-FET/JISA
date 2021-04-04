@@ -1,2 +1,0 @@
-JavaDDE.dll
-JavaDDEx64.dll

@@ -2,19 +2,18 @@ package jisa.gui;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.ScrollBar;
-import javafx.scene.control.SelectionMode;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import jisa.control.SRunnable;
@@ -44,6 +43,7 @@ public class ActionQueueDisplay extends JFXElement {
     private final int                         scrollTo      = 0;
     private       ActionRunnable              onClick       = null;
     private       ActionRunnable              onDoubleClick = null;
+    private       ScrollBar                   scrollBar     = null;
 
     public ActionQueueDisplay(String title, ActionQueue queue) {
 
@@ -156,23 +156,17 @@ public class ActionQueueDisplay extends JFXElement {
 
                 if (!box.contains(item)) {
 
-                    ScrollBar bar = list.lookupAll(".scroll-bar")
-                            .stream()
-                            .filter(e -> e instanceof ScrollBar)
-                            .map(e -> (ScrollBar) e)
-                            .filter(e -> e.getOrientation() == Orientation.VERTICAL)
-                            .findFirst()
-                            .orElse(null);
+                    ScrollBar scrollBar = getScrollBar();
 
-                    if (bar != null) {
+                    if (scrollBar != null) {
 
-                        double value    = bar.getValue();
+                        double value    = scrollBar.getValue();
                         double height   = list.getItems().stream().mapToDouble(e -> ((Region) e).getHeight()).sum() - box.getHeight();
                         double scroll   = value * height;
                         double position = (item.getMinY() - box.getMinY()) + scroll;
                         double fraction = position / height;
 
-                        bar.setValue(fraction);
+                        scrollBar.setValue(fraction);
 
                     }
 
@@ -207,12 +201,14 @@ public class ActionQueueDisplay extends JFXElement {
             list.setMouseTransparent(true);
             list.setBackground(Background.EMPTY);
             VBox outer = new VBox(container, list);
-            VBox.setMargin(list, new Insets(0, 0, 0, 15));
+            VBox.setMargin(list, new Insets(0,0,0,15));
 
             for (Action a : ((ActionQueue.MultiAction) action).getActions()) {
-                Node item = makeItem(a, false);
+
+                Region item = (Region) makeItem(a, false);
                 item.setMouseTransparent(true);
                 list.getChildren().add(item);
+
             }
 
             ((ActionQueue.MultiAction) action).getActions().addListener((InvalidationListener) l -> GUI.runNow(() -> {
@@ -220,7 +216,8 @@ public class ActionQueueDisplay extends JFXElement {
                 list.getChildren().clear();
 
                 for (Action a : ((ActionQueue.MultiAction) action).getActions()) {
-                    Node item = makeItem(a, false);
+
+                    Region item = (Region) makeItem(a, false);
                     item.setMouseTransparent(true);
                     list.getChildren().add(item);
                 }
@@ -263,6 +260,24 @@ public class ActionQueueDisplay extends JFXElement {
         reverseMap.put(overall, action);
 
         return overall;
+
+    }
+
+    protected ScrollBar getScrollBar() {
+
+        if (scrollBar == null) {
+
+            scrollBar = list.lookupAll(".scroll-bar")
+                    .stream()
+                    .filter(e -> e instanceof ScrollBar)
+                    .map(e -> (ScrollBar) e)
+                    .filter(e -> e.getOrientation() == Orientation.VERTICAL)
+                    .findFirst()
+                    .orElse(null);
+
+        }
+
+        return scrollBar;
 
     }
 
@@ -316,6 +331,35 @@ public class ActionQueueDisplay extends JFXElement {
                 list.getSelectionModel().select(listItems.get(a));
             });
         }
+    }
+
+    public void clearSelection() {
+        GUI.runNow(list.getSelectionModel()::clearSelection);
+    }
+
+    public void setDisabled(boolean disabled) {
+        GUI.runNow(() -> list.setDisable(disabled));
+    }
+
+    public boolean isDisabled() {
+        return list.isDisabled();
+    }
+
+    public void setSelectable(boolean selectable) {
+        list.setMouseTransparent(!selectable);
+    }
+
+    public boolean isSelectable() {
+        return !list.isMouseTransparent();
+    }
+
+    public void scrollToTop() {
+
+        GUI.runNow(() -> {
+            ScrollBar scrollBar = getScrollBar();
+            scrollBar.setValue(0.0);
+        });
+
     }
 
     public void setOnClick(ActionRunnable onClick) {

@@ -25,6 +25,7 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/usb4java-1.3.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/usb4java-javax-1.3.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/usb-api-1.0.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/pretty-tools-JDDE-2.1.0.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
