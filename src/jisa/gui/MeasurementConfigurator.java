@@ -13,7 +13,7 @@ public class MeasurementConfigurator extends Tabs {
     private final Map<String, Fields>   sections          = new LinkedHashMap<>();
     private final Map<Parameter, Field> parameterFieldMap = new HashMap<>();
     private final Grid                  parameterGrid     = new Grid("Parameters", 1);
-    private final Grid                  instrumentGrid    = new Grid("Instruments", 2);
+    private final Grid                  instrumentGrid    = new Grid("Instruments", 1);
     private       ConfigBlock           config            = null;
     private       int                   numColumns        = 2;
     private       boolean               colSpanning       = true;

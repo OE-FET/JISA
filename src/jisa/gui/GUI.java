@@ -493,7 +493,7 @@ public class GUI extends Application {
                 final int index = i;
 
                 Button button = new Button(option);
-                button.setPadding(new Insets(10));
+                button.setPadding(new Insets(7.5));
                 button.setMaxWidth(Integer.MAX_VALUE);
                 button.setAlignment(Pos.CENTER_LEFT);
                 list.getChildren().add(button);

@@ -1,6 +1,7 @@
 package jisa.gui;
 
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -34,8 +35,8 @@ public class JFXElement implements Element {
     private final ObjectProperty<String> title     = new SimpleObjectProperty<>("");
     private final DoubleProperty         width     = new SimpleDoubleProperty(-1);
     private final DoubleProperty         height    = new SimpleDoubleProperty(-1);
-    private final DoubleProperty         maxWidth  = new SimpleDoubleProperty(Double.POSITIVE_INFINITY);
-    private final DoubleProperty         maxHeight = new SimpleDoubleProperty(Double.POSITIVE_INFINITY);
+    private final DoubleProperty         maxWidth  = new SimpleDoubleProperty(Double.MAX_VALUE);
+    private final DoubleProperty         maxHeight = new SimpleDoubleProperty(Double.MAX_VALUE);
     private final ToolBar                toolBar;
     private final ButtonBar              buttonBar;
     private final Scene                  scene;
@@ -418,11 +419,11 @@ public class JFXElement implements Element {
     }
 
     private void updateWidth() {
-        if (width.get() >= 0) { stage.setWidth(Math.min(maxWidth.get(), width.get())); }
+        if (stage != null && width.get() >= 0) { stage.setWidth(Math.min(maxWidth.get(), width.get())); }
     }
 
     private void updateHeight() {
-        if (height.get() >= 0) { stage.setHeight(Math.min(maxHeight.get(), height.get())); }
+        if (stage != null && height.get() >= 0) { stage.setHeight(Math.min(maxHeight.get(), height.get())); }
     }
 
     private void updateIcon() {
@@ -441,45 +442,48 @@ public class JFXElement implements Element {
     public void show() {
 
         Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
-
-        var size = new Object() {
-            double height = 0.0;
-            double width  = 0.0;
-        };
-
-        GUI.runNow(() -> {
-
-            Stage stage = getStage();
-            stage.show();
-            size.width = stage.getWidth();
-            size.height = stage.getHeight();
-
-        });
+        Stage       stage  = getStage();
 
         if (stage.isMaximized()) {
+            GUI.runNow(stage::show);
             return;
         }
 
         GUI.runNow(() -> {
 
-            if (width.get() < 0 && height.get() < 0) {
+            stage.setMaxWidth(Math.min(bounds.getWidth(), maxWidth.get()));
+            stage.setMaxHeight(Math.min(bounds.getHeight(), maxHeight.get()));
 
-                size.height = Math.min(maxHeight.get(), Math.min(stage.getHeight(), bounds.getHeight()));
-                size.width  = Math.min(maxWidth.get(), Math.min(stage.getWidth(), bounds.getWidth()));
-
-                stage.setHeight(size.height);
-                stage.setWidth(size.width);
-
-                stage.setX((bounds.getMinX() + bounds.getMaxX()) / 2 - (size.width / 2));
-                stage.setY(Math.min(bounds.getHeight() / 4, (bounds.getMinY() + bounds.getMaxY()) / 2 - (size.height / 2)));
-
-                stage.setX(Math.min(bounds.getMaxX(), Math.max(stage.getX(), bounds.getMinX())));
-                stage.setY(Math.min(bounds.getMaxY(), Math.max(stage.getY(), bounds.getMinY())));
-
-            } else {
+            if (width.get() > -1) {
                 stage.setWidth(Math.min(maxWidth.get(), width.get()));
+            }
+
+            if (height.get() > -1) {
                 stage.setHeight(Math.min(maxHeight.get(), height.get()));
             }
+
+            stage.centerOnScreen();
+
+            stage.heightProperty().addListener(new InvalidationListener() {
+
+                @Override
+                public void invalidated(Observable observable) {
+                    stage.centerOnScreen();
+                    stage.heightProperty().removeListener(this);
+                }
+
+            });
+
+            stage.show();
+
+            double height = Math.min(maxHeight.get(), stage.getHeight());
+            double width  = Math.min(maxWidth.get(), stage.getWidth());
+
+            stage.setX((bounds.getMinX() + bounds.getMaxX()) / 2.0 - (width / 2.0));
+            stage.setY(Math.min(bounds.getMinY() + (bounds.getHeight() / 4.0), (bounds.getMinY() + bounds.getMaxY()) / 2.0 - (height / 2.0)));
+
+            stage.setMaxWidth(Double.MAX_VALUE);
+            stage.setMaxHeight(Double.MAX_VALUE);
 
         });
 
