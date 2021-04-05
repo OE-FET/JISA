@@ -528,7 +528,7 @@ public class ITC503 extends VISADevice implements MSTC {
 
             if (!match.find()) {
                 System.out.println(response);
-                throw new IOException("Improperly formatted response from ITC503");
+                throw new IOException(String.format("Improperly formatted response from ITC503: \"%s\"", response));
             }
 
             X = Integer.parseInt(match.group(1));

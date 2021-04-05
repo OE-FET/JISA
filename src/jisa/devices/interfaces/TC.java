@@ -226,7 +226,7 @@ public interface TC extends PID, TMeter {
             this::getTemperature,
             temperature,
             pctMargin,
-            100,
+            1000,
             time
         );
 

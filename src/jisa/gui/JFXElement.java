@@ -479,6 +479,9 @@ public class JFXElement implements Element {
             double height = Math.min(maxHeight.get(), stage.getHeight());
             double width  = Math.min(maxWidth.get(), stage.getWidth());
 
+            stage.setHeight(height);
+            stage.setWidth(width);
+
             stage.setX((bounds.getMinX() + bounds.getMaxX()) / 2.0 - (width / 2.0));
             stage.setY(Math.min(bounds.getMinY() + (bounds.getHeight() / 4.0), (bounds.getMinY() + bounds.getMaxY()) / 2.0 - (height / 2.0)));
 

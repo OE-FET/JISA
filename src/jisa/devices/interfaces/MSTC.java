@@ -160,7 +160,7 @@ public interface MSTC extends TC, MSTMeter, Output<MSTC> {
             () -> getTemperature(sensor),
             temperature,
             pctMargin,
-            100,
+            1000,
             time
         );
 

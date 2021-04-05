@@ -50,6 +50,10 @@ public class Synch {
 
         while (list.size() * interval < duration) {
 
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException("Interrupted");
+            }
+
             double value = valueToCheck.getValue();
             list.add(value);
 
@@ -81,6 +85,10 @@ public class Synch {
         double max  = target * (1 + (pctMargin / 100D));
 
         while (time < duration) {
+
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException("Interrupted");
+            }
 
             double value = valueToCheck.get();
 
