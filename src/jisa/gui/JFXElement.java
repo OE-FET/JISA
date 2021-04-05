@@ -453,12 +453,10 @@ public class JFXElement implements Element {
             stage.show();
             size.width = stage.getWidth();
             size.height = stage.getHeight();
-            stage.close();
 
         });
 
         if (stage.isMaximized()) {
-            GUI.runNow(() -> stage.show());
             return;
         }
 
@@ -482,8 +480,6 @@ public class JFXElement implements Element {
                 stage.setWidth(Math.min(maxWidth.get(), width.get()));
                 stage.setHeight(Math.min(maxHeight.get(), height.get()));
             }
-
-            stage.show();
 
         });
 
