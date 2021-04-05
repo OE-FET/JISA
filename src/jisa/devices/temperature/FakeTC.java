@@ -18,7 +18,7 @@ public class FakeTC implements TC {
     private double current  = 300.0;
     private final RTask  updater  = new RTask(500, () -> {
 
-        double diff = (setPoint - current) / 1e2;
+        double diff = (setPoint - current) / 10;
 
         if (Math.abs(diff) < 0.1) {
             diff = Math.signum(diff) * 0.1;

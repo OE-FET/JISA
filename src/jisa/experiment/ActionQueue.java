@@ -376,6 +376,12 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
             do {
 
+                if (isStopped) {
+                    isRunning = false;
+                    action.setStatus(Status.INTERRUPTED);
+                    return Result.INTERRUPTED;
+                }
+
                 action.prepare();
                 current.set(action);
                 action.start();
@@ -383,12 +389,12 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
 
                 result = action.getStatus();
 
-                count++;
-
-                if (isStopped) {
+                if (result == Status.INTERRUPTED) {
                     isRunning = false;
                     return Result.INTERRUPTED;
                 }
+
+                count++;
 
             } while (result != Status.COMPLETED && count < maxAttempts);
 
@@ -415,10 +421,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
     public void stop() {
 
         isStopped = true;
-
-        if (current.isNotNull().get()) {
-            current.get().stop();
-        }
+        getFlatActionList().forEach(Action::stop);
 
     }
 
@@ -773,6 +776,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
             boolean running     = actions.stream().anyMatch(a -> a.getStatus() == Status.RUNNING);
             boolean completed   = actions.stream().allMatch(a -> a.getStatus() == Status.COMPLETED);
             boolean interrupted = actions.stream().anyMatch(a -> a.getStatus() == Status.INTERRUPTED);
+            boolean notStarted  = actions.stream().allMatch(a -> a.getStatus() == Status.NOT_STARTED);
             long    size        = actions.size();
 
             if (running) {
@@ -784,7 +788,7 @@ public class ActionQueue implements Iterable<ActionQueue.Action> {
                 setStatus(Status.ERROR);
             } else if (completed) {
                 setStatus(Status.COMPLETED);
-            } else {
+            } else if (notStarted) {
                 setStatus(Status.NOT_STARTED);
             }
 

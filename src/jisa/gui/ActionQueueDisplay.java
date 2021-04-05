@@ -118,6 +118,11 @@ public class ActionQueueDisplay extends JFXElement {
         Label     status = new Label(action.getStatus().getText());
         name.setFont(Font.font(name.getFont().getName(), FontWeight.BOLD, 16));
 
+        if (!link) {
+            name.setTextFill(Colour.BLACK);
+            status.setTextFill(Colour.BLACK);
+        }
+
         action.nameProperty().addListener((o) -> GUI.runNow(() -> name.setText(action.getName())));
 
         action.addStatusListener((old, value) -> GUI.runNow(() -> {
@@ -199,15 +204,27 @@ public class ActionQueueDisplay extends JFXElement {
 
             VBox list  = new VBox();
             list.setMouseTransparent(true);
-            list.setBackground(Background.EMPTY);
+            list.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
+            list.setBorder(new Border(new BorderStroke(Color.web("#c8c8c8"), BorderStrokeStyle.DASHED, null, BorderStroke.THIN)));
+            list.setPadding(new Insets(5.0));
             VBox outer = new VBox(container, list);
-            VBox.setMargin(list, new Insets(0,0,0,15));
+            VBox.setMargin(list, new Insets(5,0,5,47));
 
+            int i = 0;
             for (Action a : ((ActionQueue.MultiAction) action).getActions()) {
 
                 Region item = (Region) makeItem(a, false);
+
+                if (i % 2 == 0) {
+                    item.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
+                } else {
+                    item.setBackground(new Background(new BackgroundFill(Color.web("#f9f9f9"), null, null)));
+                }
+
                 item.setMouseTransparent(true);
                 list.getChildren().add(item);
+
+                i++;
 
             }
 
@@ -215,11 +232,22 @@ public class ActionQueueDisplay extends JFXElement {
 
                 list.getChildren().clear();
 
+                int j = 0;
                 for (Action a : ((ActionQueue.MultiAction) action).getActions()) {
 
                     Region item = (Region) makeItem(a, false);
+
+                    if (j % 2 == 0) {
+                        item.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
+                    } else {
+                        item.setBackground(new Background(new BackgroundFill(Color.web("#f9f9f9"), null, null)));
+                    }
+
                     item.setMouseTransparent(true);
                     list.getChildren().add(item);
+
+                    j++;
+
                 }
 
             }));

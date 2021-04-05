@@ -18,6 +18,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import jisa.Util;
 import jisa.control.SRunnable;
 import jisa.enums.Icon;
 
@@ -29,14 +30,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class JFXElement implements Element {
 
     private final BorderPane             borderPane;
-    private final ObjectProperty<Image>  icon   = new SimpleObjectProperty<>(null);
-    private final ObjectProperty<String> title  = new SimpleObjectProperty<>("");
-    private final DoubleProperty         width  = new SimpleDoubleProperty(-1);
-    private final DoubleProperty         height = new SimpleDoubleProperty(-1);
+    private final ObjectProperty<Image>  icon      = new SimpleObjectProperty<>(null);
+    private final ObjectProperty<String> title     = new SimpleObjectProperty<>("");
+    private final DoubleProperty         width     = new SimpleDoubleProperty(-1);
+    private final DoubleProperty         height    = new SimpleDoubleProperty(-1);
+    private final DoubleProperty         maxWidth  = new SimpleDoubleProperty(Double.POSITIVE_INFINITY);
+    private final DoubleProperty         maxHeight = new SimpleDoubleProperty(Double.POSITIVE_INFINITY);
     private final ToolBar                toolBar;
     private final ButtonBar              buttonBar;
     private final Scene                  scene;
-    private       Stage                  stage  = null;
+    private       Stage                  stage     = null;
 
     public JFXElement(String title, Node centre) {
 
@@ -216,7 +219,15 @@ public class JFXElement implements Element {
     }
 
     public void setMaxWidth(double maxWidth) {
-        GUI.runNow(() -> borderPane.setMaxWidth(maxWidth));
+        GUI.runNow(() -> this.maxWidth.set(maxWidth));
+    }
+
+    public double getMaxHeight() {
+        return borderPane.getMaxHeight();
+    }
+
+    public void setMaxHeight(double maxHeight) {
+        GUI.runNow(() -> this.maxHeight.set(maxHeight));
     }
 
     /**
@@ -331,7 +342,7 @@ public class JFXElement implements Element {
 
         close();
 
-        for (Button button : added) button.remove();
+        for (Button button : added) { button.remove(); }
 
         return result.get();
 
@@ -373,7 +384,7 @@ public class JFXElement implements Element {
             this.width.set(-1);
             this.height.set(-1);
 
-            if (isShowing()) stage.sizeToScene();
+            if (isShowing()) { stage.sizeToScene(); }
 
         });
     }
@@ -390,6 +401,8 @@ public class JFXElement implements Element {
 
                 width.addListener(observable -> updateWidth());
                 height.addListener(observable -> updateHeight());
+                maxWidth.addListener(observable -> updateWidth());
+                maxHeight.addListener(observable -> updateHeight());
                 icon.addListener(observable -> updateIcon());
 
                 updateWidth();
@@ -405,11 +418,11 @@ public class JFXElement implements Element {
     }
 
     private void updateWidth() {
-        if (width.get() >= 0) stage.setWidth(width.get());
+        if (width.get() >= 0) { stage.setWidth(Math.min(maxWidth.get(), width.get())); }
     }
 
     private void updateHeight() {
-        if (height.get() >= 0) stage.setHeight(height.get());
+        if (height.get() >= 0) { stage.setHeight(Math.min(maxHeight.get(), height.get())); }
     }
 
     private void updateIcon() {
@@ -429,23 +442,48 @@ public class JFXElement implements Element {
 
         Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
 
+        var size = new Object() {
+            double height = 0.0;
+            double width  = 0.0;
+        };
+
         GUI.runNow(() -> {
 
             Stage stage = getStage();
             stage.show();
+            size.width = stage.getWidth();
+            size.height = stage.getHeight();
+            stage.close();
 
-            if (stage.isMaximized()) {
-                return;
-            }
+        });
+
+        if (stage.isMaximized()) {
+            GUI.runNow(() -> stage.show());
+            return;
+        }
+
+        GUI.runNow(() -> {
 
             if (width.get() < 0 && height.get() < 0) {
-                stage.sizeToScene();
-                stage.setHeight(Math.min(stage.getHeight(), bounds.getHeight()));
-                stage.setWidth(Math.min(stage.getWidth(), bounds.getWidth()));
+
+                size.height = Math.min(maxHeight.get(), Math.min(stage.getHeight(), bounds.getHeight()));
+                size.width  = Math.min(maxWidth.get(), Math.min(stage.getWidth(), bounds.getWidth()));
+
+                stage.setHeight(size.height);
+                stage.setWidth(size.width);
+
+                stage.setX((bounds.getMinX() + bounds.getMaxX()) / 2 - (size.width / 2));
+                stage.setY(Math.min(bounds.getHeight() / 4, (bounds.getMinY() + bounds.getMaxY()) / 2 - (size.height / 2)));
+
+                stage.setX(Math.min(bounds.getMaxX(), Math.max(stage.getX(), bounds.getMinX())));
+                stage.setY(Math.min(bounds.getMaxY(), Math.max(stage.getY(), bounds.getMinY())));
+
             } else {
-                stage.setWidth(width.get());
-                stage.setHeight(height.get());
+                stage.setWidth(Math.min(maxWidth.get(), width.get()));
+                stage.setHeight(Math.min(maxHeight.get(), height.get()));
             }
+
+            stage.show();
 
         });
 

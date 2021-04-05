@@ -483,8 +483,8 @@ public class GUI extends Application {
             dialog.setResizable(true);
 
             VBox list = new VBox();
-            list.setSpacing(15);
-            list.setPadding(new Insets(15, 15, 15, 15));
+            list.setSpacing(10);
+            list.setPadding(new Insets(10));
             list.getChildren().add(new Label(message));
 
             int i = 0;
@@ -493,6 +493,7 @@ public class GUI extends Application {
                 final int index = i;
 
                 Button button = new Button(option);
+                button.setPadding(new Insets(10));
                 button.setMaxWidth(Integer.MAX_VALUE);
                 button.setAlignment(Pos.CENTER_LEFT);
                 list.getChildren().add(button);
