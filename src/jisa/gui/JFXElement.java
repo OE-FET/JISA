@@ -31,16 +31,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class JFXElement implements Element {
 
     private final BorderPane             borderPane;
-    private final ObjectProperty<Image>  icon      = new SimpleObjectProperty<>(null);
-    private final ObjectProperty<String> title     = new SimpleObjectProperty<>("");
-    private final DoubleProperty         width     = new SimpleDoubleProperty(-1);
-    private final DoubleProperty         height    = new SimpleDoubleProperty(-1);
-    private final DoubleProperty         maxWidth  = new SimpleDoubleProperty(Double.MAX_VALUE);
-    private final DoubleProperty         maxHeight = new SimpleDoubleProperty(Double.MAX_VALUE);
+    private final ObjectProperty<Image>  icon        = new SimpleObjectProperty<>(null);
+    private final ObjectProperty<String> title       = new SimpleObjectProperty<>("");
+    private final DoubleProperty         width       = new SimpleDoubleProperty(-1);
+    private final DoubleProperty         height      = new SimpleDoubleProperty(-1);
+    private final DoubleProperty         maxWidth    = new SimpleDoubleProperty(Double.MAX_VALUE);
+    private final DoubleProperty         maxHeight   = new SimpleDoubleProperty(Double.MAX_VALUE);
     private final ToolBar                toolBar;
     private final ButtonBar              buttonBar;
     private final Scene                  scene;
-    private       Stage                  stage     = null;
+    private       Stage                  stage       = null;
+
+    static {
+        GUI.touch();
+    }
 
     public JFXElement(String title, Node centre) {
 
@@ -461,18 +465,6 @@ public class JFXElement implements Element {
             if (height.get() > -1) {
                 stage.setHeight(Math.min(maxHeight.get(), height.get()));
             }
-
-            stage.centerOnScreen();
-
-            stage.heightProperty().addListener(new InvalidationListener() {
-
-                @Override
-                public void invalidated(Observable observable) {
-                    stage.centerOnScreen();
-                    stage.heightProperty().removeListener(this);
-                }
-
-            });
 
             stage.show();
 

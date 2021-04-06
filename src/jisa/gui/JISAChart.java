@@ -171,7 +171,7 @@ public class JISAChart extends XYChart<Double, Double> {
     }
 
     @Override
-    protected synchronized void updateLegend() {
+    protected void updateLegend() {
 
         GUI.runNow(() -> {
 
@@ -188,6 +188,7 @@ public class JISAChart extends XYChart<Double, Double> {
                     }
 
                 }
+
             }
 
             if (legend.getChildren().size() > 0) {
