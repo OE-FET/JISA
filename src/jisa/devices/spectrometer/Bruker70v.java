@@ -25,9 +25,12 @@ public class Bruker70v extends DDEDevice implements FTIR{
                 + "', PTH='" + save_path + "', NSS='" + num_scans + "'});");
         String[] split = response.split("\n");
 
-
-        return super.sendRequest("COMMAND_LINE SaveAs ([<" + split[3] + ">:AB], {DAP='" + save_path + "', OEX='1', SAN='"
+        String response2 = super.sendRequest("COMMAND_LINE SaveAs ([<" + split[3] + ">:AB], {DAP='" + save_path + "', OEX='1', SAN='"
                 + sample_name + ".dpt', COF=64});");
+
+        String response3 = super.sendRequest("UNLOAD_FILE " + split[3]);
+
+        return response + "\n" + response2 + "\n" + response3;
     }
 
     public String sendBenchCommand(String bench_command) throws Exception{
