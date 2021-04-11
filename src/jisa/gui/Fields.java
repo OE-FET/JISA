@@ -20,6 +20,8 @@ import javafx.scene.text.FontWeight;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
+import jisa.gui.fields.DoubleField;
+import jisa.gui.fields.StringField;
 import jisa.maths.Range;
 
 import java.util.*;
@@ -28,13 +30,10 @@ import java.util.stream.Stream;
 
 public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
-    public  BorderPane                          pane;
-    public  GridPane                            list;
-    private Map<Field<?>, ConfigBlock.Value<?>> links  = new HashMap<>();
-    private List<Field<?>>                      fields = new LinkedList<>();
-    private ConfigBlock                         config = null;
-    private String                              tag    = null;
-    private int                                 rows   = 0;
+    public        BorderPane     pane;
+    public        GridPane       list;
+    private final List<Field<?>> fields = new LinkedList<>();
+    private       int            rows   = 0;
 
     /**
      * Creates a input fields group for user-input.
@@ -44,14 +43,6 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
     public Fields(String title) {
 
         super(title, Fields.class.getResource("fxml/InputWindow.fxml"));
-
-        Util.addShutdownHook(() -> {
-            if (config != null) {
-                links.forEach((field, value) -> value.set(field.get()));
-                config.save();
-            }
-        });
-
         BorderPane.setMargin(getNode().getCenter(), new Insets(15.0));
 
     }
@@ -180,98 +171,15 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
         GUI.runNow(() -> list.addRow(rows++, label, field));
 
-        Field<String> f = new Field<>() {
-
-            private ChangeListener<String> list = null;
-
-            @Override
-            public void set(String value) {
-
-                field.setText(value);
-            }
-
-            @Override
-            public String get() {
-
-                return field.getText();
-            }
-
-            @Override
-            public void setOnChange(SRunnable onChange) {
-
-                if (list != null) {
-                    field.textProperty().removeListener(list);
-                }
-
-                list = (observable, oldValue, newValue) -> (new Thread(() -> {
-                    try {
-                        onChange.run();
-                    } catch (Exception e) {
-                        Util.exceptionHandler(e);
-                    }
-                })).start();
-                field.textProperty().addListener(list);
-
-            }
-
-            @Override
-            public void editValues(String... values) {
-
-            }
-
-            @Override
-            public boolean isDisabled() {
-                return field.isDisabled();
-            }
-
-            @Override
-            public boolean isVisible() {
-
-                return field.isVisible();
-            }
+        StringField f = new StringField(label, field) {
 
             @Override
             public void remove() {
-
                 GUI.runNow(() -> {
-                    Fields.this.list.getChildren().removeAll(label, field);
+                    list.getChildren().removeAll(label, field);
                     updateGridding();
                 });
-
             }
-
-            @Override
-            public String getText() {
-
-                return label.getText();
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    label.setVisible(visible);
-                    label.setManaged(visible);
-                    field.setVisible(visible);
-                    field.setManaged(visible);
-                });
-
-            }
-
-
-            @Override
-            public void setText(String text) {
-
-                GUI.runNow(() -> label.setText(text));
-            }
-
-
-            @Override
-            public void setDisabled(boolean disabled) {
-
-                field.setDisable(disabled);
-            }
-
 
         };
 
@@ -299,7 +207,7 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         tableView.getColumns().add(column);
 
         MenuButton addButton = new MenuButton("✚");
-        Button     remButton = new Button("X");
+        Button     remButton = new Button("✕");
         Button     mUpButton = new Button("▲");
         Button     mDnButton = new Button("▼");
         Button     clrButton = new Button("Clear");
@@ -322,21 +230,21 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         Field<Double>  linearStop     = linearResponse.addDoubleField("Stop", max);
         Field<Integer> linearSteps    = linearResponse.addIntegerField("No. Steps", count);
 
-        Fields         stepResponse = new Fields("Add Equal Space Range");
-        Field<Double>  stepStart    = stepResponse.addDoubleField("Start", min);
-        Field<Double>  stepStop     = stepResponse.addDoubleField("Stop", max);
-        Field<Double>  stepStep     = stepResponse.addDoubleField("Step Size", dStep);
+        Fields        stepResponse = new Fields("Add Equal Space Range");
+        Field<Double> stepStart    = stepResponse.addDoubleField("Start", min);
+        Field<Double> stepStop     = stepResponse.addDoubleField("Stop", max);
+        Field<Double> stepStep     = stepResponse.addDoubleField("Step Size", dStep);
 
         Fields         polyResponse = new Fields("Add Polynomial Range");
-        Field<Double>  polyStart = polyResponse.addDoubleField("Start", min);
-        Field<Double>  polyStop  = polyResponse.addDoubleField("Stop", max);
-        Field<Integer> polySteps = polyResponse.addIntegerField("No. Steps", count);
-        Field<Integer> polyOrder = polyResponse.addIntegerField("Order", dOrder);
+        Field<Double>  polyStart    = polyResponse.addDoubleField("Start", min);
+        Field<Double>  polyStop     = polyResponse.addDoubleField("Stop", max);
+        Field<Integer> polySteps    = polyResponse.addIntegerField("No. Steps", count);
+        Field<Integer> polyOrder    = polyResponse.addIntegerField("Order", dOrder);
 
-        Fields         geomResponse = new Fields("Add Geometric Range");
-        Field<Double>  geomStart    = geomResponse.addDoubleField("Start", min);
-        Field<Double>  geomStop     = geomResponse.addDoubleField("Stop", max);
-        Field<Double>  geomStep     = geomResponse.addDoubleField("Factor", dStep);
+        Fields        geomResponse = new Fields("Add Geometric Range");
+        Field<Double> geomStart    = geomResponse.addDoubleField("Start", min);
+        Field<Double> geomStop     = geomResponse.addDoubleField("Stop", max);
+        Field<Double> geomStep     = geomResponse.addDoubleField("Factor", dStep);
 
         Fields         expResponse = new Fields("Add Geometric Range");
         Field<Double>  expStart    = expResponse.addDoubleField("Start", min);
@@ -1021,7 +929,6 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         GUI.runNow(() -> {
             list.getChildren().clear();
             fields.clear();
-            links.clear();
             rows = 0;
         });
 
@@ -1484,7 +1391,7 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         }
 
         Button addButton = new Button("✚");
-        Button remButton = new Button("✖");
+        Button remButton = new Button("✕");
         Button mUpButton = new Button("▲");
         Button mDnButton = new Button("▼");
 
@@ -1538,7 +1445,11 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
         });
 
-        VBox vBox = new VBox(new ToolBar(addButton, remButton, mUpButton, mDnButton), tableView);
+        HBox hBox = new HBox(addButton, remButton, mUpButton, mDnButton);
+        VBox vBox = new VBox(hBox, tableView);
+
+        hBox.setSpacing(5.0);
+        vBox.setSpacing(5.0);
 
         label.setMinWidth(Region.USE_PREF_SIZE);
         GridPane.setVgrow(label, Priority.NEVER);
@@ -1690,44 +1601,7 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
         GUI.runNow(() -> list.addRow(rows++, label, field));
 
-        Field<Double> f = new Field<>() {
-
-            private ChangeListener<String> list = null;
-
-            @Override
-            public void set(Double value) {
-
-                field.setValue(value);
-            }
-
-            @Override
-            public Double get() {
-
-                return field.getValue();
-            }
-
-            @Override
-            public void setOnChange(SRunnable onChange) {
-
-                field.setOnChange((v) -> (new Thread(() -> {
-                    try {
-                        onChange.run();
-                    } catch (Exception e) {
-                        Util.exceptionHandler(e);
-                    }
-                })).start());
-            }
-
-            @Override
-            public void editValues(String... values) {
-
-            }
-
-            @Override
-            public boolean isVisible() {
-                return field.isVisible();
-            }
-
+        Field<Double> f = new DoubleField(label, field) {
             @Override
             public void remove() {
 
@@ -1737,43 +1611,6 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
                 });
 
             }
-
-            @Override
-            public String getText() {
-                return label.getText();
-            }
-
-            @Override
-            public boolean isDisabled() {
-
-                return field.disabled();
-            }
-
-            @Override
-            public void setVisible(boolean visible) {
-
-                GUI.runNow(() -> {
-                    label.setVisible(visible);
-                    label.setManaged(visible);
-                    field.setVisible(visible);
-                    field.setManaged(visible);
-                });
-
-            }
-
-
-            @Override
-            public void setText(String text) {
-                GUI.runNow(() -> label.setText(text));
-            }
-
-
-            @Override
-            public void setDisabled(boolean disabled) {
-
-                field.disabled(disabled);
-            }
-
 
         };
 

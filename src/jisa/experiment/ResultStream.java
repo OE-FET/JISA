@@ -116,6 +116,8 @@ public class ResultStream extends ResultTable {
 
     private synchronized void init(String path) throws IOException {
 
+        System.out.println(path);
+
         // Make sure the directory we're wanting to write into exists.
         new File(path).getParentFile().mkdirs();
         this.path = path;

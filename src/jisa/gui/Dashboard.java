@@ -57,9 +57,9 @@ public class Dashboard extends Grid {
 
     public class Category<T extends Instrument> {
 
-        protected final IConf<T>         conf;
-        protected final Fields           fields;
-        protected final String           name;
+        protected final IConf<T> conf;
+        protected final Fields   fields;
+        protected final String   name;
         protected final List<Plotted<T>> list = new LinkedList<>();
 
         public Category(String name, IConf<T> conf) {

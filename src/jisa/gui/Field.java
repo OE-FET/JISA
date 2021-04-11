@@ -2,6 +2,7 @@ package jisa.gui;
 
 import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
+import jisa.gui.SubElement;
 
 public interface Field<T> extends SubElement {
 

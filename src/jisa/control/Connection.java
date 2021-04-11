@@ -4,12 +4,12 @@ import javafx.scene.image.Image;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.StrAddress;
-import jisa.devices.*;
+import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
 import jisa.devices.interfaces.MultiChannel;
 import jisa.devices.interfaces.MultiOutput;
 import jisa.devices.interfaces.MultiSensor;
-import jisa.experiment.ActionQueue;
+import jisa.experiment.queue.Action;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -214,10 +214,10 @@ public class Connection<T extends Instrument> {
 
     public enum Status {
 
-        DISCONNECTED(ActionQueue.Status.NOT_STARTED.getImage()),
-        CONNECTING(ActionQueue.Status.RUNNING.getImage()),
-        CONNECTED(ActionQueue.Status.COMPLETED.getImage()),
-        ERROR(ActionQueue.Status.ERROR.getImage());
+        DISCONNECTED(Action.Status.NOT_STARTED.getImage()),
+        CONNECTING(Action.Status.RUNNING.getImage()),
+        CONNECTED(Action.Status.COMPLETED.getImage()),
+        ERROR(Action.Status.ERROR.getImage());
 
         private final Image image;
 

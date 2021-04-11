@@ -4,7 +4,7 @@ import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.Connection;
 import jisa.devices.interfaces.Instrument;
-import jisa.experiment.ActionQueue;
+import jisa.experiment.queue.Action;
 import org.reflections.Reflections;
 
 import java.util.*;
@@ -177,7 +177,7 @@ public class ConnectorGrid extends Grid {
                 connector,
                 String.format("Connect to \"%s\" (%s)", connector.getTitle(), name),
                 connector.getConnection().getDriver() != null ? "Waiting..." : "Not Configured",
-                connector.getConnection().getDriver() != null ? ActionQueue.Status.NOT_STARTED.getImage() : ActionQueue.Status.INTERRUPTED.getImage()
+                connector.getConnection().getDriver() != null ? Action.Status.NOT_STARTED.getImage() : Action.Status.INTERRUPTED.getImage()
             );
 
             connector.getConnection().addChangeListener(() -> {
@@ -185,22 +185,22 @@ public class ConnectorGrid extends Grid {
                 switch (connector.getConnection().getStatus()) {
 
                     case CONNECTING:
-                        item.setImage(ActionQueue.Status.RUNNING.getImage());
+                        item.setImage(Action.Status.RUNNING.getImage());
                         item.setSubTitle("Connecting...");
                         break;
 
                     case CONNECTED:
-                        item.setImage(ActionQueue.Status.COMPLETED.getImage());
+                        item.setImage(Action.Status.COMPLETED.getImage());
                         item.setSubTitle("Connection Successful");
                         break;
 
                     case ERROR:
-                        item.setImage(ActionQueue.Status.ERROR.getImage());
+                        item.setImage(Action.Status.ERROR.getImage());
                         item.setSubTitle("Connection Error");
                         break;
 
                     default:
-                        item.setImage(ActionQueue.Status.NOT_STARTED.getImage());
+                        item.setImage(Action.Status.NOT_STARTED.getImage());
                         item.setSubTitle("Waiting...");
                         break;
 

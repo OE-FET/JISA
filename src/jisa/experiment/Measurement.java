@@ -2,12 +2,14 @@ package jisa.experiment;
 
 import jisa.devices.Configuration;
 import jisa.devices.interfaces.Instrument;
+import jisa.experiment.queue.Action;
 import jisa.gui.Field;
 import jisa.gui.Fields;
 import jisa.maths.Range;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -250,6 +252,10 @@ public abstract class Measurement {
             throw new InterruptedException();
         }
 
+    }
+
+    public List<Action> getActions() {
+        return Collections.emptyList();
     }
 
     public abstract class Parameter<T> {

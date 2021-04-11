@@ -31,16 +31,16 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class JFXElement implements Element {
 
     private final BorderPane             borderPane;
-    private final ObjectProperty<Image>  icon        = new SimpleObjectProperty<>(null);
-    private final ObjectProperty<String> title       = new SimpleObjectProperty<>("");
-    private final DoubleProperty         width       = new SimpleDoubleProperty(-1);
-    private final DoubleProperty         height      = new SimpleDoubleProperty(-1);
-    private final DoubleProperty         maxWidth    = new SimpleDoubleProperty(Double.MAX_VALUE);
-    private final DoubleProperty         maxHeight   = new SimpleDoubleProperty(Double.MAX_VALUE);
+    private final ObjectProperty<Image>  icon      = new SimpleObjectProperty<>(null);
+    private final ObjectProperty<String> title     = new SimpleObjectProperty<>("");
+    private final DoubleProperty         width     = new SimpleDoubleProperty(-1);
+    private final DoubleProperty         height    = new SimpleDoubleProperty(-1);
+    private final DoubleProperty         maxWidth  = new SimpleDoubleProperty(Double.MAX_VALUE);
+    private final DoubleProperty         maxHeight = new SimpleDoubleProperty(Double.MAX_VALUE);
     private final ToolBar                toolBar;
     private final ButtonBar              buttonBar;
     private final Scene                  scene;
-    private       Stage                  stage       = null;
+    private       Stage                  stage     = null;
 
     static {
         GUI.touch();
@@ -223,16 +223,44 @@ public class JFXElement implements Element {
         return borderPane.getMaxWidth();
     }
 
-    public void setMaxWidth(double maxWidth) {
+    public void setMaxWidth(double width) { GUI.runNow(() -> borderPane.setMaxWidth(width)); }
+
+    public void setMaxWindowWidth(double maxWidth) {
         GUI.runNow(() -> this.maxWidth.set(maxWidth));
+    }
+
+    public double getMaxWindowWidth() {
+        return maxWidth.get();
     }
 
     public double getMaxHeight() {
         return borderPane.getMaxHeight();
     }
 
-    public void setMaxHeight(double maxHeight) {
+    public void setMaxHeight(double height) { GUI.runNow(() -> borderPane.setMaxHeight(height)); }
+
+    public void setMaxWindowHeight(double maxHeight) {
         GUI.runNow(() -> this.maxHeight.set(maxHeight));
+    }
+
+    public double getMaxWindowHeight() {
+        return maxHeight.get();
+    }
+
+    public void setMinWidth(double width) {
+        GUI.runNow(() -> borderPane.setMinWidth(width));
+    }
+
+    public double getMinWidth() {
+        return borderPane.getMinWidth();
+    }
+
+    public void setMinHeight(double height) {
+        GUI.runNow(() -> borderPane.setMinHeight(height));
+    }
+
+    public double getMinHeight() {
+        return borderPane.getMinHeight();
     }
 
     /**
