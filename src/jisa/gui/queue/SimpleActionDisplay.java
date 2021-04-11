@@ -192,8 +192,8 @@ public class SimpleActionDisplay extends ActionDisplay {
     }
 
     public void setShowAll(boolean show) {
-        GUI.runNow(() -> showSubs.setSelected(show));
         showAll = show;
+        GUI.runNow(() -> showSubs.setSelected(show));
     }
 
 }

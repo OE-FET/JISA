@@ -216,13 +216,13 @@ public class SweepActionDisplay<T> extends ActionDisplay {
 
     public void setShowAll(boolean show) {
 
+        showAll = show;
+
         if (show) {
             GUI.runNow(() -> values.setValue(null));
         } else {
             GUI.runNow(() -> values.setValue(action.getCurrentSweepValue()));
         }
-
-        showAll = show;
 
     }
 
