@@ -149,6 +149,11 @@ public class MeasurementAction extends AbstractAction<ResultTable> {
 
     }
 
+    public void userEdit() {
+        super.userEdit();
+        childrenChanged();
+    }
+
     public void setRetryCount(int retryCount) {
         this.retryCount = retryCount;
     }

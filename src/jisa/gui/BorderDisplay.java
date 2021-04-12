@@ -30,6 +30,9 @@ public class BorderDisplay extends JFXElement {
             BorderPane.setMargin(bordered, new Insets(GUI.SPACING / 2));
         });
 
+        this.centre = centre;
+        pane.requestLayout();
+
     }
 
 
@@ -42,6 +45,9 @@ public class BorderDisplay extends JFXElement {
             BorderPane.setMargin(bordered, new Insets(GUI.SPACING / 2));
         });
 
+        this.left = left;
+        pane.requestLayout();
+
     }
 
     public void setRightElement(Element right) {
@@ -52,6 +58,9 @@ public class BorderDisplay extends JFXElement {
             pane.setRight(bordered);
             BorderPane.setMargin(bordered, new Insets(GUI.SPACING / 2));
         });
+
+        this.right = right;
+        pane.requestLayout();
 
     }
 
@@ -64,6 +73,9 @@ public class BorderDisplay extends JFXElement {
             BorderPane.setMargin(bordered, new Insets(GUI.SPACING / 2));
         });
 
+        this.top = top;
+        pane.requestLayout();
+
     }
 
     public void setBottomElement(Element bottom) {
@@ -74,6 +86,9 @@ public class BorderDisplay extends JFXElement {
             pane.setBottom(bordered);
             BorderPane.setMargin(bordered, new Insets(GUI.SPACING / 2));
         });
+
+        this.bottom = bottom;
+        pane.requestLayout();
 
     }
 

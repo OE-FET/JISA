@@ -723,6 +723,11 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
+    public void setTitle(String title) {
+        super.setTitle(title);
+        GUI.runNow(() -> chart.setTitle(title));
+    }
+
     public Plot copy() {
 
         Plot plot = new Plot(getTitle(), getXLabel(), getYLabel());
