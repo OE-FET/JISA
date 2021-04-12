@@ -72,17 +72,17 @@ public class ITC503 extends VISADevice implements MSTC {
     public ITC503(Address address) throws IOException, DeviceException {
 
         super(address);
-        
+
         switch (address.getType()) {
-            
+
             case GPIB:
                 setEOI(false);
                 break;
-                
+
             case SERIAL:
                 setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.TWO, Connection.Flow.NONE);
                 break;
-            
+
         }
 
         setWriteTerminator(TERMINATOR);
@@ -90,13 +90,22 @@ public class ITC503 extends VISADevice implements MSTC {
         setReadTerminator(TERMINATOR);
         addAutoRemove(TERMINATOR);
 
-        manuallyClearReadBuffer();
-
         try {
-            String idn = query("V");
+
+            String idn;
+            int    count = 0;
+
+            do {
+                clearBuffers();
+                manuallyClearReadBuffer();
+                idn = query("V");
+                count++;
+            } while (!idn.split(" ")[0].trim().equals("ITC503") && count < 3);
+
             if (!idn.split(" ")[0].trim().equals("ITC503")) {
                 throw new DeviceException("Device at address %s is not an ITC503!", address.toString());
             }
+
         } catch (IOException e) {
             throw new DeviceException("Device at address %s is not responding!", address.toString());
         }
@@ -144,14 +153,40 @@ public class ITC503 extends VISADevice implements MSTC {
 
     private synchronized double readChannel(int channel) throws IOException {
 
-        try {
-            String reply = query(C_READ, channel);
-            return Double.parseDouble(reply.substring(1));
-        } catch (Exception e) {
-            clearBuffers();
-            manuallyClearReadBuffer();
-            String reply = query(C_READ, channel);
-            return Double.parseDouble(reply.substring(1));
+        int     count   = 0;
+        boolean success = false;
+        double  reply   = 0.0;
+
+        do {
+
+            if (count > 0) {
+                clearBuffers();
+                manuallyClearReadBuffer();
+            }
+
+            String response = query(C_READ, channel);
+
+            if (response.startsWith("R")) {
+
+                try {
+                    reply   = Double.parseDouble(response.substring(1));
+                    success = true;
+                } catch (NumberFormatException exception) {
+                    success = false;
+                }
+
+            } else {
+                success = false;
+            }
+
+            count++;
+
+        } while (!success && count < 3);
+
+        if (success) {
+            return reply;
+        } else {
+            throw new IOException("ITC-503 is not responding to read command correctly");
         }
 
     }
@@ -335,7 +370,26 @@ public class ITC503 extends VISADevice implements MSTC {
     }
 
     private Status getStatus() throws IOException {
-        return new Status(query(C_QUERY_STATUS));
+
+        Status response = null;
+        int    count    = 0;
+
+        do {
+
+            try {
+                response = new Status(query(C_QUERY_STATUS));
+            } catch (Exception ignored) {}
+
+            count++;
+
+        } while (response == null && count < 3);
+
+        if (response != null) {
+            return response;
+        } else {
+            throw new IOException("ITC-503 is not responding to status command correctly");
+        }
+
     }
 
     /**
