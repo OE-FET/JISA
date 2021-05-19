@@ -20,6 +20,10 @@ import java.net.URL;
 
 public class Doc extends JFXElement {
 
+    static {
+        GUI.touch();
+    }
+
     private final ObjectProperty<Region>     viewport   = new SimpleObjectProperty<>(null);
     private final ObjectProperty<Background> background = new SimpleObjectProperty<>(new Background(new BackgroundFill(Colour.WHITE, null, null)));
     @FXML

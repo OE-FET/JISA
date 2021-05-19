@@ -120,6 +120,7 @@ public class VISADevice implements Instrument {
             } catch (VISAException e) {
                 break;
             }
+            Util.sleep(25);
         }
 
         try {

@@ -27,6 +27,8 @@ public class Main {
 
         try {
 
+            ITC503 itc = new ITC503(new GPIBAddress(0, 20));
+
             Doc doc = new Doc("Help");
 
             doc.addImage(Main.class.getResource("gui/images/jisa.png"))

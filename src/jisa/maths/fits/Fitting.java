@@ -131,7 +131,6 @@ public class Fitting {
             return new PolyFit(p, errors);
 
         } catch (Throwable e) {
-            e.printStackTrace();
             return null;
         }
 
@@ -184,7 +183,6 @@ public class Fitting {
             return new PolyFit(p, errors);
 
         } catch (Throwable e) {
-            e.printStackTrace();
             return null;
         }
 

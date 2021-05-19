@@ -88,7 +88,8 @@ public class ITC503 extends VISADevice implements MSTC {
         setWriteTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);
         setReadTerminator(TERMINATOR);
-        addAutoRemove(TERMINATOR);
+        addAutoRemove("\r");
+        addAutoRemove("\n");
 
         try {
 
@@ -164,7 +165,7 @@ public class ITC503 extends VISADevice implements MSTC {
                 manuallyClearReadBuffer();
             }
 
-            String response = query(C_READ, channel);
+            String response = query(C_READ, channel).trim();
 
             if (response.startsWith("R")) {
 
@@ -177,6 +178,7 @@ public class ITC503 extends VISADevice implements MSTC {
 
             } else {
                 success = false;
+                System.err.printf("ITC503: Improper Response %d: %s%n", count + 1, response);
             }
 
             count++;
