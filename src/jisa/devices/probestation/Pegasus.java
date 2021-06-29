@@ -25,7 +25,10 @@ public class Pegasus extends VISADevice implements ProbeStation {
         setReadTerminator(TERMINATOR);
         addAutoRemove("\n");
 
-
+        String idn = getModel();
+        if (!idn.contains("Pegasus")) {
+            throw new DeviceException("Instrument at \"%s\" is not a Pegasus Probe Station!", address.toString());
+        }
     }
 
     @Override
@@ -71,19 +74,16 @@ public class Pegasus extends VISADevice implements ProbeStation {
     @Override
     public double getXposition() throws IOException, DeviceException{
         String str = query("PSS_X");
-    //todo: change: substring -> convert string to double (ITC503 Oxford Instrument) OR PSS_a,p<tt> &check if correct
-
-
-        String reduced_str= str.replaceAll("[^0-9]", "");
-        double numberOnly = Double.parseDouble(reduced_str);
+        String[] parts = str.split(",", 2);
+        double numberOnly = Double.parseDouble(parts[1]);
         return numberOnly;
     }
 
     @Override
     public double getYposition() throws IOException, DeviceException{
-        String str = query("PSS_Y\n");
-        String reduced_str= str.replaceAll("[^0-9]", "");
-        double numberOnly = Double.parseDouble(reduced_str);
+        String str = query("PSS_Y");
+        String[] parts = str.split(",", 2);
+        double numberOnly = Double.parseDouble(parts[1]);
         return numberOnly;
     }
 
@@ -94,8 +94,15 @@ public class Pegasus extends VISADevice implements ProbeStation {
     }
     @Override
     public double getAngle() throws IOException, DeviceException{
-        //todo!
-        return 1;
+        String str = query("PSS_C");
+        String[] parts = str.split(",", 2);
+        double numberOnly = Double.parseDouble(parts[1]);
+        return numberOnly;
+    }
+
+    @Override
+    public String getModel() throws IOException, DeviceException{
+        return query("GID");
     }
 
 

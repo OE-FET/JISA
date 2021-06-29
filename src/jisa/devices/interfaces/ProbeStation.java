@@ -122,5 +122,15 @@ public interface ProbeStation extends Instrument {
      */
     void setAngle(double theta) throws IOException, DeviceException;
 
+
+    /**
+     * Returns Pegasus model name, followed by a semi-colon,followed by a list of options separated by commas
+     *
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    String getModel() throws IOException, DeviceException;
+
 }
 
