@@ -13,7 +13,7 @@ public class AgilentB1500A extends Agilent415XX {
 
     public AgilentB1500A(Address address) throws IOException, DeviceException {
 
-        super(address, false);
+        super(address, false, "\n");
 
         try {
             if (!getIDN().split(",")[1].contains("B1500A")) {
@@ -21,6 +21,22 @@ public class AgilentB1500A extends Agilent415XX {
             }
         } catch (Exception e) {
             throw new DeviceException("Device at %s is not an Agilent B1500A.", address.toString());
+        }
+
+    }
+
+    @Override
+    protected void updateIntTime(int channel) throws IOException {
+
+        if (lastIntTime != intTimes[channel]) {
+
+            lastIntTime = intTimes[channel];
+            int nplc    = (int) Math.round(lastIntTime * 50);
+
+            write("AIT 0,3,%e", lastIntTime);
+            write("AIT 1,2,%d", nplc);
+            write("AIT 2,3,%e", lastIntTime);
+
         }
 
     }
