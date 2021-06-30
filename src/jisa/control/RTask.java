@@ -7,13 +7,13 @@ import java.util.TimerTask;
 
 public class RTask {
 
-    private long      interval;
-    private Task      toRun;
-    private boolean   running = false;
-    private long      started;
-    private int       iteration;
-    private Timer     timer   = new Timer();
-    private TimerTask task;
+    private final Timer     timer   = new Timer();
+    private       Task      toRun;
+    private       long      interval;
+    private       boolean   running = false;
+    private       long      started;
+    private       int       iteration;
+    private       TimerTask task;
 
     /**
      * Creates a repeating task to run at the given interval.
@@ -23,11 +23,39 @@ public class RTask {
      */
     public RTask(long interval, Task toRun) {
         this.interval = interval;
-        this.toRun = toRun;
+        this.toRun    = toRun;
     }
 
     public RTask(long interval, SRunnable toRun) {
         this(interval, (task) -> toRun.run());
+    }
+
+    public void setInterval(long interval) {
+
+        if (isRunning()) {
+            throw new IllegalStateException("Cannot edit RTask while it is running");
+        }
+
+        this.interval = interval;
+
+    }
+
+    public long getInterval() {
+        return interval;
+    }
+
+    public void setTask(Task task) {
+
+        if (isRunning()) {
+            throw new IllegalStateException("Cannot edit RTask while it is running");
+        }
+
+        this.toRun = task;
+
+    }
+
+    public Task getTask() {
+        return toRun;
     }
 
     /**
@@ -39,19 +67,22 @@ public class RTask {
             return;
         }
 
-        started = System.currentTimeMillis();
+        started   = System.currentTimeMillis();
         iteration = 0;
 
         task = new TimerTask() {
 
             public void run() {
+
                 try {
                     toRun.run(RTask.this);
                 } catch (Throwable e) {
                     Util.errLog.printf("Exception encountered running repeat task: \"%s\"\n", e.getMessage());
                     e.printStackTrace();
                 }
+
                 iteration++;
+
             }
 
         };
