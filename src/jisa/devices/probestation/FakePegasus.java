@@ -8,6 +8,7 @@ import jisa.devices.interfaces.ProbeStation;
 import java.io.IOException;
 
 public class FakePegasus implements ProbeStation {
+
     private static final String          TERMINATOR                    = "\n";
 
     public static String getDescription() {
@@ -97,6 +98,12 @@ public class FakePegasus implements ProbeStation {
     public void setAngle(double theta) throws IOException, DeviceException{
         System.out.println("GTS_C,%f");
     }
+
+    @Override
+    public String getModel() throws IOException, DeviceException {
+        return "Fake Pegasus";
+    }
+
     @Override
     public double getAngle() throws IOException, DeviceException{
         //todo!
