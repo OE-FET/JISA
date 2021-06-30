@@ -20,84 +20,96 @@ public class Pegasus extends VISADevice implements ProbeStation {
 
         super(address);
 
+
+
         setEOI(false);
         setWriteTerminator(TERMINATOR);
         setReadTerminator(TERMINATOR);
         addAutoRemove("\n");
 
         String idn = getModel();
+        /*
         if (!idn.contains("Pegasus")) {
             throw new DeviceException("Instrument at \"%s\" is not a Pegasus Probe Station!", address.toString());
         }
+        */
+
+    }
+
+
+
+    @Override
+    public void setXPosition(double xposition) throws IOException, DeviceException{
+        String str = query("GTS_X,%f",xposition);
     }
 
     @Override
-    public void WritezFineLift(double fineheight) throws IOException, DeviceException{
-        write("WKFM_%f",fineheight);
+    public void setYPosition(double yposition) throws IOException, DeviceException{
+        String str = query("GTS_Y,%f",yposition);
     }
 
     @Override
-    public void WritezGrossLift(double grossheight) throws IOException, DeviceException{
-        write("WKGM_%f",grossheight);
-    }
-
-    @Override
-    public void ChuckGrossUp() throws IOException, DeviceException{
-        write("GUP ");
-    }
-
-    @Override
-    public void ChuckGrossDown() throws IOException, DeviceException{
-        write("GDW ");
-    }
-
-    @Override
-    public void ChuckFineUp() throws IOException, DeviceException{
-        write("CUP ");
-    }
-
-    @Override
-    public void ChuckFineDown() throws IOException, DeviceException{
-        write("CDW ");
-    }
-
-    @Override
-    public void setXposition(double xposition) throws IOException, DeviceException{
-        write("GTS_X,%f",xposition);
-    }
-
-    @Override
-    public void setYposition(double yposition) throws IOException, DeviceException{
-        write("GTS_Y,%f",yposition);
-    }
-
-    @Override
-    public double getXposition() throws IOException, DeviceException{
+    public double getXPosition() throws IOException, DeviceException{
         String str = query("PSS_X");
         String[] parts = str.split(",", 2);
         double numberOnly = Double.parseDouble(parts[1]);
-        return numberOnly;
+        return numberOnly/1000/1000;
     }
 
     @Override
-    public double getYposition() throws IOException, DeviceException{
+    public double getYPosition() throws IOException, DeviceException{
         String str = query("PSS_Y");
         String[] parts = str.split(",", 2);
         double numberOnly = Double.parseDouble(parts[1]);
-        return numberOnly;
+        return numberOnly/1000/1000;
     }
 
+    @Override
+    public void setXYPosition(double xposition, double yposition) throws IOException, DeviceException{
+        String str = query("GTS_XY,%f,%f",xposition,yposition);
+    }
 
     @Override
-    public void setAngle(double theta) throws IOException, DeviceException{
-        write("GTS_C,%f",theta);
+    public void setZPosition(double zposition) throws IOException, DeviceException{
+        String str = query("GTS_Y,%f",zposition);
+    }
+
+    @Override
+    public double getZPosition() throws IOException, DeviceException{
+        String str = query("PSS_Z");
+        String[] parts = str.split(",", 2);
+        double numberOnly = Double.parseDouble(parts[1]);
+        return numberOnly/1000/1000;
+    }
+
+    public void setXYSpeed(double speed) throws IOException, DeviceException{
+        //TODO
+    }
+
+    public double getXYSpeed() throws IOException, DeviceException{
+        //TODO
+        return 0.0;
+    }
+
+    public void setZSpeed(double speed) throws IOException, DeviceException{
+        //TODO
+    }
+
+    public double getZSpeed() throws IOException, DeviceException{
+        //TODO
+        return 0.0;
+    }
+
+    @Override
+    public void setRotation(double theta) throws IOException, DeviceException{
+        String str = query("GTS_C,%f",theta*1000);
     }
     @Override
-    public double getAngle() throws IOException, DeviceException{
+    public double getRotation() throws IOException, DeviceException{
         String str = query("PSS_C");
         String[] parts = str.split(",", 2);
         double numberOnly = Double.parseDouble(parts[1]);
-        return numberOnly;
+        return numberOnly / 1000;
     }
 
     @Override
@@ -105,6 +117,28 @@ public class Pegasus extends VISADevice implements ProbeStation {
         return query("GID");
     }
 
+    @Override
+    public void setLockDistance(double distance) throws IOException, DeviceException{
+        String str = query("PSS_Z,%f",distance*1000);
+    }
+
+    @Override
+    public double getLockDistance() throws IOException, DeviceException{
+        String str = query("PSS_Z");
+        String[] parts = str.split(",", 2);
+        double numberOnly = Double.parseDouble(parts[1]);
+        return numberOnly/1000/1000;
+    }
+    @Override
+    public void setLocked(boolean locked) throws IOException, DeviceException{
+        //todo
+    }
+
+    @Override
+    public boolean isLocked() throws IOException, DeviceException{
+        //todo
+        return false;
+    }
 
 }
 

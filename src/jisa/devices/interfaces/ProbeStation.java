@@ -9,128 +9,53 @@ import java.io.IOException;
  */
 
 
-public interface ProbeStation extends Instrument {
+public interface ProbeStation extends XYZTranslationStage {
 
     public static String getDescription() {
         return "Probe Station";
     }
 
     /**
-     * Write z-axis fine lift
+     * Write z axis locking distance
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void WritezFineLift(double fineheight) throws IOException, DeviceException;
+    void setLockDistance(double dist) throws IOException, DeviceException;
+
+    /**
+     * Returns the z axis locking distance
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    double getLockDistance() throws IOException, DeviceException;
 
 
     /**
-     * Write z-axis gross lift
+     * Write: 1 = locked position (up). 2 = not locked (down)
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void WritezGrossLift(double grossheight) throws IOException, DeviceException;
-
+    void setLocked(boolean locked) throws IOException, DeviceException;
 
     /**
-     * Moves chuck to the gross UP position.
+     * Returns if in locked position (1) or not (0)
      *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void ChuckGrossUp() throws IOException, DeviceException;
+    boolean isLocked() throws IOException, DeviceException;
 
 
-    /**
-     * Moves chuck to the gross DOWN position.
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void ChuckGrossDown() throws IOException, DeviceException;
-
-    /**
-     * Moves chuck to the fine UP position.
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void ChuckFineUp() throws IOException, DeviceException;
-
-    /**
-     * Moves chuck to the fine DOWN position.
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void ChuckFineDown() throws IOException, DeviceException;
 
 
-    /**
-     * Returns the x component of Position, in um.
-     *
-     * @return x-Position, in um
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    double getXposition() throws IOException, DeviceException;
-
-    /**
-     * Returns the y component of Position, in um.
-     *
-     * @return y-Position, in um
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    double getYposition() throws IOException, DeviceException;
-
-    /**
-     * Sets the x-position to the desired value.
-     *
-     * @param xposition x-Position, in um
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setXposition(double xposition) throws IOException, DeviceException;
 
 
-    /**
-     * Sets the y-position to the desired value.
-     *
-     * @param yposition y-Position, in um
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setYposition(double yposition) throws IOException, DeviceException;
-
-    /**
-     * Returns the angle
-     *
-     * @return rotation angle, in millidegrees
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    double getAngle() throws IOException, DeviceException;
-
-    /**
-     * Sets the angle theta to the desired value.
-     *
-     * @param theta rotation angle, in millidegrees
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setAngle(double theta) throws IOException, DeviceException;
 
 
-    /**
-     * Returns Pegasus model name, followed by a semi-colon,followed by a list of options separated by commas
-     *
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    String getModel() throws IOException, DeviceException;
+
 
 }
 
