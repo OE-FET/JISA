@@ -349,6 +349,10 @@ public class JFXElement implements Element {
 
     public int showAsDialog(String... buttons) {
 
+        if (isShowing()) {
+            return -1;
+        }
+
         Semaphore     semaphore = new Semaphore(0);
         AtomicInteger result    = new AtomicInteger(-1);
         Button[]      added     = new Button[buttons.length];

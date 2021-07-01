@@ -39,8 +39,8 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
     private final double[] currentComp = {0.5, 0.5, 0.5, 0.5, 0.5, 0.5};
     private final double[] voltageComp = {40, 40, 40, 40, 40, 40};
 
-    private final double[] intTimes    = {0.02, 0.02, 0.02, 0.02, 0.02, 0.02};
-    private       double   lastIntTime = -1;
+    protected final double[] intTimes    = {0.02, 0.02, 0.02, 0.02, 0.02, 0.02};
+    protected       double   lastIntTime = -1;
 
     private final ReadFilter[] voltageFilters = {
         makeVoltageFilter(0, NONE),
@@ -67,15 +67,15 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
     private final double[] values     = {0, 0, 0, 0, 0, 0};
 
     public Agilent415XX(Address address) throws IOException, DeviceException {
-        this(address, true);
+        this(address, true, "\r");
     }
 
-    public Agilent415XX(Address address, boolean setUS) throws IOException, DeviceException {
+    public Agilent415XX(Address address, boolean setUS, String terminator) throws IOException, DeviceException {
 
         super(address);
 
-        setWriteTerminator("\r");
-        setReadTerminator("\r");
+        setWriteTerminator(terminator);
+        setReadTerminator(terminator);
 
         write(C_RESET);
         if (setUS) write(C_FLEX);
