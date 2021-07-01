@@ -10,15 +10,6 @@ public interface XYTranslationStage extends Instrument {
     }
 
     /**
-     * Returns Pegasus model name, followed by a semi-colon,followed by a list of options separated by commas
-     *
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    String getModel() throws IOException, DeviceException;
-
-    /**
      * Returns the x component of Position, in m.
      *
      * @return x-Position, in m
@@ -34,7 +25,7 @@ public interface XYTranslationStage extends Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void setXPosition(double xposition) throws IOException, DeviceException;
+    void setXPosition(double xposition) throws IOException, DeviceException, InterruptedException;
 
 
     /**
@@ -53,7 +44,7 @@ public interface XYTranslationStage extends Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void setYPosition(double yposition) throws IOException, DeviceException;
+    void setYPosition(double yposition) throws IOException, DeviceException, InterruptedException;
 
     /**
      * Sets the x- and y-position to the desired value.
@@ -63,7 +54,7 @@ public interface XYTranslationStage extends Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void setXYPosition(double xposition,double yposition) throws IOException, DeviceException;
+    void setXYPosition(double xposition,double yposition) throws IOException, DeviceException, InterruptedException;
 
     /**
      * Sets the speed to the desired value in TODO.
@@ -89,7 +80,7 @@ public interface XYTranslationStage extends Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void setRotation(double theta) throws IOException, DeviceException;
+    void setRotation(double theta) throws IOException, DeviceException, InterruptedException;
 
     /**
      * Returns rotation angle theta in degrees
