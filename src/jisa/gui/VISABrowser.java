@@ -1,7 +1,10 @@
 package jisa.gui;
 
+import com.github.sarxos.webcam.Webcam;
 import javafx.scene.image.Image;
 import jisa.addresses.Address;
+import jisa.addresses.IDAddress;
+import jisa.enums.Icon;
 import jisa.visa.VISA;
 import jisa.visa.VISADevice;
 
@@ -73,6 +76,11 @@ public class VISABrowser extends ListDisplay<Address> {
 
                 add(address, name, address.toString(), new Image(icon.toExternalForm()));
 
+            }
+
+            for (Webcam webcam : Webcam.getWebcams()) {
+                IDAddress address = new IDAddress(webcam.getName());
+                add(address, "Webcam: " + webcam.getName(), address.toString(), Icon.DEVICE.getBlackImage());
             }
 
         } catch (Exception e) {

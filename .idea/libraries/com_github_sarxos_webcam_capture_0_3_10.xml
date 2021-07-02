@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="com.github.sarxos:webcam-capture:0.3.10" type="repository">
+    <properties maven-id="com.github.sarxos:webcam-capture:0.3.10" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/webcam-capture-0.3.10.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/bridj-0.6.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-api-1.7.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
