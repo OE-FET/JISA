@@ -88,7 +88,7 @@ public class Webcam implements Camera {
     }
 
     @Override
-    public double getFramesPerSecond() throws IOException, DeviceException {
+    public double getFrameRate() {
         return webcam.getFPS();
     }
 

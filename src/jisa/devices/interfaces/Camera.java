@@ -56,7 +56,7 @@ public interface Camera extends Instrument {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device incompatibility
      */
-    double getFramesPerSecond() throws IOException, DeviceException;
+    double getFrameRate() throws IOException, DeviceException;
 
     BufferedImage getBufferedImage() throws IOException, DeviceException;
 
