@@ -23,15 +23,7 @@ public class Range<T extends Number> implements Iterable<T> {
     public Range(T[] data) {this.data = data;}
 
     public static Range<Double> manual(Number... values) {
-
-        Double[] toReturn = new Double[values.length];
-
-        for (int i = 0; i < toReturn.length; i++) {
-            toReturn[i] = values[i].doubleValue();
-        }
-
-        return new Range<>(toReturn);
-
+        return new Range<>(Arrays.stream(values).mapToDouble(Number::doubleValue).boxed().toArray(Double[]::new));
     }
 
     /**
@@ -228,7 +220,9 @@ public class Range<T extends Number> implements Iterable<T> {
             values[i] = BigDecimal.valueOf(linear.get(i));
         }
 
-        BigDecimal[] roots = Arrays.stream(values).map(v -> v.abs().doubleValue() > 0 ? nthRoot(v.abs(), order, CONTEXT).multiply(BigDecimal.valueOf(v.signum())) : BigDecimal.ZERO).toArray(BigDecimal[]::new);
+        BigDecimal[] roots = Arrays.stream(values)
+                                   .map(v -> v.abs().doubleValue() > 0 ? nthRoot(v.abs(), order, CONTEXT).multiply(BigDecimal.valueOf(v.signum())) : BigDecimal.ZERO)
+                                   .toArray(BigDecimal[]::new);
 
         return manual(roots);
 
@@ -415,6 +409,13 @@ public class Range<T extends Number> implements Iterable<T> {
     public T[] array() {
         return data;
     }
+
+    /**
+     * Returns this range as a list of values.
+     *
+     * @return List of values
+     */
+    public List<T> list() { return List.of(data); }
 
     /**
      * Returns this range as an array of double values.

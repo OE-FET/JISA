@@ -46,7 +46,9 @@ public class GUI extends Application {
      * the java library path
      */
     static {
+        Util.sleep(500);
         JavaFX.launch();
+        Util.sleep(500);
     }
 
     /**
