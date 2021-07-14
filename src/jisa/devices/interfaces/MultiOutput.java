@@ -15,6 +15,6 @@ public interface MultiOutput<T extends Output<T>> {
 
     String getOutputName(int outputNumber);
 
-    Class<T> getOutputType();
+    Class<T> getOutputClass();
 
 }

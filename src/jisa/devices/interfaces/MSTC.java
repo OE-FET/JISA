@@ -14,7 +14,7 @@ public interface MSTC extends TC, MSTMeter, Output<MSTC> {
 
     String getOutputName();
 
-    default Class<MSTC> getOutputType() {
+    default Class<MSTC> getOutputClass() {
         return MSTC.class;
     }
 
@@ -91,6 +91,16 @@ public interface MSTC extends TC, MSTMeter, Output<MSTC> {
             @Override
             public String getSensorName() {
                 return MSTC.this.getSensorName(sensor);
+            }
+
+            @Override
+            public void setSensorType(SensorType type) throws IOException, DeviceException {
+                MSTC.this.setSensorType(sensor, type);
+            }
+
+            @Override
+            public SensorType getSensorType() throws IOException, DeviceException {
+                return MSTC.this.getSensorType(sensor);
             }
 
             @Override
@@ -178,7 +188,7 @@ public interface MSTC extends TC, MSTMeter, Output<MSTC> {
 
     }
 
-    default Class<TMeter> getSensorType() {
+    default Class<TMeter> getSensorClass() {
         return TMeter.class;
     }
 

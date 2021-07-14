@@ -16,7 +16,7 @@ public interface MultiChannel<T extends Channel<T>> extends Iterable<T> {
 
     T getChannel(int channelNumber) throws IOException, DeviceException;
 
-    Class<T> getChannelType();
+    Class<T> getChannelClass();
 
     default Iterator<T> iterator() {
         return getChannels().iterator();

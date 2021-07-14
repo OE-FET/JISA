@@ -67,7 +67,7 @@ public abstract class ResultTable implements Iterable<Result> {
 
     public int findColumn(Col column) {
 
-        String name  = column.getTitle().toLowerCase().trim();
+        String name = column.getTitle().toLowerCase().trim();
 
         for (int i = 0; i < columns.size(); i++) {
 
@@ -395,7 +395,7 @@ public abstract class ResultTable implements Iterable<Result> {
     public void output(String delim, PrintStream stream) {
 
 
-        String[]   titles = getNames();
+        String[] titles = getNames();
         stream.println("% ATTRIBUTES: " + (new JSONObject(getAttributes())).toString());
         stream.println(String.join(delim, titles));
 
@@ -615,12 +615,54 @@ public abstract class ResultTable implements Iterable<Result> {
 
     }
 
+    public List<ResultTable> splitByDirection(Evaluable splitBy) {
+
+        Integer           direction = null;
+        Double            lastValue = null;
+        List<ResultTable> list      = new LinkedList<>();
+        ResultTable       table     = new ResultList(columns.toArray(Col[]::new));
+
+        for (Result row : this) {
+
+            double value = splitBy.evaluate(row);
+
+            if (lastValue == null) {
+
+                table.addRow(row);
+
+            } else if (direction == null) {
+
+                table.addRow(row);
+                direction = Double.compare(value, lastValue);
+
+            } else {
+
+                int newDirection = Double.compare(value, lastValue);
+
+                if (newDirection != direction && newDirection != 0) {
+                    list.add(table);
+                    table = new ResultList(columns.toArray(Col[]::new));
+                }
+
+                table.addRow(row);
+                direction = newDirection;
+
+            }
+
+            lastValue = value;
+
+        }
+
+        return list;
+
+    }
+
     public FwdBwd splitTwoWaySweep(Evaluable swept) {
 
         int         mode      = -2;
         double      lastValue = swept.evaluate(getRow(0));
-        ResultTable forward   = new ResultList(columns.toArray(new Col[0]));
-        ResultTable backward  = new ResultList(columns.toArray(new Col[0]));
+        ResultTable forward   = new ResultList(columns.toArray(Col[]::new));
+        ResultTable backward  = new ResultList(columns.toArray(Col[]::new));
 
         ResultTable current = forward;
 

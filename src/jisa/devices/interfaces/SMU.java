@@ -20,7 +20,7 @@ public interface SMU extends IVMeter, IVSource, Channel<SMU> {
 
     String getChannelName();
 
-    default Class<SMU> getChannelType() {
+    default Class<SMU> getChannelClass() {
         return SMU.class;
     }
 

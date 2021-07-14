@@ -4,6 +4,6 @@ public interface Output<T> {
 
     String getOutputName();
 
-    Class<T> getOutputType();
+    Class<T> getOutputClass();
 
 }

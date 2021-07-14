@@ -4,6 +4,6 @@ public interface Channel<T> {
 
     String getChannelName();
 
-    Class<T> getChannelType();
+    Class<T> getChannelClass();
 
 }

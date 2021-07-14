@@ -16,8 +16,24 @@ public interface MSTMeter extends TMeter, MultiSensor<TMeter> {
         return "Multi-Sensor Thermometer";
     }
 
-    default Class<TMeter> getSensorType() {
+    default Class<TMeter> getSensorClass() {
         return TMeter.class;
+    }
+
+    void setSensorType(int sensor, SensorType type) throws IOException, DeviceException;
+
+    SensorType getSensorType(int sensor) throws IOException, DeviceException;
+
+    default void setSensorType(SensorType type) throws IOException, DeviceException {
+
+        for (int i = 0; i < getNumSensors(); i++) {
+            setSensorType(i, type);
+        }
+
+    }
+
+    default SensorType getSensorType() throws IOException, DeviceException {
+        return getSensorType(0);
     }
 
     /**
@@ -127,6 +143,16 @@ public interface MSTMeter extends TMeter, MultiSensor<TMeter> {
             @Override
             public String getSensorName() {
                 return MSTMeter.this.getSensorName(sensor);
+            }
+
+            @Override
+            public void setSensorType(SensorType type) throws IOException, DeviceException {
+                MSTMeter.this.setSensorType(sensor, type);
+            }
+
+            @Override
+            public SensorType getSensorType() throws IOException, DeviceException {
+                return MSTMeter.this.getSensorType(sensor);
             }
 
             @Override

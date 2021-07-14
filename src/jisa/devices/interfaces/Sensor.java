@@ -4,6 +4,6 @@ public interface Sensor<T> {
 
     String getSensorName();
 
-    Class<T> getSensorType();
+    Class<T> getSensorClass();
 
 }

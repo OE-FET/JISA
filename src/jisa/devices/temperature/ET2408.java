@@ -96,6 +96,16 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
+    public void setSensorType(SensorType type) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public SensorType getSensorType() throws IOException, DeviceException {
+        return SensorType.UNKNOWN;
+    }
+
+    @Override
     public double getTemperature() throws IOException {
         return (double) sensor.get() / getScale();
     }

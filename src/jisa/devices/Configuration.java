@@ -1,6 +1,7 @@
 package jisa.devices;
 
 import jisa.control.ConfigBlock;
+import jisa.control.SRunnable;
 import jisa.devices.interfaces.Instrument;
 import jisa.devices.interfaces.MultiChannel;
 import jisa.devices.interfaces.MultiOutput;
@@ -20,6 +21,7 @@ public class Configuration<T extends Instrument> {
     private final List<String>       names          = new LinkedList<>();
     private final List<Parameter<?>> parameters     = new LinkedList<>();
     private final List<Parameter<?>> pastParameters = new LinkedList<>();
+    private final List<SRunnable>    listeners      = new LinkedList<>();
     private       String             choiceName     = null;
     private       Instrument         input          = null;
     private       T                  choice         = null;
@@ -115,6 +117,15 @@ public class Configuration<T extends Instrument> {
 
         }
 
+    }
+
+    public SRunnable addChangeListener(SRunnable listener) {
+        listeners.add(listener);
+        return listener;
+    }
+
+    public void removeChangeListener(SRunnable listener) {
+        listeners.remove(listener);
     }
 
     public void writeToConfig(ConfigBlock block) {
@@ -229,12 +240,12 @@ public class Configuration<T extends Instrument> {
         for (Parameter p : newParameters) {
 
             pastParameters.stream()
-                      .filter(p2 -> p.getType().equals(p2.getType()) && p.getName().equals(p2.getName()))
-                      .findFirst()
-                      .ifPresent(found -> {
-                          p.setValue(found.getValue());
-                          toRemove.add(found);
-                      });
+                          .filter(p2 -> p.getType().equals(p2.getType()) && p.getName().equals(p2.getName()))
+                          .findFirst()
+                          .ifPresent(found -> {
+                              p.setValue(found.getValue());
+                              toRemove.add(found);
+                          });
 
         }
 
@@ -297,7 +308,7 @@ public class Configuration<T extends Instrument> {
             return;
         }
 
-        if (instrument instanceof MultiChannel && target.isAssignableFrom(((MultiChannel<?>) instrument).getChannelType())) {
+        if (instrument instanceof MultiChannel && target.isAssignableFrom(((MultiChannel<?>) instrument).getChannelClass())) {
 
             choiceName = "Channel";
 
@@ -307,7 +318,7 @@ public class Configuration<T extends Instrument> {
                 names.add(String.format("%d: %s", i, ((MultiChannel<?>) instrument).getChannelName(i)));
             }
 
-        } else if (instrument instanceof MultiOutput && target.isAssignableFrom(((MultiOutput<?>) instrument).getOutputType())) {
+        } else if (instrument instanceof MultiOutput && target.isAssignableFrom(((MultiOutput<?>) instrument).getOutputClass())) {
 
             choiceName = "Output";
 
@@ -317,7 +328,7 @@ public class Configuration<T extends Instrument> {
                 names.add(String.format("%d: %s", i, ((MultiOutput<?>) instrument).getOutputName(i)));
             }
 
-        } else if (instrument instanceof MultiSensor && target.isAssignableFrom(((MultiSensor<?>) instrument).getSensorType())) {
+        } else if (instrument instanceof MultiSensor && target.isAssignableFrom(((MultiSensor<?>) instrument).getSensorClass())) {
 
             choiceName = "Sensor";
 
@@ -347,10 +358,16 @@ public class Configuration<T extends Instrument> {
 
         private final Instrument.Parameter<S> parameter;
         private       S                       value;
+        private final Configuration<?>        configuration;
+
+        public Parameter(Instrument.Parameter<S> parameter, Configuration<?> configuration) {
+            this.parameter     = parameter;
+            this.value         = parameter.getDefaultValue();
+            this.configuration = configuration;
+        }
 
         public Parameter(Instrument.Parameter<S> parameter) {
-            this.parameter = parameter;
-            this.value     = parameter.getDefaultValue();
+            this(parameter, null);
         }
 
         public String getName() {
@@ -370,7 +387,13 @@ public class Configuration<T extends Instrument> {
         }
 
         public void setValue(S value) {
+
             this.value = value;
+
+            if (configuration != null) {
+                configuration.listeners.forEach(SRunnable::runRegardless);
+            }
+
         }
 
         public Class<S> getType() {

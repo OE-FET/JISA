@@ -73,9 +73,9 @@ public class Connection<T extends Instrument> {
         return ALL_CONNECTIONS.stream()
                               .filter(c ->
                                   target.isAssignableFrom(c.getType())
-                                      || (c instanceof MultiChannel && target.isAssignableFrom(((MultiChannel<?>) c).getChannelType()))
-                                      || (c instanceof MultiOutput && target.isAssignableFrom(((MultiOutput<?>) c).getOutputType()))
-                                      || (c instanceof MultiSensor && target.isAssignableFrom(((MultiSensor<?>) c).getSensorType()))
+                                      || (c instanceof MultiChannel && target.isAssignableFrom(((MultiChannel<?>) c).getChannelClass()))
+                                      || (c instanceof MultiOutput && target.isAssignableFrom(((MultiOutput<?>) c).getOutputClass()))
+                                      || (c instanceof MultiSensor && target.isAssignableFrom(((MultiSensor<?>) c).getSensorClass()))
                               )
                               .collect(Collectors.toList());
 

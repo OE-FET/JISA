@@ -80,6 +80,16 @@ public class LS336 extends VISADevice implements MSMOTC {
         return "LakeShore 336";
     }
 
+    @Override
+    public void setSensorType(int sensor, SensorType type) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public SensorType getSensorType(int sensor) throws IOException, DeviceException {
+        return SensorType.UNKNOWN;
+    }
+
     public synchronized void write(String command, Object... args) throws IOException {
 
         // Can only write to the device if we have waited enough time since the last write (50 ms)

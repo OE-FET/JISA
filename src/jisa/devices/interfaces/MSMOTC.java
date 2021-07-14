@@ -15,7 +15,7 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
         return "Multi-Sensor Multi-Output Temperature Controller";
     }
 
-    default Class<MSTC> getOutputType() {
+    default Class<MSTC> getOutputClass() {
         return MSTC.class;
     }
 
@@ -685,6 +685,16 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
             @Override
             public void setTemperatureRampRate(double kPerMin) throws IOException, DeviceException {
                 MSMOTC.this.setTemperatureRampRate(output, kPerMin);
+            }
+
+            @Override
+            public void setSensorType(int sensor, SensorType type) throws IOException, DeviceException {
+                MSMOTC.this.setSensorType(sensor, type);
+            }
+
+            @Override
+            public SensorType getSensorType(int sensor) throws IOException, DeviceException {
+                return MSMOTC.this.getSensorType(sensor);
             }
 
             @Override

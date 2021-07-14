@@ -16,9 +16,31 @@ public interface TMeter extends Instrument, Sensor<TMeter> {
 
     String getSensorName();
 
-    default Class<TMeter> getSensorType() {
+    default Class<TMeter> getSensorClass() {
         return TMeter.class;
     }
+
+    /**
+     * Sets the type of thermal sensor being used for this thermometer. If instrument has no ability to set the sensor
+     * type, then this method will have no effect.
+     *
+     * @param type Sensor type
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setSensorType(SensorType type) throws IOException, DeviceException;
+
+    /**
+     * Returns the type of thermal sensor being used for this thermometer. If instrument has no ability to set the sensor
+     * type, then this method will most likely return SensorType.UNKNOWN
+     *
+     * @return Sensor type
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    SensorType getSensorType() throws IOException, DeviceException;
 
     /**
      * Returns the temperature being reported by the thermometer.
@@ -85,9 +107,26 @@ public interface TMeter extends Instrument, Sensor<TMeter> {
         List<Parameter<?>> parameters = new LinkedList<>();
 
         parameters.add(new Parameter<>("Sensor Range [K]", 999.9, this::setTemperatureRange));
+        parameters.add(new Parameter<>("Sensor Type", SensorType.THERMOCOUPLE_K, this::setSensorType, SensorType.values()));
 
         return parameters;
 
     }
 
+    /**
+     * Enumeration of standard thermocouple types
+     */
+    enum SensorType {
+
+        UNKNOWN,
+        THERMOCOUPLE_B,
+        THERMOCOUPLE_E,
+        THERMOCOUPLE_J,
+        THERMOCOUPLE_K,
+        THERMOCOUPLE_N,
+        THERMOCOUPLE_R,
+        THERMOCOUPLE_S,
+        THERMOCOUPLE_T;
+
+    }
 }

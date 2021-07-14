@@ -12,7 +12,7 @@ public interface LevelMeter extends Instrument, MultiChannel<LevelMeter>, Channe
         return "Level Meter";
     }
 
-    default Class<LevelMeter> getChannelType() {
+    default Class<LevelMeter> getChannelClass() {
         return LevelMeter.class;
     }
 

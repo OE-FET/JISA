@@ -33,6 +33,16 @@ public class Arroyo585 extends VISADevice implements TC {
     }
 
     @Override
+    public void setSensorType(SensorType type) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public SensorType getSensorType() throws IOException, DeviceException {
+        return SensorType.UNKNOWN;
+    }
+
+    @Override
     public double getTemperature() throws IOException {
         return Integer.parseInt(query("TEC:T?")) + 273.15;
     }

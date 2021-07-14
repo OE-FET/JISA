@@ -1342,7 +1342,7 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
 
     }
 
-    default Class<SMU> getChannelType() {
+    default Class<SMU> getChannelClass() {
         return SMU.class;
     }
 

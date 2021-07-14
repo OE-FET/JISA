@@ -15,6 +15,6 @@ public interface MultiSensor<T extends Sensor<T>> {
 
     T getSensor(int sensorNumber) throws IOException, DeviceException;
 
-    Class<T> getSensorType();
+    Class<T> getSensorClass();
 
 }

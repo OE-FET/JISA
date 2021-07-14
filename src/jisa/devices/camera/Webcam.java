@@ -67,6 +67,11 @@ public class Webcam implements Camera {
     }
 
     @Override
+    public boolean isOn() throws IOException, DeviceException {
+        return webcam.isOpen();
+    }
+
+    @Override
     public Mode getMode() throws IOException, DeviceException {
 
         Dimension dimension = webcam.getViewSize();

@@ -18,6 +18,16 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
         return "Cryo-Con 22C";
     }
 
+    @Override
+    public void setSensorType(int sensor, SensorType type) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public SensorType getSensorType(int sensor) throws IOException, DeviceException {
+        return SensorType.UNKNOWN;
+    }
+
     public static final List<String> SENSORS = List.of("A", "B");
 
     private final List<List<Zone>> pidZones  = List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());

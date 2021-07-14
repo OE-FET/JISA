@@ -4,17 +4,19 @@ import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.ptr.ShortByReference;
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MSTMeter;
-import jisa.enums.Thermocouple;
+import jisa.devices.interfaces.TMeter;
 import jisa.visa.NativeDevice;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Driver class for Picotech USB-TC08 thermocouple data loggers. Requires proprietary usbtc08 library to be installed.
@@ -39,7 +41,9 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     private static final short                          ERROR_ENUMERATION_INCOMPLETE = 6;
     private static final short                          UNITS_KELVIN                 = 2;
 
-    /** Static instance of loaded library */
+    /**
+     * Static instance of loaded library
+     */
     private static USBTC08.NativeInterface INSTANCE;
 
     static {
@@ -52,17 +56,17 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
-    private final short          handle;
-    private final Thermocouple[] types = {
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE,
-            Thermocouple.NONE
+    private final short        handle;
+    private final SensorType[] types = {
+        SensorType.UNKNOWN,
+        SensorType.UNKNOWN,
+        SensorType.UNKNOWN,
+        SensorType.UNKNOWN,
+        SensorType.UNKNOWN,
+        SensorType.UNKNOWN,
+        SensorType.UNKNOWN,
+        SensorType.UNKNOWN,
+        SensorType.UNKNOWN
     };
 
     private float[]   lastValues    = {0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -225,7 +229,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     private synchronized void updateReadings() throws DeviceException {
 
         // Need a pointer to some memory to store our returned values
-        Memory tempPointer = new Memory(9 * Native.getNativeSize(Float.TYPE));
+        Memory tempPointer = new Memory(9L * Native.getNativeSize(Float.TYPE));
 
         int result = lib.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), UNITS_KELVIN);
 
@@ -283,11 +287,15 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      *
      * @throws DeviceException Upon instrument error
      */
-    public void setSensorType(int sensor, Thermocouple type) throws DeviceException, IOException {
+    public void setSensorType(int sensor, SensorType type) throws DeviceException, IOException {
 
         checkSensor(sensor);
 
-        int result = lib.usb_tc08_set_channel(handle, (short) sensor, type.getCode());
+        int result = lib.usb_tc08_set_channel(
+            handle,
+            (short) sensor,
+            NativeInterface.TYPE_MAP.getOrDefault(type, NativeInterface.USB_TC08_DISABLE_CHANNEL)
+        );
 
         if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
@@ -307,7 +315,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon instrument error
      */
-    public Thermocouple getSensorType(int sensor) throws DeviceException, IOException {
+    public SensorType getSensorType(int sensor) throws DeviceException, IOException {
 
         checkSensor(sensor);
         return types[sensor];
@@ -435,6 +443,17 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         byte  USB_TC08_THERMOCOUPLE_TYPE_T = (byte) 'T';
         byte  USB_TC08_VOLTAGE_READINGS    = (byte) 'X';
         byte  USB_TC08_DISABLE_CHANNEL     = (byte) ' ';
+
+        Map<SensorType, Byte> TYPE_MAP = Map.of(
+            SensorType.THERMOCOUPLE_B, USB_TC08_THERMOCOUPLE_TYPE_B,
+            SensorType.THERMOCOUPLE_E, USB_TC08_THERMOCOUPLE_TYPE_E,
+            SensorType.THERMOCOUPLE_J, USB_TC08_THERMOCOUPLE_TYPE_J,
+            SensorType.THERMOCOUPLE_K, USB_TC08_THERMOCOUPLE_TYPE_K,
+            SensorType.THERMOCOUPLE_N, USB_TC08_THERMOCOUPLE_TYPE_N,
+            SensorType.THERMOCOUPLE_R, USB_TC08_THERMOCOUPLE_TYPE_R,
+            SensorType.THERMOCOUPLE_S, USB_TC08_THERMOCOUPLE_TYPE_S,
+            SensorType.THERMOCOUPLE_T, USB_TC08_THERMOCOUPLE_TYPE_T
+        );
 
         short usb_tc08_open_unit();
 
