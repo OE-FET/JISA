@@ -21,7 +21,7 @@ public class Arroyo585 extends VISADevice implements TC {
 
     public Arroyo585(Address address) throws IOException, DeviceException {
         super(address);
-        setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
+        setSerialParameters(38400, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
         write("TEC:MODE:T");
     }
 
@@ -108,7 +108,7 @@ public class Arroyo585 extends VISADevice implements TC {
 
     @Override
     public double getPValue() throws IOException {
-        return Double.parseDouble(query("TEC:PID?").split(" ")[0]);
+        return Double.parseDouble(query("TEC:PID?").split(",")[0]);
     }
 
     @Override
@@ -118,14 +118,14 @@ public class Arroyo585 extends VISADevice implements TC {
 
     @Override
     public double getIValue() throws IOException {
-        return Double.parseDouble(query("TEC:PID?").split(" ")[1]);
+        return Double.parseDouble(query("TEC:PID?").split(",")[1]);
     }
 
     @Override
     public void setIValue(double value) throws IOException {
         double P = getPValue();
         double D = getDValue();
-        write("TEC:PID %f %f %f",P,value,D);
+        write("TEC:PID %f ,%f ,%f",P,value,D);
     }
 
     @Override
@@ -151,14 +151,14 @@ public class Arroyo585 extends VISADevice implements TC {
 
     @Override
     public double getDValue() throws IOException {
-        return Double.parseDouble(query("TEC:PID?").split(" ")[2]);
+        return Double.parseDouble(query("TEC:PID?").split(",")[2]);
     }
 
     @Override
     public void setDValue(double value) throws IOException {
         double P = getPValue();
         double I = getIValue();
-        write("TEC:PID %f %f %f",P,I,value);
+        write("TEC:PID %f ,%f ,%f",P,I,value);
 
     }
 
