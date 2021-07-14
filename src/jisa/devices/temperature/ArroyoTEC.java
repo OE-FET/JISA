@@ -6,30 +6,45 @@ import jisa.devices.interfaces.PID;
 import jisa.devices.interfaces.TC;
 import jisa.visa.Connection;
 import jisa.visa.VISADevice;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 
-public class Arroyo585 extends VISADevice implements TC {
+public class ArroyoTEC extends VISADevice implements TC {
 
     public static String getDescription() {
         return "Arroyo 585 TecPak";
     }
 
+    private boolean    autoPID = false;
     private PID.Zone[] zones   = new PID.Zone[0];
 
-    public Arroyo585(Address address) throws IOException, DeviceException {
-        super(address);
-        setSerialParameters(38400, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
-        write("TEC:MODE:T");
-    }
+    public ArroyoTEC(Address address) throws IOException, DeviceException {
 
+        super(address);
+
+        setSerialParameters(38400, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
+
+        setWriteTerminator("\n");
+        setReadTerminator("\n");
+        addAutoRemove("\n");
+        addAutoRemove("\r");
+
+        if (!getIDN().toLowerCase().contains("arroyo")) {
+            throw new DeviceException("Instrument at \"%s\" is not an Arroyo.", address.toString());
+        }
+
+        write("TEC:MODE:T");
+        write("TEC:HEATCOOL BOTH");
+
+    }
 
 
     @Override
     public String getSensorName() {
-        return "Arroyo";
+        return "Main Sensor";
     }
 
     @Override
@@ -44,7 +59,7 @@ public class Arroyo585 extends VISADevice implements TC {
 
     @Override
     public double getTemperature() throws IOException {
-        return Integer.parseInt(query("TEC:T?")) + 273.15;
+        return queryDouble("TEC:T?") + 273.15;
     }
 
     @Override
@@ -59,24 +74,23 @@ public class Arroyo585 extends VISADevice implements TC {
 
     @Override
     public double getTargetTemperature() throws IOException {
-        return Integer.parseInt(query("TEC:SET:T?")) + 273.15;
+        return queryDouble("TEC:SET:T?") + 273.15;
     }
 
     @Override
     public void setTargetTemperature(double temperature) throws IOException, DeviceException {
-        query("TEC:T %f",temperature - 273.15);
-
+        write("TEC:T %f", temperature - 273.15);
+        updateAutoPID();
     }
 
     @Override
     public double getTemperatureRampRate() throws IOException, DeviceException {
-        return Integer.parseInt(query("TEC:TRATE?"));
+        return queryDouble("TEC:TRATE?");
     }
 
     @Override
-    public void setTemperatureRampRate(double kPerMin) throws IOException, DeviceException {
-        write("TEC:TRATE %f",kPerMin);
-
+    public void setTemperatureRampRate(double kPerMin) throws IOException {
+        write("TEC:TRATE %f", Math.min(100.0, Math.max(0, kPerMin)));
     }
 
     @Override
@@ -85,7 +99,7 @@ public class Arroyo585 extends VISADevice implements TC {
     }
 
     @Override
-    public void setHeaterPower(double powerPCT) throws IOException {
+    public void setHeaterPower(double powerPCT) {
 
     }
 
@@ -96,11 +110,12 @@ public class Arroyo585 extends VISADevice implements TC {
 
     @Override
     public void useAutoHeater() throws IOException {
+
     }
 
     @Override
     public boolean isUsingAutoHeater() throws IOException {
-        return false;
+        return true;
     }
 
     @Override
@@ -123,7 +138,7 @@ public class Arroyo585 extends VISADevice implements TC {
 
     @Override
     public void setPValue(double value) throws IOException {
-        write("TEC:PID %f",value);
+        setPIDValues(value, getIValue(), getDValue());
     }
 
     @Override
@@ -133,30 +148,40 @@ public class Arroyo585 extends VISADevice implements TC {
 
     @Override
     public void setIValue(double value) throws IOException {
-        double P = getPValue();
-        double D = getDValue();
-        write("TEC:PID %f ,%f ,%f",P,value,D);
+        setPIDValues(getPValue(), value, getDValue());
+    }
+
+    public void setPIDValues(double p, double i, double d) throws IOException {
+
+        write(
+            "TEC:PID %f,%f,%f",
+            Math.min(10.0, Math.max(0, p)),
+            Math.min(10.0, Math.max(0, i)),
+            Math.min(10.0, Math.max(0, d))
+        );
+
     }
 
     @Override
     public void useAutoPID(boolean flag) throws IOException, DeviceException {
-
-
+        autoPID = flag;
+        updateAutoPID();
     }
 
     @Override
     public boolean isUsingAutoPID() {
-        return false;
+        return autoPID;
     }
 
     @Override
     public List<Zone> getAutoPIDZones() {
         return Arrays.asList(zones);
-
     }
 
     @Override
     public void setAutoPIDZones(Zone... zones) throws IOException, DeviceException {
+        this.zones = zones;
+        updateAutoPID();
     }
 
     @Override
@@ -166,10 +191,7 @@ public class Arroyo585 extends VISADevice implements TC {
 
     @Override
     public void setDValue(double value) throws IOException {
-        double P = getPValue();
-        double I = getIValue();
-        write("TEC:PID %f ,%f ,%f",P,I,value);
-
+        setPIDValues(getPValue(), getIValue(), value);
     }
 
     @Override
