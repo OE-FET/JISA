@@ -49,12 +49,14 @@ public interface ProbeStation extends XYZTranslationStage {
     boolean isLocked() throws IOException, DeviceException;
 
     /**
-     * Defines the xy-area in which the stage can move
+     * Write z-axis fine lift
      *
+     * @param axis : Movement axis (X,Y)
+     * @param axis : Percentage of velocity: 0 for stop, negative for movement in negative direction
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    void stageSetup(double xcenter,double ycenter, double width, double height) throws IOException, DeviceException;
+    void continMovement(String axis,double velocityPercentage) throws IOException, DeviceException;
 
 
 

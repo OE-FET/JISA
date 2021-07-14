@@ -16,6 +16,7 @@ public interface TC extends PID, TMeter {
         return "Temperature Controller";
     }
 
+
     @Override
     default String getInputName() throws IOException, DeviceException {
         return "Temperature";

@@ -11,6 +11,7 @@ import java.io.IOException;
 public class Pegasus extends VISADevice implements ProbeStation {
 
     private static final String TERMINATOR = "\n";
+    private static final Double MAXZDISTANCE = 3e-3;
 
     public static String getDescription() {
         return "Pegasus Probe Station";
@@ -103,6 +104,12 @@ public class Pegasus extends VISADevice implements ProbeStation {
     }
 
     @Override
+    public void continMovement(String axis,double velocityPercentage) throws IOException, DeviceException {
+        slowQuery("CMOV %s,%f,",axis,velocityPercentage);
+    }
+
+
+    @Override
     public double getYPosition() throws IOException {
         return parsePosition(query("PSS Y"));
     }
@@ -115,8 +122,16 @@ public class Pegasus extends VISADevice implements ProbeStation {
 
     @Override
     public void setZPosition(double position) throws IOException, DeviceException {
-        slowQuery("WKGM %d", (int) (position * 1e6));
-        slowQuery("GUP");
+        if (position > MAXZDISTANCE) {
+            throw new DeviceException("Z position larger than safety margin");
+        }
+        else{
+            slowQuery("WKGM %d", (int) (position * 1e6));
+            slowQuery("GDW");
+            slowQuery("GUP");
+        }
+
+
     }
 
     @Override
@@ -174,11 +189,14 @@ public class Pegasus extends VISADevice implements ProbeStation {
         return new Status(query("STA"));
     }
 
+
+
+
     @Override
     public void setLocked(boolean locked) throws IOException, DeviceException {
-
-        String str;
-
+        if (getZPosition() + getLockDistance() > MAXZDISTANCE) {
+            throw new DeviceException("Z position larger than safety margin");
+        }
         if (locked) {
             slowQuery("CUP");
         } else {
@@ -192,20 +210,6 @@ public class Pegasus extends VISADevice implements ProbeStation {
         return getStatus().isLiftedFine;
     }
 
-
-    @Override
-    public void stageSetup(double xcenter, double ycenter, double width, double height) throws IOException, DeviceException {
-
-        String str = query("WRZ 1");
-        checkDefaultResponse(str);
-        str = query("PCPP %d,%d", (int) (xcenter * 1e6), (int) (ycenter * 1e6));
-        checkDefaultResponse(str);
-        str = query("WRX %d", (int) (width * 1e5));
-        checkDefaultResponse(str);
-        str = query("WRY %d", (int) (height * 1e5));
-        checkDefaultResponse(str);
-
-    }
 
     public static class Status {
 

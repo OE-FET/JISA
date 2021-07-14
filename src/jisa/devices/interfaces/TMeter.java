@@ -13,6 +13,7 @@ public interface TMeter extends Instrument, Sensor<TMeter> {
         return "Thermometer";
     }
 
+
     String getSensorName();
 
     default Class<TMeter> getSensorType() {
