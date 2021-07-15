@@ -1,8 +1,8 @@
 package jisa.experiment.queue;
 
 import jisa.experiment.Measurement;
-import jisa.experiment.ResultTable;
 import jisa.gui.queue.SimpleActionDisplay;
+import jisa.results.ResultTable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -81,7 +81,6 @@ public class MeasurementAction extends AbstractAction<ResultTable> {
 
             } finally {
                 count++;
-                data.finalise();
             }
 
 

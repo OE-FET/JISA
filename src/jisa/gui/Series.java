@@ -3,13 +3,14 @@ package jisa.gui;
 import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
 import jisa.Util;
-import jisa.experiment.Col;
-import jisa.experiment.Result;
-import jisa.experiment.ResultTable;
-import jisa.experiment.RowValue;
 import jisa.maths.matrices.Matrix;
 import jisa.maths.fits.Fit;
 import jisa.maths.fits.Fitting;
+import jisa.results.Column;
+import jisa.results.ResultTable;
+import jisa.results.Row;
+import jisa.results.RowEvaluable;
+import org.python.antlr.ast.Num;
 
 import java.util.Iterator;
 import java.util.List;
@@ -18,14 +19,14 @@ import java.util.function.Predicate;
 public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
     Color[] defaultColours = {
-            Color.web("#f3622d"),
-            Color.web("#fba71b"),
-            Color.web("#57b757"),
-            Color.web("#41a9c9"),
-            Color.web("#4258c9"),
-            Color.web("#9a42c8"),
-            Color.web("#c84164"),
-            Color.web("#888888")
+        Color.web("#f3622d"),
+        Color.web("#fba71b"),
+        Color.web("#57b757"),
+        Color.web("#41a9c9"),
+        Color.web("#4258c9"),
+        Color.web("#9a42c8"),
+        Color.web("#c84164"),
+        Color.web("#888888")
     };
 
     // == Watch ========================================================================================================
@@ -40,7 +41,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    Series watch(ResultTable table, ResultTable.Evaluable xData, ResultTable.Evaluable yData, ResultTable.Evaluable eData);
+    Series watch(ResultTable table, RowEvaluable<? extends Number> xData, RowEvaluable<? extends Number> yData, RowEvaluable<? extends Number> eData);
 
     /**
      * Watch the specified ResultTable object, plotting points without error-bars based on the specified x and y values.
@@ -51,7 +52,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    default Series watch(ResultTable table, ResultTable.Evaluable xData, ResultTable.Evaluable yData) {
+    default Series watch(ResultTable table, RowEvaluable xData, RowEvaluable yData) {
         return watch(table, xData, yData, r -> 0);
     }
 
@@ -65,7 +66,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    default Series watch(ResultTable table, int xData, int yData, int eData) {
+    default Series watch(ResultTable table, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> eData) {
         return watch(table, r -> r.get(xData), r -> r.get(yData), r -> r.get(eData));
     }
 
@@ -78,19 +79,8 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    default Series watch(ResultTable table, int xData, int yData) {
+    default Series watch(ResultTable table, Column<? extends Number> xData, Column<? extends Number> yData) {
         return watch(table, r -> r.get(xData), r -> r.get(yData), r -> 0);
-    }
-
-    /**
-     * Watch the specified ResultTable object, plotting the first column on the x-axis and second on the y-axis.
-     *
-     * @param table ResultTable to watch
-     *
-     * @return Self-reference
-     */
-    default Series watch(ResultTable table) {
-        return watch(table, 0, 1);
     }
 
     // == Split ========================================================================================================
@@ -103,7 +93,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    Series split(RowValue splitBy, SeriesFormatter pattern);
+    Series split(RowEvaluable<?> splitBy, SeriesFormatter pattern);
 
     /**
      * Cause the series to automatically split into a set of sub-series based on a value in each result.
@@ -113,7 +103,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    default Series split(RowValue splitBy, String pattern) {
+    default Series split(RowEvaluable<?> splitBy, String pattern) {
         return split(splitBy, r -> String.format(pattern, splitBy.evaluate(r)));
     }
 
@@ -124,32 +114,31 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    default Series split(RowValue splitBy) {
+    default Series split(RowEvaluable<?> splitBy) {
         return split(splitBy, "%s");
     }
 
     /**
      * Cause the series to automatically split into a set of sub-series based on a value in each result.
      *
-     * @param colNum  Column index to use for the splitting
+     * @param column  Column to use for the splitting
      * @param pattern String formatting pattern for the split value to use as the name of each series
      *
      * @return Self-reference
      */
-    default Series split(int colNum, String pattern) {
-        return split(r -> r.get(colNum), pattern);
+    default Series split(Column<?> column, String pattern) {
+        return split(r -> r.get(column), pattern);
     }
 
     /**
      * Cause the series to automatically split into a set of sub-series based on a value in each result.
      *
-     * @param colNum Column index to use for the splitting
+     * @param column Column to use for the splitting
      *
      * @return Self-reference
      */
-    default Series split(int colNum) {
-        Col column = getWatched().getColumn(colNum);
-        return split(colNum, column.hasUnit() ? "%s " + column.getUnit() : "%s");
+    default Series split(Column<?> column) {
+        return split(column, column.hasUnits() ? "%s " + column.getUnits() : "%s");
     }
 
     // == Watch All ====================================================================================================
@@ -162,7 +151,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    Series watchAll(ResultTable table, int xData);
+    Series watchAll(ResultTable table, Column<? extends Number> xData);
 
     /**
      * Plots all columns in a ResultTable against the first as separate series
@@ -172,7 +161,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      * @return Self-reference
      */
     default Series watchAll(ResultTable table) {
-        return watchAll(table, 0);
+        return watchAll(table, (Column<? extends Number>) getWatched().getColumn(0));
     }
 
     /**
@@ -198,7 +187,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    Series filter(Predicate<Result> filter);
+    Series filter(Predicate<Row> filter);
 
     /**
      * Manually add a data-point, with error-bar, to the series.
@@ -578,7 +567,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
     interface SeriesFormatter {
 
-        String getName(Result row);
+        String getName(Row row);
 
     }
 

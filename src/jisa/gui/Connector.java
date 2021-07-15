@@ -77,7 +77,13 @@ public class Connector<T extends Instrument> extends JFXElement {
 
         });
 
-        driverChoice.getItems().setAll((reflections.getSubTypesOf(connection.getType()).stream().filter(Objects::nonNull).filter(driver ->
+        driverChoice.getItems().clear();
+
+        if (!(connection.getType().isInterface() || connection.getType().isAnonymousClass())) {
+            driverChoice.getItems().add(connection.getType());
+        }
+
+        driverChoice.getItems().addAll((reflections.getSubTypesOf(connection.getType()).stream().filter(Objects::nonNull).filter(driver ->
             !(
                 Modifier.isAbstract(driver.getModifiers())
                     || Modifier.isInterface(driver.getModifiers())
@@ -350,6 +356,7 @@ public class Connector<T extends Instrument> extends JFXElement {
         Util.runAsync(() -> {
             Address selected = GUI.browseVISA();
             if (selected != null) {
+                connection.setDriver(driverChoice.getValue());
                 connection.setAddress(selected);
             }
         });

@@ -20,11 +20,9 @@ import javafx.scene.shape.*;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import jisa.Util;
-import jisa.experiment.Result;
-import jisa.experiment.ResultTable;
-import jisa.experiment.RowValue;
 import jisa.maths.fits.Fit;
 import jisa.maths.functions.Function;
+import jisa.results.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -322,8 +320,8 @@ public class JISAChart extends XYChart<Double, Double> {
                         for (double x : Util.makeLinearArray(start, stop, pixels + 1)) {
 
                             constructedPath.add(new JISALineTo(
-                                    x,
-                                    getYAxis().getDisplayPosition(fitted.value(getXAxis().getValueForDisplay(x)))
+                                x,
+                                getYAxis().getDisplayPosition(fitted.value(getXAxis().getValueForDisplay(x)))
                             ));
 
                         }
@@ -427,7 +425,7 @@ public class JISAChart extends XYChart<Double, Double> {
 
     public interface ResultHandler {
 
-        void handle(Result row, double x, double y, double e);
+        void handle(Row row, double x, double y, double e);
 
     }
 
@@ -472,10 +470,10 @@ public class JISAChart extends XYChart<Double, Double> {
 
             Timeline timeline = new Timeline();
             timeline.getKeyFrames().addAll(
-                    new KeyFrame(Duration.millis(0), new KeyValue(xProperty(), fromX)),
-                    new KeyFrame(Duration.millis(0), new KeyValue(yProperty(), fromY)),
-                    new KeyFrame(Duration.millis(millis), new KeyValue(xProperty(), getX())),
-                    new KeyFrame(Duration.millis(millis), new KeyValue(yProperty(), getY()))
+                new KeyFrame(Duration.millis(0), new KeyValue(xProperty(), fromX)),
+                new KeyFrame(Duration.millis(0), new KeyValue(yProperty(), fromY)),
+                new KeyFrame(Duration.millis(millis), new KeyValue(xProperty(), getX())),
+                new KeyFrame(Duration.millis(millis), new KeyValue(yProperty(), getY()))
             );
 
             setX(fromX);
@@ -492,13 +490,13 @@ public class JISAChart extends XYChart<Double, Double> {
         public ChartTag() {
 
             setShape(new Path(
-                    new MoveTo(0, 0),
-                    new LineTo(5, 10),
-                    new LineTo(50, 10),
-                    new LineTo(50, -10),
-                    new LineTo(5, -10),
-                    new LineTo(0, 0),
-                    new ClosePath()
+                new MoveTo(0, 0),
+                new LineTo(5, 10),
+                new LineTo(50, 10),
+                new LineTo(50, -10),
+                new LineTo(5, -10),
+                new LineTo(0, 0),
+                new ClosePath()
             ));
 
             setHeight(20);
@@ -911,27 +909,27 @@ public class JISAChart extends XYChart<Double, Double> {
 
     public class JISASeries implements jisa.gui.Series {
 
-        private final Series<Double, Double>     series;
-        private final List<Data<Double, Double>> data;
-        private final ChartNode                  template;
-        private final ChartLine                  line;
-        private final List<jisa.gui.Series>      subSeries      = new ArrayList<>();
-        private       Predicate<Result>          filter         = r -> true;
-        private       double                     xTrack         = Double.POSITIVE_INFINITY;
-        private       double                     yTrack         = Double.POSITIVE_INFINITY;
-        private       double                     maxX           = Double.NEGATIVE_INFINITY;
-        private       double                     maxY           = Double.NEGATIVE_INFINITY;
-        private       Dash                       dash           = Dash.SOLID;
-        private       ResultHandler              handler;
-        private       ResultTable.Evaluable      xData          = null;
-        private       ResultTable.Evaluable      yData          = null;
-        private       ResultTable.Evaluable      eData          = null;
-        private       ResultTable                watching       = null;
-        private       ResultTable.OnUpdate       rtListener     = null;
-        private       Color[]                    defaultColours = jisa.gui.Series.defaultColours;
-        private       int                        maxPoints      = Integer.MAX_VALUE;
-        private       int                        redPoints      = Integer.MAX_VALUE;
-        private       DataHandler                click          = (x, y, e) -> {
+        private final Series<Double, Double>         series;
+        private final List<Data<Double, Double>>     data;
+        private final ChartNode                      template;
+        private final ChartLine                      line;
+        private final List<jisa.gui.Series>          subSeries      = new ArrayList<>();
+        private       Predicate<Row>                 filter         = r -> true;
+        private       double                         xTrack         = Double.POSITIVE_INFINITY;
+        private       double                         yTrack         = Double.POSITIVE_INFINITY;
+        private       double                         maxX           = Double.NEGATIVE_INFINITY;
+        private       double                         maxY           = Double.NEGATIVE_INFINITY;
+        private       Dash                           dash           = Dash.SOLID;
+        private       ResultHandler                  handler;
+        private       RowEvaluable<? extends Number> xData          = null;
+        private       RowEvaluable<? extends Number> yData          = null;
+        private       RowEvaluable<? extends Number> eData          = null;
+        private ResultTable             watching       = null;
+        private ResultTable.RowListener rtListener     = null;
+        private Color[]                 defaultColours = jisa.gui.Series.defaultColours;
+        private       int                            maxPoints      = Integer.MAX_VALUE;
+        private       int                            redPoints      = Integer.MAX_VALUE;
+        private       DataHandler                    click          = (x, y, e) -> {
         };
 
         public JISASeries(Series<Double, Double> series) {
@@ -953,10 +951,10 @@ public class JISAChart extends XYChart<Double, Double> {
         }
 
         @Override
-        public JISASeries watch(ResultTable list, ResultTable.Evaluable xData, ResultTable.Evaluable yData, ResultTable.Evaluable eData) {
+        public JISASeries watch(ResultTable list, RowEvaluable<? extends Number> xData, RowEvaluable<? extends Number> yData, RowEvaluable<? extends Number> eData) {
 
             if (watching != null) {
-                watching.removeOnUpdate(rtListener);
+                watching.removeRowListener(rtListener);
             }
 
             watching = list;
@@ -969,18 +967,18 @@ public class JISAChart extends XYChart<Double, Double> {
                     addPoint(x, y, e);
                 }
             };
-            rtListener = list.addOnUpdate(r -> {
+            rtListener = list.addRowListener(r -> {
 
                 if (filter.test(r)) {
-                    GUI.runNow(() -> handler.handle(r, xData.evaluate(r), yData.evaluate(r), eData.evaluate(r)));
+                    GUI.runNow(() -> handler.handle(r, xData.evaluate(r).doubleValue(), yData.evaluate(r).doubleValue(), eData.evaluate(r).doubleValue()));
                 }
 
             });
 
-            for (Result row : list) {
+            for (Row row : list) {
 
                 if (filter.test(row)) {
-                    GUI.runNow(() -> handler.handle(row, xData.evaluate(row), yData.evaluate(row), eData.evaluate(row)));
+                    GUI.runNow(() -> handler.handle(row, xData.evaluate(row).doubleValue(), yData.evaluate(row).doubleValue(), eData.evaluate(row).doubleValue()));
                 }
 
             }
@@ -989,16 +987,16 @@ public class JISAChart extends XYChart<Double, Double> {
 
         }
 
-        public JISASeries watch(ResultTable list, int xData, int yData, int eData) {
+        public JISASeries watch(ResultTable list, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> eData) {
 
             GUI.runNow(() -> {
 
                 if (((SmartAxis) getXAxis()).getLabelText().trim().equals("")) {
-                    ((SmartAxis) getXAxis()).setLabelText(list.getTitle(xData));
+                    ((SmartAxis) getXAxis()).setLabelText(xData.getTitle());
                 }
 
                 if (((SmartAxis) getYAxis()).getLabelText().trim().equals("")) {
-                    ((SmartAxis) getYAxis()).setLabelText(list.getTitle(yData));
+                    ((SmartAxis) getYAxis()).setLabelText(yData.getTitle());
                 }
 
             });
@@ -1007,16 +1005,16 @@ public class JISAChart extends XYChart<Double, Double> {
 
         }
 
-        public JISASeries watch(ResultTable list, int xData, int yData) {
+        public JISASeries watch(ResultTable list, Column<? extends Number> xData, Column<? extends Number> yData) {
 
             GUI.runNow(() -> {
 
                 if (((SmartAxis) getXAxis()).getLabelText().trim().equals("")) {
-                    ((SmartAxis) getXAxis()).setLabelText(list.getTitle(xData));
+                    ((SmartAxis) getXAxis()).setLabelText(xData.getTitle());
                 }
 
                 if (((SmartAxis) getYAxis()).getLabelText().trim().equals("")) {
-                    ((SmartAxis) getYAxis()).setLabelText(list.getTitle(yData));
+                    ((SmartAxis) getYAxis()).setLabelText(yData.getTitle());
                 }
 
             });
@@ -1027,7 +1025,7 @@ public class JISAChart extends XYChart<Double, Double> {
 
 
         @Override
-        public JISASeries split(RowValue splitBy, SeriesFormatter formatter) {
+        public JISASeries split(RowEvaluable<?> splitBy, SeriesFormatter formatter) {
 
             if (watching == null) {
                 throw new IllegalStateException("A series must be watching a ResultTable before being able to be split.");
@@ -1049,14 +1047,14 @@ public class JISAChart extends XYChart<Double, Double> {
                     if (!map.containsKey(value)) {
 
                         jisa.gui.Series series = createSeries()
-                                .setName(formatter.getName(r))
-                                .setColour(defaultColours[subSeries.size() % defaultColours.length])
-                                .setLineVisible(isLineVisible())
-                                .setMarkerVisible(isMarkerVisible())
-                                .setMarkerShape(getMarkerShape())
-                                .setLineDash(getLineDash())
-                                .setLineWidth(getLineWidth())
-                                .setMarkerSize(getMarkerSize());
+                            .setName(formatter.getName(r))
+                            .setColour(defaultColours[subSeries.size() % defaultColours.length])
+                            .setLineVisible(isLineVisible())
+                            .setMarkerVisible(isMarkerVisible())
+                            .setMarkerShape(getMarkerShape())
+                            .setLineDash(getLineDash())
+                            .setLineWidth(getLineWidth())
+                            .setMarkerSize(getMarkerSize());
 
                         if (isFitted()) {
                             series.fit(getFitter());
@@ -1073,9 +1071,9 @@ public class JISAChart extends XYChart<Double, Double> {
 
             };
 
-            for (Result row : watching) {
+            for (Row row : watching) {
                 if (filter.test(row)) {
-                    handler.handle(row, xData.evaluate(row), yData.evaluate(row), eData.evaluate(row));
+                    handler.handle(row, xData.evaluate(row).doubleValue(), yData.evaluate(row).doubleValue(), eData.evaluate(row).doubleValue());
                 }
             }
 
@@ -1084,52 +1082,46 @@ public class JISAChart extends XYChart<Double, Double> {
         }
 
         @Override
-        public JISASeries watchAll(ResultTable list, int xData) {
+        public JISASeries watchAll(ResultTable list, Column<? extends Number> xData) {
 
             if (watching != null) {
-                watching.removeOnUpdate(rtListener);
+                watching.removeRowListener(rtListener);
             }
 
             clear();
             getData().remove(series);
             subSeries.clear();
 
-            final Map<Integer, jisa.gui.Series> map = new HashMap<>();
+            final Map<Column<? extends Number>, jisa.gui.Series> map = new LinkedHashMap<>();
 
-            for (int i = 0; i < list.getNumCols(); i++) {
+            list.getColumns().stream().filter(c -> Number.class.isAssignableFrom(c.getType())).forEach(column -> {
 
-                if (i == xData) {
-                    continue;
+                if (column == xData) {
+                    return;
                 }
 
                 jisa.gui.Series series = createSeries()
-                        .setName(list.getTitle(i))
-                        .setColour(defaultColours[subSeries.size() % defaultColours.length]);
+                    .setName(column.getTitle())
+                    .setColour(defaultColours[subSeries.size() % defaultColours.length]);
 
                 if (isFitted()) {
                     series.fit(getFitter());
                 }
 
                 subSeries.add(series);
-                map.put(i, series);
+                map.put((Column<? extends Number>) column, series);
 
-            }
+            });
 
             handler = (r, x, y, e) -> {
 
-                double[] data = r.getData();
+                map.forEach((column, series) -> {
 
-                for (int i = 0; i < data.length; i++) {
-
-                    if (i == xData) {
-                        continue;
+                    if (!Double.isNaN(r.get(xData).doubleValue()) && !Double.isNaN(r.get(column).doubleValue())) {
+                        series.addPoint(r.get(xData).doubleValue(), r.get(column).doubleValue());
                     }
 
-                    if (!Double.isNaN(data[xData]) && !Double.isNaN(data[i])) {
-                        map.get(i).addPoint(data[xData], data[i]);
-                    }
-
-                }
+                });
 
             };
 
@@ -1137,13 +1129,13 @@ public class JISAChart extends XYChart<Double, Double> {
             this.xData = r -> r.get(xData);
             this.yData = r -> r.get(xData);
 
-            rtListener = list.addOnUpdate(r -> {
+            rtListener = list.addRowListener(r -> {
                 if (filter.test(r)) {
                     handler.handle(r, 0, 0, 0);
                 }
             });
 
-            for (Result row : list) {
+            for (Row row : list) {
                 if (filter.test(row)) {
                     handler.handle(row, 0, 0, 0);
                 }
@@ -1153,11 +1145,11 @@ public class JISAChart extends XYChart<Double, Double> {
             SmartAxis yAxis = ((SmartAxis) getYAxis());
 
             if (xAxis.getLabelText().trim().equals("")) {
-                xAxis.setLabelText(list.getTitle(xData));
+                xAxis.setLabelText(xData.getTitle());
             }
 
-            if (list.getNumCols() == 2 && yAxis.getLabelText().trim().equals("")) {
-                yAxis.setLabelText(list.getTitle(xData == 0 ? 1 : 0));
+            if (map.size() == 2 && yAxis.getLabelText().trim().equals("")) {
+                yAxis.setLabelText(map.keySet().stream().filter(c -> c != xData).findFirst().orElse(new DoubleColumn("")).getTitle());
             }
 
             return this;
@@ -1184,7 +1176,7 @@ public class JISAChart extends XYChart<Double, Double> {
         }
 
         @Override
-        public JISASeries filter(Predicate<Result> filter) {
+        public JISASeries filter(Predicate<Row> filter) {
 
             if (watching == null) {
                 throw new IllegalStateException("You cannot filter a series that isn't watching a ResultTable.");
@@ -1194,9 +1186,9 @@ public class JISAChart extends XYChart<Double, Double> {
 
             clear();
 
-            for (Result row : watching) {
+            for (Row row : watching) {
                 if (filter.test(row)) {
-                    handler.handle(row, xData.evaluate(row), yData.evaluate(row), eData.evaluate(row));
+                    handler.handle(row, xData.evaluate(row).doubleValue(), yData.evaluate(row).doubleValue(), eData.evaluate(row).doubleValue());
                 }
             }
 

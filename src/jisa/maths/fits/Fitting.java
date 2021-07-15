@@ -2,10 +2,11 @@ package jisa.maths.fits;
 
 import javafx.scene.chart.XYChart;
 import jisa.Util;
-import jisa.experiment.ResultTable;
 import jisa.maths.functions.Function;
 import jisa.maths.functions.PFunction;
 import jisa.maths.matrices.RealMatrix;
+import jisa.results.Column;
+import jisa.results.ResultTable;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math.optimization.OptimizationException;
@@ -79,8 +80,8 @@ public class Fitting {
 
     }
 
-    public static LinearFit linearFit(ResultTable data, int xCol, int yCol) {
-        return linearFit(data.getColumns(xCol), data.getColumns(yCol));
+    public static LinearFit linearFit(ResultTable data, Column<? extends Number> xCol, Column<? extends Number> yCol) {
+        return linearFit(data.toMatrix(xCol), data.toMatrix(yCol));
     }
 
     /**
@@ -192,8 +193,8 @@ public class Fitting {
         return polyFit(separateX(data), separateY(data), degree);
     }
 
-    public static PolyFit polyFit(ResultTable data, int xCol, int yCol, int degree) {
-        return polyFit(data.getColumns(xCol), data.getColumns(yCol), degree);
+    public static PolyFit polyFit(ResultTable data, Column<? extends Number> xCol, Column<? extends Number> yCol, int degree) {
+        return polyFit(data.toMatrix(xCol), data.toMatrix(yCol), degree);
     }
 
     public static GaussianFit gaussianFit(Iterable<Double> x, Iterable<Double> y) {
@@ -216,8 +217,8 @@ public class Fitting {
         return gaussianFit(separateX(data), separateY(data));
     }
 
-    public static GaussianFit gaussianFit(ResultTable data, int xCol, int yCol) {
-        return gaussianFit(data.getColumns(xCol), data.getColumns(yCol));
+    public static GaussianFit gaussianFit(ResultTable data, Column<? extends Number> xCol, Column<? extends Number> yCol) {
+        return gaussianFit(data.toMatrix(xCol), data.toMatrix(yCol));
     }
 
     public static Fit fit(Iterable<Double> x, Iterable<Double> y, PFunction toFit, double... initial) {
@@ -305,8 +306,8 @@ public class Fitting {
         return fit(separateX(data), separateY(data), toFit, initial);
     }
 
-    public static Fit fit(ResultTable data, int xCol, int yCol, PFunction toFit, double... initial) {
-        return fit(data.getColumns(xCol), data.getColumns(yCol), toFit, initial);
+    public static Fit fit(ResultTable data, Column<? extends Number> xCol, Column<? extends Number> yCol, PFunction toFit, double... initial) {
+        return fit(data.toMatrix(xCol), data.toMatrix(yCol), toFit, initial);
     }
 
     public static CosFit cosFit(Iterable<Double> x, Iterable<Double> y) {
@@ -327,8 +328,8 @@ public class Fitting {
         return cosFit(separateX(data), separateY(data));
     }
 
-    public static CosFit cosFit(ResultTable data, int xCol, int yCol) {
-        return cosFit(data.getColumns(xCol), data.getColumns(yCol));
+    public static CosFit cosFit(ResultTable data, Column<? extends Number> xCol, Column<? extends Number> yCol) {
+        return cosFit(data.toMatrix(xCol), data.toMatrix(yCol));
     }
 
 }

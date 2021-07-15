@@ -14,6 +14,9 @@ import jisa.visa.VISAException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.util.*;
 import java.util.function.BiConsumer;
 
@@ -96,10 +99,10 @@ public class Util {
         List<String> parts = new LinkedList<>();
 
 
-        if (h > 0) parts.add(String.format("%dh", h));
-        if (m > 0) parts.add(String.format("%dm", m));
-        if (s > 0) parts.add(String.format("%ds", s));
-        if (ms > 0) parts.add(String.format("%dms", ms));
+        if (h > 0) { parts.add(String.format("%dh", h)); }
+        if (m > 0) { parts.add(String.format("%dm", m)); }
+        if (s > 0) { parts.add(String.format("%ds", s)); }
+        if (ms > 0) { parts.add(String.format("%dms", ms)); }
 
         return String.join(" ", parts);
 
@@ -114,11 +117,11 @@ public class Util {
     public static String colourToCSS(Color colour) {
 
         return String.format(
-                "rgba(%s,%s,%s,%s)",
-                colour.getRed() * 255,
-                colour.getGreen() * 255,
-                colour.getBlue() * 255,
-                colour.getOpacity()
+            "rgba(%s,%s,%s,%s)",
+            colour.getRed() * 255,
+            colour.getGreen() * 255,
+            colour.getBlue() * 255,
+            colour.getOpacity()
         );
 
     }
@@ -130,23 +133,17 @@ public class Util {
         double niceFraction;
 
         if (round) {
-            if (fraction < 1.5)
-                niceFraction = 1;
-            else if (fraction < 3)
+            if (fraction < 1.5) { niceFraction = 1; } else if (fraction < 3) {
                 niceFraction = 2;
-            else if (fraction < 7)
-                niceFraction = 5;
-            else
+            } else if (fraction < 7) { niceFraction = 5; } else {
                 niceFraction = 10;
+            }
         } else {
-            if (fraction <= 1)
-                niceFraction = 1;
-            else if (fraction <= 2)
+            if (fraction <= 1) { niceFraction = 1; } else if (fraction <= 2) {
                 niceFraction = 2;
-            else if (fraction <= 5)
-                niceFraction = 5;
-            else
+            } else if (fraction <= 5) { niceFraction = 5; } else {
                 niceFraction = 10;
+            }
         }
 
         return niceFraction * Math.pow(10, exponent);
@@ -498,6 +495,22 @@ public class Util {
 
     }
 
+    public static String getCurrentTimeString() {
+
+        LocalDateTime time = LocalDateTime.now();
+
+        return String.format(
+            "%02d-%02d-%04d %02d:%02d:%02d",
+            time.getYear(),
+            time.getMonthValue(),
+            time.getDayOfMonth(),
+            time.getHour(),
+            time.getMinute(),
+            time.getSecond()
+        );
+
+    }
+
     public static void openInBrowser(String url) {
 
         String  os = System.getProperty("os.name").toLowerCase();
@@ -570,8 +583,8 @@ public class Util {
         }
 
         return Math.floor(value.doubleValue() / Math.pow(
-                10,
-                Math.floor(Math.log10(Math.abs(value.doubleValue())))
+            10,
+            Math.floor(Math.log10(Math.abs(value.doubleValue())))
         )) * Math.pow(10, Math.floor(Math.log10(Math.abs(value.doubleValue()))));
     }
 
@@ -589,8 +602,8 @@ public class Util {
         }
 
         return Math.ceil(value / Math.pow(10, Math.floor(Math.log10(Math.abs(value))))) * Math.pow(
-                10,
-                Math.floor(Math.log10(Math.abs(value)))
+            10,
+            Math.floor(Math.log10(Math.abs(value)))
         );
     }
 

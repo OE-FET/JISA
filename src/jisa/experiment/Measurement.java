@@ -6,6 +6,10 @@ import jisa.experiment.queue.Action;
 import jisa.gui.Field;
 import jisa.gui.Fields;
 import jisa.maths.Range;
+import jisa.results.Column;
+import jisa.results.ResultList;
+import jisa.results.ResultStream;
+import jisa.results.ResultTable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -99,7 +103,7 @@ public abstract class Measurement {
      *
      * @return Array of columns
      */
-    public abstract Col[] getColumns();
+    public abstract Column[] getColumns();
 
     /**
      * Generates a new ResultTable for storing results, in memory.

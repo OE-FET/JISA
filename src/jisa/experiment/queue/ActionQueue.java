@@ -1,9 +1,11 @@
 package jisa.experiment.queue;
 
 import jisa.Util;
-import jisa.experiment.Col;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;

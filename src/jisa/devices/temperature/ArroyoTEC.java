@@ -95,12 +95,12 @@ public class ArroyoTEC extends VISADevice implements TC {
 
     @Override
     public double getHeaterPower() throws IOException {
-        return 0.0;
+        return Math.pow(queryDouble("TEC:V?") / 2.5, 2) * 100.0;
     }
 
     @Override
-    public void setHeaterPower(double powerPCT) {
-
+    public void setHeaterPower(double powerPCT) throws IOException {
+        write("TEC:OUT 0");
     }
 
     @Override
@@ -110,12 +110,12 @@ public class ArroyoTEC extends VISADevice implements TC {
 
     @Override
     public void useAutoHeater() throws IOException {
-
+        write("TEC:OUT 1");
     }
 
     @Override
     public boolean isUsingAutoHeater() throws IOException {
-        return true;
+        return queryInt("TEC:OUT?") == 1;
     }
 
     @Override

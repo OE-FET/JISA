@@ -72,7 +72,8 @@ public class Connection<T extends Instrument> {
 
         return ALL_CONNECTIONS.stream()
                               .filter(c ->
-                                  target.isAssignableFrom(c.getType())
+                                  (c.isConnected() && target.isAssignableFrom(c.getDriver()))
+                                      || target.isAssignableFrom(c.getType())
                                       || (c instanceof MultiChannel && target.isAssignableFrom(((MultiChannel<?>) c).getChannelClass()))
                                       || (c instanceof MultiOutput && target.isAssignableFrom(((MultiOutput<?>) c).getOutputClass()))
                                       || (c instanceof MultiSensor && target.isAssignableFrom(((MultiSensor<?>) c).getSensorClass()))
@@ -84,8 +85,8 @@ public class Connection<T extends Instrument> {
     public static <T> List<Connection<?>> getConnectionsOf(Class<T> type) {
 
         return ALL_CONNECTIONS.stream()
-             .filter(con -> con.isConnected() && type.isAssignableFrom(con.getInstrument().getClass()))
-            .collect(Collectors.toList());
+                              .filter(con -> con.isConnected() && type.isAssignableFrom(con.getInstrument().getClass()))
+                              .collect(Collectors.toList());
 
     }
 

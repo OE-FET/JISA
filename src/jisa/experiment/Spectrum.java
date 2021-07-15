@@ -3,6 +3,8 @@ package jisa.experiment;
 import jisa.maths.functions.Function;
 import jisa.maths.interpolation.Interpolation;
 import jisa.maths.matrices.RealMatrix;
+import jisa.results.DoubleColumn;
+import jisa.results.ResultList;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -19,8 +21,8 @@ public class Spectrum implements Iterable<Spectrum.DataPoint> {
     public ResultList toResultList() {
 
         ResultList list = new ResultList(
-            new Col("Wavelength", "m"),
-            new Col("Value")
+            new DoubleColumn("Wavelength", "m"),
+            new DoubleColumn("Value")
         );
 
         forEach(p -> list.addData(p.frequency, p.value));

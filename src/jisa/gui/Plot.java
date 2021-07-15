@@ -20,11 +20,12 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import jisa.Util;
-import jisa.experiment.ResultTable;
 import jisa.gui.svg.*;
 import jisa.maths.Range;
 import jisa.maths.fits.Fit;
 import jisa.maths.functions.Function;
+import jisa.results.Column;
+import jisa.results.ResultTable;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -158,14 +159,14 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
-    public Plot(String title, ResultTable toWatch, int xData) {
+    public Plot(String title, ResultTable toWatch, Column<? extends Number> xData) {
 
         this(title);
         autoSeries = createSeries().watchAll(toWatch, xData);
 
     }
 
-    public Plot(String title, ResultTable toWatch, int xData, int yData) {
+    public Plot(String title, ResultTable toWatch, Column<? extends Number> xData, Column<? extends Number> yData) {
 
         this(title);
         autoSeries = createSeries().watch(toWatch, xData, yData);
@@ -173,7 +174,7 @@ public class Plot extends JFXElement implements Element, Clearable {
     }
 
 
-    public Plot(String title, ResultTable toWatch, int xData, int yData, int sData) {
+    public Plot(String title, ResultTable toWatch, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> sData) {
 
         this(title);
         autoSeries = createSeries().watch(toWatch, xData, yData).split(sData);
