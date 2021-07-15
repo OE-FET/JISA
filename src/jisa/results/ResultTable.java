@@ -130,6 +130,24 @@ public abstract class ResultTable implements Iterable<Row> {
         return List.copyOf(columns);
     }
 
+    public List<Column<? extends Number>> getNumericColumns() {
+
+        return columns.stream()
+                      .filter(c -> Number.class.isAssignableFrom(c.getType()))
+                      .map(c -> (Column<? extends Number>) c)
+                      .collect(Collectors.toList());
+
+    }
+
+    public Column<? extends Number> getFirstNumericColumn() {
+
+        return columns.stream()
+                      .filter(c -> Number.class.isAssignableFrom(c.getType()))
+                      .map(c -> (Column<? extends Number>) c)
+                      .findFirst().orElse(null);
+
+    }
+
     /**
      * Returns an array of all columns in this ResultTable.
      *
@@ -262,6 +280,7 @@ public abstract class ResultTable implements Iterable<Row> {
         return map;
 
     }
+
     /**
      * Splits this ResultTable into separate tables based on the value of the specified column for each row.
      *

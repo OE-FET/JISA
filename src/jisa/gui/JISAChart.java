@@ -1084,6 +1084,10 @@ public class JISAChart extends XYChart<Double, Double> {
         @Override
         public JISASeries watchAll(ResultTable list, Column<? extends Number> xData) {
 
+            if (xData == null) {
+                return this;
+            }
+
             if (watching != null) {
                 watching.removeRowListener(rtListener);
             }
@@ -1094,7 +1098,7 @@ public class JISAChart extends XYChart<Double, Double> {
 
             final Map<Column<? extends Number>, jisa.gui.Series> map = new LinkedHashMap<>();
 
-            list.getColumns().stream().filter(c -> Number.class.isAssignableFrom(c.getType())).forEach(column -> {
+            list.getNumericColumns().forEach(column -> {
 
                 if (column == xData) {
                     return;
@@ -1109,7 +1113,7 @@ public class JISAChart extends XYChart<Double, Double> {
                 }
 
                 subSeries.add(series);
-                map.put((Column<? extends Number>) column, series);
+                map.put(column, series);
 
             });
 

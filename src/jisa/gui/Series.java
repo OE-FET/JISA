@@ -161,7 +161,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      * @return Self-reference
      */
     default Series watchAll(ResultTable table) {
-        return watchAll(table, (Column<? extends Number>) getWatched().getColumn(0));
+        return watchAll(table, table.getFirstNumericColumn());
     }
 
     /**
