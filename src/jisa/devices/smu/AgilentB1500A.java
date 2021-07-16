@@ -1,5 +1,6 @@
 package jisa.devices.smu;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 
@@ -31,13 +32,15 @@ public class AgilentB1500A extends Agilent415XX {
         if (lastIntTime != intTimes[channel]) {
 
             lastIntTime = intTimes[channel];
-            int nplc    = (int) Math.round(lastIntTime * 50);
 
-            write("AIT 0,3,%e", lastIntTime);
-            write("AIT 1,2,%d", nplc);
-            write("AIT 2,3,%e", lastIntTime);
+            int nPLC = Util.truncate((int) Math.round(lastIntTime * 50), 1, 100);
+
+            write("AIT 0,2,%d", nPLC);
+            write("AIT 1,2,%d", nPLC);
 
         }
+
+        write("AAD %d,1", channel + 1);
 
     }
 

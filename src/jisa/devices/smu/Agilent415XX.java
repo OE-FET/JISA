@@ -74,21 +74,28 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
 
         super(address);
 
+        clearBuffers();
+
         setWriteTerminator(terminator);
         setReadTerminator(terminator);
 
         write(C_RESET);
-        if (setUS) write(C_FLEX);
+        if (setUS) { write(C_FLEX); }
         write(C_FMT);
 
-        String[] idn = getIDN().split(",");
+        boolean match    = false;
+        int     attempts = 0;
 
-        try {
-            if (!idn[1].contains("415") && !idn[1].contains("B1500A")) {
-                throw new Exception();
-            }
-        } catch (Exception e) {
-            throw new DeviceException("Device at %s is not an Agilent 415XX or B1500A series.", address.toString());
+        while (!match && attempts < 3) {
+
+            manuallyClearReadBuffer();
+            match = confirmIdentity();
+            attempts++;
+
+        }
+
+        if (!match) {
+            throw new DeviceException("Instrument at \"%s\" is not correctly identifying as an Agilent 415XX/B1500 series SPA.", address.toString());
         }
 
         for (int i = 0; i < getNumChannels(); i++) {
@@ -98,13 +105,26 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
 
     }
 
+    protected boolean confirmIdentity() {
+
+        try {
+            String[] idn = getIDN().split(",");
+            return idn[1].contains("415") || idn[1].contains("B1500A");
+        } catch (Throwable e) {
+            return false;
+        }
+
+    }
+
     public String getChannelName(int channel) {
+
         try {
             checkChannel(channel);
             return String.format("SMU %d", channel + 1);
         } catch (Exception e) {
             return "Unknown Channel";
         }
+
     }
 
     public String getChannelName() {

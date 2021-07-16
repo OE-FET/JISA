@@ -149,8 +149,12 @@ public class Util {
         return niceFraction * Math.pow(10, exponent);
     }
 
-    public static double truncate(Number value, Number max, Number min) {
+    public static double truncate(Number value, Number min, Number max) {
         return Math.min(max.doubleValue(), Math.max(min.doubleValue(), value.doubleValue()));
+    }
+
+    public static int truncate(int value, int min, int max) {
+        return Math.min(max, Math.max(min, value));
     }
 
     public static void runAsync(Runnable toRun) {
