@@ -39,6 +39,15 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     private static final short                          ERROR_VARIANT_NOT_SUPPORTED  = 4;
     private static final short                          ERROR_INCORRECT_MODE         = 5;
     private static final short                          ERROR_ENUMERATION_INCOMPLETE = 6;
+    private static final short                          ERROR_NOT_RESPONDING         = 7;
+    private static final short                          ERROR_FW_FAIL                = 8;
+    private static final short                          ERROR_CONFIG_FAIL            = 9;
+    private static final short                          ERROR_NOT_FOUND              = 10;
+    private static final short                          ERROR_THREAD_FAIL            = 11;
+    private static final short                          ERROR_PIPE_INFO_FAIL         = 12;
+    private static final short                          ERROR_NOT_CALIBRATED         = 13;
+    private static final short                          ERROR_PICOPP_TOO_OLD         = 14;
+    private static final short                          ERROR_COMMUNICATION          = 15;
     private static final short                          UNITS_KELVIN                 = 2;
 
     /**
@@ -71,6 +80,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     private float[]   lastValues    = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     private long      lastTime      = 0;
+    private long      interval      = 0;
     private Frequency lineFrequency = Frequency.FIFTY_HERTZ;
 
     /**
@@ -97,6 +107,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         } else {
             throw new DeviceException(getLastError((short) 0));
         }
+
+        interval = lib.usb_tc08_get_minimum_interval_ms(handle);
 
     }
 
@@ -208,11 +220,11 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     @Override
-    public double getTemperature(int sensor) throws DeviceException, IOException {
+    public synchronized double getTemperature(int sensor) throws DeviceException, IOException {
 
         checkSensor(sensor);
 
-        if ((System.currentTimeMillis() - lastTime) > lib.usb_tc08_get_minimum_interval_ms(handle)) {
+        if ((System.currentTimeMillis() - lastTime) > interval) {
             updateReadings();
         }
 
@@ -227,6 +239,9 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      * @throws DeviceException Upon instrument error
      */
     private synchronized void updateReadings() throws DeviceException {
+
+        lastTime   = System.currentTimeMillis();
+        interval   = lib.usb_tc08_get_minimum_interval_ms(handle);
 
         // Need a pointer to some memory to store our returned values
         Memory tempPointer = new Memory(9L * Native.getNativeSize(Float.TYPE));
@@ -254,7 +269,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     @Override
-    public List<Double> getTemperatures() throws DeviceException {
+    public synchronized List<Double> getTemperatures() throws DeviceException {
 
         List<Double> temperatures = new ArrayList<>(lastValues.length);
 
@@ -287,7 +302,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      *
      * @throws DeviceException Upon instrument error
      */
-    public void setSensorType(int sensor, SensorType type) throws DeviceException, IOException {
+    public synchronized void setSensorType(int sensor, SensorType type) throws DeviceException, IOException {
 
         checkSensor(sensor);
 
@@ -406,8 +421,35 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             case ERROR_ENUMERATION_INCOMPLETE:
                 return "Enumeration incomplete";
 
+            case ERROR_NOT_RESPONDING:
+                return "TC-08 unit not responding";
+
+            case ERROR_FW_FAIL:
+                return "Failed to download firmware to TC-08 unit";
+
+            case ERROR_CONFIG_FAIL:
+                return "Missing or corrupted EEPROM on TC-08 unit";
+
+            case ERROR_NOT_FOUND:
+                return "Cannot find enumerated device";
+
+            case ERROR_THREAD_FAIL:
+                return "A threading function failed";
+
+            case ERROR_PIPE_INFO_FAIL:
+                return "Can not get USB pipe information";
+
+            case ERROR_NOT_CALIBRATED:
+                return "No calibration date was found";
+
+            case ERROR_PICOPP_TOO_OLD:
+                return "The picopp.sys driver is too old";
+
+            case ERROR_COMMUNICATION:
+                return "Communication lost with TC-08 unit";
+
             default:
-                return "Unknown error";
+                return String.format("Unknown TC-08 error (code: %d)", error);
 
         }
 
