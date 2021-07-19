@@ -11,7 +11,6 @@ import java.io.IOException;
 public class Pegasus extends VISADevice implements ProbeStation {
 
     private static final String TERMINATOR = "\n";
-    private static final Double MAXZDISTANCE = 3e-3;
 
     public static String getDescription() {
         return "Pegasus Probe Station";
@@ -122,17 +121,28 @@ public class Pegasus extends VISADevice implements ProbeStation {
 
     @Override
     public void setZPosition(double position) throws IOException, DeviceException {
-        if (position > MAXZDISTANCE) {
-            throw new DeviceException("Z position larger than safety margin");
-        }
-        else{
             slowQuery("WKGM %d", (int) (position * 1e6));
             slowQuery("GDW");
-            slowQuery("GUP");
-        }
+            slowQuery("GUP");   
+    }
 
+    public void setGrossUpDistance(double position) throws IOException, DeviceException {
+        slowQuery("WKGM %d", (int) (position * 1e6));
 
     }
+
+    public void setGrossLocked(boolean locked) throws IOException, DeviceException {
+        if (locked) {
+            slowQuery("GUP");
+        } else {
+            slowQuery("GDW");
+        }
+    }
+
+    public boolean isGrossLocked() throws IOException {
+        return getStatus().isLiftedGross;
+    }
+
 
     @Override
     public double getZPosition() throws IOException {
@@ -194,9 +204,6 @@ public class Pegasus extends VISADevice implements ProbeStation {
 
     @Override
     public void setLocked(boolean locked) throws IOException, DeviceException {
-        if (getZPosition() + getLockDistance() > MAXZDISTANCE) {
-            throw new DeviceException("Z position larger than safety margin");
-        }
         if (locked) {
             slowQuery("CUP");
         } else {
