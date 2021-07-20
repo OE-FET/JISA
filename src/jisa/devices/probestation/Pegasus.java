@@ -77,12 +77,16 @@ public class Pegasus extends VISADevice implements ProbeStation {
 
     @Override
     public void setXPosition(double xposition) throws IOException, DeviceException {
-        slowQuery("GTS X,%d", (int) Math.round(xposition * 1e6));
+        if(!isLocked()) {
+            slowQuery("GTS X,%d", (int) Math.round(xposition * 1e6));
+        }
     }
 
     @Override
     public void setYPosition(double yposition) throws IOException, DeviceException {
-        slowQuery("GTS Y,%d", (int) Math.round(yposition * 1e6));
+        if(!isLocked()) {
+            slowQuery("GTS Y,%d", (int) Math.round(yposition * 1e6));
+        }
     }
 
     protected double parsePosition(String response) throws IOException {
@@ -104,7 +108,9 @@ public class Pegasus extends VISADevice implements ProbeStation {
 
     @Override
     public void continMovement(String axis,double velocityPercentage) throws IOException, DeviceException {
-        slowQuery("CMOV %s,%f,",axis,velocityPercentage);
+        if(!isLocked()){
+            slowQuery("CMOV %s,%f,",axis,velocityPercentage);
+        }
     }
 
 
@@ -126,19 +132,20 @@ public class Pegasus extends VISADevice implements ProbeStation {
             slowQuery("GUP");   
     }
 
+    @Override
     public void setGrossUpDistance(double position) throws IOException, DeviceException {
         slowQuery("WKGM %d", (int) (position * 1e6));
 
     }
-
-    public void setGrossLocked(boolean locked) throws IOException, DeviceException {
+    @Override
+    public void setGrossUp(boolean locked) throws IOException, DeviceException {
         if (locked) {
             slowQuery("GUP");
         } else {
             slowQuery("GDW");
         }
     }
-
+    @Override
     public boolean isGrossLocked() throws IOException {
         return getStatus().isLiftedGross;
     }

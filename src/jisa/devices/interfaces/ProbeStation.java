@@ -58,10 +58,31 @@ public interface ProbeStation extends XYZTranslationStage {
      */
     void continMovement(String axis,double velocityPercentage) throws IOException, DeviceException;
 
+    /**
+     * Write z-axis gross lift
+     *
+     * @param position in m
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setGrossUpDistance(double position) throws IOException, DeviceException;
 
+    /**
+     * Set Gross Up (1) or Gross Down (0)
+     *
+     * @param locked 1: up; 0: down
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setGrossUp(boolean locked) throws IOException, DeviceException;
 
-
-
+    /**
+     * Returns if Gross Up or not
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    boolean isGrossLocked() throws IOException;
 
 
 
