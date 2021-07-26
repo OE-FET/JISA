@@ -38,7 +38,7 @@ public interface VMeter extends Instrument {
      */
     default double getVoltage(double integrationTime) throws DeviceException, IOException {
 
-        synchronized (this) {
+        synchronized (getLockObject()) {
 
             double prevTime = getIntegrationTime();
             setIntegrationTime(integrationTime);

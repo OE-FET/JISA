@@ -46,7 +46,7 @@ public interface SMU extends IVMeter, IVSource, Channel<SMU> {
      */
     default double getVoltage(double integrationTime) throws DeviceException, IOException {
 
-        synchronized (this) {
+        synchronized (getLockObject()) {
 
             double prevTime = getIntegrationTime();
             setIntegrationTime(integrationTime);
@@ -90,7 +90,7 @@ public interface SMU extends IVMeter, IVSource, Channel<SMU> {
      */
     default double getCurrent(double integrationTime) throws DeviceException, IOException {
 
-        synchronized (this) {
+        synchronized (getLockObject()) {
 
             double prevTime = getIntegrationTime();
             setIntegrationTime(integrationTime);
