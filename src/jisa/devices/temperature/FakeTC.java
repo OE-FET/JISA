@@ -4,6 +4,7 @@ import jisa.addresses.Address;
 import jisa.control.RTask;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.TC;
+import jisa.devices.interfaces.TCouple;
 
 import java.io.IOException;
 import java.util.List;
@@ -104,16 +105,6 @@ public class FakeTC implements TC {
     @Override
     public String getSensorName() {
         return "Main Sensor";
-    }
-
-    @Override
-    public void setSensorType(SensorType type) throws IOException, DeviceException {
-
-    }
-
-    @Override
-    public SensorType getSensorType() throws IOException, DeviceException {
-        return SensorType.UNKNOWN;
     }
 
     @Override

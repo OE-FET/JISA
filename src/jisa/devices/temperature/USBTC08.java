@@ -4,12 +4,12 @@ import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.ptr.ShortByReference;
-import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
+import jisa.devices.interfaces.MSTCouple;
 import jisa.devices.interfaces.MSTMeter;
-import jisa.devices.interfaces.TMeter;
+import jisa.devices.interfaces.TCouple;
 import jisa.visa.NativeDevice;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * Driver class for Picotech USB-TC08 thermocouple data loggers. Requires proprietary usbtc08 library to be installed.
  */
-public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MSTMeter {
+public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MSTCouple {
 
     public static String getDescription() {
         return "PicoTech USB-TC08";
@@ -65,17 +65,17 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
-    private final short        handle;
-    private final SensorType[] types = {
-        SensorType.UNKNOWN,
-        SensorType.UNKNOWN,
-        SensorType.UNKNOWN,
-        SensorType.UNKNOWN,
-        SensorType.UNKNOWN,
-        SensorType.UNKNOWN,
-        SensorType.UNKNOWN,
-        SensorType.UNKNOWN,
-        SensorType.UNKNOWN
+    private final short          handle;
+    private final TCouple.Type[] types = {
+        TCouple.Type.UNKNOWN,
+        TCouple.Type.UNKNOWN,
+        TCouple.Type.UNKNOWN,
+        TCouple.Type.UNKNOWN,
+        TCouple.Type.UNKNOWN,
+        TCouple.Type.UNKNOWN,
+        TCouple.Type.UNKNOWN,
+        TCouple.Type.UNKNOWN,
+        TCouple.Type.UNKNOWN
     };
 
     private float[]   lastValues    = {0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -302,7 +302,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      *
      * @throws DeviceException Upon instrument error
      */
-    public synchronized void setSensorType(int sensor, SensorType type) throws DeviceException, IOException {
+    public synchronized void setSensorType(int sensor, TCouple.Type type) throws DeviceException, IOException {
 
         checkSensor(sensor);
 
@@ -330,7 +330,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon instrument error
      */
-    public SensorType getSensorType(int sensor) throws DeviceException, IOException {
+    public TCouple.Type getSensorType(int sensor) throws DeviceException, IOException {
 
         checkSensor(sensor);
         return types[sensor];
@@ -486,15 +486,15 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         byte  USB_TC08_VOLTAGE_READINGS    = (byte) 'X';
         byte  USB_TC08_DISABLE_CHANNEL     = (byte) ' ';
 
-        Map<SensorType, Byte> TYPE_MAP = Map.of(
-            SensorType.THERMOCOUPLE_B, USB_TC08_THERMOCOUPLE_TYPE_B,
-            SensorType.THERMOCOUPLE_E, USB_TC08_THERMOCOUPLE_TYPE_E,
-            SensorType.THERMOCOUPLE_J, USB_TC08_THERMOCOUPLE_TYPE_J,
-            SensorType.THERMOCOUPLE_K, USB_TC08_THERMOCOUPLE_TYPE_K,
-            SensorType.THERMOCOUPLE_N, USB_TC08_THERMOCOUPLE_TYPE_N,
-            SensorType.THERMOCOUPLE_R, USB_TC08_THERMOCOUPLE_TYPE_R,
-            SensorType.THERMOCOUPLE_S, USB_TC08_THERMOCOUPLE_TYPE_S,
-            SensorType.THERMOCOUPLE_T, USB_TC08_THERMOCOUPLE_TYPE_T
+        Map<TCouple.Type, Byte> TYPE_MAP = Map.of(
+            TCouple.Type.B, USB_TC08_THERMOCOUPLE_TYPE_B,
+            TCouple.Type.E, USB_TC08_THERMOCOUPLE_TYPE_E,
+            TCouple.Type.J, USB_TC08_THERMOCOUPLE_TYPE_J,
+            TCouple.Type.K, USB_TC08_THERMOCOUPLE_TYPE_K,
+            TCouple.Type.N, USB_TC08_THERMOCOUPLE_TYPE_N,
+            TCouple.Type.R, USB_TC08_THERMOCOUPLE_TYPE_R,
+            TCouple.Type.S, USB_TC08_THERMOCOUPLE_TYPE_S,
+            TCouple.Type.T, USB_TC08_THERMOCOUPLE_TYPE_T
         );
 
         short usb_tc08_open_unit();

@@ -5,6 +5,7 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MSTC;
 import jisa.devices.interfaces.PID;
+import jisa.devices.interfaces.TCouple;
 import jisa.visa.VISADevice;
 import jisa.visa.RawTCPIPDriver;
 
@@ -93,16 +94,6 @@ public class MercuryITC extends VISADevice implements MSTC {
 
     public static String getDescription() {
         return "Oxford Instruments Mercury ITC";
-    }
-
-    @Override
-    public void setSensorType(int sensor, SensorType type) throws IOException, DeviceException {
-
-    }
-
-    @Override
-    public SensorType getSensorType(int sensor) throws IOException, DeviceException {
-        return SensorType.UNKNOWN;
     }
 
     public void setTimeout(int value) throws IOException {

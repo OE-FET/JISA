@@ -3,6 +3,7 @@ package jisa.devices.temperature;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MSMOTC;
+import jisa.devices.interfaces.TCouple;
 import jisa.visa.Connection;
 import jisa.visa.VISADevice;
 
@@ -10,22 +11,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 public class CryoCon22C extends VISADevice implements MSMOTC {
 
     public static String getDescription() {
         return "Cryo-Con 22C";
-    }
-
-    @Override
-    public void setSensorType(int sensor, SensorType type) throws IOException, DeviceException {
-
-    }
-
-    @Override
-    public SensorType getSensorType(int sensor) throws IOException, DeviceException {
-        return SensorType.UNKNOWN;
     }
 
     public static final List<String> SENSORS = List.of("A", "B");

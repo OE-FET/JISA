@@ -688,16 +688,6 @@ public interface MSMOTC extends MSTC, MultiOutput<MSTC> {
             }
 
             @Override
-            public void setSensorType(int sensor, SensorType type) throws IOException, DeviceException {
-                MSMOTC.this.setSensorType(sensor, type);
-            }
-
-            @Override
-            public SensorType getSensorType(int sensor) throws IOException, DeviceException {
-                return MSMOTC.this.getSensorType(sensor);
-            }
-
-            @Override
             public double getTemperature(int sensor) throws IOException, DeviceException {
                 return MSMOTC.this.getTemperature(sensor);
             }

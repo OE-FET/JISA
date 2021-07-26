@@ -4,6 +4,7 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MSMOTC;
+import jisa.devices.interfaces.TCouple;
 import jisa.visa.Connection.Flow;
 import jisa.visa.Connection.Parity;
 import jisa.visa.Connection.StopBits;
@@ -78,16 +79,6 @@ public class LS336 extends VISADevice implements MSMOTC {
 
     public static String getDescription() {
         return "LakeShore 336";
-    }
-
-    @Override
-    public void setSensorType(int sensor, SensorType type) throws IOException, DeviceException {
-
-    }
-
-    @Override
-    public SensorType getSensorType(int sensor) throws IOException, DeviceException {
-        return SensorType.UNKNOWN;
     }
 
     public synchronized void write(String command, Object... args) throws IOException {

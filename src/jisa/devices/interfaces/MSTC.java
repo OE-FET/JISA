@@ -94,16 +94,6 @@ public interface MSTC extends TC, MSTMeter, Output<MSTC> {
             }
 
             @Override
-            public void setSensorType(SensorType type) throws IOException, DeviceException {
-                MSTC.this.setSensorType(sensor, type);
-            }
-
-            @Override
-            public SensorType getSensorType() throws IOException, DeviceException {
-                return MSTC.this.getSensorType(sensor);
-            }
-
-            @Override
             public double getTemperature() throws IOException, DeviceException {
                 return MSTC.this.getTemperature(sensor);
             }
