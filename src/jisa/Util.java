@@ -221,11 +221,26 @@ public class Util {
 
     }
 
-    public static void waitForAll(SRunnable... runnable) {
+    /**
+     * Runs multiple Runnables in parallel, returning only when all have completed.
+     *
+     * @param runnables Runnables to run
+     *
+     * @throws InterruptedException Upon thread being interrupted
+     */
+    public static void runInParallel(SRunnable... runnables) throws InterruptedException {
 
         List<Thread> threads = new LinkedList<>();
 
+        for (SRunnable runnable : runnables) {
+            threads.add(new Thread(runnable::runRegardless));
+        }
 
+        threads.forEach(Thread::start);
+
+        for (Thread thread : threads) {
+            thread.join();
+        }
 
     }
 

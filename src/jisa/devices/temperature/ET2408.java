@@ -6,6 +6,7 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.PID;
 import jisa.devices.interfaces.TC;
+import jisa.devices.interfaces.TCouple;
 import jisa.visa.ModbusRTUDevice;
 
 import java.io.IOException;
@@ -93,16 +94,6 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     @Override
     public String getSensorName() {
         return "Main Sensor";
-    }
-
-    @Override
-    public void setSensorType(SensorType type) throws IOException, DeviceException {
-
-    }
-
-    @Override
-    public SensorType getSensorType() throws IOException, DeviceException {
-        return SensorType.UNKNOWN;
     }
 
     @Override

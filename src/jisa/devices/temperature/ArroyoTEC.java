@@ -4,6 +4,7 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.PID;
 import jisa.devices.interfaces.TC;
+import jisa.devices.interfaces.TCouple;
 import jisa.visa.Connection;
 import jisa.visa.VISADevice;
 
@@ -45,16 +46,6 @@ public class ArroyoTEC extends VISADevice implements TC {
     @Override
     public String getSensorName() {
         return "Main Sensor";
-    }
-
-    @Override
-    public void setSensorType(SensorType type) throws IOException, DeviceException {
-
-    }
-
-    @Override
-    public SensorType getSensorType() throws IOException, DeviceException {
-        return SensorType.UNKNOWN;
     }
 
     @Override

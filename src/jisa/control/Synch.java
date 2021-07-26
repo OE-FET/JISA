@@ -48,7 +48,7 @@ public class Synch {
 
         ArrayList<Double> list = new ArrayList<>();
 
-        while (list.size() * interval < duration) {
+        while ((long) list.size() * interval < duration) {
 
             if (Thread.currentThread().isInterrupted()) {
                 throw new InterruptedException("Interrupted");
