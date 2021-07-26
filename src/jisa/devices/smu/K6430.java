@@ -90,13 +90,13 @@ public class K6430 extends KeithleySCPI {
     protected double measureVoltage() throws IOException {
         write(":SENS:FUNC \"VOLT\"");
         write(":FORMAT:ELEMENTS VOLT");
-        return isOn() ? queryDouble(":READ?") : queryDouble(":FETCH?");
+        return isOn() ? queryDouble(":READ?") : 0.0;
     }
 
     protected double measureCurrent() throws IOException {
         write(":SENS:FUNC \"CURR\"");
         write(":FORMAT:ELEMENTS CURR");
-        return isOn() ? queryDouble(":READ?") : queryDouble(":FETCH?");
+        return isOn() ? queryDouble(":READ?") : 0.0;
     }
 
     protected void disableAveraging() throws IOException {
@@ -110,7 +110,15 @@ public class K6430 extends KeithleySCPI {
     }
 
     public void setIntegrationTime(double seconds) throws IOException {
+
         write(":NPLC %e", seconds * LINE_FREQUENCY);
+
+        // K6430 seems to need a bit of extra time to adjust after changing its integration time while output is on
+        if (isOn()) {
+            Util.sleep((long) (seconds * 1e3));
+            queryDouble(":READ?");
+        }
+
     }
 
     @Override
@@ -124,6 +132,10 @@ public class K6430 extends KeithleySCPI {
 
     public boolean isFourProbeEnabled() throws IOException {
         return query(":SYST:RSENSE?").equals(OUTPUT_ON);
+    }
+
+    public Object getLockObject() {
+        return this;
     }
 
 }

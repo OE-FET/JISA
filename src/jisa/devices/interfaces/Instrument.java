@@ -50,6 +50,10 @@ public interface Instrument {
 
     }
 
+    default Object getLockObject() {
+        return this;
+    }
+
     default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
         return new LinkedList<>();
     }

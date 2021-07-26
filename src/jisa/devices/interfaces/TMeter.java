@@ -13,7 +13,6 @@ public interface TMeter extends Instrument, Sensor<TMeter> {
         return "Thermometer";
     }
 
-
     String getSensorName();
 
     default Class<TMeter> getSensorClass() {
@@ -107,7 +106,7 @@ public interface TMeter extends Instrument, Sensor<TMeter> {
         List<Parameter<?>> parameters = new LinkedList<>();
 
         parameters.add(new Parameter<>("Sensor Range [K]", 999.9, this::setTemperatureRange));
-        parameters.add(new Parameter<>("Sensor Type", SensorType.THERMOCOUPLE_K, this::setSensorType, SensorType.values()));
+        parameters.add(new Parameter<>("Sensor Type", SensorType.UNKNOWN, this::setSensorType, SensorType.values()));
 
         return parameters;
 

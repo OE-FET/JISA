@@ -1134,6 +1134,7 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
      * @throws IOException     Upon communications error
      */
     void setLineFilterEnabled(int channel, boolean enabled) throws DeviceException, IOException;
+
     /**
      * Returns whether the voltmeter is using any line-frequency filtering
      *
@@ -1333,10 +1334,10 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
 
         if (!Util.isBetween(channel, 0, getNumChannels() - 1)) {
             throw new DeviceException(
-                    "Invalid channel, %d, specified for %s SMU (valid range: 0 to %d)",
-                    channel,
-                    getClass().getSimpleName(),
-                    getNumChannels() - 1
+                "Invalid channel, %d, specified for %s SMU (valid range: 0 to %d)",
+                channel,
+                getClass().getSimpleName(),
+                getNumChannels() - 1
             );
         }
 
@@ -1351,8 +1352,8 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
      */
     class VirtualSMU implements SMU {
 
-        private int   channel;
-        private MCSMU smu;
+        private final int   channel;
+        private final MCSMU smu;
 
         public VirtualSMU(MCSMU smu, int channel) {
             this.smu     = smu;
@@ -1621,6 +1622,10 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
         @Override
         public Address getAddress() {
             return smu.getAddress();
+        }
+
+        public Object getLockObject() {
+            return smu;
         }
 
     }

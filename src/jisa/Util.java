@@ -221,6 +221,14 @@ public class Util {
 
     }
 
+    public static void waitForAll(SRunnable... runnable) {
+
+        List<Thread> threads = new LinkedList<>();
+
+
+
+    }
+
     public static Image colourImage(Image toColour, Color colour) {
 
         int           width      = (int) toColour.getWidth();

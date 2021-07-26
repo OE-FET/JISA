@@ -34,7 +34,7 @@ public interface IMeter extends Instrument {
      */
     default double getCurrent(double integrationTime) throws DeviceException, IOException {
 
-        synchronized (this) {
+        synchronized (getLockObject()) {
 
             double prevTime = getIntegrationTime();
             setIntegrationTime(integrationTime);
