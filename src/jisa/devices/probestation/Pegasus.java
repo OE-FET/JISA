@@ -70,7 +70,7 @@ public class Pegasus extends VISADevice implements ProbeStation {
         } else if (str.contains("INF 010")) {
             throw new DeviceException("Attempt to move X, Y or Theta with the Chuck raised");
         } else if (!str.contains("INF 000")) {
-            throw new DeviceException("Error was raised (see Manual): %s", str);
+            throw new DeviceException("Error was raised (see manual): \"%s\"", str);
         }
 
     }

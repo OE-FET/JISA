@@ -39,6 +39,7 @@ public class ArroyoTEC extends VISADevice implements TC {
 
         write("TEC:MODE:T");
         write("TEC:HEATCOOL BOTH");
+        write("TEC:GAIN PID");
 
     }
 
@@ -150,6 +151,8 @@ public class ArroyoTEC extends VISADevice implements TC {
             Math.min(10.0, Math.max(0, i)),
             Math.min(10.0, Math.max(0, d))
         );
+
+        write("TEC:GAIN PID");
 
     }
 
