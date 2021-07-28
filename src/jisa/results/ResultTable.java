@@ -421,9 +421,11 @@ public abstract class ResultTable implements Iterable<Row> {
 
             for (int j = 0; j < columns.length; j++) {
 
-                matrix.set(i, j, columns[i].evaluate(row).doubleValue());
+                matrix.set(i, j, columns[j].evaluate(row).doubleValue());
 
             }
+
+            i++;
 
         }
 

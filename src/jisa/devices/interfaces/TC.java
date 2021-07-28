@@ -237,41 +237,45 @@ public interface TC extends PID, TMeter {
 
         LinkedList<Parameter<?>> parameters = new LinkedList<>();
 
-        parameters.add(new Parameter<>(
-            "PID Settings",
-            new TableQuantity(new String[]{"Min T [K]", "Max T [K]", "P", "I", "D", "Heater Range [%]"}, List.of(
-                List.of(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0)
-            )),
-            q -> {
+        if (TC.class.isAssignableFrom(target)) {
 
-                List<List<Double>> values = q.getValue();
+            parameters.add(new Parameter<>(
+                "PID Settings",
+                new TableQuantity(new String[]{"Min T [K]", "Max T [K]", "P", "I", "D", "Heater Range [%]"}, List.of(
+                    List.of(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0)
+                )),
+                q -> {
 
-                if (values.size() == 0) {
-                    values.add(List.of(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0));
+                    List<List<Double>> values = q.getValue();
+
+                    if (values.size() == 0) {
+                        values.add(List.of(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0));
+                    }
+
+                    if (values.size() < 2) {
+
+                        useAutoPID(false);
+                        setPIDValues(values.get(0).get(2), values.get(0).get(3), values.get(0).get(4));
+                        setHeaterRange(values.get(0).get(5));
+
+                    } else {
+
+                        PID.Zone[] zones = values
+                            .stream().map(r -> new PID.Zone(r.get(0), r.get(1), r.get(2), r.get(3), r.get(4), r.get(5)))
+                            .toArray(PID.Zone[]::new);
+
+                        setAutoPIDZones(zones);
+                        useAutoPID(true);
+
+                    }
+
                 }
 
-                if (values.size() < 2) {
+            ));
 
-                    useAutoPID(false);
-                    setPIDValues(values.get(0).get(2), values.get(0).get(3), values.get(0).get(4));
-                    setHeaterRange(values.get(0).get(5));
+            parameters.add(new Parameter<>("Ramp Rate [K/min]", 0.0, this::setTemperatureRampRate));
 
-                } else {
-
-                    PID.Zone[] zones = values
-                        .stream().map(r -> new PID.Zone(r.get(0), r.get(1), r.get(2), r.get(3), r.get(4), r.get(5)))
-                        .toArray(PID.Zone[]::new);
-
-                    setAutoPIDZones(zones);
-                    useAutoPID(true);
-
-                }
-
-            }
-
-        ));
-
-        parameters.add(new Parameter<>("Ramp Rate [K/min]", 0.0, this::setTemperatureRampRate));
+        }
 
         parameters.addAll(TMeter.super.getConfigurationParameters(target));
 
