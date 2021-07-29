@@ -150,6 +150,11 @@ public class Pegasus extends VISADevice implements ProbeStation {
         return getStatus().isLiftedGross;
     }
 
+    @Override
+    public double getGrossUpDistance() throws IOException, DeviceException {
+        return 0.0;
+    }
+
 
     @Override
     public double getZPosition() throws IOException {
