@@ -85,6 +85,23 @@ public interface ProbeStation extends XYZTranslationStage {
     boolean isGrossLocked() throws IOException;
 
 
+    /**
+     * Switches Light on (1) or off (2)
+     *
+     * @param lightOn 1: light on; 0: light off
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setLightOn(boolean lightOn) throws IOException, DeviceException;
+
+    /**
+     * Returns if light is on or not
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    boolean getLightOn() throws IOException;
+
 
 
 }

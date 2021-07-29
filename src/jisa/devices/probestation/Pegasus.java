@@ -29,8 +29,8 @@ public class Pegasus extends VISADevice implements ProbeStation {
             throw new DeviceException("Instrument at \"%s\" is not a Pegasus Probe Station!", address.toString());
         }
 
-        slowQuery("LDI");
-        slowQuery("LDC");
+        //slowQuery("LDI");
+        //slowQuery("LDC");
 
     }
 
@@ -77,14 +77,14 @@ public class Pegasus extends VISADevice implements ProbeStation {
 
     @Override
     public void setXPosition(double xposition) throws IOException, DeviceException {
-        if(!isLocked()) {
+        if(!isLocked() && !getStatus().isLiftedGross) {
             slowQuery("GTS X,%d", (int) Math.round(xposition * 1e6));
         }
     }
 
     @Override
     public void setYPosition(double yposition) throws IOException, DeviceException {
-        if(!isLocked()) {
+        if(!isLocked() && !getStatus().isLiftedGross) {
             slowQuery("GTS Y,%d", (int) Math.round(yposition * 1e6));
         }
     }
@@ -108,7 +108,7 @@ public class Pegasus extends VISADevice implements ProbeStation {
 
     @Override
     public void continMovement(String axis,double velocityPercentage) throws IOException, DeviceException {
-        if(!isLocked()){
+        if(!isLocked() && !getStatus().isLiftedGross){
             slowQuery("CMOV %s,%f,",axis,velocityPercentage);
         }
     }
@@ -129,7 +129,7 @@ public class Pegasus extends VISADevice implements ProbeStation {
     public void setZPosition(double position) throws IOException, DeviceException {
             slowQuery("WKGM %d", (int) (position * 1e6));
             slowQuery("GDW");
-            slowQuery("GUP");   
+            slowQuery("GUP");
     }
 
     @Override
@@ -223,6 +223,18 @@ public class Pegasus extends VISADevice implements ProbeStation {
     public boolean isLocked() throws IOException {
         return getStatus().isLiftedFine;
     }
+
+    @Override
+    public void setLightOn(boolean lightOn) throws IOException, DeviceException {
+        if(lightOn) slowQuery("LI1");
+        else slowQuery("LI0");
+    }
+
+    @Override
+    public boolean getLightOn() throws IOException{
+        return false;
+    }
+
 
 
     public static class Status {
