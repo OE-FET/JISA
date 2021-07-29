@@ -8,7 +8,6 @@ import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MSTCouple;
-import jisa.devices.interfaces.MSTMeter;
 import jisa.devices.interfaces.TCouple;
 import jisa.visa.NativeDevice;
 

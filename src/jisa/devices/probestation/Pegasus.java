@@ -77,12 +77,16 @@ public class Pegasus extends VISADevice implements ProbeStation {
 
     @Override
     public void setXPosition(double xposition) throws IOException, DeviceException {
-        slowQuery("GTS X,%d", (int) Math.round(xposition * 1e6));
+        if(!isLocked() && !getStatus().isLiftedGross) {
+            slowQuery("GTS X,%d", (int) Math.round(xposition * 1e6));
+        }
     }
 
     @Override
     public void setYPosition(double yposition) throws IOException, DeviceException {
-        slowQuery("GTS Y,%d", (int) Math.round(yposition * 1e6));
+        if(!isLocked() && !getStatus().isLiftedGross) {
+            slowQuery("GTS Y,%d", (int) Math.round(yposition * 1e6));
+        }
     }
 
     protected double parsePosition(String response) throws IOException {
@@ -104,7 +108,9 @@ public class Pegasus extends VISADevice implements ProbeStation {
 
     @Override
     public void continMovement(String axis,double velocityPercentage) throws IOException, DeviceException {
-        slowQuery("CMOV %s,%f,",axis,velocityPercentage);
+        if(!isLocked() && !getStatus().isLiftedGross){
+            slowQuery("CMOV %s,%f,",axis,velocityPercentage);
+        }
     }
 
 
@@ -123,18 +129,15 @@ public class Pegasus extends VISADevice implements ProbeStation {
     public void setZPosition(double position) throws IOException, DeviceException {
             slowQuery("WKGM %d", (int) (position * 1e6));
             slowQuery("GDW");
-            slowQuery("GUP");   
+            slowQuery("GUP");
     }
 
+    @Override
     public void setGrossUpDistance(double position) throws IOException, DeviceException {
         slowQuery("WKGM %d", (int) (position * 1e6));
 
     }
-
-    public double getGrossUpDistance() throws IOException, DeviceException {
-        return queryDouble("WKGM?");
-    }
-
+    @Override
     public void setGrossUp(boolean locked) throws IOException, DeviceException {
         if (locked) {
             slowQuery("GUP");
@@ -142,8 +145,8 @@ public class Pegasus extends VISADevice implements ProbeStation {
             slowQuery("GDW");
         }
     }
-
-    public boolean isGrossUp() throws IOException {
+    @Override
+    public boolean isGrossLocked() throws IOException {
         return getStatus().isLiftedGross;
     }
 
@@ -220,6 +223,18 @@ public class Pegasus extends VISADevice implements ProbeStation {
     public boolean isLocked() throws IOException {
         return getStatus().isLiftedFine;
     }
+
+    @Override
+    public void setLightOn(boolean lightOn) throws IOException, DeviceException {
+        if(lightOn) slowQuery("LI1");
+        else slowQuery("LI0");
+    }
+
+    @Override
+    public boolean getLightOn() throws IOException{
+        return false;
+    }
+
 
 
     public static class Status {
