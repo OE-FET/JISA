@@ -12,6 +12,8 @@ public interface ConfigBlock {
 
     ConfigFile.Value<Boolean> booleanValue(String name);
 
+    ConfigFile.Value<Object> value(String name);
+
     boolean hasValue(String name);
 
     boolean hasBlock(String name);

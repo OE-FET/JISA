@@ -131,7 +131,11 @@ public class Pegasus extends VISADevice implements ProbeStation {
 
     }
 
-    public void setGrossLocked(boolean locked) throws IOException, DeviceException {
+    public double getGrossUpDistance() throws IOException, DeviceException {
+        return queryDouble("WKGM?");
+    }
+
+    public void setGrossUp(boolean locked) throws IOException, DeviceException {
         if (locked) {
             slowQuery("GUP");
         } else {
@@ -139,7 +143,7 @@ public class Pegasus extends VISADevice implements ProbeStation {
         }
     }
 
-    public boolean isGrossLocked() throws IOException {
+    public boolean isGrossUp() throws IOException {
         return getStatus().isLiftedGross;
     }
 

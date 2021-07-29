@@ -59,12 +59,13 @@ public interface ProbeStation extends XYZTranslationStage {
     void continMovement(String axis,double velocityPercentage) throws IOException, DeviceException;
 
 
+    void setGrossUpDistance(double distance) throws IOException, DeviceException;
 
+    double getGrossUpDistance() throws IOException, DeviceException;
 
+    void setGrossUp(boolean lift) throws IOException, DeviceException;
 
-
-
-
+    boolean isGrossUp() throws IOException, DeviceException;
 
 }
 

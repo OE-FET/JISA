@@ -9,13 +9,15 @@ import javafx.scene.layout.GridPane;
 import jisa.devices.interfaces.*;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class CheckGrid extends JFXElement {
 
     private final GridPane     gridPane;
-    private       CheckBox[][] boxes;
+    private       CheckBox[][] boxes = new CheckBox[0][0];
 
     public CheckGrid(String title, int columns, int rows) {
 
@@ -27,15 +29,16 @@ public class CheckGrid extends JFXElement {
 
     }
 
-    protected void layoutGrid(int columns, int rows) {
+    protected synchronized void layoutGrid(int columns, int rows) {
 
+        boolean[][] values = getValues();
         boxes = new CheckBox[columns][rows];
 
         GUI.runNow(() -> {
 
             gridPane.getChildren().clear();
 
-            Button    all = new Button("X");
+            Button all = new Button("X");
             all.setMinWidth(30);
             all.setMinHeight(30);
             all.setOnAction(e -> Arrays.stream(boxes).flatMap(Arrays::stream).forEach(c -> c.setSelected(!c.isSelected())));
@@ -76,13 +79,15 @@ public class CheckGrid extends JFXElement {
 
         });
 
+        setValues(values);
+
     }
 
-    public void setSize(int columns, int rows) {
+    public synchronized void setSize(int columns, int rows) {
         layoutGrid(columns, rows);
     }
 
-    public boolean isChecked(int column, int row) {
+    public synchronized boolean isChecked(int column, int row) {
 
         try {
             return boxes[column][row].isSelected();
@@ -92,11 +97,11 @@ public class CheckGrid extends JFXElement {
 
     }
 
-    public void setChecked(int column, int row, boolean checked) {
+    public synchronized void setChecked(int column, int row, boolean checked) {
         GUI.runNow(() -> boxes[column][row].setSelected(checked));
     }
 
-    public void setAll(boolean checked) {
+    public synchronized void setAll(boolean checked) {
 
         GUI.runNow(() -> {
 
@@ -112,7 +117,7 @@ public class CheckGrid extends JFXElement {
 
     }
 
-    public void setColumn(int column, boolean checked) {
+    public synchronized void setColumn(int column, boolean checked) {
 
         for (int y = 0; y < getRowCount(); y++) {
             setChecked(column, y, checked);
@@ -120,7 +125,7 @@ public class CheckGrid extends JFXElement {
 
     }
 
-    public void setRow(int row, boolean checked) {
+    public synchronized void setRow(int row, boolean checked) {
 
         for (int x = 0; x < getColumnCount(); x++) {
             setChecked(x, row, checked);
@@ -128,7 +133,7 @@ public class CheckGrid extends JFXElement {
 
     }
 
-    public int getRowCount() {
+    public synchronized int getRowCount() {
 
         try {
             return boxes[0].length;
@@ -138,25 +143,35 @@ public class CheckGrid extends JFXElement {
 
     }
 
-    public int getColumnCount() {
+    public synchronized int getColumnCount() {
         return boxes.length;
     }
 
-    public boolean[][] getValues() {
+    public synchronized boolean[][] getValues() {
 
-        boolean[][] values = new boolean[boxes.length][boxes[0].length];
+        boolean[][] values = new boolean[getColumnCount()][getRowCount()];
 
-        for (int x = 0; x < boxes.length; x++) {
-
-            for (int y = 0; y < boxes[0].length; y++) {
-
-                values[x][y] = boxes[x][y].isSelected();
-
+        for (int x = 0; x < values.length; x++) {
+            for (int y = 0; y < values[0].length; y++) {
+                values[x][y] = boxes[x][y] == null || boxes[x][y].isSelected();
             }
-
         }
 
         return values;
+
+    }
+
+    public synchronized void setValues(boolean[][] values) {
+
+        GUI.runNow(() -> {
+
+            for (int x = 0; x < Math.min(boxes.length, values.length); x++) {
+                for (int y = 0; y < Math.min(boxes[0].length, values[0].length); y++) {
+                    boxes[x][y].setSelected(values[x][y]);
+                }
+            }
+
+        });
 
     }
 

@@ -1,8 +1,11 @@
 package jisa.experiment;
 
+import jisa.control.ConfigBlock;
+import jisa.control.Returnable;
 import jisa.devices.Configuration;
 import jisa.devices.interfaces.Instrument;
 import jisa.experiment.queue.Action;
+import jisa.gui.Element;
 import jisa.gui.Field;
 import jisa.gui.Fields;
 import jisa.maths.Range;
@@ -302,10 +305,24 @@ public abstract class Measurement {
         }
 
         public void setValue(T value) {
+
+            updateValue(value);
+
+            if (field != null) {
+                field.set(value);
+            }
+
+        }
+
+        protected void updateValue(T value) {
             this.value = value;
         }
 
         protected abstract Field<T> makeField(Fields fields);
+
+        public Element getElement() {
+            return null;
+        }
 
         public Field<T> createField(Fields fields) {
             field = makeField(fields);
@@ -313,10 +330,76 @@ public abstract class Measurement {
         }
 
         public void update() {
-            setValue(field.get());
+            updateValue(field.get());
         }
 
     }
+
+    public class CustomParameter<T> extends Parameter<T> {
+
+        private final Element   element;
+        private final Getter<T> getter;
+        private final Setter<T> setter;
+        private final Reader<T> reader;
+        private final Writer<T> writer;
+
+        public CustomParameter(String name, Element element, Getter<T> getter, Setter<T> setter, Reader<T> reader, Writer<T> writer) {
+            super("", name, null, getter.get());
+            this.element = element;
+            this.getter  = getter;
+            this.setter  = setter;
+            this.reader  = reader;
+            this.writer  = writer;
+        }
+
+        public CustomParameter(String name, Element element, Getter<T> getter, Setter<T> setter) {
+            this(name, element, getter, setter, b -> (T) b.value(name).getOrDefault(getter.get()), (b,v) -> b.value(name).set(v));
+        }
+
+        public void setValue(T value) {
+            updateValue(value);
+            setter.set(value);
+        }
+
+        public void update() {
+            updateValue(getter.get());
+        }
+
+        @Override
+        protected Field<T> makeField(Fields fields) {
+            return null;
+        }
+
+        public Element getElement() {
+            return element;
+        }
+
+        public void writeToConfig(ConfigBlock block) {
+            writer.write(block, getValue());
+        }
+
+        public void loadFromConfig(ConfigBlock block) {
+            setValue(reader.read(block));
+        }
+
+    }
+
+    public interface Getter<T> {
+        T get();
+    }
+
+    public interface Setter<T> {
+        void set(T value);
+    }
+
+    public interface Reader<T> {
+        T read(ConfigBlock block);
+    }
+
+    public interface Writer<T> {
+        void write(ConfigBlock block, T value);
+    }
+
 
     public class DoubleParameter extends Parameter<Double> {
 
