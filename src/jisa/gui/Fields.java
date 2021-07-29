@@ -1392,6 +1392,7 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
         Button addButton = new Button("✚");
         Button remButton = new Button("✕");
+        Button edtButton = new Button("✎");
         Button mUpButton = new Button("▲");
         Button mDnButton = new Button("▼");
 
@@ -1417,6 +1418,38 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
                 tableView.getItems().remove(index);
             }
 
+        });
+
+        edtButton.setOnAction(e -> Util.runAsync(() -> {
+
+            int index = tableView.getSelectionModel().getSelectedIndex();
+
+            if (index > -1) {
+
+                List<Double> oldValues = tableView.getItems().get(index);
+
+                for (int j = 0; j < oldValues.size(); j++) {
+                    addFields.get(j).set(oldValues.get(j));
+                }
+
+                if (addNew.showAsConfirmation()) {
+
+                    ObservableList<Double> values = FXCollections.observableArrayList(
+                        addFields.stream().map(Field::get).collect(Collectors.toList())
+                    );
+
+                    GUI.runNow(() -> tableView.getItems().set(index, values));
+
+                }
+
+            }
+
+        }));
+
+        tableView.setOnMouseClicked(e -> {
+            if (e.getClickCount() > 1 && tableView.getSelectionModel().getSelectedIndex() > -1) {
+                edtButton.getOnAction().handle(null);
+            }
         });
 
         mUpButton.setOnAction(e -> {
@@ -1445,7 +1478,7 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
         });
 
-        HBox hBox = new HBox(addButton, remButton, mUpButton, mDnButton);
+        HBox hBox = new HBox(addButton, remButton, edtButton, mUpButton, mDnButton);
         VBox vBox = new VBox(hBox, tableView);
 
         hBox.setSpacing(5.0);

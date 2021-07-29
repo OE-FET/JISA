@@ -170,8 +170,11 @@ public interface MSTC extends TC, MSTMeter, Output<MSTC> {
 
         LinkedList<Parameter<?>> parameters = new LinkedList<>();
 
-        List<String> names = getSensors().stream().map(Sensor::getSensorName).collect(Collectors.toUnmodifiableList());
-        parameters.add(new Parameter<>("Sensor", getSensorName(0), n -> useSensor(names.indexOf(n)), names.toArray(String[]::new)));
+        if (TC.class.isAssignableFrom(target)) {
+            List<String> names = getSensors().stream().map(Sensor::getSensorName).collect(Collectors.toUnmodifiableList());
+            parameters.add(new Parameter<>("Sensor", getSensorName(0), n -> useSensor(names.indexOf(n)), names.toArray(String[]::new)));
+        }
+
         parameters.addAll(TC.super.getConfigurationParameters(target));
 
         return parameters;

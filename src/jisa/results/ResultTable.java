@@ -258,7 +258,7 @@ public abstract class ResultTable implements Iterable<Row> {
      * @return Unique values, as a List
      */
     public <T> List<T> getUniqueValues(Column<T> column) {
-        return toList(r -> r.get(column));
+        return getUniqueValues(r -> r.get(column));
     }
 
     /**
@@ -360,7 +360,7 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
-    public ResultList sorted(Column<? extends Number> byColumn) {
+    public ResultList sorted(Column<?> byColumn) {
         return sorted(r -> r.get(byColumn));
     }
 
@@ -421,9 +421,11 @@ public abstract class ResultTable implements Iterable<Row> {
 
             for (int j = 0; j < columns.length; j++) {
 
-                matrix.set(i, j, columns[i].evaluate(row).doubleValue());
+                matrix.set(i, j, columns[j].evaluate(row).doubleValue());
 
             }
+
+            i++;
 
         }
 
@@ -723,6 +725,10 @@ public abstract class ResultTable implements Iterable<Row> {
 
             return this;
 
+        }
+
+        public <T> T get(Column<T> column) {
+            return (T) map.getOrDefault(column, null);
         }
 
         public ResultTable endRow() {

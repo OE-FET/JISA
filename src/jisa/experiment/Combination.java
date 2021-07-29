@@ -4,12 +4,14 @@ import jisa.Util;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class Combination implements Comparable<Combination> {
 
-    private final Double[] values;
+    private final Object[] values;
 
-    public Combination(Double... values) {
+    public Combination(Object... values) {
         this.values = values;
     }
 
@@ -22,8 +24,8 @@ public class Combination implements Comparable<Combination> {
             }
 
             int i = 0;
-            for (double v : ((Combination) other).values) {
-                if (v != values[i++]) return false;
+            for (Object v : ((Combination) other).values) {
+                if (!v.toString().equals(values[i++].toString())) return false;
             }
 
             return true;
@@ -35,20 +37,12 @@ public class Combination implements Comparable<Combination> {
     }
 
     public String toString() {
-        return Util.joinDoubles(", ", Arrays.asList(values));
+        return Arrays.stream(values).map(Objects::toString).collect(Collectors.joining(", "));
     }
 
     @Override
     public int compareTo(Combination combination) {
-
-        if (equals(combination)) {
-            return 0;
-        } else if (combination.values[0] < values[0]) {
-            return -1;
-        } else {
-            return +1;
-        }
-
+        return toString().compareTo(combination.toString());
     }
 
 }

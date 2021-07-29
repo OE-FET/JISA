@@ -962,23 +962,38 @@ public class JISAChart extends XYChart<Double, Double> {
             this.xData = xData;
             this.yData = yData;
             this.eData = eData;
+
             handler    = (r, x, y, e) -> {
+
                 if (!Double.isNaN(x) && !Double.isNaN(y) && !Double.isNaN(e)) {
                     addPoint(x, y, e);
                 }
+
             };
+
             rtListener = list.addRowListener(r -> {
 
                 if (filter.test(r)) {
-                    GUI.runNow(() -> handler.handle(r, xData.evaluate(r).doubleValue(), yData.evaluate(r).doubleValue(), eData.evaluate(r).doubleValue()));
+
+                    Number x = xData.evaluate(r);
+                    Number y = yData.evaluate(r);
+                    Number e = eData.evaluate(r);
+
+                    GUI.runNow(() -> handler.handle(r, x == null ? 0.0 : x.doubleValue(), y == null ? 0.0 : y.doubleValue(), e == null ? 0.0 : e.doubleValue()));
                 }
 
             });
 
-            for (Row row : list) {
+            for (Row r : list) {
 
-                if (filter.test(row)) {
-                    GUI.runNow(() -> handler.handle(row, xData.evaluate(row).doubleValue(), yData.evaluate(row).doubleValue(), eData.evaluate(row).doubleValue()));
+                if (filter.test(r)) {
+
+                    Number x = xData.evaluate(r);
+                    Number y = yData.evaluate(r);
+                    Number e = eData.evaluate(r);
+
+                    GUI.runNow(() -> handler.handle(r, x == null ? 0.0 : x.doubleValue(), y == null ? 0.0 : y.doubleValue(), e == null ? 0.0 : e.doubleValue()));
+
                 }
 
             }
@@ -1071,10 +1086,18 @@ public class JISAChart extends XYChart<Double, Double> {
 
             };
 
-            for (Row row : watching) {
-                if (filter.test(row)) {
-                    handler.handle(row, xData.evaluate(row).doubleValue(), yData.evaluate(row).doubleValue(), eData.evaluate(row).doubleValue());
+            for (Row r : watching) {
+
+                if (filter.test(r)) {
+
+                    Number x = xData.evaluate(r);
+                    Number y = yData.evaluate(r);
+                    Number e = eData.evaluate(r);
+
+                    GUI.runNow(() -> handler.handle(r, x == null ? 0.0 : x.doubleValue(), y == null ? 0.0 : y.doubleValue(), e == null ? 0.0 : e.doubleValue()));
+
                 }
+
             }
 
             return this;
@@ -1190,10 +1213,18 @@ public class JISAChart extends XYChart<Double, Double> {
 
             clear();
 
-            for (Row row : watching) {
-                if (filter.test(row)) {
-                    handler.handle(row, xData.evaluate(row).doubleValue(), yData.evaluate(row).doubleValue(), eData.evaluate(row).doubleValue());
+            for (Row r : watching) {
+
+                if (filter.test(r)) {
+
+                    Number x = xData.evaluate(r);
+                    Number y = yData.evaluate(r);
+                    Number e = eData.evaluate(r);
+
+                    GUI.runNow(() -> handler.handle(r, x == null ? 0.0 : x.doubleValue(), y == null ? 0.0 : y.doubleValue(), e == null ? 0.0 : e.doubleValue()));
+
                 }
+
             }
 
             return this;

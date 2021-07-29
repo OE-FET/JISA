@@ -69,12 +69,16 @@ public class ResultList extends ResultTable {
 
     }
 
-    public ResultList(Column<?>... columns) {
+    public ResultList(Column... columns) {
         super(columns);
     }
 
     public ResultList(String... names) {
         this(Arrays.stream(names).map(DoubleColumn::new).toArray(DoubleColumn[]::new));
+    }
+
+    public ResultList(List<Column> columns) {
+        this(columns.toArray(Column[]::new));
     }
 
     @Override
