@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+   <center>
+      <ListView fx:id="terminal" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+   </center>
+   <padding>
+      <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+   </padding>
+   <bottom>
+      <HBox spacing="15.0" BorderPane.alignment="CENTER">
+         <children>
+            <TextField fx:id="input" onAction="#textEnter" HBox.hgrow="ALWAYS">
+               <HBox.margin>
+                  <Insets />
+               </HBox.margin>
+            </TextField>
+            <Button mnemonicParsing="false" onAction="#writeLine" text="Write" HBox.hgrow="NEVER" />
+            <Button layoutX="537.0" layoutY="25.0" mnemonicParsing="false" onAction="#readLine" text="Read" />
+            <Button layoutX="537.0" layoutY="25.0" mnemonicParsing="false" onAction="#queryLine" text="Query" />
+         </children>
+         <padding>
+            <Insets top="15.0" />
+         </padding>
+      </HBox>
+   </bottom>
+   <right>
+      <GridPane hgap="15.0" vgap="15.0" BorderPane.alignment="CENTER">
+         <children>
+            <Label text="Time Out [ms]" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+            <TextField GridPane.rowIndex="0" GridPane.columnIndex="1" />
+            <Label text="Write Terminator" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+            <TextField GridPane.rowIndex="1" GridPane.columnIndex="1" />
+            <Label text="Read Terminator" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+            <TextField GridPane.rowIndex="2" GridPane.columnIndex="1" />
+         </children>
+
+         <padding>
+            <Insets left="15.0" />
+         </padding></GridPane>
+   </right>
+</BorderPane>

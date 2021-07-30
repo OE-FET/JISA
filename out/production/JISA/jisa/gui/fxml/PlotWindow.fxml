@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane fx:id="pane" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/10.0.2-internal" xmlns:fx="http://javafx.com/fxml/1">
+
+
+    <center>
+        <AnchorPane fx:id="stack" style="-fx-background-color: transparent;" BorderPane.alignment="CENTER"/>
+    </center>
+
+    <bottom>
+        <HBox fx:id="sliderBox" alignment="CENTER" spacing="5" style="-fx-padding: 5 5 5 5; -fx-background-color: white;">
+            <Label text="Range:" HBox.hgrow="NEVER" />
+            <Slider fx:id="rangeSliderX" max="100.0" min="0.01" HBox.hgrow="ALWAYS" />
+        </HBox>
+    </bottom>
+
+</BorderPane>

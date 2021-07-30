@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+
+
+<?import javafx.scene.control.ScrollPane?>
+<BorderPane fx:id="borderPane" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+   <center>
+      <ScrollPane fx:id="scroll"
+                  fitToHeight="true" fitToWidth="true" maxHeight="1.7976931348623157E308"
+                  maxWidth="1.7976931348623157E308"
+                  style="-fx-background-color: transparent; -fx-background: transparent;">
+         <ImageView fx:id="imageView" pickOnBounds="true" preserveRatio="true" BorderPane.alignment="CENTER"/>
+      </ScrollPane>
+   </center>
+</BorderPane>

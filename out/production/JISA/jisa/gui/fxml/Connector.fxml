@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<BorderPane fx:id="pane" prefWidth="600.0" style="-fx-background-color: transparent;"
+            xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
+
+    <top>
+        <Label fx:id="errorText" managed="false" maxWidth="Infinity"
+               style="-fx-background-color: brown; -fx-text-fill: white; -fx-padding: 15px;" visible="false"/>
+    </top>
+
+    <center>
+        <VBox maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" spacing="15.0"
+              BorderPane.alignment="TOP_LEFT">
+            <padding>
+                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>
+            </padding>
+            <HBox alignment="CENTER_LEFT" spacing="15.0" VBox.vgrow="NEVER">
+                <Label alignment="TOP_RIGHT" minWidth="75.0" text="Driver" HBox.hgrow="NEVER"/>
+                <ChoiceBox fx:id="driverChoice" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS"/>
+            </HBox>
+            <HBox alignment="CENTER_LEFT" spacing="15.0" VBox.vgrow="NEVER">
+                <Label alignment="TOP_RIGHT" minWidth="75.0" text="Protocol" HBox.hgrow="NEVER"/>
+                <ChoiceBox fx:id="protocolChoice" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS"/>
+            </HBox>
+            <Separator prefWidth="200.0"/>
+            <GridPane fx:id="parameters" hgap="15" vgap="15">
+
+            </GridPane>
+        </VBox>
+    </center>
+    <left>
+        <ImageView fx:id="icon" fitHeight="64.0" fitWidth="64.0" pickOnBounds="true" preserveRatio="true"
+                   BorderPane.alignment="TOP_LEFT">
+            <BorderPane.margin>
+                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>
+            </BorderPane.margin>
+            <Image url="@../images/smu.png"/>
+        </ImageView>
+    </left>
+    <bottom>
+        <ButtonBar HBox.hgrow="NEVER">
+            <buttons>
+                <Button visible="false" ButtonBar.buttonData="LEFT" fx:id="removeButton" layoutX="313.0" layoutY="10.0" mnemonicParsing="false" text="Remove"/>
+                <Button ButtonBar.buttonData="RIGHT" fx:id="browseButton" layoutX="313.0" layoutY="10.0" mnemonicParsing="false" onAction="#browse" text="Browse..."/>
+                <Button ButtonBar.buttonData="RIGHT" fx:id="applyButton" layoutX="313.0" layoutY="10.0" mnemonicParsing="false" onAction="#apply" text="Apply"/>
+            </buttons>
+            <padding>
+                <Insets bottom="15.0" left="15.0" right="15.0" top="15.0"/>
+            </padding>
+            <HBox.margin>
+                <Insets/>
+            </HBox.margin>
+        </ButtonBar>
+    </bottom>
+</BorderPane>
