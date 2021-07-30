@@ -175,6 +175,29 @@ public class ConfigFile implements ConfigBlock {
 
     }
 
+    public Value<Object> value(String name) {
+
+        return new Value<Object>() {
+
+            @Override
+            public void set(Object value) {
+                root.put(name, value);
+            }
+
+            @Override
+            public Object get() {
+                return root.get(name);
+            }
+
+            @Override
+            public Object getOrDefault(Object defaultValue) {
+                return root.has(name) ? get() : defaultValue;
+            }
+
+        };
+
+    }
+
     @Override
     public boolean hasValue(String name) {
         return root.has(name);
@@ -325,6 +348,29 @@ public class ConfigFile implements ConfigBlock {
 
                 @Override
                 public Boolean getOrDefault(Boolean defaultValue) {
+                    return sub.has(name) ? get() : defaultValue;
+                }
+
+            };
+
+        }
+
+        public Value<Object> value(String name) {
+
+            return new Value<Object>() {
+
+                @Override
+                public void set(Object value) {
+                    sub.put(name, value);
+                }
+
+                @Override
+                public Object get() {
+                    return sub.get(name);
+                }
+
+                @Override
+                public Object getOrDefault(Object defaultValue) {
                     return sub.has(name) ? get() : defaultValue;
                 }
 

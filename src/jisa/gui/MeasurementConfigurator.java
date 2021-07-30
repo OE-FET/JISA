@@ -2,6 +2,7 @@ package jisa.gui;
 
 import jisa.control.ConfigBlock;
 import jisa.experiment.Measurement;
+import jisa.experiment.Measurement.CustomParameter;
 import jisa.experiment.Measurement.Parameter;
 
 import java.util.*;
@@ -12,6 +13,7 @@ public class MeasurementConfigurator extends Tabs {
     private final Measurement           measurement;
     private final Map<String, Fields>   sections          = new LinkedHashMap<>();
     private final Map<Parameter, Field> parameterFieldMap = new HashMap<>();
+    private final List<CustomParameter> customs           = new LinkedList<>();
     private final Grid                  parameterGrid     = new Grid("Parameters", 1);
     private final Grid                  instrumentGrid    = new Grid("Instruments", 1);
     private       ConfigBlock           config            = null;
@@ -33,14 +35,17 @@ public class MeasurementConfigurator extends Tabs {
 
         for (Parameter<?> parameter : measurement.getParameters()) {
 
-            if (!sections.containsKey(parameter.getSection())) {
-                sections.put(
-                        parameter.getSection(),
-                        new Fields(parameter.getSection())
-                );
-            }
+            if (parameter instanceof CustomParameter) {
+                customs.add((CustomParameter) parameter);
+            } else {
 
-            parameterFieldMap.put(parameter, parameter.createField(sections.get(parameter.getSection())));
+                if (!sections.containsKey(parameter.getSection())) {
+                    sections.put(parameter.getSection(), new Fields(parameter.getSection()));
+                }
+
+                parameterFieldMap.put(parameter, parameter.createField(sections.get(parameter.getSection())));
+
+            }
 
         }
 
@@ -61,9 +66,10 @@ public class MeasurementConfigurator extends Tabs {
         ConfigBlock block = config.subBlock(measurement.getClass().getName());
 
         for (Fields fields : sections.values()) {
-            fields.loadFromConfig(block.subBlock(fields.getTitle()));
+            fields.loadFromConfig(block.subBlock("Standard Fields").subBlock(fields.getTitle()));
         }
 
+        customs.forEach(c -> c.loadFromConfig(block.subBlock("Custom Fields")));
         instrumentGrid.getElements().forEach(c -> ((Configurator) c).loadFromConfig(block.subBlock("Instrument Configs").subBlock(c.getTitle())));
 
     }
@@ -94,13 +100,16 @@ public class MeasurementConfigurator extends Tabs {
 
         parameterGrid.clear();
 
-        int          remainder = colSpanning ? sections.size() % numColumns : 0;
-        List<Fields> fields    = new ArrayList<>(sections.values());
-        Grid         firstRow  = new Grid(remainder);
-        Grid         otherRows = new Grid(numColumns);
+        List<Element> combined = new ArrayList<>();
+        combined.addAll(sections.values());
+        combined.addAll(customs.stream().map(CustomParameter::getElement).distinct().collect(Collectors.toList()));
 
-        for (int i = 0; i < remainder; i++) { firstRow.add(fields.get(i)); }
-        for (int i = remainder; i < fields.size(); i++) { otherRows.add(fields.get(i)); }
+        int  remainder = colSpanning ? combined.size() % numColumns : 0;
+        Grid firstRow  = new Grid(remainder);
+        Grid otherRows = new Grid(numColumns);
+
+        for (int i = 0; i < remainder; i++) {firstRow.add(combined.get(i));}
+        for (int i = remainder; i < combined.size(); i++) {otherRows.add(combined.get(i));}
 
         if (!firstRow.getElements().isEmpty()) { parameterGrid.add(firstRow); }
         parameterGrid.add(otherRows);
@@ -123,8 +132,10 @@ public class MeasurementConfigurator extends Tabs {
         measurement.getParameters().forEach(Parameter::update);
 
         if (config != null) {
-            sections.values().forEach(f -> f.writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock(f.getTitle())));
+            sections.values().forEach(f -> f.writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock("Standard Fields").subBlock(f.getTitle())));
+            customs.forEach(f -> f.writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock("Custom Fields")));
             instrumentGrid.getElements().forEach(c -> ((Configurator) c).writeToConfig(config.subBlock(measurement.getClass().getName()).subBlock("Instrument Configs").subBlock(c.getTitle())));
+            config.save();
         }
 
     }

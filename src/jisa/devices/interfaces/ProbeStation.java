@@ -84,6 +84,7 @@ public interface ProbeStation extends XYZTranslationStage {
      */
     boolean isGrossLocked() throws IOException;
 
+    double getGrossUpDistance() throws IOException, DeviceException;
 
     /**
      * Switches Light on (1) or off (2)

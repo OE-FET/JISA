@@ -29,8 +29,8 @@ public class Pegasus extends VISADevice implements ProbeStation {
             throw new DeviceException("Instrument at \"%s\" is not a Pegasus Probe Station!", address.toString());
         }
 
-        //slowQuery("LDI");
-        //slowQuery("LDC");
+        slowQuery("LDI");
+        slowQuery("LDC");
 
     }
 
@@ -148,6 +148,11 @@ public class Pegasus extends VISADevice implements ProbeStation {
     @Override
     public boolean isGrossLocked() throws IOException {
         return getStatus().isLiftedGross;
+    }
+
+    @Override
+    public double getGrossUpDistance() throws IOException, DeviceException {
+        return 0.0;
     }
 
 
