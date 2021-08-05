@@ -22,8 +22,6 @@ public class K6430 extends KeithleySCPI {
             throw new DeviceException("Instrument at \"%s\" is not a Keithley 6430", address.toString());
         }
 
-        addAutoRemove("\r");
-
         write(":SENS:FUNC:CONC OFF");
 
     }

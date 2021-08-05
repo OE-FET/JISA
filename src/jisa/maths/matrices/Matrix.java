@@ -5,6 +5,8 @@ import jisa.maths.matrices.exceptions.*;
 
 import java.util.Iterator;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public interface Matrix<T> extends Iterable<T> {
 
@@ -443,6 +445,10 @@ public interface Matrix<T> extends Iterable<T> {
      */
     default void mapColToCol(int source, int dest, GFunction<T, T> mapper) {
         mapColToCol(source, dest, (i, v) -> mapper.value(v));
+    }
+
+    default Stream<T> stream() {
+        return StreamSupport.stream(spliterator(), false);
     }
 
     /**

@@ -1,7 +1,9 @@
 package jisa.experiment.queue;
 
 import jisa.Util;
+import org.json.JSONObject;
 
+import java.io.*;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,7 +12,7 @@ import java.util.Map;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 
-public class ActionQueue {
+public class ActionQueue implements Serializable {
 
     private final List<Action<?>>               queue         = new LinkedList<>();
     private final List<ListListener<Action<?>>> listListeners = new LinkedList<>();
@@ -31,6 +33,20 @@ public class ActionQueue {
         queue.add(action);
         listListeners.forEach(l -> l.added(action));
         return action;
+    }
+
+    public void saveActions(String path) throws IOException {
+        JSONObject object = new JSONObject(queue);
+        FileOutputStream out = new FileOutputStream(path);
+        out.write(object.toString(4).getBytes());
+        out.close();
+    }
+
+    public void loadActions(String path) throws IOException, ClassNotFoundException {
+        ObjectInputStream in     = new ObjectInputStream(new FileInputStream(path));
+        List<Action<?>>   loaded = (List<Action<?>>) in.readObject();
+        addActions(loaded);
+        in.close();
     }
 
     /**

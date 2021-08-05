@@ -4,11 +4,12 @@ import javafx.scene.image.Image;
 import jisa.gui.GUI;
 import jisa.gui.queue.ActionDisplay;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public interface Action<T> {
+public interface Action<T> extends Serializable {
 
     /**
      * Returns the name of the action.

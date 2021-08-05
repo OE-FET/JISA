@@ -30,8 +30,7 @@ public interface ProbeStation extends XYZTranslationStage {
      * @throws IOException     Upon communications error
      */
     double getLockDistance() throws IOException, DeviceException;
-
-
+    
     /**
      * Write: 1 = locked position (up). 2 = not locked (down)
      *
