@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-
-<?import javafx.scene.control.ListView?>
-<?import javafx.scene.layout.BorderPane?>
-<ListView xmlns="http://javafx.com/javafx/10.0.2-internal"
-          xmlns:fx="http://javafx.com/fxml/1" fx:id="list" BorderPane.alignment="CENTER" prefWidth="400"/>
-
