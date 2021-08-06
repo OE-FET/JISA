@@ -234,11 +234,15 @@ public class Pegasus extends VISADevice implements ProbeStation {
 
     @Override
     public void goLoadPosition() throws IOException, DeviceException{
-        slowQuery("LDB");
+        setLocked(false);
+        setGrossUp(false);
+        setXYPosition(0.0,0.0);
     }
 
     @Override
     public void goProbingZoneCentre() throws IOException, DeviceException{
+        setLocked(false);
+        setGrossUp(false);
         slowQuery("LDC");
     }
 
