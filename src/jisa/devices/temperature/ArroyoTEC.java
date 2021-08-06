@@ -198,4 +198,32 @@ public class ArroyoTEC extends VISADevice implements TC {
 
     }
 
+    public void setSensorType(SensorType type) throws IOException {
+        write("TEC:SEN %d", type.ordinal());
+    }
+
+    public SensorType getSensorType() throws IOException {
+        int ordinal = queryInt("TEC:SEN?");
+        return SensorType.values()[ordinal];
+    }
+
+    public List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+
+        List<Parameter<?>> defaultList = TC.super.getConfigurationParameters(target);
+        defaultList.add(new Parameter<>("Sensor Type", SensorType.DISABLED, this::setSensorType, SensorType.values()));
+        return defaultList;
+
+    }
+
+    public enum SensorType {
+        DISABLED,
+        THERMISTOR_100uA,
+        THERMISTOR_10uA,
+        LM335,
+        AD590,
+        RTD,
+        RTD_4_WIRE,
+        THERMISTOR_1mA;
+    }
+
 }

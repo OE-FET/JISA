@@ -325,7 +325,7 @@ public class RealMatrix implements Matrix<Double> {
     }
 
     public double getNorm() {
-        return map(Math::abs).getRowSums().getMaxElement();
+        return Math.sqrt(stream().mapToDouble(v -> v * v).sum());
     }
 
     public double getMaxElement() {

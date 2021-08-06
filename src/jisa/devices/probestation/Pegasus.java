@@ -29,9 +29,6 @@ public class Pegasus extends VISADevice implements ProbeStation {
             throw new DeviceException("Instrument at \"%s\" is not a Pegasus Probe Station!", address.toString());
         }
 
-        slowQuery("LDI");
-        slowQuery("LDC");
-
     }
 
     protected synchronized String slowQuery(String message, Object... params) throws IOException, DeviceException {
@@ -113,7 +110,6 @@ public class Pegasus extends VISADevice implements ProbeStation {
         }
     }
 
-
     @Override
     public double getYPosition() throws IOException {
         return parsePosition(query("PSS Y"));
@@ -135,8 +131,8 @@ public class Pegasus extends VISADevice implements ProbeStation {
     @Override
     public void setGrossUpDistance(double position) throws IOException, DeviceException {
         slowQuery("WKGM %d", (int) (position * 1e6));
-
     }
+
     @Override
     public void setGrossUp(boolean locked) throws IOException, DeviceException {
         if (locked) {
@@ -145,6 +141,7 @@ public class Pegasus extends VISADevice implements ProbeStation {
             slowQuery("GDW");
         }
     }
+
     @Override
     public boolean isGrossLocked() throws IOException {
         return getStatus().isLiftedGross;
@@ -154,7 +151,6 @@ public class Pegasus extends VISADevice implements ProbeStation {
     public double getGrossUpDistance() throws IOException, DeviceException {
         return 0.0;
     }
-
 
     @Override
     public double getZPosition() throws IOException {
@@ -192,7 +188,6 @@ public class Pegasus extends VISADevice implements ProbeStation {
         return query("GID");
     }
 
-
     @Override
     public void setLockDistance(double distance) throws IOException, DeviceException {
         String str = query("WKFM %d", (int) (distance * 1e6));
@@ -210,9 +205,6 @@ public class Pegasus extends VISADevice implements ProbeStation {
     public Status getStatus() throws IOException {
         return new Status(query("STA"));
     }
-
-
-
 
     @Override
     public void setLocked(boolean locked) throws IOException, DeviceException {
@@ -239,8 +231,6 @@ public class Pegasus extends VISADevice implements ProbeStation {
     public boolean getLightOn() throws IOException{
         return false;
     }
-
-
 
     public static class Status {
 

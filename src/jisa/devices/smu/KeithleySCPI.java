@@ -114,11 +114,22 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
         super(address, prefDriver);
 
-        if (address.getType() == Address.Type.SERIAL) {
-            setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
-            setWriteTerminator("\r");
-            setReadTerminator(CR_TERMINATOR);
+        switch(address.getType()) {
+
+            case SERIAL:
+                setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
+                setWriteTerminator("\r");
+                setReadTerminator("\r");
+                break;
+
+            case GPIB:
+                setEOI(true);
+                break;
+
         }
+
+        addAutoRemove("\r");
+        addAutoRemove("\n");
 
         write(":SYSTEM:CLEAR");
         manuallyClearReadBuffer();
@@ -539,7 +550,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     }
 
     public boolean isOn() throws IOException {
-        return query(C_QUERY_OUTPUT_STATE).equals(OUTPUT_ON);
+        return query(C_QUERY_OUTPUT_STATE).trim().equals(OUTPUT_ON);
     }
 
     public void setSourceValue(double value) throws IOException, DeviceException {
