@@ -102,7 +102,22 @@ public interface ProbeStation extends XYZTranslationStage {
      */
     boolean getLightOn() throws IOException;
 
+    /**
+     * Moves stage to load position
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void goLoadPosition() throws IOException, DeviceException;
 
+
+    /**
+     * Moves stage to Probing Zone Centre
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void goProbingZoneCentre() throws IOException, DeviceException;
 
 }
 
