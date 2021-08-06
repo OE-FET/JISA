@@ -299,6 +299,7 @@ public abstract class ResultTable implements Iterable<Row> {
         Double           lastValue = null;
         List<ResultList> list      = new LinkedList<>();
         ResultList       table     = ResultList.emptyCopyOf(this);
+        list.add(table);
 
         for (Row row : this) {
 
@@ -318,8 +319,8 @@ public abstract class ResultTable implements Iterable<Row> {
                 int newDirection = Double.compare(value, lastValue);
 
                 if (newDirection != direction && newDirection != 0) {
-                    list.add(table);
                     table = ResultList.emptyCopyOf(this);
+                    list.add(table);
                 }
 
                 table.addRow(row);

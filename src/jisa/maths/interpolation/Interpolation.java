@@ -239,6 +239,22 @@ public class Interpolation {
 
         list.sort(Map.Entry.comparingByKey());
 
+        Iterator<Map.Entry<Double,Double>> iterator = list.iterator();
+
+        // Remove any entries that are not strictly increasing
+        Double last = null;
+        while (iterator.hasNext()) {
+
+            Map.Entry<Double, Double> entry = iterator.next();
+
+            if (last != null && entry.getKey() <= last) {
+                iterator.remove();
+            }
+
+            last = entry.getKey();
+
+        }
+
         double[] params = new double[list.size()];
         double[] values = new double[list.size()];
 
