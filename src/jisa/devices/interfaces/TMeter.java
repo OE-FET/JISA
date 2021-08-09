@@ -108,7 +108,7 @@ public interface TMeter extends Instrument, Sensor<TMeter> {
      * @throws DeviceException      Upon compatibility error
      * @throws InterruptedException Upon wait being interrupted
      */
-    default void waitForStableTemperature(double temperature, double pctMargin, long duration, long maxTime) throws IOException, DeviceException, InterruptedException {
+    default void waitForStableTemperatureMaxTime(double temperature, double pctMargin, long duration, long maxTime) throws IOException, DeviceException, InterruptedException {
         Synch.waitForStableTargetMaxTime(this::getTemperature, temperature, pctMargin, 1000, duration, maxTime);
     }
 
