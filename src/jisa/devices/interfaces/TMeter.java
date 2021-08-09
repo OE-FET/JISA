@@ -81,7 +81,7 @@ public interface TMeter extends Instrument, Sensor<TMeter> {
 
 
     /**
-     * Wait for the temperature to remain within a percentage range of any value for at least a specified amount of time.
+     * Wait for the temperature to remain within a percentage range of any value for at least a specified amount of time, with max. time.
      *
      * @param pctMargin Percentage range to stay within
      * @param duration  Minimum time needed to be in range.
@@ -93,6 +93,23 @@ public interface TMeter extends Instrument, Sensor<TMeter> {
      */
     default void waitForStableTemperatureMaxTime(double pctMargin, long duration, long maxTime) throws IOException, DeviceException, InterruptedException {
         Synch.waitForParamStableMaxTime(this::getTemperature, pctMargin, 1000, duration, maxTime);
+    }
+
+    /**
+     * Wait for the temperature to remain within a range of a given value for at least a specified amount of time, with maximum time.
+     *
+     * @param temperature Temperature to be in range of
+     * @param pctMargin   Percentage range to stay within
+     * @param duration    Minimum time needed to be in range.
+     * @param maxTime Maximum time of stabilization
+     *
+     *
+     * @throws IOException          Upon communications error
+     * @throws DeviceException      Upon compatibility error
+     * @throws InterruptedException Upon wait being interrupted
+     */
+    default void waitForStableTemperature(double temperature, double pctMargin, long duration, long maxTime) throws IOException, DeviceException, InterruptedException {
+        Synch.waitForStableTargetMaxTime(this::getTemperature, temperature, pctMargin, 1000, duration, maxTime);
     }
 
     default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
