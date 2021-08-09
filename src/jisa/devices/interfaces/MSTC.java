@@ -166,6 +166,34 @@ public interface MSTC extends TC, MSTMeter, Output<MSTC> {
 
     }
 
+    /**
+     * Waits until the temperature reported by the specified sensor has remained within the specified percentage margin
+     * of the specified temperature for at least the specified time.
+     *
+     * @param sensor      Sensor number
+     * @param temperature Temperature target
+     * @param pctMargin   Percentage margin
+     * @param time        Duration, in seconds
+     * @param maxTime     Max. Duration, in seconds
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    default void waitForStableTemperatureMaxTime(int sensor, double temperature, double pctMargin, long time, long maxTime) throws IOException, DeviceException, InterruptedException {
+
+        checkSensor(sensor);
+
+        Synch.waitForStableTargetMaxTime(
+                () -> getTemperature(sensor),
+                temperature,
+                pctMargin,
+                1000,
+                time,
+                maxTime
+        );
+
+    }
+
     default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
 
         LinkedList<Parameter<?>> parameters = new LinkedList<>();
