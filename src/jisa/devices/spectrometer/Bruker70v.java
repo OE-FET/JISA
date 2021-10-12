@@ -43,4 +43,13 @@ public class Bruker70v extends DDEDevice implements FTIR{
 
         return super.sendRequest("COMMAND_LINE LoadReference([<" + split[3] + ">:ScRf], { });");
     }
+
+    public String takeReference(String exp_file, String save_path, int num_scans) throws Exception{
+            String response = super.sendRequest("COMMAND_LINE MeasureReference(0, {EXP='" + exp_file
+                    + "', XPP='G:\\\\User XPM files', PTH='" + save_path + "', NSR='" + num_scans + "'});");
+
+            String[] split = response.split("\n");
+
+            return response;
+    }
 }
