@@ -11,4 +11,6 @@ public interface FTIR extends Instrument {
     String sendBenchCommand(String bench_command) throws Exception;
 
     String loadReference(String file_path, String file_name) throws Exception;
+
+    String takeReference(String exp_file, String save_path, int num_scans) throws Exception;
 }
