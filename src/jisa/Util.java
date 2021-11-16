@@ -99,11 +99,11 @@ public class Util {
 
         List<String> parts = new LinkedList<>();
 
-        if (d > 0) { parts.add(String.format("%dd", d)); }
-        if (h > 0) { parts.add(String.format("%dh", h)); }
-        if (m > 0) { parts.add(String.format("%dm", m)); }
-        if (s > 0) { parts.add(String.format("%ds", s)); }
-        if (ms > 0) { parts.add(String.format("%dms", ms)); }
+        if (d > 0) {parts.add(String.format("%dd", d));}
+        if (h > 0) {parts.add(String.format("%dh", h));}
+        if (m > 0) {parts.add(String.format("%dm", m));}
+        if (s > 0) {parts.add(String.format("%ds", s));}
+        if (ms > 0) {parts.add(String.format("%dms", ms));}
 
         return String.join(" ", parts);
 
@@ -119,11 +119,11 @@ public class Util {
 
         List<String> parts = new LinkedList<>();
 
-        if (d > 0) { parts.add(String.format("%dd", d)); }
-        if (h > 0) { parts.add(String.format("%02dh", h)); }
-        if (m > 0) { parts.add(String.format("%02dm", m)); }
-        if (s > 0) { parts.add(String.format("%02ds", s)); }
-        if (ms > 0) { parts.add(String.format("%03dms", ms)); }
+        if (d > 0) {parts.add(String.format("%dd", d));}
+        if (h > 0) {parts.add(String.format("%02dh", h));}
+        if (m > 0) {parts.add(String.format("%02dm", m));}
+        if (s > 0) {parts.add(String.format("%02ds", s));}
+        parts.add(String.format("%03dms", ms));
 
         return String.join(" ", parts);
 
@@ -154,15 +154,15 @@ public class Util {
         double niceFraction;
 
         if (round) {
-            if (fraction < 1.5) { niceFraction = 1; } else if (fraction < 3) {
+            if (fraction < 1.5) {niceFraction = 1;} else if (fraction < 3) {
                 niceFraction = 2;
-            } else if (fraction < 7) { niceFraction = 5; } else {
+            } else if (fraction < 7) {niceFraction = 5;} else {
                 niceFraction = 10;
             }
         } else {
-            if (fraction <= 1) { niceFraction = 1; } else if (fraction <= 2) {
+            if (fraction <= 1) {niceFraction = 1;} else if (fraction <= 2) {
                 niceFraction = 2;
-            } else if (fraction <= 5) { niceFraction = 5; } else {
+            } else if (fraction <= 5) {niceFraction = 5;} else {
                 niceFraction = 10;
             }
         }
