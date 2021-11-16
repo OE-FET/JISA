@@ -3,7 +3,7 @@ package jisa.visa;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.StrAddress;
-import jisa.addresses.TCPIPSocketAddress;
+import jisa.addresses.TCPIPAddress;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,7 +17,7 @@ public class RawTCPIPDriver implements Driver {
     @Override
     public Connection open(Address address) throws VISAException {
 
-        TCPIPSocketAddress addr = address.toTCPIPSocketAddress();
+        TCPIPAddress addr = address.toTCPIPSocketAddress();
 
         if (addr == null) {
             throw new VISAException("Raw TCP-IP driver can only be used to open raw TCP-IP sockets!");
@@ -39,7 +39,7 @@ public class RawTCPIPDriver implements Driver {
 
     @Override
     public boolean worksWith(Address address) {
-        return address.getType() == Address.Type.TCPIP_SOCKET;
+        return address.getType() == Address.Type.TCPIP;
     }
 
     public static class TCPIPConnection implements Connection {

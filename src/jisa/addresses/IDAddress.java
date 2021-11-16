@@ -2,7 +2,7 @@ package jisa.addresses;
 
 public class IDAddress implements Address {
 
-    private String value;
+    private final String value;
 
     public IDAddress(String value) {
         this.value = value.trim();

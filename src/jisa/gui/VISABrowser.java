@@ -43,8 +43,8 @@ public class VISABrowser extends ListDisplay<Address> {
                         icon = VISABrowser.class.getResource("images/usb.png");
                         break;
 
+                    case LXI:
                     case TCPIP:
-                    case TCPIP_SOCKET:
                         icon = VISABrowser.class.getResource("images/tcpip.png");
                         break;
 

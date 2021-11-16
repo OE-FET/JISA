@@ -1,6 +1,5 @@
 package jisa.addresses;
 
-import java.nio.channels.Pipe;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -27,9 +26,9 @@ public interface Address {
         } else if (parts[0].contains("ASRL")) {
             type = Type.SERIAL;
         } else if (parts[0].contains("TCPIP") && parts[parts.length - 1].contains("INSTR")) {
-            type = Type.TCPIP;
+            type = Type.LXI;
         } else if (parts[0].contains("TCPIP") && parts[parts.length - 1].contains("SOCKET")) {
-            type = Type.TCPIP_SOCKET;
+            type = Type.TCPIP;
         } else if (parts[0].contains("MODBUS")) {
             type = Type.MODBUS;
         } else if (parts[0].contains("SNID")) {
@@ -73,7 +72,7 @@ public interface Address {
 
     }
 
-    default TCPIPAddress toTCPIPAddress() {
+    default LXIAddress toTCPIPAddress() {
 
         Pattern pattern = Pattern.compile("TCPIP([0-9]*?)::(.*?)::INSTR");
         Matcher matcher = pattern.matcher(toString().trim());
@@ -81,7 +80,7 @@ public interface Address {
         if (matcher.matches()) {
             int    board = matcher.group(1).equals("") ? -1 : Integer.parseInt(matcher.group(1));
             String host  = matcher.group(2);
-            return new TCPIPAddress(board, host);
+            return new LXIAddress(board, host);
         } else {
             return null;
         }
@@ -89,7 +88,7 @@ public interface Address {
 
     }
 
-    default TCPIPSocketAddress toTCPIPSocketAddress() {
+    default TCPIPAddress toTCPIPSocketAddress() {
 
         Pattern pattern = Pattern.compile("TCPIP([0-9]*?)::(.*?)::([0-9]*?)::SOCKET");
         Matcher matcher = pattern.matcher(toString().trim());
@@ -98,7 +97,7 @@ public interface Address {
             int    board = matcher.group(1).equals("") ? -1 : Integer.parseInt(matcher.group(1));
             String host  = matcher.group(2);
             int    port  = Integer.parseInt(matcher.group(3));
-            return new TCPIPSocketAddress(board, host, port);
+            return new TCPIPAddress(board, host, port);
         } else {
             return null;
         }
@@ -178,10 +177,10 @@ public interface Address {
             case USB:
                 return toUSBAddress().createParams();
 
-            case TCPIP:
+            case LXI:
                 return toTCPIPAddress().createParams();
 
-            case TCPIP_SOCKET:
+            case TCPIP:
                 return toTCPIPSocketAddress().createParams();
 
             case SERIAL:
@@ -208,8 +207,8 @@ public interface Address {
     enum Type {
         GPIB,
         USB,
+        LXI,
         TCPIP,
-        TCPIP_SOCKET,
         SERIAL,
         MODBUS,
         ID,

@@ -2,8 +2,8 @@ package jisa.addresses;
 
 public class GPIBAddress implements Address {
 
-    private int bus;
-    private int address;
+    private final int bus;
+    private final int address;
 
     public GPIBAddress(int bus, int address) {
         this.bus = bus;

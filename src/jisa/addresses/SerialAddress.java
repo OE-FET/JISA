@@ -2,7 +2,7 @@ package jisa.addresses;
 
 public class SerialAddress implements Address {
 
-    private String port;
+    private final String port;
 
     public SerialAddress(String port) {
         this.port = port;

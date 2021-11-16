@@ -63,10 +63,10 @@ public class SerialDriver implements Driver {
 
     public static class SerialConnection implements Connection {
 
-        private SerialPort port;
-        private int        tmo;
-        private String     terms;
-        private byte[]     terminationSequence = {0x0A};
+        private final SerialPort port;
+        private       int        tmo;
+        private       String     terms;
+        private       byte[]     terminationSequence = {0x0A};
 
         public SerialConnection(SerialPort comPort) throws VISAException {
             port = comPort;

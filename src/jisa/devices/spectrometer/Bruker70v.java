@@ -1,13 +1,13 @@
 package jisa.devices.spectrometer;
 
 import jisa.addresses.Address;
-import jisa.addresses.TCPIPAddress;
+import jisa.addresses.LXIAddress;
 import jisa.visa.DDEDevice;
 import jisa.devices.interfaces.FTIR;
 
 public class Bruker70v extends DDEDevice implements FTIR{
 
-    public Bruker70v(TCPIPAddress address, int timeout) throws Exception {
+    public Bruker70v(LXIAddress address, int timeout) throws Exception {
         super(address, "Opus", "System", timeout);
     }
 

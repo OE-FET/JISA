@@ -12,6 +12,11 @@ import jisa.visa.VISADevice;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -22,36 +27,37 @@ public class K236 extends VISADevice implements SMU {
     }
 
     // == CONSTANTS ====================================================================================================
-    private static final String C_SET_SRC_FUNC   = "F%d,%d";
-    private static final String C_SET_BIAS       = "B%f,%d,%d";
-    private static final String C_GET_VALUE      = "G%d,%d,%d";
-    private static final String C_EXECUTE        = "X";
-    private static final String C_SET_SENSE      = "O%d";
-    private static final String C_OPERATE        = "N%d";
-    private static final String C_NO_TERM        = "Y4";
-    private static final String C_TRIGGER        = "H0";
-    private static final String C_RESET          = "J0";
-    private static final String C_DISABLE_FILTER = "P0";
-    private static final String C_SET_COMPLIANCE = "L%f,%d";
-    private static final String C_GET_STATUS     = "U3";
-    private static final String C_GET_PARAMS     = "U4";
-    private static final String C_GET_COMPLIANCE = "U5";
-    private static final String C_SET_INT_TIME   = "S%d";
-    private static final int    OPERATE_OFF      = 0;
-    private static final int    OPERATE_ON       = 1;
-    private static final int    OUTPUT_NOTHING   = 0;
-    private static final int    OUTPUT_SOURCE    = 1;
-    private static final int    OUTPUT_DELAY     = 2;
-    private static final int    OUTPUT_MEASURE   = 4;
-    private static final int    OUTPUT_TIME      = 8;
-    private static final int    FORMAT_CLEAN     = 2;
-    private static final int    ONE_DC_DATA      = 0;
-    private static final int    SENSE_LOCAL      = 0;
-    private static final int    SENSE_REMOTE     = 1;
-    private static final double MIN_CURRENT      = -100e-3;
-    private static final double MAX_CURRENT      = +100e-3;
-    private static final double MIN_VOLTAGE      = -110;
-    private static final double MAX_VOLTAGE      = +110;
+    private static final String C_SET_SRC_FUNC     = "F%d,%d";
+    private static final String C_SET_BIAS         = "B%f,%d,%d";
+    private static final String C_GET_VALUE        = "G%d,%d,%d";
+    private static final String C_EXECUTE          = "X";
+    private static final String C_SET_SENSE        = "O%d";
+    private static final String C_OPERATE          = "N%d";
+    private static final String C_NO_TERM          = "Y4";
+    private static final String C_TRIGGER          = "H0";
+    private static final String C_RESET            = "J0";
+    private static final String C_DISABLE_FILTER   = "P0";
+    private static final String C_SET_COMPLIANCE   = "L%f,%d";
+    private static final String C_GET_STATUS       = "U3";
+    private static final String C_GET_PARAMS       = "U4";
+    private static final String C_GET_COMPLIANCE   = "U5";
+    private static final String C_SET_INT_TIME     = "S%d";
+    private static final int    OPERATE_OFF        = 0;
+    private static final int    OPERATE_ON         = 1;
+    private static final int    OUTPUT_NOTHING     = 0;
+    private static final int    OUTPUT_SOURCE      = 1;
+    private static final int    OUTPUT_DELAY       = 2;
+    private static final int    OUTPUT_MEASURE     = 4;
+    private static final int    OUTPUT_TIME        = 8;
+    private static final int    FORMAT_CLEAN       = 2;
+    private static final int    ONE_DC_DATA        = 0;
+    private static final int    SENSE_LOCAL        = 0;
+    private static final int    SENSE_REMOTE       = 1;
+    private static final double MIN_CURRENT        = -100e-3;
+    private static final double MAX_CURRENT        = +100e-3;
+    private static final double MIN_VOLTAGE        = -110;
+    private static final double MAX_VOLTAGE        = +110;
+    private static final int    MIN_WRITE_INTERVAL = 20;
 
     private double lineFrequency;
     private double lastBias = 0.0;
@@ -109,20 +115,22 @@ public class K236 extends VISADevice implements SMU {
 
 
     // == INTERNAL VARIABLES ===========================================================================================
-    private Source     source      = null;
-    private Function   function    = null;
-    private double     biasLevel   = 0;
-    private boolean    on          = false;
-    private boolean    remote      = true;
-    private AMode      filterMode  = AMode.NONE;
-    private ReadFilter filterS     = NONE_S;
-    private ReadFilter filterM     = NONE_M;
-    private int        filterCount = 1;
-    private SRange     sRange      = SRange.AUTO;
-    private SRange     mRange      = SRange.AUTO;
-    private double     iLimit      = 0.1;
-    private double     vLimit      = 110;
-    private double     mLimit      = 0.1;
+    private       Source     source      = null;
+    private       Function   function    = null;
+    private       double     biasLevel   = 0;
+    private       boolean    on          = false;
+    private       boolean    remote      = true;
+    private       AMode      filterMode  = AMode.NONE;
+    private       ReadFilter filterS     = NONE_S;
+    private       ReadFilter filterM     = NONE_M;
+    private       int        filterCount = 1;
+    private       SRange     sRange      = SRange.AUTO;
+    private       SRange     mRange      = SRange.AUTO;
+    private       double     iLimit      = 0.1;
+    private       double     vLimit      = 110;
+    private       double     mLimit      = 0.1;
+    private final Semaphore  control     = new Semaphore(1);
+    private final Timer      timer       = new Timer();
 
     public K236(Address address) throws IOException, DeviceException {
 
@@ -139,6 +147,9 @@ public class K236 extends VISADevice implements SMU {
         setAverageMode(AMode.NONE);
         turnOff();
 
+        clearBuffers();
+        getVoltage();
+
         for (int i = 0; i < 10; i++) {
             read();
         }
@@ -151,6 +162,26 @@ public class K236 extends VISADevice implements SMU {
 
         } catch (IOException e) {
             throw new DeviceException("Device at address %s is not responding!", address.toString());
+        }
+
+    }
+
+    @Override
+    public synchronized void write(String data, Object... params) throws IOException {
+
+        try {
+
+            control.acquire();
+            super.write(data, params);
+
+        } catch (InterruptedException e) {
+
+            throw new IOException("Interrupted acquiring permit to write.");
+
+        } finally {
+
+            timer.schedule(new TimerTask() { public void run() {control.release();} }, MIN_WRITE_INTERVAL);
+
         }
 
     }
@@ -207,9 +238,7 @@ public class K236 extends VISADevice implements SMU {
     }
 
     private double readValue(int channel) throws IOException {
-
         return queryDouble(C_GET_VALUE, channel, FORMAT_CLEAN, ONE_DC_DATA);
-
     }
 
     public double getSourceValue() throws IOException, DeviceException {

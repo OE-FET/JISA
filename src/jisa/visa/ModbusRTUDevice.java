@@ -21,8 +21,8 @@ public class ModbusRTUDevice implements Instrument {
     private final String port;
     private final int    unit;
 
-    private static Map<String, ModbusMaster> masters = new HashMap<>();
-    private        ModbusMaster              master;
+    private static final Map<String, ModbusMaster> masters = new HashMap<>();
+    private final        ModbusMaster              master;
 
     public ModbusRTUDevice(Address address, SerialPort.BaudRate baud, int dataBits, int stopBits, SerialPort.Parity parity) throws IOException, DeviceException {
 

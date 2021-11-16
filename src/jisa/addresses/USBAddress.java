@@ -6,11 +6,11 @@ import java.util.ArrayList;
 
 public class USBAddress implements Address {
 
-    private int    board;
-    private int    manufacturer;
-    private int    model;
-    private String serialNumber;
-    private int    interfaceNumber;
+    private final int    board;
+    private final int    manufacturer;
+    private final int    model;
+    private final String serialNumber;
+    private final int    interfaceNumber;
 
     public USBAddress(int board, int manufacturer, int model, String serialNumber, int interfaceNumber) {
         this.board           = board;

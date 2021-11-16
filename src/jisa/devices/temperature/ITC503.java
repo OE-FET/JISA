@@ -10,9 +10,7 @@ import jisa.visa.Connection;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -56,7 +54,7 @@ public class ITC503 extends VISADevice implements MSTC {
     private static final double          STANDARD_ERROR_PERC           = 10;
     private static final int             MIN_WRITE_INTERVAL            = 5;
     private final        Semaphore       timingControl                 = new Semaphore(1);
-    private final        ExecutorService timingService                 = Executors.newFixedThreadPool(1);
+    private final        Timer           timingService                 = new Timer();
     private              boolean         autoPID                       = false;
     private              PID.Zone[]      zones                         = new PID.Zone[0];
     private              double          rampRate                      = 0.0;
@@ -138,17 +136,9 @@ public class ITC503 extends VISADevice implements MSTC {
         }
 
         try {
-
             super.write(command, args);
-
         } finally {
-
-            // Do not allow another write until 100 ms from now.
-            timingService.submit(() -> {
-                Util.sleep(MIN_WRITE_INTERVAL);
-                timingControl.release();
-            });
-
+            timingService.schedule(new TimerTask() {  public void run() { timingControl.release(); } }, MIN_WRITE_INTERVAL);
         }
 
     }

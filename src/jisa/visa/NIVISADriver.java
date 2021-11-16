@@ -36,8 +36,18 @@ public class NIVISADriver implements Driver {
     protected NativeLong          visaResourceManagerHandle;
 
     public NIVISADriver() {
+
         lib                       = NIVISADriver.libStatic;
         visaResourceManagerHandle = NIVISADriver.visaResourceManagerHandleStatic;
+
+        Util.addShutdownHook(() -> {
+
+            if (visaResourceManagerHandle != null) {
+                NIVISADriver.libStatic.viClose(NIVISADriver.visaResourceManagerHandleStatic);
+            }
+
+        });
+
     }
 
     public static void init() throws VISAException {

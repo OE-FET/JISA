@@ -2,16 +2,29 @@ package jisa.addresses;
 
 public class TCPIPAddress implements Address {
 
-    private int    board;
-    private String host;
+    private final int    board;
+    private final String host;
+    private final int    port;
 
-    public TCPIPAddress(int board, String host) {
+    public TCPIPAddress(int board, String host, int port) {
         this.board = board;
         this.host = host;
+        this.port = port;
     }
 
-    public TCPIPAddress(String host) {
-        this(-1, host);
+    public TCPIPAddress(String address, int port) {
+        this(-1, address, port);
+    }
+
+    @Override
+    public String toString() {
+
+        if (board == -1) {
+            return String.format("TCPIP::%s::%d::SOCKET", host, port);
+        } else {
+            return String.format("TCPIP%d::%s::%d::SOCKET", board, host, port);
+        }
+
     }
 
     public int getBoard() {
@@ -22,51 +35,43 @@ public class TCPIPAddress implements Address {
         return host;
     }
 
-    @Override
-    public String toString() {
-
-        if (board == -1) {
-
-            return String.format("TCPIP::%s::INSTR", host);
-
-        } else {
-
-            return String.format("TCPIP%d::%s::INSTR", board, host);
-
-        }
+    public int getPort() {
+        return port;
     }
 
     public AddressParams createParams() {
 
-        AddressParams params = new TCPIPParams();
+        AddressParams params = new TCPIPSocketParams();
         params.set(0, board);
         params.set(1, host);
+        params.set(2, port);
 
         return params;
 
     }
 
-    public TCPIPAddress toTCPIPAddress() {
+    public TCPIPAddress toTCPIPSocketAddress() {
         return this;
     }
 
-    public static class TCPIPParams extends AddressParams<TCPIPAddress> {
+    public static class TCPIPSocketParams extends AddressParams<TCPIPAddress> {
 
-        public TCPIPParams() {
+        public TCPIPSocketParams() {
 
             addParam("Board", false);
             addParam("Host", true);
+            addParam("Port", false);
 
         }
 
         @Override
         public TCPIPAddress createAddress() {
-            return new TCPIPAddress(getInt(0), getString(1));
+            return new TCPIPAddress(getInt(0), getString(1), getInt(2));
         }
 
         @Override
         public String getName() {
-            return "TCP-IP (VXI-11)";
+            return "TCP-IP Socket";
         }
     }
 

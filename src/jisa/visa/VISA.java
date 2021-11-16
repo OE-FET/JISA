@@ -146,7 +146,7 @@ public class VISA {
         }
 
         // Workaround to use internal TCP-IP implementation since there seems to be issues with TCP-IP Sockets and NI-VISA
-        if (address.getType() == Address.Type.TCPIP_SOCKET) {
+        if (address.getType() == Address.Type.TCPIP) {
 
             try {
                 connection = lookup.get(RawTCPIPDriver.class).open(address);

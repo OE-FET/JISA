@@ -704,6 +704,10 @@ public abstract class ResultTable implements Iterable<Row> {
         return new RowBuilder();
     }
 
+    public void addData(Map<Column<?>, Object> data) {
+        addRow(new Row(data));
+    }
+
     public abstract Stream<Row> stream();
 
     public class RowBuilder {

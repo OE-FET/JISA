@@ -2,7 +2,7 @@ package jisa.visa;
 
 import com.pretty_tools.dde.client.DDEClientConversation;
 import jisa.addresses.Address;
-import jisa.addresses.TCPIPAddress;
+import jisa.addresses.LXIAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
 
@@ -15,7 +15,7 @@ public class DDEDevice implements Instrument {
     private final String host;
     private final DDEClientConversation convo;
 
-    public DDEDevice(TCPIPAddress address, String service, String topic, int timeout) throws Exception{
+    public DDEDevice(LXIAddress address, String service, String topic, int timeout) throws Exception{
         host = address.getHost();
         convo = new DDEClientConversation();
         convo.setTimeout(timeout);
@@ -23,7 +23,7 @@ public class DDEDevice implements Instrument {
     }
 
     public DDEDevice(Address address) throws Exception {
-        TCPIPAddress tcp_addr = address.toTCPIPAddress();
+        LXIAddress tcp_addr = address.toTCPIPAddress();
 
         try {
             host = tcp_addr.getHost();
@@ -60,7 +60,7 @@ public class DDEDevice implements Instrument {
 
     @Override
     public Address getAddress() {
-        return new TCPIPAddress(host);
+        return new LXIAddress(host);
     }
 
     public String sendRequest(String request) throws Exception {
