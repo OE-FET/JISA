@@ -91,18 +91,39 @@ public class Util {
 
     public static String msToString(long millis) {
 
-        long ms = millis % 1000;
-        long s  = (millis / 1000) % 60;
+        long ms = (millis) % 1000;
+        long s  = (millis / (1000)) % 60;
         long m  = (millis / (1000 * 60)) % 60;
-        long h  = (millis / (1000 * 60 * 60));
+        long h  = (millis / (1000 * 60 * 60)) % 24;
+        long d  = (millis / (1000 * 60 * 60 * 24));
 
         List<String> parts = new LinkedList<>();
 
-
+        if (d > 0) { parts.add(String.format("%dd", d)); }
         if (h > 0) { parts.add(String.format("%dh", h)); }
         if (m > 0) { parts.add(String.format("%dm", m)); }
         if (s > 0) { parts.add(String.format("%ds", s)); }
         if (ms > 0) { parts.add(String.format("%dms", ms)); }
+
+        return String.join(" ", parts);
+
+    }
+
+    public static String msToPaddedString(long millis) {
+
+        long ms = (millis) % 1000;
+        long s  = (millis / (1000)) % 60;
+        long m  = (millis / (1000 * 60)) % 60;
+        long h  = (millis / (1000 * 60 * 60)) % 24;
+        long d  = (millis / (1000 * 60 * 60 * 24));
+
+        List<String> parts = new LinkedList<>();
+
+        if (d > 0) { parts.add(String.format("%dd", d)); }
+        if (h > 0) { parts.add(String.format("%02dh", h)); }
+        if (m > 0) { parts.add(String.format("%02dm", m)); }
+        if (s > 0) { parts.add(String.format("%02ds", s)); }
+        if (ms > 0) { parts.add(String.format("%03dms", ms)); }
 
         return String.join(" ", parts);
 

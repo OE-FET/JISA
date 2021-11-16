@@ -57,7 +57,7 @@ public class K236 extends VISADevice implements SMU {
     private static final double MAX_CURRENT        = +100e-3;
     private static final double MIN_VOLTAGE        = -110;
     private static final double MAX_VOLTAGE        = +110;
-    private static final int    MIN_WRITE_INTERVAL = 20;
+    private static final int    MIN_WRITE_INTERVAL = 100;
 
     private double lineFrequency;
     private double lastBias = 0.0;
@@ -169,22 +169,77 @@ public class K236 extends VISADevice implements SMU {
     @Override
     public synchronized void write(String data, Object... params) throws IOException {
 
-        try {
+        IOException lastError = null;
 
-            control.acquire();
-            super.write(data, params);
+        for (int i = 0; i < 3; i ++) {
 
-        } catch (InterruptedException e) {
+            if (i > 0) {
+                clearBuffers();
+                Util.sleep(MIN_WRITE_INTERVAL);
+            }
 
-            throw new IOException("Interrupted acquiring permit to write.");
+            try {
 
-        } finally {
+                try {
 
-            timer.schedule(new TimerTask() { public void run() {control.release();} }, MIN_WRITE_INTERVAL);
+                    control.acquire();
+                    super.write(data, params);
+                    return;
+
+                } catch (InterruptedException e) {
+                    throw new IOException("Interrupted acquiring permit to write.");
+                } finally {
+                    timer.schedule(new TimerTask() { public void run() { control.release(); } }, MIN_WRITE_INTERVAL);
+                }
+
+            } catch (IOException e) {
+                lastError = e;
+                Util.errLog.printf("Error writing to K236 (attempt %d): %s%n", i + 1, e.getMessage());
+            }
 
         }
 
+        throw lastError;
+
     }
+
+    public synchronized String read() throws IOException {
+
+        IOException lastError = null;
+
+        for (int i = 0; i < 3; i ++) {
+
+            if (i > 0) {
+                clearBuffers();
+                Util.sleep(MIN_WRITE_INTERVAL);
+            }
+
+            try {
+
+                try {
+
+                    control.acquire();
+                    return super.read();
+
+                } catch (InterruptedException e) {
+                    throw new IOException("Interrupted acquiring permit to write.");
+                } finally {
+                    timer.schedule(new TimerTask() {
+                        public void run() {control.release();}
+                    }, MIN_WRITE_INTERVAL);
+                }
+
+            } catch (IOException e) {
+                lastError = e;
+                Util.errLog.printf("Error reading from K236 (attempt %d): %s%n", i + 1, e.getMessage());
+            }
+
+        }
+
+        throw lastError;
+
+    }
+
 
     public void setSourceValue(double level) throws IOException, DeviceException {
 
