@@ -192,9 +192,9 @@ public interface IMeter extends Instrument {
     void setLineFilterEnabled(boolean enabled) throws DeviceException, IOException;
 
 
-    default void waitForStableCurrent(double pctMargin, int duration) throws IOException, DeviceException, InterruptedException {
+    default void waitForStableCurrent(double pctMargin, int interval, int duration) throws IOException, DeviceException, InterruptedException {
 
-        Synch.waitForParamStable(this::getCurrent, pctMargin, (int) (getIntegrationTime() * 4000.0), duration);
+        Synch.waitForParamStable(this::getCurrent, pctMargin, interval, duration);
 
     }
 

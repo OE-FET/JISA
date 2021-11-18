@@ -563,6 +563,10 @@ public abstract class ResultTable implements Iterable<Row> {
 
     protected Row parseCSVLine(String line) {
 
+        if (line == null) {
+            return null;
+        }
+
         String[] parts = Arrays.stream(line.replace("\\,", "&comma;").split(","))
                                .map(s -> s.trim().replace("&comma;", ","))
                                .toArray(String[]::new);

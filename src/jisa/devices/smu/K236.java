@@ -57,7 +57,7 @@ public class K236 extends VISADevice implements SMU {
     private static final double MAX_CURRENT        = +100e-3;
     private static final double MIN_VOLTAGE        = -110;
     private static final double MAX_VOLTAGE        = +110;
-    private static final int    MIN_WRITE_INTERVAL = 100;
+    private static final int    MIN_WRITE_INTERVAL = 50;
 
     private double lineFrequency;
     private double lastBias = 0.0;
