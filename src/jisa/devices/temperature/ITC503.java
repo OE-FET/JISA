@@ -90,24 +90,19 @@ public class ITC503 extends VISADevice implements MSTC {
         addAutoRemove("\r");
         addAutoRemove("\n");
 
-        try {
+        String idn;
+        int    count = 0;
 
-            String idn;
-            int    count = 0;
+        do {
+            clearBuffers();
+            manuallyClearReadBuffer();
+            idn = query("V");
+            count++;
+            System.out.printf("ITC503 IDN Response %d: \"%s\"%n", count, idn);
+        } while (!idn.split(" ")[0].trim().equals("ITC503") && count < 3);
 
-            do {
-                clearBuffers();
-                manuallyClearReadBuffer();
-                idn = query("V");
-                count++;
-            } while (!idn.split(" ")[0].trim().equals("ITC503") && count < 3);
-
-            if (!idn.split(" ")[0].trim().equals("ITC503")) {
-                throw new DeviceException("Device at address %s is not an ITC503!", address.toString());
-            }
-
-        } catch (IOException e) {
-            throw new DeviceException("Device at address %s is not responding!", address.toString());
+        if (!idn.split(" ")[0].trim().equals("ITC503")) {
+            throw new DeviceException("Device at address %s is not an ITC503!", address.toString());
         }
 
         setMode(Mode.REMOTE_UNLOCKED);
@@ -371,7 +366,8 @@ public class ITC503 extends VISADevice implements MSTC {
 
             try {
                 response = new Status(query(C_QUERY_STATUS));
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
 
             count++;
 
