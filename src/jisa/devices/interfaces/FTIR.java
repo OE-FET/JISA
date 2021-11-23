@@ -2,7 +2,7 @@ package jisa.devices.interfaces;
 
 public interface FTIR extends Instrument {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Fourier Transform Infrared (FTIR) Spectrometer";
     }
 

@@ -2,11 +2,11 @@ package jisa.devices.spectrometer;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.UVvis;
+import jisa.devices.interfaces.Spectrometer;
 
 import java.io.IOException;
 
-public class AgilentCary6000i implements UVvis {
+public class AgilentCary6000i implements Spectrometer {
 
     @Override
     public String getIDN() throws IOException, DeviceException {
@@ -24,7 +24,7 @@ public class AgilentCary6000i implements UVvis {
     }
 
     @Override
-    public String takeScan(String sample_name) throws Exception {
+    public String takeScan(String exp_file, String sample_name, String save_path, int num_scans) throws Exception {
         String script_path = "C:\\Varian\\CaryWinUV\\ADL\\startscan.adl";
         String exe_path = "C:\\Varian\\CaryWinUV\\ADLShell.exe";
 
@@ -45,7 +45,7 @@ public class AgilentCary6000i implements UVvis {
     }
 
     @Override
-    public String takeReference() throws Exception {
+    public String takeReference(String exp_file, String save_path, int num_scans) throws Exception {
         return null;
     }
 }
