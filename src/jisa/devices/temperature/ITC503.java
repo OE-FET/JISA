@@ -96,7 +96,21 @@ public class ITC503 extends VISADevice implements MSTC {
         do {
             clearBuffers();
             manuallyClearReadBuffer();
-            idn = query("V");
+
+            try {
+
+                idn = query("V");
+
+            } catch (Exception e) {
+
+                if (count < 2) {
+                    idn = "";
+                } else {
+                    throw e;
+                }
+
+            }
+
             count++;
             System.out.printf("ITC503 IDN Response %d: \"%s\"%n", count, idn);
         } while (!idn.split(" ")[0].trim().equals("ITC503") && count < 3);
