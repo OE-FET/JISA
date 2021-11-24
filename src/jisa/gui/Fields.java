@@ -229,32 +229,32 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         Field<Double>  linearStart    = linearResponse.addDoubleField("Start", min);
         Field<Double>  linearStop     = linearResponse.addDoubleField("Stop", max);
         Field<Integer> linearSteps    = linearResponse.addIntegerField("No. Steps", count);
-        Field<Boolean> linearSym      = linearResponse.addCheckBox("Symmetrical?", false);
+        Field<Boolean> linearSym      = linearResponse.addCheckBox("Symmetrical", false);
 
         Fields         stepResponse = new Fields("Add Equal Space Range");
         Field<Double>  stepStart    = stepResponse.addDoubleField("Start", min);
         Field<Double>  stepStop     = stepResponse.addDoubleField("Stop", max);
         Field<Double>  stepStep     = stepResponse.addDoubleField("Step Size", dStep);
-        Field<Boolean> stepSym      = stepResponse.addCheckBox("Symmetrical?", false);
+        Field<Boolean> stepSym      = stepResponse.addCheckBox("Symmetrical", false);
 
         Fields         polyResponse = new Fields("Add Polynomial Range");
         Field<Double>  polyStart    = polyResponse.addDoubleField("Start", min);
         Field<Double>  polyStop     = polyResponse.addDoubleField("Stop", max);
         Field<Integer> polySteps    = polyResponse.addIntegerField("No. Steps", count);
         Field<Integer> polyOrder    = polyResponse.addIntegerField("Order", dOrder);
-        Field<Boolean> polySym      = polyResponse.addCheckBox("Symmetrical?", false);
+        Field<Boolean> polySym      = polyResponse.addCheckBox("Symmetrical", false);
 
         Fields         geomResponse = new Fields("Add Geometric Range");
         Field<Double>  geomStart    = geomResponse.addDoubleField("Start", min);
         Field<Double>  geomStop     = geomResponse.addDoubleField("Stop", max);
         Field<Double>  geomStep     = geomResponse.addDoubleField("Factor", dStep);
-        Field<Boolean> geomSym      = geomResponse.addCheckBox("Symmetrical?", false);
+        Field<Boolean> geomSym      = geomResponse.addCheckBox("Symmetrical", false);
 
         Fields         expResponse = new Fields("Add Geometric Range");
         Field<Double>  expStart    = expResponse.addDoubleField("Start", min);
         Field<Double>  expStop     = expResponse.addDoubleField("Stop", max);
         Field<Integer> expSteps    = expResponse.addIntegerField("No. Steps", count);
-        Field<Boolean> expSym      = expResponse.addCheckBox("Symmetrical?", false);
+        Field<Boolean> expSym      = expResponse.addCheckBox("Symmetrical", false);
 
         addManual.setOnAction(e -> Util.runAsync(() -> {
 
@@ -512,7 +512,6 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
                 });
 
             }
-
 
             @Override
             public void setVisible(boolean visible) {

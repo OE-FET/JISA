@@ -81,10 +81,13 @@ public class Util {
     }
 
     public static void runRegardless(SRunnable toRun) {
+        toRun.runRegardless();
+    }
 
-        try {
-            toRun.run();
-        } catch (Throwable ignored) {
+    public static void runRegardless(SRunnable... toRun) {
+
+        for (SRunnable run : toRun) {
+            run.runRegardless();
         }
 
     }
