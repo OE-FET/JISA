@@ -1,7 +1,7 @@
 package jisa.devices.interfaces;
 
 public interface UVvis extends Instrument{
-    public static String getDescription() {
+    static String getDescription() {
         return "UV-vis Spectrometer";
     }
 

@@ -3,24 +3,13 @@ package jisa.devices.spectrometer;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Spectrometer;
+import jisa.visa.PseudoDevice;
 
 import java.io.IOException;
 
-public class AgilentCary6000i implements Spectrometer {
+public class AgilentCary6000i extends PseudoDevice implements Spectrometer {
 
-    @Override
-    public String getIDN() throws IOException, DeviceException {
-        return null;
-    }
-
-    @Override
-    public void close() throws IOException, DeviceException {
-
-    }
-
-    @Override
-    public Address getAddress() {
-        return null;
+    public AgilentCary6000i() throws Exception {
     }
 
     @Override
