@@ -229,27 +229,32 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         Field<Double>  linearStart    = linearResponse.addDoubleField("Start", min);
         Field<Double>  linearStop     = linearResponse.addDoubleField("Stop", max);
         Field<Integer> linearSteps    = linearResponse.addIntegerField("No. Steps", count);
+        Field<Boolean> linearSym      = linearResponse.addCheckBox("Symmetrical?", false);
 
-        Fields        stepResponse = new Fields("Add Equal Space Range");
-        Field<Double> stepStart    = stepResponse.addDoubleField("Start", min);
-        Field<Double> stepStop     = stepResponse.addDoubleField("Stop", max);
-        Field<Double> stepStep     = stepResponse.addDoubleField("Step Size", dStep);
+        Fields         stepResponse = new Fields("Add Equal Space Range");
+        Field<Double>  stepStart    = stepResponse.addDoubleField("Start", min);
+        Field<Double>  stepStop     = stepResponse.addDoubleField("Stop", max);
+        Field<Double>  stepStep     = stepResponse.addDoubleField("Step Size", dStep);
+        Field<Boolean> stepSym      = stepResponse.addCheckBox("Symmetrical?", false);
 
         Fields         polyResponse = new Fields("Add Polynomial Range");
         Field<Double>  polyStart    = polyResponse.addDoubleField("Start", min);
         Field<Double>  polyStop     = polyResponse.addDoubleField("Stop", max);
         Field<Integer> polySteps    = polyResponse.addIntegerField("No. Steps", count);
         Field<Integer> polyOrder    = polyResponse.addIntegerField("Order", dOrder);
+        Field<Boolean> polySym      = polyResponse.addCheckBox("Symmetrical?", false);
 
-        Fields        geomResponse = new Fields("Add Geometric Range");
-        Field<Double> geomStart    = geomResponse.addDoubleField("Start", min);
-        Field<Double> geomStop     = geomResponse.addDoubleField("Stop", max);
-        Field<Double> geomStep     = geomResponse.addDoubleField("Factor", dStep);
+        Fields         geomResponse = new Fields("Add Geometric Range");
+        Field<Double>  geomStart    = geomResponse.addDoubleField("Start", min);
+        Field<Double>  geomStop     = geomResponse.addDoubleField("Stop", max);
+        Field<Double>  geomStep     = geomResponse.addDoubleField("Factor", dStep);
+        Field<Boolean> geomSym      = geomResponse.addCheckBox("Symmetrical?", false);
 
         Fields         expResponse = new Fields("Add Geometric Range");
         Field<Double>  expStart    = expResponse.addDoubleField("Start", min);
         Field<Double>  expStop     = expResponse.addDoubleField("Stop", max);
         Field<Integer> expSteps    = expResponse.addIntegerField("No. Steps", count);
+        Field<Boolean> expSym      = expResponse.addCheckBox("Symmetrical?", false);
 
         addManual.setOnAction(e -> Util.runAsync(() -> {
 
@@ -277,11 +282,17 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         addLinear.setOnAction(e -> Util.runAsync(() -> {
 
             if (linearResponse.showAsConfirmation()) {
+
+                Range<Double> range = Range.linear(linearStart.get(), linearStop.get(), linearSteps.get());
+
+                if (linearSym.get()) {
+                    range = range.mirror();
+                }
+
                 tableView.getItems().addAll(
-                    Arrays.stream(Range.linear(linearStart.get(), linearStop.get(), linearSteps.get()).array())
-                          .map(FXCollections::observableArrayList)
-                          .collect(Collectors.toList())
+                    range.stream().map(FXCollections::observableArrayList).collect(Collectors.toList())
                 );
+
             }
 
         }));
@@ -289,11 +300,17 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         addStep.setOnAction(e -> Util.runAsync(() -> {
 
             if (stepResponse.showAsConfirmation()) {
+
+                Range<Double> range = Range.step(stepStart.get(), stepStop.get(), stepStep.get());
+
+                if (stepSym.get()) {
+                    range = range.mirror();
+                }
+
                 tableView.getItems().addAll(
-                    Arrays.stream(Range.step(stepStart.get(), stepStop.get(), stepStep.get()).array())
-                          .map(FXCollections::observableArrayList)
-                          .collect(Collectors.toList())
+                    range.stream().map(FXCollections::observableArrayList).collect(Collectors.toList())
                 );
+
             }
 
         }));
@@ -301,11 +318,17 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         addPoly.setOnAction(e -> Util.runAsync(() -> {
 
             if (polyResponse.showAsConfirmation()) {
+
+                Range<Double> range = Range.polynomial(polyStart.get(), polyStop.get(), polySteps.get(), polyOrder.get());
+
+                if (polySym.get()) {
+                    range = range.mirror();
+                }
+
                 tableView.getItems().addAll(
-                    Arrays.stream(Range.polynomial(polyStart.get(), polyStop.get(), polySteps.get(), polyOrder.get()).array())
-                          .map(FXCollections::observableArrayList)
-                          .collect(Collectors.toList())
+                    range.stream().map(FXCollections::observableArrayList).collect(Collectors.toList())
                 );
+
             }
 
         }));
@@ -313,10 +336,15 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         addGeometric.setOnAction(e -> Util.runAsync(() -> {
 
             if (geomResponse.showAsConfirmation()) {
+
+                Range<Double> range = Range.geometric(geomStart.get(), geomStop.get(), geomStep.get());
+
+                if (geomSym.get()) {
+                    range = range.mirror();
+                }
+
                 tableView.getItems().addAll(
-                    Arrays.stream(Range.geometric(geomStart.get(), geomStop.get(), geomStep.get()).array())
-                          .map(FXCollections::observableArrayList)
-                          .collect(Collectors.toList())
+                    range.stream().map(FXCollections::observableArrayList).collect(Collectors.toList())
                 );
             }
 
@@ -325,11 +353,17 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         addExponential.setOnAction(e -> Util.runAsync(() -> {
 
             if (expResponse.showAsConfirmation()) {
+
+                Range<Double> range = Range.exponential(expStart.get(), expStop.get(), expSteps.get());
+
+                if (expSym.get()) {
+                    range = range.mirror();
+                }
+
                 tableView.getItems().addAll(
-                    Arrays.stream(Range.exponential(expStart.get(), expStop.get(), expSteps.get()).array())
-                          .map(FXCollections::observableArrayList)
-                          .collect(Collectors.toList())
+                    range.stream().map(FXCollections::observableArrayList).collect(Collectors.toList())
                 );
+
             }
 
         }));

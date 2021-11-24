@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * Class for defining ranges of numbers to iterate over.
@@ -416,6 +417,10 @@ public class Range<T extends Number> implements Iterable<T> {
      * @return List of values
      */
     public List<T> list() { return List.of(data); }
+
+    public Stream<T> stream() {
+        return Arrays.stream(data);
+    }
 
     /**
      * Returns this range as an array of double values.
