@@ -142,6 +142,11 @@ public interface MenuButton extends SubElement {
 
         }
 
+        //Method to remove all items from menubutton
+        public void removeAllItems() {
+            button.getItems().clear();
+        }
+
         public Separator addSeparator() {
 
             SeparatorMenuItem separator = new SeparatorMenuItem();

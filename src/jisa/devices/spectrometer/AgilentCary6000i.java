@@ -3,7 +3,6 @@ package jisa.devices.spectrometer;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Spectrometer;
-import jisa.visa.PseudoDevice;
 
 import java.io.IOException;
 
@@ -41,7 +40,7 @@ public class AgilentCary6000i implements Spectrometer {
 
     @Override
     public String getIDN() throws IOException, DeviceException {
-        return null;
+        return "Agilent Cary6000i UV-vis Spectrometer";
     }
 
     @Override
