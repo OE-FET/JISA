@@ -8,19 +8,8 @@ import java.io.IOException;
 
 public class AgilentCary6000i implements Spectrometer {
 
-    @Override
-    public String getIDN() throws IOException, DeviceException {
-        return null;
-    }
+    public AgilentCary6000i(Address address) throws Exception {
 
-    @Override
-    public void close() throws IOException, DeviceException {
-
-    }
-
-    @Override
-    public Address getAddress() {
-        return null;
     }
 
     @Override
@@ -46,6 +35,21 @@ public class AgilentCary6000i implements Spectrometer {
 
     @Override
     public String takeReference(String exp_file, String save_path, int num_scans) throws Exception {
+        return null;
+    }
+
+    @Override
+    public String getIDN() throws IOException, DeviceException {
+        return "Agilent Cary6000i UV-vis Spectrometer";
+    }
+
+    @Override
+    public void close() throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public Address getAddress() {
         return null;
     }
 }

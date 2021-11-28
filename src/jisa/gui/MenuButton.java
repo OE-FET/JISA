@@ -66,6 +66,11 @@ public interface MenuButton extends SubElement {
     Button addItem(String text, ClickHandler onClick);
 
     /**
+     * Removes all items from the menu button's menu.
+     */
+    void removeAllItems();
+
+    /**
      * Adds a separator as the next item in the menu.
      *
      * @return Separator object representing the separator
@@ -140,6 +145,11 @@ public interface MenuButton extends SubElement {
 
             };
 
+        }
+
+        @Override
+        public void removeAllItems() {
+            button.getItems().clear();
         }
 
         public Separator addSeparator() {
