@@ -24,41 +24,43 @@ import java.util.regex.Pattern;
  */
 public class ITC503 extends VISADevice implements MSTC {
 
-    private static final String          TERMINATOR                    = "\r";
-    private static final String          C_SET_COMM_MODE               = "Q2";
-    private static final String          C_READ                        = "R%d";
-    private static final String          C_SET_MODE                    = "C%d";
-    private static final String          C_SET_TEMP                    = "T%f";
-    private static final String          C_SET_AUTO                    = "A%d";
-    private static final String          C_SET_SENSOR                  = "H%d";
-    private static final String          C_SET_AUTO_PID                = "L%d";
-    private static final String          C_SET_P                       = "P%f";
-    private static final String          C_SET_I                       = "I%f";
-    private static final String          C_SET_D                       = "D%f";
-    private static final String          C_SET_HEATER                  = "O%.01f";
-    private static final String          C_SET_FLOW                    = "G%f";
-    private static final String          C_SET_HEATER_LIM              = "M%.01f";
-    private static final String          C_QUERY_STATUS                = "X";
-    private static final int             SET_TEMP_CHANNEL              = 0;
-    private static final int             TEMP_ERROR_CHANNEL            = 4;
-    private static final int             HEATER_OP_PERC                = 5;
-    private static final int             HEATER_OP_VOLTS               = 6;
-    private static final int             GAS_OP                        = 7;
-    private static final int             PROP_BAND                     = 8;
-    private static final int             INT_ACTION_TIME               = 9;
-    private static final int             DER_ACTION_TIME               = 10;
-    private static final int             FREQ_CHAN_OFFSET              = 10;
-    private static final double          MAX_HEATER_VOLTAGE            = 40.0;
-    private static final long            STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
-    private static final int             STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
-    private static final double          STANDARD_ERROR_PERC           = 10;
-    private static final int             MIN_WRITE_INTERVAL            = 5;
-    private final        Semaphore       timingControl                 = new Semaphore(1);
-    private final        Timer           timingService                 = new Timer();
-    private              boolean         autoPID                       = false;
-    private              PID.Zone[]      zones                         = new PID.Zone[0];
-    private              double          rampRate                      = 0.0;
-    private              double          setPoint                      = 0.0;
+    private static final String     TERMINATOR_1                  = "\r\n";
+    private static final String     TERMINATOR_2                  = "\r";
+    private static final String     TERMINATOR_3                  = "\n";
+    private static final String     C_SET_COMM_MODE               = "Q2";
+    private static final String     C_READ                        = "R%d";
+    private static final String     C_SET_MODE                    = "C%d";
+    private static final String     C_SET_TEMP                    = "T%f";
+    private static final String     C_SET_AUTO                    = "A%d";
+    private static final String     C_SET_SENSOR                  = "H%d";
+    private static final String     C_SET_AUTO_PID                = "L%d";
+    private static final String     C_SET_P                       = "P%f";
+    private static final String     C_SET_I                       = "I%f";
+    private static final String     C_SET_D                       = "D%f";
+    private static final String     C_SET_HEATER                  = "O%.01f";
+    private static final String     C_SET_FLOW                    = "G%f";
+    private static final String     C_SET_HEATER_LIM              = "M%.01f";
+    private static final String     C_QUERY_STATUS                = "X";
+    private static final int        SET_TEMP_CHANNEL              = 0;
+    private static final int        TEMP_ERROR_CHANNEL            = 4;
+    private static final int        HEATER_OP_PERC                = 5;
+    private static final int        HEATER_OP_VOLTS               = 6;
+    private static final int        GAS_OP                        = 7;
+    private static final int        PROP_BAND                     = 8;
+    private static final int        INT_ACTION_TIME               = 9;
+    private static final int        DER_ACTION_TIME               = 10;
+    private static final int        FREQ_CHAN_OFFSET              = 10;
+    private static final double     MAX_HEATER_VOLTAGE            = 40.0;
+    private static final long       STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
+    private static final int        STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
+    private static final double     STANDARD_ERROR_PERC           = 10;
+    private static final int        MIN_WRITE_INTERVAL            = 5;
+    private final        Semaphore  timingControl                 = new Semaphore(1);
+    private final        Timer      timingService                 = new Timer();
+    private              boolean    autoPID                       = false;
+    private              PID.Zone[] zones                         = new PID.Zone[0];
+    private              double     rampRate                      = 0.0;
+    private              double     setPoint                      = 0.0;
 
     /**
      * Open the ITC503 device at the given bus and address
@@ -70,6 +72,7 @@ public class ITC503 extends VISADevice implements MSTC {
      */
     public ITC503(Address address) throws IOException, DeviceException {
 
+        // There's nothing super about an ITC503, but this needs to be called
         super(address);
 
         switch (address.getType()) {
@@ -84,16 +87,30 @@ public class ITC503 extends VISADevice implements MSTC {
 
         }
 
-        setWriteTerminator(TERMINATOR);
+        // The ITC503 has an unfortunate tendency to change which line terminator(s) it uses, so we need to
+        // programmatically determine which one it has randomly selected this time
+        setWriteTerminator(TERMINATOR_1);
         write(C_SET_COMM_MODE);
-        setReadTerminator(TERMINATOR);
-        addAutoRemove("\r");
-        addAutoRemove("\n");
+        setReadTerminator(TERMINATOR_1);
+        addAutoRemove(TERMINATOR_1, TERMINATOR_2, TERMINATOR_3);
+
+        setTimeout(500);
+        String terminator = determineTerminator();
+        setTimeout(1000);
+
+        if (terminator == null) {
+            throw new IOException("ITC503 is refusing to terminate replies correctly.");
+        }
+
+        setWriteTerminator(terminator);
+        setReadTerminator(terminator);
 
         String idn;
         int    count = 0;
 
+        // Try to extract the correct IDN response up to 3 times before giving up
         do {
+
             clearBuffers();
             manuallyClearReadBuffer();
 
@@ -113,17 +130,45 @@ public class ITC503 extends VISADevice implements MSTC {
 
             count++;
             System.out.printf("ITC503 IDN Response %d: \"%s\"%n", count, idn);
+
         } while (!idn.split(" ")[0].trim().equals("ITC503") && count < 3);
 
         if (!idn.split(" ")[0].trim().equals("ITC503")) {
-            throw new DeviceException("Device at address %s is not an ITC503!", address.toString());
+            throw new DeviceException("Device at address \"%s\" is not claiming to be an ITC503!", address.toString());
         }
 
+        // If we've made it this far, it seems that all is well
         setMode(Mode.REMOTE_UNLOCKED);
         write(C_SET_AUTO_PID, 0);
 
+        // Just to be safe
         clearBuffers();
         manuallyClearReadBuffer();
+
+    }
+
+    private String determineTerminator() throws IOException {
+
+        List<String> terminators = List.of(TERMINATOR_1, TERMINATOR_2, TERMINATOR_3);
+
+        for (String attempt : terminators) {
+
+            clearBuffers();
+            manuallyClearReadBuffer();
+
+            setWriteTerminator(attempt);
+            setReadTerminator(attempt);
+
+            try {
+                String idn = query("V");
+                if (idn.contains("ITC503")) {
+                    return attempt;
+                }
+            } catch (IOException ignored) {}
+
+        }
+
+        return null;
 
     }
 
@@ -138,7 +183,7 @@ public class ITC503 extends VISADevice implements MSTC {
     @Override
     public synchronized void write(String command, Object... args) throws IOException {
 
-        // Can only write to the device if we have waited enough time since the last write (50 ms)
+        // Can only read/write from/to the device if we have waited enough time since the last write (5 ms)
         try {
             timingControl.acquire();
         } catch (InterruptedException ignored) {
@@ -147,7 +192,28 @@ public class ITC503 extends VISADevice implements MSTC {
         try {
             super.write(command, args);
         } finally {
-            timingService.schedule(new TimerTask() {  public void run() { timingControl.release(); } }, MIN_WRITE_INTERVAL);
+            timingService.schedule(new TimerTask() {
+                public void run() {timingControl.release();}
+            }, MIN_WRITE_INTERVAL);
+        }
+
+    }
+
+    @Override
+    public synchronized String read() throws IOException {
+
+        // Can only read/write from/to the device if we have waited enough time since the last write (5 ms)
+        try {
+            timingControl.acquire();
+        } catch (InterruptedException ignored) {
+        }
+
+        try {
+            return super.read();
+        } finally {
+            timingService.schedule(new TimerTask() {
+                public void run() {timingControl.release();}
+            }, MIN_WRITE_INTERVAL);
         }
 
     }
@@ -170,26 +236,19 @@ public class ITC503 extends VISADevice implements MSTC {
             if (response.startsWith("R")) {
 
                 try {
-                    reply   = Double.parseDouble(response.substring(1));
-                    success = true;
-                } catch (NumberFormatException exception) {
-                    success = false;
-                }
+                    return Double.parseDouble(response.substring(1));
+                } catch (NumberFormatException ignored) {}
 
             } else {
-                success = false;
                 System.err.printf("ITC503: Improper Response %d: %s%n", count + 1, response);
             }
 
             count++;
 
-        } while (!success && count < 3);
+        } while (count < 3);
 
-        if (success) {
-            return reply;
-        } else {
-            throw new IOException("ITC-503 is not responding to read command correctly");
-        }
+        throw new IOException("ITC503 is not responding to read command correctly");
+
 
     }
 

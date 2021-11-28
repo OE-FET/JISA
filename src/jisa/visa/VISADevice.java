@@ -202,8 +202,8 @@ public class VISADevice implements Instrument {
 
     }
 
-    public synchronized void addAutoRemove(String phrase) {
-        toRemove.add(phrase);
+    public synchronized void addAutoRemove(String... phrases) {
+        toRemove.addAll(List.of(phrases));
     }
 
     /**
