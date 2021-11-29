@@ -5,6 +5,7 @@ import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Spectrometer;
 import org.apache.commons.lang3.StringUtils;
 
+
 import java.io.*;
 
 public class AgilentCary6000i implements Spectrometer {
@@ -27,15 +28,15 @@ public class AgilentCary6000i implements Spectrometer {
             int dir_end = StringUtils.ordinalIndexOf(content, ",", 11);
             int samp_end = StringUtils.ordinalIndexOf(content, ",", 12);
 
-            String old_dir = content.substring(dir_start, dir_end);
-            String old_samp = content.substring(dir_end, samp_end);
+            String old_dir = content.substring(dir_start+1, dir_end);
+            String old_samp = content.substring(dir_end+1, samp_end);
 
-            content.replace(old_dir, file_directory);
-            content.replace(old_samp, sample_name);
+            content = content.replace(old_dir, file_directory);
+            content = content.replace(old_samp, sample_name);
 
-            FileWriter writer = new FileWriter(config_path);
-            writer.append(content);
-            writer.flush();
+            FileOutputStream fileOut = new FileOutputStream(file);
+            fileOut.write(content.getBytes());
+            fileOut.close();
         }
 
         String script_path = "C:\\Varian\\CaryWinUV\\ADL\\startscan.adl";
