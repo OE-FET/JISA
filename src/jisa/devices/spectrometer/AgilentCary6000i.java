@@ -3,8 +3,9 @@ package jisa.devices.spectrometer;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Spectrometer;
+import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
+import java.io.*;
 
 public class AgilentCary6000i implements Spectrometer {
 
@@ -13,7 +14,30 @@ public class AgilentCary6000i implements Spectrometer {
     }
 
     @Override
-    public String takeScan(String exp_file, String sample_name, String save_path, int num_scans) throws Exception {
+    public String takeScan(String file_directory, String sample_name, String scan_file_path, int num_scans) throws Exception {
+
+        String config_path = "C:\\Varian\\CaryWinUV\\ADL\\measurementconfig.cfg";
+        File file = new File(config_path);
+
+        // Modifies the file directory and sample name in the config file to match those provided
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String content = br.readLine();
+
+            int dir_start = StringUtils.ordinalIndexOf(content, ",", 10);
+            int dir_end = StringUtils.ordinalIndexOf(content, ",", 11);
+            int samp_end = StringUtils.ordinalIndexOf(content, ",", 12);
+
+            String old_dir = content.substring(dir_start, dir_end);
+            String old_samp = content.substring(dir_end, samp_end);
+
+            content.replace(old_dir, file_directory);
+            content.replace(old_samp, sample_name);
+
+            FileWriter writer = new FileWriter(config_path);
+            writer.append(content);
+            writer.flush();
+        }
+
         String script_path = "C:\\Varian\\CaryWinUV\\ADL\\startscan.adl";
         String exe_path = "C:\\Varian\\CaryWinUV\\ADLShell.exe";
 
