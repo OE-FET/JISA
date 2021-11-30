@@ -24,9 +24,9 @@ import java.util.regex.Pattern;
  */
 public class ITC503 extends VISADevice implements MSTC {
 
-    private static final String     TERMINATOR_1                  = "\r\n";
-    private static final String     TERMINATOR_2                  = "\r";
-    private static final String     TERMINATOR_3                  = "\n";
+    private static final String     TERMINATOR_1                  = "\r";
+    private static final String     TERMINATOR_2                  = "\n";
+    private static final String     TERMINATOR_3                  = "\r\n";
     private static final String     C_SET_COMM_MODE               = "Q2";
     private static final String     C_READ                        = "R%d";
     private static final String     C_SET_MODE                    = "C%d";
@@ -90,8 +90,9 @@ public class ITC503 extends VISADevice implements MSTC {
         // The ITC503 has an unfortunate tendency to change which line terminator(s) it uses, so we need to
         // programmatically determine which one it has randomly selected this time
         setWriteTerminator(TERMINATOR_1);
-        write(C_SET_COMM_MODE);
         setReadTerminator(TERMINATOR_1);
+        write(C_SET_COMM_MODE);
+
         addAutoRemove(TERMINATOR_1, TERMINATOR_2, TERMINATOR_3);
 
         setTimeout(500);
@@ -102,7 +103,6 @@ public class ITC503 extends VISADevice implements MSTC {
             throw new IOException("ITC503 is refusing to terminate replies correctly.");
         }
 
-        setWriteTerminator(terminator);
         setReadTerminator(terminator);
 
         String idn;
@@ -155,15 +155,16 @@ public class ITC503 extends VISADevice implements MSTC {
 
             clearBuffers();
             manuallyClearReadBuffer();
-
-            setWriteTerminator(attempt);
             setReadTerminator(attempt);
 
             try {
+
                 String idn = query("V");
+
                 if (idn.contains("ITC503")) {
                     return attempt;
                 }
+
             } catch (IOException ignored) {}
 
         }
@@ -200,7 +201,7 @@ public class ITC503 extends VISADevice implements MSTC {
     }
 
     @Override
-    public synchronized String read() throws IOException {
+    public synchronized String read(int retryCount) throws IOException {
 
         // Can only read/write from/to the device if we have waited enough time since the last write (5 ms)
         try {
@@ -209,7 +210,7 @@ public class ITC503 extends VISADevice implements MSTC {
         }
 
         try {
-            return super.read();
+            return super.read(retryCount);
         } finally {
             timingService.schedule(new TimerTask() {
                 public void run() {timingControl.release();}
