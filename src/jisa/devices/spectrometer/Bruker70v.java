@@ -15,11 +15,17 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
         super(address);
     }
 
-    public static String getDescription() {
+    public String getDescription() {
         return "Bruker 70v FTIR";
     }
 
-    public String takeScan(String exp_file, String sample_name, String save_path, int num_scans) throws Exception{
+    //String exp_file, String sample_name, String save_path, int num_scans
+    public String takeScan(String[] scan_params) throws Exception{
+        String exp_file = scan_params[0];
+        String sample_name = scan_params[1];
+        String save_path = scan_params[2];
+        String num_scans = scan_params[3];
+
         String response = super.sendRequest("COMMAND_LINE MeasureSample(0, {EXP='" + exp_file
                 + "', XPP='G:\\\\User XPM files', SNM='" + sample_name
                 + "', PTH='" + save_path + "', NSS='" + num_scans + "'});");

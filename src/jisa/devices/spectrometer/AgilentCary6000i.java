@@ -13,8 +13,12 @@ public class AgilentCary6000i implements Spectrometer {
 
     }
 
+    public String getDescription() {
+        return "Agilent Cary6000i UV-Vis Spectrophotometer";
+    }
+
     @Override
-    public String takeScan(String file_directory, String sample_name, String scan_file_path, int num_scans) throws Exception {
+    public String takeScan(String[] scan_params) throws Exception {
         String script_path = "C:\\Varian\\CaryWinUV\\ADL\\runScan.adl";
         String exe_path = "C:\\Varian\\CaryWinUV\\ADLShell.exe";
 
@@ -23,21 +27,6 @@ public class AgilentCary6000i implements Spectrometer {
         Runtime.getRuntime ().exec (cmdArr);
 
         return "Scan Launched";
-    }
-
-    @Override
-    public String sendBenchCommand(String bench_command) throws Exception {
-        return null;
-    }
-
-    @Override
-    public String loadReference(String file_path, String file_name) throws Exception {
-        return null;
-    }
-
-    @Override
-    public String takeReference(String exp_file, String save_path, int num_scans) throws Exception {
-        return null;
     }
 
     @Override
