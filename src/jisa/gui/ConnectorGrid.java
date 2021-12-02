@@ -212,7 +212,7 @@ public class ConnectorGrid extends Grid {
 
         list.show();
 
-        getConnectors().parallelStream().forEach(Connector::connect);
+        getConnectors().forEach(Connector::connect);
 
         return list;
 

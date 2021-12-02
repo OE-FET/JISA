@@ -323,10 +323,14 @@ public class VISADevice implements Instrument {
                     throw new IOException(e.getMessage());
                 }
 
+                System.out.printf("Retrying read from \"%s\", reason: %s%n", address.toString(), e.getMessage());
+
             }
 
         }
+
         return lastRead;
+
     }
 
     public synchronized byte[] readBytes(int numBytes) throws IOException {

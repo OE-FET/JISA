@@ -10,6 +10,7 @@ import jisa.visa.Connection;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -150,7 +151,9 @@ public class ITC503 extends VISADevice implements MSTC {
     private String determineTerminator() throws IOException {
 
         List<String> terminators = List.of(TERMINATOR_1, TERMINATOR_2, TERMINATOR_3);
+        List<String> safe        = List.of("\\r", "\\n", "\\r\\n");
 
+        int i = 0;
         for (String attempt : terminators) {
 
             clearBuffers();
@@ -158,14 +161,21 @@ public class ITC503 extends VISADevice implements MSTC {
             setReadTerminator(attempt);
 
             try {
-
+                System.out.printf("ITC503 Attempting Terminator \"%s\": ", safe.get(i++));
                 String idn = query("V");
 
+                 System.out.printf("\"%s\"... ", idn);
+
                 if (idn.contains("ITC503")) {
+                    System.out.println("Success");
                     return attempt;
+                } else {
+                    System.out.println("Failure");
                 }
 
-            } catch (IOException ignored) {}
+            } catch (IOException e) {
+                System.out.printf("%s... Failure%n", e.getMessage());
+            }
 
         }
 

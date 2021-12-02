@@ -13,6 +13,7 @@ import jisa.addresses.StrAddress;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +32,7 @@ public class NIVISADriver implements Driver {
     private static       VISANativeInterface libStatic;
     private static       String              libName;
     private static       NativeLong          visaResourceManagerHandleStatic;
+    private static final List<Integer>       SUCCESS_CODES = List.of(VI_SUCCESS, VI_SUCCESS_TERM_CHAR, VI_SUCCESS_MAX_CNT);
 
     protected VISANativeInterface lib;
     protected NativeLong          visaResourceManagerHandle;
@@ -360,7 +362,7 @@ public class NIVISADriver implements Driver {
                     returnCount
             );
 
-            if (status.longValue() != VI_SUCCESS) {
+            if (status.longValue() < VI_SUCCESS) {
 
                 switch (status.intValue()) {
 
@@ -387,7 +389,7 @@ public class NIVISADriver implements Driver {
 
             NativeLong status = lib.viClear(handle);
 
-            if (status.longValue() != VI_SUCCESS) {
+            if (status.intValue() != VI_SUCCESS) {
                 throw new VISAException("Unable to clear connection.");
             }
 
@@ -413,7 +415,7 @@ public class NIVISADriver implements Driver {
                     returnCount
             );
 
-            if (status.longValue() != VI_SUCCESS) {
+            if (status.intValue() != VI_SUCCESS) {
 
                 switch (status.intValue()) {
 
@@ -448,24 +450,23 @@ public class NIVISADriver implements Driver {
                     returnCount
             );
 
-            if (status.longValue() != VI_SUCCESS) {
+            switch (status.intValue()) {
 
-                switch (status.intValue()) {
+                case VI_SUCCESS:
+                case VI_SUCCESS_TERM_CHAR:
+                case VI_SUCCESS_MAX_CNT:
+                    return Util.trimArray(response.array());
 
-                    case VI_ERROR_INV_OBJECT:
-                        throw new VISAException("That connection is not open.");
+                case VI_ERROR_INV_OBJECT:
+                    throw new VISAException("That connection is not open.");
 
-                    case VI_ERROR_TMO:
-                        throw new VISAException("Read operation timed out.");
+                case VI_ERROR_TMO:
+                    throw new VISAException("Read operation timed out.");
 
-                    default:
-                        throw new VISAException("Error reading from instrument.");
-
-                }
+                default:
+                    throw new VISAException("Error reading from instrument, code: 0x%08X", status.intValue());
 
             }
-
-            return Util.trimArray(response.array());
 
         }
 
