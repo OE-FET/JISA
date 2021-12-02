@@ -18,7 +18,8 @@ public class AgilentCary6000i implements Spectrometer {
         String script_path = "C:\\Varian\\CaryWinUV\\ADL\\runScan.adl";
         String exe_path = "C:\\Varian\\CaryWinUV\\ADLShell.exe";
 
-        String cmdArr [] = {exe_path, script_path};
+        // Runs the runScan.adl script in a minimized window
+        String cmdArr [] = {"cmd", "/c", "start", "/min", exe_path, script_path};
         Runtime.getRuntime ().exec (cmdArr);
 
         return "Scan Launched";
