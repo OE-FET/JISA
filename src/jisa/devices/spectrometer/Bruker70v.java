@@ -41,6 +41,7 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
 //                ".0\" 1>:AB], {DAP='" + save_path + "', OEX='1', SAN='" + sample_name + ".dpt', COF=64});");
 
         String response2 = "";
+
         String response3 = "";
 
         try {
@@ -51,6 +52,7 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
         }
         catch (Exception e) { //Temporarily ignoring issues where scan fails
             e.printStackTrace();
+            System.out.println("SCAN FAILED");
         }
 
 
