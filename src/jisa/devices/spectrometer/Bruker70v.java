@@ -39,10 +39,20 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
 
 //        String response2 = super.sendRequest("COMMAND_LINE SaveAs ([<\"" + save_path + sample_name +
 //                ".0\" 1>:AB], {DAP='" + save_path + "', OEX='1', SAN='" + sample_name + ".dpt', COF=64});");
-        String response2 = super.sendRequest("COMMAND_LINE SaveAs ([<" + split[3] + ">:AB], {DAP='" + save_path + "', OEX='1', SAN='"
-                + sample_name + ".dpt', COF=64});");
 
-        String response3 = super.sendRequest("UNLOAD_FILE " + split[3]);
+        String response2 = "";
+        String response3 = "";
+
+        try {
+            response2 = super.sendRequest("COMMAND_LINE SaveAs ([<" + split[3] + ">:AB], {DAP='" + save_path + "', OEX='1', SAN='"
+                    + sample_name + ".dpt', COF=64});");
+
+            response3 = super.sendRequest("UNLOAD_FILE " + split[3]);
+        }
+        catch (Exception e) { //Temporarily ignoring issues where scan fails
+            e.printStackTrace();
+        }
+
 
         return response + "\n" + response2 + "\n" + response3;
     }
