@@ -383,7 +383,11 @@ public interface LockIn extends Instrument {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    void autoRange() throws IOException, DeviceException;
+    void autoRange(double factor) throws IOException, DeviceException, InterruptedException;
+
+    default void autoRange() throws IOException, DeviceException, InterruptedException {
+        autoRange(1.0);
+    }
 
     /**
      * Returns the triggering mode used for external referencing (SINE, POS_TTL, NEG_TTL).
