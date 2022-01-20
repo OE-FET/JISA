@@ -20,7 +20,7 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
     }
 
     //String exp_file, String sample_name, String save_path, int num_scans
-    public String takeScan(String[] scan_params) throws Exception{
+    public String takeScan(String[] scan_params) throws Exception {
         String exp_file = scan_params[0];
         String sample_name = scan_params[1];
         String save_path = scan_params[2];
@@ -31,32 +31,28 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
                 + "', PTH='" + save_path + "', NSS='" + num_scans + "'});");
         String[] split = response.split("\n");
 
-        int i = 1;
-        for (String str : split) {
-            System.out.println("LINE " + i + ": " + str);
-            i++;
+        //If scan fails, rerun it
+        if (split.length == 2) {
+            return takeScan(scan_params);
+        }
+        else {
+            String response2 = "";
+            String response3 = "";
+
+            try {
+                response2 = super.sendRequest("COMMAND_LINE SaveAs ([<" + split[3] + ">:AB], {DAP='" + save_path + "', OEX='1', SAN='"
+                        + sample_name + ".dpt', COF=64});");
+
+                response3 = super.sendRequest("UNLOAD_FILE " + split[3]);
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("Scan Failed!");
+            }
+
+            return response + "\n" + response2 + "\n" + response3;
         }
 
-//        String response2 = super.sendRequest("COMMAND_LINE SaveAs ([<\"" + save_path + sample_name +
-//                ".0\" 1>:AB], {DAP='" + save_path + "', OEX='1', SAN='" + sample_name + ".dpt', COF=64});");
-
-        String response2 = "";
-
-        String response3 = "";
-
-        try {
-            response2 = super.sendRequest("COMMAND_LINE SaveAs ([<" + split[3] + ">:AB], {DAP='" + save_path + "', OEX='1', SAN='"
-                    + sample_name + ".dpt', COF=64});");
-
-            response3 = super.sendRequest("UNLOAD_FILE " + split[3]);
-        }
-        catch (Exception e) { //Temporarily ignoring issues where scan fails
-            e.printStackTrace();
-            System.out.println("SCAN FAILED");
-        }
-
-
-        return response + "\n" + response2 + "\n" + response3;
     }
 
     public String sendBenchCommand(String bench_command) throws Exception{
