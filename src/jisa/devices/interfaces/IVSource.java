@@ -9,10 +9,6 @@ public interface IVSource extends ISource, VSource {
         return "Current and Voltage Source";
     }
 
-    /*
-     * On Jisa update add functions below to interface.
-     */
-
     /**
      * Get the default value or the value set by the setCurrent() method.
      * @return current setting [A]
