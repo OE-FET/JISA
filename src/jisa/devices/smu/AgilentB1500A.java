@@ -27,6 +27,18 @@ public class AgilentB1500A extends Agilent415XX {
     }
 
     @Override
+    public double getSetCurrent() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
+    public double getSetVoltage() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
     protected void updateIntTime(int channel) throws IOException {
 
         if (lastIntTime != intTimes[channel]) {

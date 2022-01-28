@@ -47,6 +47,18 @@ public class K2200 extends VISADevice implements DCPower {
 
     }
 
+    @Override
+    public double getSetCurrent() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented");
+    }
+
+    @Override
+    public double getSetVoltage() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented");
+    }
+
     public double getVoltage() throws IOException {
         return queryDouble(C_QUERY_VOLTAGE);
     }
@@ -70,6 +82,12 @@ public class K2200 extends VISADevice implements DCPower {
     @Override
     public double getVoltageLimit() throws IOException, DeviceException {
         return queryInt("VOLT:PROP:STAT?") == 1 ? queryDouble("VOLT:PROP:LEVEL?") : 0;
+    }
+
+    @Override
+    public void setCurrentLimit(double current) throws IOException, DeviceException
+    {
+        throw new DeviceException("Device not available");
     }
 
     public void setVoltage(double voltage) throws IOException {

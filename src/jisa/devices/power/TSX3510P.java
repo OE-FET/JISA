@@ -32,6 +32,18 @@ public class TSX3510P extends VISADevice implements DCPower {
     }
 
     @Override
+    public double getSetCurrent() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented");
+    }
+
+    @Override
+    public double getSetVoltage() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented");
+    }
+
+    @Override
     public void turnOn() throws IOException, DeviceException {
         write("OP 1");
         on = true;
@@ -74,6 +86,12 @@ public class TSX3510P extends VISADevice implements DCPower {
 
     public double getVoltageLimit() throws IOException {
         return Double.parseDouble(query("OVP?").substring(4));
+    }
+
+    @Override
+    public void setCurrentLimit(double current) throws IOException, DeviceException
+    {
+        throw new DeviceException("Device not available");
     }
 
     public void setDeltaI(double current) throws IOException {

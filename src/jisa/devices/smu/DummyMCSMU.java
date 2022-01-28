@@ -27,6 +27,18 @@ public class DummyMCSMU implements MCSMU {
     private static Cleaner   cleaner = Cleaner.create();
 
     @Override
+    public double getSetCurrent() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
+    public double getSetVoltage() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
     public String getChannelName(int channel) {
         String[] values = {"A", "B", "C", "D"};
         return "SMU " + values[channel];

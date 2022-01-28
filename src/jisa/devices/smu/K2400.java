@@ -29,6 +29,18 @@ public class K2400 extends KeithleySCPI {
     }
 
     @Override
+    public double getSetCurrent() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
+    public double getSetVoltage() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
     public String getChannelName() {
         return "Keithley 2400 SMU";
     }

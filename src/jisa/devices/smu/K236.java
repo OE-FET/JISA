@@ -694,6 +694,18 @@ public class K236 extends VISADevice implements SMU {
     }
 
     @Override
+    public double getSetCurrent() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
+    public double getSetVoltage() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
     public void setIntegrationTime(double time) throws IOException {
         write(C_SET_INT_TIME, IntTime.fromDouble(time).toInt());
     }

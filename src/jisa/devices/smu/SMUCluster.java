@@ -77,6 +77,18 @@ public class SMUCluster implements MCSMU {
     }
 
     @Override
+    public double getSetCurrent() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
+    public double getSetVoltage() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
     public String getChannelName(int channel) {
         try {
             checkChannel(channel);
