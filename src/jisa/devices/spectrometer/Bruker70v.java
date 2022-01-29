@@ -33,6 +33,8 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
 
         //If scan fails, rerun it
         if (split.length == 2) {
+            System.out.println("OPUS did not respond properly to scan command: ");
+            System.out.println(response);
             return takeScan(scan_params);
         }
         else {
