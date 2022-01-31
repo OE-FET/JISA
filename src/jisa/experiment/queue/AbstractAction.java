@@ -144,6 +144,11 @@ public abstract class AbstractAction<T> implements Action<T> {
     }
 
     @Override
+    public List<Listener<Action<T>>> getStatusListeners () {
+        return statusListeners;
+    }
+
+    @Override
     public abstract boolean isRunning();
 
     @Override

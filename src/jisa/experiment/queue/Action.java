@@ -176,6 +176,8 @@ public interface Action<T> extends Serializable {
         return listener;
     }
 
+    List<Listener<Action<T>>> getStatusListeners();
+
     /**
      * Removes the specified listener for the action - if it has it.
      *
