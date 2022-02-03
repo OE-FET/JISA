@@ -132,7 +132,9 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
         addAutoRemove("\n");
 
         write(":SYSTEM:CLEAR");
-        manuallyClearReadBuffer();
+        write(":TRAC:CLE"); // clears all readings and statistics from default buffer
+        write(":STAT:CLE"); // clears event registers and the event log
+        //manuallyClearReadBuffer();
         setAverageMode(AMode.NONE);
 
         LINE_FREQUENCY = queryDouble(C_QUERY_LFR);

@@ -27,6 +27,18 @@ public class K6430 extends KeithleySCPI {
     }
 
     @Override
+    public double getSetCurrent() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
+    public double getSetVoltage() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
     public TType getTerminalType(Terminals terminals) {
 
         switch (terminals) {
