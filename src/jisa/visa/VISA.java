@@ -5,10 +5,7 @@ import jisa.addresses.Address;
 import jisa.addresses.StrAddress;
 import jisa.gui.GUI;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Static class for accessing the native VISA library in a more Java-friendly way
@@ -19,6 +16,7 @@ public class VISA {
     private final static HashMap<Class, Driver> lookup  = new HashMap<>();
 
     static {
+        Locale.setDefault(Locale.US);
 
         System.out.println("Attempting to load drivers.");
 
