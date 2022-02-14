@@ -131,6 +131,15 @@ public interface DCPower extends IVSource {
     double getVoltageLimit() throws IOException, DeviceException;
 
     /**
+     * Sets the current protection limit
+     *
+     * @param current limit [A]
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon device compatibility error
+     */
+    void setCurrentLimit(double current) throws IOException, DeviceException;
+
+    /**
      * Wait for the voltage output of the supply to be stable within the given percentage margin and time-frame
      *
      * @param pctError Margin of error, percentage

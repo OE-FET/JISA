@@ -26,6 +26,18 @@ public class Agilent4155X extends Agilent415XX {
     }
 
     @Override
+    public double getSetCurrent() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
+    public double getSetVoltage() throws DeviceException, IOException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
     protected AgilentRange rangeFromVoltage(int channel, double voltage) {
         return VoltRange.fromVoltage(UnitType.SMU, voltage);
     }

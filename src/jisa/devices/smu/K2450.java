@@ -59,6 +59,18 @@ public class K2450 extends KeithleySCPI {
     }
 
     @Override
+    public double getSetCurrent() throws DeviceException, IOException
+    {
+        return queryDouble(":SOUR:CURR?");
+    }
+
+    @Override
+    public double getSetVoltage() throws DeviceException, IOException
+    {
+        return queryDouble(":SOUR:VOLT?");
+    }
+
+    @Override
     public String getChannelName() {
         return "Main Channel";
     }
