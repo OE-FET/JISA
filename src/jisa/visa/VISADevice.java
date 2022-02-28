@@ -436,4 +436,27 @@ public class VISADevice implements Instrument {
 
     }
 
+    /**
+     * Method to check limits of instruments values.
+     * Clips value and prints warning message if not in range.
+     *
+     * @param valueName parameter to be checked (e.g. Voltage range)
+     * @param value value to set
+     * @param lower lower limit
+     * @param upper upper limit
+     * @param unit unit of value
+     * @return value, clipped if not in range of limits
+     */
+    protected double checkLimit(String valueName, double value, double lower, double upper, String unit)
+    {
+        if (value > upper) {
+            System.err.printf("WARNING: %s %f %s exceeds max value %f %s, value is clipped.%n", valueName, value, unit, upper, unit);
+            value = upper;
+        } else if (value < lower) {
+            System.err.printf("WARNING: %s %f %s does not reach min value %f %s, value is increased.%n", valueName, value, unit, lower, unit);
+            value = lower;
+        }
+        return value;
+    }
+
 }
