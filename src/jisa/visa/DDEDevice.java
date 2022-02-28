@@ -30,8 +30,8 @@ public class DDEDevice implements Instrument {
             InetAddress inet = InetAddress.getByName(host);
             if (inet.isReachable(5000)){
                 convo = new DDEClientConversation();
-                //Setting timeout to 20 minutes
-                convo.setTimeout(1200000);
+                //Setting timeout to 200 minutes
+                convo.setTimeout(12000000);
                 convo.connect("Opus", "System");
             }
             else{

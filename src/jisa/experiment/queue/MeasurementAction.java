@@ -37,54 +37,56 @@ public class MeasurementAction extends AbstractAction<ResultTable> {
         int     count   = 0;
         boolean success = false;
 
-        do {
+        if (getStatus() != Status.COMPLETED){
+            do {
 
-            setStatus(count > 0 ? Status.RETRY : Status.RUNNING);
+                setStatus(count > 0 ? Status.RETRY : Status.RUNNING);
 
-            try {
+                try {
 
-                String path = generateFilePath();
+                    String path = generateFilePath();
 
-                if (path != null) {
-                    data = measurement.newResults(path);
-                } else {
+                    if (path != null) {
+                        data = measurement.newResults(path);
+                    } else {
+                        data = measurement.newResults();
+                    }
+
+                } catch (IOException e) {
                     data = measurement.newResults();
                 }
 
-            } catch (IOException e) {
-                data = measurement.newResults();
-            }
+                getAttributes().forEach(data::setAttribute);
 
-            getAttributes().forEach(data::setAttribute);
+                onStart();
 
-            onStart();
+                try {
 
-            try {
+                    measurement.start();
+                    setStatus(Status.COMPLETED);
 
-                measurement.start();
-                setStatus(Status.COMPLETED);
+                } catch (InterruptedException e) {
 
-            } catch (InterruptedException e) {
-
-                lastException = e;
-                setStatus(Status.INTERRUPTED);
-                break;
-
-            } catch (Exception e) {
-
-                lastException = e;
-                setStatus(Status.ERROR);
-
-                if (isCritical()) {
+                    lastException = e;
+                    setStatus(Status.INTERRUPTED);
                     break;
+
+                } catch (Exception e) {
+
+                    lastException = e;
+                    setStatus(Status.ERROR);
+
+                    if (isCritical()) {
+                        break;
+                    }
+
+                } finally {
+                    count++;
                 }
 
-            } finally {
-                count++;
-            }
 
-
-        } while (getStatus() != Status.COMPLETED && count < retryCount);
+            } while (getStatus() != Status.COMPLETED && count < retryCount);
+        }
 
         onFinish();
 
