@@ -15,6 +15,8 @@ public class K2450 extends KeithleySCPI {
 
     protected static final String C_SET_LIMIT_2450   = ":SOUR:%s:%sLIM %e";
     protected static final String C_QUERY_LIMIT_2450 = ":SOUR:%s:%sLIM?";
+    protected static final String C_QUERY_LIMIT_2450_MIN = ":SOUR:%s:%sLIM? MIN";
+    protected static final String C_QUERY_LIMIT_2450_MAX = ":SOUR:%s:%sLIM? MAX";
 
     public K2450(Address address) throws IOException, DeviceException {
 
@@ -82,6 +84,9 @@ public class K2450 extends KeithleySCPI {
 
     @Override
     public void setVoltageLimit(double voltage) throws IOException {
+        double low = queryDouble(C_QUERY_LIMIT_2450_MIN, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol());
+        double upp = queryDouble(C_QUERY_LIMIT_2450_MAX, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol());
+        voltage = checkLimit("Voltage limit", voltage, low, upp, "V");
         write(C_SET_LIMIT_2450, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol(), voltage);
         vLimit = voltage;
     }
@@ -93,6 +98,9 @@ public class K2450 extends KeithleySCPI {
 
     @Override
     public void setCurrentLimit(double current) throws IOException {
+        double low = queryDouble(C_QUERY_LIMIT_2450_MIN,  Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol());
+        double upp = queryDouble(C_QUERY_LIMIT_2450_MAX,  Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol());
+        current = checkLimit("Current limit", current, low, upp, "A");
         write(C_SET_LIMIT_2450, Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol(), current);
         iLimit = current;
     }

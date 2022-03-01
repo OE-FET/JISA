@@ -24,6 +24,8 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     protected static final String C_QUERY_SOURCE_FUNCTION = ":SOUR:FUNC?";
     protected static final String C_QUERY_OUTPUT_STATE    = ":OUTP:STATE?";
     protected static final String C_SET_SOURCE_VALUE      = ":SOUR:%s %e";
+    protected static final String C_QUERY_SOURCE_VALUE_MIN= ":SOUR:%s? MIN";
+    protected static final String C_QUERY_SOURCE_VALUE_MAX= ":SOUR:%s? MAX";
     protected static final String C_SET_TERMINALS         = ":ROUT:TERM %s";
     protected static final String C_QUERY_TERMINALS       = ":ROUT:TERM?";
     protected static final String C_SET_PROBE_MODE        = ":SENS:RSEN %s";
@@ -36,10 +38,14 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     protected static final String C_QUERY_AVG_STATE       = "VOLT:AVER?";
     protected static final String C_SET_SRC_RANGE         = ":SOUR:%s:RANG %e";
     protected static final String C_QUERY_SRC_RANGE       = ":SOUR:%s:RANG?";
+    protected static final String C_QUERY_SRC_RANGE_MIN   = ":SOUR:%s:RANG? MIN";
+    protected static final String C_QUERY_SRC_RANGE_MAX   = ":SOUR:%s:RANG? MAX";
     protected static final String C_SET_SRC_AUTO_RANGE    = ":SOUR:%s:RANG:AUTO %s";
     protected static final String C_QUERY_SRC_AUTO_RANGE  = ":SOUR:%s:RANG:AUTO?";
     protected static final String C_SET_MEAS_RANGE        = ":SENS:%s:RANG %e";
     protected static final String C_QUERY_MEAS_RANGE      = ":SENS:%s:RANG?";
+    protected static final String C_QUERY_MEAS_RANGE_MIN  = ":SENS:%s:RANG? MIN";
+    protected static final String C_QUERY_MEAS_RANGE_MAX  = ":SENS:%s:RANG? MAX";
     protected static final String C_SET_MEAS_AUTO_RANGE   = ":SENS:%s:RANG:AUTO %s";
     protected static final String C_QUERY_MEAS_AUTO_RANGE = ":SENS:%s:RANG:AUTO?";
     protected static final String C_SET_NPLC              = ":SENS:NPLC %f";
@@ -230,13 +236,15 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     public double getSourceRange() throws IOException {
 
         return queryDouble(C_QUERY_SRC_RANGE, getSourceMode().getTag());
-
     }
 
     @Override
     public void setSourceRange(double value) throws IOException {
 
         Source mode = getSourceMode();
+        double low = queryDouble(C_QUERY_SRC_RANGE_MIN, mode.getTag());
+        double upp = queryDouble(C_QUERY_SRC_RANGE_MAX, mode.getTag());
+        value = checkLimit(mode.name(), value, low, upp);
         write(C_SET_SRC_AUTO_RANGE, mode.getTag(), OUTPUT_OFF);
         write(C_SET_SRC_RANGE, mode.getTag(), value);
 
@@ -267,6 +275,9 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     public void setMeasureRange(double value) throws IOException {
 
         Source mode = getMeasureMode();
+        double low = queryDouble(C_QUERY_SRC_RANGE_MIN, mode.getTag());
+        double upp = queryDouble(C_QUERY_SRC_RANGE_MAX, mode.getTag());
+        value = checkLimit(mode.name(), value, low, upp);
         write(C_SET_SRC_AUTO_RANGE, mode.getTag(), OUTPUT_OFF);
         write(C_SET_SRC_RANGE, mode.getTag(), value);
 
@@ -310,6 +321,9 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
         boolean src = isSourcing(Source.VOLTAGE);
 
+        double low = queryDouble(C_QUERY_MEAS_RANGE_MIN, Source.VOLTAGE.getTag());
+        double upp = queryDouble(C_QUERY_MEAS_RANGE_MAX, Source.VOLTAGE.getTag());
+        value = checkLimit("Voltage range", value, low, upp, "V");
         write(src ? C_SET_SRC_AUTO_RANGE : C_SET_MEAS_AUTO_RANGE, Source.VOLTAGE.getTag(), OUTPUT_OFF);
         write(src ? C_SET_SRC_RANGE : C_SET_MEAS_RANGE, Source.VOLTAGE.getTag(), value);
 
@@ -348,6 +362,9 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
         boolean src = isSourcing(Source.CURRENT);
 
+        double low = queryDouble(C_QUERY_MEAS_RANGE_MIN, Source.CURRENT.getTag());
+        double upp = queryDouble(C_QUERY_MEAS_RANGE_MAX, Source.CURRENT.getTag());
+        value = checkLimit("Current range", value, low, upp, "A");
         write(src ? C_SET_SRC_AUTO_RANGE : C_SET_MEAS_AUTO_RANGE, Source.CURRENT.getTag(), OUTPUT_OFF);
         write(src ? C_SET_SRC_RANGE : C_SET_MEAS_RANGE, Source.CURRENT.getTag(), value);
 
@@ -609,6 +626,9 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     }
 
     public void setSourceValue(Source type, double value) throws IOException, DeviceException {
+        double low = queryDouble(C_QUERY_SOURCE_VALUE_MIN, type.getTag());
+        double upp = queryDouble(C_QUERY_SOURCE_VALUE_MAX, type.getTag());
+        value = checkLimit(type.name(), value, low, upp);
         write(C_SET_SOURCE_VALUE, type.getTag(), value);
         setSource(type);
     }
