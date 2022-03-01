@@ -458,5 +458,16 @@ public class VISADevice implements Instrument {
         }
         return value;
     }
+    protected double checkLimit(String valueName, double value, double lower, double upper)
+    {
+        if (value > upper) {
+            System.err.printf("WARNING: %s %f exceeds max value %f, value is clipped.%n", valueName, value, upper);
+            value = upper;
+        } else if (value < lower) {
+            System.err.printf("WARNING: %s %f does not reach min value %f, value is increased.%n", valueName, value, lower);
+            value = lower;
+        }
+        return value;
+    }
 
 }
