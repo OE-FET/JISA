@@ -69,6 +69,7 @@ public class VISADevice implements Instrument {
      * Opens the device at the specified address
      *
      * @param address Some form of InstrumentAddress (eg GPIBAddress, USBAddress etc)
+     * @param prefDriver Preferred driver to try first
      *
      * @throws IOException Upon communications error
      */

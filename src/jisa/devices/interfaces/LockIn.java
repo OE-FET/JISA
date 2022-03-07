@@ -380,8 +380,11 @@ public interface LockIn extends Instrument {
      * Instruct the lock-in to automatically determine the measurement range to use for the currently measured input.
      * Does not return until completed.
      *
+     * @param factor
+     *
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
+     * @throws InterruptedException Upon interruption error
      */
     void autoRange(double factor) throws IOException, DeviceException, InterruptedException;
 
@@ -420,6 +423,7 @@ public interface LockIn extends Instrument {
      *
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
+     * @throws InterruptedException Upon interruption error
      */
     default void waitForStableLock(double pctMargin, long duration) throws IOException, DeviceException, InterruptedException {
 
@@ -438,6 +442,7 @@ public interface LockIn extends Instrument {
      *
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
+     * @throws InterruptedException Upon interruption error
      */
     default void waitForStableLock() throws IOException, DeviceException, InterruptedException {
         waitForStableLock(0.1, 5000);
