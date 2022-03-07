@@ -2,6 +2,7 @@ package jisa.visa;
 
 import jisa.Util;
 import jisa.addresses.Address;
+import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
 
 import java.io.IOException;
@@ -437,37 +438,31 @@ public class VISADevice implements Instrument {
     }
 
     /**
-     * Method to check limits of instruments values.
-     * Clips value and prints warning message if not in range.
+     * Method to check limits of instruments values, throws DeviceException exceeded.
      *
      * @param valueName parameter to be checked (e.g. Voltage range)
      * @param value value to set
      * @param lower lower limit
      * @param upper upper limit
      * @param unit unit of value
-     * @return value, clipped if not in range of limits
      */
-    protected double checkLimit(String valueName, double value, double lower, double upper, String unit)
+    protected void checkLimit(String valueName, double value, double lower, double upper, String unit) throws DeviceException
     {
         if (value > upper) {
-            System.err.printf("WARNING: %s %f %s exceeds max value %f %s, value is clipped.%n", valueName, value, unit, upper, unit);
-            value = upper;
-        } else if (value < lower) {
-            System.err.printf("WARNING: %s %f %s does not reach min value %f %s, value is increased.%n", valueName, value, unit, lower, unit);
-            value = lower;
+            throw new DeviceException("%s %f %s exceeds device maximum value %f %s", valueName, value, unit, upper, unit);
         }
-        return value;
+        else if (value < lower) {
+            throw new DeviceException("%s %f %s is below minimum value of device %f %s", valueName, value, unit, lower, unit);
+        }
     }
-    protected double checkLimit(String valueName, double value, double lower, double upper)
+    protected void checkLimit(String valueName, double value, double lower, double upper) throws DeviceException
     {
         if (value > upper) {
-            System.err.printf("WARNING: %s %f exceeds max value %f, value is clipped.%n", valueName, value, upper);
-            value = upper;
-        } else if (value < lower) {
-            System.err.printf("WARNING: %s %f does not reach min value %f, value is increased.%n", valueName, value, lower);
-            value = lower;
+            throw new DeviceException("%s %f exceeds device maximum value %f", valueName, value, upper);
         }
-        return value;
+        else if (value < lower) {
+            throw new DeviceException("%s %f is below minimum value of device %f", valueName, value, lower);
+        }
     }
 
 }

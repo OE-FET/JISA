@@ -397,7 +397,8 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
     }
 
-    public void setVoltageLimit(double limit) throws IOException {
+    public void setVoltageLimit(double limit) throws IOException, DeviceException
+    {
 
         write(C_SET_LIMIT, Source.VOLTAGE.getTag(), limit);
         vLimit = limit;
@@ -410,7 +411,8 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
     }
 
-    public void setCurrentLimit(double limit) throws IOException {
+    public void setCurrentLimit(double limit) throws IOException, DeviceException
+    {
 
         write(C_SET_LIMIT, Source.CURRENT.getTag(), limit);
         iLimit = limit;

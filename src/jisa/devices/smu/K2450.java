@@ -83,10 +83,11 @@ public class K2450 extends KeithleySCPI {
     }
 
     @Override
-    public void setVoltageLimit(double voltage) throws IOException {
+    public void setVoltageLimit(double voltage) throws IOException, DeviceException
+    {
         double low = queryDouble(C_QUERY_LIMIT_2450_MIN, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol());
         double upp = queryDouble(C_QUERY_LIMIT_2450_MAX, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol());
-        voltage = checkLimit("Voltage limit", voltage, low, upp, "V");
+        checkLimit("Voltage limit", voltage, low, upp, "V");
         write(C_SET_LIMIT_2450, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol(), voltage);
         vLimit = voltage;
     }
@@ -97,10 +98,11 @@ public class K2450 extends KeithleySCPI {
     }
 
     @Override
-    public void setCurrentLimit(double current) throws IOException {
+    public void setCurrentLimit(double current) throws IOException, DeviceException
+    {
         double low = queryDouble(C_QUERY_LIMIT_2450_MIN,  Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol());
         double upp = queryDouble(C_QUERY_LIMIT_2450_MAX,  Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol());
-        current = checkLimit("Current limit", current, low, upp, "A");
+        checkLimit("Current limit", current, low, upp, "A");
         write(C_SET_LIMIT_2450, Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol(), current);
         iLimit = current;
     }
