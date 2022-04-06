@@ -2,6 +2,7 @@ package jisa.devices.smu;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
+import jisa.enums.Function;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
 
@@ -164,6 +165,28 @@ public class K2450 extends KeithleySCPI {
     @Override
     public void setLineFilterEnabled(boolean enabled) {
         System.err.println("Keithley 2450s do not have a line-filter feature.");
+    }
+
+    /**
+     * This command determines if the measurement range is set manually or automatically for the
+     * selected measure function.
+     *
+     * @param funcOpt The measure function:
+     * Current: CURRent[:DC]
+     * Resistance: RESistance
+     * Voltage: VOLTage[:DC]
+     * @param measState
+     * Set the measurement range manually: 0
+     * Set the measurement range automatically: 1
+     *
+     * @throws IOException Upon communications error
+     * @throws DeviceException Upon incompatibility with device
+     */
+    public void setMeasureRange(Function funcOpt, boolean measState) throws IOException, DeviceException{
+        String cmd = ":SENS:"+funcOpt.toString()+":RANG:AUTO 0";
+        if(measState)
+            cmd = ":SENS:"+funcOpt.toString()+":RANG:AUTO 1";
+        write(cmd);
     }
 
     public boolean isLimitTripped() throws IOException {
