@@ -2,6 +2,7 @@ package jisa.devices.smu;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
+import jisa.enums.Function;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
 
@@ -15,6 +16,8 @@ public class K2450 extends KeithleySCPI {
 
     protected static final String C_SET_LIMIT_2450   = ":SOUR:%s:%sLIM %e";
     protected static final String C_QUERY_LIMIT_2450 = ":SOUR:%s:%sLIM?";
+    protected static final String C_QUERY_LIMIT_2450_MIN = ":SOUR:%s:%sLIM? MIN";
+    protected static final String C_QUERY_LIMIT_2450_MAX = ":SOUR:%s:%sLIM? MAX";
 
     public K2450(Address address) throws IOException, DeviceException {
 
@@ -81,7 +84,11 @@ public class K2450 extends KeithleySCPI {
     }
 
     @Override
-    public void setVoltageLimit(double voltage) throws IOException {
+    public void setVoltageLimit(double voltage) throws IOException, DeviceException
+    {
+        double low = queryDouble(C_QUERY_LIMIT_2450_MIN, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol());
+        double upp = queryDouble(C_QUERY_LIMIT_2450_MAX, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol());
+        checkLimit("Voltage limit", voltage, low, upp, "V");
         write(C_SET_LIMIT_2450, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol(), voltage);
         vLimit = voltage;
     }
@@ -92,7 +99,11 @@ public class K2450 extends KeithleySCPI {
     }
 
     @Override
-    public void setCurrentLimit(double current) throws IOException {
+    public void setCurrentLimit(double current) throws IOException, DeviceException
+    {
+        double low = queryDouble(C_QUERY_LIMIT_2450_MIN,  Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol());
+        double upp = queryDouble(C_QUERY_LIMIT_2450_MAX,  Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol());
+        checkLimit("Current limit", current, low, upp, "A");
         write(C_SET_LIMIT_2450, Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol(), current);
         iLimit = current;
     }
@@ -154,6 +165,28 @@ public class K2450 extends KeithleySCPI {
     @Override
     public void setLineFilterEnabled(boolean enabled) {
         System.err.println("Keithley 2450s do not have a line-filter feature.");
+    }
+
+    /**
+     * This command determines if the measurement range is set manually or automatically for the
+     * selected measure function.
+     *
+     * @param funcOpt The measure function:
+     * Current: CURRent[:DC]
+     * Resistance: RESistance
+     * Voltage: VOLTage[:DC]
+     * @param measState
+     * Set the measurement range manually: 0
+     * Set the measurement range automatically: 1
+     *
+     * @throws IOException Upon communications error
+     * @throws DeviceException Upon incompatibility with device
+     */
+    public void setMeasureRange(Function funcOpt, boolean measState) throws IOException, DeviceException{
+        String cmd = ":SENS:"+funcOpt.toString()+":RANG:AUTO 0";
+        if(measState)
+            cmd = ":SENS:"+funcOpt.toString()+":RANG:AUTO 1";
+        write(cmd);
     }
 
     public boolean isLimitTripped() throws IOException {
