@@ -23,6 +23,7 @@ public class VISADevice implements Instrument {
     public final static int    CR_TERMINATOR   = 0x0D;
     public final static int    CRLF_TERMINATOR = 0x0D0A;
     public final static String C_IDN           = "*IDN?";
+    public final static String C_CLS           = "*CLS";
 
     private final static List<WeakReference<VISADevice>> opened = new LinkedList<>();
 
@@ -88,7 +89,6 @@ public class VISADevice implements Instrument {
 
         // Keep a weak reference to this
         opened.add(new WeakReference<>(this));
-
     }
 
     public synchronized void clearBuffers() throws IOException {
@@ -413,15 +413,17 @@ public class VISADevice implements Instrument {
     }
 
     /**
-     * Sends the standard identifications query to the device (*IDN?)
+     * Sends the standard identifications query to the device (*IDN?).
+     * Only valid if device supports the IEEE448.2 standard.
      *
-     * @return The resposne of the device
+     * @return The response of the device
      *
      * @throws IOException Upon communications error
      */
     public synchronized String getIDN() throws IOException {
         return query(C_IDN);
     }
+
 
     /**
      * Close the connection to the device
@@ -436,6 +438,16 @@ public class VISADevice implements Instrument {
             throw new IOException(e.getMessage());
         }
 
+    }
+
+    /**
+     * Clears the event registers in all the register sets and clears the error queue (*CLS).
+     * Only valid if device supports the IEEE448.2 standard.
+     *
+     * @throws IOException Upon communications error
+     */
+    public synchronized void clearErrorQueue() throws IOException {
+        write(C_CLS);
     }
 
     /**
