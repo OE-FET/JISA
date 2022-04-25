@@ -182,8 +182,8 @@ public interface VMeter extends Instrument {
      *
      * @return Terminal type (TRIAX, PHOENIX, BNC or BANANA)
      *
-     * @throws DeviceException
-     * @throws IOException
+     * @throws IOException Until communication error
+     * @throws DeviceException Until compatibility error
      */
     TType getTerminalType(Terminals terminals) throws DeviceException, IOException;
 
