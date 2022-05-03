@@ -2,10 +2,7 @@ package jisa.devices.interfaces;
 
 import jisa.Util;
 import jisa.devices.DeviceException;
-import jisa.enums.AMode;
-import jisa.enums.Source;
-import jisa.enums.TType;
-import jisa.enums.Terminals;
+import jisa.enums.*;
 import jisa.experiment.IVPoint;
 
 import java.io.IOException;
@@ -568,6 +565,18 @@ public interface SMU extends IVMeter, IVSource, Channel<SMU> {
      * @throws IOException     Upon communications error
      */
     void setTerminals(Terminals terminals) throws DeviceException, IOException;
+
+    /**
+     * Set the instrument for 4-wire or 2-wire sense with appropriate functions
+     *
+     * @param funcType set the function type to Current, Voltage, Resistance
+     * @param enableSense True to turn ON output, false to turn OFF output
+     *                    The sense lines are automatically reconnected when the output is turned ON
+     *
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    void setProbeMode(Function funcType, boolean enableSense) throws DeviceException, IOException;
 
     /**
      * Returns the mode used by the SMU channel when turned off.

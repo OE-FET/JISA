@@ -6,6 +6,7 @@ import jisa.control.*;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.SMU;
 import jisa.enums.AMode;
+import jisa.enums.Function;
 import jisa.enums.Terminals;
 import jisa.visa.Connection;
 import jisa.visa.Driver;
@@ -29,7 +30,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     protected static final String C_QUERY_SOURCE_VALUE_MAX= ":SOUR:%s? MAX";
     protected static final String C_SET_TERMINALS         = ":ROUT:TERM %s";
     protected static final String C_QUERY_TERMINALS       = ":ROUT:TERM?";
-    protected static final String C_SET_PROBE_MODE        = ":SENS:RSEN %s";
+    protected static final String C_SET_PROBE_MODE        = ":SENS:%s:RSEN %s";
     protected static final String C_QUERY_PROBE_MODE      = "CURR:RSEN?";
     protected static final String C_SET_AVG_COUNT         = "AVER:COUNT %d";
     protected static final String C_QUERY_AVG_COUNT       = "VOLT:AVER:COUNT?";
@@ -51,8 +52,8 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     protected static final String C_QUERY_MEAS_AUTO_RANGE = ":SENS:%s:RANG:AUTO?";
     protected static final String C_SET_NPLC              = ":SENS:NPLC %f";
     protected static final String C_QUERY_NPLC            = ":SENS:%s:NPLC?";
-    protected static final String C_SET_OFF_STATE         = ":OUTP:SMOD %s";
-    protected static final String C_QUERY_OFF_STATE       = ":OUTP:SMOD?";
+    protected static final String C_SET_OFF_STATE         = ":OUTP:%s:SMOD %s";
+    protected static final String C_QUERY_OFF_STATE       = ":OUTP:%s:SMOD?";
     protected static final String C_SET_LIMIT             = ":SENS:%s:PROTECTION %e";
     protected static final String C_QUERY_LIMIT           = ":SENS:%s:PROTECTION?";
     protected static final String C_QUERY_LFR             = ":SYST:LFR?";
@@ -978,6 +979,14 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
         }
 
+    }
+
+    @Override
+    public void setProbeMode(Function funcType, boolean enableSense) throws DeviceException, IOException{
+        if(enableSense)
+            write(C_SET_PROBE_MODE, funcType.toString(), "ON");
+        else
+            write(C_SET_PROBE_MODE, funcType.toString(), "OFF");
     }
 
     @Override

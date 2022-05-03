@@ -4,10 +4,7 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MCSMU;
 import jisa.devices.interfaces.SMU;
-import jisa.enums.AMode;
-import jisa.enums.Source;
-import jisa.enums.TType;
-import jisa.enums.Terminals;
+import jisa.enums.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -401,6 +398,11 @@ public class SMUCluster implements MCSMU {
     public void setTerminals(int channel, Terminals terminals) throws DeviceException, IOException {
         checkChannel(channel);
         devices.get(channel).setTerminals(terminals);
+    }
+
+    @Override
+    public void setProbeMode(int channel, Function funcType, boolean enableSense) throws DeviceException, IOException {
+        throw new DeviceException("Need to implement");
     }
 
     @Override
