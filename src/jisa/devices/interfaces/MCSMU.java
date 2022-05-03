@@ -3,10 +3,7 @@ package jisa.devices.interfaces;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.enums.AMode;
-import jisa.enums.Source;
-import jisa.enums.TType;
-import jisa.enums.Terminals;
+import jisa.enums.*;
 import jisa.experiment.IVPoint;
 import jisa.experiment.MCIVPoint;
 
@@ -1086,6 +1083,8 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
 
     void setTerminals(int channel, Terminals terminals) throws DeviceException, IOException;
 
+    void setProbeMode(int channel, Function funcType, boolean enableSense) throws DeviceException, IOException;
+
     Terminals getTerminals(int channel) throws DeviceException, IOException;
 
     default Terminals getTerminals() throws DeviceException, IOException {
@@ -1095,6 +1094,12 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
     default void setTerminals(Terminals terminals) throws DeviceException, IOException {
         for (int cn = 0; cn < getNumChannels(); cn++) {
             setTerminals(cn, terminals);
+        }
+    }
+
+    default void setProbeMode(Function funcType, boolean enableSense) throws DeviceException, IOException {
+        for (int cn = 0; cn < getNumChannels(); cn++) {
+            setProbeMode(cn, funcType, enableSense);
         }
     }
 
@@ -1587,6 +1592,11 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
         @Override
         public void setTerminals(Terminals terminals) throws DeviceException, IOException {
             smu.setTerminals(channel, terminals);
+        }
+
+        @Override
+        public void setProbeMode(Function funcType, boolean enableSense) throws DeviceException, IOException{
+            smu.setProbeMode(channel, funcType, enableSense);
         }
 
         @Override

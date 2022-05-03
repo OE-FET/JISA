@@ -4,10 +4,7 @@ import jisa.addresses.Address;
 import jisa.control.*;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.SPA;
-import jisa.enums.AMode;
-import jisa.enums.Source;
-import jisa.enums.TType;
-import jisa.enums.Terminals;
+import jisa.enums.*;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
@@ -723,6 +720,12 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
     @Override
     public void setTerminals(int channel, Terminals terminals) throws DeviceException, IOException {
         checkChannel(channel);
+    }
+
+    @Override
+    public void setProbeMode(int channel, Function funcType, boolean enableSense) throws DeviceException, IOException {
+        throw new DeviceException("Need to implement");
+        //checkChannel(channel);
     }
 
     @Override

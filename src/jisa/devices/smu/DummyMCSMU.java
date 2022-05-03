@@ -3,10 +3,7 @@ package jisa.devices.smu;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MCSMU;
-import jisa.enums.AMode;
-import jisa.enums.Source;
-import jisa.enums.TType;
-import jisa.enums.Terminals;
+import jisa.enums.*;
 
 import java.io.IOException;
 import java.lang.ref.Cleaner;
@@ -318,6 +315,11 @@ public class DummyMCSMU implements MCSMU {
     @Override
     public void setTerminals(int channel, Terminals terminals) throws DeviceException, IOException {
 
+    }
+
+    @Override
+    public void setProbeMode(int channel, Function funcType, boolean enableSense) throws DeviceException, IOException {
+        throw new DeviceException("Need to implement");
     }
 
     @Override

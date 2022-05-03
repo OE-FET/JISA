@@ -5,6 +5,7 @@ import jisa.control.*;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.SMU;
 import jisa.enums.AMode;
+import jisa.enums.Function;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
 import jisa.Util;
@@ -735,6 +736,11 @@ public class K236 extends VISADevice implements SMU {
     @Override
     public void setTerminals(Terminals terminals) {
 
+    }
+
+    @Override
+    public void setProbeMode(jisa.enums.Function funcType, boolean enableSense) throws DeviceException, IOException{
+        throw new DeviceException("Need to implement");
     }
 
     @Override

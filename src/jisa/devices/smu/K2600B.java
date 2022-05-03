@@ -4,10 +4,7 @@ import jisa.addresses.Address;
 import jisa.control.*;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MCSMU;
-import jisa.enums.AMode;
-import jisa.enums.Source;
-import jisa.enums.TType;
-import jisa.enums.Terminals;
+import jisa.enums.*;
 import jisa.visa.RawTCPIPDriver;
 import jisa.visa.VISADevice;
 
@@ -714,6 +711,11 @@ public class K2600B extends VISADevice implements MCSMU {
 
         checkChannel(channel);
 
+    }
+
+    @Override
+    public void setProbeMode(int channel, Function funcType, boolean enableSense) throws DeviceException, IOException {
+        throw new DeviceException("Need to implement");
     }
 
     @Override
