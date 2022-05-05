@@ -121,7 +121,7 @@ public final class SmartAxis extends ValueAxis<Double> {
                 double logLowerBound = Math.log10(getLowerBound());
 
                 double delta = logUpperBound - logLowerBound;
-                double deltaV = Math.log10(value) - logLowerBound;
+                double deltaV = Math.log10(Math.abs(value)) - logLowerBound;
 
                 if (getSide().isVertical()) {
                     return (1. - ((deltaV) / delta)) * getHeight();

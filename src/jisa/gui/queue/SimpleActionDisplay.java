@@ -102,9 +102,11 @@ public class SimpleActionDisplay extends ActionDisplay {
             children.setManaged(visible && showSubs.isSelected());
             childHeader.setVisible(visible && showSubs.isSelected());
             childHeader.setManaged(visible && showSubs.isSelected());
-            showSubs.setVisible(visible);
             showSubs.setManaged(visible);
         });
+
+        container.setOnMouseEntered(event -> showSubs.setVisible(showSubs.isManaged()));
+        container.setOnMouseExited(event -> showSubs.setVisible(false));
 
         showSubs.selectedProperty().addListener(l -> {
 

@@ -7,16 +7,18 @@ import java.util.stream.Collectors;
 
 public class SweepAction<T> extends AbstractAction<Void> {
 
-    private       T                    lastValue;
-    private       Action               lastAction;
-    private       boolean              isRunning      = false;
-    private       Formatter<T>         formatter      = String::valueOf;
-    private       boolean              isStopped      = false;
-    private final List<Listener<T>>    valueListeners = new LinkedList<>();
-    private final List<T>              sweepValues    = new LinkedList<>();
-    private final List<Action>         subActions     = new LinkedList<>();
-    private final Map<T, List<Action>> children       = new LinkedHashMap<>();
-    private final List<Exception>      exceptions     = new LinkedList<>();
+    private       T                 lastValue;
+    private       Action            lastAction;
+    private       boolean           isRunning      = false;
+    private       Formatter<T>      formatter      = String::valueOf;
+    private       boolean           isStopped      = false;
+    private final List<Listener<T>> valueListeners = new LinkedList<>();
+    private final List<T>           sweepValues    = new LinkedList<>();
+    private final List<Action>      subActions     = new LinkedList<>();
+    private final List<Action>      finalActions   = new LinkedList<>();
+
+    private final Map<T, List<Action>> children   = new LinkedHashMap<>();
+    private final List<Exception>      exceptions = new LinkedList<>();
     private final ActionGenerator<T>   generator;
 
     public SweepAction(String name, Iterable<T> sweepValues, ActionGenerator<T> generator) {
@@ -237,6 +239,7 @@ public class SweepAction<T> extends AbstractAction<Void> {
                     action.setStatus(Status.INTERRUPTED);
                     setStatus(Status.INTERRUPTED);
                     isRunning = false;
+                    runFinalActions();
                     onFinish();
                     return;
                 }
@@ -251,6 +254,7 @@ public class SweepAction<T> extends AbstractAction<Void> {
                 if (action.getStatus() == Status.INTERRUPTED) {
                     setStatus(Status.INTERRUPTED);
                     isRunning = false;
+                    runFinalActions();
                     onFinish();
                     return;
                 }
@@ -262,6 +266,7 @@ public class SweepAction<T> extends AbstractAction<Void> {
                     if (action.isCritical()) {
                         setStatus(Status.ERROR);
                         isRunning = false;
+                        runFinalActions();
                         onFinish();
                         return;
                     }
@@ -274,6 +279,7 @@ public class SweepAction<T> extends AbstractAction<Void> {
 
         isRunning = false;
         setStatus(failed ? Status.ERROR : Status.COMPLETED);
+        runFinalActions();
         onFinish();
 
     }
@@ -287,6 +293,15 @@ public class SweepAction<T> extends AbstractAction<Void> {
             lastAction.stop();
         }
 
+    }
+
+    @Override
+    public void skip() {
+        lastAction.skip();
+    }
+
+    protected void runFinalActions() {
+        finalActions.forEach(Action::start);
     }
 
     @Override
@@ -350,6 +365,33 @@ public class SweepAction<T> extends AbstractAction<Void> {
      */
     public List<Action> getChildrenByValue(T value) {
         return List.copyOf(children.getOrDefault(value, Collections.emptyList()));
+    }
+
+    public List<Action> getFinalActions() {
+        return List.copyOf(finalActions);
+    }
+
+    public synchronized <R extends Action> R addFinalAction(R action) {
+        finalActions.add(action);
+        action.addChildrenListener(it -> regenerateActions());
+        childrenChanged();
+        return action;
+    }
+
+    public synchronized void addFinalActions(Collection<Action> actions) {
+        finalActions.addAll(actions);
+        actions.forEach(a -> a.addChildrenListener(it -> regenerateActions()));
+        childrenChanged();
+    }
+
+    public synchronized void removeFinalAction(Action action) {
+        finalActions.remove(action);
+        childrenChanged();
+    }
+
+    public synchronized void clearFinalActions() {
+        finalActions.clear();
+        childrenChanged();
     }
 
     @Override

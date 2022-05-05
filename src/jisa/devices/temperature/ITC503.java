@@ -203,9 +203,7 @@ public class ITC503 extends VISADevice implements MSTC {
         try {
             super.write(command, args);
         } finally {
-            timingService.schedule(new TimerTask() {
-                public void run() {timingControl.release();}
-            }, MIN_WRITE_INTERVAL);
+            timingService.schedule(new TimerTask() { public void run() {timingControl.release();} }, MIN_WRITE_INTERVAL);
         }
 
     }
@@ -222,9 +220,7 @@ public class ITC503 extends VISADevice implements MSTC {
         try {
             return super.read(retryCount);
         } finally {
-            timingService.schedule(new TimerTask() {
-                public void run() {timingControl.release();}
-            }, MIN_WRITE_INTERVAL);
+            timingService.schedule(new TimerTask() { public void run() {timingControl.release();} }, MIN_WRITE_INTERVAL);
         }
 
     }

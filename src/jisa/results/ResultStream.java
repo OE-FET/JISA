@@ -1,5 +1,6 @@
 package jisa.results;
 
+import jisa.Util;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -7,6 +8,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -30,23 +32,27 @@ public class ResultStream extends ResultTable {
             header     = file.readLine();
         }
 
-        ResultStream stream = new ResultStream(ResultTable.parseColumnHeaderLine(header));
-
-        stream.path = path;
-        stream.file = file;
+        ResultStream stream = new ResultStream(file, path, ResultTable.parseColumnHeaderLine(header));
 
         if (attributes == null) {
             stream.addBefore(0, "% ATTRIBUTES: {}");
         } else {
-            attributes.toMap().forEach((k,v) -> stream.setAttributeQuiet(k, v.toString()));
+            attributes.toMap().forEach((k, v) -> stream.setAttributeQuiet(k, v.toString()));
         }
 
         return stream;
 
     }
 
-    private ResultStream(Column<?>... columns) {
+    private ResultStream(RandomAccessFile file, String path, Column<?>... columns) {
         super(columns);
+        this.file = file;
+        this.path = path;
+    }
+
+    public ResultStream(Column<?>... columns) throws IOException {
+        super(columns);
+        initialise(null);
     }
 
     public ResultStream(String file, Column<?>... columns) throws IOException {
@@ -60,11 +66,23 @@ public class ResultStream extends ResultTable {
 
     private synchronized void initialise(String path) throws IOException {
 
-        // Make sure the directory we're wanting to write into exists.
-        new File(path).getParentFile().mkdirs();
-        this.path = path;
+        if (path != null) {
 
-        file = new RandomAccessFile(path, "rw");
+            // Make sure the directory we're wanting to write into exists.
+            new File(path).getParentFile().mkdirs();
+            this.path = path;
+
+            file = new RandomAccessFile(path, "rw");
+
+        } else {
+
+            File tempFile = File.createTempFile("JISA", ".csv");
+            tempFile.deleteOnExit();
+            this.path = tempFile.getAbsolutePath();
+            file      = new RandomAccessFile(tempFile, "rw");
+
+        }
+
         file.setLength(0);
         file.seek(0);
         file.writeBytes(getAttributeLine());
@@ -259,9 +277,11 @@ public class ResultStream extends ResultTable {
 
     protected synchronized void replaceLine(int lineNo, String newLine) {
 
-        StringBuilder newFile = new StringBuilder();
 
         try {
+
+            File             temp     = File.createTempFile("JISA", ".csv");
+            RandomAccessFile tempFile = new RandomAccessFile(temp, "rw");
 
             resetPosition();
 
@@ -271,19 +291,26 @@ public class ResultStream extends ResultTable {
             do {
 
                 if (i++ != lineNo) {
-                    newFile.append(line);
+                    tempFile.writeBytes(line);
                 } else {
-                    newFile.append(newLine);
+                    tempFile.writeBytes(newLine);
                 }
 
-                newFile.append("\n");
+                tempFile.writeBytes("\n");
 
                 line = getLine();
 
             } while (line != null);
 
+            tempFile.seek(0);
             file.setLength(0);
-            file.writeBytes(newFile.toString());
+
+            for (long j = 0; j < tempFile.length(); j++) {
+                file.write(tempFile.read());
+            }
+
+            tempFile.close();
+            temp.delete();
 
             resetPosition();
 
@@ -295,9 +322,10 @@ public class ResultStream extends ResultTable {
 
     protected synchronized void addBefore(int lineNo, String newLine) {
 
-        StringBuilder newFile = new StringBuilder();
-
         try {
+
+            File             temp     = File.createTempFile("JISA", ".csv");
+            RandomAccessFile tempFile = new RandomAccessFile(temp, "rw");
 
             resetPosition();
 
@@ -308,25 +336,32 @@ public class ResultStream extends ResultTable {
 
                 if (i != lineNo) {
 
-                    newFile.append(line);
+                    tempFile.writeBytes(line);
 
                 } else {
 
-                    newFile.append(newLine);
-                    newFile.append("\n");
-                    newFile.append(line);
+                    tempFile.writeBytes(newLine);
+                    tempFile.writeBytes("\n");
+                    tempFile.writeBytes(line);
 
                 }
 
-                newFile.append("\n");
+                tempFile.writeBytes("\n");
                 i++;
 
                 line = getLine();
 
             } while (line != null);
 
+            tempFile.seek(0);
             file.setLength(0);
-            file.writeBytes(newFile.toString());
+
+            for (long j = 0; j < tempFile.length(); j++) {
+                file.write(tempFile.read());
+            }
+
+            tempFile.close();
+            temp.delete();
 
             resetPosition();
 

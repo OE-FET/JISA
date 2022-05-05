@@ -11,17 +11,16 @@ public class Row {
 
     private final Map<Column<?>, Object> values;
 
-    public Row(Map<Column<?>, Object> values) {
+    public Row(List<Column<?>> columns, Map<Column<?>, Object> values) {
 
         this.values = values;
 
-        for (Column<?> column : this.values.keySet()) {
-
-            if (column.isCalculated()) {
-                this.values.put(column, column.calculate(this));
-            }
-
-        }
+        this.values.putAll(
+            columns.stream()
+                  .filter(Column::isCalculated)
+                  .map(c -> Map.entry(c, c.calculate(this)))
+                  .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+        );
 
     }
 

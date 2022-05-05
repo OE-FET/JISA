@@ -472,6 +472,10 @@ public abstract class ResultTable implements Iterable<Row> {
 
     public abstract int getRowCount();
 
+    public int size() {
+        return getRowCount();
+    }
+
     public int getColumnCount() {
         return columns.size();
     }
@@ -510,7 +514,7 @@ public abstract class ResultTable implements Iterable<Row> {
 
         } else {
 
-            addRow(new Row(map));
+            addRow(new Row(columns, map));
 
         }
 
@@ -578,7 +582,7 @@ public abstract class ResultTable implements Iterable<Row> {
             map.put(columns.get(i), parts[i].equals("null") ? null : columns.get(i).parse(parts[i]));
         }
 
-        return new Row(map);
+        return new Row(columns, map);
 
     }
 
@@ -708,21 +712,51 @@ public abstract class ResultTable implements Iterable<Row> {
         return new RowBuilder();
     }
 
-    public void addData(Map<Column<?>, Object> data) {
-        addRow(new Row(data));
+    public void addRow(Rowable rowable) {
+
+        RowSetter builder = new RowSetter();
+        rowable.build(builder);
+        builder.endRow();
+
+    }
+
+    public void mapRow(Map<Column<?>, Object> data) {
+        addRow(new Row(columns, data));
+    }
+
+    public void mapRow(Map.Entry<Column, Object>... values) {
+        addRow(new Row(columns, Arrays.stream(values).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
+    }
+
+    public void mapRows(Map<Column, Iterable> rows) {
+
+        List<Map.Entry<Column, Iterator>> iterators = rows
+            .entrySet()
+            .stream()
+            .map(e -> Map.entry(e.getKey(), e.getValue().iterator()))
+            .collect(Collectors.toList());
+
+        while (iterators.stream().allMatch(e -> e.getValue().hasNext())) {
+            mapRow(iterators.stream().map(e -> Map.entry(e.getKey(), e.getValue().next())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+        }
+
     }
 
     public abstract Stream<Row> stream();
 
-    public class RowBuilder {
+    public interface Rowable {
+        void build(RowSetter row);
+    }
+
+    public class RowSetter {
 
         private final Map<Column<?>, Object> map = new LinkedHashMap<>();
 
-        public RowBuilder() {
+        public RowSetter() {
             columns.forEach(c -> map.put(c, null));
         }
 
-        public <T> RowBuilder set(Column<T> column, T value) {
+        public <T> RowSetter set(Column<T> column, T value) {
 
             column = findColumn(column);
 
@@ -740,9 +774,17 @@ public abstract class ResultTable implements Iterable<Row> {
             return (T) map.getOrDefault(column, null);
         }
 
-        public ResultTable endRow() {
-            addRow(new Row(map));
+        protected ResultTable endRow() {
+            addRow(new Row(columns, map));
             return ResultTable.this;
+        }
+
+    }
+
+    public class RowBuilder extends RowSetter {
+
+        public ResultTable endRow() {
+            return super.endRow();
         }
 
     }

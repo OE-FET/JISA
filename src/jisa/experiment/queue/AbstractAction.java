@@ -114,6 +114,9 @@ public abstract class AbstractAction<T> implements Action<T> {
     public abstract void stop();
 
     @Override
+    public abstract void skip();
+
+    @Override
     public Status getStatus() {
         return status;
     }

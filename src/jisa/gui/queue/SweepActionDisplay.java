@@ -28,19 +28,24 @@ public class SweepActionDisplay<T> extends ActionDisplay {
 
     private static boolean showAll = false;
 
-    protected final SweepAction<T>                   action;
-    protected final ImageView                        imageView      = new ImageView();
-    protected final Label                            titleLabel     = new Label();
-    protected final Label                            statusLabel    = new Label();
-    protected final ChoiceBox<T>                     values         = new ChoiceBox<>();
-    protected final VBox                             titleBox       = new VBox(titleLabel, statusLabel);
-    protected final VBox                             tags           = new VBox();
-    protected final HBox                             mainBox        = new HBox(imageView, titleBox, tags);
-    protected final Label                            childLabel     = new Label("Sweep Actions");
-    protected final HBox                             childHeader    = new HBox(childLabel, values);
-    protected final VBox                             children       = new VBox();
+    protected final SweepAction<T> action;
+    protected final ImageView      imageView    = new ImageView();
+    protected final Label          titleLabel   = new Label();
+    protected final Label          statusLabel  = new Label();
+    protected final ChoiceBox<T>   values       = new ChoiceBox<>();
+    protected final VBox           titleBox     = new VBox(titleLabel, statusLabel);
+    protected final VBox           tags         = new VBox();
+    protected final HBox           mainBox      = new HBox(imageView, titleBox, tags);
+    protected final Label          childLabel   = new Label("Sweep Actions");
+    protected final HBox           childHeader  = new HBox(childLabel, values);
+    protected final VBox           children     = new VBox();
+    protected final Label          finalLabel   = new Label("End-of-Sweep Actions");
+    protected final HBox           finalHeader  = new HBox(finalLabel);
+    protected final VBox           finalActions = new VBox();
+
     protected final VBox                             container      = new VBox();
     private final   List<Listener<ActionDisplay<?>>> childListeners = new LinkedList<>();
+    private final   List<Listener<ActionDisplay<?>>> finalListeners = new LinkedList<>();
 
 
     public SweepActionDisplay(SweepAction<T> action) {
@@ -74,6 +79,16 @@ public class SweepActionDisplay<T> extends ActionDisplay {
         childHeader.setPadding(new Insets(5, 10, 5, 10));
         childHeader.setBorder(new Border(new BorderStroke(Color.SILVER, BorderStrokeStyle.SOLID, null, new BorderWidths(1, 1, 0, 1))));
 
+        finalLabel.setFont(Font.font(titleLabel.getFont().getFamily(), FontWeight.BOLD, 16));
+        finalLabel.setTextAlignment(TextAlignment.CENTER);
+        finalLabel.setMaxWidth(Double.MAX_VALUE);
+        finalLabel.setTextAlignment(TextAlignment.CENTER);
+        finalLabel.setMaxWidth(Double.MAX_VALUE);
+        finalHeader.setBackground(new Background(new BackgroundFill(Color.gray(0.98), null, null)));
+        finalHeader.setAlignment(Pos.CENTER_LEFT);
+        finalHeader.setPadding(new Insets(5, 10, 5, 10));
+        finalHeader.setBorder(new Border(new BorderStroke(Color.SILVER, BorderStrokeStyle.SOLID, null, new BorderWidths(1, 1, 0, 1))));
+
         imageView.setFitWidth(35);
         imageView.setFitHeight(35);
 
@@ -98,7 +113,7 @@ public class SweepActionDisplay<T> extends ActionDisplay {
 
         }));
 
-        container.getChildren().addAll(mainBox, childHeader, children);
+        container.getChildren().addAll(mainBox, childHeader, children, finalHeader, finalActions);
 
         children.getChildren().addListener((InvalidationListener) l -> {
             boolean visible = children.getChildren().size() > 0;
@@ -107,9 +122,12 @@ public class SweepActionDisplay<T> extends ActionDisplay {
         });
 
         children.setBorder(new Border(new BorderStroke(Color.SILVER, BorderStrokeStyle.SOLID, null, new BorderWidths(0, 1, 1, 0))));
+        finalActions.setBorder(new Border(new BorderStroke(Color.SILVER, BorderStrokeStyle.SOLID, null, new BorderWidths(0, 1, 1, 0))));
 
         VBox.setMargin(children, new Insets(0, 10, 10, 10));
         VBox.setMargin(childHeader, new Insets(0, 10, 0, 10));
+        VBox.setMargin(finalActions, new Insets(0, 10, 10, 10));
+        VBox.setMargin(finalHeader, new Insets(0, 10, 0, 10));
 
         values.setConverter(new StringConverter<T>() {
 
@@ -145,11 +163,13 @@ public class SweepActionDisplay<T> extends ActionDisplay {
                 values.setValue(it);
             }
         }));
+
         action.addChildrenListener(it -> GUI.runNow(() -> {
             values.getItems().clear();
             values.getItems().add(null);
             values.getItems().addAll(action.getSweepValues());
             values.setValue(action.getCurrentSweepValue());
+            drawFinalActions();
         }));
 
         action.addAttributeListener(l -> drawTags());
@@ -160,6 +180,7 @@ public class SweepActionDisplay<T> extends ActionDisplay {
 
         drawTags();
         drawChildren();
+        drawFinalActions();
 
     }
 
@@ -203,6 +224,33 @@ public class SweepActionDisplay<T> extends ActionDisplay {
                     .peek(a -> childListeners.add(a.addRunningListener(l -> triggerRunningListeners((ActionDisplay<?>) l))))
                     .collect(Collectors.toList())
             );
+
+        });
+
+    }
+
+    protected void drawFinalActions() {
+
+        GUI.runNow(() -> {
+
+
+            finalActions.getChildren().forEach(it -> ((ActionDisplay<?>) it).removeRunningListeners(finalListeners));
+            finalListeners.clear();
+            finalActions.getChildren().clear();
+            finalActions.getChildren().addAll(
+                action.getFinalActions()
+                      .stream()
+                      .map(Action::getDisplay)
+                      .peek(a -> a.setBorder(SUB_BORDER))
+                      .peek(a -> finalListeners.add(a.addRunningListener(l -> triggerRunningListeners((ActionDisplay<?>) l))))
+                      .collect(Collectors.toList())
+            );
+
+            boolean show = !finalActions.getChildren().isEmpty();
+            finalActions.setVisible(show);
+            finalActions.setManaged(show);
+            finalHeader.setVisible(show);
+            finalHeader.setManaged(show);
 
         });
 

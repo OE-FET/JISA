@@ -132,6 +132,11 @@ public interface Action<T> extends Serializable {
     void stop();
 
     /**
+     * Marks the action to be skipped next time it is run, or immediately if it is currently running.
+     */
+    void skip();
+
+    /**
      * Returns the current status of this action.
      *
      * @return Status of action
@@ -256,6 +261,7 @@ public interface Action<T> extends Serializable {
         RETRY("Running (Retry)", "progress"),
         STOPPING("Stopping", "progress"),
         INTERRUPTED("Interrupted", "cancelled"),
+        SKIPPED("Skipped", "cancelled"),
         COMPLETED("Completed", "complete"),
         ERROR("Error Encountered", "error");
 

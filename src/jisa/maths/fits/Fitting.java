@@ -14,7 +14,9 @@ import org.apache.commons.math.optimization.fitting.CurveFitter;
 import org.apache.commons.math.optimization.fitting.GaussianFitter;
 import org.apache.commons.math.optimization.fitting.HarmonicFitter;
 import org.apache.commons.math.optimization.fitting.ParametricRealFunction;
+import org.apache.commons.math.optimization.general.AbstractLeastSquaresOptimizer;
 import org.apache.commons.math.optimization.general.GaussNewtonOptimizer;
+import org.apache.commons.math.optimization.general.LevenbergMarquardtOptimizer;
 
 import java.util.Iterator;
 import java.util.List;
@@ -221,12 +223,12 @@ public class Fitting {
         return gaussianFit(data.toMatrix(xCol), data.toMatrix(yCol));
     }
 
-    public static Fit fit(Iterable<Double> x, Iterable<Double> y, PFunction toFit, double... initial) {
+    public static ParametricRealFunction toPRFunction(PFunction pFunction) {
 
-        ParametricRealFunction func = new ParametricRealFunction() {
+        return new ParametricRealFunction() {
             @Override
             public double value(double v, double[] doubles) {
-                return toFit.calculate(v, doubles);
+                return pFunction.calculate(v, doubles);
             }
 
             @Override
@@ -240,7 +242,7 @@ public class Fitting {
                     Function toDeriv = p -> {
                         double[] temp = parameters.clone();
                         temp[finalI] = p;
-                        return toFit.calculate(x, temp);
+                        return pFunction.calculate(x, temp);
                     };
 
                     gradients[i] = toDeriv.derivative().value(parameters[i]);
@@ -250,13 +252,21 @@ public class Fitting {
                 return gradients;
 
             }
+
         };
 
-        GaussNewtonOptimizer optimiser = new GaussNewtonOptimizer(false);
+    }
+
+    public static Fit fit(Iterable<Double> x, Iterable<Double> y, PFunction toFit, double... initial) {
+
+        ParametricRealFunction func = toPRFunction(toFit);
+
+        AbstractLeastSquaresOptimizer optimiser = new LevenbergMarquardtOptimizer();
         optimiser.setMaxIterations(1000);
         optimiser.setMaxEvaluations(1000);
 
         CurveFitter fitter = new CurveFitter(optimiser);
+
 
         Util.iterateCombined(x, y, (xp, yp) -> {
             if (Double.isFinite(xp) && Double.isFinite(yp) && Double.isFinite(toFit.calculate(xp, initial))) {

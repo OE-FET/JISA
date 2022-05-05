@@ -378,7 +378,10 @@ public interface LockIn extends Instrument {
 
     /**
      * Instruct the lock-in to automatically determine the measurement range to use for the currently measured input.
-     * Does not return until completed.
+     * This is done by picking the smallest range (multiplied by the supplied factor) within which the current value
+     * fits within after any offsetting. Does not return until completed.
+     *
+     * @param factor Multiplicative factor used to modify the range (i.e. 0.5 would mean the value must fit within half of the range selected)
      *
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error

@@ -208,9 +208,7 @@ public interface VMeter extends Instrument {
     void setTerminals(Terminals terminals) throws DeviceException, IOException;
 
     default void waitForStableVoltage(double pctMargin, int duration) throws IOException, DeviceException, InterruptedException {
-
         Synch.waitForParamStable(this::getVoltage, pctMargin, (int) (getIntegrationTime() * 4000.0), duration);
-
     }
 
     /**

@@ -8,6 +8,7 @@ import java.util.*;
 
 public class SimpleAction extends AbstractAction<Void> {
 
+    private       boolean   skip          = false;
     private       String    name;
     private       boolean   isRunning     = false;
     private       Thread    runningThread = null;
@@ -27,6 +28,12 @@ public class SimpleAction extends AbstractAction<Void> {
     @Override
     public void start() {
 
+        if (skip) {
+            setStatus(Status.SKIPPED);
+            skip = false;
+            return;
+        }
+
         runningThread = Thread.currentThread();
 
         setStatus(Status.RUNNING);
@@ -39,7 +46,8 @@ public class SimpleAction extends AbstractAction<Void> {
             setStatus(Status.COMPLETED);
         } catch (InterruptedException e) {
             lastException = e;
-            setStatus(Status.INTERRUPTED);
+            setStatus(skip ? Status.SKIPPED : Status.INTERRUPTED);
+            skip = false;
         } catch (Exception e) {
             lastException = e;
             setStatus(Status.ERROR);
@@ -62,6 +70,11 @@ public class SimpleAction extends AbstractAction<Void> {
             i++;
         }
 
+    }
+
+    public void skip() {
+        skip = true;
+        if (isRunning) stop();
     }
 
     @Override

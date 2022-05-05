@@ -19,6 +19,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class Util {
 
@@ -723,6 +725,16 @@ public class Util {
 
         while (ittrX.hasNext() && ittrY.hasNext()) {
             forEach.accept(ittrX.next(), ittrY.next());
+        }
+
+    }
+
+    public static <T> void iterateCombined(Consumer<T[]> forEach, Iterable<T>... iterables) {
+
+        List<Iterator<T>> iterators = Arrays.stream(iterables).map(Iterable::iterator).collect(Collectors.toList());
+
+        while (iterators.stream().allMatch(Iterator::hasNext)) {
+            forEach.accept((T[]) iterators.stream().map(Iterator::next).toArray());
         }
 
     }

@@ -12,6 +12,7 @@ import java.util.List;
 public class MeasurementAction extends AbstractAction<ResultTable> {
 
     private final Measurement   measurement;
+    private       boolean       skip          = false;
     private       int           retryCount    = 1;
     private       Exception     lastException = null;
     private       ResultTable   data          = null;
@@ -130,6 +131,11 @@ public class MeasurementAction extends AbstractAction<ResultTable> {
             count++;
         }
 
+    }
+
+    @Override
+    public void skip() {
+        skip = true;
     }
 
     public void setOnMeasurementStart(Listener<MeasurementAction> listener) {
