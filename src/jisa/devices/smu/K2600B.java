@@ -101,6 +101,22 @@ public class K2600B extends VISADevice implements MCSMU {
 
     }
 
+    public boolean errorsEmpty() throws IOException {
+        return query("print(errorqueue.count)").equals("0.00000e+00");
+    }
+
+    public String getNumErrors() throws IOException {
+        return query("print(errorqueue.count)");
+    }
+
+    public String getNextError() throws IOException {
+        return query("print(errorqueue.next())");
+    }
+
+    public void clearErrorQueue() throws IOException {
+        write("errorqueue.clear()");
+    }
+
     @Override
     public double getSetCurrent() throws DeviceException, IOException
     {
