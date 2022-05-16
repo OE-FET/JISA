@@ -1,46 +1,32 @@
 package jisa.gui.plotting;
 
-import java.security.InvalidParameterException;
-import java.util.*;
-
-import de.gsi.chart.renderer.ErrorStyle;
-import de.gsi.chart.renderer.spi.AbstractErrorDataSetRendererParameter;
-import de.gsi.dataset.spi.DoubleDataSet;
-import javafx.collections.ObservableList;
-import javafx.geometry.Orientation;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.FillRule;
-
-import jisa.gui.Colour;
-import jisa.gui.Series;
-import jisa.maths.Range;
-import jisa.maths.fits.Fit;
-import jisa.maths.functions.Function;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.gsi.chart.Chart;
 import de.gsi.chart.XYChart;
 import de.gsi.chart.XYChartCss;
 import de.gsi.chart.axes.Axis;
 import de.gsi.chart.axes.spi.CategoryAxis;
 import de.gsi.chart.renderer.Renderer;
+import de.gsi.chart.renderer.spi.AbstractErrorDataSetRendererParameter;
 import de.gsi.chart.renderer.spi.utils.DefaultRenderColorScheme;
 import de.gsi.chart.utils.StyleParser;
 import de.gsi.dataset.DataSet;
-import de.gsi.dataset.DataSetError.ErrorType;
-import de.gsi.dataset.utils.DoubleArrayCache;
-import de.gsi.dataset.utils.ProcessingProfiler;
+import de.gsi.dataset.spi.DoubleDataSet;
+import javafx.collections.ObservableList;
+import javafx.geometry.Orientation;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
+import jisa.gui.Colour;
+import jisa.gui.Series;
+import jisa.maths.Range;
+
+import java.security.InvalidParameterException;
+import java.util.*;
 
 /**
  * Modified copy of the ErrorDataSetRenderer
  */
 public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARenderer> implements Renderer {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(JISARenderer.class);
-    private              long   stopStamp;
 
     /**
      * Creates new <code>ErrorDataSetRenderer</code>.
@@ -132,32 +118,23 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
         }
 
         final Axis    yAxis         = yAxisTemp;
-        final long    start         = ProcessingProfiler.getTimeStamp();
         final double  xAxisWidth    = xAxis.getWidth();
         final boolean xAxisInverted = xAxis.isInvertedAxis();
         final double  xMin          = xAxis.getValueForDisplay(xAxisInverted ? xAxisWidth : 0.0);
         final double  xMax          = xAxis.getValueForDisplay(xAxisInverted ? 0.0 : xAxisWidth);
 
-        if (ProcessingProfiler.getDebugState()) {
-            ProcessingProfiler.getTimeDiff(start, "init");
-        }
-
         for (int dataSetIndex = localDataSetList.size() - 1; dataSetIndex >= 0; dataSetIndex--) {
 
-            final int ldataSetIndex = dataSetIndex;
-            stopStamp = ProcessingProfiler.getTimeStamp();
-            final DataSet dataSet = localDataSetList.get(dataSetIndex);
+            final int     ldataSetIndex = dataSetIndex;
+            final DataSet dataSet       = localDataSetList.get(dataSetIndex);
 
             if (!dataSet.isVisible()) {
                 continue;
             }
 
-            // N.B. print out for debugging purposes, please keep (used for
-            // detecting redundant or too frequent render updates)
-            // System.err.println(String.format("render for range [%f,%f] and dataset = '%s'", xMin, xMax, dataSet.getName()));
-
             // update categories in case of category axes for the first (index == '0') indexed data set
             if (dataSetIndex == 0) {
+
                 if (getFirstAxis(Orientation.HORIZONTAL) instanceof CategoryAxis) {
                     final CategoryAxis axis = (CategoryAxis) getFirstAxis(Orientation.HORIZONTAL);
                     dataSet.lock().readLockGuard(() -> axis.updateCategories(dataSet));
@@ -167,12 +144,15 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
                     final CategoryAxis axis = (CategoryAxis) getFirstAxis(Orientation.VERTICAL);
                     dataSet.lock().readLockGuard(() -> axis.updateCategories(dataSet));
                 }
+
             }
 
             // check for potentially reduced data range we are supposed to plot
             final Optional<CachedDataPoints> cachedPoints = dataSet.lock().readLockGuard(() -> {
+
                 int indexMin;
                 int indexMax; /* indexMax is excluded in the drawing */
+
                 if (isAssumeSortedData()) {
                     indexMin = Math.max(0, dataSet.getIndex(DataSet.DIM_X, xMin) - 1);
                     indexMax = Math.min(dataSet.getIndex(DataSet.DIM_X, xMax) + 2, dataSet.getDataCount());
@@ -181,52 +161,63 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
                     indexMax = dataSet.getDataCount();
                 }
 
+                // zero length/range data set -> nothing to be drawn
                 if (indexMax - indexMin <= 0) {
-                    // zero length/range data set -> nothing to be drawn
                     return Optional.empty();
                 }
 
-                if (ProcessingProfiler.getDebugState()) {
-                    stopStamp = ProcessingProfiler.getTimeDiff(stopStamp, "get min/max" + String.format(" from:%d to:%d", indexMin, indexMax));
-                }
-
                 final CachedDataPoints localCachedPoints = new CachedDataPoints(indexMin, indexMax, dataSet.getDataCount(), true);
-                if (ProcessingProfiler.getDebugState()) {
-                    stopStamp = ProcessingProfiler.getTimeDiff(stopStamp, "get CachedPoints");
+                final boolean          isPolarPlot       = ((XYChart) chart).isPolarPlot();
+
+                if (isParallelImplementation()) {
+
+                    localCachedPoints.computeScreenCoordinatesInParallel(
+                        xAxis,
+                        yAxis,
+                        dataSet,
+                        dataSetOffset + ldataSetIndex,
+                        indexMin,
+                        indexMax,
+                        getErrorType(),
+                        isPolarPlot,
+                        isallowNaNs()
+                    );
+
+                } else {
+
+                    localCachedPoints.computeScreenCoordinates(
+                        xAxis,
+                        yAxis,
+                        dataSet,
+                        dataSetOffset + ldataSetIndex,
+                        indexMin,
+                        indexMax,
+                        getErrorType(),
+                        isPolarPlot,
+                        isallowNaNs()
+                    );
+
                 }
 
-                // compute local screen coordinates
-                final boolean isPolarPlot = ((XYChart) chart).isPolarPlot();
-                if (isParallelImplementation()) {
-                    localCachedPoints.computeScreenCoordinatesInParallel(xAxis, yAxis, dataSet, dataSetOffset + ldataSetIndex, indexMin, indexMax, getErrorType(), isPolarPlot, isallowNaNs());
-                } else {
-                    localCachedPoints.computeScreenCoordinates(xAxis, yAxis, dataSet, dataSetOffset + ldataSetIndex, indexMin, indexMax, getErrorType(), isPolarPlot, isallowNaNs());
-                }
-                if (ProcessingProfiler.getDebugState()) {
-                    stopStamp = ProcessingProfiler.getTimeDiff(stopStamp, "computeScreenCoordinates()");
-                }
                 return Optional.of(localCachedPoints);
+
             });
 
             cachedPoints.ifPresent(value -> {
+
                 // invoke data reduction algorithm
                 value.reduce(rendererDataReducerProperty().get(), isReducePoints(), getMinRequiredReductionSize());
 
                 // draw individual plot components
                 drawChartComponents(gc, value, dataSet);
-
                 value.release();
+
             });
 
-            stopStamp = ProcessingProfiler.getTimeStamp();
-
-            if (ProcessingProfiler.getDebugState()) {
-                ProcessingProfiler.getTimeDiff(stopStamp, "localCachedPoints.release()");
-            }
-        } // end of 'dataSetIndex' loop
-        ProcessingProfiler.getTimeDiff(start);
+        }
 
         return localDataSetList;
+
     }
 
     protected void drawMarker(final String style, final GraphicsContext gc, final double x, final double y) {
@@ -236,7 +227,7 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
         try {
             marker = Series.Shape.valueOf(StyleParser.getPropertyValue(style, XYChartCss.MARKER_TYPE).toUpperCase()).getMarker();
         } catch (IllegalArgumentException e) {
-            marker = JISAMarker.CROSS;
+            marker = JISAMarker.CIRCLE;
         }
 
         Color  stroke    = StyleParser.getColorPropertyValue(style, XYChartCss.STROKE_COLOR);
@@ -249,8 +240,6 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
     }
 
     protected void drawErrorBars(final GraphicsContext gc, final CachedDataPoints lCacheP, DataSet dataSet) {
-
-        final long start = ProcessingProfiler.getTimeStamp();
 
         if (!(dataSet instanceof JISAErrorDataSet && !((JISAErrorDataSet) dataSet).isMarkerVisible())) {
 
@@ -295,7 +284,6 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
         drawPolyLine(gc, lCacheP, dataSet);
         drawMarker(gc, lCacheP, dataSet);
 
-        ProcessingProfiler.getTimeDiff(start);
     }
 
     /**
@@ -313,19 +301,16 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
         DefaultRenderColorScheme.setMarkerScheme(gc, localCachedPoints.defaultStyle, localCachedPoints.dataSetIndex + localCachedPoints.dataSetStyleIndex);
 
         for (int i = 0; i < localCachedPoints.actualDataCount; i++) {
+
             final double x = localCachedPoints.xValues[i];
             final double y = localCachedPoints.yValues[i];
             drawMarker(localCachedPoints.defaultStyle, gc, x, y);
+
         }
 
         gc.restore();
     }
 
-    /**
-     * @param gc                the graphics context from the Canvas parent
-     * @param localCachedPoints reference to local cached data point object
-     * @param dataSet
-     */
     protected void drawPolyLine(final GraphicsContext gc, final CachedDataPoints localCachedPoints, DataSet dataSet) {
 
         if ((dataSet instanceof JISAErrorDataSet && !((JISAErrorDataSet) dataSet).isLineVisible())) {
@@ -339,12 +324,10 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
             DoubleDataSet fitted = ((JISAErrorDataSet) dataSet).getFittedPoints(xAxis.getMin(), xAxis.getMax());
 
             if (fitted == null) {
+
                 drawPolyLineLine(gc, localCachedPoints, dataSet);
+
             } else {
-
-                CachedDataPoints cache = new CachedDataPoints(0, fitted.getDataCount() - 1, fitted.getDataCount(), false);
-
-                cache.computeScreenCoordinatesInParallel(xAxis, yAxis, fitted, localCachedPoints.dataSetIndex, 0, fitted.getDataCount(), ErrorStyle.NONE, false, true);
 
                 gc.save();
 
@@ -352,31 +335,26 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
                 gc.setLineWidth(((JISAErrorDataSet) dataSet).getThickness());
                 gc.setLineDashes(((JISAErrorDataSet) dataSet).getDash().getDoubleArray());
 
-                gc.strokePolyline(cache.xValues, cache.yValues, fitted.getDataCount());
+                gc.strokePolyline(Arrays.stream(fitted.getXValues()).map(xAxis::getDisplayPosition).toArray(), Arrays.stream(fitted.getYValues()).map(yAxis::getDisplayPosition).toArray(), fitted.getDataCount());
 
                 gc.restore();
 
             }
 
         } else {
+
             drawPolyLineLine(gc, localCachedPoints, dataSet);
+
         }
 
     }
 
-    /**
-     * @return the instance of this ErrorDataSetRenderer.
-     */
-    @Override
     protected JISARenderer getThis() {
         return this;
     }
 
     private void drawChartComponents(final GraphicsContext gc, final CachedDataPoints localCachedPoints, final DataSet dataSet) {
-
-        final long start = ProcessingProfiler.getTimeStamp();
         drawErrorBars(gc, localCachedPoints, dataSet);
-        ProcessingProfiler.getTimeDiff(start);
     }
 
     protected static void drawPolyLineLine(final GraphicsContext gc, final CachedDataPoints localCachedPoints, DataSet dataSet) {
@@ -423,8 +401,10 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
     }
 
     private static void compactVector(final double[] input, final int stopIndex) {
+
         if (stopIndex >= 0) {
             System.arraycopy(input, input.length - stopIndex, input, stopIndex, stopIndex);
         }
+
     }
 }

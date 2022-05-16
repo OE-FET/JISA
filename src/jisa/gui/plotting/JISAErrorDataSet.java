@@ -140,17 +140,17 @@ public class JISAErrorDataSet extends TwoErrorDataSet {
     public String generateStyle() {
 
         Map<String, String> style = mapOf(
-            XYChartCss.STROKE_COLOR, Colour.toRGBA(colour.get()),
-            XYChartCss.MARKER_COLOR, Colour.toRGBA(colour.get()),
-            XYChartCss.STROKE_WIDTH, thickness.get().toString(),
-            XYChartCss.STROKE_DASH_PATTERN, Arrays.stream(dash.get().getArray()).map(Object::toString).collect(Collectors.joining(",")),
-            XYChartCss.MARKER_SIZE, size.get().toString(),
+            XYChartCss.STROKE_COLOR,           Colour.toRGBA(colour.get()),
+            XYChartCss.MARKER_COLOR,           Colour.toRGBA(colour.get()),
+            XYChartCss.STROKE_WIDTH,           thickness.get().toString(),
+            XYChartCss.STROKE_DASH_PATTERN,    Arrays.stream(dash.get().getArray()).map(Object::toString).collect(Collectors.joining(",")),
+            XYChartCss.MARKER_SIZE,            size.get().toString(),
             XYChartCss.DATASET_SHOW_IN_LEGEND, Boolean.toString(true),
-            XYChartCss.FILL_COLOR, "none",
-            XYChartCss.MARKER_TYPE, shape.get().name(),
-            "lineVisible", lineVisible.get().toString(),
-            "markerVisible", markerVisible.get().toString(),
-            "ordering", ordering.get().toString()
+            XYChartCss.FILL_COLOR,             "none",
+            XYChartCss.MARKER_TYPE,            shape.get().name(),
+            "lineVisible",                     lineVisible.get().toString(),
+            "markerVisible",                   markerVisible.get().toString(),
+            "ordering",                        ordering.get().toString()
         );
 
         return style.entrySet().stream().map(e -> String.format("%s:%s", e.getKey(), e.getValue())).collect(Collectors.joining(";"));
