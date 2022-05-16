@@ -1,8 +1,12 @@
 package jisa.gui;
 
+import de.gsi.chart.renderer.Renderer;
+import de.gsi.dataset.DataSet;
+import javafx.collections.ObservableList;
 import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
 import jisa.Util;
+import jisa.gui.plotting.JISAMarker;
 import jisa.maths.matrices.Matrix;
 import jisa.maths.fits.Fit;
 import jisa.maths.fits.Fitting;
@@ -12,11 +16,14 @@ import jisa.results.Row;
 import jisa.results.RowEvaluable;
 import org.python.antlr.ast.Num;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-public interface Series extends Iterable<XYChart.Data<Double, Double>> {
+public interface Series {
 
     Color[] defaultColours = {
         Color.web("#f3622d"),
@@ -31,17 +38,12 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
     // == Watch ========================================================================================================
 
-    /**
-     * Watch the specified ResultTable object, plotting points with error-bars based on the specified x,y and error values.
-     *
-     * @param table ResultTable to watch
-     * @param xData Lambda representing the x-data to plot
-     * @param yData Lambda representing the y-data to plot
-     * @param eData Lambda representing the error-bar data
-     *
-     * @return Self-reference
-     */
-    Series watch(ResultTable table, RowEvaluable<? extends Number> xData, RowEvaluable<? extends Number> yData, RowEvaluable<? extends Number> eData);
+    Series watch(ResultTable table, RowEvaluable<? extends Number> xData, RowEvaluable<? extends Number> yData, RowEvaluable<? extends Number> eXData, RowEvaluable<? extends Number> eYData);
+
+    default Series watch(ResultTable table, RowEvaluable<? extends Number> xData, RowEvaluable<? extends Number> yData, RowEvaluable<? extends Number> eYData) {
+        return watch(table, xData, yData, r -> 0, eYData);
+    }
+
 
     /**
      * Watch the specified ResultTable object, plotting points without error-bars based on the specified x and y values.
@@ -53,7 +55,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      * @return Self-reference
      */
     default Series watch(ResultTable table, RowEvaluable xData, RowEvaluable yData) {
-        return watch(table, xData, yData, r -> 0);
+        return watch(table, xData, yData, r -> 0, r -> 0);
     }
 
     /**
@@ -66,8 +68,12 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      *
      * @return Self-reference
      */
-    default Series watch(ResultTable table, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> eData) {
-        return watch(table, r -> r.get(xData), r -> r.get(yData), r -> r.get(eData));
+    default Series watch(ResultTable table, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> eYData) {
+        return watch(table, r -> r.get(xData), r -> r.get(yData), r -> r.get(eYData));
+    }
+
+    default Series watch(ResultTable table, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> eXData, Column<? extends Number> eYData) {
+        return watch(table, r -> r.get(xData), r -> r.get(yData), r -> r.get(eXData), r -> r.get(eYData));
     }
 
     /**
@@ -144,41 +150,12 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
     // == Watch All ====================================================================================================
 
     /**
-     * Plots all columns in a ResultTable against one of them as separate series
-     *
-     * @param table ResultTable to plot
-     * @param xData Index of column to use for x-axis values
-     *
-     * @return Self-reference
-     */
-    Series watchAll(ResultTable table, Column<? extends Number> xData);
-
-    /**
-     * Plots all columns in a ResultTable against the first as separate series
-     *
-     * @param table ResultTable to plot
-     *
-     * @return Self-reference
-     */
-    default Series watchAll(ResultTable table) {
-        return watchAll(table, table.getFirstNumericColumn());
-    }
-
-    /**
      * Returns which, if any, ResultTable is currently being watched by this series.
      *
      * @return ResultTable, null if none
      */
     ResultTable getWatched();
 
-    /**
-     * Set what should happen when a data-point in this series is clicked.
-     *
-     * @param onClick Action
-     *
-     * @return Self-reference
-     */
-    Series setOnClick(JISAChart.DataHandler onClick);
 
     /**
      * Set a true/false test to filter data by, only plotting rows from the ResultTable that return true when tested.
@@ -189,16 +166,11 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      */
     Series filter(Predicate<Row> filter);
 
-    /**
-     * Manually add a data-point, with error-bar, to the series.
-     *
-     * @param x     x-value
-     * @param y     y-value
-     * @param error error-bar size
-     *
-     * @return Self-reference
-     */
-    Series addPoint(double x, double y, double error);
+    Series addPoint(double x, double y, double errorX, double errorY);
+
+    default Series addPoint(double x, double y, double errorY) {
+        return addPoint(x, y, 0.0, errorY);
+    }
 
     /**
      * Manually add a data-point, without an error-bar, to the series.
@@ -209,7 +181,7 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      * @return Self-reference
      */
     default Series addPoint(double x, double y) {
-        return addPoint(x, y, 0);
+        return addPoint(x, y, 0, 0);
     }
 
     default Series addPoints(Iterable<Double> x, Iterable<Double> y) {
@@ -219,18 +191,32 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
     }
 
-    default Series addPoints(Iterable<Double> x, Iterable<Double> y, Iterable<Double> e) {
+    default Series addPoints(Iterable<? extends Number> x, Iterable<? extends Number> y, Iterable<? extends Number> eX, Iterable<? extends Number> eY) {
 
-        Iterator<Double> xI = x.iterator();
-        Iterator<Double> yI = y.iterator();
-        Iterator<Double> eI = e.iterator();
+        Iterator<? extends Number> xI  = x.iterator();
+        Iterator<? extends Number> yI  = y.iterator();
+        Iterator<? extends Number> eXI = eY.iterator();
+        Iterator<? extends Number> eYI = eY.iterator();
 
-        while (xI.hasNext() && yI.hasNext() && eI.hasNext()) {
-            addPoint(xI.next(), yI.next(), eI.next());
+        while (xI.hasNext() && yI.hasNext() && eXI.hasNext() && eYI.hasNext()) {
+            addPoint(xI.next().doubleValue(), yI.next().doubleValue(), eXI.next().doubleValue(), eYI.next().doubleValue());
         }
 
         return this;
 
+    }
+
+    default Series addPoints(Iterable<? extends Number> x, Iterable<? extends Number> y, Iterable<? extends Number> eY) {
+
+        Iterator<? extends Number> xI  = x.iterator();
+        Iterator<? extends Number> yI  = y.iterator();
+        Iterator<? extends Number> eYI = eY.iterator();
+
+        while (xI.hasNext() && yI.hasNext() && eYI.hasNext()) {
+            addPoint(xI.next().doubleValue(), yI.next().doubleValue(), eYI.next().doubleValue());
+        }
+
+        return this;
     }
 
     default Series addPoints(Matrix<Double> data) {
@@ -254,13 +240,6 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
         return this;
 
     }
-
-    /**
-     * Returns all the XY points plotted in this series.
-     *
-     * @return List of XYChart Data points
-     */
-    List<XYChart.Data<Double, Double>> getPoints();
 
     /**
      * Remove all points from this series.
@@ -350,6 +329,22 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
     Series setColour(Color colour);
 
     /**
+     * Returns the colour being used to represent errors in this series.
+     *
+     * @return Colour of series
+     */
+    Color getErrorColour();
+
+    /**
+     * Sets the colour used to represent errors in this series.
+     *
+     * @param colour Colour to use
+     *
+     * @return Self-reference
+     */
+    Series setErrorColour(Color colour);
+
+    /**
      * Sets the sequence of colours to use when auto-generating sub-series (for example, when split() is called).
      *
      * @param colours The colours in order that they should be used.
@@ -373,6 +368,22 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      * @return Self-reference
      */
     Series setLineWidth(double width);
+
+    /**
+     * Returns line-width used when drawing lines for error bars on this series.
+     *
+     * @return Line width, in pixels
+     */
+    double getErrorLineWidth();
+
+    /**
+     * Sets the line-width used for drawing lines for error bars on this series.
+     *
+     * @param width Line width to use, in pixels
+     *
+     * @return Self-reference
+     */
+    Series setErrorLineWidth(double width);
 
     /**
      * Returns the dash type used for drawing the line for this series.
@@ -475,35 +486,13 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
      */
     Series remove();
 
-    /**
-     * Uses the specified fitter to draw a fitted line to the data instead of linearly interpolating between points.
-     *
-     * @param fitter Fitter to use
-     *
-     * @return Self-reference
-     */
-    Series fit(JISAChart.Fitter fitter);
+    Series fit(SeriesFitter fitter);
 
-    /**
-     * Replaces the linearly-interpolated line between points with a fitted polynomial curve of the specified order.
-     *
-     * @param degree Order of polynomial to fit
-     *
-     * @return Self-reference
-     */
-    default Series polyFit(final int degree) {
-
-        return fit((data) -> {
-
-            if (data.size() < degree) {
-                return null;
-            }
-
-            return Fitting.polyFit(data, degree);
-
-        });
-
+    default Series polyFit(int order) {
+        return fit((x, y) -> Fitting.polyFit(x, y, order));
     }
+
+    Series removeFit();
 
     /**
      * Returns the fit being used to draw the fitted curve to the data currently.
@@ -513,35 +502,57 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
     Fit getFit();
 
     /**
-     * Returns the fitter being used to generate fits to the data.
-     *
-     * @return Fitter being used
-     */
-    JISAChart.Fitter getFitter();
-
-    /**
      * Returns whether the data is currently being fitted.
      *
      * @return Fitted?
      */
     boolean isFitted();
 
+    Series setPointOrder(Ordering order);
+
+    Ordering getPointOrdering();
+
     /**
      * Returns the unboxed JavaFx representation of this series.
      *
      * @return JavaFx XYChart.Series object
      */
-    XYChart.Series<Double, Double> getXYChartSeries();
+    ObservableList<? extends DataSet> getDatasets();
+
+    interface SeriesFitter {
+
+        Fit fit(Iterable<Double> x, Iterable<Double> y);
+
+        default Fit fit(double[] x, double[] y) {
+            return fit(Arrays.stream(x).boxed().collect(Collectors.toList()), Arrays.stream(y).boxed().collect(Collectors.toList()));
+        }
+
+    }
 
     enum Shape {
-        CIRCLE,
-        DOT,
-        SQUARE,
-        DIAMOND,
-        CROSS,
-        TRIANGLE,
-        STAR,
-        DASH
+
+        CIRCLE(JISAMarker.CIRCLE),
+        DOT(JISAMarker.DOT),
+        SQUARE(JISAMarker.RECTANGLE),
+        DIAMOND(JISAMarker.DIAMOND),
+        CROSS(JISAMarker.CROSS);
+
+        private final JISAMarker marker;
+
+        Shape(JISAMarker marker) {
+            this.marker = marker;
+        }
+
+        public JISAMarker getMarker() {
+            return marker;
+        }
+
+    }
+
+    enum Ordering {
+        NONE,
+        X_AXIS,
+        Y_AXIS
     }
 
     enum Dash {
@@ -561,6 +572,10 @@ public interface Series extends Iterable<XYChart.Data<Double, Double>> {
 
         public Double[] getArray() {
             return array;
+        }
+
+        public double[] getDoubleArray() {
+            return Arrays.stream(array).mapToDouble(v -> v).toArray();
         }
 
     }

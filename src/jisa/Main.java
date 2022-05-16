@@ -2,11 +2,18 @@ package jisa;
 
 import javafx.application.Platform;
 import jisa.addresses.*;
+import jisa.control.RTask;
 import jisa.devices.temperature.ITC503;
 import jisa.gui.*;
+import jisa.maths.fits.Fitting;
+import jisa.results.Column;
+import jisa.results.DoubleColumn;
+import jisa.results.ResultList;
+import jisa.results.ResultTable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Random;
 
 public class Main {
 
@@ -19,38 +26,48 @@ public class Main {
 
         try {
 
+            Plot           plot    = new Plot("Title", "X [V]", "Y [V]");
+            Column<Double> X       = new DoubleColumn("X", "V");
+            Column<Double> Y       = new DoubleColumn("Y", "V");
+            Column<Double> Z       = new DoubleColumn("Z", "V");
+            Column<Double> E       = new DoubleColumn("E", "V");
+            ResultTable    table   = new ResultList(X, Y, Z, E);
+            Series         series1 = plot.createSeries().watch(table, X, Y, E).setLineWidth(2.0).polyFit(1);
+            Series         series2 = plot.createSeries().watch(table, X, Z, E).setLineWidth(2.0).polyFit(1);
+            plot.setMouseEnabled(true);
+
+
+            plot.addSaveButton("Save");
+            plot.show();
+            plot.setExitOnClose(true);
+
+            Random rand = new Random();
+
+
+            for (double x = 1; x <= 50; x += 5) {table.addData(x, rand.nextDouble(), rand.nextDouble() + 10.0, rand.nextDouble());}
+
+
+            System.in.read();
+
+
             Doc doc = new Doc("Help");
 
-            doc.addImage(Main.class.getResource("gui/images/jisa.png"))
-               .setAlignment(Doc.Align.CENTRE);
+            doc.addImage(Main.class.getResource("gui/images/jisa.png")).setAlignment(Doc.Align.CENTRE);
 
-            doc.addHeading("Testing Utility")
-               .setAlignment(Doc.Align.CENTRE);
+            doc.addHeading("Testing Utility").setAlignment(Doc.Align.CENTRE);
 
             doc.addText("This is the built-in testing utility for JISA. Using this utility, you can:");
 
-            doc.addList(false)
-               .addItem("Scan for instruments, to see what instruments JISA can detect")
-               .addItem("Enter address manually, to connect to an instrument with a known address")
-               .addItem("Exit, to exit this utility");
+            doc.addList(false).addItem("Scan for instruments, to see what instruments JISA can detect").addItem("Enter address manually, to connect to an instrument with a known address").addItem("Exit, to exit this utility");
 
             doc.addText("For more information regarding how to include and use this library in your project, take a look at the JISA wiki at:");
 
-            doc.addLink("https://github.com/OE-FET/JISA/wiki", "https://github.com/OE-FET/JISA/wiki")
-               .setAlignment(Doc.Align.CENTRE);
+            doc.addLink("https://github.com/OE-FET/JISA/wiki", "https://github.com/OE-FET/JISA/wiki").setAlignment(Doc.Align.CENTRE);
 
             while (true) {
 
                 // Ask the user if they want to perform a test
-                int result = GUI.choiceWindow(
-                        "JISA",
-                        "JISA Library - William Wood - 2018-2020",
-                        "What would you like to do?",
-                        "Scan for Instruments",
-                        "Enter Address Manually",
-                        "Help",
-                        "Exit"
-                );
+                int result = GUI.choiceWindow("JISA", "JISA Library - William Wood - 2018-2020", "What would you like to do?", "Scan for Instruments", "Enter Address Manually", "Help", "Exit");
 
                 switch (result) {
 
@@ -70,12 +87,7 @@ public class Main {
 
                     case CHOICE_ADDR:
 
-                        String[] values = GUI.inputWindow(
-                                "JISA",
-                                "Input Address",
-                                "Please type the VISA address to connect to...",
-                                "Address"
-                        );
+                        String[] values = GUI.inputWindow("JISA", "Input Address", "Please type the VISA address to connect to...", "Address");
 
                         if (values == null) {
                             break;

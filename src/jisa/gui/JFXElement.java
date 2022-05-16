@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class JFXElement implements Element {
 
+    private final Pane                   emptyPane = new Pane();
     private final BorderPane             borderPane;
     private final ObjectProperty<Image>  icon      = new SimpleObjectProperty<>(null);
     private final ObjectProperty<String> title     = new SimpleObjectProperty<>("");
@@ -41,6 +42,7 @@ public class JFXElement implements Element {
     private final ButtonBar              buttonBar;
     private final Scene                  scene;
     private       Stage                  stage     = null;
+    private       boolean                exit      = false;
 
     static {
         GUI.touch();
@@ -56,7 +58,12 @@ public class JFXElement implements Element {
         scene      = new Scene(borderPane);
         scene.setFill(Colour.string("#f4f4f4"));
         borderPane.setBackground(Background.EMPTY);
-        borderPane.setCenter(centre);
+
+        if (centre != null) {
+            borderPane.setCenter(centre);
+        } else {
+            borderPane.setCenter(emptyPane);
+        }
 
         toolBar   = new ToolBar();
         buttonBar = new ButtonBar();
@@ -64,6 +71,17 @@ public class JFXElement implements Element {
         setUpBars();
 
 
+    }
+
+    public void setCentreNode(Node centre) {
+        GUI.runNow(() -> {
+            borderPane.setCenter(centre);
+            setUpBars();
+        });
+    }
+
+    public JFXElement(String title) {
+        this(title, (Node) null);
     }
 
     /**
@@ -223,7 +241,7 @@ public class JFXElement implements Element {
         return borderPane.getMaxWidth();
     }
 
-    public void setMaxWidth(double width) { GUI.runNow(() -> borderPane.setMaxWidth(width)); }
+    public void setMaxWidth(double width) {GUI.runNow(() -> borderPane.setMaxWidth(width));}
 
     public void setMaxWindowWidth(double maxWidth) {
         GUI.runNow(() -> this.maxWidth.set(maxWidth));
@@ -237,7 +255,7 @@ public class JFXElement implements Element {
         return borderPane.getMaxHeight();
     }
 
-    public void setMaxHeight(double height) { GUI.runNow(() -> borderPane.setMaxHeight(height)); }
+    public void setMaxHeight(double height) {GUI.runNow(() -> borderPane.setMaxHeight(height));}
 
     public void setMaxWindowHeight(double maxHeight) {
         GUI.runNow(() -> this.maxHeight.set(maxHeight));
@@ -379,7 +397,7 @@ public class JFXElement implements Element {
 
         close();
 
-        for (Button button : added) { button.remove(); }
+        for (Button button : added) {button.remove();}
 
         return result.get();
 
@@ -421,7 +439,7 @@ public class JFXElement implements Element {
             this.width.set(-1);
             this.height.set(-1);
 
-            if (isShowing()) { stage.sizeToScene(); }
+            if (isShowing()) {stage.sizeToScene();}
 
         });
     }
@@ -455,11 +473,11 @@ public class JFXElement implements Element {
     }
 
     private void updateWidth() {
-        if (stage != null && width.get() >= 0) { stage.setWidth(Math.min(maxWidth.get(), width.get())); }
+        if (stage != null && width.get() >= 0) {stage.setWidth(Math.min(maxWidth.get(), width.get()));}
     }
 
     private void updateHeight() {
-        if (stage != null && height.get() >= 0) { stage.setHeight(Math.min(maxHeight.get(), height.get())); }
+        if (stage != null && height.get() >= 0) {stage.setHeight(Math.min(maxHeight.get(), height.get()));}
     }
 
     private void updateIcon() {
@@ -624,6 +642,12 @@ public class JFXElement implements Element {
             });
         }
 
+        exit = close;
+
+    }
+
+    public boolean isExitOnClose() {
+        return exit;
     }
 
     public void setOnClose(SRunnable toRun) {
