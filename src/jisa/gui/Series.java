@@ -534,7 +534,11 @@ public interface Series {
         CIRCLE(JISAMarker.CIRCLE),
         DOT(JISAMarker.DOT),
         SQUARE(JISAMarker.RECTANGLE),
+        TRIANGLE(JISAMarker.TRIANGLE),
+        STAR(JISAMarker.STAR),
         DIAMOND(JISAMarker.DIAMOND),
+        DASH(JISAMarker.DASH),
+        PLUS(JISAMarker.PLUS),
         CROSS(JISAMarker.CROSS);
 
         private final JISAMarker marker;

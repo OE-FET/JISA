@@ -15,8 +15,13 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.util.StringConverter;
 import jisa.Util;
 import jisa.gui.plotting.*;
+import jisa.gui.svg.*;
+import jisa.maths.fits.Fit;
+import jisa.maths.functions.Function;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -30,14 +35,17 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static de.gsi.dataset.DataSet.DIM_X;
+import static de.gsi.dataset.DataSet.DIM_Y;
+
 public class Plot extends JFXElement implements Element, Clearable {
 
     public static final Pattern UNIT_PATTERN = Pattern.compile("^(.*)[(\\[](.*?)[)\\]]$");
 
 
     private       JISAXYChart                     chart;
-    private       DefaultNumericAxis              xAxis;
-    private       DefaultNumericAxis              yAxis;
+    private       JISAAxis                        xAxis;
+    private       JISAAxis                        yAxis;
     private final ObservableList<Series>          series    = FXCollections.observableArrayList();
     private final Map<Series, ListChangeListener> listeners = new HashMap<>();
     private final JISAZoomer                      zoomer    = new JISAZoomer();
@@ -47,18 +55,25 @@ public class Plot extends JFXElement implements Element, Clearable {
         super(title);
         setMinHeight(500);
         setMinWidth(500);
+        setWindowSize(600, 525);
 
         GUI.runNow(() -> {
+
             xAxis = new JISAAxis(xLabel, xUnits);
             yAxis = new JISAAxis(yLabel, yUnits);
+
             xAxis.setAutoRangePadding(0.05);
             yAxis.setAutoRangePadding(0.05);
+
             xAxis.setForceZeroInRange(false);
             yAxis.setForceZeroInRange(false);
+
             chart = new JISAXYChart(xAxis, yAxis);
             chart.setTitle(title);
-            BorderPane.setMargin(chart, new Insets(0));
             setCentreNode(chart);
+
+            getStage().getScene().setFill(Colour.WHITE);
+
         });
 
         series.addListener((ListChangeListener<? super Series>) c -> GUI.runNow(() -> {
@@ -99,6 +114,11 @@ public class Plot extends JFXElement implements Element, Clearable {
 
         }));
 
+
+    }
+
+    public JISAXYChart getChart() {
+        return chart;
     }
 
     public Plot(String title, String xLabel, String yLabel) {
@@ -181,6 +201,86 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
+    public void setXLimits(double min, double max) {
+
+        GUI.runNow(() -> {
+            xAxis.setAutoRanging(false);
+            xAxis.setMin(min);
+            xAxis.setMax(max);
+        });
+
+    }
+
+    public void setXMin(double min) {
+        GUI.runNow(() -> {
+            xAxis.setAutoRanging(false);
+            xAxis.setMin(min);
+        });
+    }
+
+    public void setXMax(double min) {
+        GUI.runNow(() -> {
+            xAxis.setAutoRanging(false);
+            xAxis.setMax(min);
+        });
+    }
+
+    public double getXMin() {
+        return xAxis.getMin();
+    }
+
+    public double getXMax() {
+        return xAxis.getMax();
+    }
+
+    public void autoRangeX() {
+        GUI.runNow(() -> xAxis.setAutoRanging(true));
+    }
+
+    public boolean isXAutoRanging() {
+        return xAxis.isAutoRanging();
+    }
+
+    public void setYLimits(double min, double may) {
+
+        GUI.runNow(() -> {
+            yAxis.setAutoRanging(false);
+            yAxis.setMin(min);
+            yAxis.setMax(may);
+        });
+
+    }
+
+    public void setYMin(double min) {
+        GUI.runNow(() -> {
+            yAxis.setAutoRanging(false);
+            yAxis.setMin(min);
+        });
+    }
+
+    public void setYMax(double min) {
+        GUI.runNow(() -> {
+            yAxis.setAutoRanging(false);
+            yAxis.setMax(min);
+        });
+    }
+
+    public double getYMin() {
+        return yAxis.getMin();
+    }
+
+    public double getYMax() {
+        return yAxis.getMax();
+    }
+
+    public void autoRangeY() {
+        GUI.runNow(() -> yAxis.setAutoRanging(true));
+    }
+
+    public boolean isYAutoRanging() {
+        return yAxis.isAutoRanging();
+    }
+
     public List<Series> getSeries() {
         return List.copyOf(series);
     }
@@ -207,8 +307,8 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     public void setXAxisLogarithmic(boolean flag, double base) {
         GUI.runNow(() -> {
-            xAxis.setLogAxis(true);
             xAxis.setLogarithmBase(base);
+            xAxis.setLogAxis(flag);
         });
     }
 
@@ -222,8 +322,8 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     public void setYAxisLogarithmic(boolean flag, double base) {
         GUI.runNow(() -> {
-            yAxis.setLogAxis(true);
             yAxis.setLogarithmBase(base);
+            yAxis.setLogAxis(flag);
         });
     }
 
@@ -260,41 +360,47 @@ public class Plot extends JFXElement implements Element, Clearable {
 
         save.addDialogButton("Save", () -> {
 
-            if (!file.get().trim().equals("")) {
+            try {
 
-                switch (format.get()) {
+                if (!file.get().trim().equals("")) {
 
-                    case 0:
+                    switch (format.get()) {
 
-                        if (!file.get().endsWith(".svg")) {
-                            file.set(file.get() + ".svg");
-                        }
+                        case 0:
 
-//                        saveSVG(file.get(), width.get(), height.get());
-                        break;
+                            if (!file.get().endsWith(".svg")) {
+                                file.set(file.get() + ".svg");
+                            }
 
-                    case 1:
+                            saveSVG(file.get(), width.get(), height.get());
+                            break;
 
-                        if (!file.get().endsWith(".png")) {
-                            file.set(file.get() + ".png");
-                        }
+                        case 1:
 
-                        savePNG(file.get(), width.get(), height.get());
-                        break;
+                            if (!file.get().endsWith(".png")) {
+                                file.set(file.get() + ".png");
+                            }
 
-                    case 2:
+                            savePNG(file.get(), width.get(), height.get());
+                            break;
 
-                        if (!file.get().endsWith(".tex")) {
-                            file.set(file.get() + ".tex");
-                        }
+                        case 2:
 
-                        saveTex(file.get());
-                        break;
+                            if (!file.get().endsWith(".tex")) {
+                                file.set(file.get() + ".tex");
+                            }
+
+                            saveTex(file.get());
+                            break;
+
+                    }
+
+                    save.close();
 
                 }
 
-                save.close();
-
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
         });
@@ -321,12 +427,27 @@ public class Plot extends JFXElement implements Element, Clearable {
         return chart.getPlugins().contains(zoomer);
     }
 
-    public void savePNG(String path, double w, double h) {
+    public Plot copy() {
 
         Plot plot = new Plot(getTitle(), getXLabel(), getXUnit(), getYLabel(), getYUnit());
 
-        plot.chart.getDatasets().addAll(chart.getDatasets());
+        plot.series.addAll(this.series);
+        plot.setLegendVisible(isLegendVisible());
+        plot.setMouseEnabled(isMouseEnabled());
+        plot.setWindowSize(getWindowWidth(), getWindowHeight());
+        plot.setMinHeight(getMinHeight());
+        plot.setMaxHeight(getMaxHeight());
+        plot.setMinWidth(getMinWidth());
+        plot.setMaxWidth(getMaxWidth());
         plot.updateLegend();
+
+        return plot;
+
+    }
+
+    public void savePNG(String path, double w, double h) {
+
+        Plot plot = copy();
 
         plot.setWindowSize(w, h);
         plot.show();
@@ -353,6 +474,334 @@ public class Plot extends JFXElement implements Element, Clearable {
         });
 
         plot.close();
+
+    }
+
+    public void saveSVG(String fileName, double width, double height) throws IOException {
+
+        SVGElement main = new SVGElement("g");
+
+        main.setAttribute("font-family", "sans-serif")
+            .setAttribute("font-size", 12);
+
+        double aStartX = 100.0;
+        double aStartY = height + 65.0;
+        double aEndX   = 100.0 + width;
+        double aEndY   = 65.0;
+
+        SVGElement axisBox = new SVGElement("rect");
+
+        axisBox.setAttribute("x", 100.0)
+               .setAttribute("y", 65.0)
+               .setAttribute("width", width)
+               .setAttribute("height", height)
+               .setStrokeWidth(1)
+               .setFillColour("none")
+               .setStrokeColour(Color.BLACK);
+
+        SVGElement clip = new SVGElement("clipPath");
+        clip.setAttribute("id", "lineClip");
+
+        SVGElement clipPath = new SVGElement("rect");
+
+        clipPath.setAttribute("x", aStartX)
+                .setAttribute("y", aEndY)
+                .setAttribute("width", width)
+                .setAttribute("height", height);
+
+        clipPath.setStrokeColour("none");
+        clipPath.setFillColour("none");
+
+        clip.add(clipPath);
+        main.add(clip);
+
+        SVGText title = new SVGText((aStartX + aEndX) / 2, 50.0, "middle", chart.getTitle());
+        title.setAttribute("font-size", "20px");
+        main.add(title);
+
+        List<Double> xTicks = this.xAxis.getTickMarkValues();
+        List<Double> yTicks = this.yAxis.getTickMarkValues();
+
+        double xScale = (aEndX - aStartX) / this.xAxis.getWidth();
+        double yScale = (aEndY - aStartY) / this.yAxis.getHeight();
+
+        for (Double x : xTicks) {
+
+            double pos = xScale * this.xAxis.getDisplayPosition(x) + aStartX;
+
+            if (!Util.isBetween(pos, aStartX, aEndX)) {
+                continue;
+            }
+
+            SVGLine tick = new SVGLine(pos, aStartY, pos, aStartY + 10);
+
+            tick.setStrokeWidth(1)
+                .setStrokeColour(Colour.BLACK);
+
+            SVGLine grid = new SVGLine(pos, aStartY, pos, aEndY);
+
+            grid.setStrokeWidth(0.5)
+                .setStrokeColour(Colour.SILVER)
+                .setDash("2", "2");
+
+            main.add(tick);
+            main.add(grid);
+
+            SVGText label = new SVGText(pos, aStartY + 26.0, "middle", xAxis.getAxisLabelFormatter().toString(x));
+            main.add(label);
+
+        }
+
+        SVGText xLabel = new SVGText((aEndX + aStartX) / 2, aStartY + 75.0, "middle", xAxis.getAxisLabel().getText());
+        xLabel.setAttribute("font-size", "16px");
+        main.add(xLabel);
+
+        for (Double y : yTicks) {
+
+            double pos = aEndY - yScale * this.yAxis.getDisplayPosition(y);
+
+            if (!Util.isBetween(pos, aEndY, aStartY)) {
+                continue;
+            }
+
+            SVGLine tick = new SVGLine(aStartX, pos, aStartX - 10, pos);
+
+            tick.setStrokeWidth(1)
+                .setStrokeColour(Colour.BLACK);
+            SVGLine grid = new SVGLine(aStartX, pos, aEndX, pos);
+
+            grid.setStrokeWidth(0.5)
+                .setStrokeColour(Colour.SILVER)
+                .setDash("2", "2");
+            main.add(tick);
+            main.add(grid);
+
+            SVGText label = new SVGText(aStartX - 12.0, pos + 4.0, "end", yAxis.getAxisLabelFormatter().toString(y));
+            main.add(label);
+
+        }
+
+        SVGText yLabel = new SVGText(aStartX - 75.0, (aEndY + aStartY) / 2, "middle", yAxis.getAxisLabel().getText());
+        yLabel.setAttribute("transform", String.format("rotate(-90 %s %s)", aStartX - 75.0, (aEndY + aStartY) / 2))
+              .setAttribute("font-size", "16px");
+        main.add(yLabel);
+        main.add(axisBox);
+
+        SVGElement legend = new SVGElement("rect");
+
+        legend.setStrokeWidth(1.0)
+              .setStrokeColour(Color.BLACK)
+              .setFillColour("none");
+
+
+        double legendH = (chart.getDatasets().filtered(DataSet::isVisible).size() * 25) + 5.0;
+        double legendX = aEndX + 25.0;
+        double legendY = aEndY;
+
+        double legendW = 0.0;
+
+        for (DataSet s : chart.getDatasets().filtered(DataSet::isVisible)) {
+            legendW = Math.max(legendW, (10.0 * s.getName().length()) + 15.0 + 5 + 3 + 20.0);
+        }
+
+        legend.setAttribute("x", legendX)
+              .setAttribute("y", legendY)
+              .setAttribute("width", legendW)
+              .setAttribute("height", legendH);
+
+        if (chart.isLegendVisible()) {
+            main.add(legend);
+        } else {
+            legendW = 0;
+        }
+
+        int i = 0;
+        for (DataSet set : chart.getDatasets().filtered(DataSet::isVisible)) {
+
+            JISAErrorDataSet s = (JISAErrorDataSet) set;
+
+            Color        c = s.getColour();
+            double       w = s.getThickness();
+            double       m = s.getSize();
+            Series.Shape p = s.getShape();
+
+            List<String> terms = new LinkedList<>();
+
+            SVGElement legendCircle = makeMarker(s.isMarkerVisible() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
+            SVGText legendText      = new SVGText(
+                legendX + 15.0 + 5 + 3 + 10,
+                legendY + (25 * i) + 15.0 + 5,
+                "beginning",
+                s.getName()
+            );
+
+            legendText.setAttribute("font-size", "16px");
+
+            if (chart.isLegendVisible()) {
+                main.add(legendCircle);
+                main.add(legendText);
+            }
+
+            boolean first = true;
+
+            List<SVGElement> list = new LinkedList<>();
+
+            double lastX = -1;
+            double lastY = -1;
+
+            for (int j = 0; j < s.getDataCount(); j++) {
+
+                double x = aStartX + xScale * this.xAxis.getDisplayPosition(s.get(DIM_X, j));
+                double y = aEndY - yScale * this.yAxis.getDisplayPosition(s.get(DIM_Y, j));
+
+                if (!Util.isBetween(x, aStartX, aEndX) || !Util.isBetween(y, aEndY, aStartY)) {
+                    continue;
+                }
+
+                terms.add(String.format("%s%s %s", first ? "M" : "L", x, y));
+
+                if (s.isMarkerVisible()) {
+
+                    if (s.getErrorPositive(DIM_Y, j) != s.getErrorNegative(DIM_Y, j)) {
+
+                        double yp    = aEndY - yScale * this.yAxis.getDisplayPosition(s.get(DIM_Y, j) + s.getErrorPositive(DIM_Y, j));
+                        double yn    = aEndY - yScale * this.yAxis.getDisplayPosition(s.get(DIM_Y, j) - s.getErrorPositive(DIM_Y, j));
+                        double xn    = x - 5;
+                        double xp    = x + 5;
+
+                        String  erPath   = String.format("M%s %s L%s %s M%s %s L%s %s M%s %s L%s %s", xn, yp, xp, yp, x, yp, x, yn, xn, yn, xp, yn);
+                        SVGPath errorBar = new SVGPath(erPath);
+
+                        errorBar.setStrokeColour(c)
+                                .setStrokeWidth(w)
+                                .setStyle("fill", "none");
+
+                        list.add(errorBar);
+
+                    }
+
+                    list.add(makeMarker(p, c, x, y, m));
+
+                }
+
+                first = false;
+
+            }
+
+            SVGPath path;
+            if (!s.isFitted()) {
+                path = new SVGPath(String.join(" ", terms));
+                path.setAttribute("clip-path", "url(#lineClip)");
+            } else {
+
+                Fit          fit      = s.getFit();
+                Function     func     = fit.getFunction();
+                List<String> elements = new LinkedList<>();
+                boolean      firstEl  = true;
+
+                for (double xc = aStartX; xc <= aEndX; xc++) {
+
+                    double x  = this.xAxis.getValueForDisplay((xc - aStartX) / xScale);
+                    double y  = func.value(x);
+                    double yc = aEndY - yScale * this.yAxis.getDisplayPosition(y);
+
+                    if (Util.isBetween(yc, aEndY, aStartY)) {
+
+                        elements.add(String.format("%s%s %s", firstEl ? "M" : "L", xc, yc));
+                        firstEl = false;
+
+                    }
+
+                }
+
+                path = new SVGPath(String.join(" ", elements));
+
+            }
+
+            path.setStrokeColour(c)
+                .setStrokeWidth(w)
+                .setDash(s.getDash().getArray())
+                .setStyle("fill", "none");
+
+            if (s.isLineVisible()) {
+                main.add(path);
+            }
+
+            list.forEach(main::add);
+
+            i++;
+
+        }
+
+
+        SVG svg = new SVG(width + legendW + 50.0 + 100.0, height + 60.0 + 100.0);
+        svg.add(main);
+
+        svg.output(fileName);
+
+
+    }
+
+
+
+    private SVGElement makeMarker(Series.Shape p, Color c, double x, double y, double m) {
+
+        SVGElement marker;
+
+        switch (p) {
+
+            case TRIANGLE:
+
+                marker = new SVGTriangle(x, y, m)
+                    .setStrokeColour(c)
+                    .setFillColour(Color.WHITE)
+                    .setStrokeWidth(2);
+                break;
+
+            case DASH:
+
+                marker = new SVGLine(x - m, y, x + m, y)
+                    .setStrokeColour(c)
+                    .setStrokeWidth(2);
+                break;
+
+            default:
+            case CIRCLE:
+            case DOT:
+
+                marker = new SVGCircle(x, y, m)
+                    .setStrokeColour(c)
+                    .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
+                    .setStrokeWidth(2);
+                break;
+
+            case SQUARE:
+            case DIAMOND:
+
+                marker = new SVGSquare(x, y, m)
+                    .setStrokeColour(c)
+                    .setFillColour(Color.WHITE)
+                    .setStrokeWidth(2);
+
+                if (p == Series.Shape.DIAMOND) {
+                    marker.setAttribute("transform", "rotate(45 " + x + " " + y + ")");
+                }
+
+                break;
+
+            case CROSS:
+
+                marker = new SVGCross(x, y, m)
+                    .setStrokeColour(c)
+                    .setFillColour(c)
+                    .setStrokeWidth(1);
+
+                break;
+
+
+        }
+
+        return marker;
 
     }
 

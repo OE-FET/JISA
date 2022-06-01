@@ -2,20 +2,16 @@ package jisa.gui.plotting;
 
 import de.gsi.chart.Chart;
 import de.gsi.chart.XYChart;
-import de.gsi.chart.XYChartCss;
 import de.gsi.chart.axes.Axis;
 import de.gsi.chart.axes.spi.CategoryAxis;
 import de.gsi.chart.renderer.Renderer;
 import de.gsi.chart.renderer.spi.AbstractErrorDataSetRendererParameter;
-import de.gsi.chart.renderer.spi.utils.DefaultRenderColorScheme;
-import de.gsi.chart.utils.StyleParser;
 import de.gsi.dataset.DataSet;
 import de.gsi.dataset.spi.DoubleDataSet;
 import javafx.collections.ObservableList;
 import javafx.geometry.Orientation;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
 import jisa.gui.Colour;
 import jisa.gui.Series;
 import jisa.maths.Range;
@@ -44,6 +40,21 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
         setDashSize(dashSize);
     }
 
+    protected static void setLineGC(GraphicsContext gc, JISAErrorDataSet dataSet) {
+
+        gc.setStroke(dataSet.getColour());
+        gc.setLineWidth(dataSet.getThickness());
+        gc.setLineDashes(dataSet.getDash().getDoubleArray());
+
+    }
+
+    protected static void setErrorBarGC(GraphicsContext gc, JISAErrorDataSet dataSet) {
+
+        gc.setStroke(dataSet.getErrorColour());
+        gc.setLineWidth(dataSet.getErrorThickness());
+
+    }
+
     /**
      * @param dataSet for which the representative icon should be generated
      * @param dsIndex index within renderer set
@@ -55,35 +66,30 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
     @Override
     public Canvas drawLegendSymbol(final DataSet dataSet, final int dsIndex, final int width, final int height) {
 
-        final Canvas          canvas = new Canvas(width, height);
-        final GraphicsContext gc     = canvas.getGraphicsContext2D();
+        if (!(dataSet instanceof JISAErrorDataSet)) {
+            return null;
+        }
 
-        final String  style        = dataSet.getStyle();
-        final Integer layoutOffset = StyleParser.getIntegerPropertyValue(style, XYChartCss.DATASET_LAYOUT_OFFSET);
-        final Integer dsIndexLocal = StyleParser.getIntegerPropertyValue(style, XYChartCss.DATASET_INDEX);
+        final JISAErrorDataSet set    = (JISAErrorDataSet) dataSet;
+        final Canvas           canvas = new Canvas(width, height);
+        final GraphicsContext  gc     = canvas.getGraphicsContext2D();
+        final String           style  = dataSet.getStyle();
+        final double           x      = width / 2.0;
+        final double           y      = height / 2.0;
 
-        final int dsLayoutIndexOffset = layoutOffset == null ? 0 : layoutOffset; // TODO: rationalise
-
-        final int plottingIndex = dsLayoutIndexOffset + (dsIndexLocal == null ? dsIndex : dsIndexLocal);
-
-        gc.save();
-
-        DefaultRenderColorScheme.setLineScheme(gc, dataSet.getStyle(), plottingIndex);
-        DefaultRenderColorScheme.setGraphicsContextAttributes(gc, dataSet.getStyle());
-        DefaultRenderColorScheme.setFillScheme(gc, dataSet.getStyle(), plottingIndex);
-
-        final double x = width / 2.0;
-        final double y = height / 2.0;
-
-        if (!(dataSet instanceof JISAErrorDataSet && !((JISAErrorDataSet) dataSet).isLineVisible())) {
+        if (set.isLineVisible()) {
+            gc.save();
+            setLineGC(gc, set);
             gc.strokeLine(1, y, width - 2.0, y);
+            gc.restore();
         }
 
-        if (!(dataSet instanceof JISAErrorDataSet && !((JISAErrorDataSet) dataSet).isMarkerVisible())) {
-            drawMarker(dataSet.getStyle(), gc, (1.0 + width - 2.0) / 2.0, y);
+        if (set.isMarkerVisible()) {
+            gc.save();
+            drawMarker(set, gc, (1.0 + width - 2.0) / 2.0, y);
+            gc.restore();
         }
 
-        gc.restore();
         return canvas;
 
     }
@@ -125,8 +131,20 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
 
         for (int dataSetIndex = localDataSetList.size() - 1; dataSetIndex >= 0; dataSetIndex--) {
 
-            final int     ldataSetIndex = dataSetIndex;
-            final DataSet dataSet       = localDataSetList.get(dataSetIndex);
+            if (!(localDataSetList.get(dataSetIndex) instanceof JISAErrorDataSet)) {
+                continue;
+            }
+
+            final int              ldataSetIndex = dataSetIndex;
+            final JISAErrorDataSet dataSet       = (JISAErrorDataSet) localDataSetList.get(dataSetIndex);
+
+            if (xAxis instanceof JISADefaultAxis) {
+                ((JISADefaultAxis) xAxis).recordLogValues(dataSet.xValues.toArray(new double[0]));
+            }
+
+            if (yAxis instanceof JISADefaultAxis) {
+                ((JISADefaultAxis) yAxis).recordLogValues(dataSet.yValues.toArray(new double[0]));
+            }
 
             if (!dataSet.isVisible()) {
                 continue;
@@ -166,12 +184,12 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
                     return Optional.empty();
                 }
 
-                final CachedDataPoints localCachedPoints = new CachedDataPoints(indexMin, indexMax, dataSet.getDataCount(), true);
-                final boolean          isPolarPlot       = ((XYChart) chart).isPolarPlot();
+                final CachedDataPoints cache       = new CachedDataPoints(indexMin, indexMax, dataSet.getDataCount(), true);
+                final boolean          isPolarPlot = ((XYChart) chart).isPolarPlot();
 
                 if (isParallelImplementation()) {
 
-                    localCachedPoints.computeScreenCoordinatesInParallel(
+                    cache.computeScreenCoordinatesInParallel(
                         xAxis,
                         yAxis,
                         dataSet,
@@ -185,7 +203,7 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
 
                 } else {
 
-                    localCachedPoints.computeScreenCoordinates(
+                    cache.computeScreenCoordinates(
                         xAxis,
                         yAxis,
                         dataSet,
@@ -199,11 +217,11 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
 
                 }
 
-                return Optional.of(localCachedPoints);
+                return Optional.of(cache);
 
             });
 
-            cachedPoints.ifPresent(value -> {
+            cachedPoints.ifPresentOrElse(value -> {
 
                 // invoke data reduction algorithm
                 value.reduce(rendererDataReducerProperty().get(), isReducePoints(), getMinRequiredReductionSize());
@@ -211,6 +229,12 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
                 // draw individual plot components
                 drawChartComponents(gc, value, dataSet);
                 value.release();
+
+            }, () -> {
+
+                if (dataSet.isFitted()) {
+                    drawFittedLine(gc, dataSet, dataSet.getFittedPoints(xMin, xMax), xAxis, yAxis);
+                }
 
             });
 
@@ -220,58 +244,45 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
 
     }
 
-    protected void drawMarker(final String style, final GraphicsContext gc, final double x, final double y) {
+    protected void drawMarker(JISAErrorDataSet dataSet, final GraphicsContext gc, final double x, final double y) {
 
         JISAMarker marker;
 
         try {
-            marker = Series.Shape.valueOf(StyleParser.getPropertyValue(style, XYChartCss.MARKER_TYPE).toUpperCase()).getMarker();
-        } catch (IllegalArgumentException e) {
+            marker = dataSet.getShape().getMarker();
+        } catch (Exception e) {
             marker = JISAMarker.CIRCLE;
         }
 
-        Color  stroke    = StyleParser.getColorPropertyValue(style, XYChartCss.STROKE_COLOR);
-        Color  fill      = Colour.WHITE;
-        double size      = StyleParser.getFloatingDecimalPropertyValue(style, XYChartCss.MARKER_SIZE);
-        double thickness = StyleParser.getFloatingDecimalPropertyValue(style, XYChartCss.STROKE_WIDTH);
-
-        marker.draw(gc, x, y, size, thickness, stroke, fill);
+        marker.draw(gc, x, y, dataSet.getSize(), dataSet.getThickness(), dataSet.getColour(), Colour.WHITE);
 
     }
 
-    protected void drawErrorBars(final GraphicsContext gc, final CachedDataPoints lCacheP, DataSet dataSet) {
+    protected void drawErrorBars(final GraphicsContext gc, final CachedDataPoints cache, JISAErrorDataSet dataSet) {
 
-        if (!(dataSet instanceof JISAErrorDataSet && !((JISAErrorDataSet) dataSet).isMarkerVisible())) {
+        if (dataSet.isMarkerVisible()) {
 
             gc.save();
 
-            final int dashHalf;
-            if (dataSet instanceof JISAErrorDataSet) {
-                JISAErrorDataSet set = (JISAErrorDataSet) dataSet;
-                gc.setStroke(set.getErrorColour());
-                gc.setLineWidth(set.getErrorThickness());
-                dashHalf = set.getSize().intValue();
-            } else {
-                dashHalf = getDashSize() / 2;
-                DefaultRenderColorScheme.setLineScheme(gc, lCacheP.defaultStyle, lCacheP.dataSetIndex);
-            }
+            setErrorBarGC(gc, dataSet);
 
+            final int dashHalf = dataSet.getSize().intValue();
 
-            for (int i = 0; i < lCacheP.actualDataCount; i++) {
+            for (int i = 0; i < cache.actualDataCount; i++) {
 
-                if (lCacheP.errorXNeg != lCacheP.errorXPos) {
+                if (Math.abs(cache.errorXPos[i] - cache.errorXNeg[i]) > 1.0) {
 
-                    gc.strokeLine(lCacheP.errorXNeg[i], lCacheP.yValues[i], lCacheP.errorXPos[i], lCacheP.yValues[i]);
-                    gc.strokeLine(lCacheP.errorXNeg[i], lCacheP.yValues[i] - dashHalf, lCacheP.errorXNeg[i], lCacheP.yValues[i] + dashHalf);
-                    gc.strokeLine(lCacheP.errorXPos[i], lCacheP.yValues[i] - dashHalf, lCacheP.errorXPos[i], lCacheP.yValues[i] + dashHalf);
+                    gc.strokeLine(cache.errorXNeg[i], cache.yValues[i], cache.errorXPos[i], cache.yValues[i]);
+                    gc.strokeLine(cache.errorXNeg[i], cache.yValues[i] - dashHalf, cache.errorXNeg[i], cache.yValues[i] + dashHalf);
+                    gc.strokeLine(cache.errorXPos[i], cache.yValues[i] - dashHalf, cache.errorXPos[i], cache.yValues[i] + dashHalf);
 
                 }
 
-                if (lCacheP.errorYNeg != lCacheP.errorYPos) {
+                if (Math.abs(cache.errorYPos[i] - cache.errorYNeg[i]) > 1.0) {
 
-                    gc.strokeLine(lCacheP.xValues[i], lCacheP.errorYNeg[i], lCacheP.xValues[i], lCacheP.errorYPos[i]);
-                    gc.strokeLine(lCacheP.xValues[i] - dashHalf, lCacheP.errorYNeg[i], lCacheP.xValues[i] + dashHalf, lCacheP.errorYNeg[i]);
-                    gc.strokeLine(lCacheP.xValues[i] - dashHalf, lCacheP.errorYPos[i], lCacheP.xValues[i] + dashHalf, lCacheP.errorYPos[i]);
+                    gc.strokeLine(cache.xValues[i], cache.errorYNeg[i], cache.xValues[i], cache.errorYPos[i]);
+                    gc.strokeLine(cache.xValues[i] - dashHalf, cache.errorYNeg[i], cache.xValues[i] + dashHalf, cache.errorYNeg[i]);
+                    gc.strokeLine(cache.xValues[i] - dashHalf, cache.errorYPos[i], cache.xValues[i] + dashHalf, cache.errorYPos[i]);
 
                 }
 
@@ -281,71 +292,75 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
 
         }
 
-        drawPolyLine(gc, lCacheP, dataSet);
-        drawMarker(gc, lCacheP, dataSet);
+        drawPolyLine(gc, cache, dataSet);
+        drawMarkers(gc, cache, dataSet);
 
     }
 
     /**
-     * @param gc                the graphics context from the Canvas parent
-     * @param localCachedPoints reference to local cached data point object
+     * @param gc    the graphics context from the Canvas parent
+     * @param cache reference to local cached data point object
      */
-    protected void drawMarker(final GraphicsContext gc, final CachedDataPoints localCachedPoints, DataSet dataSet) {
+    protected void drawMarkers(final GraphicsContext gc, final CachedDataPoints cache, JISAErrorDataSet dataSet) {
 
-        if (!isDrawMarker() || (dataSet instanceof JISAErrorDataSet && !((JISAErrorDataSet) dataSet).isMarkerVisible())) {
+        if (!isDrawMarker() || !dataSet.isMarkerVisible()) {
             return;
         }
 
         gc.save();
 
-        DefaultRenderColorScheme.setMarkerScheme(gc, localCachedPoints.defaultStyle, localCachedPoints.dataSetIndex + localCachedPoints.dataSetStyleIndex);
+        for (int i = 0; i < cache.actualDataCount; i++) {
 
-        for (int i = 0; i < localCachedPoints.actualDataCount; i++) {
-
-            final double x = localCachedPoints.xValues[i];
-            final double y = localCachedPoints.yValues[i];
-            drawMarker(localCachedPoints.defaultStyle, gc, x, y);
+            final double x = cache.xValues[i];
+            final double y = cache.yValues[i];
+            drawMarker(dataSet, gc, x, y);
 
         }
 
         gc.restore();
     }
 
-    protected void drawPolyLine(final GraphicsContext gc, final CachedDataPoints localCachedPoints, DataSet dataSet) {
+    protected void drawPolyLine(final GraphicsContext gc, final CachedDataPoints cache, JISAErrorDataSet dataSet) {
 
-        if ((dataSet instanceof JISAErrorDataSet && !((JISAErrorDataSet) dataSet).isLineVisible())) {
+        if (!dataSet.isLineVisible()) {
             return;
         }
 
-        if (dataSet instanceof JISAErrorDataSet && ((JISAErrorDataSet) dataSet).isFitted()) {
+        if (dataSet.isFitted()) {
 
             Axis          xAxis  = getFirstAxis(Orientation.HORIZONTAL);
             Axis          yAxis  = getFirstAxis(Orientation.VERTICAL);
-            DoubleDataSet fitted = ((JISAErrorDataSet) dataSet).getFittedPoints(xAxis.getMin(), xAxis.getMax());
+            DoubleDataSet fitted = dataSet.getFittedPoints(xAxis.getMin(), xAxis.getMax());
 
             if (fitted == null) {
-
-                drawPolyLineLine(gc, localCachedPoints, dataSet);
-
+                drawDataLine(gc, cache, dataSet);
             } else {
-
-                gc.save();
-
-                gc.setStroke(((JISAErrorDataSet) dataSet).getColour());
-                gc.setLineWidth(((JISAErrorDataSet) dataSet).getThickness());
-                gc.setLineDashes(((JISAErrorDataSet) dataSet).getDash().getDoubleArray());
-
-                gc.strokePolyline(Arrays.stream(fitted.getXValues()).map(xAxis::getDisplayPosition).toArray(), Arrays.stream(fitted.getYValues()).map(yAxis::getDisplayPosition).toArray(), fitted.getDataCount());
-
-                gc.restore();
-
+                drawFittedLine(gc, dataSet, fitted, xAxis, yAxis);
             }
 
         } else {
 
-            drawPolyLineLine(gc, localCachedPoints, dataSet);
+            drawDataLine(gc, cache, dataSet);
 
         }
+
+    }
+
+    protected void drawFittedLine(GraphicsContext gc, JISAErrorDataSet dataSet, DoubleDataSet fitted, Axis xAxis, Axis yAxis) {
+
+        if (fitted == null) {
+            return;
+        }
+
+        gc.save();
+
+        gc.setStroke(dataSet.getColour());
+        gc.setLineWidth(dataSet.getThickness());
+        gc.setLineDashes(dataSet.getDash().getDoubleArray());
+
+        gc.strokePolyline(Arrays.stream(fitted.getXValues()).map(xAxis::getDisplayPosition).toArray(), Arrays.stream(fitted.getYValues()).map(yAxis::getDisplayPosition).toArray(), fitted.getDataCount());
+
+        gc.restore();
 
     }
 
@@ -353,47 +368,46 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
         return this;
     }
 
-    private void drawChartComponents(final GraphicsContext gc, final CachedDataPoints localCachedPoints, final DataSet dataSet) {
-        drawErrorBars(gc, localCachedPoints, dataSet);
+    private void drawChartComponents(final GraphicsContext gc, final CachedDataPoints cache, final JISAErrorDataSet dataSet) {
+        drawErrorBars(gc, cache, dataSet);
     }
 
-    protected static void drawPolyLineLine(final GraphicsContext gc, final CachedDataPoints localCachedPoints, DataSet dataSet) {
-
+    protected static void drawDataLine(final GraphicsContext gc, final CachedDataPoints cache, JISAErrorDataSet dataSet) {
 
         gc.save();
 
-        DefaultRenderColorScheme.setLineScheme(gc, localCachedPoints.defaultStyle, localCachedPoints.dataSetIndex + localCachedPoints.dataSetStyleIndex);
-        DefaultRenderColorScheme.setGraphicsContextAttributes(gc, localCachedPoints.defaultStyle);
+        setLineGC(gc, dataSet);
 
-        if (dataSet instanceof JISAErrorDataSet && ((JISAErrorDataSet) dataSet).getOrdering() != Series.Ordering.NONE) {
+        if (dataSet.getOrdering() != Series.Ordering.NONE) {
 
-            Integer[]        indices = Range.count(0, localCachedPoints.actualDataCount - 1).array();
-            JISAErrorDataSet set     = (JISAErrorDataSet) dataSet;
+            Integer[] indices = Range.count(0, cache.actualDataCount - 1).array();
 
-            switch (set.getOrdering()) {
+            switch (dataSet.getOrdering()) {
 
                 case X_AXIS:
-                    Arrays.sort(indices, Comparator.comparingDouble(i -> localCachedPoints.xValues[i]));
+                    Arrays.sort(indices, Comparator.comparingDouble(i -> cache.xValues[i]));
                     break;
 
                 case Y_AXIS:
-                    Arrays.sort(indices, Comparator.comparingDouble(i -> localCachedPoints.yValues[i]));
+                    Arrays.sort(indices, Comparator.comparingDouble(i -> cache.yValues[i]));
                     break;
 
             }
 
             gc.beginPath();
-            gc.moveTo(localCachedPoints.xValues[indices[0]], localCachedPoints.yValues[indices[0]]);
+            gc.moveTo(cache.xValues[indices[0]], cache.yValues[indices[0]]);
 
             for (int i = 1; i < indices.length; i++) {
-                gc.lineTo(localCachedPoints.xValues[indices[i]], localCachedPoints.yValues[indices[i]]);
+                gc.lineTo(cache.xValues[indices[i]], cache.yValues[indices[i]]);
             }
 
             gc.stroke();
 
 
         } else {
-            gc.strokePolyline(localCachedPoints.xValues, localCachedPoints.yValues, localCachedPoints.actualDataCount);
+
+            gc.strokePolyline(cache.xValues, cache.yValues, cache.actualDataCount);
+
         }
 
         gc.restore();

@@ -1,5 +1,6 @@
 package jisa.gui.plotting;
 
+import de.gsi.dataset.event.UpdateEvent;
 import de.gsi.dataset.spi.DoubleErrorDataSet;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -107,6 +108,7 @@ public class JISASeries implements Series {
         }
 
         dataSets.forEach(d -> d.autoNotification().set(true));
+        dataSets.forEach(d -> d.fireInvalidated(new UpdateEvent(d, "add")));
 
     }
 
@@ -187,6 +189,7 @@ public class JISASeries implements Series {
         }
 
         dataSets.get(0).autoNotification().set(true);
+        dataSets.forEach(d -> d.fireInvalidated(new UpdateEvent(d, "add")));
 
         return this;
 

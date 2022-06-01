@@ -32,8 +32,8 @@ public class Main {
             Column<Double> Z       = new DoubleColumn("Z", "V");
             Column<Double> E       = new DoubleColumn("E", "V");
             ResultTable    table   = new ResultList(X, Y, Z, E);
-            Series         series1 = plot.createSeries().watch(table, X, Y, E).setLineWidth(2.0).polyFit(1);
-            Series         series2 = plot.createSeries().watch(table, X, Z, E).setLineWidth(2.0).polyFit(1);
+            Series         series1 = plot.createSeries().watch(table, X, Y).setMarkerShape(Series.Shape.CIRCLE).setLineVisible(false);
+            Series         series2 = plot.createSeries().watch(table, X, Z).setMarkerShape(Series.Shape.PLUS).setLineVisible(false);
             plot.setMouseEnabled(true);
 
 
@@ -44,7 +44,7 @@ public class Main {
             Random rand = new Random();
 
 
-            for (double x = 1; x <= 50; x += 5) {table.addData(x, rand.nextDouble(), rand.nextDouble() + 10.0, rand.nextDouble());}
+            for (double x = 1; x <= 50; x += 5) {table.addData(x, rand.nextDouble() - 0.5, rand.nextDouble() + 10.0, rand.nextDouble());}
 
 
             System.in.read();

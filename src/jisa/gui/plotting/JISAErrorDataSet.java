@@ -20,6 +20,7 @@ import jisa.maths.functions.Function;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -32,7 +33,7 @@ public class JISAErrorDataSet extends TwoErrorDataSet {
     private final ObjectProperty<Dash>         dash           = new SimpleObjectProperty<>(Dash.SOLID);
     private final ObjectProperty<Double>       thickness      = new SimpleObjectProperty<>(3.0);
     private final ObjectProperty<Double>       errorThickness = new SimpleObjectProperty<>(null);
-    private final ObjectProperty<Double>       size           = new SimpleObjectProperty<>(6.0);
+    private final ObjectProperty<Double>       size           = new SimpleObjectProperty<>(5.0);
     private final ObjectProperty<Boolean>      lineVisible    = new SimpleObjectProperty<>(true);
     private final ObjectProperty<Boolean>      markerVisible  = new SimpleObjectProperty<>(true);
     private final ObjectProperty<SeriesFitter> fitter         = new SimpleObjectProperty<>(null);
@@ -61,34 +62,16 @@ public class JISAErrorDataSet extends TwoErrorDataSet {
 
         this.plot = plot;
 
-        colour.addListener(o -> setStyle(generateStyle()));
-        shape.addListener(o -> setStyle(generateStyle()));
-        dash.addListener(o -> setStyle(generateStyle()));
-        thickness.addListener(o -> setStyle(generateStyle()));
-        size.addListener(o -> setStyle(generateStyle()));
-        lineVisible.addListener(o -> setStyle(generateStyle()));
-        markerVisible.addListener(o -> setStyle(generateStyle()));
-        ordering.addListener(o -> setStyle(generateStyle()));
+        colour.addListener(o -> updateStyle());
+        shape.addListener(o -> updateStyle());
+        dash.addListener(o -> updateStyle());
+        thickness.addListener(o -> updateStyle());
+        size.addListener(o -> updateStyle());
+        lineVisible.addListener(o -> updateStyle());
+        markerVisible.addListener(o -> updateStyle());
+        ordering.addListener(o -> updateStyle());
 
-        fitter.addListener(o -> {
-
-            if (isFitted()) {
-
-                Fit fit;
-
-                try {
-                    fit = fitter.get().fit(xValues.toArray(new double[0]), yValues.toArray(new double[0]));
-                } catch (Throwable e) {
-                    fit = null;
-                }
-
-                this.fit.set(fit);
-
-                plot.forceRedraw();
-
-            }
-
-        });
+        fitter.addListener(o -> fireInvalidated(new UpdateEvent(this, "add")));
 
         addListener(e -> {
 
@@ -102,16 +85,23 @@ public class JISAErrorDataSet extends TwoErrorDataSet {
                     fit = null;
                 }
 
-                this.fit.set(fit);
+                if (this.fit.get() != fit) {
+                    this.fit.set(fit);
+                }
 
+            } else if (this.fit.isNotNull().get()) {
+                this.fit.set(null);
             }
 
         });
 
-        fit.addListener(i -> fireInvalidated(new UpdateEvent(this, "add")));
+        updateStyle();
 
-        setStyle(generateStyle());
+    }
 
+    public void updateStyle() {
+        fireInvalidated(new UpdateEvent(this, "style"));
+        plot.updateLegend();
     }
 
     public JISAErrorDataSet setName(String name) {
@@ -128,33 +118,6 @@ public class JISAErrorDataSet extends TwoErrorDataSet {
         size.set(other.size.get());
         lineVisible.set(other.lineVisible.get());
         markerVisible.set(other.markerVisible.get());
-    }
-
-    public JISAErrorDataSet setStyle(String style) {
-        super.setStyle(style);
-        fireInvalidated(new UpdateEvent(this, "add"));
-        plot.updateLegend();
-        return this;
-    }
-
-    public String generateStyle() {
-
-        Map<String, String> style = mapOf(
-            XYChartCss.STROKE_COLOR,           Colour.toRGBA(colour.get()),
-            XYChartCss.MARKER_COLOR,           Colour.toRGBA(colour.get()),
-            XYChartCss.STROKE_WIDTH,           thickness.get().toString(),
-            XYChartCss.STROKE_DASH_PATTERN,    Arrays.stream(dash.get().getArray()).map(Object::toString).collect(Collectors.joining(",")),
-            XYChartCss.MARKER_SIZE,            size.get().toString(),
-            XYChartCss.DATASET_SHOW_IN_LEGEND, Boolean.toString(true),
-            XYChartCss.FILL_COLOR,             "none",
-            XYChartCss.MARKER_TYPE,            shape.get().name(),
-            "lineVisible",                     lineVisible.get().toString(),
-            "markerVisible",                   markerVisible.get().toString(),
-            "ordering",                        ordering.get().toString()
-        );
-
-        return style.entrySet().stream().map(e -> String.format("%s:%s", e.getKey(), e.getValue())).collect(Collectors.joining(";"));
-
     }
 
     public Dash getDash() {

@@ -30,7 +30,7 @@ public class JISAXYChart extends XYChart {
         GridPane.setMargin(getAxesPane(Side.BOTTOM), new Insets(0, 0, 15, 0));
         GridPane.setMargin(getAxesPane(Side.RIGHT), new Insets(0, 15, 0, 0));
         ((FlowPane) getLegend().getNode()).setPadding(new Insets(0, 15, 0, 0));
-
+        getGridRenderer().setDrawOnTop(false);
     }
 
     public void forceRedraw() {

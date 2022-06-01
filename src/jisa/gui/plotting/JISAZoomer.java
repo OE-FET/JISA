@@ -29,19 +29,18 @@ import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
-import javafx.geometry.Bounds;
-import javafx.geometry.Insets;
-import javafx.geometry.Orientation;
-import javafx.geometry.Point2D;
+import javafx.geometry.*;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.controlsfx.control.RangeSlider;
@@ -58,10 +57,6 @@ public class JISAZoomer extends ChartPlugin {
     private static final int                                   DEFAULT_AUTO_ZOOM_THRESHOLD = 15;
     private static final int                                   DEFAULT_FLICKER_THRESHOLD   = 3;
     private static final int                                   FONT_SIZE                   = 22;
-    private static final String                                ICON_ZOOM_OUT               = "fa-arrows-alt:22";
-    private static final String                                ICON_ZOOM_HV                = "fa-arrows:22";
-    private static final String                                ICON_ZOOM_H                 = "fa-arrows-h:22";
-    private static final String                                ICON_ZOOM_V                 = "fa-arrows-v:22";
     public static final  Predicate<MouseEvent>                 DEFAULT_MOUSE_FILTER        = MouseEventsHelper::isOnlyMiddleButtonDown;
     private              double                                panShiftX;
     private              double                                panShiftY;
@@ -336,39 +331,58 @@ public class JISAZoomer extends ChartPlugin {
     }
 
     public HBox getZoomInteractorBar() {
-        Separator separator = new Separator();
-        separator.setOrientation(Orientation.VERTICAL);
+
         HBox buttonBar = new HBox();
         buttonBar.setPadding(new Insets(1.0, 1.0, 1.0, 1.0));
-        Button zoomOut = new Button("O");
+
+        Button zoomOut = new Button("\uD83D\uDDD6");
+
+        zoomOut.setMinWidth(25);
         zoomOut.setPadding(new Insets(3.0, 3.0, 3.0, 3.0));
         zoomOut.setTooltip(new Tooltip("zooms to origin and enables auto-ranging"));
-        Button zoomModeXY = new Button("XY");
+
+        Label buttonLabel1 = new Label("⬌");
+        Label buttonLabel2 = new Label("⬍");
+        StackPane graphic = new StackPane(buttonLabel1, buttonLabel2);
+        graphic.setAlignment(Pos.CENTER);
+        Button zoomModeXY = new Button("", graphic);
+        zoomModeXY.setMinWidth(25);
         zoomModeXY.setPadding(new Insets(3.0, 3.0, 3.0, 3.0));
         zoomModeXY.setTooltip(new Tooltip("set zoom-mode to X & Y range (N.B. disables auto-ranging)"));
-        Button zoomModeX = new Button("X");
+
+        Button zoomModeX = new Button("⬌");
+        zoomModeX.setMinWidth(25);
         zoomModeX.setPadding(new Insets(3.0, 3.0, 3.0, 3.0));
         zoomModeX.setTooltip(new Tooltip("set zoom-mode to X range (N.B. disables auto-ranging)"));
-        Button zoomModeY = new Button("Y");
+
+        Button zoomModeY = new Button("⬍");
+        zoomModeY.setMinWidth(25);
         zoomModeY.setPadding(new Insets(3.0, 3.0, 3.0, 3.0));
         zoomModeY.setTooltip(new Tooltip("set zoom-mode to Y range (N.B. disables auto-ranging)"));
+
         zoomOut.setOnAction((evt) -> {
             this.zoomOrigin();
             this.getChart().getAxes().forEach((axis) -> {
                 axis.setAutoRanging(true);
             });
         });
+
         zoomModeXY.setOnAction((evt) -> {
             this.setAxisMode(AxisMode.XY);
         });
+
         zoomModeX.setOnAction((evt) -> {
             this.setAxisMode(AxisMode.X);
         });
+
         zoomModeY.setOnAction((evt) -> {
             this.setAxisMode(AxisMode.Y);
         });
-        buttonBar.getChildren().addAll(new Node[]{separator, zoomOut, zoomModeXY, zoomModeX, zoomModeY});
+
+        buttonBar.getChildren().addAll(zoomOut, new Separator(Orientation.VERTICAL), zoomModeXY, zoomModeX, zoomModeY);
+
         return buttonBar;
+
     }
 
     public Predicate<MouseEvent> getZoomOriginMouseFilter() {

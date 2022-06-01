@@ -13,6 +13,8 @@ import de.gsi.dataset.utils.AssertUtils;
 
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 
+import java.util.List;
+
 public class TwoErrorDataSet extends AbstractErrorDataSet<TwoErrorDataSet> implements DataSet2D, DataSetError, EditableDataSet {
 
     private static final String          Y_COORDINATES    = "Y coordinates";
@@ -133,7 +135,9 @@ public class TwoErrorDataSet extends AbstractErrorDataSet<TwoErrorDataSet> imple
             getAxisDescription(DIM_X).add(x + xErrorPos);
             getAxisDescription(DIM_Y).add(y - yErrorNeg);
             getAxisDescription(DIM_Y).add(y + yErrorPos);
+
         });
+
         return fireInvalidated(new UpdatedDataEvent(this, "add"));
     }
 
