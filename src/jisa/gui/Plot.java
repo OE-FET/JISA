@@ -4,6 +4,7 @@ import de.gsi.chart.Chart;
 import de.gsi.chart.XYChart;
 import de.gsi.chart.axes.Axis;
 import de.gsi.chart.axes.spi.DefaultNumericAxis;
+import de.gsi.chart.axes.spi.TickMark;
 import de.gsi.chart.plugins.Zoomer;
 import de.gsi.chart.ui.geometry.Side;
 import de.gsi.dataset.DataSet;
@@ -519,15 +520,15 @@ public class Plot extends JFXElement implements Element, Clearable {
         title.setAttribute("font-size", "20px");
         main.add(title);
 
-        List<Double> xTicks = this.xAxis.getTickMarkValues();
-        List<Double> yTicks = this.yAxis.getTickMarkValues();
+        List<TickMark> xTicks = this.xAxis.getTickMarks();
+        List<TickMark>   yTicks = this.yAxis.getTickMarks();
 
         double xScale = (aEndX - aStartX) / this.xAxis.getWidth();
         double yScale = (aEndY - aStartY) / this.yAxis.getHeight();
 
-        for (Double x : xTicks) {
+        for (TickMark x : xTicks) {
 
-            double pos = xScale * this.xAxis.getDisplayPosition(x) + aStartX;
+            double pos = xScale * x.getPosition() + aStartX;
 
             if (!Util.isBetween(pos, aStartX, aEndX)) {
                 continue;
@@ -547,7 +548,7 @@ public class Plot extends JFXElement implements Element, Clearable {
             main.add(tick);
             main.add(grid);
 
-            SVGText label = new SVGText(pos, aStartY + 26.0, "middle", xAxis.getAxisLabelFormatter().toString(x));
+            SVGText label = new SVGText(pos, aStartY + 26.0, "middle", x.getText());
             main.add(label);
 
         }
@@ -556,9 +557,9 @@ public class Plot extends JFXElement implements Element, Clearable {
         xLabel.setAttribute("font-size", "16px");
         main.add(xLabel);
 
-        for (Double y : yTicks) {
+        for (TickMark y : yTicks) {
 
-            double pos = aEndY - yScale * this.yAxis.getDisplayPosition(y);
+            double pos = aEndY - yScale * y.getPosition();
 
             if (!Util.isBetween(pos, aEndY, aStartY)) {
                 continue;
@@ -576,7 +577,7 @@ public class Plot extends JFXElement implements Element, Clearable {
             main.add(tick);
             main.add(grid);
 
-            SVGText label = new SVGText(aStartX - 12.0, pos + 4.0, "end", yAxis.getAxisLabelFormatter().toString(y));
+            SVGText label = new SVGText(aStartX - 12.0, pos + 4.0, "end", y.getText());
             main.add(label);
 
         }
