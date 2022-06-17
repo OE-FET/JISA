@@ -896,4 +896,16 @@ public class Colour {
         return Color.valueOf(string);
     }
 
+    public static String toRGBA(Color colour) {
+
+        return String.format(
+            "rgba(%d, %d, %d, %.02f)",
+            (int) (255 * colour.getRed()),
+            (int) (255 * colour.getGreen()),
+            (int) (255 * colour.getBlue()),
+            colour.getOpacity()
+        );
+
+    }
+
 }

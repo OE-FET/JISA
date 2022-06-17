@@ -1,303 +1,432 @@
 package jisa.gui;
 
-import javafx.beans.property.SimpleObjectProperty;
+import de.gsi.chart.Chart;
+import de.gsi.chart.XYChart;
+import de.gsi.chart.axes.Axis;
+import de.gsi.chart.axes.spi.DefaultNumericAxis;
+import de.gsi.chart.axes.spi.TickMark;
+import de.gsi.chart.axes.spi.format.DefaultTimeFormatter;
+import de.gsi.chart.plugins.Zoomer;
+import de.gsi.chart.ui.geometry.Side;
+import de.gsi.dataset.DataSet;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.geometry.Point2D;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.geometry.Side;
-import javafx.scene.Cursor;
-import javafx.scene.Node;
-import javafx.scene.chart.XYChart;
-import javafx.scene.control.Button;
-import javafx.scene.control.Slider;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
-import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import jisa.Util;
+import jisa.gui.plotting.*;
 import jisa.gui.svg.*;
-import jisa.maths.Range;
 import jisa.maths.fits.Fit;
 import jisa.maths.functions.Function;
-import jisa.results.Column;
-import jisa.results.ResultTable;
 
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static de.gsi.dataset.DataSet.DIM_X;
+import static de.gsi.dataset.DataSet.DIM_Y;
 
 public class Plot extends JFXElement implements Element, Clearable {
 
-    public  BorderPane pane;
-    public  Pane       stack;
-    public  JISAChart  chart;
-    public  SmartAxis  xAxis;
-    public  SmartAxis  yAxis;
-    public  Button     autoButton;
-    public  HBox       sliderBox;
-    public  Slider     rangeSliderX;
-    private Rectangle  rect;
-    private Series     autoSeries    = null;
-    private boolean    mouseCommands = false;
+    public static final Pattern UNIT_PATTERN = Pattern.compile("^(.*)[(\\[](.*?)[)\\]]$");
 
-    /**
-     * Creates an empty plot from the given title, x-axis label, and y-axis label.
-     *
-     * @param title  Title of the plot
-     * @param xLabel X-Axis Label
-     * @param yLabel Y-Axis Lable
-     */
-    public Plot(String title, String xLabel, String yLabel) {
 
-        super(title, Plot.class.getResource("fxml/PlotWindow.fxml"));
+    private       JISAXYChart                     chart;
+    private       JISAAxis                        xAxis;
+    private       JISAAxis                        yAxis;
+    private final ObservableList<Series>          series    = FXCollections.observableArrayList();
+    private final Map<Series, ListChangeListener> listeners = new HashMap<>();
+    private final JISAZoomer                      zoomer    = new JISAZoomer();
 
-        chart = new JISAChart();
-        chart.setMinHeight(400);
-        xAxis = (SmartAxis) chart.getXAxis();
-        yAxis = (SmartAxis) chart.getYAxis();
+    public Plot(String title, String xLabel, String xUnits, String yLabel, String yUnits) {
 
-        AnchorPane.setBottomAnchor(chart, 0.0);
-        AnchorPane.setTopAnchor(chart, 0.0);
-        AnchorPane.setLeftAnchor(chart, 0.0);
-        AnchorPane.setRightAnchor(chart, 0.0);
-        BorderPane.setAlignment(chart, Pos.CENTER);
-
-        chart.setLegendSide(Side.RIGHT);
-        chart.setAnimated(true);
-        chart.setMinHeight(400.0);
-
-        stack.getChildren().add(chart);
+        super(title);
+        setMinHeight(500);
+        setMinWidth(500);
+        setWindowSize(600, 525);
 
         GUI.runNow(() -> {
-            chart.setStyle("-fx-background-color: white;");
-            xAxis.setLabelText(xLabel);
-            yAxis.setLabelText(yLabel);
-            chart.setTitle(title);
+
+            xAxis = new JISAAxis(xLabel, xUnits);
+            yAxis = new JISAAxis(yLabel, yUnits);
+
+            xAxis.setAutoRangePadding(0.05);
+            yAxis.setAutoRangePadding(0.05);
+
             xAxis.setForceZeroInRange(false);
             yAxis.setForceZeroInRange(false);
-            xAxis.setAnimated(false);
-            yAxis.setAnimated(false);
-            xAxis.setAutoRanging(true);
-            yAxis.setAutoRanging(true);
-            rect = new Rectangle();
-            rect.setFill(Color.CORNFLOWERBLUE.deriveColor(0, 1, 1, 0.5));
 
-            rect.setVisible(false);
-            rect.setManaged(false);
+            chart = new JISAXYChart(xAxis, yAxis);
+            chart.setTitle(title);
+            setCentreNode(chart);
 
-            AnchorPane canvas = new AnchorPane();
-            canvas.setStyle(
-                    "-fx-background-color: transparent; -fx-border-color: black; -fx-border-style: solid; -fx-border-width: 5px;");
-            canvas.setMouseTransparent(true);
-            canvas.getChildren().add(rect);
-            canvas.setManaged(false);
-            stack.getChildren().add(canvas);
-
-            rangeSliderX.setValue(100.0);
-            sliderBox.setVisible(false);
-            sliderBox.setManaged(false);
+            getStage().getScene().setFill(Colour.WHITE);
 
         });
 
-        rangeSliderX.valueProperty().addListener((a, b, c) -> {
+        series.addListener((ListChangeListener<? super Series>) c -> GUI.runNow(() -> {
 
-            double value = rangeSliderX.getValue() / 100.0;
+            while (c.next()) {
 
-            if (value >= 1.0) {
-                autoLimitsX();
-            } else {
+                for (Series added : c.getAddedSubList()) {
 
-                double min = Double.POSITIVE_INFINITY;
-                double max = Double.NEGATIVE_INFINITY;
+                    ListChangeListener<DataSet> listener = x -> GUI.runNow(() -> {
 
-                for (XYChart.Series<Double, Double> series : chart.getData()) {
+                        while (x.next()) {
+                            chart.getDatasets().addAll(x.getAddedSubList());
+                            chart.getDatasets().removeAll(x.getRemoved());
+                        }
 
-                    for (XYChart.Data<Double, Double> point : series.getData()) {
+                        chart.getLegend().updateLegend(chart.getDatasets(), chart.getRenderers());
 
-                        min = Math.min(point.getXValue(), min);
-                        max = Math.max(point.getXValue(), max);
+                    });
 
-                    }
+                    added.getDatasets().addListener(listener);
+                    listeners.put(added, listener);
+
+                    chart.getDatasets().addAll(added.getDatasets());
 
                 }
 
-                double range = Math.abs(max - min) * value;
+                for (Series removed : c.getRemoved()) {
 
-                autoTrackX(range);
+                    ListChangeListener<DataSet> listener = listeners.get(removed);
+                    removed.getDatasets().removeListener(listener);
+                    chart.getDatasets().removeAll(removed.getDatasets());
+
+                }
+
+                chart.getLegend().updateLegend(chart.getDatasets(), chart.getRenderers());
 
             }
 
+        }));
+
+
+    }
+
+    public JISAXYChart getChart() {
+        return chart;
+    }
+
+    public Plot(String title, String xLabel, String yLabel) {
+        this(title, "", "", "", "");
+        setXLabel(xLabel);
+        setYLabel(yLabel);
+    }
+
+    public void updateLegend() {
+        GUI.runNow(() -> chart.getLegend().updateLegend(chart.getDatasets(), chart.getRenderers(), true));
+    }
+
+    public void forceRedraw() {
+        GUI.runNow(() -> chart.forceRedraw());
+    }
+
+    public boolean isLegendVisible() {
+        return chart.isLegendVisible();
+    }
+
+    public void setLegendVisible(boolean visible) {
+        GUI.runNow(() -> chart.setLegendVisible(visible));
+    }
+
+    public void setXLabel(String name, String units) {
+        xAxis.setName(name);
+        xAxis.setUnit(units);
+    }
+
+    public void setXLabel(String name) {
+
+        Matcher matcher = UNIT_PATTERN.matcher(name);
+
+        if (matcher.matches()) {
+            setXLabel(matcher.group(1), matcher.group(2));
+        } else {
+            setXLabel(name, null);
+        }
+
+    }
+
+    public void setXUnit(String unit) {
+        xAxis.setUnit(unit);
+    }
+
+    public void setYUnit(String unit) {
+        yAxis.setUnit(unit);
+    }
+
+    public String getXUnit() {
+        return xAxis.getUnit();
+    }
+
+    public String getYUnit() {
+        return yAxis.getUnit();
+    }
+
+    public String getXLabel() {
+        return xAxis.getName();
+    }
+
+    public String getYLabel() {
+        return yAxis.getName();
+    }
+
+    public void setYLabel(String name, String units) {
+        yAxis.setName(name);
+        yAxis.setUnit(units);
+    }
+
+    public void setYLabel(String name) {
+
+        Matcher matcher = UNIT_PATTERN.matcher(name);
+
+        if (matcher.matches()) {
+            setYLabel(matcher.group(1), matcher.group(2));
+        } else {
+            setYLabel(name, null);
+        }
+
+    }
+
+    public void setXLimits(double min, double max) {
+
+        GUI.runNow(() -> {
+            xAxis.setAutoRanging(false);
+            xAxis.setMin(min);
+            xAxis.setMax(max);
         });
 
-        getNode().needsLayoutProperty().addListener((observableValue, aBoolean, t1) -> chart.updateAxisRange());
+    }
+
+    public void setXMin(double min) {
+        GUI.runNow(() -> {
+            xAxis.setAutoRanging(false);
+            xAxis.setMin(min);
+        });
+    }
+
+    public void setXMax(double min) {
+        GUI.runNow(() -> {
+            xAxis.setAutoRanging(false);
+            xAxis.setMax(min);
+        });
+    }
+
+    public double getXMin() {
+        return xAxis.getMin();
+    }
+
+    public double getXMax() {
+        return xAxis.getMax();
+    }
+
+    public void autoRangeX() {
+        GUI.runNow(() -> xAxis.setAutoRanging(true));
+    }
+
+    public boolean isXAutoRanging() {
+        return xAxis.isAutoRanging();
+    }
+
+    public void setYLimits(double min, double may) {
+
+        GUI.runNow(() -> {
+            yAxis.setAutoRanging(false);
+            yAxis.setMin(min);
+            yAxis.setMax(may);
+        });
 
     }
 
-    public Plot(String title, String xLabel) {
-        this(title, xLabel, "");
+    public void setYMin(double min) {
+        GUI.runNow(() -> {
+            yAxis.setAutoRanging(false);
+            yAxis.setMin(min);
+        });
     }
 
-    public Plot(String title) {
-        this(title, "", "");
+    public void setYMax(double min) {
+        GUI.runNow(() -> {
+            yAxis.setAutoRanging(false);
+            yAxis.setMax(min);
+        });
     }
 
-    public Plot(String title, ResultTable toWatch) {
-
-        this(title);
-        autoSeries = createSeries().watchAll(toWatch);
-
+    public double getYMin() {
+        return yAxis.getMin();
     }
 
-    public Plot(String title, ResultTable toWatch, Column<? extends Number> xData) {
-
-        this(title);
-        autoSeries = createSeries().watchAll(toWatch, xData);
-
+    public double getYMax() {
+        return yAxis.getMax();
     }
 
-    public Plot(String title, ResultTable toWatch, Column<? extends Number> xData, Column<? extends Number> yData) {
-
-        this(title);
-        autoSeries = createSeries().watch(toWatch, xData, yData);
-
+    public void autoRangeY() {
+        GUI.runNow(() -> yAxis.setAutoRanging(true));
     }
 
-
-    public Plot(String title, ResultTable toWatch, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> sData) {
-
-        this(title);
-        autoSeries = createSeries().watch(toWatch, xData, yData).split(sData);
-
+    public boolean isYAutoRanging() {
+        return yAxis.isAutoRanging();
     }
 
     public List<Series> getSeries() {
-        return new ArrayList<>(chart.getSeries());
+        return List.copyOf(series);
     }
 
-    public AxisType getYAxisType() {
+    public Series createSeries() {
 
-        switch (yAxis.getMode()) {
+        Series series = new JISASeries("Series " + (this.series.size() + 1), this);
 
-            case LOGARITHMIC:
-                return AxisType.LOGARITHMIC;
+        series.setColour(Series.defaultColours[this.series.size() % Series.defaultColours.length]);
 
-            default:
-            case LINEAR:
-                return AxisType.LINEAR;
-
-        }
+        GUI.runNow(() -> this.series.add(series));
+        return series;
 
     }
 
-    /**
-     * Sets the scaling type to use for the y-axis.
-     *
-     * @param type LINEAR or LOGARITHMIC
-     */
-    public void setYAxisType(AxisType type) {
-
-        switch (type) {
-
-            case LINEAR:
-                yAxis.setMode(SmartAxis.Mode.LINEAR);
-                break;
-
-            case LOGARITHMIC:
-                yAxis.setMode(SmartAxis.Mode.LOGARITHMIC);
-                break;
-
-        }
-
-        GUI.runNow(chart::updateAxes);
-        GUI.runNow(pane::requestLayout);
-
+    public void removeSeries(Series toRemove) {
+        GUI.runNow(() -> this.series.remove(toRemove));
     }
 
-    public AxisType getXAxisType() {
-
-        switch (xAxis.getMode()) {
-
-            case LOGARITHMIC:
-                return AxisType.LOGARITHMIC;
-
-            default:
-            case LINEAR:
-                return AxisType.LINEAR;
-
-        }
-
+    @Override
+    public void clear() {
+        GUI.runNow(series::clear);
     }
 
-    /**
-     * Sets the scaling type to use for the x-axis.
-     *
-     * @param type LINEAR or LOGARITHMIC
-     */
     public void setXAxisType(AxisType type) {
 
         switch (type) {
 
             case LINEAR:
-                xAxis.setMode(SmartAxis.Mode.LINEAR);
+
+                GUI.runNow(() -> {
+                    xAxis.setLogAxis(false);
+                    xAxis.setTimeAxis(false);
+                    xAxis.setAutoUnitScaling(JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
+                });
+
                 break;
 
             case LOGARITHMIC:
-                xAxis.setMode(SmartAxis.Mode.LOGARITHMIC);
+
+                GUI.runNow(() -> {
+                    xAxis.setLogAxis(true);
+                    xAxis.setTimeAxis(false);
+                    xAxis.setAutoUnitScaling(JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
+                });
+
+                break;
+
+            case TIME:
+
+                GUI.runNow(() -> {
+                    xAxis.setLogAxis(false);
+                    xAxis.setTimeAxis(true);
+                    xAxis.setAutoUnitScaling(false);
+                    ((DefaultTimeFormatter) xAxis.getAxisLabelFormatter()).setTimeZoneOffset(ZoneId.systemDefault().getRules().getOffset(Instant.now()));
+                });
+
                 break;
 
         }
 
-        GUI.runNow(chart::updateAxes);
-        GUI.runNow(pane::requestLayout);
+    }
+
+    public void setYAxisType(AxisType type) {
+
+        switch (type) {
+
+            case LINEAR:
+
+                GUI.runNow(() -> {
+                    yAxis.setLogAxis(false);
+                    yAxis.setTimeAxis(false);
+                    yAxis.setAutoUnitScaling(JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
+                });
+
+                break;
+
+            case LOGARITHMIC:
+
+                GUI.runNow(() -> {
+                    yAxis.setLogAxis(true);
+                    yAxis.setTimeAxis(false);
+                    yAxis.setAutoUnitScaling(JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
+                });
+
+                break;
+
+            case TIME:
+
+                GUI.runNow(() -> {
+                    yAxis.setLogAxis(false);
+                    yAxis.setTimeAxis(true);
+                    yAxis.setAutoUnitScaling(false);
+                    ((DefaultTimeFormatter) yAxis.getAxisLabelFormatter()).setTimeZoneOffset(ZoneId.systemDefault().getRules().getOffset(Instant.now()));
+                });
+
+                break;
+
+        }
 
     }
 
-    /**
-     * Returns how line-segnments connecting plotted points are ordered.
-     *
-     * @return X_AXIS, Y_AXIS or ORDER_ADDED
-     */
-    public Sort getPointOrdering() {
-        return chart.getAxisSortingPolicy();
+    public AxisType getXAxisType() {
+
+        if (xAxis.isLogAxis()) {
+            return AxisType.LOGARITHMIC;
+        } else if (xAxis.isTimeAxis()) {
+            return AxisType.TIME;
+        } else {
+            return AxisType.LINEAR;
+        }
+
     }
 
-    /**
-     * Sets how line-segments connecting plotted points should be ordered.
-     *
-     * @param ordering X_AXIS, Y_AXIS or ORDER_ADDED
-     */
-    public void setPointOrdering(Sort ordering) {
-        chart.setAxisSortingPolicy(ordering);
+    public AxisType getYAxisType() {
+
+        if (yAxis.isLogAxis()) {
+            return AxisType.LOGARITHMIC;
+        } else if (yAxis.isTimeAxis()) {
+            return AxisType.TIME;
+        } else {
+            return AxisType.LINEAR;
+        }
+
     }
 
-    /**
-     * Creates a new data series to display on the plot.
-     *
-     * @return Newly created Series object
-     */
-    public Series createSeries() {
-        return chart.createSeries();
+    public void setXAxisLogarithmBase(double base) {
+        GUI.runNow(() -> xAxis.setLogarithmBase(base));
     }
 
-    /**
-     * Returns the series object of any automatically generated series from the Plot constructor.
-     *
-     * @return Automatically generated series, null if there is none
-     */
-    public Series getAutoSeries() {
+    public void setYAxisLogarithmBase(double base) {
+        GUI.runNow(() -> yAxis.setLogarithmBase(base));
+    }
 
-        return autoSeries;
+    public double getXAxisLogarithmBase() {
+        return xAxis.getLogarithmBase();
+    }
+
+    public double getYAxisLogarithmBase() {
+        return yAxis.getLogarithmBase();
     }
 
     /**
@@ -307,42 +436,6 @@ public class Plot extends JFXElement implements Element, Clearable {
      */
     public jisa.gui.Button addSaveButton(String text) {
         return addToolbarButton(text, this::showSaveDialog);
-    }
-
-    /**
-     * Returns the number of columns used for laying-out the plot legend. A value of 0 indicates no limit.
-     *
-     * @return Max columns
-     */
-    public int getLegendColumns() {
-        return chart.getChartLegend().getMaxColumns();
-    }
-
-    /**
-     * Sets the number of columns to use for laying-out the plot legend.
-     *
-     * @param columns Max columns
-     */
-    public void setLegendColumns(int columns) {
-        chart.getChartLegend().setMaxColumns(columns);
-    }
-
-    /**
-     * Returns the number of rows used for laying-out the plot legend. A value of 0 indicates no limit.
-     *
-     * @return Max rows
-     */
-    public int getLegendRows() {
-        return chart.getChartLegend().getMaxRows();
-    }
-
-    /**
-     * Sets the number of rows to use for laying-out the plot legend.
-     *
-     * @param rows Max rows
-     */
-    public void setLegendRows(int rows) {
-        chart.getChartLegend().setMaxRows(rows);
     }
 
     /**
@@ -361,41 +454,47 @@ public class Plot extends JFXElement implements Element, Clearable {
 
         save.addDialogButton("Save", () -> {
 
-            if (!file.get().trim().equals("")) {
+            try {
 
-                switch (format.get()) {
+                if (!file.get().trim().equals("")) {
 
-                    case 0:
+                    switch (format.get()) {
 
-                        if (!file.get().endsWith(".svg")) {
-                            file.set(file.get() + ".svg");
-                        }
+                        case 0:
 
-                        saveSVG(file.get(), width.get(), height.get());
-                        break;
+                            if (!file.get().endsWith(".svg")) {
+                                file.set(file.get() + ".svg");
+                            }
 
-                    case 1:
+                            saveSVG(file.get(), width.get(), height.get());
+                            break;
 
-                        if (!file.get().endsWith(".png")) {
-                            file.set(file.get() + ".png");
-                        }
+                        case 1:
 
-                        savePNG(file.get(), width.get(), height.get());
-                        break;
+                            if (!file.get().endsWith(".png")) {
+                                file.set(file.get() + ".png");
+                            }
 
-                    case 2:
+                            savePNG(file.get(), width.get(), height.get());
+                            break;
 
-                        if (!file.get().endsWith(".tex")) {
-                            file.set(file.get() + ".tex");
-                        }
+                        case 2:
 
-                        saveTex(file.get());
-                        break;
+                            if (!file.get().endsWith(".tex")) {
+                                file.set(file.get() + ".tex");
+                            }
+
+                            saveTex(file.get());
+                            break;
+
+                    }
+
+                    save.close();
 
                 }
 
-                save.close();
-
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
         });
@@ -404,381 +503,39 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
-    /**
-     * Returns whether the x-axis range slider is visible or not.
-     *
-     * @return Visible?
-     */
-    public boolean isSliderVisible() {
-        return sliderBox.isVisible();
-    }
-
-    /**
-     * Sets whether the x-axis range slider is visible or not.
-     *
-     * @param flag Visible?
-     */
-    public void setSliderVisible(boolean flag) {
-
-        GUI.runNow(() -> {
-
-            if (!flag) {
-                rangeSliderX.setValue(100.0);
-            }
-
-            sliderBox.setVisible(flag);
-            sliderBox.setManaged(flag);
-
-            adjustSize();
-
-        });
-
-    }
-
-    /**
-     * Returns the text used for the x-axis label.
-     *
-     * @return Current x-axis label text
-     */
-    public String getXLabel() {
-        return xAxis.getLabelText();
-    }
-
-    /**
-     * Sets the text used for the x-axis label.
-     *
-     * @param label New x-axis label text
-     */
-    public void setXLabel(String label) {
-        GUI.runNow(() -> xAxis.setLabelText(label));
-    }
-
-    /**
-     * Returns the text used for the y-axis label.
-     *
-     * @return Current y-axis label text
-     */
-    public String getYLabel() {
-        return yAxis.getLabelText();
-    }
-
-    /**
-     * Sets the text used for the y-axis label.
-     *
-     * @param label New y-axis label text
-     */
-    public void setYLabel(String label) {
-        GUI.runNow(() -> yAxis.setLabelText(label));
-    }
-
-    public boolean isMouseEnabled() {
-        return mouseCommands;
-    }
-
-    /**
-     * Sets whether
-     *
-     * @param flag
-     */
     public void setMouseEnabled(boolean flag) {
 
         if (flag) {
 
-            XYChart.Series<Double, Double> series = new XYChart.Series<>();
-
-            final Node                          background = chart.lookup(".chart-plot-background");
-            final SimpleObjectProperty<Point2D> startZoom  = new SimpleObjectProperty<>();
-            final SimpleObjectProperty<Point2D> firstZoom  = new SimpleObjectProperty<>();
-            final SimpleObjectProperty<Point2D> start      = new SimpleObjectProperty<>();
-            final SimpleObjectProperty<Point2D> startMax   = new SimpleObjectProperty<>();
-            final SimpleObjectProperty<Point2D> startMin   = new SimpleObjectProperty<>();
-
-
-            chart.setOnMousePressed(event -> {
-
-                if (event.isSecondaryButtonDown()) {
-
-                    pane.getScene().setCursor(Cursor.CROSSHAIR);
-                    Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-                    Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-                    startZoom.set(new Point2D(event.getX(), event.getY()));
-                    firstZoom.set(new Point2D(pointX.getX(), pointY.getY()));
-                    rect.setVisible(true);
-                    rect.setManaged(true);
-                } else if ((event.isPrimaryButtonDown() && event.isControlDown()) || event.isMiddleButtonDown()) {
-                    pane.getScene().setCursor(Cursor.MOVE);
-                    Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-                    Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-                    startMin.set(new Point2D(xAxis.getLowerBound(), yAxis.getLowerBound()));
-                    startMax.set(new Point2D(xAxis.getUpperBound(), yAxis.getUpperBound()));
-                    start.set(new Point2D(pointX.getX(), pointY.getY()));
-                } else if (event.getClickCount() >= 2) {
-                    autoLimitsX();
-                    autoLimitsY();
-                }
-
-            });
-
-            chart.setOnMouseDragged(event -> {
-
-                if (event.isSecondaryButtonDown()) {
-
-                    final double x = Math.max(0, Math.min(stack.getWidth(), event.getX()));
-                    final double y = Math.max(0, Math.min(stack.getHeight(), event.getY()));
-                    rect.setX(Math.min(x, startZoom.get().getX()));
-                    rect.setY(Math.min(y, startZoom.get().getY()));
-                    rect.setWidth(Math.abs(x - startZoom.get().getX()));
-                    rect.setHeight(Math.abs(y - startZoom.get().getY()));
-
-                } else if ((event.isPrimaryButtonDown() && event.isControlDown()) || event.isMiddleButtonDown()) {
-
-                    Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-                    Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-
-
-                    if (xAxis.getMode() == SmartAxis.Mode.LINEAR) {
-                        final double diff = xAxis.getValueForDisplay(pointX.getX()) - xAxis.getValueForDisplay(start.get().getX());
-                        final double min  = startMin.get().getX() - diff;
-                        final double max  = startMax.get().getX() - diff;
-                        setXLimits(Math.min(min, max), Math.max(min, max));
-                    } else {
-                        final double diff10 = Math.log10(xAxis.getValueForDisplay(pointX.getX())) - Math.log10(xAxis.getValueForDisplay(start.get().getX()));
-                        final double min    = Math.pow(10, Math.log10(startMin.get().getX()) - diff10);
-                        final double max    = Math.pow(10, Math.log10(startMax.get().getX()) - diff10);
-                        setXLimits(Math.min(min, max), Math.max(min, max));
-                    }
-
-
-                    if (yAxis.getMode() == SmartAxis.Mode.LINEAR) {
-                        final double diff = yAxis.getValueForDisplay(pointY.getY()) - yAxis.getValueForDisplay(start.get().getY());
-                        final double min  = startMin.get().getY() - diff;
-                        final double max  = startMax.get().getY() - diff;
-                        setYLimits(Math.min(min, max), Math.max(min, max));
-                    } else {
-                        final double diff10 = Math.log10(yAxis.getValueForDisplay(pointY.getY())) - Math.log10(yAxis.getValueForDisplay(start.get().getY()));
-                        final double min    = Math.pow(10, Math.log10(startMin.get().getY()) - diff10);
-                        final double max    = Math.pow(10, Math.log10(startMax.get().getY()) - diff10);
-                        setYLimits(Math.min(min, max), Math.max(min, max));
-                    }
-
-                }
-
-            });
-
-            chart.setOnMouseReleased(event -> {
-
-                pane.getScene().setCursor(Cursor.DEFAULT);
-
-                if (rect.isVisible() && rect.getWidth() > 0 && rect.getHeight() > 0) {
-
-                    final Point2D pointX = xAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-                    final Point2D pointY = yAxis.sceneToLocal(event.getSceneX(), event.getSceneY());
-
-                    final double minX = xAxis.getValueForDisplay(Math.min(firstZoom.get().getX(), pointX.getX()));
-                    final double maxX = xAxis.getValueForDisplay(Math.max(firstZoom.get().getX(), pointX.getX()));
-                    final double minY = yAxis.getValueForDisplay(Math.min(firstZoom.get().getY(), pointY.getY()));
-                    final double maxY = yAxis.getValueForDisplay(Math.max(firstZoom.get().getY(), pointY.getY()));
-
-                    setXLimits(Math.min(minX, maxX), Math.max(minX, maxX));
-                    setYLimits(Math.min(minY, maxY), Math.max(minY, maxY));
-
-                    rect.setWidth(0);
-                    rect.setHeight(0);
-                    rect.setVisible(false);
-                    rect.setManaged(false);
-
-                } else if (rect.isVisible()) {
-                    rect.setWidth(0);
-                    rect.setHeight(0);
-                    rect.setVisible(false);
-                    rect.setManaged(false);
-                }
-
-            });
+            if (!chart.getPlugins().contains(zoomer)) {
+                GUI.runNow(() -> chart.getPlugins().add(zoomer));
+            }
 
         } else {
-
-            chart.setOnMousePressed(null);
-            chart.setOnMouseDragged(null);
-            chart.setOnMouseReleased(null);
-
+            GUI.runNow(() -> chart.getPlugins().remove(zoomer));
         }
 
-        mouseCommands = flag;
-
     }
 
-    /**
-     * Use auto-ranging for both X and Y limits
-     */
-    public void autoLimits() {
-
-        autoLimitsX();
-        autoLimitsY();
-
-    }
-
-    /**
-     * Sets the bounds on the x-axis.
-     *
-     * @param min Minimum value to show on x-axis
-     * @param max Maximum value to show on x-axis
-     */
-    public void setXLimits(final double min, final double max) {
-
-        GUI.runNow(() -> {
-            xAxis.setAutoRanging(false);
-            xAxis.setLowerBound(min);
-            xAxis.setUpperBound(max);
-        });
-
-    }
-
-    public double getXLowerLimit() {
-        return xAxis.getLowerBound();
-    }
-
-    public double getXUpperLimit() {
-        return xAxis.getUpperBound();
-    }
-
-    public double getYLowerLimit() {
-        return yAxis.getLowerBound();
-    }
-
-    public double getYUpperLimit() {
-        return yAxis.getUpperBound();
-    }
-
-    /**
-     * Sets the bounds on the y-axis.
-     *
-     * @param min Minimum value to show on y-axis
-     * @param max Maximum value to show on y-axis
-     */
-    public void setYLimits(final double min, final double max) {
-
-        GUI.runNow(() -> {
-            yAxis.setAutoRanging(false);
-            yAxis.setLowerBound(min);
-            yAxis.setUpperBound(max);
-        });
-    }
-
-    public Side getLegendPosition() {
-        return chart.getLegendSide();
-    }
-
-    public void setLegendPosition(Side position) {
-        GUI.runNow(() -> chart.setLegendSide(position));
-    }
-
-    public boolean isLegendVisible() {
-        return chart.isLegendVisible();
-    }
-
-    public void setLegendVisible(boolean show) {
-
-        GUI.runNow(() -> chart.setLegendVisible(show));
-    }
-
-    /**
-     * Sets the x-axis to automatically choose its bounds.
-     */
-    public void autoLimitsX() {
-        GUI.runNow(() -> {
-            xAxis.setMaxRange(Double.POSITIVE_INFINITY);
-            xAxis.setAutoRanging(true);
-        });
-    }
-
-    /**
-     * Sets the y-axis to automatically choose its bounds.
-     */
-    public void autoLimitsY() {
-        GUI.runNow(() -> {
-            yAxis.setMaxRange(Double.POSITIVE_INFINITY);
-            yAxis.setAutoRanging(true);
-        });
-    }
-
-    public void autoTrackX(double range) {
-        GUI.runNow(() -> {
-            xAxis.setMaxRange(range);
-            xAxis.setAutoRanging(true);
-        });
-    }
-
-    public void autoTrackY(double range) {
-        GUI.runNow(() -> {
-            yAxis.setMaxRange(range);
-            yAxis.setAutoRanging(true);
-        });
-    }
-
-    public void show() {
-
-        super.show();
-        adjustSize();
-        GUI.runNow(() -> getStage().getScene().setFill(Colour.WHITE));
-
-    }
-
-    public void setTitle(String title) {
-        super.setTitle(title);
-        GUI.runNow(() -> chart.setTitle(title));
+    public boolean isMouseEnabled() {
+        return chart.getPlugins().contains(zoomer);
     }
 
     public Plot copy() {
 
-        Plot plot = new Plot(getTitle(), getXLabel(), getYLabel());
+        Plot plot = new Plot(getTitle(), getXLabel(), getXUnit(), getYLabel(), getYUnit());
 
-        for (JISAChart.JISASeries series : chart.getSeries()) {
-
-            if (!chart.getData().contains(series.getXYChartSeries())) {
-                continue;
-            }
-
-            Series copy = plot.createSeries();
-
-            copy.setName(series.getName())
-                .setColour(series.getColour())
-                .setLineDash(series.getLineDash())
-                .setLineWidth(series.getLineWidth())
-                .setMarkerShape(series.getMarkerShape())
-                .setMarkerSize(series.getMarkerSize())
-                .setMarkerVisible(series.isMarkerVisible())
-                .setLineVisible(series.isLineVisible());
-
-            if (series.isFitted()) copy.fit(series.getFitter());
-
-            for (XYChart.Data<Double, Double> point : series.getPoints()) {
-
-                if (point.getExtraValue() instanceof Double) {
-                    copy.addPoint(point.getXValue(), point.getYValue(), (Double) point.getExtraValue());
-                } else {
-                    copy.addPoint(point.getXValue(), point.getYValue());
-                }
-
-            }
-
-        }
-
-        plot.xAxis.setMode(xAxis.getMode());
-        plot.yAxis.setMode(yAxis.getMode());
-        plot.setPointOrdering(getPointOrdering());
+        plot.series.addAll(this.series);
         plot.setLegendVisible(isLegendVisible());
-
-        if (getLegendColumns() == 0) {
-            plot.setLegendRows(getLegendRows());
-        } else {
-            plot.setLegendColumns(getLegendColumns());
-        }
-
         plot.setMouseEnabled(isMouseEnabled());
-
-        if (!xAxis.isAutoRanging()) plot.setXLimits(getXLowerLimit(), getXUpperLimit());
-        if (!yAxis.isAutoRanging()) plot.setYLimits(getYLowerLimit(), getYUpperLimit());
+        plot.setXAxisType(getXAxisType());
+        plot.setYAxisType(getYAxisType());
+        plot.setWindowSize(getWindowWidth(), getWindowHeight());
+        plot.setMinHeight(getMinHeight());
+        plot.setMaxHeight(getMaxHeight());
+        plot.setMinWidth(getMinWidth());
+        plot.setMaxWidth(getMaxWidth());
+        plot.updateLegend();
 
         return plot;
 
@@ -803,6 +560,7 @@ public class Plot extends JFXElement implements Element, Clearable {
         GUI.runNow(() -> {
 
             WritableImage image = plot.chart.snapshot(null, null);
+
             try {
                 ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", new File(path));
             } catch (IOException e) {
@@ -857,18 +615,15 @@ public class Plot extends JFXElement implements Element, Clearable {
         title.setAttribute("font-size", "20px");
         main.add(title);
 
-        List<Double> xTicks = this.xAxis.getMajorTicks();
-        List<Double> yTicks = this.yAxis.getMajorTicks();
+        List<TickMark> xTicks = this.xAxis.getTickMarks();
+        List<TickMark>   yTicks = this.yAxis.getTickMarks();
 
         double xScale = (aEndX - aStartX) / this.xAxis.getWidth();
         double yScale = (aEndY - aStartY) / this.yAxis.getHeight();
 
-        StringConverter<Double> formatterX = this.xAxis.getTickLabelFormatter();
-        StringConverter<Double> formatterY = this.yAxis.getTickLabelFormatter();
+        for (TickMark x : xTicks) {
 
-        for (Double x : xTicks) {
-
-            double pos = xScale * this.xAxis.getDisplayPosition(x) + aStartX;
+            double pos = xScale * x.getPosition() + aStartX;
 
             if (!Util.isBetween(pos, aStartX, aEndX)) {
                 continue;
@@ -888,18 +643,18 @@ public class Plot extends JFXElement implements Element, Clearable {
             main.add(tick);
             main.add(grid);
 
-            SVGText label = new SVGText(pos, aStartY + 26.0, "middle", formatterX.toString(x));
+            SVGText label = new SVGText(pos, aStartY + 26.0, "middle", x.getText());
             main.add(label);
 
         }
 
-        SVGText xLabel = new SVGText((aEndX + aStartX) / 2, aStartY + 75.0, "middle", this.xAxis.getLabel());
+        SVGText xLabel = new SVGText((aEndX + aStartX) / 2, aStartY + 75.0, "middle", xAxis.getAxisLabel().getText());
         xLabel.setAttribute("font-size", "16px");
         main.add(xLabel);
 
-        for (Double y : yTicks) {
+        for (TickMark y : yTicks) {
 
-            double pos = aEndY - yScale * this.yAxis.getDisplayPosition(y);
+            double pos = aEndY - yScale * y.getPosition();
 
             if (!Util.isBetween(pos, aEndY, aStartY)) {
                 continue;
@@ -917,12 +672,12 @@ public class Plot extends JFXElement implements Element, Clearable {
             main.add(tick);
             main.add(grid);
 
-            SVGText label = new SVGText(aStartX - 12.0, pos + 4.0, "end", formatterY.toString(y));
+            SVGText label = new SVGText(aStartX - 12.0, pos + 4.0, "end", y.getText());
             main.add(label);
 
         }
 
-        SVGText yLabel = new SVGText(aStartX - 75.0, (aEndY + aStartY) / 2, "middle", this.yAxis.getLabel());
+        SVGText yLabel = new SVGText(aStartX - 75.0, (aEndY + aStartY) / 2, "middle", yAxis.getAxisLabel().getText());
         yLabel.setAttribute("transform", String.format("rotate(-90 %s %s)", aStartX - 75.0, (aEndY + aStartY) / 2))
               .setAttribute("font-size", "16px");
         main.add(yLabel);
@@ -935,13 +690,13 @@ public class Plot extends JFXElement implements Element, Clearable {
               .setFillColour("none");
 
 
-        double legendH = (chart.getData().size() * 25) + 5.0;
+        double legendH = (chart.getDatasets().filtered(DataSet::isVisible).size() * 25) + 5.0;
         double legendX = aEndX + 25.0;
         double legendY = aEndY;
 
         double legendW = 0.0;
 
-        for (XYChart.Series s : chart.getData()) {
+        for (DataSet s : chart.getDatasets().filtered(DataSet::isVisible)) {
             legendW = Math.max(legendW, (10.0 * s.getName().length()) + 15.0 + 5 + 3 + 20.0);
         }
 
@@ -957,25 +712,23 @@ public class Plot extends JFXElement implements Element, Clearable {
         }
 
         int i = 0;
-        for (Series s : chart.getSeries()) {
+        for (DataSet set : chart.getDatasets().filtered(DataSet::isVisible)) {
 
-            if (!chart.getData().contains(s.getXYChartSeries())) {
-                continue;
-            }
+            JISAErrorDataSet s = (JISAErrorDataSet) set;
 
             Color        c = s.getColour();
-            double       w = s.getLineWidth();
-            double       m = s.getMarkerSize();
-            Series.Shape p = s.getMarkerShape();
+            double       w = s.getThickness();
+            double       m = s.getSize();
+            Series.Shape p = s.getShape();
 
             List<String> terms = new LinkedList<>();
 
             SVGElement legendCircle = makeMarker(s.isMarkerVisible() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
-            SVGText legendText = new SVGText(
-                    legendX + 15.0 + 5 + 3 + 10,
-                    legendY + (25 * i) + 15.0 + 5,
-                    "beginning",
-                    s.getName()
+            SVGText legendText      = new SVGText(
+                legendX + 15.0 + 5 + 3 + 10,
+                legendY + (25 * i) + 15.0 + 5,
+                "beginning",
+                s.getName()
             );
 
             legendText.setAttribute("font-size", "16px");
@@ -992,29 +745,10 @@ public class Plot extends JFXElement implements Element, Clearable {
             double lastX = -1;
             double lastY = -1;
 
-            List<XYChart.Data<Double, Double>> data;
+            for (int j = 0; j < s.getDataCount(); j++) {
 
-            switch (getPointOrdering()) {
-
-                case X_AXIS:
-                    data = s.getXYChartSeries().getData().sorted(Comparator.comparingDouble(XYChart.Data::getXValue));
-                    break;
-
-                case Y_AXIS:
-                    data = s.getXYChartSeries().getData().sorted(Comparator.comparingDouble(XYChart.Data::getYValue));
-                    break;
-
-                default:
-                    data = s.getXYChartSeries().getData();
-                    break;
-
-
-            }
-
-            for (XYChart.Data<Double, Double> point : data) {
-
-                double x = aStartX + xScale * this.xAxis.getDisplayPosition(point.getXValue());
-                double y = aEndY - yScale * this.yAxis.getDisplayPosition(point.getYValue());
+                double x = aStartX + xScale * this.xAxis.getDisplayPosition(s.get(DIM_X, j));
+                double y = aEndY - yScale * this.yAxis.getDisplayPosition(s.get(DIM_Y, j));
 
                 if (!Util.isBetween(x, aStartX, aEndX) || !Util.isBetween(y, aEndY, aStartY)) {
                     continue;
@@ -1024,11 +758,10 @@ public class Plot extends JFXElement implements Element, Clearable {
 
                 if (s.isMarkerVisible()) {
 
-                    if (point.getExtraValue() != null && (double) point.getExtraValue() > 0) {
+                    if (s.getErrorPositive(DIM_Y, j) != s.getErrorNegative(DIM_Y, j)) {
 
-                        double error = (double) point.getExtraValue();
-                        double yp    = aEndY - yScale * this.yAxis.getDisplayPosition(point.getYValue() + error);
-                        double yn    = aEndY - yScale * this.yAxis.getDisplayPosition(point.getYValue() - error);
+                        double yp    = aEndY - yScale * this.yAxis.getDisplayPosition(s.get(DIM_Y, j) + s.getErrorPositive(DIM_Y, j));
+                        double yn    = aEndY - yScale * this.yAxis.getDisplayPosition(s.get(DIM_Y, j) - s.getErrorPositive(DIM_Y, j));
                         double xn    = x - 5;
                         double xp    = x + 5;
 
@@ -1083,7 +816,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
             path.setStrokeColour(c)
                 .setStrokeWidth(w)
-                .setDash(s.getLineDash().getArray())
+                .setDash(s.getDash().getArray())
                 .setStyle("fill", "none");
 
             if (s.isLineVisible()) {
@@ -1105,7 +838,10 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
+
+
     private SVGElement makeMarker(Series.Shape p, Color c, double x, double y, double m) {
+
         SVGElement marker;
 
         switch (p) {
@@ -1113,16 +849,16 @@ public class Plot extends JFXElement implements Element, Clearable {
             case TRIANGLE:
 
                 marker = new SVGTriangle(x, y, m)
-                        .setStrokeColour(c)
-                        .setFillColour(Color.WHITE)
-                        .setStrokeWidth(2);
+                    .setStrokeColour(c)
+                    .setFillColour(Color.WHITE)
+                    .setStrokeWidth(2);
                 break;
 
             case DASH:
 
                 marker = new SVGLine(x - m, y, x + m, y)
-                        .setStrokeColour(c)
-                        .setStrokeWidth(2);
+                    .setStrokeColour(c)
+                    .setStrokeWidth(2);
                 break;
 
             default:
@@ -1130,18 +866,18 @@ public class Plot extends JFXElement implements Element, Clearable {
             case DOT:
 
                 marker = new SVGCircle(x, y, m)
-                        .setStrokeColour(c)
-                        .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
-                        .setStrokeWidth(2);
+                    .setStrokeColour(c)
+                    .setFillColour(p == Series.Shape.CIRCLE ? Color.WHITE : c)
+                    .setStrokeWidth(2);
                 break;
 
             case SQUARE:
             case DIAMOND:
 
                 marker = new SVGSquare(x, y, m)
-                        .setStrokeColour(c)
-                        .setFillColour(Color.WHITE)
-                        .setStrokeWidth(2);
+                    .setStrokeColour(c)
+                    .setFillColour(Color.WHITE)
+                    .setStrokeWidth(2);
 
                 if (p == Series.Shape.DIAMOND) {
                     marker.setAttribute("transform", "rotate(45 " + x + " " + y + ")");
@@ -1152,9 +888,9 @@ public class Plot extends JFXElement implements Element, Clearable {
             case CROSS:
 
                 marker = new SVGCross(x, y, m)
-                        .setStrokeColour(c)
-                        .setFillColour(c)
-                        .setStrokeWidth(1);
+                    .setStrokeColour(c)
+                    .setFillColour(c)
+                    .setStrokeWidth(1);
 
                 break;
 
@@ -1171,101 +907,34 @@ public class Plot extends JFXElement implements Element, Clearable {
         builder.append("\\begin{tikzpicture}\n");
 
 
-        builder.append("\\begin{axis}[\n")
-               .append("\txmode                   = ").append(xAxis.getMode() == SmartAxis.Mode.LOGARITHMIC ? "log" : "normal").append(",\n")
-               .append("\tymode                   = ").append(yAxis.getMode() == SmartAxis.Mode.LOGARITHMIC ? "log" : "normal").append(",\n");
+        builder.append("\\begin{axis}[\n").append("\txmode                   = ").append(xAxis.isLogAxis() ? "log" : "normal").append(",\n").append("\tymode                   = ").append(yAxis.isLogAxis() ? "log" : "normal").append(",\n");
 
         if (!xAxis.isAutoRanging()) {
-            builder.append("\txmin                    = ").append(xAxis.getLowerBound()).append(",\n")
-                   .append("\txmax                    = ").append(xAxis.getUpperBound()).append(",\n");
+            builder.append("\txmin                    = ").append(xAxis.getMin()).append(",\n").append("\txmax                    = ").append(xAxis.getMax()).append(",\n");
         }
         if (!yAxis.isAutoRanging()) {
-            builder.append("\tymin                    = ").append(yAxis.getLowerBound()).append(",\n")
-                   .append("\tymax                    = ").append(yAxis.getUpperBound()).append(",\n");
+            builder.append("\tymin                    = ").append(yAxis.getMin()).append(",\n").append("\tymax                    = ").append(yAxis.getMax()).append(",\n");
         }
 
-        builder.append("\tgrid,\n")
-               .append("\tgrid style              = {dotted},\n")
-               .append("\tlegend pos              = outer north east,\n")
-               .append("\twidth                   = 0.7 * \\linewidth,\n")
-               .append("\ttitle                   = {\\textbf{").append(getTitle().replace("^", "\\^{}")).append("}},\n")
-               .append("\txlabel                  = {").append(getXLabel().replace("^", "\\^{}")).append("},\n")
-               .append("\tylabel                  = {").append(getYLabel().replace("^", "\\^{}")).append("},\n")
-               .append("\tlegend cell align       = left,\n")
-               .append("\tevery axis title/.style = {at={(0.5, 1.2)}}\n")
-               .append("]\n");
+        builder.append("\tgrid,\n").append("\tgrid style              = {dotted},\n").append("\tlegend pos              = outer north east,\n").append("\twidth                   = 0.7 * \\linewidth,\n").append("\ttitle                   = {\\textbf{").append(getTitle().replace("^", "\\^{}")).append("}},\n").append("\txlabel                  = {").append(xAxis.getAxisLabel().getText().replace("^", "\\^{}")).append("},\n").append("\tylabel                  = {").append(yAxis.getAxisLabel().getText().replace("^", "\\^{}")).append("},\n").append("\tlegend cell align       = left,\n").append("\tevery axis title/.style = {at={(0.5, 1.2)}}\n").append("]\n");
 
         List<String> legend = new LinkedList<>();
 
-        for (JISAChart.JISASeries series : chart.getSeries()) {
+        for (int i = 0; i < chart.getDatasets().size(); i++) {
 
-            int red   = (int) (series.getColour().getRed() * 255);
-            int green = (int) (series.getColour().getGreen() * 255);
-            int blue  = (int) (series.getColour().getBlue() * 255);
+            JISAErrorDataSet series = (JISAErrorDataSet) chart.getDatasets().get(i);
 
-            if (!chart.getData().contains(series.getXYChartSeries())) {
-                continue;
-            }
+            String symbol = "*";
+            String fill   = "white";
 
-            String symbol;
-            String fill;
-
-            switch (series.getMarkerShape()) {
-
-                case CIRCLE:
-                    symbol = "*";
-                    fill = "white";
-                    break;
-
-                case DOT:
-                    symbol = "*";
-                    fill = String.format("{rgb,255:red,%d;green,%d;blue,%d}", red, green, blue);
-                    break;
-
-                case SQUARE:
-                    symbol = "square*";
-                    fill = "white";
-                    break;
-
-                case DIAMOND:
-                    symbol = "diamond";
-                    fill = "white";
-                    break;
-
-                case CROSS:
-                    symbol = "x";
-                    fill = "none";
-                    break;
-
-                case TRIANGLE:
-                    symbol = "triangle";
-                    fill = "none";
-                    break;
-
-                case STAR:
-                    symbol = "star";
-                    fill = "none";
-                    break;
-
-                case DASH:
-                    symbol = "-";
-                    fill = "none";
-                    break;
-
-                default:
-                    symbol = "none";
-                    fill = "none";
-
-            }
-
-            if (!series.isMarkerVisible()) symbol = "none";
+            if (!series.isMarkerVisible()) {symbol = "none";}
 
             String onlyMarks = series.isLineVisible() ? "" : "only marks,\n";
 
-
             String lineType;
 
-            switch (series.getLineDash()) {
+            switch (series.getDash()) {
+
                 case DOTTED:
                     lineType = ",\n\tdotted";
                     break;
@@ -1284,75 +953,50 @@ public class Plot extends JFXElement implements Element, Clearable {
 
             }
 
+
+            int red   = (int) (series.getColour().getRed() * 255);
+            int green = (int) (series.getColour().getGreen() * 255);
+            int blue  = (int) (series.getColour().getBlue() * 255);
+
             builder.append("\\addplot[\n");
 
-            if (!series.isLineVisible() || series.isFitted()) builder.append("\tonly marks,\n");
+            if (!series.isLineVisible()) {builder.append("\tonly marks,\n");}
 
-            builder.append("\tmark               = ").append(symbol).append(",\n")
-                   .append("\tmark options       = { fill = ").append(fill).append(", scale=1.25 },\n")
-                   .append("\tcolor              = {rgb,255:red,").append(red).append(";green,").append(green).append(";blue,").append(blue).append("},\n")
-                   .append("\tline width         = ").append(series.getLineWidth() / 2.0)
-                   .append(lineType).append(",\n")
-                   .append("\terror bars/.cd,\n")
-                   .append("\ty dir              = both,\n")
-                   .append("\ty explicit,\n")
-                   .append("\terror bar style    = { line width = ").append(series.getLineWidth() / 2.0).append(" },\n")
-                   .append("\terror mark options = { rotate = 90, mark size = 3, line width = ").append(series.getLineWidth() / 2.0).append(" },\n")
-                   .append("]\n")
-                   .append("table[x index = 0, y index = 1, y error index = 2] {\n");
+            builder.append("\tmark               = ").append(symbol).append(",\n").append("\tmark options       = { fill = ").append(fill).append(", scale=1.25 },\n").append("\tcolor              = {rgb,255:red,").append(red).append(";green,").append(green).append(";blue,").append(blue).append("},\n").append("\tline width         = ").append(series.getThickness() / 2.0).append(lineType).append(",\n").append("\terror bars/.cd,\n").append("\ty dir              = both,\n").append("\ty explicit,\n").append("\terror bar style    = { line width = ").append(series.getThickness() / 2.0).append(" },\n").append("\terror mark options = { rotate = 90, mark size = 3, line width = ").append(series.getThickness() / 2.0).append(" },\n").append("]\n").append("table[x index = 0, y index = 1, y error index = 2] {\n");
 
 
-            List<XYChart.Data<Double, Double>> data;
-
-            switch (getPointOrdering()) {
-
-                case X_AXIS:
-                    data = series.getXYChartSeries().getData().sorted(Comparator.comparingDouble(XYChart.Data::getXValue));
-                    break;
-
-                case Y_AXIS:
-                    data = series.getXYChartSeries().getData().sorted(Comparator.comparingDouble(XYChart.Data::getYValue));
-                    break;
-
-                default:
-                    data = series.getXYChartSeries().getData();
-                    break;
-
-
-            }
-
-            for (XYChart.Data<Double, Double> point : data) {
-                builder.append(String.format("\t%.04e\t%.04e\t%.04e\n", point.getXValue(), point.getYValue(), point.getExtraValue() instanceof Double && ((Double) point.getExtraValue()) != 0 ? (Double) point.getExtraValue() : Double.NaN));
+            for (int j = 0; j < series.getDataCount(); j++) {
+                builder.append(String.format("\t%.04e\t%.04e\t%.04e\n", series.getX(j), series.getY(j), series.getErrorPositive(1, j) > 0 ? series.getErrorPositive(1, j) * 2.0 : Double.NaN));
             }
 
             builder.append("\n};\n");
 
             legend.add("\t{" + series.getName().replace("^", "\\^{}") + "}");
 
-            if (series.isFitted()) {
-
-                Function fit = series.getFit().getFunction();
-
-                builder.append("\\addplot[\n")
-                       .append("\tmark               = none,\n")
-                       .append("\tcolor              = {rgb,255:red,").append(red).append(";green,").append(green).append(";blue,").append(blue).append("},\n")
-                       .append("\tline width         = ").append(series.getLineWidth() / 2.0)
-                       .append(lineType).append(",\n")
-                       .append("\tforget plot\n")
-                       .append("]\n")
-                       .append("table[x index = 0, y index = 1] {\n");
-
-                for (double x : Range.linear(getXLowerLimit(), getXUpperLimit(), 100)) {
-                    builder.append(String.format("\t%.04e\t%.04e\n", x, fit.value(x)));
-                }
-
-                builder.append("\n};\n");
-
-            }
+//            if (series.isFitted()) {
+//
+//                Function fit = series.getFit().getFunction();
+//
+//                builder.append("\\addplot[\n")
+//                       .append("\tmark               = none,\n")
+//                       .append("\tcolor              = {rgb,255:red,").append(red).append(";green,").append(green).append(";blue,").append(blue).append("},\n")
+//                       .append("\tline width         = ").append(series.getLineWidth() / 2.0)
+//                       .append(lineType).append(",\n")
+//                       .append("\tforget plot\n")
+//                       .append("]\n")
+//                       .append("table[x index = 0, y index = 1] {\n");
+//
+//                for (double x : Range.linear(getXLowerLimit(), getXUpperLimit(), 100)) {
+//                    builder.append(String.format("\t%.04e\t%.04e\n", x, fit.value(x)));
+//                }
+//
+//                builder.append("\n};\n");
+//
+//            }
 
         }
 
-        if (isLegendVisible()) {
+        if (chart.isLegendVisible()) {
             builder.append(String.format("\\legend{\n%s\n}\n", String.join(",\n", legend)));
         }
 
@@ -1369,48 +1013,10 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
-    public void saveSVG(String path) throws IOException {
-
-        saveSVG(path, 600, 500);
-    }
-
-    private void adjustSize() {
-
-        GUI.runNow(() -> {
-
-            Stage stage = getStage();
-
-            double width  = stage.getWidth();
-            double height = stage.getHeight();
-
-            stage.setMinWidth(0.0);
-            stage.setMinHeight(0.0);
-
-            stage.sizeToScene();
-            stage.setMinHeight(stage.getHeight());
-            stage.setMinWidth(stage.getWidth());
-            stage.setHeight(height);
-            stage.setWidth(width);
-
-        });
-
-    }
-
-
-    @Override
-    public synchronized void clear() {
-        GUI.runNow(() -> chart.getData().clear());
-    }
-
     public enum AxisType {
         LINEAR,
-        LOGARITHMIC
-    }
-
-    public enum Sort {
-        X_AXIS,
-        Y_AXIS,
-        ORDER_ADDED
+        LOGARITHMIC,
+        TIME
     }
 
 }
