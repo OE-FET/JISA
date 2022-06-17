@@ -38,17 +38,18 @@ import de.gsi.chart.axes.spi.transforms.LogarithmicTimeAxisTransform;
  */
 public class JISADefaultAxis extends AbstractAxis implements Axis {
 
-    private static final      Logger                       LOGGER                = LoggerFactory.getLogger(JISADefaultAxis.class);
-    public static final       double                       DEFAULT_LOG_MIN_VALUE = 1e-6;
-    private static final      int                          DEFAULT_RANGE_LENGTH  = 2;
-    private                   double                       offset;
-    private final transient   Cache                        cache                 = new Cache();
-    private final transient   DefaultAxisTransform         linearTransform       = new DefaultAxisTransform(this);
-    private final transient   JISALogTransform             logTransform          = new JISALogTransform(this);
-    private final transient   LogarithmicTimeAxisTransform logTimeTransform      = new LogarithmicTimeAxisTransform(this);
-    protected final transient List<Double>                 logValues             = new LinkedList<>();
-    protected transient       AxisTransform                axisTransform         = linearTransform;
-    protected                 boolean                      isUpdating;
+    private static final    Logger                       LOGGER                = LoggerFactory.getLogger(JISADefaultAxis.class);
+    public static final     double                       DEFAULT_LOG_MIN_VALUE = 1e-6;
+    private static final    int                          DEFAULT_RANGE_LENGTH  = 2;
+    private                 double                       offset;
+    private final transient Cache                        cache                 = new Cache();
+    private final transient DefaultAxisTransform         linearTransform       = new DefaultAxisTransform(this);
+    private final transient JISALogTransform             logTransform          = new JISALogTransform(this);
+    private final transient LogarithmicTimeAxisTransform logTimeTransform      = new LogarithmicTimeAxisTransform(this);
+    protected transient     double                       logMin                = Double.NaN;
+    protected transient     double                       logMax                = Double.NaN;
+    protected transient     AxisTransform                axisTransform         = linearTransform;
+    protected               boolean                      isUpdating;
 
     private final transient BooleanProperty forceZeroInRange = new SimpleBooleanProperty(this, "forceZeroInRange", false) {
         @Override
@@ -220,11 +221,23 @@ public class JISADefaultAxis extends AbstractAxis implements Axis {
     }
 
     public void recordLogValues(final double... values) {
-        logValues.addAll(Arrays.stream(values).filter(v -> v > 0).boxed().collect(Collectors.toList()));
+
+        double max = Arrays.stream(values).map(Math::abs).max().orElse(0.0);
+        double min = Arrays.stream(values).map(Math::abs).min().orElse(0.0);
+
+        if (max > 0.0 && (max > logMax || Double.isNaN(logMax))) {
+            logMax = max;
+        }
+
+        if (min > 0.0 && (min < logMin || Double.isNaN(logMin))) {
+            logMin = min;
+        }
+
     }
 
     public boolean clear() {
-        logValues.clear();
+        logMax = Double.NaN;
+        logMin = Double.NaN;
         return super.clear();
     }
 
@@ -430,19 +443,21 @@ public class JISADefaultAxis extends AbstractAxis implements Axis {
         }
 
         return cache.localCurrentLowerBound + (displayPosition - cache.localOffset) / cache.localScale;
+
     }
 
     @Override
     protected AxisRange autoRange(final double minValue, final double maxValue, final double length, final double labelSize) {
 
-        final double min          = isLogAxis ? logValues.stream().mapToDouble(axisTransform::forward).min().orElse(1) : (minValue > 0 && isForceZeroInRange() ? 0 : minValue);
-        final double max          = isLogAxis ? logValues.stream().mapToDouble(axisTransform::forward).max().orElse(10) : (maxValue < 0 && isForceZeroInRange() ? 0 : maxValue);
+        final double min          = isLogAxis ? (Double.isNaN(logMin) ? 1  : logMin) : (minValue > 0 && isForceZeroInRange() ? 0 : minValue);
+        final double max          = isLogAxis ? (Double.isNaN(logMax) ? 10 : logMax) : (maxValue < 0 && isForceZeroInRange() ? 0 : maxValue);
         final double padding      = JISADefaultAxis.getEffectiveRange(min, max) * getAutoRangePadding();
         final double paddingScale = 1.0 + getAutoRangePadding();
         final double paddedMin    = isLogAxis ? minValue / paddingScale : clampBoundToZero(min - padding, min);
         final double paddedMax    = isLogAxis ? maxValue * paddingScale : clampBoundToZero(max + padding, max);
 
         return computeRange(paddedMin, paddedMax, length, labelSize);
+
     }
 
     @Override

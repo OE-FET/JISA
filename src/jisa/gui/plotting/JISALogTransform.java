@@ -71,7 +71,7 @@ public class JISALogTransform extends AbstractAxisTransform {
 
     protected double log(final double value) {
 
-        if (value <= 0) {
+        if (value == 0) {
             return getMinimumRange();
         }
 
@@ -116,9 +116,11 @@ public class JISALogTransform extends AbstractAxisTransform {
 
     @Override
     public void setMinimumRange(final double val) {
+
         if (val <= 0) {
             return;
         }
+
         axis.minProperty().set(val);
     }
 

@@ -5,6 +5,7 @@ import de.gsi.chart.XYChart;
 import de.gsi.chart.axes.Axis;
 import de.gsi.chart.axes.spi.DefaultNumericAxis;
 import de.gsi.chart.axes.spi.TickMark;
+import de.gsi.chart.axes.spi.format.DefaultTimeFormatter;
 import de.gsi.chart.plugins.Zoomer;
 import de.gsi.chart.ui.geometry.Side;
 import de.gsi.dataset.DataSet;
@@ -29,6 +30,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -306,34 +311,122 @@ public class Plot extends JFXElement implements Element, Clearable {
         GUI.runNow(series::clear);
     }
 
-    public void setXAxisLogarithmic(boolean flag, double base) {
-        GUI.runNow(() -> {
-            xAxis.setLogarithmBase(base);
-            xAxis.setLogAxis(flag);
-        });
+    public void setXAxisType(AxisType type) {
+
+        switch (type) {
+
+            case LINEAR:
+
+                GUI.runNow(() -> {
+                    xAxis.setLogAxis(false);
+                    xAxis.setTimeAxis(false);
+                    xAxis.setAutoUnitScaling(JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
+                });
+
+                break;
+
+            case LOGARITHMIC:
+
+                GUI.runNow(() -> {
+                    xAxis.setLogAxis(true);
+                    xAxis.setTimeAxis(false);
+                    xAxis.setAutoUnitScaling(JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
+                });
+
+                break;
+
+            case TIME:
+
+                GUI.runNow(() -> {
+                    xAxis.setLogAxis(false);
+                    xAxis.setTimeAxis(true);
+                    xAxis.setAutoUnitScaling(false);
+                    ((DefaultTimeFormatter) xAxis.getAxisLabelFormatter()).setTimeZoneOffset(ZoneId.systemDefault().getRules().getOffset(Instant.now()));
+                });
+
+                break;
+
+        }
+
     }
 
-    public void setXAxisLogarithmic(boolean flag) {
-        setXAxisLogarithmic(flag, 10);
+    public void setYAxisType(AxisType type) {
+
+        switch (type) {
+
+            case LINEAR:
+
+                GUI.runNow(() -> {
+                    yAxis.setLogAxis(false);
+                    yAxis.setTimeAxis(false);
+                    yAxis.setAutoUnitScaling(JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
+                });
+
+                break;
+
+            case LOGARITHMIC:
+
+                GUI.runNow(() -> {
+                    yAxis.setLogAxis(true);
+                    yAxis.setTimeAxis(false);
+                    yAxis.setAutoUnitScaling(JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
+                });
+
+                break;
+
+            case TIME:
+
+                GUI.runNow(() -> {
+                    yAxis.setLogAxis(false);
+                    yAxis.setTimeAxis(true);
+                    yAxis.setAutoUnitScaling(false);
+                    ((DefaultTimeFormatter) yAxis.getAxisLabelFormatter()).setTimeZoneOffset(ZoneId.systemDefault().getRules().getOffset(Instant.now()));
+                });
+
+                break;
+
+        }
+
     }
 
-    public boolean isXAxisLogarithmic() {
-        return xAxis.isLogAxis();
+    public AxisType getXAxisType() {
+
+        if (xAxis.isLogAxis()) {
+            return AxisType.LOGARITHMIC;
+        } else if (xAxis.isTimeAxis()) {
+            return AxisType.TIME;
+        } else {
+            return AxisType.LINEAR;
+        }
+
     }
 
-    public void setYAxisLogarithmic(boolean flag, double base) {
-        GUI.runNow(() -> {
-            yAxis.setLogarithmBase(base);
-            yAxis.setLogAxis(flag);
-        });
+    public AxisType getYAxisType() {
+
+        if (yAxis.isLogAxis()) {
+            return AxisType.LOGARITHMIC;
+        } else if (yAxis.isTimeAxis()) {
+            return AxisType.TIME;
+        } else {
+            return AxisType.LINEAR;
+        }
+
     }
 
-    public void setYAxisLogarithmic(boolean flag) {
-        setYAxisLogarithmic(flag, 10);
+    public void setXAxisLogarithmBase(double base) {
+        GUI.runNow(() -> xAxis.setLogarithmBase(base));
     }
 
-    public boolean isYAxisLogarithmic() {
-        return yAxis.isLogAxis();
+    public void setYAxisLogarithmBase(double base) {
+        GUI.runNow(() -> yAxis.setLogarithmBase(base));
+    }
+
+    public double getXAxisLogarithmBase() {
+        return xAxis.getLogarithmBase();
+    }
+
+    public double getYAxisLogarithmBase() {
+        return yAxis.getLogarithmBase();
     }
 
     /**
@@ -435,6 +528,8 @@ public class Plot extends JFXElement implements Element, Clearable {
         plot.series.addAll(this.series);
         plot.setLegendVisible(isLegendVisible());
         plot.setMouseEnabled(isMouseEnabled());
+        plot.setXAxisType(getXAxisType());
+        plot.setYAxisType(getYAxisType());
         plot.setWindowSize(getWindowWidth(), getWindowHeight());
         plot.setMinHeight(getMinHeight());
         plot.setMaxHeight(getMaxHeight());
@@ -916,6 +1011,12 @@ public class Plot extends JFXElement implements Element, Clearable {
 
         stream.close();
 
+    }
+
+    public enum AxisType {
+        LINEAR,
+        LOGARITHMIC,
+        TIME
     }
 
 }

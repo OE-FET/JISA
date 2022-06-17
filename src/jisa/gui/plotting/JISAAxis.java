@@ -14,8 +14,8 @@ public class JISAAxis extends JISADefaultAxis {
 
     protected AxisRange autoRange(double minValue, double maxValue, double length, double labelSize) {
 
-        final double min          = isLogAxis ? logValues.stream().mapToDouble(v -> v).min().orElse(1) : (minValue > 0 && isForceZeroInRange() ? 0 : minValue);
-        final double max          = isLogAxis ? logValues.stream().mapToDouble(v -> v).max().orElse(10) : (maxValue < 0 && isForceZeroInRange() ? 0 : maxValue);
+        final double min          = isLogAxis ? (Double.isNaN(logMin) ? 1  : logMin) : (minValue > 0 && isForceZeroInRange() ? 0 : minValue);
+        final double max          = isLogAxis ? (Double.isNaN(logMax) ? 10 : logMax) : (maxValue < 0 && isForceZeroInRange() ? 0 : maxValue);
         final double padding      = getEffectiveRange(min, max) * this.getAutoRangePadding();
         final double paddingScale = 1.0 + this.getAutoRangePadding();
         final double paddedMin    = isLogAxis ? min / paddingScale : min - padding;

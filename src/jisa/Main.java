@@ -26,30 +26,6 @@ public class Main {
 
         try {
 
-            Plot           plot    = new Plot("Title", "X [V]", "Y [V]");
-            Column<Double> X       = new DoubleColumn("X", "V");
-            Column<Double> Y       = new DoubleColumn("Y", "V");
-            Column<Double> Z       = new DoubleColumn("Z", "V");
-            Column<Double> E       = new DoubleColumn("E", "V");
-            ResultTable    table   = new ResultList(X, Y, Z, E);
-            Series         series1 = plot.createSeries().watch(table, X, Y).setMarkerShape(Series.Shape.CIRCLE).setLineVisible(false);
-            Series         series2 = plot.createSeries().watch(table, X, Z).setMarkerShape(Series.Shape.PLUS).setLineVisible(false);
-            plot.setMouseEnabled(true);
-
-
-            plot.addSaveButton("Save");
-            plot.show();
-            plot.setExitOnClose(true);
-
-            Random rand = new Random();
-
-
-            for (double x = 1; x <= 50; x += 5) {table.addData(x, rand.nextDouble() - 0.5, rand.nextDouble() + 10.0, rand.nextDouble());}
-
-
-            System.in.read();
-
-
             Doc doc = new Doc("Help");
 
             doc.addImage(Main.class.getResource("gui/images/jisa.png")).setAlignment(Doc.Align.CENTRE);
@@ -67,7 +43,15 @@ public class Main {
             while (true) {
 
                 // Ask the user if they want to perform a test
-                int result = GUI.choiceWindow("JISA", "JISA Library - William Wood - 2018-2020", "What would you like to do?", "Scan for Instruments", "Enter Address Manually", "Help", "Exit");
+                int result = GUI.choiceWindow(
+                    "JISA",
+                    "JISA Library - William Wood - 2018-2020",
+                    "What would you like to do?",
+                    "Scan for Instruments",
+                    "Enter Address Manually",
+                    "Help",
+                    "Exit"
+                );
 
                 switch (result) {
 

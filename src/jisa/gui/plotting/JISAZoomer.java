@@ -341,11 +341,7 @@ public class JISAZoomer extends ChartPlugin {
         zoomOut.setPadding(new Insets(3.0, 3.0, 3.0, 3.0));
         zoomOut.setTooltip(new Tooltip("zooms to origin and enables auto-ranging"));
 
-        Label buttonLabel1 = new Label("⬌");
-        Label buttonLabel2 = new Label("⬍");
-        StackPane graphic = new StackPane(buttonLabel1, buttonLabel2);
-        graphic.setAlignment(Pos.CENTER);
-        Button zoomModeXY = new Button("", graphic);
+        Button zoomModeXY = new Button("⬌⬍");
         zoomModeXY.setMinWidth(25);
         zoomModeXY.setPadding(new Insets(3.0, 3.0, 3.0, 3.0));
         zoomModeXY.setTooltip(new Tooltip("set zoom-mode to X & Y range (N.B. disables auto-ranging)"));
