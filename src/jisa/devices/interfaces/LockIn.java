@@ -385,6 +385,8 @@ public interface LockIn extends Instrument {
      *
      * @param factor
      *
+     * @param factor
+     *
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      * @throws InterruptedException Upon interruption error
