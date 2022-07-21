@@ -10,8 +10,11 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.text.Font;
 import jisa.gui.Colour;
 import jnr.ffi.annotations.In;
+
+import java.awt.*;
 
 public class JISAXYChart extends XYChart {
 
@@ -37,4 +40,8 @@ public class JISAXYChart extends XYChart {
         redrawCanvas();
     }
 
+    public void removeTitle() {
+        titleLabel.setVisible(false);
+        titleLabel.setPadding(Insets.EMPTY);
+    }
 }
