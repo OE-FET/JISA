@@ -3,6 +3,7 @@ package jisa;
 import javafx.application.Platform;
 import jisa.addresses.*;
 import jisa.control.RTask;
+import jisa.devices.function_generator.K3390;
 import jisa.devices.temperature.ITC503;
 import jisa.gui.*;
 import jisa.maths.fits.Fitting;
@@ -25,6 +26,8 @@ public class Main {
     public static void main(String[] args) {
 
         try {
+
+            //K3390 fgen = new K3390(new USBAddress(0x05E6, 0x3390, "1242550"));
 
             Doc doc = new Doc("Help");
 
@@ -58,6 +61,7 @@ public class Main {
                     case CHOICE_SCAN:
 
                         Address address = GUI.browseVISA();
+                        System.out.print(address);
 
                         if (address == null) {
                             break;

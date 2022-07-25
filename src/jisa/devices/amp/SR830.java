@@ -19,6 +19,7 @@ public class SR830 extends VISADevice implements DPLockIn {
         return "Stanford Research Systems SR830";
     }
 
+    private static final String C_RESET              = "*RST";
     private static final String C_QUERY_FREQ         = "FREQ?";
     private static final String C_SET_FREQ           = "FREQ %f";
     private static final String C_QUERY_PHASE        = "PHAS?";
@@ -83,7 +84,12 @@ public class SR830 extends VISADevice implements DPLockIn {
             throw new DeviceException("Device at address %s is not responding!", address.toString());
         }
 
+        reset();
 
+    }
+
+    public void reset() throws IOException {
+        write(C_RESET);
     }
 
     @Override
@@ -404,6 +410,16 @@ public class SR830 extends VISADevice implements DPLockIn {
         Thread.sleep(500);
         setTimeConstant(timeConst);
 
+    }
+
+    /**
+     * Alternative implementation of the auto range function using the default auto gain function.
+     */
+    public void autoGain() throws IOException, InterruptedException {
+        write("AGAN");
+        Thread.sleep(500);
+        while (queryInt("*STB? 1") == 0)
+            Thread.sleep(500);
     }
 
     private boolean isWorking() throws IOException {
