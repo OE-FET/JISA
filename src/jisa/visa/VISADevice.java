@@ -6,8 +6,10 @@ import jisa.devices.interfaces.Instrument;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.*;
 
 /**
  * Generic instrument encapsulation via VISA
@@ -58,6 +60,13 @@ public class VISADevice implements Instrument {
     private       int          retryCount     = 3;
     private       int          timeout        = 2000;
 
+    // logging utilities
+    private Logger logger = null;
+    private StreamHandler loggerHandler = null;
+    private boolean loggerEnabled = false;
+
+
+
     public VISADevice(Address address) throws IOException {
 
         this(address, null);
@@ -87,6 +96,64 @@ public class VISADevice implements Instrument {
         // Keep a weak reference to this
         opened.add(new WeakReference<>(this));
 
+    }
+
+    /**
+     * Enable the logging functions for the device. The driver will log all the commands sent out and all the
+     * readings received. Once enabled, the logging cannot be disabled (for now).
+     *
+     * @param loggerName Name of the logger. It should be distinct from other loggers and ideally shorter than
+     *                   15 characters. If the name given is null, the class name will be used as a default.
+     * @param logFileName Name of the file where the log will be written. If the name is null, the log will be printed
+     *                    to the terminal.
+     */
+    public void enableLogger(String loggerName, String logFileName) {
+        loggerEnabled = true;
+        if (loggerName == null)
+        {
+            loggerName = this.getClass().getName();
+        }
+        logger = Logger.getLogger(loggerName);
+        logger.setUseParentHandlers(false);
+        if (logFileName == null)
+        {
+            loggerHandler = new ConsoleHandler();
+            loggerHandler.setLevel(Level.INFO);
+        }
+        else
+        {
+            try {
+                loggerHandler = new FileHandler(logFileName);
+                loggerHandler.setLevel(Level.INFO);
+            } catch (IOException e){
+                System.out.print("Logger file handler initialization failed!");
+                loggerEnabled = false;
+                return;
+            }
+        }
+        logger.addHandler(loggerHandler);
+        loggerHandler.setFormatter(new CustomLoggerFormatter());
+        logger.log(Level.INFO, "Logger enabled");
+    }
+
+    /**
+     * Check if the logger is enabled.
+     * @return true if the logger is enabled.
+     */
+    public boolean isLoggerEnabled()
+    {
+        return loggerEnabled;
+    }
+
+    /**
+     * Add a new log entry. Safe to call even if the logger is not enabled. In this case, the function will do nothing.
+     * @param level level of the log entry
+     * @param message message of the log entry
+     */
+    public void addLog(Level level, String message)
+    {
+        if (loggerEnabled)
+            logger.log(level, message);
     }
 
     public synchronized void clearBuffers() throws IOException {
@@ -266,6 +333,8 @@ public class VISADevice implements Instrument {
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
+        if (loggerEnabled)
+            logger.log(Level.INFO, "write: " + commandParsed);
 
     }
 
@@ -328,6 +397,9 @@ public class VISADevice implements Instrument {
             }
 
         }
+
+        if (loggerEnabled)
+            logger.log(Level.INFO, "read:  " + lastRead);
 
         return lastRead;
 
@@ -434,6 +506,22 @@ public class VISADevice implements Instrument {
             throw new IOException(e.getMessage());
         }
 
+    }
+
+    private static class CustomLoggerFormatter extends SimpleFormatter
+    {
+        // formatter for the optional logging functionality.
+        private static final String format = "[%1$tF %1$tT] [%2$-7s] [%3$-15.15s] %4$s %n";
+
+        @Override
+        public synchronized String format(LogRecord lr) {
+            return String.format(format,
+                    new Date(lr.getMillis()),
+                    lr.getLevel().getLocalizedName(),
+                    lr.getLoggerName(),
+                    lr.getMessage()
+            );
+        }
     }
 
 }

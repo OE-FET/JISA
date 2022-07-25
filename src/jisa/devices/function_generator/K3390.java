@@ -180,8 +180,8 @@ public class K3390 extends VISADevice implements FunctionGenerator {
         reset();
         try {
             String[] idn = query("*IDN?").split(",");
-            if (!idn[1].trim().equals("K3390")) {
-                throw new DeviceException("Device at address %s is not an SR830!", address.toString());
+            if (!idn[1].trim().equals("3390")) {
+                throw new DeviceException("Device at address %s is not an K3390!", address.toString());
             }
         } catch (IOException e) {
             throw new DeviceException("Device at address %s is not responding!", address.toString());

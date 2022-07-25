@@ -11,6 +11,7 @@ import jisa.visa.VISADevice;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class SR830 extends VISADevice implements DPLockIn {
@@ -152,7 +153,8 @@ public class SR830 extends VISADevice implements DPLockIn {
     }
 
     public DataPacket getAll() throws IOException {
-        return new DataPacket(query(C_QUERY_ALL));
+        String data = query(C_QUERY_ALL);
+        return new DataPacket(data);
     }
 
     @Override
@@ -417,9 +419,16 @@ public class SR830 extends VISADevice implements DPLockIn {
      */
     public void autoGain() throws IOException, InterruptedException {
         write("AGAN");
-        Thread.sleep(500);
-        while (queryInt("*STB? 1") == 0)
-            Thread.sleep(500);
+        Thread.sleep(1000);
+        /*
+         The best way to check if the device is ready is to do serial polling.
+         However, this might require some special implementation...
+         For the current serial interface, only one command is processed at a time, so we shall just wait till we
+         can read something back, and this will make sure that we have waited for a long enough period of time for
+         the auto gain command to be completed.
+         */
+        write("*STB? 1");
+        read(1000);
     }
 
     private boolean isWorking() throws IOException {
@@ -857,7 +866,12 @@ public class SR830 extends VISADevice implements DPLockIn {
         }
 
         public DataPacket(String data) {
-
+            // sometimes, the string received contains two lines, and there is some stray character in the second line.
+            // just to be safe, some trimming is done here!
+            if (data.contains("\r"))
+                data = data.substring(0, data.indexOf("\r"));
+            if (data.contains("\n"))
+                data = data.substring(0, data.indexOf("\n"));
             String[] raw = data.split(",");
 
             x = Double.parseDouble(raw[0]);
