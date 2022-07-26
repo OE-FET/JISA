@@ -22,6 +22,7 @@ public class RawTCPIPDriver implements Driver {
         if (addr == null) {
             throw new VISAException("Raw TCP-IP driver can only be used to open raw TCP-IP sockets!");
         }
+
         try {
             Socket socket = new Socket(InetAddress.getByName(addr.getHost()), addr.getPort());
             socket.setSoTimeout(2000);
@@ -44,10 +45,10 @@ public class RawTCPIPDriver implements Driver {
 
     public static class TCPIPConnection implements Connection {
 
-        private Socket       socket;
-        private OutputStream out;
-        private InputStream  in;
-        private byte[]       terminationSequence;
+        private final Socket       socket;
+        private final OutputStream out;
+        private final InputStream  in;
+        private       byte[]       terminationSequence;
 
         public TCPIPConnection(Socket tcpipSocket) throws IOException {
             socket = tcpipSocket;

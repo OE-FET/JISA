@@ -328,7 +328,7 @@ public class GUI extends Application {
             File start = new File(startPath);
 
             if (start.exists()) {
-                FILE_CHOOSER.setInitialDirectory(start);
+                FILE_CHOOSER.setInitialDirectory(start.isDirectory() ? start : start.getParentFile());
             }
 
         }

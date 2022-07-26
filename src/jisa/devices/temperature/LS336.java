@@ -1,29 +1,20 @@
 package jisa.devices.temperature;
 
-import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.MSMOTC;
-import jisa.devices.interfaces.TCouple;
-import jisa.visa.Connection.Flow;
-import jisa.visa.Connection.Parity;
-import jisa.visa.Connection.StopBits;
+import jisa.devices.interfaces.TC;
+import jisa.visa.Connection;
 import jisa.visa.RawTCPIPDriver;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 
-/**
- * Class for controlling Lake Shore Model 336 temperature controllers.
- * <p>
- * They are generally annoying with a shoddy communications implementation. Hooray!
- */
-public class LS336 extends VISADevice implements MSMOTC {
+public class LS336 extends VISADevice implements TC {
 
     private static final String[]        CHANNELS             = {"A", "B", "C", "D"};
     private static final String          C_QUERY_SENSOR       = "KRDG? %s";
@@ -48,12 +39,26 @@ public class LS336 extends VISADevice implements MSMOTC {
     private final        boolean[]       autoPID              = {false, false};
     private final        Zone[][]        zones                = new Zone[2][0];
 
+    private final List<Thermometer> thermometers = List.of(
+        new Thermometer("A", 1),
+        new Thermometer("B", 2),
+        new Thermometer("C", 3),
+        new Thermometer("D", 4)
+    );
+
+    private final List<Heater> heaters = List.of(
+        new Heater(1),
+        new Heater(2)
+    );
+
+    private final List<Loop> loops = heaters.stream().map(Loop::new).collect(Collectors.toUnmodifiableList());
+
     public LS336(Address address) throws IOException, DeviceException {
 
         super(address, RawTCPIPDriver.class);
 
         if (address.getType() == Address.Type.SERIAL) {
-            setSerialParameters(57600, 7, Parity.ODD, StopBits.ONE, Flow.NONE);
+            setSerialParameters(57600, 7, Connection.Parity.ODD, Connection.StopBits.ONE, Connection.Flow.NONE);
         }
 
         setReadTerminator(LF_TERMINATOR);
@@ -77,283 +82,310 @@ public class LS336 extends VISADevice implements MSMOTC {
 
     }
 
-    public static String getDescription() {
-        return "LakeShore 336";
-    }
+    public class Thermometer implements TC.Thermometer {
 
-    public synchronized void write(String command, Object... args) throws IOException {
+        private final String name;
+        private final int    number;
 
-        // Can only write to the device if we have waited enough time since the last write (50 ms)
-        try {
-            timingControl.acquire();
-        } catch (InterruptedException ignored) {
+        private Thermometer(String name, int number) {
+            this.name   = name;
+            this.number = number;
         }
 
-        try {
-
-            super.write(command, args);
-
-        } finally {
-
-            // Do not allow another write until 50 ms from now.
-            timingService.submit(() -> {
-                Util.sleep(50);
-                timingControl.release();
-            });
-
+        public String getLetter() {
+            return name;
         }
 
-    }
-
-    @Override
-    public double getTemperature(int sensor) throws IOException, DeviceException {
-        checkSensor(sensor);
-        return queryDouble(C_QUERY_SENSOR, CHANNELS[sensor]);
-    }
-
-    @Override
-    public int getNumSensors() {
-        return 4;
-    }
-
-    @Override
-    public String getSensorName(int sensorNumber) {
-
-        try {
-            checkSensor(sensorNumber);
-            return String.format("%s (%s)", CHANNELS[sensorNumber], query("INNAME? %s", CHANNELS[sensorNumber]).trim());
-        } catch (Exception e) {
-            return "Unknown Sensor";
+        public int getNumber() {
+            return number;
         }
 
-    }
+        @Override
+        public String getIDN() throws IOException, DeviceException {
+            return LS336.this.getIDN();
+        }
 
-    @Override
-    public void setTemperatureRange(int sensor, double range) throws DeviceException {
-        checkSensor(sensor);
-        // No range options
-    }
+        @Override
+        public Address getAddress() {
+            return LS336.this.getAddress();
+        }
 
-    @Override
-    public double getTemperatureRange(int sensor) throws DeviceException {
-        checkSensor(sensor);
-        return 999.999;
-    }
+        @Override
+        public String getName() {
+            try {
+                return String.format("%s (%s)", name, query("INNAME? %s", name).trim());
+            } catch (IOException e) {
+                return String.format("%s (%s)", name, "Name Unknown");
+            }
+        }
 
-    @Override
-    public int getNumOutputs() {
-        return 2;
-    }
+        @Override
+        public String getSensorName() {
+            return getName();
+        }
 
-    @Override
-    public String getOutputName(int outputNumber) {
-        return String.format("Output %d", outputNumber + 1);
-    }
+        @Override
+        public double getTemperature() throws IOException, DeviceException {
+            return queryDouble(C_QUERY_SENSOR, name);
+        }
 
-    private OutMode getOutMode(int output) throws IOException {
-        return new OutMode(query(C_QUERY_OUT_MODE, output + 1));
-    }
+        @Override
+        public void setTemperatureRange(double range) throws IOException, DeviceException {
+            // No range options
+        }
 
-    private PID getPID(int output) throws IOException {
-        return new PID(query(C_QUERY_PID, output + 1));
-    }
-
-    @Override
-    public void useSensor(int output, int sensor) throws IOException, DeviceException {
-        checkOutput(output);
-        checkSensor(sensor);
-        OutMode mode = getOutMode(output);
-        mode.input = sensor + 1;
-        write(C_SET_OUT_MODE, output + 1, mode.mode, mode.input, mode.powerUp ? 1 : 0);
-    }
-
-    @Override
-    public int getUsedSensor(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return getOutMode(output).input - 1;
-    }
-
-    @Override
-    public void setPValue(int output, double value) throws IOException, DeviceException {
-        checkOutput(output);
-        PID pid = getPID(output);
-        setPID(output, value, pid.iValue, pid.dValue);
-    }
-
-    @Override
-    public void setIValue(int output, double value) throws IOException, DeviceException {
-        checkOutput(output);
-        PID pid = getPID(output);
-        setPID(output, pid.pValue, value, pid.dValue);
-    }
-
-    @Override
-    public void setDValue(int output, double value) throws IOException, DeviceException {
-        checkOutput(output);
-        PID pid = getPID(output);
-        setPID(output, pid.pValue, pid.iValue, value);
-    }
-
-    private void setPID(int output, double P, double I, double D) throws IOException {
-        write(C_SET_PID, output + 1, P, I, D);
-    }
-
-    @Override
-    public double getPValue(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return getPID(output).pValue;
-    }
-
-    @Override
-    public double getIValue(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return getPID(output).iValue;
-    }
-
-    @Override
-    public double getDValue(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return getPID(output).dValue;
-    }
-
-    @Override
-    public void useAutoPID(int output, boolean flag) throws DeviceException, IOException {
-        checkOutput(output);
-        autoPID[output] = flag;
-        updateAutoPID(output);
-    }
-
-    @Override
-    public boolean isUsingAutoPID(int output) throws DeviceException {
-        checkOutput(output);
-        return autoPID[output];
-    }
-
-    @Override
-    public List<Zone> getAutoPIDZones(int output) throws DeviceException {
-        checkOutput(output);
-        return Arrays.asList(zones[output]);
-    }
-
-    @Override
-    public void setAutoPIDZones(int output, Zone... zones) throws IOException, DeviceException {
-        checkOutput(output);
-        this.zones[output] = zones;
-        updateAutoPID(output);
-    }
-
-    @Override
-    public void setHeaterRange(int output, double range) throws IOException, DeviceException {
-        checkOutput(output);
-        write(C_SET_HEATER_RANGE, output + 1, HRange.fromDouble(range).ordinal());
-    }
-
-    @Override
-    public double getHeaterRange(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return HRange.values()[queryInt(C_QUERY_HEATER_RANGE, output + 1)].getPCT();
-    }
-
-    @Override
-    public void setTargetTemperature(int output, double temperature) throws IOException, DeviceException {
-        checkOutput(output);
-        write(C_SET_SET_POINT, output + 1, temperature);
-        updateAutoPID(output);
-    }
-
-    @Override
-    public double getTargetTemperature(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return queryDouble(C_QUERY_SET_POINT, output + 1);
-    }
-
-    @Override
-    public void setTemperatureRampRate(int output, double kPerMin) throws IOException, DeviceException {
-
-        checkOutput(output);
-
-        if (kPerMin == 0) {
-            write(C_SET_RAMP, output + 1, 0, 0.0);
-        } else {
-            write(C_SET_RAMP, output + 1, 1, Math.abs(kPerMin));
+        @Override
+        public double getTemperatureRange() throws IOException, DeviceException {
+            return 999.999;
         }
 
     }
 
-    @Override
-    public double getTemperatureRampRate(int output) throws IOException, DeviceException {
+    public class Heater implements TC.Heater {
 
-        checkOutput(output);
+        private final int number;
 
-        String[] response = query(C_QUERY_RAMP, output + 1).split(",");
+        private Heater(int number) {
+            this.number = number;
+        }
 
-        if (response[0].equals("0")) {
-            return 0.0;
-        } else {
-            return Double.parseDouble(response[1]);
+        public int getNumber() {
+            return number;
+        }
+
+        @Override
+        public String getIDN() throws IOException, DeviceException {
+            return LS336.this.getIDN();
+        }
+
+        @Override
+        public Address getAddress() {
+            return LS336.this.getAddress();
+        }
+
+        @Override
+        public double getValue() throws IOException, DeviceException {
+            return queryDouble(C_QUERY_HEATER, number);
+        }
+
+        @Override
+        public double getLimit() throws IOException {
+            return HRange.values()[queryInt(C_QUERY_HEATER_RANGE, number)].getPCT();
+        }
+
+        @Override
+        public void setLimit(double range) throws IOException {
+            write(C_SET_HEATER_RANGE, number, HRange.fromDouble(range).ordinal());
+        }
+
+        @Override
+        public String getName() {
+            return String.format("Heater %d", number);
+        }
+
+    }
+
+    public class Loop extends ZonedLoop {
+
+        private final Heater output;
+        private       double rampRate = 0.0;
+        private       double manual   = 0.0;
+
+
+        private Loop(Heater output) {
+            this.output = output;
+        }
+
+        @Override
+        public String getIDN() throws IOException, DeviceException {
+            return LS336.this.getIDN();
+        }
+
+        @Override
+        public Address getAddress() {
+            return LS336.this.getAddress();
+        }
+
+        @Override
+        public String getName() throws IOException, DeviceException {
+            return getOutput().getName();
+        }
+
+        @Override
+        public void setTemperature(double value) throws IOException, DeviceException {
+            write(C_SET_SET_POINT, getOutput().getNumber(), value);
+            updatePID(value);
+        }
+
+        @Override
+        public double getTemperature() throws IOException, DeviceException {
+            return queryDouble(C_QUERY_SET_POINT, getOutput().getNumber());
+        }
+
+        @Override
+        public void setRampEnabled(boolean flag) throws IOException, DeviceException {
+            write(C_SET_RAMP, getOutput().getNumber(), flag ? 1 : 0, flag ? rampRate : 0.0);
+        }
+
+        @Override
+        public boolean isRampEnabled() throws IOException, DeviceException {
+            String[] response = query(C_QUERY_RAMP, getOutput().getNumber()).split(",");
+            return response[0].trim().equals("1");
+        }
+
+        @Override
+        public void setRampRate(double limit) throws IOException, DeviceException {
+            rampRate = Math.abs(limit);
+            boolean enabled = isRampEnabled();
+            write(C_SET_RAMP, getOutput().getNumber(), enabled, enabled ? rampRate : 0.0);
+        }
+
+        @Override
+        public double getRampRate() {
+            return rampRate;
+        }
+
+        @Override
+        public double getPValue() throws IOException, DeviceException {
+            return getPID().pValue;
+        }
+
+        @Override
+        public double getIValue() throws IOException, DeviceException {
+            return getPID().iValue;
+        }
+
+        @Override
+        public double getDValue() throws IOException, DeviceException {
+            return getPID().dValue;
+        }
+
+        public PIDValue getPID() throws IOException, DeviceException {
+            return new PIDValue(query(C_QUERY_PID, getOutput().getNumber()));
+        }
+
+        @Override
+        public void setPValue(double value) throws IOException, DeviceException {
+            PIDValue pid = getPID();
+            setPIDValues(value, pid.iValue, pid.dValue);
+        }
+
+        @Override
+        public void setIValue(double value) throws IOException, DeviceException {
+            PIDValue pid = getPID();
+            setPIDValues(pid.pValue, value, pid.dValue);
+        }
+
+        @Override
+        public void setDValue(double value) throws IOException, DeviceException {
+            PIDValue pid = getPID();
+            setPIDValues(pid.pValue, pid.iValue, value);
+        }
+
+        public void setPIDValues(double p, double i, double d) throws IOException, DeviceException {
+            write(C_SET_PID, getOutput().getNumber(), p, i, d);
+        }
+
+        private OutMode getOutMode() throws IOException, DeviceException {
+            return new OutMode(query(C_QUERY_OUT_MODE, getOutput().getNumber()));
+        }
+
+        @Override
+        public Thermometer getInput() throws IOException, DeviceException {
+            int number = getOutMode().input;
+            return thermometers.stream().filter(i -> i.getNumber() == number).findFirst().orElse(null);
+        }
+
+        @Override
+        public Heater getOutput() throws IOException, DeviceException {
+            return output;
+        }
+
+        @Override
+        public void setInput(Input input) throws IOException, DeviceException {
+
+            if (!getAvailableInputs().contains(input)) {
+                throw new DeviceException("That input cannot be used for this PID loop.");
+            }
+
+            Thermometer tm = (Thermometer) input;
+
+            OutMode mode = getOutMode();
+            mode.input = tm.number;
+            write(C_SET_OUT_MODE, getOutput().getNumber(), mode.mode, mode.input, mode.powerUp ? 1 : 0);
+
+        }
+
+        @Override
+        public void setOutput(Output output) {
+            // Nothing to set
+        }
+
+        @Override
+        public List<? extends Output> getAvailableOutputs() {
+            return List.of(output);
+        }
+
+        @Override
+        public List<? extends Input> getAvailableInputs() {
+            return thermometers;
+        }
+
+        @Override
+        public void setManualValue(double value) throws IOException {
+
+            manual = value;
+
+            if (!isPIDEnabled()) {
+                write(C_SET_HEATER, output.getNumber(), manual);
+            }
+
+        }
+
+        @Override
+        public double getManualValue() {
+            return manual;
+        }
+
+        @Override
+        public void setPIDEnabled(boolean flag) throws IOException {
+
+            if (flag) {
+                write(C_SET_HEATER, output.getNumber(), 0.0);
+            } else {
+                write(C_SET_HEATER, output.getNumber(), manual);
+            }
+
+        }
+
+        @Override
+        public boolean isPIDEnabled() throws IOException {
+            return queryDouble(C_QUERY_M_HEATER, output.getNumber()) == 0.0;
         }
 
     }
 
     @Override
-    public double getHeaterPower(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return queryDouble(C_QUERY_HEATER, output + 1);
+    public List<Thermometer> getInputs() {
+        return thermometers;
+    }
+
+    public List<Thermometer> getThermometers() {
+        return getInputs();
     }
 
     @Override
-    public double getFlow(int output) {
-        Util.errLog.println("LakeShore 336 does not control gas flow.");
-        return 0;
+    public List<Heater> getOutputs() {
+        return heaters;
+    }
+
+    public List<Heater> getHeaters() {
+        return getOutputs();
     }
 
     @Override
-    public void useAutoHeater(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        write(C_SET_HEATER, output + 1, 0.0);
-    }
-
-    @Override
-    public boolean isUsingAutoHeater(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return queryDouble(C_QUERY_M_HEATER, output + 1) == 0;
-    }
-
-    @Override
-    public void useAutoFlow(int output) {
-        Util.errLog.println("WARNING: LakeShore 336 does not control gas flow.");
-    }
-
-    @Override
-    public boolean isUsingAutoFlow(int output) {
-        Util.errLog.println("WARNING: LakeShore 336 does not control gas flow.");
-        return false;
-    }
-
-    @Override
-    public void setHeaterPower(int output, double powerPCT) throws IOException, DeviceException {
-        checkOutput(output);
-        write(C_SET_HEATER, output + 1, powerPCT);
-    }
-
-    @Override
-    public void setFlow(int output, double outputPCT) throws DeviceException {
-        throw new DeviceException("LS336 does not control gas flow.");
-    }
-
-    @Override
-    public String getOutputName() {
-        return null;
-    }
-
-    @Override
-    public String getSensorName() {
-
-        try {
-            return getSensorName(getUsedSensor());
-        } catch (Exception e) {
-            return "Unknown Sensor";
-        }
+    public List<Loop> getLoops() {
+        return loops;
     }
 
     private enum HRange {
@@ -390,6 +422,22 @@ public class LS336 extends VISADevice implements MSMOTC {
 
     }
 
+    private static class PIDValue {
+
+        public final double pValue;
+        public final double iValue;
+        public final double dValue;
+
+        public PIDValue(String response) {
+
+            String[] vals = response.trim().split(",");
+            pValue = Double.parseDouble(vals[0].trim());
+            iValue = Double.parseDouble(vals[1].trim());
+            dValue = Double.parseDouble(vals[2].trim());
+
+        }
+    }
+
     private static class OutMode {
 
         public int     mode;
@@ -406,22 +454,6 @@ public class LS336 extends VISADevice implements MSMOTC {
 
         }
 
-    }
-
-    private static class PID {
-
-        public final double pValue;
-        public final double iValue;
-        public final double dValue;
-
-        public PID(String response) {
-
-            String[] vals = response.trim().split(",");
-            pValue = Double.parseDouble(vals[0].trim());
-            iValue = Double.parseDouble(vals[1].trim());
-            dValue = Double.parseDouble(vals[2].trim());
-
-        }
     }
 
 }

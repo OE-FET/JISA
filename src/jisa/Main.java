@@ -1,19 +1,17 @@
 package jisa;
 
 import javafx.application.Platform;
-import jisa.addresses.*;
-import jisa.control.RTask;
-import jisa.devices.temperature.ITC503;
-import jisa.gui.*;
-import jisa.maths.fits.Fitting;
-import jisa.results.Column;
-import jisa.results.DoubleColumn;
-import jisa.results.ResultList;
-import jisa.results.ResultTable;
+import jisa.addresses.Address;
+import jisa.addresses.GPIBAddress;
+import jisa.addresses.StrAddress;
+import jisa.devices.interfaces.TC;
+import jisa.devices.temperature.MercuryITC;
+import jisa.gui.DeviceShell;
+import jisa.gui.Doc;
+import jisa.gui.GUI;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Random;
 
 public class Main {
 

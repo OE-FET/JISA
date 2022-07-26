@@ -1,13 +1,16 @@
 package jisa.devices.relay;
 
-import jisa.addresses.Address;
 import jisa.Util;
+import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MSwitch;
+import jisa.devices.interfaces.Switch;
 import jisa.visa.Connection;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ADRelay extends VISADevice implements MSwitch {
 
@@ -22,6 +25,7 @@ public class ADRelay extends VISADevice implements MSwitch {
         super(address);
 
         setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
+        setTimeout(2000);
 
         setReadTerminator(LF_TERMINATOR);
         setWriteTerminator("\n");
@@ -61,5 +65,39 @@ public class ADRelay extends VISADevice implements MSwitch {
     @Override
     public int getNumChannels() {
         return NUM_CHANNELS;
+    }
+
+    @Override
+    public String getChannelName(int channelNumber) {
+        return String.format("Relay %d", channelNumber + 1);
+    }
+
+    @Override
+    public List<Switch> getChannels() {
+
+        int numChannels = getNumChannels();
+
+        List<Switch> list = new ArrayList<>(numChannels);
+
+        for (int cn = 0; cn < numChannels; cn++) {
+
+            try {
+                list.add(getChannel(cn));
+            } catch (DeviceException ignored) { }
+
+        }
+
+        return list;
+
+    }
+
+    @Override
+    public String getChannelName() {
+        return "All Channels";
+    }
+
+    @Override
+    public Class<Switch> getChannelClass() {
+        return Switch.class;
     }
 }

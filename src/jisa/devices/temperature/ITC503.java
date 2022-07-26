@@ -3,17 +3,15 @@ package jisa.devices.temperature;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.MSTC;
-import jisa.devices.interfaces.PID;
-import jisa.devices.interfaces.TCouple;
+import jisa.devices.interfaces.TC;
 import jisa.visa.Connection;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,45 +21,331 @@ import java.util.regex.Pattern;
  * <p>
  * VISADevice class for controlling mercury ITC503 temperature controllers.
  */
-public class ITC503 extends VISADevice implements MSTC {
+public class ITC503 extends VISADevice implements TC {
 
-    private static final String     TERMINATOR_1                  = "\r";
-    private static final String     TERMINATOR_2                  = "\n";
-    private static final String     TERMINATOR_3                  = "\r\n";
-    private static final String     C_SET_COMM_MODE               = "Q2";
-    private static final String     C_READ                        = "R%d";
-    private static final String     C_SET_MODE                    = "C%d";
-    private static final String     C_SET_TEMP                    = "T%f";
-    private static final String     C_SET_AUTO                    = "A%d";
-    private static final String     C_SET_SENSOR                  = "H%d";
-    private static final String     C_SET_AUTO_PID                = "L%d";
-    private static final String     C_SET_P                       = "P%f";
-    private static final String     C_SET_I                       = "I%f";
-    private static final String     C_SET_D                       = "D%f";
-    private static final String     C_SET_HEATER                  = "O%.01f";
-    private static final String     C_SET_FLOW                    = "G%f";
-    private static final String     C_SET_HEATER_LIM              = "M%.01f";
-    private static final String     C_QUERY_STATUS                = "X";
-    private static final int        SET_TEMP_CHANNEL              = 0;
-    private static final int        TEMP_ERROR_CHANNEL            = 4;
-    private static final int        HEATER_OP_PERC                = 5;
-    private static final int        HEATER_OP_VOLTS               = 6;
-    private static final int        GAS_OP                        = 7;
-    private static final int        PROP_BAND                     = 8;
-    private static final int        INT_ACTION_TIME               = 9;
-    private static final int        DER_ACTION_TIME               = 10;
-    private static final int        FREQ_CHAN_OFFSET              = 10;
-    private static final double     MAX_HEATER_VOLTAGE            = 40.0;
-    private static final long       STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
-    private static final int        STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
-    private static final double     STANDARD_ERROR_PERC           = 10;
-    private static final int        MIN_WRITE_INTERVAL            = 5;
-    private final        Semaphore  timingControl                 = new Semaphore(1);
-    private final        Timer      timingService                 = new Timer();
-    private              boolean    autoPID                       = false;
-    private              PID.Zone[] zones                         = new PID.Zone[0];
-    private              double     rampRate                      = 0.0;
-    private              double     setPoint                      = 0.0;
+    private static final String            TERMINATOR_1                  = "\r";
+    private static final String            TERMINATOR_2                  = "\n";
+    private static final String            TERMINATOR_3                  = "\r\n";
+    private static final String            C_SET_COMM_MODE               = "Q2";
+    private static final String            C_READ                        = "R%d";
+    private static final String            C_SET_MODE                    = "C%d";
+    private static final String            C_SET_TEMP                    = "T%f";
+    private static final String            C_SET_AUTO                    = "A%d";
+    private static final String            C_SET_SENSOR                  = "H%d";
+    private static final String            C_SET_AUTO_PID                = "L%d";
+    private static final String            C_SET_P                       = "P%f";
+    private static final String            C_SET_I                       = "I%f";
+    private static final String            C_SET_D                       = "D%f";
+    private static final String            C_SET_HEATER                  = "O%.01f";
+    private static final String            C_SET_FLOW                    = "G%f";
+    private static final String            C_SET_HEATER_LIM              = "M%.01f";
+    private static final String            C_QUERY_STATUS                = "X";
+    private static final int               SET_TEMP_CHANNEL              = 0;
+    private static final int               TEMP_ERROR_CHANNEL            = 4;
+    private static final int               HEATER_OP_PERC                = 5;
+    private static final int               HEATER_OP_VOLTS               = 6;
+    private static final int               GAS_OP                        = 7;
+    private static final int               PROP_BAND                     = 8;
+    private static final int               INT_ACTION_TIME               = 9;
+    private static final int               DER_ACTION_TIME               = 10;
+    private static final int               FREQ_CHAN_OFFSET              = 10;
+    private static final double            MAX_HEATER_VOLTAGE            = 40.0;
+    private static final long              STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
+    private static final int               STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
+    private static final double            STANDARD_ERROR_PERC           = 10;
+    private static final int               MIN_WRITE_INTERVAL            = 5;
+    private final        Semaphore         timingControl                 = new Semaphore(1);
+    private final        Timer             timingService                 = new Timer();
+    private final        List<Thermometer> thermometers                  = List.of(
+        new Thermometer(1),
+        new Thermometer(2),
+        new Thermometer(3)
+    );
+
+    @Override
+    public List<Thermometer> getInputs() {
+        return thermometers;
+    }
+
+    @Override
+    public List<Heater> getOutputs() {
+        return List.of(heater);
+    }
+
+    @Override
+    public List<Loop> getLoops() {
+        return List.of(loop);
+    }
+
+    private class Thermometer implements TC.Thermometer {
+
+        private final int number;
+
+        private Thermometer(int number) {
+            this.number = number;
+        }
+
+        public int getNumber() {
+            return number;
+        }
+
+        @Override
+        public String getIDN() throws IOException, DeviceException {
+            return ITC503.this.getIDN();
+        }
+
+        @Override
+        public Address getAddress() {
+            return ITC503.this.getAddress();
+        }
+
+        @Override
+        public String getName() {
+            return String.format("Sensor %d", number);
+        }
+
+        @Override
+        public String getSensorName() {
+            return getName();
+        }
+
+        @Override
+        public double getTemperature() throws IOException, DeviceException {
+            return readChannel(number);
+        }
+
+        @Override
+        public void setTemperatureRange(double range) throws IOException, DeviceException {
+            // No ranging options
+        }
+
+        @Override
+        public double getTemperatureRange() throws IOException, DeviceException {
+            return 999.999;
+        }
+
+    }
+
+    private final TC.Heater heater = new Heater() {
+
+        @Override
+        public String getIDN() throws IOException {
+            return ITC503.this.getIDN();
+        }
+
+        @Override
+        public Address getAddress() {
+            return ITC503.this.getAddress();
+        }
+
+        @Override
+        public double getValue() throws IOException {
+            return Math.pow(readChannel(HEATER_OP_PERC) / 100.0, 2) * 100.0;
+        }
+
+        @Override
+        public double getLimit() throws IOException {
+            return Math.pow(((readChannel(HEATER_OP_VOLTS) / (readChannel(HEATER_OP_PERC) / 100.0)) / MAX_HEATER_VOLTAGE), 2) * 100.0;
+        }
+
+        @Override
+        public void setLimit(double range) throws IOException {
+            double voltage = MAX_HEATER_VOLTAGE * Math.sqrt(range / 100.0);
+            query(C_SET_HEATER_LIM, voltage);
+        }
+
+        @Override
+        public String getName() {
+            return "ITC503 Heater Output";
+        }
+
+    };
+
+    private final ZonedLoop loop = new ZonedLoop() {
+
+        private boolean ramping = false;
+        private double rampRate = 0.0;
+        private double setPoint = 0.0;
+
+        @Override
+        public String getName() {
+            return "Main Loop";
+        }
+
+        @Override
+        public void setTemperature(double temperature) throws IOException, DeviceException {
+
+            query("S0");
+
+            if (!ramping || rampRate <= 0) {
+
+                query(C_SET_TEMP, temperature);
+                updatePID(temperature);
+
+            } else {
+
+                for (int i = 1; i <= 16; i++) {
+
+                    query("x%d", i);
+                    query("y1");
+                    query("s%f", temperature);
+                    query("y2");
+                    query("s0.0");
+                    query("y3");
+                    query("s0.0");
+
+                }
+
+                double currentTemperature = getInput().getValue();
+
+                query("x1");
+                query("y2");
+                query("s%.1f", Math.abs(temperature - currentTemperature) / Math.abs(rampRate));
+
+                query(C_SET_TEMP, currentTemperature);
+                updatePID(temperature);
+                query("S1");
+
+            }
+
+            setPoint = temperature;
+
+        }
+
+        @Override
+        public double getTemperature() throws IOException {
+            return readChannel(SET_TEMP_CHANNEL);
+        }
+
+        @Override
+        public void setRampEnabled(boolean flag) throws IOException, DeviceException {
+            ramping = flag;
+            setSetPoint(getSetPoint());
+        }
+
+        @Override
+        public boolean isRampEnabled() {
+            return ramping;
+        }
+
+        @Override
+        public void setRampRate(double limit) {
+            rampRate = limit;
+        }
+
+        @Override
+        public double getRampRate() {
+            return rampRate;
+        }
+
+        @Override
+        public double getPValue() throws IOException {
+            return readChannel(PROP_BAND);
+        }
+
+        @Override
+        public double getIValue() throws IOException {
+            return readChannel(INT_ACTION_TIME);
+        }
+
+        @Override
+        public double getDValue() throws IOException {
+            return readChannel(DER_ACTION_TIME);
+        }
+
+        @Override
+        public void setPValue(double value) throws IOException {
+            query(C_SET_P, value);
+        }
+
+        @Override
+        public void setIValue(double value) throws IOException {
+            query(C_SET_I, value);
+        }
+
+        @Override
+        public void setDValue(double value) throws IOException {
+            query(C_SET_D, value);
+        }
+
+        @Override
+        public Input getInput() throws IOException {
+            int used = getStatus().H;
+            return thermometers.stream().filter(i -> i.getNumber() == used).findFirst().orElse(thermometers.get(0));
+        }
+
+        @Override
+        public Output getOutput() {
+            return heater;
+        }
+
+        @Override
+        public void setInput(Input input) throws IOException, DeviceException {
+
+            if (input instanceof Thermometer && thermometers.contains(input)) {
+                query(C_SET_SENSOR, ((Thermometer) input).getNumber());
+            } else {
+                throw new DeviceException("That input cannot be used for this PID loop");
+            }
+
+        }
+
+        @Override
+        public void setOutput(Output output) throws DeviceException {
+
+            if (output != heater) {
+                throw new DeviceException("That output cannot be used with this PID loop");
+            }
+
+        }
+
+        @Override
+        public List<? extends Output> getAvailableOutputs() {
+            return List.of(heater);
+        }
+
+        @Override
+        public List<? extends Input> getAvailableInputs() {
+            return thermometers;
+        }
+
+        @Override
+        public String getIDN() throws IOException {
+            return ITC503.this.getIDN();
+        }
+
+        @Override
+        public Address getAddress() {
+            return ITC503.this.getAddress();
+        }
+
+        @Override
+        public void setManualValue(double value) throws IOException, DeviceException {
+
+            if (!Util.isBetween(value, 0, 100)) {
+                throw new DeviceException("Heater power must be a value between 0 and 100, %s given", value);
+            }
+
+            query(C_SET_HEATER, Math.sqrt(value / 100.0) * 100.0);
+
+        }
+
+        @Override
+        public double getManualValue() throws IOException, DeviceException {
+            return getOutput().getValue();
+        }
+
+        @Override
+        public void setPIDEnabled(boolean flag) throws IOException {
+            query(C_SET_AUTO, AutoMode.fromMode(flag, false).toInt());
+        }
+
+        @Override
+        public boolean isPIDEnabled() throws IOException {
+            return AutoMode.fromInt(getStatus().A).heaterAuto();
+        }
+
+    };
 
     /**
      * Open the ITC503 device at the given bus and address
@@ -164,7 +448,7 @@ public class ITC503 extends VISADevice implements MSTC {
                 System.out.printf("ITC503 Attempting Terminator \"%s\": ", safe.get(i++));
                 String idn = query("V");
 
-                 System.out.printf("\"%s\"... ", idn);
+                System.out.printf("\"%s\"... ", idn);
 
                 if (idn.contains("ITC503")) {
                     System.out.println("Success");
@@ -203,7 +487,9 @@ public class ITC503 extends VISADevice implements MSTC {
         try {
             super.write(command, args);
         } finally {
-            timingService.schedule(new TimerTask() { public void run() {timingControl.release();} }, MIN_WRITE_INTERVAL);
+            timingService.schedule(new TimerTask() {
+                public void run() {timingControl.release();}
+            }, MIN_WRITE_INTERVAL);
         }
 
     }
@@ -220,7 +506,9 @@ public class ITC503 extends VISADevice implements MSTC {
         try {
             return super.read(retryCount);
         } finally {
-            timingService.schedule(new TimerTask() { public void run() {timingControl.release();} }, MIN_WRITE_INTERVAL);
+            timingService.schedule(new TimerTask() {
+                public void run() {timingControl.release();}
+            }, MIN_WRITE_INTERVAL);
         }
 
     }
@@ -259,183 +547,6 @@ public class ITC503 extends VISADevice implements MSTC {
 
     }
 
-    @Override
-    public String getOutputName() {
-        return "Main Loop";
-    }
-
-    /**
-     * Returns the temperature that the ITC is currently programmed to reach.
-     *
-     * @return Target temperature
-     *
-     * @throws IOException Upon communication error
-     */
-    public double getTargetTemperature() throws IOException {
-        return readChannel(SET_TEMP_CHANNEL);
-    }
-
-    public void setTargetTemperature(double temperature) throws IOException, DeviceException {
-
-        query("S0");
-
-        if (rampRate == 0) {
-
-            query(C_SET_TEMP, temperature);
-            updateAutoPID();
-
-        } else {
-
-            for (int i = 1; i <= 16; i++) {
-
-                query("x%d", i);
-                query("y1");
-                query("s%f", temperature);
-                query("y2");
-                query("s0.0");
-                query("y3");
-                query("s0.0");
-
-            }
-
-            double currentTemperature = getTemperature();
-
-            query("x1");
-            query("y2");
-            query("s%.1f", Math.abs(temperature - currentTemperature) / Math.abs(rampRate));
-
-            query(C_SET_TEMP, currentTemperature);
-            updateAutoPID(temperature);
-            query("S1");
-
-        }
-
-        setPoint = temperature;
-
-    }
-
-    @Override
-    public double getTemperatureRampRate() throws IOException, DeviceException {
-        return rampRate;
-    }
-
-    @Override
-    public void setTemperatureRampRate(double kPerMin) throws IOException, DeviceException {
-        rampRate = kPerMin;
-    }
-
-    @Override
-    public double getHeaterPower() throws IOException {
-        return Math.pow(readChannel(HEATER_OP_PERC) / 100.0, 2) * 100.0;
-    }
-
-    @Override
-    public void setHeaterPower(double powerPCT) throws IOException {
-        query(C_SET_HEATER, Math.sqrt(powerPCT / 100.0) * 100.0);
-        AutoMode mode = AutoMode.fromMode(false, isUsingAutoFlow());
-        query(C_SET_AUTO, mode.toInt());
-    }
-
-    @Override
-    public double getFlow() throws IOException {
-        return readChannel(GAS_OP);
-    }
-
-    @Override
-    public void setFlow(double outputPCT) throws IOException {
-        query(C_SET_FLOW, outputPCT);
-        AutoMode mode = AutoMode.fromMode(isUsingAutoHeater(), false);
-        query(C_SET_AUTO, mode.toInt());
-    }
-
-    @Override
-    public void useAutoHeater() throws IOException {
-        AutoMode mode = AutoMode.fromMode(true, isUsingAutoFlow());
-        query(C_SET_AUTO, mode.toInt());
-    }
-
-    @Override
-    public boolean isUsingAutoHeater() throws IOException {
-        return AutoMode.fromInt(getStatus().A).heaterAuto();
-    }
-
-    @Override
-    public void useAutoFlow() throws IOException {
-        AutoMode mode = AutoMode.fromMode(isUsingAutoHeater(), true);
-        query(C_SET_AUTO, mode.toInt());
-    }
-
-    @Override
-    public boolean isUsingAutoFlow() throws IOException {
-        return AutoMode.fromInt(getStatus().A).gasAuto();
-    }
-
-    @Override
-    public void useAutoPID(boolean flag) throws IOException, DeviceException {
-        autoPID = flag;
-        updateAutoPID();
-    }
-
-    @Override
-    public boolean isUsingAutoPID() throws IOException, DeviceException {
-        return autoPID;
-    }
-
-    @Override
-    public List<PID.Zone> getAutoPIDZones() throws IOException, DeviceException {
-        return Arrays.asList(zones);
-    }
-
-    @Override
-    public void setAutoPIDZones(PID.Zone... zones) throws IOException, DeviceException {
-        this.zones = zones;
-        updateAutoPID();
-    }
-
-    @Override
-    public double getPValue() throws IOException {
-        return readChannel(PROP_BAND);
-    }
-
-    @Override
-    public void setPValue(double value) throws IOException {
-        query(C_SET_P, value);
-    }
-
-    @Override
-    public double getIValue() throws IOException {
-        return readChannel(INT_ACTION_TIME);
-    }
-
-    @Override
-    public void setIValue(double value) throws IOException {
-        query(C_SET_I, value);
-    }
-
-    @Override
-    public double getDValue() throws IOException {
-        return readChannel(DER_ACTION_TIME);
-    }
-
-    @Override
-    public void setDValue(double value) throws IOException {
-        query(C_SET_D, value);
-
-    }
-
-    @Override
-    public double getHeaterRange() throws IOException {
-        return Math.pow(((readChannel(HEATER_OP_VOLTS) / (readChannel(HEATER_OP_PERC) / 100.0)) / MAX_HEATER_VOLTAGE), 2) * 100.0;
-    }
-
-    @Override
-    public void setHeaterRange(double range) throws IOException {
-
-        double voltage = MAX_HEATER_VOLTAGE * Math.sqrt(range / 100.0);
-
-        query(C_SET_HEATER_LIM, voltage);
-
-    }
 
     private Status getStatus() throws IOException {
 
@@ -461,52 +572,6 @@ public class ITC503 extends VISADevice implements MSTC {
 
     }
 
-    /**
-     * Returns the temperature reported by the given sensor.
-     *
-     * @param sensor The sensor to read (1, 2 or 3)
-     *
-     * @return Temperature reported by the sensor
-     *
-     * @throws IOException     Upon communication error
-     * @throws DeviceException Upon invalid sensor number
-     */
-    public synchronized double getTemperature(int sensor) throws IOException, DeviceException {
-
-        if (!Util.isBetween(sensor, 0, 2)) {
-            throw new DeviceException("Sensor index, %d, out of range!", sensor);
-        }
-
-        return readChannel(sensor + 1);
-
-    }
-
-    @Override
-    public void useSensor(int sensor) throws IOException, DeviceException {
-
-        if (!Util.isBetween(sensor, 0, 2)) {
-            throw new DeviceException("Sensor index, %d, out of range!", sensor);
-        }
-
-        query(C_SET_SENSOR, sensor + 1);
-
-    }
-
-    @Override
-    public int getUsedSensor() throws IOException {
-        return getStatus().H - 1;
-    }
-
-    @Override
-    public int getNumSensors() {
-        return 3;
-    }
-
-    @Override
-    public String getSensorName(int sensorNumber) {
-        return String.format("Sensor %d", sensorNumber + 1);
-    }
-
     public String getIDN() throws IOException {
         return query("V").replace("\n", "").replace("\r", "");
     }
@@ -525,25 +590,8 @@ public class ITC503 extends VISADevice implements MSTC {
         query(C_SET_MODE, mode.toInt());
     }
 
-    @Override
-    public void setTemperatureRange(int sensor, double range) throws DeviceException {
-        checkSensor(sensor);
-        // No range options for ITC503
-    }
-
-    @Override
-    public double getTemperatureRange(int sensor) throws DeviceException {
-        checkSensor(sensor);
-        return 999.9;
-    }
-
-    @Override
-    public String getSensorName() {
-        return getSensorName(0);
-    }
-
     public List<Parameter<?>> getConfigurationParameters(Class<?> target) {
-        List<Parameter<?>> parameters = MSTC.super.getConfigurationParameters(target);
+        List<Parameter<?>> parameters = TC.super.getConfigurationParameters(target);
         parameters.add(new Parameter<>("Use Internal PID Table", false, v -> query(C_SET_AUTO_PID, v ? 1 : 0)));
         return parameters;
     }
@@ -555,7 +603,7 @@ public class ITC503 extends VISADevice implements MSTC {
         LOCAL_UNLOCKED(2),
         REMOTE_UNLOCKED(3);
 
-        private static HashMap<Integer, Mode> lookup = new HashMap<>();
+        private static final HashMap<Integer, Mode> lookup = new HashMap<>();
 
         static {
             for (Mode mode : Mode.values()) {
@@ -563,7 +611,7 @@ public class ITC503 extends VISADevice implements MSTC {
             }
         }
 
-        private int c;
+        private final int c;
 
         Mode(int code) {
             c = code;
@@ -588,7 +636,7 @@ public class ITC503 extends VISADevice implements MSTC {
 
         private static final int                        H      = 1;
         private static final int                        G      = 2;
-        private static       HashMap<Integer, AutoMode> lookup = new HashMap<>();
+        private static final HashMap<Integer, AutoMode> lookup = new HashMap<>();
 
         static {
             for (AutoMode mode : values()) {
@@ -596,7 +644,7 @@ public class ITC503 extends VISADevice implements MSTC {
             }
         }
 
-        private int c;
+        private final int c;
 
         AutoMode(int code) {
             c = code;

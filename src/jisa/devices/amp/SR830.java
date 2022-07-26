@@ -1,12 +1,12 @@
 package jisa.devices.amp;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.control.Nameable;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.DPLockIn;
 import jisa.devices.interfaces.LockIn;
 import jisa.enums.*;
-import jisa.Util;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
