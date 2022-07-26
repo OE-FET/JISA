@@ -156,7 +156,7 @@ public class ITC503 extends VISADevice implements TC {
 
         @Override
         public String getName() {
-            return "ITC503 Heater Output";
+            return "Main Heater";
         }
 
     };

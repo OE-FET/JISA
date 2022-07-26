@@ -48,7 +48,7 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
     interface Heater extends Output {
 
         default String getValueName() {
-            return "Heater Power";
+            return "Power";
         }
 
         default String getUnits() {
