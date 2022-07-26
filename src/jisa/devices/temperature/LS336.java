@@ -212,13 +212,13 @@ public class LS336 extends VISADevice implements TC {
         }
 
         @Override
-        public void setTemperature(double value) throws IOException, DeviceException {
+        public void setSetPoint(double value) throws IOException, DeviceException {
             write(C_SET_SET_POINT, getOutput().getNumber(), value);
             updatePID(value);
         }
 
         @Override
-        public double getTemperature() throws IOException, DeviceException {
+        public double getSetPoint() throws IOException, DeviceException {
             return queryDouble(C_QUERY_SET_POINT, getOutput().getNumber());
         }
 

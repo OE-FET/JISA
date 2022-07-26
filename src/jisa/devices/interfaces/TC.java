@@ -12,6 +12,134 @@ import java.util.stream.Collectors;
  */
 public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSensor<TMeter> {
 
+    static String getDescription() {
+        return "Temperature Controller";
+    }
+
+    interface Thermometer extends Input, TMeter {
+
+        default double getValue() throws IOException, DeviceException {
+            return getTemperature();
+        }
+
+        default void setRange(double range) throws IOException, DeviceException {
+            setTemperatureRange(range);
+        }
+
+        @Override
+        default String getSensorName() {
+            return Input.super.getSensorName();
+        }
+
+        default double getRange() throws IOException, DeviceException {
+            return getTemperatureRange();
+        }
+
+        default String getValueName() {
+            return "Temperature";
+        }
+
+        default String getUnits() {
+            return "K";
+        }
+
+    }
+
+    interface Heater extends Output {
+
+        default String getValueName() {
+            return "Heater Power";
+        }
+
+        default String getUnits() {
+            return "%";
+        }
+
+    }
+
+    interface Loop extends PID.Loop, Channel<Loop> {
+
+        default Class<Loop> getChannelClass() {
+            return Loop.class;
+        }
+
+        default String getChannelName() {
+
+            try {
+                return getName();
+            } catch (Exception e) {
+                return "Unknown Loop";
+            }
+
+        }
+
+        void setSetPoint(double temperature) throws IOException, DeviceException;
+
+        default void setTemperature(double temperature) throws IOException, DeviceException {
+            setSetPoint(temperature);
+        }
+
+        double getSetPoint() throws IOException, DeviceException;
+
+        default double getTemperature() throws IOException, DeviceException {
+            return getInput().getValue();
+        }
+
+        default void waitForStableTemperature(double target, double pct, long msec) {
+            waitForStableValue(target, pct, msec);
+        }
+
+    }
+
+    List<? extends Loop> getLoops() throws IOException, DeviceException;
+
+    default Loop getLoop(int index) throws IOException, DeviceException {
+        return getLoops().get(index);
+    }
+
+    abstract class ZonedLoop extends PID.ZonedLoop implements Loop {
+
+    }
+
+    default List<? extends Thermometer> getThermometers() throws IOException, DeviceException {
+        return getInputs().stream().filter(i -> i instanceof Thermometer).map(i -> (Thermometer) i).collect(Collectors.toList());
+    }
+
+    default List<? extends Heater> getHeaters() throws IOException, DeviceException {
+        return getInputs().stream().filter(i -> i instanceof Heater).map(i -> (Heater) i).collect(Collectors.toList());
+    }
+
+    default List<Class<? extends Instrument>> getMultiTypes() {
+
+        return List.of(
+            PID.Loop.class,
+            TMeter.class
+        );
+
+    }
+
+    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) throws IOException, DeviceException {
+
+        if (TMeter.class.isAssignableFrom(type)) {
+            return getThermometers().stream().map(i -> (I) i).collect(Collectors.toUnmodifiableList());
+        } else if (Loop.class.isAssignableFrom(type)) {
+            return getLoops().stream().map(i -> (I) i).collect(Collectors.toUnmodifiableList());
+        } else {
+            return Collections.emptyList();
+        }
+
+    }
+
+    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) throws IOException, DeviceException {
+
+        try {
+            return getSubInstruments(type).get(index);
+        } catch (IndexOutOfBoundsException e) {
+            throw new DeviceException("No \"%s\" with index %d found.", type.getSimpleName(), index);
+        }
+
+    }
+
     @Override
     default int getNumChannels() {
 
@@ -96,134 +224,6 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
     @Override
     default Class<TMeter> getSensorClass() {
         return TMeter.class;
-    }
-
-    static String getDescription() {
-        return "Temperature Controller";
-    }
-
-    interface Thermometer extends Input, TMeter {
-
-        default double getValue() throws IOException, DeviceException {
-            return getTemperature();
-        }
-
-        default void setRange(double range) throws IOException, DeviceException {
-            setTemperatureRange(range);
-        }
-
-        @Override
-        default String getSensorName() {
-            return Input.super.getSensorName();
-        }
-
-        default double getRange() throws IOException, DeviceException {
-            return getTemperatureRange();
-        }
-
-        default String getValueName() {
-            return "Temperature";
-        }
-
-        default String getUnits() {
-            return "K";
-        }
-
-    }
-
-    interface Heater extends Output {
-
-        default String getValueName() {
-            return "Heater Power";
-        }
-
-        default String getUnits() {
-            return "%";
-        }
-
-    }
-
-    interface Loop extends PID.Loop, Channel<Loop> {
-
-        default Class<Loop> getChannelClass() {
-            return Loop.class;
-        }
-
-        default String getChannelName() {
-
-            try {
-                return getName();
-            } catch (Exception e) {
-                return "Unknown Loop";
-            }
-
-        }
-
-        void setTemperature(double temperature) throws IOException, DeviceException;
-
-        default void setSetPoint(double value) throws IOException, DeviceException {
-            setTemperature(value);
-        }
-
-        double getTemperature() throws IOException, DeviceException;
-
-        default double getSetPoint() throws IOException, DeviceException {
-            return getTemperature();
-        }
-
-        default void waitForStableTemperature(double target, double pct, long msec) {
-            waitForStableValue(target, pct, msec);
-        }
-
-    }
-
-    List<? extends Loop> getLoops() throws IOException, DeviceException;
-
-    default Loop getLoop(int index) throws IOException, DeviceException {
-        return getLoops().get(index);
-    }
-
-    abstract class ZonedLoop extends PID.ZonedLoop implements Loop {
-
-    }
-
-    default List<? extends Thermometer> getThermometers() throws IOException, DeviceException {
-        return getInputs().stream().filter(i -> i instanceof Thermometer).map(i -> (Thermometer) i).collect(Collectors.toList());
-    }
-
-    default List<? extends Heater> getHeaters() throws IOException, DeviceException {
-        return getInputs().stream().filter(i -> i instanceof Heater).map(i -> (Heater) i).collect(Collectors.toList());
-    }
-
-    default List<Class<? extends Instrument>> getMultiTypes() {
-
-        return List.of(
-            PID.Loop.class,
-            TMeter.class
-        );
-
-    }
-
-    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) throws IOException, DeviceException {
-
-        if (TMeter.class.isAssignableFrom(type)) {
-            return getThermometers().stream().map(i -> (I) i).collect(Collectors.toUnmodifiableList());
-        } else if (Loop.class.isAssignableFrom(type)) {
-            return getLoops().stream().map(i -> (I) i).collect(Collectors.toUnmodifiableList());
-        } else {
-            return Collections.emptyList();
-        }
-
-    }
-
-    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) throws IOException, DeviceException {
-
-        try {
-            return getSubInstruments(type).get(index);
-        } catch (IndexOutOfBoundsException e) {
-            throw new DeviceException("No \"%s\" with index %d found.", type.getSimpleName(), index);
-        }
-
     }
 
 }

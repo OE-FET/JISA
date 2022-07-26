@@ -132,13 +132,13 @@ public class ArroyoTEC extends VISADevice implements TC {
         private boolean ramping = false;
 
         @Override
-        public void setTemperature(double temperature) throws IOException, DeviceException {
+        public void setSetPoint(double temperature) throws IOException, DeviceException {
             write("TEC:T %f", temperature - 273.15);
             updatePID(temperature);
         }
 
         @Override
-        public double getTemperature() throws IOException {
+        public double getSetPoint() throws IOException {
             return queryDouble("TEC:SET:T?") + 273.15;
         }
 

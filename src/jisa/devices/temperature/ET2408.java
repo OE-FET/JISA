@@ -201,13 +201,13 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     public final Loop LOOP = new ZonedLoop() {
 
         @Override
-        public void setTemperature(double temperature) throws IOException, DeviceException {
+        public void setSetPoint(double temperature) throws IOException, DeviceException {
             setPoint.set((int) (temperature * getScale()));
             updatePID(temperature);
         }
 
         @Override
-        public double getTemperature() throws IOException {
+        public double getSetPoint() throws IOException {
             return (double) setPoint.get() / getScale();
         }
 

@@ -442,13 +442,13 @@ public class CryoCon22C extends VISADevice implements TC {
         }
 
         @Override
-        public void setTemperature(double temperature) throws IOException, DeviceException {
+        public void setSetPoint(double temperature) throws IOException, DeviceException {
             query("LOOP %d:SETP %e", heater.getNumber(), temperature);
             updatePID(temperature);
         }
 
         @Override
-        public double getTemperature() throws IOException, DeviceException {
+        public double getSetPoint() throws IOException, DeviceException {
             return queryDouble("LOOP %d:SETP?", heater.getNumber());
         }
 

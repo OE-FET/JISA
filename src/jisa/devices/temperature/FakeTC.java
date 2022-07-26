@@ -142,12 +142,12 @@ public class FakeTC implements TC {
     private final Loop LOOP = new ZonedLoop() {
 
         @Override
-        public void setTemperature(double temperature) {
+        public void setSetPoint(double temperature) {
             setPoint = temperature;
         }
 
         @Override
-        public double getTemperature() {
+        public double getSetPoint() {
             return setPoint;
         }
 

@@ -453,12 +453,12 @@ public class MercuryITC extends VISADevice implements TC {
         }
 
         @Override
-        public void setTemperature(double temperature) throws IOException, DeviceException {
+        public void setSetPoint(double temperature) throws IOException, DeviceException {
             sensor.set("LOOP", "TSET", String.format("%s", temperature));
         }
 
         @Override
-        public double getTemperature() throws IOException, DeviceException {
+        public double getSetPoint() throws IOException, DeviceException {
             return sensor.getDouble("LOOP", "TSET");
         }
 

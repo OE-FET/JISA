@@ -173,7 +173,7 @@ public class ITC503 extends VISADevice implements TC {
         }
 
         @Override
-        public void setTemperature(double temperature) throws IOException, DeviceException {
+        public void setSetPoint(double temperature) throws IOException, DeviceException {
 
             query("S0");
 
@@ -213,7 +213,7 @@ public class ITC503 extends VISADevice implements TC {
         }
 
         @Override
-        public double getTemperature() throws IOException {
+        public double getSetPoint() throws IOException {
             return readChannel(SET_TEMP_CHANNEL);
         }
 
