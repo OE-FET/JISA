@@ -32,6 +32,13 @@ public interface Instrument {
     void close() throws IOException, DeviceException;
 
     /**
+     * Reset the instrument to factory default
+     * @throws DeviceException Upon incompatibility with device
+     * @throws IOException     Upon communications error
+     */
+    default void reset() throws IOException{};
+
+    /**
      * Returns any Address object used to connect to this instrument.
      *
      * @return Address object, null if none

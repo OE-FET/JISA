@@ -132,6 +132,10 @@ public class SR830 extends VISADevice implements DPLockIn {
         write(C_SET_REF, RefMode.fromRefMode(mode).toInt());
     }
 
+    public boolean isLocked() throws IOException{
+        return queryInt("LIAS? 3") != 1;
+    }
+
     @Override
     public double getLockedX() throws IOException {
         return queryDouble(C_QUERY_OUTPUT, OUTPUT_X);

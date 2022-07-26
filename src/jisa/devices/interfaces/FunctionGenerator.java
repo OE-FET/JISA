@@ -1,8 +1,11 @@
 package jisa.devices.interfaces;
 
+import jisa.control.Nameable;
 import jisa.devices.DeviceException;
+import jisa.devices.amp.SR830;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 
 public interface FunctionGenerator extends Instrument{
@@ -107,6 +110,12 @@ public interface FunctionGenerator extends Instrument{
                 result[i] = evaluateWaveform(t[i]);
             return result;
         }
+
+        /**
+         * Scale the voltage of the waveform by a factor.
+         * @param factor scaling factor.
+         */
+        public void scale(double factor);
     }
 
     public static class SineWave implements Waveform {
@@ -115,7 +124,10 @@ public interface FunctionGenerator extends Instrument{
          * The descriptor for the sine wave. Everything is in SI units (V, rad, V, Hz respectively).
          * The amplitude is the mathematical amplitude, not the Vpp amplitude.
          */
-        private final double amplitude, phase, offset, frequency;
+        private double amplitude;
+        private final double phase;
+        private double offset;
+        private final double frequency;
 
         public double getAmplitude() {
             return amplitude;
@@ -148,6 +160,11 @@ public interface FunctionGenerator extends Instrument{
             return amplitude*Math.sin(frequency*t*Math.PI*2 + phase) + offset;
         }
 
+        public void scale(double factor){
+            this.amplitude = this.amplitude*factor;
+            this.offset = this.offset*factor;
+        }
+
     }
 
     public static class SquareWave implements Waveform {
@@ -157,7 +174,11 @@ public interface FunctionGenerator extends Instrument{
          * The amplitude is the mathematical amplitude, not the Vpp amplitude.
          * By default, the wave is zero centered, and the dutyCycle is 0.5 (or 50%).
          */
-        private final double amplitude, phase, offset, frequency, dutyCycle;
+        private double amplitude;
+        private final double phase;
+        private double offset;
+        private final double frequency;
+        private final double dutyCycle;
 
         public double getAmplitude() {
             return amplitude;
@@ -195,6 +216,11 @@ public interface FunctionGenerator extends Instrument{
             this.dutyCycle = Math.abs(dutyCycle);
         }
 
+        public void scale(double factor){
+            this.amplitude = this.amplitude*factor;
+            this.offset = this.offset*factor;
+        }
+
         @Override
         public double evaluateWaveform(double t) {
             double curr_cycle_fraction = (frequency*t + phase/Math.PI/2) % 1;
@@ -203,6 +229,49 @@ public interface FunctionGenerator extends Instrument{
                 return offset + amplitude;
             else
                 return offset - amplitude;
+        }
+    }
+
+    public static enum SupportedWaveforms implements Nameable{
+        SineWave(0, "sine wave"),
+        SquareWave(1, "square wave");
+
+        private final int code;
+        private final String name;
+
+        private static HashMap<Integer, SupportedWaveforms> lookup = new HashMap<>();
+
+        static {
+            for (SupportedWaveforms mode : SupportedWaveforms.values()) {
+                lookup.put(mode.toInt(), mode);
+            }
+        }
+
+        SupportedWaveforms(int code, String name){
+            this.code = code;
+            this.name = name;
+        }
+
+        public int toInt(){
+            return code;
+        }
+
+        public static SupportedWaveforms fromInt(int i) {
+            return lookup.getOrDefault(i, null);
+        }
+
+        public String toString(){
+            return name;
+        }
+        @Override
+        public String getName() {
+            return null;
+        }
+
+        public static String[] getAllNames()
+        {
+            // NEED TO DO IT BETTER LATER!!!
+            return new String[]{"sine wave", "square wave"};
         }
     }
 }
