@@ -8,6 +8,7 @@ import jisa.addresses.USBAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.amp.SR830;
 import jisa.devices.function_generator.K3390;
+import jisa.devices.smu.K2400;
 import jisa.gui.*;
 import jisa.results.ResultStream;
 import jisa.results.ResultTable;
@@ -22,8 +23,9 @@ public class ACGatingTest {
         // define the measurement units
         K3390 funcGen = new K3390(new USBAddress(0x05E6, 0x3390, "1242550"));
         SR830 lockInAmp = new SR830(new GPIBAddress(8));
+        K2400 smu = new K2400(new GPIBAddress(28));
 
-        ACGatingMeasurement measurement = new ACGatingMeasurement(funcGen, lockInAmp, null, null);
+        ACGatingMeasurement measurement = new ACGatingMeasurement(funcGen, lockInAmp, smu, null);
         MeasurementConfigurator configurator = new MeasurementConfigurator(measurement);
 
         Table table = new Table("table of results");
@@ -31,56 +33,6 @@ public class ACGatingTest {
         Grid window = new Grid("AC gating", table, plot);
 
         window.addToolbarButton("Start", ()->onStart(measurement, table, plot));
-
-//        window.addToolbarButton("Start", () -> {
-//
-//            if (measurement.isRunning()) {
-//                GUI.errorAlert("A measurement is already running.");
-//            } else {
-//
-//                if (configurator.showInput()) {
-//                    measurement.updateConfigs();
-//
-//                    table.clear();
-//                    plot.clear();
-//
-//                    if (!measurement.checkExportPath()) {
-//                        GUI.errorAlert("File path not correct! Check again!");
-//                        return;
-//                    }
-//
-//                    // get the output path
-//                    ResultTable results;
-//                    if (measurement.getOutputFileNames() != null) {
-//                        measurement.writeConfig();
-//                        results = measurement.newResults(measurement.getOutputFileNames()[1]);
-//                    }
-//                    else{
-//                        results = measurement.newResults();
-//                    }
-//
-//                    table.watch(results);
-//                    //plot.createSeries().watch(results);
-//
-//                    try {
-//                        measurement.start();
-//                    } catch (InterruptedException e) {
-//                        GUI.warningAlert("Measurement Interrupted.");
-//                    } catch (Exception e) {
-//                        GUI.errorAlert(e.getMessage());
-//                        e.printStackTrace();
-//                    } finally {
-//                        GUI.infoAlert("Measurement Ended.");
-//                    }
-//                    if (results instanceof ResultStream)
-//                    {
-//                        ((ResultStream) results).close();
-//                    }
-//
-//                }
-//
-//            }
-//        });
 
         window.addToolbarButton("Stop", () -> {
 
@@ -92,7 +44,7 @@ public class ACGatingTest {
 
         });
 
-        window.addToolbarButton("Exit", ()->window.close());
+        window.addToolbarButton("Exit", window::close);
 
         window.show();
     }

@@ -8,6 +8,7 @@ import jisa.devices.function_generator.K3390;
 import jisa.devices.interfaces.FunctionGenerator;
 import jisa.devices.interfaces.LockIn;
 import jisa.devices.interfaces.SMU;
+import jisa.devices.smu.K2400;
 import jisa.enums.Input;
 import jisa.enums.Shield;
 import jisa.enums.Source;
@@ -15,7 +16,7 @@ import jisa.experiment.Measurement;
 import jisa.results.Col;
 import jisa.results.Column;
 import jisa.results.ResultTable;
-import jnr.ffi.annotations.In;
+import jisa.visa.VISADevice;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,6 +26,8 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Objects;
 
 /**
@@ -36,7 +39,8 @@ import java.util.Objects;
  */
 
 public class ACGatingMeasurement extends Measurement {
-    // configuration parameters
+    // safety limits parameters (will implement this later...)
+    private final double MAX_ABS_VOLTAGE = 50.0;
 
     // The waveform that is actually applied on the gate
     private FunctionGenerator.Waveform gate_waveform;
@@ -44,7 +48,7 @@ public class ACGatingMeasurement extends Measurement {
     private final boolean smuAvailable;
     private final K3390 funcGen;
     private final SR830 lockInAmp;
-    private final SMU smu;
+    private final K2400 smu;
 
     // configurators
     private StringParameter testName;
@@ -67,7 +71,7 @@ public class ACGatingMeasurement extends Measurement {
      * Construct the measurement. All measurement instruments are owned externally.
      * If currentConfig is null, some default values will be given here.
      */
-    public ACGatingMeasurement(K3390 funcGen, SR830 lockInAmp, SMU smu, TestConfigs currentConfig){
+    public ACGatingMeasurement(K3390 funcGen, SR830 lockInAmp, K2400 smu, TestConfigs currentConfig){
         super();
         this.funcGen = funcGen;
         this.lockInAmp = lockInAmp;
@@ -185,6 +189,14 @@ public class ACGatingMeasurement extends Measurement {
         // set up the SMU
         if (smuAvailable){
             smu.reset();
+            smu.enableLogger("SMU K2400", null);
+            smu.setSource(Source.VOLTAGE);
+            smu.useAutoVoltageRange();
+            smu.setVoltageLimit(MAX_ABS_VOLTAGE);    // 5 V voltage limit
+            smu.setCurrentLimit(100e-3); // 100 mA current limit
+            smu.setVoltage(currentConfig.V_DS);
+            smu.setFourProbeEnabled(false);
+            smu.turnOn();
             // configure and output V_DS
         }
 
@@ -232,8 +244,14 @@ public class ACGatingMeasurement extends Measurement {
             double lockInCurrent = lockInVoltage/ currentConfig.currentSenseResistance;
             double lockInPhase = lockInAmp.getLockedPhase();
             results.addData((double) relativeTime, lockInVoltage, lockInCurrent, lockInPhase);
+
+            // wait for the specified amount of time before the next measurement.
+            long timeElapsed =  System.currentTimeMillis() - testStartTime - relativeTime;
+            long timeToSleep = Math.round(currentConfig.timeBetweenDataPoints_ms) - timeElapsed;
+            if (timeToSleep < 0)
+                timeToSleep = 0;
             // the timing might not be very precise...
-            Thread.sleep(Math.round(currentConfig.timeBetweenDataPoints_ms));
+            Thread.sleep(timeToSleep);
         }
         System.out.print("Measurement ended!");
     }
@@ -251,6 +269,7 @@ public class ACGatingMeasurement extends Measurement {
     @Override
     protected void onFinish() throws Exception {
         Util.runRegardless(funcGen::turnOff);
+        Util.runRegardless(()-> {if (smuAvailable) smu.turnOff();});
         // smu turn off
     }
 
@@ -370,6 +389,12 @@ public class ACGatingMeasurement extends Measurement {
                 json.put("currentSenseResistance"  , currentSenseResistance);
                 json.put("timeBetweenDataPoints_ms", timeBetweenDataPoints_ms);
                 json.put("nDataPoints"             , nDataPoints);
+
+                // add a time stamp as well.
+                SimpleDateFormat formatter = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+                Date date = new Date();
+                json.put("timeStamp", formatter.format(date));
+
             } catch (JSONException e) {
                 e.printStackTrace();
             }

@@ -111,7 +111,6 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     private       int                filterCount     = 1;
 
     public KeithleySCPI(Address address, Class<? extends Driver> prefDriver) throws IOException, DeviceException {
-
         super(address, prefDriver);
 
         switch(address.getType()) {
@@ -133,7 +132,9 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
         write(":SYSTEM:CLEAR");
         write(":TRAC:CLE"); // clears all readings and statistics from default buffer
-        write(":STAT:CLE"); // clears event registers and the event log
+        // for K2400, this is not an SCPI command!
+        if (!(this instanceof K2400))
+            write(":STAT:CLE"); // clears event registers and the event log
         //manuallyClearReadBuffer();
         setAverageMode(AMode.NONE);
 
@@ -508,6 +509,10 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
     public void turnOff() throws IOException {
         setOutputState(false);
+    }
+
+    public void reset() throws IOException{
+        write("*RST");
     }
 
     public void setOutputState(boolean on) throws IOException {

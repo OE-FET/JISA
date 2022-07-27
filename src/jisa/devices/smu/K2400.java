@@ -84,5 +84,17 @@ public class K2400 extends KeithleySCPI {
     public void setLineFilterEnabled(boolean enabled) throws DeviceException, IOException {
 
     }
+    public void setFourProbeEnabled(boolean fourProbe) throws IOException {
+        // an override is needed because the commands are slightly different!!
+        if (fourProbe)
+            write(":SYST:RSEN ON");
+        else
+            write(":SYST:RSEN OFF");
+    }
+
+    public boolean isFourProbeEnabled() throws IOException {
+        // an override is needed because the commands are slightly different!!
+        return query(":SYST:RSEN?").trim().equals(OUTPUT_ON);
+    }
 
 }
