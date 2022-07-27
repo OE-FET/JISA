@@ -132,9 +132,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
         write(":SYSTEM:CLEAR");
         write(":TRAC:CLE"); // clears all readings and statistics from default buffer
-        // for K2400, this is not an SCPI command!
-        if (!(this instanceof K2400))
-            write(":STAT:CLE"); // clears event registers and the event log
+        write(":STAT:CLE"); // clears event registers and the event log
         //manuallyClearReadBuffer();
         setAverageMode(AMode.NONE);
 
