@@ -14,7 +14,27 @@ public class MainK3390Testing {
     public static void main(String[] args) throws IOException, DeviceException, InterruptedException {
 //        Address address = GUI.browseVISA();
 //        System.out.print(address);
+        DCOutputTest();
+    }
 
+    public static void DCOutputTest() throws IOException, DeviceException, InterruptedException
+    {
+        K3390 funcGen = new K3390(new USBAddress(0x05E6, 0x3390, "1242550"));
+        funcGen.enableLogger("K3390", null);
+        funcGen.setStandardImpedanceMode();
+        for(int i = -10; i <= 10; i ++) {
+            funcGen.outputDC((float)i / 5.0);
+            Thread.sleep(5000);
+        }
+
+        for(int i = 10; i >= -10; i --) {
+            funcGen.outputDC((float)i / 5.0);
+            Thread.sleep(5000);
+        }
+        funcGen.turnOff();
+    }
+
+    public static void K3390SquareWaveSineWaveTest() throws IOException, DeviceException, InterruptedException {
         K3390 funcGen = new K3390(new USBAddress(0x05E6, 0x3390, "1242550"));
         funcGen.setHighImpedanceMode();
         for(int i = 1; i <= 10; i ++)

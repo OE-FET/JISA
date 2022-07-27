@@ -20,10 +20,11 @@ public class K3390 extends VISADevice implements FunctionGenerator {
     protected static final String C_SET_STANDARD_LOAD_IMPEDANCE = "OUTP:LOAD 50";
     protected static final String C_SET_HIGH_Z_LOAD_IMPEDANCE   = "OUTP:LOAD INF";
     // output function selection
-    protected static final String C_SET_SINE_WAVE               = "FUNC SIN";
-    protected static final String C_SET_SQUARE_WAVE             = "FUNC SQU";
-    protected static final String C_SET_SQUARE_WAVE_DUTY_CYCLE  = "FUNC:SQU:DCYC %f";
-    protected static final String C_QUERY_FUNC                  = "FUNC?";
+    protected static final String C_SET_SINE_WAVE              = "FUNC SIN";
+    protected static final String C_SET_SQUARE_WAVE            = "FUNC SQU";
+    protected static final String C_SET_DC                     = "FUNC DC";
+    protected static final String C_SET_SQUARE_WAVE_DUTY_CYCLE = "FUNC:SQU:DCYC %f";
+    protected static final String C_QUERY_FUNC                 = "FUNC?";
 
     // set frequency
     protected static final String C_SET_FREQ_HZ = "FREQ %f";
@@ -44,6 +45,9 @@ public class K3390 extends VISADevice implements FunctionGenerator {
     // the max voltage in the standard impedance mode
     protected static final double SINE_WAVE_MAX_VOLTAGE   = 5.0;
     protected static final double SQUARE_WAVE_MAX_VOLTAGE = 5.0;
+    protected static final double DC_MAX_VOLTAGE          = 5.0;
+
+    protected static final double HIGH_IMPEDANCE_MODE_VOLTAGE_LIMIT_MULTIPLIER = 2.0;
 
     private boolean is_high_impedance_mode;
 
@@ -55,7 +59,7 @@ public class K3390 extends VISADevice implements FunctionGenerator {
     public boolean validateWaveform(Waveform waveform) {
         double voltage_limit_multiplier = 1.0;
         if (is_high_impedance_mode)
-            voltage_limit_multiplier = 2.0;
+            voltage_limit_multiplier = HIGH_IMPEDANCE_MODE_VOLTAGE_LIMIT_MULTIPLIER;
 
         if (waveform instanceof SineWave) {
             // freq range given on page 35 "Setting frequency or period" section of the manual
@@ -150,6 +154,22 @@ public class K3390 extends VISADevice implements FunctionGenerator {
             write(C_SET_VOLTAGE_OFFSET, ((SquareWave) waveform).getOffset());
             write(C_SET_SQUARE_WAVE_DUTY_CYCLE, ((SquareWave) waveform).getDutyCycle()*100);
         }
+    }
+
+    /**
+     * Output a DC voltage from the signal generator.
+     * The function generator will turn on and supply the voltage immediately.
+     * @param voltage the voltage in V to be generated
+     */
+    public void outputDC(double voltage) throws IOException, DeviceException {
+        double voltage_limit_multiplier = 1.0;
+        if (is_high_impedance_mode)
+            voltage_limit_multiplier = HIGH_IMPEDANCE_MODE_VOLTAGE_LIMIT_MULTIPLIER;
+        if (voltage > DC_MAX_VOLTAGE*voltage_limit_multiplier)
+            throw new DeviceException("Max DC voltage exceeded");
+        write(C_SET_DC);
+        write(C_SET_VOLTAGE_OFFSET, voltage);
+        turnOn();
     }
 
     @Override
