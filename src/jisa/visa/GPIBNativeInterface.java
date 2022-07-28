@@ -238,6 +238,8 @@ public interface GPIBNativeInterface extends Library {
 
     int ibrda(int ud, Pointer buf, int cnt);
 
+    int ibeos(int ud, int eosmode);
+
     @Deprecated
     int ibrpp(int ud, Pointer ppr);
 

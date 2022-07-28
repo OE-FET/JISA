@@ -3,6 +3,7 @@ package jisa.devices.temperature;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
+import jisa.devices.interfaces.PID;
 import jisa.devices.interfaces.TC;
 import jisa.visa.Connection;
 import jisa.visa.VISADevice;
@@ -343,6 +344,15 @@ public class ITC503 extends VISADevice implements TC {
         @Override
         public boolean isPIDEnabled() throws IOException {
             return AutoMode.fromInt(getStatus().A).heaterAuto();
+        }
+
+        @Override
+        public List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+
+            List<Parameter<?>> list = super.getConfigurationParameters(target);
+            list.add(new Parameter<>("Use Internal PID Table", true, v -> query(C_SET_AUTO_PID, v ? 1 : 0)));
+            return list;
+
         }
 
     };

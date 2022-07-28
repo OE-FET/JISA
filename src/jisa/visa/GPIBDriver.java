@@ -258,7 +258,19 @@ public class GPIBDriver implements Driver {
             );
 
             if (wasError()) {
-                throw new VISAException("Error setting EOI");
+
+                lib.ibeos(handle, ((int) character));
+
+                lib.ibconfig(
+                        handle,
+                        GPIBNativeInterface.IbcEOSrd,
+                        (int) character
+                );
+
+                if (wasError()) {
+                    throw new VISAException("Error setting read terminator...");
+                }
+
             }
 
         }
