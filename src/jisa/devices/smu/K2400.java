@@ -150,6 +150,8 @@ public class K2400 extends VISADevice implements SMU {
         if (!(getSource() == Source.VOLTAGE)){
             throw new DeviceException("Setting voltage when not sourcign voltage is not allowed!");
         }
+        if (Math.abs(voltage) > 20)
+            write(":SOUR:VOLT:RANG MAX");
         write(C_SET_SOURCE_VALUE, VOLTAGE_OPTION, voltage);
 
     }

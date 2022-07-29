@@ -182,7 +182,7 @@ public class ACGatingMeasurement extends Measurement {
         funcGen.reset();
         funcGen.enableLogger("Func Gen K3390", null);
         // might need to change it to low impedance mode later!
-        funcGen.setHighImpedanceMode();
+        funcGen.setStandardImpedanceMode();
         funcGen.turnOnSynchronizationSignal();
         funcGen.outputWaveform(createWaveform());
 
@@ -191,7 +191,7 @@ public class ACGatingMeasurement extends Measurement {
             smu.reset();
             smu.enableLogger("SMU K2400", null);
             smu.setSource(Source.VOLTAGE);
-            smu.useAutoVoltageRange();
+            // smu.useAutoVoltageRange();
             smu.setVoltageLimit(MAX_ABS_VOLTAGE);    // 5 V voltage limit
             smu.setCurrentLimit(100e-3); // 100 mA current limit
             smu.setVoltage(currentConfig.V_DS);
