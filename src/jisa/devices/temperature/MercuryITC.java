@@ -77,7 +77,7 @@ public class MercuryITC extends VISADevice implements TC {
 
     }
 
-    public String[] readITC(String... parts) throws IOException, DeviceException {
+    public String[] readITC(String... parts) throws IOException {
 
         String[] response = query(String.join(":", parts)).split(":");
         String[] answer   = new String[response.length - parts.length];
@@ -104,17 +104,17 @@ public class MercuryITC extends VISADevice implements TC {
     }
 
     @Override
-    public List<Thermometer> getInputs() throws IOException, DeviceException {
+    public List<Thermometer> getInputs() {
         return inputs;
     }
 
     @Override
-    public List<Heater> getOutputs() throws IOException, DeviceException {
+    public List<Heater> getOutputs() {
         return outputs;
     }
 
     @Override
-    public List<Loop> getLoops() throws IOException, DeviceException {
+    public List<Loop> getLoops() {
         return loops;
     }
 

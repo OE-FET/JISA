@@ -1,6 +1,7 @@
 package jisa.gui;
 
 //import javafx.JavaFx;
+import com.sun.javafx.css.StyleManager;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -49,6 +50,8 @@ public class GUI extends Application {
         Util.sleep(500);
         JavaFX.launch();
         Util.sleep(500);
+        Application.setUserAgentStylesheet(Application.STYLESHEET_MODENA);
+        StyleManager.getInstance().addUserAgentStylesheet(GUI.class.getResource("breeze.css").toString());
     }
 
     /**

@@ -2,6 +2,7 @@ package jisa.gui;
 
 
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.effect.DropShadow;
@@ -30,6 +31,7 @@ public class DoubleInput extends HBox {
             HBox.setHgrow(root, Priority.ALWAYS);
             mantissa.setTextFormatter(new TextFormatter<Double>(new DoubleStringConverter(), 0.0, DBL_FILTER));
             exponent.setTextFormatter(new TextFormatter<Integer>(new IntegerStringConverter(), 0, INT_FILTER));
+            root.setPadding(Insets.EMPTY);
 
             mantissa.textProperty().addListener((observable, oldValue, newValue) -> {
                 if (onChange != null) {
@@ -47,10 +49,8 @@ public class DoubleInput extends HBox {
 
                 if (mantissa.isFocused()) {
                     root.getStyleClass().add("focused");
-                    root.setEffect(new DropShadow(3, Color.valueOf("#039ED3")));
                 } else {
                     root.getStyleClass().remove("focused");
-                    root.setEffect(null);
                 }
 
             });
@@ -59,10 +59,8 @@ public class DoubleInput extends HBox {
 
                 if (exponent.isFocused()) {
                     root.getStyleClass().add("focused");
-                    root.setEffect(new DropShadow(3, Color.valueOf("#039ED3")));
                 } else {
                     root.getStyleClass().remove("focused");
-                    root.setEffect(null);
                 }
 
             });
