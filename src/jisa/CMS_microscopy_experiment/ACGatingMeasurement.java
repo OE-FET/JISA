@@ -38,7 +38,7 @@ import java.util.Objects;
  * Note that the convention is that the source is grounded.
  */
 
-public class ACGatingMeasurement extends Measurement {
+public class ACGatingMeasurement extends MeasurementPlus {
     // safety limits parameters (will implement this later...)
     private final double MAX_ABS_VOLTAGE = 50.0;
 
@@ -105,7 +105,7 @@ public class ACGatingMeasurement extends Measurement {
     /**
      * Initialize the UI configurators.
      */
-    public void initializeConfigurators()
+    private void initializeConfigurators()
     {
         testName                 = new StringParameter("Basic Info"         , "Test Name"                , ""   , currentConfig.testName);
         gateVoltageHigh_V        = new DoubleParameter("Gate Signal"        , "Gate Voltage High"        , "V"  , currentConfig.gateVoltageHigh_V);
@@ -228,7 +228,7 @@ public class ACGatingMeasurement extends Measurement {
 
     @Override
     public String getName() {
-        return "AC Gating Measurement";
+        return currentConfig.getTestName();
     }
 
     @Override
@@ -326,10 +326,10 @@ public class ACGatingMeasurement extends Measurement {
         }
         return new String[]{
                 String.valueOf(Paths.get(currentConfig.outputPath, currentConfig.testName + i + "_config.json")),
-                String.valueOf(Paths.get(currentConfig.outputPath, currentConfig.testName + i + "_data.json"))};
+                String.valueOf(Paths.get(currentConfig.outputPath, currentConfig.testName + i + "_data.csv"))};
     }
 
-    static class TestConfigs{
+    public static class TestConfigs{
         private String testName;
         private double gateVoltageHigh_V;
         private double gateVoltageLow_V;

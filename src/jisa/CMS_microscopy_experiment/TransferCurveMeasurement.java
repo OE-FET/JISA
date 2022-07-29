@@ -24,7 +24,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 
-public class TransferCurveMeasurement extends Measurement {
+public class TransferCurveMeasurement extends MeasurementPlus {
 
     private final double MAX_ABS_VOLTAGE = 50.0;
 
@@ -68,13 +68,14 @@ public class TransferCurveMeasurement extends Measurement {
         // smu.useAutoVoltageRange();
         //smu.setVoltageLimit(MAX_ABS_VOLTAGE);    // 50 V voltage limit
         //smu.setCurrentLimit(100e-3); // 100 mA current limit
+        smu.setVoltageRange(currentConfig.V_DS);
         smu.setVoltage(currentConfig.V_DS);
         smu.turnOn();
     }
     /**
      * Initialize the UI configurators.
      */
-    public void initializeConfigurators(){
+    private void initializeConfigurators(){
         testName           = new StringParameter("Basic Info"        , "Test Name"          , "" , currentConfig.getTestName());
         V_DS               = new DoubleParameter("Scan Settings"     , "V_DS"               , "V", currentConfig.getV_DS());
         minV_G             = new DoubleParameter("Scan Settings"     , "Min V_G"            , "V", currentConfig.getMinV_G());
@@ -116,7 +117,7 @@ public class TransferCurveMeasurement extends Measurement {
 
     @Override
     public String getName() {
-        return "DIY transfer curve";
+        return currentConfig.getTestName();
     }
 
     @Override
@@ -255,10 +256,10 @@ public class TransferCurveMeasurement extends Measurement {
         }
         return new String[]{
                 String.valueOf(Paths.get(currentConfig.outputPath, currentConfig.testName + i + "_config.json")),
-                String.valueOf(Paths.get(currentConfig.outputPath, currentConfig.testName + i + "_data.json"))};
+                String.valueOf(Paths.get(currentConfig.outputPath, currentConfig.testName + i + "_data.csv"))};
     }
 
-    static class TestConfigs{
+    public static class TestConfigs{
         private String testName;
         private double V_DS;
         private double minV_G;

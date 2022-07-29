@@ -150,10 +150,9 @@ public class K2400 extends VISADevice implements SMU {
         if (!(getSource() == Source.VOLTAGE)){
             throw new DeviceException("Setting voltage when not sourcign voltage is not allowed!");
         }
-        if (Math.abs(voltage) > 20)
-            write(":SOUR:VOLT:RANG MAX");
+//        if (Math.abs(voltage) > 20)
+//            write(":SOUR:VOLT:RANG MAX");
         write(C_SET_SOURCE_VALUE, VOLTAGE_OPTION, voltage);
-
     }
 
     @Override
@@ -199,6 +198,33 @@ public class K2400 extends VISADevice implements SMU {
             return Source.CURRENT;
         addLog(Level.INFO, "Source mode not recognized.");
         return null;
+    }
+
+
+    // needs testing
+    @Override
+    public double getVoltageRange() throws DeviceException, IOException {
+        return queryDouble(":SOUR:VOLT:RANG?");
+    }
+
+    // needs testing
+    @Override
+    public void setVoltageRange(double value) throws DeviceException, IOException {
+        boolean isOriginallyOn = isOn();
+        turnOff();
+        double maxVoltageRange = queryDouble(":SOUR:VOLT:RANG? MAX");
+        if (value > maxVoltageRange)
+        {
+            write(":SOUR:VOLT:RANG MAX");
+            addLog(Level.WARNING, "Voltage limit exceeds max limit. Max voltage limit set");
+        }
+        // set to the minimum and ramp up until there is a range that can take it.
+        write(":SOUR:VOLT:RANG MIN");
+        System.out.print(value);
+        while (queryDouble(":SOUR:VOLT:RANG?") < Math.abs(value))
+            write(":SOUR:VOLT:RANG UP");
+        if (isOriginallyOn)
+            turnOn();
     }
 
     // functions that are not implemented
@@ -344,16 +370,6 @@ public class K2400 extends VISADevice implements SMU {
 
     @Override
     public boolean isAutoRangingMeasure() throws DeviceException, IOException {
-        throw new DeviceException("Not implemented!");
-    }
-
-    @Override
-    public double getVoltageRange() throws DeviceException, IOException {
-        throw new DeviceException("Not implemented!");
-    }
-
-    @Override
-    public void setVoltageRange(double value) throws DeviceException, IOException {
         throw new DeviceException("Not implemented!");
     }
 

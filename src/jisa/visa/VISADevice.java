@@ -108,6 +108,8 @@ public class VISADevice implements Instrument {
      *                    to the terminal.
      */
     public void enableLogger(String loggerName, String logFileName) {
+        if (loggerEnabled)
+            return;
         loggerEnabled = true;
         if (loggerName == null)
         {
