@@ -51,7 +51,7 @@ public class GUI extends Application {
         JavaFX.launch();
         Util.sleep(500);
         Application.setUserAgentStylesheet(Application.STYLESHEET_MODENA);
-        StyleManager.getInstance().addUserAgentStylesheet(GUI.class.getResource("breeze.css").toString());
+        StyleManager.getInstance().addUserAgentStylesheet(GUI.class.getResource("style/breeze.css").toString());
     }
 
     /**
