@@ -42,17 +42,29 @@ val currentA = smuA.getCurrent() // Measure current
 smuA.turnOff()                   // Disable output of channel
 ```
 ### 2. Data Handling
+
+JISA provides a simple means of creating tables of data which can then be directly output as CSV files:
+
 ```kotlin
 // Create results storage
-val results = ResultList("Voltage", "Current", "Temperature")
+val V     = DoubleColumn("Voltage", "V")
+val I     = DoubleColumn("Current", "A")
+val T     = DoubleColumn("Temperature", "K")
+val table = ResultList(V, I, T)
 
 // Take 10 readings
 repeat(10) {
-    results.addData(smu.getVoltage(), smu.getCurrent(), tc.getTemperature())
+
+    table.addRow { row ->
+        row[V] = smu.getVoltage()
+        row[I] = smu.getCurrent()
+        row[T] = tc.getTemperature()
+    }
+    
 }
 
 // Easy output as CSV file
-results.output("data.csv")  
+table.output("data.csv")  
 ```
 ### 3. GUI Building Blocks
 ```kotlin
