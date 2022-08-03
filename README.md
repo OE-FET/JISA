@@ -68,7 +68,11 @@ repeat(10) {
 repeat(10) {
 
     // Add data by providing it in column order
-    table.addData(smu.getVoltage(), smu.getCurrent(), tc.getTemperature())
+    table.addData(
+        smu.getVoltage(), 
+        smu.getCurrent(), 
+        tc.getTemperature()
+    )
     
 }
 
