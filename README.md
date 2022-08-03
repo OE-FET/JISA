@@ -55,11 +55,20 @@ val table = ResultList(V, I, T)
 // Take 10 readings
 repeat(10) {
 
+    // Add data by specifying columns
     table.addRow { row ->
         row[V] = smu.getVoltage()
         row[I] = smu.getCurrent()
         row[T] = tc.getTemperature()
     }
+    
+}
+
+// Take another 10 readings
+repeat(10) {
+
+    // Add data by providing it in column order
+    table.addData(smu.getVoltage(), smu.getCurrent(), tc.getTemperature())
     
 }
 
@@ -141,14 +150,14 @@ fun main() {
     val smu     = K2450(GPIBAddress(0,20))
     val results = ResultList(Col("Voltage", "V"), Col("Current", "A"))
 
-    smu.setVoltage(0.0)
+    smu.voltage = 0.0
     smu.turnOn()
 
     for (v in Range.linear(0.0, 60.0, 61)) {
     
-        smu.setVoltage(v)
+        smu.voltage = v
         Util.sleep(500)
-        results.addData(smu.getVoltage(), smu.getCurrent())
+        results.addData(smu.voltage, smu.current)
         
     }
     
