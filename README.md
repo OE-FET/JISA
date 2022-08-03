@@ -96,7 +96,7 @@ val plot = Plot("Results", "Voltage", "Current")
 val grid = Grid("Main Window", params, plot)
 
 // Add start button to toolbar
-grid.addToolbarButton("Start Sweep") {
+grid.addToolbarButton("Start Sweep") { // This code will run when clicked
 
     // Makes range starting at minV, ending at maxV in numV steps
     val voltages = Range.linear(
@@ -105,7 +105,9 @@ grid.addToolbarButton("Start Sweep") {
         numV.get()    // No. steps
     )   
     
-    // Code to run sweep
+    for (voltage in voltages) {
+        /*... do measurement here ...*/
+    }
     
 }
 
