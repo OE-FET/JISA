@@ -57,9 +57,9 @@ repeat(10) {
 
     // Add data by specifying columns
     table.addRow { row ->
-        row[V] = smu.getVoltage()
         row[I] = smu.getCurrent()
         row[T] = tc.getTemperature()
+        row[V] = smu.getVoltage()
     }
     
 }
