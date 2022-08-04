@@ -399,6 +399,10 @@ public class SweepAction<T> extends AbstractAction<Void> {
         return new SweepActionDisplay<T>(this);
     }
 
+    public ActionGenerator<T> getGenerator() {
+        return generator;
+    }
+
     @Override
     public SweepAction<T> copy() {
 
