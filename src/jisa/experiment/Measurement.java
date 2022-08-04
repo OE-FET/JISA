@@ -267,11 +267,11 @@ public abstract class Measurement {
 
     public abstract class Parameter<T> {
 
-        private final String   section;
-        private final String   name;
-        private final String   units;
-        private       T        value;
-        private       Field<T> field = null;
+        private final     String   section;
+        private final     String   name;
+        private final     String   units;
+        private             T      value;
+        private transient Field<T> field = null;
 
         public Parameter(String section, String name, String units, T defaultValue) {
 
