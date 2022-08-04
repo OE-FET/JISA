@@ -758,10 +758,10 @@ public class Plot extends JFXElement implements Element, Clearable {
 
                 if (s.isMarkerVisible()) {
 
-                    if (s.getErrorPositive(DIM_Y, j) != s.getErrorNegative(DIM_Y, j)) {
+                    if (s.getErrorPositive(DIM_Y, j) + s.getErrorNegative(DIM_Y, j) > 0) {
 
                         double yp    = aEndY - yScale * this.yAxis.getDisplayPosition(s.get(DIM_Y, j) + s.getErrorPositive(DIM_Y, j));
-                        double yn    = aEndY - yScale * this.yAxis.getDisplayPosition(s.get(DIM_Y, j) - s.getErrorPositive(DIM_Y, j));
+                        double yn    = aEndY - yScale * this.yAxis.getDisplayPosition(s.get(DIM_Y, j) - s.getErrorNegative(DIM_Y, j));
                         double xn    = x - 5;
                         double xp    = x + 5;
 

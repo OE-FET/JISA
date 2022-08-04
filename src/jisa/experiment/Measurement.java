@@ -1,7 +1,6 @@
 package jisa.experiment;
 
 import jisa.control.ConfigBlock;
-import jisa.control.Returnable;
 import jisa.devices.Configuration;
 import jisa.devices.interfaces.Instrument;
 import jisa.experiment.queue.Action;
@@ -423,6 +422,19 @@ public abstract class Measurement {
         @Override
         protected Field<Integer> makeField(Fields fields) {
             return fields.addIntegerField(getTitle(), getValue());
+        }
+
+    }
+
+    public class TimeParameter extends Parameter<Integer> {
+
+        public TimeParameter(String section, String name, Integer defaultValue) {
+            super(section, name, null, defaultValue);
+        }
+
+        @Override
+        protected Field<Integer> makeField(Fields fields) {
+            return fields.addTimeField(getTitle(), getValue());
         }
 
     }

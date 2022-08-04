@@ -18,11 +18,11 @@ import java.util.stream.Stream;
 public abstract class ResultTable implements Iterable<Row> {
 
     public static final Map<String, ResultList.ColumnBuilder> STANDARD_TYPES = Map.of(
-        "String", StringColumn::new,
-        "Double", DoubleColumn::new,
+        "String",  StringColumn::new,
+        "Double",  DoubleColumn::new,
         "Integer", IntColumn::new,
         "Boolean", BooleanColumn::new,
-        "Long", LongColumn::new
+        "Long",    LongColumn::new
     );
 
     private final List<Column<?>>     columns;

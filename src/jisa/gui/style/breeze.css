@@ -66,7 +66,7 @@
 .choice-box:hover,
 .menu-button:hover,
 .button:hover {
-    -fx-background-color: rgba(0,0,0,0.1), -fx-outer-border-color, -fx-inner-border-color, -fx-body-color, rgba(255, 255, 255, 0.25);
+    -fx-background-color: rgba(0,0,0,0.1), #3daee6, #3daee6, -fx-body-color, rgba(255, 255, 255, 0.25);
     -fx-background-insets: 0px -1px -1px 0px, 0px, 0px, 1px, 1px;
     -fx-background-radius: 3px, 2px, 2px, 1px, 3px;
 }

@@ -22,6 +22,7 @@ import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
 import jisa.gui.fields.DoubleField;
 import jisa.gui.fields.StringField;
+import jisa.gui.fields.TimeField;
 import jisa.maths.Range;
 
 import java.util.*;
@@ -556,6 +557,41 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
     }
 
+    public Field<Integer> addTimeField(String name, int initialValue) {
+
+        TimeInput field = new TimeInput();
+        field.setValue(initialValue);
+        field.setMaxWidth(Integer.MAX_VALUE);
+        Label label = new Label(name);
+        label.setMinWidth(Region.USE_PREF_SIZE);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(field, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(field, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
+
+        GUI.runNow(() -> list.addRow(rows++, label, field));
+
+        TimeField f = new TimeField(label, field) {
+
+            @Override
+            public void remove() {
+                GUI.runNow(() -> {
+                    list.getChildren().removeAll(label, field);
+                    updateGridding();
+                });
+            }
+
+        };
+
+        fields.add(f);
+        return f;
+
+    }
+
+    public Field<Integer> addTimeField(String name) {
+        return addTimeField(name, 0);
+    }
 
     /**
      * Add a simple text box to the fields group. Accepts any string.
