@@ -55,6 +55,10 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
             return "%";
         }
 
+        default double getPower() throws IOException, DeviceException {
+            return getValue();
+        }
+
     }
 
     interface Loop extends PID.Loop, Channel<Loop> {
