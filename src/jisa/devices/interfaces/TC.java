@@ -89,6 +89,24 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
             waitForStableValue(target, pct, msec);
         }
 
+        default List<Thermometer> getAvailableThermometers() {
+
+            return getAvailableInputs().stream()
+                                       .filter(i -> i instanceof Thermometer)
+                                       .map(i -> (Thermometer) i)
+                                       .collect(Collectors.toUnmodifiableList());
+
+        }
+
+        default List<Heater> getAvailableHeaters() {
+
+            return getAvailableOutputs().stream()
+                                       .filter(i -> i instanceof Heater)
+                                       .map(i -> (Heater) i)
+                                       .collect(Collectors.toUnmodifiableList());
+
+        }
+
     }
 
     List<? extends Loop> getLoops() throws IOException, DeviceException;
@@ -102,11 +120,21 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
     }
 
     default List<? extends Thermometer> getThermometers() throws IOException, DeviceException {
-        return getInputs().stream().filter(i -> i instanceof Thermometer).map(i -> (Thermometer) i).collect(Collectors.toList());
+
+        return getInputs().stream()
+                          .filter(i -> i instanceof Thermometer)
+                          .map(i -> (Thermometer) i)
+                          .collect(Collectors.toList());
+
     }
 
     default List<? extends Heater> getHeaters() throws IOException, DeviceException {
-        return getInputs().stream().filter(i -> i instanceof Heater).map(i -> (Heater) i).collect(Collectors.toList());
+
+        return getInputs().stream()
+                          .filter(i -> i instanceof Heater)
+                          .map(i -> (Heater) i)
+                          .collect(Collectors.toList());
+
     }
 
     default List<Class<? extends Instrument>> getMultiTypes() {
