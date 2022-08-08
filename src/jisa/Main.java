@@ -7,10 +7,8 @@ import jisa.addresses.StrAddress;
 import jisa.devices.interfaces.TC;
 import jisa.devices.temperature.ITC503;
 import jisa.devices.temperature.MercuryITC;
-import jisa.gui.DeviceShell;
-import jisa.gui.Doc;
-import jisa.gui.Fields;
-import jisa.gui.GUI;
+import jisa.gui.*;
+import jisa.maths.Range;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

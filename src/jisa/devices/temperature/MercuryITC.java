@@ -2,6 +2,7 @@ package jisa.devices.temperature;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
+import jisa.devices.interfaces.PID;
 import jisa.devices.interfaces.TC;
 import jisa.visa.VISADevice;
 
@@ -317,6 +318,106 @@ public class MercuryITC extends VISADevice implements TC {
             }
 
         }
+    }
+
+    public class AuxOutput implements PID.Output {
+
+        private final String uid;
+
+        public String get(String... parts) throws IOException, DeviceException {
+
+            String[] full = new String[4 + parts.length];
+
+            full[0] = "READ";
+            full[1] = "DEV";
+            full[2] = uid + ".A1";
+            full[3] = "AUX";
+
+            System.arraycopy(parts, 0, full, 4, parts.length);
+
+            return readITC(full)[0];
+
+        }
+
+        public double getDouble(String... parts) throws IOException, DeviceException {
+
+            String[] full = new String[4 + parts.length];
+
+            full[0] = "READ";
+            full[1] = "DEV";
+            full[2] = uid + ".A1";
+            full[3] = "AUX";
+
+            System.arraycopy(parts, 0, full, 4, parts.length);
+
+            String[] response = readITC(full);
+
+            double value = Double.parseDouble(response[0]);
+            double scale = (parts[0].equals("SIG") && response.length > 1 && response[1].length() == 2) ? getScale(response[1].charAt(0)) : 1.0;
+
+            return value * scale;
+
+        }
+
+        public String[] set(String... parts) throws IOException, DeviceException {
+
+            String[] full = new String[4 + parts.length];
+
+            full[0] = "SET";
+            full[1] = "DEV";
+            full[2] = uid + ".H1";
+            full[3] = "HTR";
+
+            System.arraycopy(parts, 0, full, 4, parts.length);
+
+            return writeITC(full);
+
+        }
+
+        public AuxOutput(String uid) {
+            this.uid = uid;
+        }
+
+        @Override
+        public String getIDN() throws IOException, DeviceException {
+            return null;
+        }
+
+        @Override
+        public Address getAddress() {
+            return null;
+        }
+
+        @Override
+        public double getValue() throws IOException, DeviceException {
+            return 0;
+        }
+
+        @Override
+        public double getLimit() throws IOException, DeviceException {
+            return 0;
+        }
+
+        @Override
+        public void setLimit(double range) throws IOException, DeviceException {
+
+        }
+
+        @Override
+        public String getName() {
+            return "Aux Output";
+        }
+
+        @Override
+        public String getValueName() {
+            return "Voltage";
+        }
+
+        @Override
+        public String getUnits() {
+            return "V";
+        }
+
     }
 
     public class Loop extends ZonedLoop {
