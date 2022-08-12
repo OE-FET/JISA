@@ -20,7 +20,7 @@ import java.io.IOException;
 public class ACGatingAndTransferTestSequence {
     // measurement settings
     // number of points to take for each AC gating measurement (1 s per point)
-    static int nPointsACGating = 10;
+    static int nPointsACGating = 180;
     // the frequencies at which the measurement should be done.
     static double[] freqList = {11, 23, 57, 103, 211, 400, 800, 1000};
     // wave type used for AC gating
@@ -28,9 +28,9 @@ public class ACGatingAndTransferTestSequence {
     // the high voltage for AC gating. The low voltage is always - 50;
     static double ACGatingHigh = -0;
     // output directory
-    static String outputPath = "C:\\Users\\Zhang Yansheng\\Desktop\\summer project 2022\\dummy test folder\\dummy test sequence";
+    static String outputPath = "C:\\Users\\Zhang Yansheng\\Desktop\\summer project 2022\\data storage\\12 Aug Gosia device 7\\freq sweep sine wave";
     // overall test name
-    static String overallTestName = "dummy";
+    static String overallTestName = "freq_sweep";
 
     static volatile boolean isStopped = true;
     static ACGatingMeasurement acGatingMeasurement;
@@ -68,11 +68,11 @@ public class ACGatingAndTransferTestSequence {
         // define configurations
         TransferCurveMeasurement.TestConfigs linearTransferCurveConfig;
         linearTransferCurveConfig = new TransferCurveMeasurement.TestConfigs("None",
-                -5, -50, 10, 56, 1000, outputPath);
+                -5, -50, 5, 56, 1000, outputPath);
 
         TransferCurveMeasurement.TestConfigs saturationTransferCurveConfig;
         saturationTransferCurveConfig = new TransferCurveMeasurement.TestConfigs("None",
-                -50, -50, 10, 56, 1000, outputPath);
+                -50, -50, 5, 56, 1000, outputPath);
 
         ACGatingMeasurement.TestConfigs acGatingConfig;
         acGatingConfig = new ACGatingMeasurement.TestConfigs("None",
@@ -83,6 +83,8 @@ public class ACGatingAndTransferTestSequence {
         // saturation transfer curve before
         saturationTransferCurveConfig.setTestName(overallTestName + "_saturation_transfer_curve_before");
         transferCurveMeasurement.setConfig(saturationTransferCurveConfig);
+        if (isStopped)
+            return;
         startMeasurement(transferCurveMeasurement, table, plot2, new int[]{2, 3});
 
         for (int i = 0; i < freqList.length; i ++) {
@@ -91,13 +93,17 @@ public class ACGatingAndTransferTestSequence {
                 System.out.println("Measurement stopped!!");
                 return;
             }
-            isStopped = false;
             String transferCurveName = overallTestName + "_linear_transfer_curve_" + i + "_";
 
             linearTransferCurveConfig.setTestName(transferCurveName);
             transferCurveMeasurement.setConfig(linearTransferCurveConfig);
             startMeasurement(transferCurveMeasurement, table, plot2, new int[]{2, 3});
 
+            if (isStopped)
+            {
+                System.out.println("Measurement stopped!!");
+                return;
+            }
             String acGatingName = overallTestName + "_ac_gating_" + i + "_";
             acGatingConfig.setTestName(acGatingName);
             acGatingConfig.setGateFrequency_Hz(freqList[i]);
