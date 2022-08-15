@@ -221,9 +221,11 @@ public class ACGatingMeasurement extends MeasurementPlus {
         if (currentConfig.gateFrequency_Hz < 200)
             lockInAmp.setSyncFilterEnabled(true);
         lockInAmp.setTimeConstant(currentConfig.timeConstant_ms*0.001);
-        lockInAmp.autoGain();
+        Thread.sleep(20000);
+        //lockInAmp.autoGain();
         // get a bit of reserve for the lock-in amp
-        lockInAmp.setRange(lockInAmp.getRange()*2);
+        //lockInAmp.setRange(lockInAmp.getRange()*2);
+        lockInAmp.setRange(0.0002);
     }
 
     @Override

@@ -20,7 +20,7 @@ import java.io.IOException;
 public class ACGatingAndTransferTestSequence {
     // measurement settings
     // number of points to take for each AC gating measurement (1 s per point)
-    static int nPointsACGating = 180;
+    static int nPointsACGating = 60;
     // the frequencies at which the measurement should be done.
     static double[] freqList = {11, 23, 57, 103, 211, 400, 800, 1000};
     // wave type used for AC gating
@@ -28,7 +28,7 @@ public class ACGatingAndTransferTestSequence {
     // the high voltage for AC gating. The low voltage is always - 50;
     static double ACGatingHigh = -0;
     // output directory
-    static String outputPath = "C:\\Users\\Zhang Yansheng\\Desktop\\summer project 2022\\data storage\\12 Aug Gosia device 7\\freq sweep sine wave";
+    static String outputPath = "C:\\Users\\Zhang Yansheng\\Desktop\\summer project 2022\\data storage\\11-08-22 CAS device for microscopy testing\\device 8\\freq dependent studies";
     // overall test name
     static String overallTestName = "freq_sweep";
 

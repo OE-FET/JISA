@@ -76,13 +76,14 @@ public class TransferCurveMeasurement extends MeasurementPlus {
      * Initialize the UI configurators.
      */
     private void initializeConfigurators(){
-        testName           = new StringParameter("Basic Info"        , "Test Name"          , "" , currentConfig.getTestName());
-        V_DS               = new DoubleParameter("Scan Settings"     , "V_DS"               , "V", currentConfig.getV_DS());
-        minV_G             = new DoubleParameter("Scan Settings"     , "Min V_G"            , "V", currentConfig.getMinV_G());
-        maxV_G             = new DoubleParameter("Scan Settings"     , "Max V_G"            , "V", currentConfig.getMaxV_G());
-        nPoints            = new IntegerParameter("Scan Settings"    , "# Points"           , "" , currentConfig.getnPoints());
-        amplificationRatio = new ChoiceParameter("Scan Settings"     , "Amplification Ratio", 0  , String.valueOf(currentConfig.amplificationRatio));
-        outputPath         = new StringParameter("Measurement Config", "Output path"        , "" , currentConfig.outputPath);
+        testName           = new StringParameter("Basic Info"        , "Test Name"          , ""  , currentConfig.getTestName());
+        V_DS               = new DoubleParameter("Scan Settings"     , "V_DS"               , "V" , currentConfig.getV_DS());
+        minV_G             = new DoubleParameter("Scan Settings"     , "Min V_G"            , "V" , currentConfig.getMinV_G());
+        maxV_G             = new DoubleParameter("Scan Settings"     , "Max V_G"            , "V" , currentConfig.getMaxV_G());
+        timeBetweenPoints  = new DoubleParameter("Scan Settings"     , "Time between points", "ms", currentConfig.getTimeBetweenPoints());
+        nPoints            = new IntegerParameter("Scan Settings"    , "# Points"           , ""  , currentConfig.getnPoints());
+        amplificationRatio = new ChoiceParameter("Scan Settings"     , "Amplification Ratio", 0   , String.valueOf(currentConfig.amplificationRatio));
+        outputPath         = new StringParameter("Measurement Config", "Output path"        , ""  , currentConfig.outputPath);
     }
 
     public void updateConfigurators() {
@@ -91,16 +92,18 @@ public class TransferCurveMeasurement extends MeasurementPlus {
         minV_G.setValue(currentConfig.minV_G);
         maxV_G.setValue(currentConfig.maxV_G);
         nPoints.setValue(currentConfig.nPoints);
+        timeBetweenPoints.setValue(currentConfig.timeBetweenPoints);
         outputPath.setValue(currentConfig.outputPath);
     }
 
     public void updateConfigs(){
-        currentConfig.testName   = testName.getValue();
-        currentConfig.V_DS       = V_DS.getValue();
-        currentConfig.minV_G     = minV_G.getValue();
-        currentConfig.maxV_G     = maxV_G.getValue();
-        currentConfig.nPoints    = nPoints.getValue();
-        currentConfig.outputPath = outputPath.getValue();
+        currentConfig.testName          = testName.getValue();
+        currentConfig.V_DS              = V_DS.getValue();
+        currentConfig.minV_G            = minV_G.getValue();
+        currentConfig.maxV_G            = maxV_G.getValue();
+        currentConfig.nPoints           = nPoints.getValue();
+        currentConfig.outputPath        = outputPath.getValue();
+        currentConfig.timeBetweenPoints = timeBetweenPoints.getValue();
     }
     /**
      * Change the test configuration
