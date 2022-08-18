@@ -1,9 +1,20 @@
 package jisa.maths.fits;
 
+import jisa.Util;
+import jisa.maths.functions.Function;
 import jisa.maths.functions.PFunction;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
+import org.apache.commons.math.analysis.solvers.BrentSolver;
+import org.apache.commons.math.optimization.*;
+import org.apache.commons.math.optimization.direct.NelderMead;
+import org.apache.commons.math.optimization.direct.PowellOptimizer;
+import org.apache.commons.math.optimization.fitting.CurveFitter;
+import org.apache.commons.math.optimization.fitting.ParametricRealFunction;
+import org.apache.commons.math.optimization.general.AbstractLeastSquaresOptimizer;
+import org.apache.commons.math.optimization.general.LevenbergMarquardtOptimizer;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,24 +23,43 @@ public class Fitter {
 
     private final PFunction                function;
     private final MultivariateRealFunction minFunction;
-    private final List<Point>              points = new LinkedList<>();
+    private final MultivariateRealFunction realFunction;
+    private final List<Point>              points            = new LinkedList<>();
     private       double[]                 start;
     private       double[]                 maxLimits;
     private       double[]                 minLimits;
     private       int                      maxIterations;
     private       int                      maxEvaluations;
-    private       double                   maxChange;
-    private       double                   minChange;
+    private       double                   relativeTolerance = 1e-50;
+    private       double                   absoluteTolerance = 1e-50;
 
     public Fitter(PFunction function) {
 
         this.function    = function;
-        this.minFunction = parameters -> points
-            .stream()
-            .mapToDouble(p -> p.w * Math.pow((p.y - function.calculate(p.x, parameters)), 2))
-            .sum();
+        this.minFunction = parameters -> {
+
+            for (int i = 0; i < parameters.length; i++) {
+
+                if (!Util.isBetween(parameters[i], minLimits[i], maxLimits[i])) {
+                    return Double.POSITIVE_INFINITY;
+                }
+
+            }
+
+            return points
+                .stream()
+                .mapToDouble(p -> p.w * Math.pow((p.y - function.calculate(p.x, parameters)) / p.y, 2))
+                .sum() / points.stream().mapToDouble(p -> p.w).sum();
+
+        };
+
+        this.realFunction = parameters ->  points
+                .stream()
+                .mapToDouble(p -> p.w * Math.pow((p.y - function.calculate(p.x, parameters)) / p.y, 2))
+                .sum() / points.stream().mapToDouble(p -> p.w).sum();
 
     }
+
 
     public void addPoint(double x, double y, double w) {
         points.add(new Point(x, y, w));
@@ -113,31 +143,90 @@ public class Fitter {
         this.maxEvaluations = maxEvaluations;
     }
 
-    public double getMaxChange() {
-        return maxChange;
+    public double getRelativeTolerance() {
+        return relativeTolerance;
     }
 
-    public void setMaxChange(double maxChange) {
-        this.maxChange = maxChange;
+    public void setRelativeTolerance(double relativeTolerance) {
+        this.relativeTolerance = relativeTolerance;
     }
 
-    public double getMinChange() {
-        return minChange;
+    public double getAbsoluteTolerance() {
+        return absoluteTolerance;
     }
 
-    public void setMinChange(double minChange) {
-        this.minChange = minChange;
+    public void setAbsoluteTolerance(double absoluteTolerance) {
+        this.absoluteTolerance = absoluteTolerance;
     }
 
     protected double[] gradient(final double[] parameters) {
         return new double[0];
     }
 
-    public Fit fit() throws FunctionEvaluationException {
+    public Fit fit() {
 
-        double[] position = start.clone();
+        double[]       position = start.clone();
+        JISANelderMead opt      = new JISANelderMead();
 
-        return null;
+        opt.setMaxEvaluations(maxEvaluations);
+        opt.setMaxIterations(maxIterations);
+
+        opt.setConvergenceChecker(new SimpleRealPointChecker(relativeTolerance, absoluteTolerance));
+
+        try {
+
+            RealPointValuePair pair = opt.optimize(minFunction, realFunction, GoalType.MINIMIZE, start);
+            Function           func = x -> function.calculate(x, pair.getPoint());
+
+            return new Fit() {
+
+                private double[] errors = null;
+
+                @Override
+                public double getParameter(int order) {
+                    return pair.getPoint()[order];
+                }
+
+                @Override
+                public double[] getParameters() {
+                    return pair.getPoint();
+                }
+
+                @Override
+                public double getError(int order) {
+                    return getErrors()[order];
+                }
+
+                @Override
+                public double[] getErrors() {
+
+                    if (errors == null) {
+
+                        try {
+                            errors = opt.estimateErrors(points.size());
+                        } catch (Throwable e) {
+                            errors = new double[pair.getPoint().length];
+                            Arrays.fill(errors, Double.NaN);
+                        }
+
+                    }
+
+                    return errors.clone();
+
+                }
+
+                @Override
+                public Function getFunction() {
+                    return func;
+                }
+
+            };
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
 
     }
 

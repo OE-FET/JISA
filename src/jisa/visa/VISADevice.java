@@ -4,6 +4,8 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
+import jisa.visa.drivers.Connection;
+import jisa.visa.drivers.Driver;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;

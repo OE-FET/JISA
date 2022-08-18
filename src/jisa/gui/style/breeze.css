@@ -168,7 +168,7 @@
 }
 
 .scroll-bar > .thumb {
-    -fx-background-color: plasma-blue;
+    -fx-background-color: plasma-blue!important;
     -fx-background-radius: 5em; /*24px;*/
     -fx-background-insets: 0.23em; /* 0.333333em;*/ /*4px;*/
 }

@@ -5,7 +5,7 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MSwitch;
 import jisa.devices.interfaces.Switch;
-import jisa.visa.Connection;
+import jisa.visa.drivers.Connection;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;

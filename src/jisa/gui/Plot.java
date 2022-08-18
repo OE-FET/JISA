@@ -133,6 +133,14 @@ public class Plot extends JFXElement implements Element, Clearable {
         setYLabel(yLabel);
     }
 
+    public Plot(String title) {
+        this(title, "", "", "", "");
+    }
+
+    public Plot() {
+        this("", "", "", "", "");
+    }
+
     public void updateLegend() {
         GUI.runNow(() -> chart.getLegend().updateLegend(chart.getDatasets(), chart.getRenderers(), true));
     }
@@ -172,6 +180,11 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     public void setYUnit(String unit) {
         yAxis.setUnit(unit);
+    }
+
+    public void setTitle(String title) {
+        super.setTitle(title);
+        GUI.runNow(() -> chart.setTitle(title));
     }
 
     public String getXUnit() {
@@ -573,7 +586,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
-    public void saveSVG(String fileName, double width, double height) throws IOException {
+    public SVG getSVG(double width, double height) {
 
         SVGElement main = new SVGElement("g");
 
@@ -833,11 +846,21 @@ public class Plot extends JFXElement implements Element, Clearable {
         SVG svg = new SVG(width + legendW + 50.0 + 100.0, height + 60.0 + 100.0);
         svg.add(main);
 
-        svg.output(fileName);
-
+        return svg;
 
     }
 
+    public void saveSVG(String fileName, double width, double height) throws IOException {
+        getSVG(width, height).output(fileName);
+    }
+
+    public void outputSVG(PrintStream stream, double width, double height) {
+        getSVG(width, height).output(stream);
+    }
+
+    public void outputSVG(double width, double height) {
+        getSVG(width, height).output(System.out);
+    }
 
     private SVGElement makeMarker(Series.Shape p, Color c, double x, double y, double m) {
 

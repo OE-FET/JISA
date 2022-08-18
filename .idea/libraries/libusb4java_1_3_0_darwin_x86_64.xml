@@ -9,6 +9,8 @@
       <root url="jar://$PROJECT_DIR$/lib/usb-api-1.0.2.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ideaLibSources/usb4java-1.3.0-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

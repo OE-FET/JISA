@@ -2,10 +2,11 @@ package jisa.visa;
 
 import jisa.Util;
 import jisa.addresses.Address;
-import jisa.addresses.StrAddress;
 import jisa.gui.GUI;
+import jisa.visa.drivers.*;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Static class for accessing the native VISA library in a more Java-friendly way
@@ -81,11 +82,20 @@ public class VISA {
             System.out.println("Nope.");
         }
 
+        try {
+            System.out.print("Trying USB-TMC driver...             \t");
+            drivers.add(new USBTMCDriver());
+            System.out.println("Success.");
+        } catch (Exception | Error ignored) {
+            System.out.println("Nope.");
+        }
+
         for (Driver d : drivers) {
             lookup.put(d.getClass(), d);
         }
 
         if (drivers.isEmpty()) {
+
             Util.sleep(500);
             Util.errLog.println("ERROR: Could not load any drivers!");
 
@@ -95,6 +105,7 @@ public class VISA {
             }
 
             System.exit(1);
+
         } else {
             System.out.printf("Successfully loaded %d drivers.\n", drivers.size());
         }
@@ -111,17 +122,22 @@ public class VISA {
      *
      * @throws VISAException Upon error with VISA interface
      */
-    public static StrAddress[] getInstruments() throws VISAException {
+    public static List<Address> listInstruments() throws VISAException {
 
-        Map<String, StrAddress> addresses = new LinkedHashMap<>();
+        List<Address> addresses = new LinkedList<>();
 
         for (Driver driver : drivers) {
-            for (StrAddress a : driver.search()) {
-                addresses.put(a.toString().toLowerCase().trim(), a);
-            }
+
+            addresses.addAll(
+                driver.search()
+                      .stream()
+                      .filter(a -> addresses.stream().noneMatch(b -> b.toString().trim().equalsIgnoreCase(a.toString().trim())))
+                      .collect(Collectors.toUnmodifiableList())
+            );
+
         }
 
-        return addresses.values().toArray(new StrAddress[0]);
+        return addresses;
 
     }
 
@@ -148,7 +164,7 @@ public class VISA {
             try {
                 connection = lookup.get(preferredDriver).open(address);
                 return connection;
-            } catch (Exception ignored) { }
+            } catch (Exception ignored) {}
 
         }
 
@@ -158,7 +174,7 @@ public class VISA {
             try {
                 connection = lookup.get(RawTCPIPDriver.class).open(address);
                 return connection;
-            } catch (Exception ignored) { }
+            } catch (Exception ignored) {}
 
         }
 

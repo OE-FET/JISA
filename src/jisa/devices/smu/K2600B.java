@@ -8,7 +8,7 @@ import jisa.enums.AMode;
 import jisa.enums.Source;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
-import jisa.visa.RawTCPIPDriver;
+import jisa.visa.drivers.RawTCPIPDriver;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;

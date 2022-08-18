@@ -5,7 +5,7 @@ import jisa.devices.interfaces.VPreAmp;
 import jisa.enums.Coupling;
 import jisa.enums.Filter;
 import jisa.enums.Input;
-import jisa.visa.Connection;
+import jisa.visa.drivers.Connection;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;

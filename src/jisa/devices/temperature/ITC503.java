@@ -3,9 +3,8 @@ package jisa.devices.temperature;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.PID;
 import jisa.devices.interfaces.TC;
-import jisa.visa.Connection;
+import jisa.visa.drivers.Connection;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;

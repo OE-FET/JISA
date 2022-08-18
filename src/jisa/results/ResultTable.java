@@ -4,10 +4,7 @@ import com.google.common.collect.Lists;
 import jisa.maths.matrices.RealMatrix;
 import org.json.JSONObject;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -597,7 +594,7 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
-    public void outputTable(PrintStream stream) {
+    public void outputTable(PrintStream stream, String formatter) {
 
         int[] widths = new int[getColumnCount()];
 
@@ -698,6 +695,11 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    public void outputTable(PrintStream stream) {
+        outputTable(stream, "%s");
+    }
+
+
     public void outputTable() {
         outputTable(System.out);
     }
@@ -706,6 +708,63 @@ public abstract class ResultTable implements Iterable<Row> {
         PrintStream writer = new PrintStream(new FileOutputStream(path));
         outputTable(writer);
         writer.close();
+    }
+
+    public void outputHTML(PrintStream stream) {
+
+        stream.println("<table>");
+        stream.println("<thead><tr>");
+
+        for (Column column : columns) {
+
+            stream.print("<th>");
+            stream.print(column.getTitle());
+            stream.println("</th>");
+
+        }
+
+        stream.println("</tr></thead>");
+
+        stream.println("<tbody>");
+
+        for (Row row : this) {
+
+            stream.println("<tr>");
+
+            for (Column column : columns) {
+
+                stream.print("<td>");
+                stream.print(row.get(column).toString());
+                stream.println("</td>");
+
+            }
+
+            stream.println("</tr>");
+
+        }
+
+        stream.println("</tbody>");
+        stream.println("</table>");
+
+    }
+
+    public void outputHTML() {
+        outputHTML(System.out);
+    }
+
+    public void outputHTML(String file) throws FileNotFoundException {
+        PrintStream stream = new PrintStream(new FileOutputStream(file));
+        outputHTML(stream);
+        stream.close();
+    }
+
+    public String getHTML() {
+
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        outputHTML(new PrintStream(stream));
+
+        return stream.toString();
+
     }
 
     public RowBuilder startRow() {
@@ -785,6 +844,11 @@ public abstract class ResultTable implements Iterable<Row> {
 
         public ResultTable endRow() {
             return super.endRow();
+        }
+
+        public <T> RowBuilder set(Column<T> column, T value) {
+            super.set(column, value);
+            return this;
         }
 
     }

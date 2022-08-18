@@ -9,6 +9,7 @@ import jisa.visa.VISA;
 import jisa.visa.VISADevice;
 
 import java.net.URL;
+import java.util.List;
 
 public class VISABrowser extends ListDisplay<Address> {
 
@@ -27,7 +28,7 @@ public class VISABrowser extends ListDisplay<Address> {
 
         try {
 
-            Address[] addresses = VISA.getInstruments();
+            List<Address> addresses = VISA.listInstruments();
 
             for (Address address : addresses) {
 

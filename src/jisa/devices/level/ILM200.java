@@ -4,7 +4,7 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.LevelMeter;
 import jisa.devices.temperature.ITC503;
-import jisa.visa.Connection;
+import jisa.visa.drivers.Connection;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
