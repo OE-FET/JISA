@@ -2,6 +2,7 @@ package jisa.visa;
 
 import jisa.Util;
 import jisa.addresses.Address;
+import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
 
 import java.io.IOException;
@@ -68,6 +69,7 @@ public class VISADevice implements Instrument {
      * Opens the device at the specified address
      *
      * @param address Some form of InstrumentAddress (eg GPIBAddress, USBAddress etc)
+     * @param prefDriver Preferred driver to try first
      *
      * @throws IOException Upon communications error
      */
@@ -434,6 +436,34 @@ public class VISADevice implements Instrument {
             throw new IOException(e.getMessage());
         }
 
+    }
+
+    /**
+     * Method to check limits of instruments values, throws DeviceException exceeded.
+     *
+     * @param valueName parameter to be checked (e.g. Voltage range)
+     * @param value value to set
+     * @param lower lower limit
+     * @param upper upper limit
+     * @param unit unit of value
+     */
+    protected void checkLimit(String valueName, double value, double lower, double upper, String unit) throws DeviceException
+    {
+        if (value > upper) {
+            throw new DeviceException("%s %f %s exceeds device maximum value %f %s", valueName, value, unit, upper, unit);
+        }
+        else if (value < lower) {
+            throw new DeviceException("%s %f %s is below minimum value of device %f %s", valueName, value, unit, lower, unit);
+        }
+    }
+    protected void checkLimit(String valueName, double value, double lower, double upper) throws DeviceException
+    {
+        if (value > upper) {
+            throw new DeviceException("%s %f exceeds device maximum value %f", valueName, value, upper);
+        }
+        else if (value < lower) {
+            throw new DeviceException("%s %f is below minimum value of device %f", valueName, value, lower);
+        }
     }
 
 }

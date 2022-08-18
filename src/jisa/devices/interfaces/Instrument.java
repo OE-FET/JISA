@@ -43,7 +43,6 @@ public interface Instrument {
      *
      * @param msec Timeout, in milliseconds
      *
-     * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
     default void setTimeout(int msec) throws IOException {
