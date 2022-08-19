@@ -21,8 +21,9 @@ then `JISA` simply represents them as collections of `SMU` objects, or simply as
 
 ```kotlin
 // Get first channel from both instruments
-val smuK = keithley.getChannel(0)
-val smuA = agilent.getChannel(0)
+val smu1 = keithley.getChannel(0)
+val smu2 = agilent.getChannel(0)
+val smu3 = k2450
 ```
 
 meaning that operating them is done exactly the same way in JISA regardless of which make/model of instsrument they are from
@@ -56,9 +57,9 @@ fun voltageSweep(smu: SMU): List<IVPoint> {
 }
 
 // Can pass any SMU to it and it will run without needing to be changed
-val results1 = voltageSweep(smuK)
-val results2 = voltageSweep(smuA)
-val results3 = voltageSweep(k2450)
+val results1 = voltageSweep(smu1)
+val results2 = voltageSweep(smu2)
+val results3 = voltageSweep(smu3)
 ```
 ### 2. Data Handling
 
