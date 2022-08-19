@@ -226,8 +226,6 @@ function main()
     smu     = jisa.devices.K2450(JISA.Addresses.GPIBAddress(0,20));
     results = jisa.experiment.ResultList({'Voltage [V]', 'Current [A]'});
 
-    results.setUnits({'V', 'A'});    
-
     smu.setVoltage(0.0);
     smu.turnOn();
     
