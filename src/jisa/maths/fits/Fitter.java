@@ -4,15 +4,11 @@ import jisa.Util;
 import jisa.maths.functions.Function;
 import jisa.maths.functions.PFunction;
 import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.MaxIterationsExceededException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
-import org.apache.commons.math.analysis.solvers.BrentSolver;
+import org.apache.commons.math.analysis.solvers.NewtonSolver;
 import org.apache.commons.math.optimization.*;
 import org.apache.commons.math.optimization.direct.NelderMead;
-import org.apache.commons.math.optimization.direct.PowellOptimizer;
-import org.apache.commons.math.optimization.fitting.CurveFitter;
-import org.apache.commons.math.optimization.fitting.ParametricRealFunction;
-import org.apache.commons.math.optimization.general.AbstractLeastSquaresOptimizer;
-import org.apache.commons.math.optimization.general.LevenbergMarquardtOptimizer;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,7 +19,7 @@ public class Fitter {
 
     private final PFunction                function;
     private final MultivariateRealFunction minFunction;
-    private final MultivariateRealFunction realFunction;
+    private final MultivariateRealFunction leastSquares;
     private final List<Point>              points            = new LinkedList<>();
     private       double[]                 start;
     private       double[]                 maxLimits;
@@ -32,6 +28,48 @@ public class Fitter {
     private       int                      maxEvaluations;
     private       double                   relativeTolerance = 1e-50;
     private       double                   absoluteTolerance = 1e-50;
+
+    public static double[] estimateErrors(MultivariateRealFunction leastSquares, double[] solution, int numPoints) throws FunctionEvaluationException {
+
+        double[] errors = new double[solution.length];
+
+        for (int i = 0; i < solution.length; i++) {
+
+            final int j = i;
+
+            NewtonSolver solver = new NewtonSolver();
+            double       minLS  = leastSquares.value(solution);
+            double       minLI  = numPoints * Math.log(2.0 * Math.PI * minLS / (numPoints - 1)) + ((numPoints - 1) * minLS / (2.0 * minLS));
+
+            Function function = x -> {
+
+                double[] point = solution.clone();
+                point[j] = x;
+
+                try {
+                    double ls         = leastSquares.value(point);
+                    double likelihood = numPoints * Math.log(2.0 * Math.PI * minLS / (numPoints - 1)) + ((numPoints - 1) * ls / (2.0 * minLS));
+                    return Math.abs((minLI + 0.5) - likelihood);
+                } catch (FunctionEvaluationException e) {
+                    return Double.POSITIVE_INFINITY;
+                }
+
+            };
+
+            double value;
+            try {
+                value = Math.abs(solver.solve(6000, function, -Double.MAX_VALUE, Double.MAX_VALUE, solution[i]) - solution[i]);
+            } catch (MaxIterationsExceededException e) {
+                value = Double.NaN;
+            }
+
+            errors[i] = value;
+
+        }
+
+        return errors;
+
+    }
 
     public Fitter(PFunction function) {
 
@@ -53,10 +91,10 @@ public class Fitter {
 
         };
 
-        this.realFunction = parameters ->  points
-                .stream()
-                .mapToDouble(p -> p.w * Math.pow((p.y - function.calculate(p.x, parameters)) / p.y, 2))
-                .sum() / points.stream().mapToDouble(p -> p.w).sum();
+        this.leastSquares = parameters -> points
+            .stream()
+            .mapToDouble(p -> Math.pow((p.y - function.calculate(p.x, parameters)), 2))
+            .sum();
 
     }
 
@@ -165,8 +203,8 @@ public class Fitter {
 
     public Fit fit() {
 
-        double[]       position = start.clone();
-        JISANelderMead opt      = new JISANelderMead();
+        double[]   position = start.clone();
+        NelderMead opt      = new NelderMead();
 
         opt.setMaxEvaluations(maxEvaluations);
         opt.setMaxIterations(maxIterations);
@@ -175,7 +213,7 @@ public class Fitter {
 
         try {
 
-            RealPointValuePair pair = opt.optimize(minFunction, realFunction, GoalType.MINIMIZE, start);
+            RealPointValuePair pair = opt.optimize(minFunction, GoalType.MINIMIZE, start);
             Function           func = x -> function.calculate(x, pair.getPoint());
 
             return new Fit() {
@@ -203,7 +241,7 @@ public class Fitter {
                     if (errors == null) {
 
                         try {
-                            errors = opt.estimateErrors(points.size());
+                            errors = estimateErrors(leastSquares, pair.getPoint(), points.size());
                         } catch (Throwable e) {
                             errors = new double[pair.getPoint().length];
                             Arrays.fill(errors, Double.NaN);
