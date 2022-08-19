@@ -21,9 +21,9 @@ then `JISA` simply represents them as collections of `SMU` objects, or simply as
 
 ```kotlin
 // Get first channel from both instruments
-val smu1: SMU = keithley.getChannel(0)
-val smu2: SMU = agilent.getChannel(0)
-val smu3: SMU = k2450
+val smu1 = keithley.getChannel(0)
+val smu2 = agilent.getChannel(0)
+val smu3 = k2450
 ```
 
 meaning that operating them is done exactly the same way in JISA regardless of which make/model of instsrument they are from
