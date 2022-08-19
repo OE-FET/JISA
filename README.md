@@ -17,7 +17,7 @@ val agilent  = Agilent4155X(GPIBAddress(20))
 val k2450    = K2450(GPIBAddress(22))
 ```
 
-then `JISA` simply represents them as collections of `SMU` channels, or simply as an `SMU` channel in the case of the K2450:
+then `JISA` simply represents them as collections of `SMU` objects, or simply as a single `SMU` object in the case of the K2450:
 
 ```kotlin
 // Get first channel from both instruments
