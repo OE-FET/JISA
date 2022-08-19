@@ -8,15 +8,16 @@
 In essence then, the purpose of `JISA` is to act as an alternative (and actually decent) means of creating experimental control systems. It comprises, largely, of three sections:
 ### 1. Standardised Instrument Control
 
-`JISA` implements standard interfaces for each "type" of instrument, meaning that instruments are easily interchangeable. If we connect to a Keithley SMU and an Agilent SPA
+`JISA` implements standard interfaces for each "type" of instrument, meaning that instruments are easily interchangeable. If we connect to a Keithley 2600 series multi-channel SMU, an Agilent SPA, and a Keithley 2450 single-channel SMU:
 
 ```kotlin
 // Connect to instruments
 val keithley = K2600B(TCPIPAddress("192.168.0.5"))
 val agilent  = Agilent4155X(GPIBAddress(20))
+val k2450    = K2450(GPIBAddress(22))
 ```
 
-then `JISA` simply represents them as collections of `SMU` channels
+then `JISA` simply represents them as collections of `SMU` channels, or simply as an `SMU` channel in the case of the K2450:
 
 ```kotlin
 // Get first channel from both instruments
@@ -27,19 +28,37 @@ val smuA = agilent.getChannel(0)
 meaning that operating them is done exactly the same way in JISA regardless of which make/model of instsrument they are from
 
 ```kotlin
-smuK.setIntegrationTime(0.1)     // Set the integration time
-smuK.useAutoRanges()             // Use auto ranging on current and voltage
-smuK.setVoltage(5.0)             // Set to source 5.0 V
-smuK.turnOn()                    // Enable output of channel
-val currentK = smuK.getCurrent() // Measure current
-smuK.turnOff()                   // Disable output of channel
+data class IVPoint(val V: Double, val I: Double)
 
-smuA.setIntegrationTime(0.1)     // Set the integration time
-smuA.useAutoRanges()             // Use auto ranging on current and voltage
-smuA.setVoltage(5.0)             // Set to source 5.0 V
-smuA.turnOn()                    // Enable output of channel
-val currentA = smuA.getCurrent() // Measure current
-smuA.turnOff()                   // Disable output of channel
+// Write a method expecting to be given an SMU channel without having to specify what make/model
+fun voltageSweep(smu: SMU): List<IVPoint> {
+
+    // Create list to hold results
+    val results = ArrayList<IVPoint>()
+
+    smu.setIntegrationTime(0.1) // Set the integration time
+    smu.useAutoRanges()         // Use auto ranging on current and voltage
+    smu.setVoltage(0.0)         // Set to source 0.0 V
+    smu.turnOn()                // Enable output of channel
+    
+    // Sweep voltage from 0V to 50V, recording measured currents in list
+    for (voltage in Range.linear(0, 50)) {
+    
+        smu.setVoltage(voltage)
+        
+        val current  = smu.getCurrent()
+        results     += IVPoint(voltage, current)
+        
+    }
+    
+    return results
+
+}
+
+// Can pass any SMU to it and it will run without needing to be changed
+val results1 = voltageSweep(smuK)
+val results2 = voltageSweep(smuA)
+val results3 = voltageSweep(k2450)
 ```
 ### 2. Data Handling
 
