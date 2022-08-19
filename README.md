@@ -149,7 +149,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         SMU         smu     = new K2450(new GPIBAddress(0, 20));
-        ResultTable results = new ResultList(new Col("Voltage", "V"), new Col("Current", "A"));
+        ResultTable results = new ResultList("Voltage [V]", "Current [A]");
 
         smu.setVoltage(0.0);
         smu.turnOn();
@@ -174,7 +174,7 @@ public class Main {
 fun main() {
 
     val smu     = K2450(GPIBAddress(0,20))
-    val results = ResultList(Col("Voltage", "V"), Col("Current", "A"))
+    val results = ResultList("Voltage [V]", "Current [A]")
 
     smu.voltage = 0.0
     smu.turnOn()
@@ -192,15 +192,16 @@ fun main() {
 
 }
 ```
-**Python (Jython) - "Screw your traditions, I'm a snake from the future"**
+**Python (GraalPython) - "Screw your traditions, I'm a snake from the future"**
 
-To use in Python, take a look at PyJISA [here](https://github.com/OE-FET/PyJISA).
+To use in CPython, take a look at PyJISA [here](https://github.com/OE-FET/PyJISA).
+Otherwise, take a look at GraalVM [here](https://www.graalvm.org/).
 
 ```python
 def main():
     
     smu     = K2450(GPIBAddress(0,20))
-    results = ResultList([Col("Voltage", "V"), Col("Current", "A")])
+    results = ResultList("Voltage [V]", "Current [A]")
 
     smu.setVoltage(0.0)
     smu.turnOn()
@@ -209,7 +210,7 @@ def main():
     
         smu.setVoltage(v)
         Util.sleep(500)
-        results.addData([smu.getVoltage(), smu.getCurrent()])
+        results.addData(smu.getVoltage(), smu.getCurrent())
     
     
     smu.turnOff()
@@ -223,7 +224,7 @@ main()
 function main()
     
     smu     = jisa.devices.K2450(JISA.Addresses.GPIBAddress(0,20));
-    results = jisa.experiment.ResultList({'Voltage', 'Current'});
+    results = jisa.experiment.ResultList({'Voltage [V]', 'Current [A]'});
 
     results.setUnits({'V', 'A'});    
 
@@ -248,7 +249,7 @@ We can then extend this program easily, with only two lines, to display a plot o
 fun main() {
 
     val smu     = K2450(GPIBAddress(0,20))
-    val results = ResultList(Col("Voltage", "V"), Col("Current", "A")) 
+    val results = ResultList("Voltage [V]", "Current [A]") 
 
     // Make a plot that watches our results
     val plot = Plot("Results", results)
