@@ -16,6 +16,7 @@ import jisa.gui.plotting.*;
 import jisa.gui.svg.*;
 import jisa.maths.fits.Fit;
 import jisa.maths.functions.Function;
+import jisa.results.ResultTable;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -44,8 +45,8 @@ public class Plot extends JFXElement implements Element, Clearable {
     private       JISAAxis                        yAxis;
     private final ObservableList<Series>          series         = FXCollections.observableArrayList();
     private final Map<Series, ListChangeListener> listeners      = new HashMap<>();
-    private final JISAZoomer          zoomer         = new JISAZoomer();
-    private final List<ClickListener> clickListeners = new LinkedList<>();
+    private final JISAZoomer                      zoomer         = new JISAZoomer();
+    private final List<ClickListener>             clickListeners = new LinkedList<>();
 
     public Plot(String title, String xLabel, String xUnits, String yLabel, String yUnits) {
 
@@ -141,6 +142,11 @@ public class Plot extends JFXElement implements Element, Clearable {
         this("", "", "", "", "");
     }
 
+    public Plot(String title, ResultTable table) {
+        this(title);
+        createSeries().watch(table, table.getNthNumericColumn(0), table.getNthNumericColumn(1));
+    }
+
     public void updateLegend() {
         GUI.runNow(() -> chart.getLegend().updateLegend(chart.getDatasets(), chart.getRenderers(), true));
     }
@@ -158,8 +164,12 @@ public class Plot extends JFXElement implements Element, Clearable {
     }
 
     public void setXLabel(String name, String units) {
-        xAxis.setName(name);
-        xAxis.setUnit(units);
+
+        GUI.runNow(() -> {
+            xAxis.setName(name);
+            xAxis.setUnit(units);
+        });
+
     }
 
     public void setXLabel(String name) {
@@ -175,11 +185,11 @@ public class Plot extends JFXElement implements Element, Clearable {
     }
 
     public void setXUnit(String unit) {
-        xAxis.setUnit(unit);
+        GUI.runNow(() -> xAxis.setUnit(unit));
     }
 
     public void setYUnit(String unit) {
-        yAxis.setUnit(unit);
+        GUI.runNow(() -> yAxis.setUnit(unit));
     }
 
     public void setTitle(String title) {
@@ -204,8 +214,12 @@ public class Plot extends JFXElement implements Element, Clearable {
     }
 
     public void setYLabel(String name, String units) {
-        yAxis.setName(name);
-        yAxis.setUnit(units);
+
+        GUI.runNow(() -> {
+            yAxis.setName(name);
+            yAxis.setUnit(units);
+        });
+
     }
 
     public void setYLabel(String name) {

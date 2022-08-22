@@ -145,6 +145,19 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    public Column<? extends Number> getNthNumericColumn(int n) {
+
+        try {
+            return columns.stream()
+                          .filter(c -> Number.class.isAssignableFrom(c.getType()))
+                          .map(c -> (Column<? extends Number>) c)
+                          .toArray(Column[]::new)[n];
+        } catch (IndexOutOfBoundsException e) {
+            return null;
+        }
+
+    }
+
     /**
      * Returns an array of all columns in this ResultTable.
      *

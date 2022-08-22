@@ -1,7 +1,6 @@
 package jisa.gui.plotting;
 
 import de.gsi.dataset.event.UpdateEvent;
-import de.gsi.dataset.spi.DoubleErrorDataSet;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.paint.Color;
@@ -13,7 +12,6 @@ import jisa.results.ResultTable;
 import jisa.results.Row;
 import jisa.results.RowEvaluable;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -56,13 +54,19 @@ public class JISASeries implements Series {
 
             r -> {
 
-                if (filter.test(r)) {
+                try {
 
-                    double errorX = Math.abs(eX.evaluate(r).doubleValue());
-                    double errorY = Math.abs(eY.evaluate(r).doubleValue());
+                    if (filter.test(r)) {
 
-                    selector.select(r).add(x.evaluate(r).doubleValue(), y.evaluate(r).doubleValue(), errorY, errorY, errorX, errorX);
+                        double errorX = Math.abs(eX.evaluate(r).doubleValue());
+                        double errorY = Math.abs(eY.evaluate(r).doubleValue());
 
+                        selector.select(r).add(x.evaluate(r).doubleValue(), y.evaluate(r).doubleValue(), errorY, errorY, errorX, errorX);
+
+                    }
+
+                } catch (RuntimeException e) {
+                    e.printStackTrace();
                 }
 
             }

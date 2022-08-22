@@ -47,23 +47,25 @@ public class Fitter {
                 point[j] = x;
 
                 try {
+
                     double ls         = leastSquares.value(point);
                     double likelihood = numPoints * Math.log(2.0 * Math.PI * minLS / (numPoints - 1)) + ((numPoints - 1) * ls / (2.0 * minLS));
+
                     return Math.abs((minLI + 0.5) - likelihood);
+
                 } catch (FunctionEvaluationException e) {
+
                     return Double.POSITIVE_INFINITY;
+
                 }
 
             };
 
-            double value;
             try {
-                value = Math.abs(solver.solve(6000, function, -Double.MAX_VALUE, Double.MAX_VALUE, solution[i]) - solution[i]);
+                errors[i] = Math.abs(solver.solve(6000, function, -Double.MAX_VALUE, Double.MAX_VALUE, solution[i]) - solution[i]);
             } catch (MaxIterationsExceededException e) {
-                value = Double.NaN;
+                errors[i] = Double.NaN;
             }
-
-            errors[i] = value;
 
         }
 
@@ -195,10 +197,6 @@ public class Fitter {
 
     public void setAbsoluteTolerance(double absoluteTolerance) {
         this.absoluteTolerance = absoluteTolerance;
-    }
-
-    protected double[] gradient(final double[] parameters) {
-        return new double[0];
     }
 
     public Fit fit() {
