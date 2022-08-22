@@ -14,7 +14,7 @@ In essence then, the purpose of `JISA` is to act as an alternative (and actually
 // Connect to instruments
 val keithley = K2600B(TCPIPAddress("192.168.0.5"))
 val agilent  = Agilent4155X(GPIBAddress(20))
-val k2450    = K2450(GPIBAddress(22))
+val k2450    = K2450(USBAddress(0x05E6, 0x2450))
 ```
 
 then `JISA` simply represents them as collections of `SMU` objects, or simply as a single `SMU` object in the case of the K2450:
