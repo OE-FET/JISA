@@ -2,14 +2,10 @@ package jisa;
 
 import javafx.application.Platform;
 import jisa.addresses.Address;
-import jisa.addresses.GPIBAddress;
 import jisa.addresses.StrAddress;
-import jisa.devices.interfaces.TC;
-import jisa.devices.temperature.ITC503;
-import jisa.devices.temperature.MercuryITC;
-import jisa.gui.*;
-import jisa.gui.fields.DoubleField;
-import jisa.maths.Range;
+import jisa.gui.DeviceShell;
+import jisa.gui.Doc;
+import jisa.gui.GUI;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

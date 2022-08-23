@@ -413,6 +413,19 @@ public abstract class Measurement {
 
     }
 
+    public class DecimalParameter extends Parameter<Double> {
+
+        public DecimalParameter(String section, String name, String units, Double defaultValue) {
+            super(section, name, units, defaultValue);
+        }
+
+        @Override
+        protected Field<Double> makeField(Fields fields) {
+            return fields.addDecimalField(getTitle(), getValue());
+        }
+
+    }
+
     public class IntegerParameter extends Parameter<Integer> {
 
         public IntegerParameter(String section, String name, String units, Integer defaultValue) {

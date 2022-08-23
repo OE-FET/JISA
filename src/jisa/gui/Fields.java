@@ -1436,6 +1436,142 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
         return addIntegerField(name, 0);
     }
 
+    /**
+     * Adds a text box that only accepts decimal values.
+     *
+     * @param name         Name of the field
+     * @param initialValue Initial value to display
+     *
+     * @return SetGettable to set or get the value as a decimal
+     */
+    public Field<Double> addDecimalField(String name, double initialValue) {
+
+        HBox box = new HBox();
+        box.setSpacing(15);
+        box.setAlignment(Pos.CENTER_LEFT);
+
+        DecimalField field = new DecimalField();
+        field.setText(String.valueOf(initialValue));
+        field.setMaxWidth(Integer.MAX_VALUE);
+        Label label = new Label(name);
+        label.setMinWidth(Region.USE_PREF_SIZE);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(field, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(field, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
+
+        GUI.runNow(() -> list.addRow(rows++, label, field));
+
+        Field<Double> f = new Field<>() {
+
+            private ChangeListener<String> list = null;
+
+            @Override
+            public void set(Double value) {
+
+                field.setText(value.toString());
+            }
+
+            @Override
+            public Double get() {
+
+                return field.getDecimalValue();
+            }
+
+            @Override
+            public void setOnChange(SRunnable onChange) {
+
+                if (list != null) {
+                    field.textProperty().removeListener(list);
+                }
+
+                list = (observable, oldValue, newValue) -> (new Thread(() -> {
+                    try {
+                        onChange.run();
+                    } catch (Exception e) {
+                        Util.exceptionHandler(e);
+                    }
+                })).start();
+
+                field.textProperty().addListener(list);
+            }
+
+            @Override
+            public void editValues(String... values) {
+
+            }
+
+            @Override
+            public boolean isVisible() {
+                return field.isVisible();
+            }
+
+            @Override
+            public void remove() {
+
+                GUI.runNow(() -> {
+                    Fields.this.list.getChildren().removeAll(label, field);
+                    updateGridding();
+                });
+
+            }
+
+            @Override
+            public String getText() {
+                return label.getText();
+            }
+
+            @Override
+            public boolean isDisabled() {
+
+                return field.isDisabled();
+            }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    label.setVisible(visible);
+                    label.setManaged(visible);
+                    field.setVisible(visible);
+                    field.setManaged(visible);
+                });
+
+            }
+
+
+            @Override
+            public void setText(String text) {
+                GUI.runNow(() -> label.setText(text));
+            }
+
+
+            @Override
+            public void setDisabled(boolean disabled) {
+
+                field.setDisable(disabled);
+            }
+
+
+        };
+
+        fields.add(f);
+        return f;
+    }
+
+    /**
+     * Adds a text box that only accepts decimal values.
+     *
+     * @param name Name of the field
+     *
+     * @return SetGettable to set or get the value as a decimal
+     */
+    public Field<Double> addDecimalField(String name) {
+
+        return addDecimalField(name, 0.0);
+    }
+
     public Field<List<List<Double>>> addTable(String name, String... columns) {
 
         Label                             label     = new Label(name);
