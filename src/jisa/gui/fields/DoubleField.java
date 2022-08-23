@@ -80,5 +80,9 @@ public abstract class DoubleField implements Field<Double> {
         field.disabled(disabled);
     }
 
+    public void setLeading(int num) {
+        field.leading = num;
+    }
+
 
 }

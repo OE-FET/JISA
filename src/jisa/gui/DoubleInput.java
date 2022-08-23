@@ -18,6 +18,7 @@ public class DoubleInput extends HBox {
 
     public TextField    mantissa;
     public TextField    exponent;
+    public int leading = 3;
     public HBox         root;
     public DoubleChange onChange = null;
 
@@ -92,7 +93,7 @@ public class DoubleInput extends HBox {
 
     public void setValue(double value) {
 
-        int    exponent = value == 0 ? 0 : (int) (3 * Math.floor(Math.log10(Math.abs(value)) / 3));
+        int    exponent = value == 0 ? 0 : (int) (leading * Math.floor(Math.log10(Math.abs(value)) / leading));
         double mantissa = value / Math.pow(10, exponent);
 
         this.mantissa.setText(String.format("%f", mantissa));
