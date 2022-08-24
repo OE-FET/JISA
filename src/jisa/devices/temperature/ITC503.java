@@ -385,7 +385,6 @@ public class ITC503 extends VISADevice implements TC {
         // programmatically determine which one it has randomly selected this time
         setWriteTerminator(TERMINATOR_1);
         setReadTerminator(TERMINATOR_1);
-        write(C_SET_COMM_MODE);
 
         addAutoRemove(TERMINATOR_1, TERMINATOR_2, TERMINATOR_3);
 
@@ -434,11 +433,6 @@ public class ITC503 extends VISADevice implements TC {
         // If we've made it this far, it seems that all is well
         setMode(Mode.REMOTE_UNLOCKED);
         write(C_SET_AUTO_PID, 0);
-
-        // Just to be safe
-        clearBuffers();
-        manuallyClearReadBuffer();
-
     }
 
     private String determineTerminator() throws IOException {
