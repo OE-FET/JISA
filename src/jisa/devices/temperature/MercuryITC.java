@@ -55,7 +55,7 @@ public class MercuryITC extends VISADevice implements TC {
 
         String[] responses = query("READ:SYS:CAT").split(":");
 
-        for (int i = 1; i < responses.length; i += 3) {
+        for (int i = 3; i < responses.length-2; i += 3) {
 
             String uid  = responses[i + 1];
             String type = responses[i + 2];
@@ -74,13 +74,10 @@ public class MercuryITC extends VISADevice implements TC {
                     break;
 
             }
-
         }
-
     }
 
     public String[] readITC(String... parts) throws IOException {
-
         String[] response = query(String.join(":", parts)).split(":");
         String[] answer   = new String[response.length - parts.length];
 
@@ -130,7 +127,7 @@ public class MercuryITC extends VISADevice implements TC {
 
             full[0] = "READ";
             full[1] = "DEV";
-            full[2] = uid + ".T1";
+            full[2] = uid;
             full[3] = "HTR";
 
             System.arraycopy(parts, 0, full, 4, parts.length);
@@ -145,14 +142,14 @@ public class MercuryITC extends VISADevice implements TC {
 
             full[0] = "READ";
             full[1] = "DEV";
-            full[2] = uid + ".T1";
+            full[2] = uid;
             full[3] = "TEMP";
 
             System.arraycopy(parts, 0, full, 4, parts.length);
 
             String[] response = readITC(full);
 
-            double value = Double.parseDouble(response[0]);
+            double value = Double.parseDouble(response[0].substring(0, response[0].length() - 1));
             double scale = (parts[0].equals("SIG") && response.length > 1 && response[1].length() == 2) ? getScale(response[1].charAt(0)) : 1.0;
 
             return value * scale;
@@ -165,7 +162,7 @@ public class MercuryITC extends VISADevice implements TC {
 
             full[0] = "SET";
             full[1] = "DEV";
-            full[2] = uid + ".T1";
+            full[2] = uid;
             full[3] = "TEMP";
 
             System.arraycopy(parts, 0, full, 4, parts.length);
@@ -226,7 +223,7 @@ public class MercuryITC extends VISADevice implements TC {
 
             full[0] = "READ";
             full[1] = "DEV";
-            full[2] = uid + ".H1";
+            full[2] = uid;
             full[3] = "HTR";
 
             System.arraycopy(parts, 0, full, 4, parts.length);
@@ -241,7 +238,7 @@ public class MercuryITC extends VISADevice implements TC {
 
             full[0] = "READ";
             full[1] = "DEV";
-            full[2] = uid + ".H1";
+            full[2] = uid;
             full[3] = "HTR";
 
             System.arraycopy(parts, 0, full, 4, parts.length);
@@ -261,7 +258,7 @@ public class MercuryITC extends VISADevice implements TC {
 
             full[0] = "SET";
             full[1] = "DEV";
-            full[2] = uid + ".H1";
+            full[2] = uid;
             full[3] = "HTR";
 
             System.arraycopy(parts, 0, full, 4, parts.length);
