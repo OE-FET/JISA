@@ -225,7 +225,7 @@ public class ACGatingMeasurement extends MeasurementPlus {
         //lockInAmp.autoGain();
         // get a bit of reserve for the lock-in amp
         //lockInAmp.setRange(lockInAmp.getRange()*2);
-        lockInAmp.setRange(0.0002);
+        lockInAmp.setRange(0.05);
     }
 
     @Override

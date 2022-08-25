@@ -67,7 +67,7 @@ public class TransferCurveMeasurement extends MeasurementPlus {
         smu.setSource(Source.VOLTAGE);
         // smu.useAutoVoltageRange();
         //smu.setVoltageLimit(MAX_ABS_VOLTAGE);    // 50 V voltage limit
-        //smu.setCurrentLimit(100e-3); // 100 mA current limit
+        smu.setCurrentLimit(10e-3); // 100 mA current limit
         smu.setVoltageRange(currentConfig.V_DS);
         smu.setVoltage(currentConfig.V_DS);
         smu.turnOn();

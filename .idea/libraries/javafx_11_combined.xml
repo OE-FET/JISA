@@ -4,40 +4,6 @@
       <root url="jar://$PROJECT_DIR$/lib/javafx-16-combined.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES>
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.base/src/main/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.base/src/shims/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.base/src/test/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.controls/src/android/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.controls/src/ios/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.controls/src/main/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.controls/src/shims/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.controls/src/test/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.fxml/src/main/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.fxml/src/shims/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.fxml/src/test/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.graphics/src/android/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.graphics/src/dalvik/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.graphics/src/jslc/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.graphics/src/main/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.graphics/src/main/jsl-decora" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.graphics/src/main/jsl-prism" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.graphics/src/shims/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.graphics/src/test/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.graphics/src/test/jslc" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.graphics/tools/font" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.media/src/main/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.media/src/tools/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.swing/src/main/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.swing/src/shims/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.swt/src/main/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.swt/src/test/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.web/src/android/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.web/src/ios/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.web/src/main/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.web/src/main/native/Source/WebCore/bindings/java/dom3/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.web/src/shims/java" />
-      <root url="file://$PROJECT_DIR$/../JavaFXSource/javafx.web/src/test/java" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>

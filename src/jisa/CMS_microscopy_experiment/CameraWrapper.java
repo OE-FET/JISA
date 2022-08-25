@@ -22,12 +22,12 @@ public class CameraWrapper {
     InputStream input;
     InputStreamReader reader;
 
-    final static byte[] SET_FILE_NAME      = {1};
-    final static byte[] SET_N_FRAME        = {2};
-    final static byte[] IS_RECORDING       = {3};
-    final static byte[] START_RECORDING    = {4};
+    final static byte[] SET_FILE_NAME = {1};
+    final static byte[] SET_N_FRAME = {2};
+    final static byte[] IS_RECORDING = {3};
+    final static byte[] START_RECORDING = {4};
     final static byte[] SET_STATUS_DISPLAY = {5};
-    final static byte[] CLOSE_CONNECTION   = {6};
+    final static byte[] CLOSE_CONNECTION = {6};
 
     // logging utilities
     private Logger logger = null;
@@ -39,12 +39,12 @@ public class CameraWrapper {
         socket = new Socket(host, port);
 
         output = socket.getOutputStream();
-        input   = socket.getInputStream();
-        while ((input == null) || (output == null)){
+        input = socket.getInputStream();
+        while ((input == null) || (output == null)) {
             addLog(Level.WARNING, "input or output null");
             sleep(1000);
             output = socket.getOutputStream();
-            input  = socket.getInputStream();
+            input = socket.getInputStream();
         }
         reader = new InputStreamReader(input);
     }
@@ -65,8 +65,9 @@ public class CameraWrapper {
 
     public void setNFrame(int nFrame) throws IOException {
         addLog(Level.INFO, "setNFrame " + nFrame);
+        byte[] nFrame_byte = int2ByteArray(nFrame);
         output.write(SET_N_FRAME);
-        output.write(int2ByteArray(nFrame));
+        output.write(nFrame_byte);
         output.flush();
     }
 
@@ -77,7 +78,7 @@ public class CameraWrapper {
         output.write(IS_RECORDING);
         int data = input.read();
         addLog(Level.INFO, "received " + data);
-        while(data == -1) {
+        while (data == -1) {
             data = input.read();
             addLog(Level.INFO, "received " + data);
             sleep(10);
@@ -102,6 +103,13 @@ public class CameraWrapper {
         output.flush();
     }
 
+    public void closeConnection() throws IOException
+    {
+        addLog(Level.INFO, "closing connection...");
+        output.write(CLOSE_CONNECTION);
+        output.flush();
+    }
+
     private byte[] string2ByteArray(String string)
     {
         return string.getBytes(StandardCharsets.US_ASCII);
@@ -109,7 +117,7 @@ public class CameraWrapper {
 
     private byte[] int2ByteArray(int val)
     {
-        return ByteBuffer.allocate(4).order(ByteOrder.nativeOrder()).putInt(val).array();
+        return ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(val).array();
     }
 
 
