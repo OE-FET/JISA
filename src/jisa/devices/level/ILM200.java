@@ -4,8 +4,10 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.LevelMeter;
 import jisa.devices.temperature.ITC503;
-import jisa.visa.drivers.Connection;
 import jisa.visa.VISADevice;
+import jisa.visa.connections.Connection;
+import jisa.visa.connections.GPIBConnection;
+import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -24,8 +26,17 @@ public class ILM200 extends VISADevice implements LevelMeter {
     public ILM200(Address address) throws IOException {
 
         super(address);
-        setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
-        setEOI(false);
+
+        Connection connection = getConnection();
+
+        if (connection instanceof SerialConnection) {
+            ((SerialConnection) connection).setSerialParameters(9600, 8, SerialConnection.Parity.NONE, SerialConnection.Stop.BITS_10);
+        }
+
+        if (connection instanceof GPIBConnection) {
+            ((GPIBConnection) connection).setEOIEnabled(false);
+        }
+
         setWriteTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);
         setReadTerminator(EOS_RETURN);

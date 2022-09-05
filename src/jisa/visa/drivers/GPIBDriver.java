@@ -1,14 +1,17 @@
 package jisa.visa.drivers;
 
+import com.sun.jna.*;
 import jisa.addresses.Address;
 import jisa.addresses.GPIBAddress;
-import com.sun.jna.*;
 import jisa.visa.NativeString;
 import jisa.visa.VISAException;
+import jisa.visa.connections.Connection;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,8 +68,8 @@ public class GPIBDriver implements Driver {
 
         }
 
-        private int  code;
-        private long value;
+        private final int  code;
+        private final long value;
 
         TMO(int code, long value) {
             this.code  = code;
@@ -178,9 +181,10 @@ public class GPIBDriver implements Driver {
     /**
      * Implementation of Connection for GPIB-based connections
      */
-    public class GPIBConnection implements Connection {
+    public class GPIBConnection implements jisa.visa.connections.GPIBConnection {
 
-        private int handle;
+        private final int     handle;
+        private       Charset charset = StandardCharsets.UTF_8;
 
         public GPIBConnection(int ibHandle) {
             handle = ibHandle;
@@ -188,7 +192,7 @@ public class GPIBDriver implements Driver {
 
         @Override
         public void writeBytes(byte[] bytes) throws VISAException {
-            write(new String(bytes));
+            write(new String(bytes, charset));
         }
 
         @Override
@@ -203,9 +207,19 @@ public class GPIBDriver implements Driver {
         }
 
         @Override
+        public void setEncoding(Charset charset) {
+            this.charset = charset;
+        }
+
+        @Override
+        public Charset getEncoding() {
+            return charset;
+        }
+
+        @Override
         public void write(String toWrite) throws VISAException {
 
-            NativeString nToWrite = new NativeString(toWrite);
+            NativeString nToWrite = new NativeString(toWrite, charset.name());
 
             lib.ibwrt(
                 handle,
@@ -235,7 +249,7 @@ public class GPIBDriver implements Driver {
         }
 
         @Override
-        public void setEOI(boolean set) throws VISAException {
+        public void setEOIEnabled(boolean set) throws VISAException {
 
             lib.ibconfig(
                 handle,
@@ -292,18 +306,16 @@ public class GPIBDriver implements Driver {
         }
 
         @Override
-        public void setSerial(int baud, int data, Parity parity, StopBits stop, Flow flow) {
-            // Nothing to do here
-        }
-
-        @Override
         public void close() throws VISAException {
+
             lib.ibonl(handle, 0);
 
             if (wasError()) {
                 throw new VISAException("Could not close instrument.");
             }
+
         }
+
     }
 
     @Override

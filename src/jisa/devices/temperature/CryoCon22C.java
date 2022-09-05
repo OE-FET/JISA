@@ -4,17 +4,19 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.TC;
-import jisa.visa.drivers.Connection;
 import jisa.visa.VISADevice;
+import jisa.visa.connections.Connection;
+import jisa.visa.connections.GPIBConnection;
+import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
 import java.util.List;
 
 public class CryoCon22C extends VISADevice implements TC {
 
-    public final Thermometer SENSOR_A = new Thermometer("A");
-    public final Thermometer SENSOR_B = new Thermometer("B");
-    public final Heater      HEATER_1 = new Heater(1);
+    public final TMeter SENSOR_A = new TMeter("A");
+    public final TMeter SENSOR_B = new TMeter("B");
+    public final Heater HEATER_1 = new Heater(1);
     public final Heater      HEATER_2 = new Heater(2);
     public final Heater      HEATER_3 = new Heater(3);
     public final Heater      HEATER_4 = new Heater(4);
@@ -31,27 +33,31 @@ public class CryoCon22C extends VISADevice implements TC {
 
         super(address);
 
-        if (address.getType() == Address.Type.SERIAL) {
+        Connection connection = getConnection();
 
-            setSerialParameters(
+        if (connection instanceof SerialConnection) {
+
+            ((SerialConnection) connection).setSerialParameters(
                 9600,
                 8,
-                Connection.Parity.NONE,
-                Connection.StopBits.ONE,
-                Connection.Flow.NONE
+                SerialConnection.Parity.NONE,
+                SerialConnection.Stop.BITS_10
             );
 
         }
 
-        if (address.getType() == Address.Type.GPIB) {
-            setEOI(true);
+        if (connection instanceof GPIBConnection) {
+
+            ((GPIBConnection) connection).setEOIEnabled(true);
+
         } else {
+
             setWriteTerminator("\n");
             setReadTerminator("\n");
+
         }
 
-        addAutoRemove("\n");
-        addAutoRemove("\r");
+        addAutoRemove("\n", "\r");
 
         String[] idn = getIDN().split(",");
 
@@ -65,7 +71,7 @@ public class CryoCon22C extends VISADevice implements TC {
     }
 
     @Override
-    public List<Thermometer> getInputs() {
+    public List<TMeter> getInputs() {
         return List.of(SENSOR_A, SENSOR_B);
     }
 
@@ -79,11 +85,11 @@ public class CryoCon22C extends VISADevice implements TC {
         return List.of(LOOP_1, LOOP_2, LOOP_3, LOOP_4);
     }
 
-    private class Thermometer implements TC.Thermometer {
+    private class TMeter implements TC.TMeter {
 
         private final String sensor;
 
-        private Thermometer(String sensor) {
+        private TMeter(String sensor) {
             this.sensor = sensor;
         }
 
@@ -103,11 +109,13 @@ public class CryoCon22C extends VISADevice implements TC {
 
         @Override
         public String getName() {
+
             try {
                 return String.format("%s (%s)", sensor, query("INPUT %s:NAME?", sensor).trim());
             } catch (IOException e) {
                 return String.format("%s (%s)", sensor, "Name Unknown");
             }
+
         }
 
         @Override
@@ -238,22 +246,16 @@ public class CryoCon22C extends VISADevice implements TC {
             switch (number) {
 
                 case 1:
-
                     if (range > 10.0) {value = "HIGH";} else if (range > 1.0) {value = "MID";} else {value = "LOW";}
-
                     break;
 
                 case 2:
-
                     if (range > 10.0) {value = "HIGH";} else {value = "LOW";}
-
                     break;
 
                 case 3:
                 case 4:
-
                     if (range > 50.0) {value = "10V";} else {value = "5V";}
-
                     break;
 
                 default:
@@ -380,8 +382,8 @@ public class CryoCon22C extends VISADevice implements TC {
         @Override
         public void setInput(Input input) throws IOException, DeviceException {
 
-            if (input instanceof Thermometer && (input == SENSOR_A || input == SENSOR_B)) {
-                query("LOOP %d:SOURCE %s", heater.getNumber(), ((Thermometer) input).getSensor());
+            if (input instanceof TMeter && (input == SENSOR_A || input == SENSOR_B)) {
+                query("LOOP %d:SOURCE %s", heater.getNumber(), ((TMeter) input).getSensor());
             } else {
                 throw new DeviceException("That input cannot be used for this TC/PID loop");
             }
@@ -403,7 +405,7 @@ public class CryoCon22C extends VISADevice implements TC {
         }
 
         @Override
-        public List<Thermometer> getAvailableInputs() {
+        public List<TMeter> getAvailableInputs() {
             return List.of(SENSOR_A, SENSOR_B);
         }
 
@@ -426,11 +428,11 @@ public class CryoCon22C extends VISADevice implements TC {
         @Override
         public void setPIDEnabled(boolean flag) throws IOException, DeviceException {
 
-            if (!isRampEnabled()) {
-                query("LOOP %d:TYPE PID", heater.getNumber());
+            if (isRampEnabled()) {
+                query("LOOP %d:TYPE RAMPP", heater.getNumber());
                 updatePID(getSetPoint());
             } else {
-                query("LOOP %d:TYPE RAMPP", heater.getNumber());
+                query("LOOP %d:TYPE PID", heater.getNumber());
                 updatePID(getSetPoint());
             }
 

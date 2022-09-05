@@ -1,7 +1,9 @@
 package jisa.results;
 
 import com.google.common.collect.Lists;
+import jisa.Util;
 import jisa.maths.matrices.RealMatrix;
+import jisa.results.ResultList.ColumnBuilder;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -14,13 +16,15 @@ import java.util.stream.Stream;
 
 public abstract class ResultTable implements Iterable<Row> {
 
-    public static final Map<String, ResultList.ColumnBuilder> STANDARD_TYPES = Map.of(
-        "String",  StringColumn::new,
-        "Double",  DoubleColumn::new,
-        "Integer", IntColumn::new,
-        "Boolean", BooleanColumn::new,
-        "Long",    LongColumn::new
-    );
+    public static final Map<String, ColumnBuilder> STANDARD_TYPES = Util.build(new LinkedHashMap<>(), types -> {
+
+        types.put("String",  StringColumn::new);
+        types.put("Double",  DoubleColumn::new);
+        types.put("Integer", IntColumn::new);
+        types.put("Boolean", BooleanColumn::new);
+        types.put("Long",    LongColumn::new);
+
+    });
 
     private final List<Column<?>>     columns;
     private final Map<String, String> attributes     = new LinkedHashMap<>();
@@ -368,6 +372,26 @@ public abstract class ResultTable implements Iterable<Row> {
         } else {
             return stream().sorted(Comparator.comparing(r -> expression.evaluate(r).toString())).collect(ResultList.collect(this));
         }
+
+    }
+
+    public ResultList subTable(Column... columns) {
+
+        ResultList list = new ResultList(columns);
+
+        for (Row row : this) {
+
+            RowBuilder builder = list.startRow();
+
+            for (Column column : columns) {
+                builder.set(column, row.get(column));
+            }
+
+            builder.endRow();
+
+        }
+
+        return list;
 
     }
 

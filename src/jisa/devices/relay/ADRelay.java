@@ -5,8 +5,9 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MSwitch;
 import jisa.devices.interfaces.Switch;
-import jisa.visa.drivers.Connection;
 import jisa.visa.VISADevice;
+import jisa.visa.connections.Connection;
+import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,7 +25,12 @@ public class ADRelay extends VISADevice implements MSwitch {
 
         super(address);
 
-        setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
+        Connection connection = getConnection();
+
+        if (connection instanceof SerialConnection) {
+            ((SerialConnection) connection).setSerialParameters(9600, 8, SerialConnection.Parity.NONE, SerialConnection.Stop.BITS_10);
+        }
+
         setTimeout(2000);
 
         setReadTerminator(LF_TERMINATOR);

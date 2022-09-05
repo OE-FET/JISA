@@ -3,9 +3,10 @@ package jisa.devices.temperature;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.TC;
-import jisa.visa.drivers.Connection;
-import jisa.visa.drivers.RawTCPIPDriver;
 import jisa.visa.VISADevice;
+import jisa.visa.connections.Connection;
+import jisa.visa.connections.SerialConnection;
+import jisa.visa.drivers.TCPIPDriver;
 
 import java.io.IOException;
 import java.util.List;
@@ -39,11 +40,11 @@ public class LS336 extends VISADevice implements TC {
     private final        boolean[]       autoPID              = {false, false};
     private final        Zone[][]        zones                = new Zone[2][0];
 
-    private final List<Thermometer> thermometers = List.of(
-        new Thermometer("A", 1),
-        new Thermometer("B", 2),
-        new Thermometer("C", 3),
-        new Thermometer("D", 4)
+    private final List<TMeter> thermometers = List.of(
+        new TMeter("A", 1),
+        new TMeter("B", 2),
+        new TMeter("C", 3),
+        new TMeter("D", 4)
     );
 
     private final List<Heater> heaters = List.of(
@@ -55,10 +56,12 @@ public class LS336 extends VISADevice implements TC {
 
     public LS336(Address address) throws IOException, DeviceException {
 
-        super(address, RawTCPIPDriver.class);
+        super(address, TCPIPDriver.class);
 
-        if (address.getType() == Address.Type.SERIAL) {
-            setSerialParameters(57600, 7, Connection.Parity.ODD, Connection.StopBits.ONE, Connection.Flow.NONE);
+        Connection connection = getConnection();
+
+        if (connection instanceof SerialConnection) {
+            ((SerialConnection) connection).setSerialParameters(57600, 7, SerialConnection.Parity.ODD, SerialConnection.Stop.BITS_10);
         }
 
         setReadTerminator(LF_TERMINATOR);
@@ -82,12 +85,12 @@ public class LS336 extends VISADevice implements TC {
 
     }
 
-    public class Thermometer implements TC.Thermometer {
+    public class TMeter implements TC.TMeter {
 
         private final String name;
         private final int    number;
 
-        private Thermometer(String name, int number) {
+        private TMeter(String name, int number) {
             this.name   = name;
             this.number = number;
         }
@@ -291,7 +294,7 @@ public class LS336 extends VISADevice implements TC {
         }
 
         @Override
-        public Thermometer getInput() throws IOException, DeviceException {
+        public TMeter getInput() throws IOException, DeviceException {
             int number = getOutMode().input;
             return thermometers.stream().filter(i -> i.getNumber() == number).findFirst().orElse(null);
         }
@@ -308,7 +311,7 @@ public class LS336 extends VISADevice implements TC {
                 throw new DeviceException("That input cannot be used for this PID loop.");
             }
 
-            Thermometer tm = (Thermometer) input;
+            TMeter tm = (TMeter) input;
 
             OutMode mode = getOutMode();
             mode.input = tm.number;
@@ -366,11 +369,11 @@ public class LS336 extends VISADevice implements TC {
     }
 
     @Override
-    public List<Thermometer> getInputs() {
+    public List<TMeter> getInputs() {
         return thermometers;
     }
 
-    public List<Thermometer> getThermometers() {
+    public List<TMeter> getThermometers() {
         return getInputs();
     }
 

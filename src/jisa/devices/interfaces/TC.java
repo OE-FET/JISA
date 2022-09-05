@@ -16,7 +16,7 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
         return "Temperature Controller";
     }
 
-    interface Thermometer extends Input, TMeter {
+    interface TMeter extends Input, jisa.devices.interfaces.TMeter {
 
         default double getValue() throws IOException, DeviceException {
             return getTemperature();
@@ -93,11 +93,11 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
             waitForStableValue(target, pct, msec);
         }
 
-        default List<Thermometer> getAvailableThermometers() {
+        default List<TMeter> getAvailableThermometers() {
 
             return getAvailableInputs().stream()
-                                       .filter(i -> i instanceof Thermometer)
-                                       .map(i -> (Thermometer) i)
+                                       .filter(i -> i instanceof TMeter)
+                                       .map(i -> (TMeter) i)
                                        .collect(Collectors.toUnmodifiableList());
 
         }
@@ -123,11 +123,11 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
 
     }
 
-    default List<? extends Thermometer> getThermometers() throws IOException, DeviceException {
+    default List<? extends TMeter> getThermometers() throws IOException, DeviceException {
 
         return getInputs().stream()
-                          .filter(i -> i instanceof Thermometer)
-                          .map(i -> (Thermometer) i)
+                          .filter(i -> i instanceof TMeter)
+                          .map(i -> (TMeter) i)
                           .collect(Collectors.toList());
 
     }
@@ -145,14 +145,14 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
 
         return List.of(
             PID.Loop.class,
-            TMeter.class
+            jisa.devices.interfaces.TMeter.class
         );
 
     }
 
     default <I extends Instrument> List<I> getSubInstruments(Class<I> type) throws IOException, DeviceException {
 
-        if (TMeter.class.isAssignableFrom(type)) {
+        if (jisa.devices.interfaces.TMeter.class.isAssignableFrom(type)) {
             return getThermometers().stream().map(i -> (I) i).collect(Collectors.toUnmodifiableList());
         } else if (Loop.class.isAssignableFrom(type)) {
             return getLoops().stream().map(i -> (I) i).collect(Collectors.toUnmodifiableList());
@@ -238,10 +238,10 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
     }
 
     @Override
-    default List<TMeter> getSensors() {
+    default List<jisa.devices.interfaces.TMeter> getSensors() {
 
         try {
-            return getThermometers().stream().map(t -> (TMeter) t).collect(Collectors.toUnmodifiableList());
+            return getThermometers().stream().map(t -> (jisa.devices.interfaces.TMeter) t).collect(Collectors.toUnmodifiableList());
         } catch (Exception e) {
             return Collections.emptyList();
         }
@@ -249,13 +249,13 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
     }
 
     @Override
-    default TMeter getSensor(int sensorNumber) throws IOException, DeviceException {
+    default jisa.devices.interfaces.TMeter getSensor(int sensorNumber) throws IOException, DeviceException {
         return getSensors().get(sensorNumber);
     }
 
     @Override
-    default Class<TMeter> getSensorClass() {
-        return TMeter.class;
+    default Class<jisa.devices.interfaces.TMeter> getSensorClass() {
+        return jisa.devices.interfaces.TMeter.class;
     }
 
 }

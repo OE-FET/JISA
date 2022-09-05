@@ -8,7 +8,6 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.image.WritableImage;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import jisa.Util;
@@ -16,6 +15,7 @@ import jisa.gui.plotting.*;
 import jisa.gui.svg.*;
 import jisa.maths.fits.Fit;
 import jisa.maths.functions.Function;
+import jisa.results.Column;
 import jisa.results.ResultTable;
 
 import javax.imageio.ImageIO;
@@ -143,8 +143,24 @@ public class Plot extends JFXElement implements Element, Clearable {
     }
 
     public Plot(String title, ResultTable table) {
+
         this(title);
-        createSeries().watch(table, table.getNthNumericColumn(0), table.getNthNumericColumn(1));
+
+        Column<? extends Number> xAxis = null;
+        for (int i = 0; i < table.getColumnCount(); i++) {
+
+            if (Number.class.isAssignableFrom(table.getColumn(i).getType())) {
+
+                if (xAxis == null) {
+                    xAxis = (Column<? extends Number>) table.getColumn(i);
+                } else {
+                    createSeries().watch(table, xAxis, (Column<? extends Number>) table.getColumn(i));
+                }
+
+            }
+
+        }
+
     }
 
     public void updateLegend() {

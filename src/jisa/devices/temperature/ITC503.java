@@ -4,8 +4,10 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.TC;
-import jisa.visa.drivers.Connection;
 import jisa.visa.VISADevice;
+import jisa.visa.connections.Connection;
+import jisa.visa.connections.GPIBConnection;
+import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -23,65 +25,153 @@ import java.util.regex.Pattern;
  */
 public class ITC503 extends VISADevice implements TC {
 
-    private static final String            TERMINATOR_1                  = "\r";
-    private static final String            TERMINATOR_2                  = "\n";
-    private static final String            TERMINATOR_3                  = "\r\n";
-    private static final String            C_SET_COMM_MODE               = "Q2";
-    private static final String            C_READ                        = "R%d";
-    private static final String            C_SET_MODE                    = "C%d";
-    private static final String            C_SET_TEMP                    = "T%f";
-    private static final String            C_SET_AUTO                    = "A%d";
-    private static final String            C_SET_SENSOR                  = "H%d";
-    private static final String            C_SET_AUTO_PID                = "L%d";
-    private static final String            C_SET_P                       = "P%f";
-    private static final String            C_SET_I                       = "I%f";
-    private static final String            C_SET_D                       = "D%f";
-    private static final String            C_SET_HEATER                  = "O%.01f";
-    private static final String            C_SET_FLOW                    = "G%f";
-    private static final String            C_SET_HEATER_LIM              = "M%.01f";
-    private static final String            C_QUERY_STATUS                = "X";
-    private static final int               SET_TEMP_CHANNEL              = 0;
-    private static final int               TEMP_ERROR_CHANNEL            = 4;
-    private static final int               HEATER_OP_PERC                = 5;
-    private static final int               HEATER_OP_VOLTS               = 6;
-    private static final int               GAS_OP                        = 7;
-    private static final int               PROP_BAND                     = 8;
-    private static final int               INT_ACTION_TIME               = 9;
-    private static final int               DER_ACTION_TIME               = 10;
-    private static final int               FREQ_CHAN_OFFSET              = 10;
-    private static final double            MAX_HEATER_VOLTAGE            = 40.0;
-    private static final long              STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
-    private static final int               STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
-    private static final double            STANDARD_ERROR_PERC           = 10;
-    private static final int               MIN_WRITE_INTERVAL            = 5;
-    private final        Semaphore         timingControl                 = new Semaphore(1);
-    private final        Timer             timingService                 = new Timer();
-    private final        List<Thermometer> thermometers                  = List.of(
-        new Thermometer(1),
-        new Thermometer(2),
-        new Thermometer(3)
-    );
+    private static final String TERMINATOR_1                  = "\r";
+    private static final String TERMINATOR_2                  = "\n";
+    private static final String TERMINATOR_3                  = "\r\n";
+    private static final String C_SET_COMM_MODE               = "Q2";
+    private static final String C_READ                        = "R%d";
+    private static final String C_SET_MODE                    = "C%d";
+    private static final String C_SET_TEMP                    = "T%f";
+    private static final String C_SET_AUTO                    = "A%d";
+    private static final String C_SET_SENSOR                  = "H%d";
+    private static final String C_SET_AUTO_PID                = "L%d";
+    private static final String C_SET_P                       = "P%f";
+    private static final String C_SET_I                       = "I%f";
+    private static final String C_SET_D                       = "D%f";
+    private static final String C_SET_HEATER                  = "O%.01f";
+    private static final String C_SET_FLOW                    = "G%f";
+    private static final String C_SET_HEATER_LIM              = "M%.01f";
+    private static final String C_QUERY_STATUS                = "X";
+    private static final int    SET_TEMP_CHANNEL              = 0;
+    private static final int    TEMP_ERROR_CHANNEL            = 4;
+    private static final int    HEATER_OP_PERC                = 5;
+    private static final int    HEATER_OP_VOLTS               = 6;
+    private static final int    GAS_OP                        = 7;
+    private static final int    PROP_BAND                     = 8;
+    private static final int    INT_ACTION_TIME               = 9;
+    private static final int    DER_ACTION_TIME               = 10;
+    private static final int    FREQ_CHAN_OFFSET              = 10;
+    private static final double MAX_HEATER_VOLTAGE            = 40.0;
+    private static final long   STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
+    private static final int    STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
+    private static final double STANDARD_ERROR_PERC           = 10;
+    private static final int    MIN_WRITE_INTERVAL            = 5;
+
+    private final Semaphore    timingControl = new Semaphore(1);
+    private final Timer        timingService = new Timer();
+    private final List<TMeter> thermometers;
+    private final List<Heater> heaters;
+    private final List<Loop>   loops;
+
+    /**
+     * Open the ITC503 device at the given bus and address
+     *
+     * @param address The GPIB address on the bus that the ITC503 has
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException If the specified device does not identify as an ITC503
+     */
+    public ITC503(Address address) throws IOException, DeviceException {
+
+        // There's nothing super about an ITC503, but this needs to be called
+        super(address);
+
+        Connection connection = getConnection();
+
+        if (connection instanceof GPIBConnection) {
+            ((GPIBConnection) connection).setEOIEnabled(false);
+        }
+
+        if (connection instanceof SerialConnection) {
+
+            ((SerialConnection) connection).setSerialParameters(
+                9600,
+                8,
+                SerialConnection.Parity.NONE,
+                SerialConnection.Stop.BITS_20
+            );
+
+        }
+
+        // The ITC503 has an unfortunate tendency to change which line terminator(s) it uses, so we need to
+        // programmatically determine which one it has randomly selected this time
+        setWriteTerminator(TERMINATOR_1);
+        setReadTerminator(TERMINATOR_1);
+
+        addAutoRemove(TERMINATOR_1, TERMINATOR_2, TERMINATOR_3);
+
+        setTimeout(500);
+        String terminator = determineTerminator();
+        setTimeout(1000);
+
+        if (terminator == null) {
+            throw new IOException("ITC503 is refusing to terminate replies correctly.");
+        }
+
+        setReadTerminator(terminator);
+
+        String idn;
+        int    count = 0;
+
+        // Try to extract the correct IDN response up to 3 times before giving up
+        do {
+
+            clearBuffers();
+            manuallyClearReadBuffer();
+
+            try {
+
+                idn = query("V");
+
+            } catch (Exception e) {
+
+                if (count < 2) {
+                    idn = "";
+                } else {
+                    throw e;
+                }
+
+            }
+
+            count++;
+            System.out.printf("ITC503 IDN Response %d: \"%s\"%n", count, idn);
+
+        } while (!idn.split(" ")[0].trim().equals("ITC503") && count < 3);
+
+        if (!idn.split(" ")[0].trim().equals("ITC503")) {
+            throw new DeviceException("Device at address \"%s\" is not claiming to be an ITC503!", address.toString());
+        }
+
+        // If we've made it this far, it seems that all is well
+        setMode(Mode.REMOTE_UNLOCKED);
+        write(C_SET_AUTO_PID, 0);
+
+        thermometers = List.of(new TMeter(1), new TMeter(2), new TMeter(3));
+        heaters      = List.of(heater);
+        loops        = List.of(loop);
+
+    }
 
     @Override
-    public List<Thermometer> getInputs() {
+    public List<TMeter> getInputs() {
         return thermometers;
     }
 
     @Override
     public List<Heater> getOutputs() {
-        return List.of(heater);
+        return heaters;
     }
 
     @Override
     public List<Loop> getLoops() {
-        return List.of(loop);
+        return loops;
     }
 
-    private class Thermometer implements TC.Thermometer {
+    private class TMeter implements TC.TMeter {
 
         private final int number;
 
-        private Thermometer(int number) {
+        private TMeter(int number) {
             this.number = number;
         }
 
@@ -282,8 +372,8 @@ public class ITC503 extends VISADevice implements TC {
         @Override
         public void setInput(Input input) throws IOException, DeviceException {
 
-            if (input instanceof Thermometer && thermometers.contains(input)) {
-                query(C_SET_SENSOR, ((Thermometer) input).getNumber());
+            if (input instanceof TMeter && thermometers.contains(input)) {
+                query(C_SET_SENSOR, ((TMeter) input).getNumber());
             } else {
                 throw new DeviceException("That input cannot be used for this PID loop");
             }
@@ -356,85 +446,6 @@ public class ITC503 extends VISADevice implements TC {
 
     };
 
-    /**
-     * Open the ITC503 device at the given bus and address
-     *
-     * @param address The GPIB address on the bus that the ITC503 has
-     *
-     * @throws IOException     Upon communication error
-     * @throws DeviceException If the specified device does not identify as an ITC503
-     */
-    public ITC503(Address address) throws IOException, DeviceException {
-
-        // There's nothing super about an ITC503, but this needs to be called
-        super(address);
-
-        switch (address.getType()) {
-
-            case GPIB:
-                setEOI(false);
-                break;
-
-            case SERIAL:
-                setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.TWO, Connection.Flow.NONE);
-                break;
-
-        }
-
-        // The ITC503 has an unfortunate tendency to change which line terminator(s) it uses, so we need to
-        // programmatically determine which one it has randomly selected this time
-        setWriteTerminator(TERMINATOR_1);
-        setReadTerminator(TERMINATOR_1);
-
-        addAutoRemove(TERMINATOR_1, TERMINATOR_2, TERMINATOR_3);
-
-        setTimeout(500);
-        String terminator = determineTerminator();
-        setTimeout(1000);
-
-        if (terminator == null) {
-            throw new IOException("ITC503 is refusing to terminate replies correctly.");
-        }
-
-        setReadTerminator(terminator);
-
-        String idn;
-        int    count = 0;
-
-        // Try to extract the correct IDN response up to 3 times before giving up
-        do {
-
-            clearBuffers();
-            manuallyClearReadBuffer();
-
-            try {
-
-                idn = query("V");
-
-            } catch (Exception e) {
-
-                if (count < 2) {
-                    idn = "";
-                } else {
-                    throw e;
-                }
-
-            }
-
-            count++;
-            System.out.printf("ITC503 IDN Response %d: \"%s\"%n", count, idn);
-
-        } while (!idn.split(" ")[0].trim().equals("ITC503") && count < 3);
-
-        if (!idn.split(" ")[0].trim().equals("ITC503")) {
-            throw new DeviceException("Device at address \"%s\" is not claiming to be an ITC503!", address.toString());
-        }
-
-        // If we've made it this far, it seems that all is well
-        setMode(Mode.REMOTE_UNLOCKED);
-        write(C_SET_AUTO_PID, 0);
-    }
-
     private String determineTerminator() throws IOException {
 
         List<String> terminators = List.of(TERMINATOR_1, TERMINATOR_2, TERMINATOR_3);
@@ -448,6 +459,7 @@ public class ITC503 extends VISADevice implements TC {
             setReadTerminator(attempt);
 
             try {
+
                 System.out.printf("ITC503 Attempting Terminator \"%s\": ", safe.get(i++));
                 String idn = query("V");
 
@@ -516,18 +528,12 @@ public class ITC503 extends VISADevice implements TC {
 
     }
 
-    private synchronized double readChannel(int channel) throws IOException {
+    protected synchronized double readChannel(int channel) throws IOException {
 
-        int     count   = 0;
         boolean success = false;
         double  reply   = 0.0;
 
-        do {
-
-            if (count > 0) {
-                clearBuffers();
-                manuallyClearReadBuffer();
-            }
+        for (int count = 0; count < 3; count++) {
 
             String response = query(C_READ, channel).trim();
 
@@ -541,12 +547,12 @@ public class ITC503 extends VISADevice implements TC {
                 System.err.printf("ITC503: Improper Response %d: %s%n", count + 1, response);
             }
 
-            count++;
+            clearBuffers();
+            manuallyClearReadBuffer();
 
-        } while (count < 3);
+        }
 
         throw new IOException("ITC503 is not responding to read command correctly");
-
 
     }
 

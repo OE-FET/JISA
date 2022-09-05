@@ -1,6 +1,7 @@
 package jisa.gui;
 
 //import javafx.JavaFx;
+
 import com.sun.javafx.css.StyleManager;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -16,21 +17,17 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import jisa.Main;
 import jisa.Util;
 import jisa.addresses.Address;
+import jisa.devices.interfaces.Instrument;
 import jisa.experiment.Measurement;
-import org.python.apache.xerces.jaxp.JAXPConstants;
 
 import java.io.File;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Scanner;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -58,6 +55,29 @@ public class GUI extends Application {
      * Dummy method used to initiate first accessing of the GUI thread early.
      */
     public static void touch() {
+
+    }
+
+    public static <T extends Instrument> T connectTo(Class<T> driver, Address address) {
+
+        Constructor<T> constructor;
+
+        try {
+            constructor = driver.getConstructor(Address.class);
+        } catch (NoSuchMethodException e) {
+            GUI.errorAlert("That driver does not have a valid constructor.");
+            return null;
+        }
+
+        T instrument;
+        try {
+            instrument = constructor.newInstance(address);
+        } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
+            GUI.errorAlert("Error connecting to \"" + address.toString() + "\":\n" + e.getMessage());
+            return null;
+        }
+
+        return instrument;
 
     }
 

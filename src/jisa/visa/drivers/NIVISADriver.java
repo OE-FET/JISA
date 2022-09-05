@@ -11,10 +11,14 @@ import jisa.addresses.SerialAddress;
 import jisa.addresses.StrAddress;
 import jisa.visa.VISAException;
 import jisa.visa.VISANativeInterface;
+import jisa.visa.connections.*;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -35,7 +39,7 @@ public class NIVISADriver implements Driver {
     private static       VISANativeInterface libStatic;
     private static       String              libName;
     private static       NativeLong          visaResourceManagerHandleStatic;
-    private static final List<Integer>       SUCCESS_CODES = List.of(VI_SUCCESS, VI_SUCCESS_TERM_CHAR, VI_SUCCESS_MAX_CNT);
+    private static final List<Integer>       SUCCESS_CODES    = List.of(VI_SUCCESS, VI_SUCCESS_TERM_CHAR, VI_SUCCESS_MAX_CNT);
 
     protected VISANativeInterface lib;
     protected NativeLong          visaResourceManagerHandle;
@@ -112,17 +116,12 @@ public class NIVISADriver implements Driver {
      *
      * @return The ByteBuffer that I mentioned.
      */
+    protected static ByteBuffer stringToByteBuffer(String source, Charset charset) {
+        return ByteBuffer.wrap(source.getBytes(charset));
+    }
+
     protected static ByteBuffer stringToByteBuffer(String source) {
-
-        try {
-            ByteBuffer dest = ByteBuffer.allocate(source.length() + 1);
-            dest.put(source.getBytes(responseEncoding));
-            dest.position(0);
-            return dest;
-        } catch (UnsupportedEncodingException e) {
-            return null;
-        }
-
+        return stringToByteBuffer(source, StandardCharsets.UTF_8);
     }
 
     @Override
@@ -139,21 +138,39 @@ public class NIVISADriver implements Driver {
             pViString = stringToByteBuffer(address.toString());
         }
 
-        if (pViString == null) {
-            throw new VISAException("Error encoding address to ByteBuffer.");
-        }
-
         NativeLong status = lib.viOpen(
-                visaResourceManagerHandle,
-                pViString,         // byte buffer for instrument string
-                new NativeLong(0), // access mode (locking or not). 0:Use Visa default
-                new NativeLong(0), // timeout, only when access mode equals locking
-                pViInstrument      // pointer to instrument object
+            visaResourceManagerHandle,
+            pViString,         // byte buffer for instrument string
+            new NativeLong(0), // access mode (locking or not). 0:Use Visa default
+            new NativeLong(0), // timeout, only when access mode equals locking
+            pViInstrument      // pointer to instrument object
         );
 
         if (status.longValue() == VI_SUCCESS) {
 
-            return new VISAConnection(pViInstrument.getValue());
+            switch (address.getType()) {
+
+                case SERIAL:
+                case COM:
+                    return new VISASerialConnection(pViInstrument.getValue());
+
+                case GPIB:
+                    return new VISAGPIBConnection(pViInstrument.getValue());
+
+                case TCPIP:
+                    return new VISATCPIPConnection(pViInstrument.getValue());
+
+                case LXI:
+                    return new VISALXIConnection(pViInstrument.getValue());
+
+                case USB:
+                    return new VISAUSBConnection(pViInstrument.getValue());
+
+                default:
+                    return new VISAConnection(pViInstrument.getValue());
+
+            }
+
 
         } else {
 
@@ -189,11 +206,11 @@ public class NIVISADriver implements Driver {
         ByteBuffer            pViString     = stringToByteBuffer(address);
 
         NativeLong status = lib.viOpen(
-                visaResourceManagerHandle,
-                pViString,
-                new NativeLong(0),
-                new NativeLong(0),
-                pViInstrument
+            visaResourceManagerHandle,
+            pViString,
+            new NativeLong(0),
+            new NativeLong(0),
+            pViInstrument
         );
 
         if (status.longValue() == VI_SUCCESS) {
@@ -282,11 +299,11 @@ public class NIVISADriver implements Driver {
 
         // Perform the native call
         NativeLong status = lib.viFindRsrc(
-                visaResourceManagerHandle,
-                expr,
-                listHandle,
-                listCount,
-                desc
+            visaResourceManagerHandle,
+            expr,
+            listHandle,
+            listCount,
+            desc
         );
 
         if (status.longValue() == VI_ERROR_RSRC_NFOUND) {
@@ -299,11 +316,11 @@ public class NIVISADriver implements Driver {
             throw new VISAException("Error searching for devices.");
         }
 
-        int                   count     = listCount.getValue().intValue();
-        ArrayList<Address>    addresses = new ArrayList<>();
-        NativeLong            handle    = listHandle.getValue();
-        String                address;
-        Pattern               dfind     = Pattern.compile("(COM([0-9]*))|(/dev/tty((S)|(USB))([0-9]*))");
+        int                count     = listCount.getValue().intValue();
+        ArrayList<Address> addresses = new ArrayList<>();
+        NativeLong         handle    = listHandle.getValue();
+        String             address;
+        Pattern            dfind     = Pattern.compile("(COM([0-9]*))|(/dev/tty((S)|(USB))([0-9]*))");
         do {
 
             try {
@@ -325,7 +342,7 @@ public class NIVISADriver implements Driver {
 
                     if (matcher.find()) {
                         String port = matcher.group(0);
-                        strAddress  = new SerialAddress(port.trim());
+                        strAddress = new SerialAddress(port.trim());
                     }
 
                 } catch (Exception ignored) {}
@@ -346,6 +363,7 @@ public class NIVISADriver implements Driver {
     public class VISAConnection implements Connection {
 
         protected NativeLong handle;
+        private   Charset    charset = StandardCharsets.UTF_8;
 
         public VISAConnection(NativeLong viHandle) {
             handle = viHandle;
@@ -361,10 +379,10 @@ public class NIVISADriver implements Driver {
             NativeLongByReference returnCount = new NativeLongByReference();
 
             NativeLong status = lib.viWrite(
-                    handle,
-                    pBuffer,
-                    new NativeLong(writeLength),
-                    returnCount
+                handle,
+                pBuffer,
+                new NativeLong(writeLength),
+                returnCount
             );
 
             if (status.longValue() < VI_SUCCESS) {
@@ -401,23 +419,30 @@ public class NIVISADriver implements Driver {
         }
 
         @Override
+        public void setEncoding(Charset charset) {
+            this.charset = charset;
+        }
+
+        @Override
+        public Charset getEncoding() {
+            return charset;
+        }
+
+        @Override
         public void write(String toWrite) throws VISAException {
 
             // Convert string to bytes to send
-            ByteBuffer pBuffer = stringToByteBuffer(toWrite);
-            if (pBuffer == null) {
-                throw new VISAException("Error converting command to ByteBuffer");
-            }
+            ByteBuffer pBuffer = stringToByteBuffer(toWrite, charset);
 
             long writeLength = toWrite.length();
 
             NativeLongByReference returnCount = new NativeLongByReference();
 
             NativeLong status = lib.viWrite(
-                    handle,
-                    pBuffer,
-                    new NativeLong(writeLength),
-                    returnCount
+                handle,
+                pBuffer,
+                new NativeLong(writeLength),
+                returnCount
             );
 
             if (status.intValue() != VI_SUCCESS) {
@@ -449,10 +474,10 @@ public class NIVISADriver implements Driver {
             NativeLongByReference returnCount = new NativeLongByReference();
 
             NativeLong status = lib.viRead(
-                    handle,
-                    response,
-                    new NativeLong(bufferSize),
-                    returnCount
+                handle,
+                response,
+                new NativeLong(bufferSize),
+                returnCount
             );
 
             switch (status.intValue()) {
@@ -476,11 +501,6 @@ public class NIVISADriver implements Driver {
         }
 
         @Override
-        public void setEOI(boolean set) throws VISAException {
-            setAttribute(VI_ATTR_SEND_END_EN, set ? VI_TRUE : VI_FALSE);
-        }
-
-        @Override
         public void setReadTerminator(long character) throws VISAException {
             setAttribute(VI_ATTR_TERMCHAR_EN, character != 0 ? VI_TRUE : VI_FALSE);
             setAttribute(VI_ATTR_TERMCHAR, character);
@@ -489,17 +509,6 @@ public class NIVISADriver implements Driver {
         @Override
         public void setTimeout(int duration) throws VISAException {
             setAttribute(VI_ATTR_TMO_VALUE, duration);
-        }
-
-        @Override
-        public void setSerial(int baud, int data, Parity parity, StopBits stop, Flow flow) throws VISAException {
-
-            setAttribute(VI_ATTR_ASRL_BAUD, baud);
-            setAttribute(VI_ATTR_ASRL_DATA_BITS, data);
-            setAttribute(VI_ATTR_ASRL_PARITY, parity.toInt());
-            setAttribute(VI_ATTR_ASRL_STOP_BITS, stop.toInt());
-            setAttribute(VI_ATTR_ASRL_FLOW_CNTRL, flow.toInt());
-
         }
 
         @Override
@@ -516,9 +525,9 @@ public class NIVISADriver implements Driver {
         public void setAttribute(long attribute, long value) throws VISAException {
 
             NativeLong status = lib.viSetAttribute(
-                    handle,
-                    new NativeLong(attribute),
-                    new NativeLong(value)
+                handle,
+                new NativeLong(attribute),
+                new NativeLong(value)
             );
 
             if (status.longValue() != VI_SUCCESS) {
@@ -532,9 +541,9 @@ public class NIVISADriver implements Driver {
             NativeLongByReference pointer = new NativeLongByReference();
 
             NativeLong status = lib.viGetAttribute(
-                    handle,
-                    new NativeLong(attribute),
-                    pointer.getPointer()
+                handle,
+                new NativeLong(attribute),
+                pointer.getPointer()
             );
 
             return pointer.getValue().longValue();
@@ -546,13 +555,70 @@ public class NIVISADriver implements Driver {
             Pointer pointer = new Memory(VI_FIND_BUFLEN);
 
             NativeLong status = lib.viGetAttribute(
-                    handle,
-                    new NativeLong(attribute),
-                    pointer
+                handle,
+                new NativeLong(attribute),
+                pointer
             );
 
             return pointer.getString(0);
 
+        }
+
+    }
+
+    public class VISASerialConnection extends VISAConnection implements SerialConnection {
+
+        public VISASerialConnection(NativeLong viHandle) {
+            super(viHandle);
+        }
+
+        @Override
+        public void setSerialParameters(int baud, int data, SerialConnection.Parity parity, SerialConnection.Stop stop, SerialConnection.FlowControl... flows) throws VISAException {
+
+            setAttribute(VI_ATTR_ASRL_BAUD, baud);
+            setAttribute(VI_ATTR_ASRL_DATA_BITS, data);
+            setAttribute(VI_ATTR_ASRL_PARITY, parity.toInt());
+            setAttribute(VI_ATTR_ASRL_STOP_BITS, stop.toInt());
+            setAttribute(VI_ATTR_ASRL_FLOW_CNTRL, Arrays.stream(flows).mapToInt(FlowControl::toInt).reduce((a, b) -> a | b).orElse(0));
+
+        }
+
+    }
+
+    public class VISAGPIBConnection extends VISAConnection implements GPIBConnection {
+
+
+        public VISAGPIBConnection(NativeLong viHandle) {
+            super(viHandle);
+        }
+
+        @Override
+        public void setEOIEnabled(boolean use) throws VISAException {
+            setAttribute(VI_ATTR_SEND_END_EN, use ? VI_TRUE : VI_FALSE);
+        }
+
+    }
+
+    public class VISATCPIPConnection extends VISAConnection implements TCPIPConnection {
+
+        public VISATCPIPConnection(NativeLong viHandle) {
+            super(viHandle);
+        }
+
+    }
+
+    public class VISAUSBConnection extends VISAConnection implements USBConnection {
+
+        public VISAUSBConnection(NativeLong viHandle) {
+            super(viHandle);
+        }
+
+    }
+
+    public class VISALXIConnection extends VISAConnection implements LXIConnection {
+
+        public VISALXIConnection(NativeLong viHandle) {
+            super(viHandle);
         }
 
     }

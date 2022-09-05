@@ -8,17 +8,18 @@ import javafx.scene.control.TitledPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import jisa.control.SRunnable;
 
 /**
  * A collapsible section box that surrounds one GUI element.
  */
 public class Section extends JFXElement {
 
-    public  Pane       pane;
-    public  TitledPane titled;
-    private Label      title      = new Label();
-    private BorderPane borderPane = new BorderPane();
-    private HBox       toolBar    = new HBox();
+    public        Pane       pane;
+    public        TitledPane titled;
+    private final Label      title      = new Label();
+    private final BorderPane borderPane = new BorderPane();
+    private final HBox       toolBar    = new HBox();
 
     public Section(String title, Element element) {
 
@@ -106,7 +107,7 @@ public class Section extends JFXElement {
         GUI.runNow(() -> titled.setCollapsible(expanded));
     }
 
-    public Button addTitleButton(String text, ClickHandler onClick) {
+    public Button addTitleButton(String text, SRunnable onClick) {
 
         javafx.scene.control.Button button = new javafx.scene.control.Button(text);
         button.setOnAction(event -> onClick.start());

@@ -1,14 +1,17 @@
 package jisa.visa.drivers;
 
 import jisa.addresses.Address;
-import jisa.addresses.StrAddress;
 import jisa.addresses.USBAddress;
 import jisa.visa.VISAException;
+import jisa.visa.connections.Connection;
+import jisa.visa.connections.USBConnection;
 import org.usb4java.*;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -209,8 +212,8 @@ public class USBTMCDriver implements Driver {
 
         initialise();
 
-        DeviceList       list      = new DeviceList();
-        List<Address>    addresses = new LinkedList<>();
+        DeviceList    list      = new DeviceList();
+        List<Address> addresses = new LinkedList<>();
 
         LibUsb.getDeviceList(context, list);
 
@@ -247,7 +250,7 @@ public class USBTMCDriver implements Driver {
         return address.getType() == Address.Type.USB;
     }
 
-    private static class USBTMCConnection implements Connection {
+    private static class USBTMCConnection implements USBConnection {
 
         private final DeviceHandle handle;
         private final byte         bulkIn;
@@ -255,6 +258,7 @@ public class USBTMCDriver implements Driver {
         private final short        maxPkt;
         private final int          iFace;
         private       int          timeOut = 500;
+        private       Charset      charset = StandardCharsets.UTF_8;
 
         private USBTMCConnection(DeviceHandle device, byte bulkIn, byte bulkOut, short maxPkt, int iFace) {
             this.handle  = device;
@@ -289,6 +293,16 @@ public class USBTMCDriver implements Driver {
                 throw new VISAException("Error resetting USB-TMC device.");
             }
 
+        }
+
+        @Override
+        public void setEncoding(Charset charset) {
+            this.charset = charset;
+        }
+
+        @Override
+        public Charset getEncoding() {
+            return charset;
         }
 
         @Override

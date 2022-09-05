@@ -20,19 +20,25 @@ public class Main {
     public static void main(String[] args) {
 
         try {
+
             Doc doc = new Doc("Help");
 
-            doc.addImage(Main.class.getResource("gui/images/jisa.png")).setAlignment(Doc.Align.CENTRE);
+            doc.addImage(Main.class.getResource("gui/images/jisa.png"))
+               .setAlignment(Doc.Align.CENTRE);
 
-            doc.addHeading("Testing Utility").setAlignment(Doc.Align.CENTRE);
+            doc.addHeading("Testing Utility")
+               .setAlignment(Doc.Align.CENTRE);
 
             doc.addText("This is the built-in testing utility for JISA. Using this utility, you can:");
 
-            doc.addList(false).addItem("Scan for instruments, to see what instruments JISA can detect").addItem("Enter address manually, to connect to an instrument with a known address").addItem("Exit, to exit this utility");
+            doc.addList(false)
+               .addItem("Scan for instruments, to see what instruments JISA can detect")
+               .addItem("Enter address manually, to connect to an instrument with a known address").addItem("Exit, to exit this utility");
 
             doc.addText("For more information regarding how to include and use this library in your project, take a look at the JISA wiki at:");
 
-            doc.addLink("https://github.com/OE-FET/JISA/wiki", "https://github.com/OE-FET/JISA/wiki").setAlignment(Doc.Align.CENTRE);
+            doc.addLink("https://github.com/OE-FET/JISA/wiki", "https://github.com/OE-FET/JISA/wiki")
+               .setAlignment(Doc.Align.CENTRE);
 
             while (true) {
 

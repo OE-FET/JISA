@@ -3,6 +3,7 @@ package jisa.visa;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.gui.GUI;
+import jisa.visa.connections.Connection;
 import jisa.visa.drivers.*;
 
 import java.util.*;
@@ -76,7 +77,7 @@ public class VISA {
 
         try {
             System.out.print("Trying Raw TCP-IP driver...          \t");
-            drivers.add(new RawTCPIPDriver());
+            drivers.add(new TCPIPDriver());
             System.out.println("Success.");
         } catch (Exception | Error ignored) {
             System.out.println("Nope.");
@@ -172,7 +173,7 @@ public class VISA {
         if (address.getType() == Address.Type.TCPIP) {
 
             try {
-                connection = lookup.get(RawTCPIPDriver.class).open(address);
+                connection = lookup.get(TCPIPDriver.class).open(address);
                 return connection;
             } catch (Exception ignored) {}
 

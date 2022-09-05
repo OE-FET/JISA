@@ -8,8 +8,8 @@ import jisa.enums.AMode;
 import jisa.enums.Source;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
-import jisa.visa.drivers.RawTCPIPDriver;
 import jisa.visa.VISADevice;
+import jisa.visa.drivers.TCPIPDriver;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -70,15 +70,15 @@ public class K2600B extends VISADevice implements MCSMU {
     private static final int      OFF_SOURCE_VOLT            = 1;
     private final        double   LINE_FREQUENCY;
 
-    private AMode[]      filterMode  = {AMode.NONE, AMode.NONE};
-    private int[]        filterCount = {1, 1};
-    private ReadFilter[] filterV     = {null, null};
-    private ReadFilter[] filterI     = {null, null};
+    private final AMode[]      filterMode  = {AMode.NONE, AMode.NONE};
+    private final int[]        filterCount = {1, 1};
+    private final ReadFilter[] filterV     = {null, null};
+    private final ReadFilter[] filterI     = {null, null};
 
     public K2600B(Address address) throws IOException, DeviceException {
 
         // Connect and set-up terminators
-        super(address, RawTCPIPDriver.class);
+        super(address, TCPIPDriver.class);
         setReadTerminator(LF_TERMINATOR);
         setWriteTerminator("\n");
         addAutoRemove("\n");
@@ -118,14 +118,12 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
-    public double getSetCurrent() throws DeviceException, IOException
-    {
+    public double getSetCurrent() throws DeviceException, IOException {
         throw new DeviceException("Not implemented.");
     }
 
     @Override
-    public double getSetVoltage() throws DeviceException, IOException
-    {
+    public double getSetVoltage() throws DeviceException, IOException {
         throw new DeviceException("Not implemented.");
     }
 

@@ -40,8 +40,8 @@ public class MercuryITC extends VISADevice implements TC {
 
     }
 
-    private final List<Thermometer> inputs  = new LinkedList<>();
-    private final List<Heater>      outputs = new LinkedList<>();
+    private final List<TMeter> inputs  = new LinkedList<>();
+    private final List<Heater> outputs = new LinkedList<>();
     private final List<Loop>        loops   = new LinkedList<>();
 
 
@@ -55,16 +55,16 @@ public class MercuryITC extends VISADevice implements TC {
 
         String[] responses = query("READ:SYS:CAT").split(":");
 
-        for (int i = 3; i < responses.length-2; i += 3) {
+        for (int i = 3; i < responses.length - 3; i += 3) {
 
-            String uid  = responses[i + 1];
-            String type = responses[i + 2];
+            String uid  = responses[i + 1].trim();
+            String type = responses[i + 2].trim().toUpperCase();
 
             switch (type) {
 
                 case "TEMP":
-                    Thermometer tm = new Thermometer(uid);
-                    Loop lp = new Loop(tm);
+                    TMeter tm = new TMeter(uid);
+                    Loop        lp = new Loop(tm);
                     inputs.add(tm);
                     loops.add(lp);
                     break;
@@ -78,6 +78,7 @@ public class MercuryITC extends VISADevice implements TC {
     }
 
     public String[] readITC(String... parts) throws IOException {
+
         String[] response = query(String.join(":", parts)).split(":");
         String[] answer   = new String[response.length - parts.length];
 
@@ -103,7 +104,7 @@ public class MercuryITC extends VISADevice implements TC {
     }
 
     @Override
-    public List<Thermometer> getInputs() {
+    public List<TMeter> getInputs() {
         return inputs;
     }
 
@@ -117,9 +118,15 @@ public class MercuryITC extends VISADevice implements TC {
         return loops;
     }
 
-    public class Thermometer implements TC.Thermometer {
+    private class Component {
 
+        private final String dev;
         private final String uid;
+
+        private Component(String dev, String uid) {
+            this.dev = dev;
+            this.uid = uid;
+        }
 
         public String get(String... parts) throws IOException, DeviceException {
 
@@ -128,7 +135,7 @@ public class MercuryITC extends VISADevice implements TC {
             full[0] = "READ";
             full[1] = "DEV";
             full[2] = uid;
-            full[3] = "HTR";
+            full[3] = dev;
 
             System.arraycopy(parts, 0, full, 4, parts.length);
 
@@ -143,7 +150,7 @@ public class MercuryITC extends VISADevice implements TC {
             full[0] = "READ";
             full[1] = "DEV";
             full[2] = uid;
-            full[3] = "TEMP";
+            full[3] = dev;
 
             System.arraycopy(parts, 0, full, 4, parts.length);
 
@@ -163,7 +170,7 @@ public class MercuryITC extends VISADevice implements TC {
             full[0] = "SET";
             full[1] = "DEV";
             full[2] = uid;
-            full[3] = "TEMP";
+            full[3] = dev;
 
             System.arraycopy(parts, 0, full, 4, parts.length);
 
@@ -171,7 +178,14 @@ public class MercuryITC extends VISADevice implements TC {
 
         }
 
-        public Thermometer(String uid) {
+    }
+
+    public class TMeter extends Component implements TC.TMeter {
+
+        private final String uid;
+
+        public TMeter(String uid) {
+            super("TEMP", uid);
             this.uid = uid;
         }
 
@@ -213,61 +227,12 @@ public class MercuryITC extends VISADevice implements TC {
 
     }
 
-    public class Heater implements TC.Heater {
+    public class Heater extends Component implements TC.Heater {
 
         private final String uid;
 
-        public String get(String... parts) throws IOException, DeviceException {
-
-            String[] full = new String[4 + parts.length];
-
-            full[0] = "READ";
-            full[1] = "DEV";
-            full[2] = uid;
-            full[3] = "HTR";
-
-            System.arraycopy(parts, 0, full, 4, parts.length);
-
-            return readITC(full)[0];
-
-        }
-
-        public double getDouble(String... parts) throws IOException, DeviceException {
-
-            String[] full = new String[4 + parts.length];
-
-            full[0] = "READ";
-            full[1] = "DEV";
-            full[2] = uid;
-            full[3] = "HTR";
-
-            System.arraycopy(parts, 0, full, 4, parts.length);
-
-            String[] response = readITC(full);
-
-            double value = Double.parseDouble(response[0]);
-            double scale = (parts[0].equals("SIG") && response.length > 1 && response[1].length() == 2) ? getScale(response[1].charAt(0)) : 1.0;
-
-            return value * scale;
-
-        }
-
-        public String[] set(String... parts) throws IOException, DeviceException {
-
-            String[] full = new String[4 + parts.length];
-
-            full[0] = "SET";
-            full[1] = "DEV";
-            full[2] = uid;
-            full[3] = "HTR";
-
-            System.arraycopy(parts, 0, full, 4, parts.length);
-
-            return writeITC(full);
-
-        }
-
         public Heater(String uid) {
+            super("HTR", uid);
             this.uid = uid;
         }
 
@@ -317,61 +282,12 @@ public class MercuryITC extends VISADevice implements TC {
         }
     }
 
-    public class AuxOutput implements PID.Output {
+    public class AuxOutput extends Component implements PID.Output {
 
         private final String uid;
 
-        public String get(String... parts) throws IOException, DeviceException {
-
-            String[] full = new String[4 + parts.length];
-
-            full[0] = "READ";
-            full[1] = "DEV";
-            full[2] = uid + ".A1";
-            full[3] = "AUX";
-
-            System.arraycopy(parts, 0, full, 4, parts.length);
-
-            return readITC(full)[0];
-
-        }
-
-        public double getDouble(String... parts) throws IOException, DeviceException {
-
-            String[] full = new String[4 + parts.length];
-
-            full[0] = "READ";
-            full[1] = "DEV";
-            full[2] = uid + ".A1";
-            full[3] = "AUX";
-
-            System.arraycopy(parts, 0, full, 4, parts.length);
-
-            String[] response = readITC(full);
-
-            double value = Double.parseDouble(response[0]);
-            double scale = (parts[0].equals("SIG") && response.length > 1 && response[1].length() == 2) ? getScale(response[1].charAt(0)) : 1.0;
-
-            return value * scale;
-
-        }
-
-        public String[] set(String... parts) throws IOException, DeviceException {
-
-            String[] full = new String[4 + parts.length];
-
-            full[0] = "SET";
-            full[1] = "DEV";
-            full[2] = uid + ".H1";
-            full[3] = "HTR";
-
-            System.arraycopy(parts, 0, full, 4, parts.length);
-
-            return writeITC(full);
-
-        }
-
         public AuxOutput(String uid) {
+            super("AUX", uid + ".A1");
             this.uid = uid;
         }
 
@@ -419,9 +335,9 @@ public class MercuryITC extends VISADevice implements TC {
 
     public class Loop extends ZonedLoop {
 
-        private final Thermometer sensor;
+        private final TMeter sensor;
 
-        public Loop(Thermometer sensor) {
+        public Loop(TMeter sensor) {
             this.sensor = sensor;
         }
 
@@ -491,7 +407,7 @@ public class MercuryITC extends VISADevice implements TC {
         }
 
         @Override
-        public Thermometer getInput() throws IOException, DeviceException {
+        public TMeter getInput() throws IOException, DeviceException {
             return sensor;
         }
 
@@ -534,7 +450,7 @@ public class MercuryITC extends VISADevice implements TC {
         }
 
         @Override
-        public List<Thermometer> getAvailableInputs() {
+        public List<TMeter> getAvailableInputs() {
             return List.of(sensor);
         }
 

@@ -86,7 +86,7 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
-    public List<Thermometer> getInputs() {
+    public List<TMeter> getInputs() {
         return List.of(THERMOMETER);
     }
 
@@ -101,7 +101,7 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
 
-    public final Thermometer THERMOMETER = new Thermometer() {
+    public final TMeter THERMOMETER = new TMeter() {
 
         @Override
         public String getName() {
@@ -300,7 +300,7 @@ public class ET2408 extends ModbusRTUDevice implements TC {
         }
 
         @Override
-        public List<Thermometer> getAvailableInputs() {
+        public List<TMeter> getAvailableInputs() {
             return List.of(THERMOMETER);
         }
 

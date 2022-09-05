@@ -1,18 +1,17 @@
 package jisa.visa.drivers;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.SerialAddress;
-import jisa.addresses.StrAddress;
-import jisa.Util;
 import jisa.visa.VISAException;
-import jisa.visa.drivers.Connection;
-import jisa.visa.drivers.Driver;
+import jisa.visa.connections.Connection;
+import jisa.visa.connections.SerialConnection;
 import jssc.SerialPort;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -72,20 +71,21 @@ public class SerialDriver implements Driver {
             throw new VISAException("Error opening port \"%s\".", device.trim());
         }
 
-        return new SerialConnection(port);
+        return new NSConnection(port);
 
     }
 
-    public static class SerialConnection implements Connection {
+    public static class NSConnection implements SerialConnection {
 
         private final SerialPort port;
         private       int        tmo;
         private       String     terms;
         private       byte[]     terminationSequence = {0x0A};
+        private       Charset    charset             = Charset.defaultCharset();
 
-        public SerialConnection(SerialPort comPort) throws VISAException {
+        public NSConnection(SerialPort comPort) throws VISAException {
             port = comPort;
-            setSerial(9600, 8, Parity.NONE, StopBits.ONE, Flow.NONE);
+            setSerialParameters(9600, 8);
         }
 
         @Override
@@ -117,12 +117,22 @@ public class SerialDriver implements Driver {
         }
 
         @Override
+        public void setEncoding(Charset charset) {
+            this.charset = charset;
+        }
+
+        @Override
+        public Charset getEncoding() {
+            return charset;
+        }
+
+        @Override
         public void write(String toWrite) throws VISAException {
 
             boolean result = false;
 
             try {
-                result = port.writeString(toWrite);
+                result = port.writeBytes(toWrite.getBytes(charset));
             } catch (SerialPortException e) {
                 e.printStackTrace();
             }
@@ -175,28 +185,32 @@ public class SerialDriver implements Driver {
         }
 
         @Override
-        public void setEOI(boolean set) {
-            // Nothing to do here
-        }
-
-        @Override
         public void setReadTerminator(long character) {
+
+            if (character == 0) {
+                terminationSequence = new byte[0];
+            }
 
             ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
             buffer.putLong(character);
 
-            int pos = 0;
+            buffer.rewind();
 
-            for (int i = 0; i < Long.BYTES; i++) {
-                if (buffer.get(i) > 0) {
-                    pos = i;
-                    break;
-                }
+            byte value = 0;
+
+            while (value == 0) {
+                value = buffer.get();
             }
 
-            terminationSequence = new byte[Long.BYTES - pos];
-            System.arraycopy(buffer.array(), pos, terminationSequence, 0, terminationSequence.length);
+            buffer.position(buffer.position() - 1);
 
+            terminationSequence = buffer.slice().array();
+
+        }
+
+        @Override
+        public void setReadTerminator(String character) {
+            terminationSequence = character.getBytes(charset);
         }
 
         @Override
@@ -205,22 +219,23 @@ public class SerialDriver implements Driver {
         }
 
         @Override
-        public void setSerial(int baud, int data, Parity parity, StopBits stop, Flow flow) throws VISAException {
+        public void setSerialParameters(int baud, int data, SerialConnection.Parity parity, SerialConnection.Stop stop, SerialConnection.FlowControl... flows) throws VISAException {
 
-            int stopBits = 1;
+            int stopBits;
 
             switch (stop) {
 
-                case ONE:
-                    stopBits = SerialPort.STOPBITS_1;
+                case BITS_20:
+                    stopBits = SerialPort.STOPBITS_2;
                     break;
 
-                case ONE_HALF:
+                case BITS_15:
                     stopBits = SerialPort.STOPBITS_1_5;
                     break;
 
-                case TWO:
-                    stopBits = SerialPort.STOPBITS_2;
+                default:
+                case BITS_10:
+                    stopBits = SerialPort.STOPBITS_1;
                     break;
 
             }
@@ -229,22 +244,25 @@ public class SerialDriver implements Driver {
 
                 port.setParams(baud, data, stopBits, parity.toInt());
 
-                switch (flow) {
+                int flowControl = SerialPort.FLOWCONTROL_NONE;
 
-                    case RTS_CTS:
-                        port.setFlowControlMode(SerialPort.FLOWCONTROL_RTSCTS_IN | SerialPort.FLOWCONTROL_RTSCTS_OUT);
-                        break;
+                for (FlowControl flow : flows) {
 
-                    case XON_XOFF:
-                        port.setFlowControlMode(SerialPort.FLOWCONTROL_XONXOFF_IN | SerialPort.FLOWCONTROL_XONXOFF_OUT);
-                        break;
+                    switch (flow) {
 
-                    default:
-                    case NONE:
-                        port.setFlowControlMode(SerialPort.FLOWCONTROL_NONE);
-                        break;
+                        case RTS_CTS:
+                            flowControl |= SerialPort.FLOWCONTROL_RTSCTS_IN | SerialPort.FLOWCONTROL_RTSCTS_OUT;
+                            break;
+
+                        case XON_XOFF:
+                            flowControl |= SerialPort.FLOWCONTROL_XONXOFF_IN | SerialPort.FLOWCONTROL_XONXOFF_OUT;
+                            break;
+
+                    }
 
                 }
+
+                port.setFlowControlMode(flowControl);
 
             } catch (SerialPortException e) {
                 throw new VISAException(e.getMessage());

@@ -12,6 +12,9 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Interface for defining the standard functionality of Source-Measure Unit (SMU) instruments.
+ */
 public interface SMU extends IVMeter, IVSource, Channel<SMU> {
 
     public static String getDescription() {
@@ -165,6 +168,16 @@ public interface SMU extends IVMeter, IVSource, Channel<SMU> {
      * @throws IOException     Upon communications error
      */
     void turnOff() throws DeviceException, IOException;
+
+    default void setOn(boolean on) throws IOException, DeviceException {
+
+        if (on) {
+            turnOn();
+        } else {
+            turnOff();
+        }
+
+    }
 
     /**
      * Checks whether the output of the SMU is currently enabled

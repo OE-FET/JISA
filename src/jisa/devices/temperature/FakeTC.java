@@ -34,7 +34,7 @@ public class FakeTC implements TC {
     }
 
     @Override
-    public List<Thermometer> getInputs() {
+    public List<TMeter> getInputs() {
         return List.of(THERMOMETER);
     }
 
@@ -66,7 +66,7 @@ public class FakeTC implements TC {
 
     });
 
-    private final Thermometer THERMOMETER = new Thermometer() {
+    private final TMeter THERMOMETER = new TMeter() {
 
         @Override
         public String getName() {

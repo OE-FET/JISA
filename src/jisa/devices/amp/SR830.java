@@ -92,6 +92,16 @@ public class SR830 extends VISADevice implements DPLockIn {
     }
 
     @Override
+    public double getFrequencyRange() throws IOException, DeviceException {
+        return 999.9;
+    }
+
+    @Override
+    public void setFrequencyRange(double range) throws IOException, DeviceException {
+        // No ranging options to set
+    }
+
+    @Override
     public double getRefPhase() throws IOException {
         return queryDouble(C_QUERY_PHASE);
     }

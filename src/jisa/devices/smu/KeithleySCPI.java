@@ -7,9 +7,11 @@ import jisa.devices.DeviceException;
 import jisa.devices.interfaces.SMU;
 import jisa.enums.AMode;
 import jisa.enums.Terminals;
-import jisa.visa.drivers.Connection;
-import jisa.visa.drivers.Driver;
 import jisa.visa.VISADevice;
+import jisa.visa.connections.Connection;
+import jisa.visa.connections.GPIBConnection;
+import jisa.visa.connections.SerialConnection;
+import jisa.visa.drivers.Driver;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -120,18 +122,18 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
         super(address, prefDriver);
 
-        switch (address.getType()) {
+        Connection connection = getConnection();
 
-            case SERIAL:
-                setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
-                setWriteTerminator("\r");
-                setReadTerminator("\r");
-                break;
+        if (connection instanceof SerialConnection) {
 
-            case GPIB:
-                setEOI(true);
-                break;
+            ((SerialConnection) connection).setSerialParameters(9600, 8, SerialConnection.Parity.NONE, SerialConnection.Stop.BITS_10);
+            setWriteTerminator("\r");
+            setReadTerminator("\r");
 
+        }
+
+        if (connection instanceof GPIBConnection) {
+            ((GPIBConnection) connection).setEOIEnabled(true);
         }
 
         addAutoRemove("\r");

@@ -11,11 +11,14 @@ import jisa.addresses.SerialAddress;
 import jisa.addresses.StrAddress;
 import jisa.visa.VISAException;
 import jisa.visa.VISANativeInterface;
+import jisa.visa.connections.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,8 +28,7 @@ import java.util.regex.Pattern;
 
 import static jisa.visa.VISANativeInterface.*;
 
-public class RSVISADriver implements Driver
-{
+public class RSVISADriver implements Driver {
 
     private static final String              OS_NAME          = System.getProperty("os.name").toLowerCase();
     private static final String              responseEncoding = "UTF8";
@@ -36,12 +38,12 @@ public class RSVISADriver implements Driver
     private static final int                 VI_NULL          = 0;
     private static final int                 VI_TRUE          = 1;
     private static final int                 VI_FALSE         = 0;
-    private static jisa.visa.VISANativeInterface libStatic;
+    private static       VISANativeInterface libStatic;
     private static       String              libName;
     private static       NativeLong          visaResourceManagerHandleStatic;
-    private static final List<Integer>       SUCCESS_CODES = List.of(VI_SUCCESS, VI_SUCCESS_TERM_CHAR, VI_SUCCESS_MAX_CNT);
+    private static final List<Integer>       SUCCESS_CODES    = List.of(VI_SUCCESS, VI_SUCCESS_TERM_CHAR, VI_SUCCESS_MAX_CNT);
 
-    protected jisa.visa.VISANativeInterface lib;
+    protected VISANativeInterface lib;
     protected NativeLong          visaResourceManagerHandle;
 
     public RSVISADriver() {
@@ -59,19 +61,18 @@ public class RSVISADriver implements Driver
 
     }
 
-    public static void init() throws jisa.visa.VISAException
-    {
+    public static void init() throws VISAException {
 
         try {
 
             if (OS_NAME.contains("win")) {
                 libName   = "RsVisa32";
-                libStatic = Native.loadLibrary(RSVISADriver.libName, jisa.visa.VISANativeInterface.class);
+                libStatic = Native.loadLibrary(RSVISADriver.libName, VISANativeInterface.class);
             } else if (OS_NAME.contains("linux") || OS_NAME.contains("mac")) {
                 libName   = "visa";
                 libStatic = Native.loadLibrary(RSVISADriver.libName, VISANativeInterface.class);
             } else {
-                throw new jisa.visa.VISAException("Platform not yet supported!");
+                throw new VISAException("Platform not yet supported!");
             }
 
         } catch (UnsatisfiedLinkError e) {
@@ -79,14 +80,14 @@ public class RSVISADriver implements Driver
         }
 
         if (libStatic == null) {
-            throw new jisa.visa.VISAException("Could not load VISA library");
+            throw new VISAException("Could not load VISA library");
         }
 
         // Attempt to get a resource manager handle
         try {
             visaResourceManagerHandleStatic = getResourceManager();
-        } catch (jisa.visa.VISAException e) {
-            throw new jisa.visa.VISAException("Could not get resource manager");
+        } catch (VISAException e) {
+            throw new VISAException("Could not get resource manager");
         }
 
     }
@@ -96,17 +97,17 @@ public class RSVISADriver implements Driver
      *
      * @return Resource manager handle.
      *
-     * @throws jisa.visa.VISAException When VISA does go gone screw it up
+     * @throws VISAException When VISA does go gone screw it up
      */
-    protected static NativeLong getResourceManager() throws jisa.visa.VISAException
-    {
+    protected static NativeLong getResourceManager() throws VISAException {
 
         NativeLongByReference pViSession = new NativeLongByReference();
         NativeLong            visaStatus = RSVISADriver.libStatic.viOpenDefaultRM(pViSession);
 
         if (visaStatus.longValue() != VI_SUCCESS) {
-            throw new jisa.visa.VISAException("Error opening resource manager!");
+            throw new VISAException("Error opening resource manager!");
         }
+
         return pViSession.getValue();
 
     }
@@ -119,19 +120,24 @@ public class RSVISADriver implements Driver
      * @return The ByteBuffer that I mentioned.
      */
     protected static ByteBuffer stringToByteBuffer(String source) {
+
         try {
+
             ByteBuffer dest = ByteBuffer.allocate(source.length() + 1);
             dest.put(source.getBytes(responseEncoding));
             dest.position(0);
             return dest;
+
         } catch (UnsupportedEncodingException e) {
+
             return null;
+
         }
+
     }
 
     @Override
-    public Connection open(Address address) throws jisa.visa.VISAException
-    {
+    public Connection open(Address address) throws VISAException {
 
         NativeLongByReference pViInstrument = new NativeLongByReference();
 
@@ -145,42 +151,63 @@ public class RSVISADriver implements Driver
         }
 
         if (pViString == null) {
-            throw new jisa.visa.VISAException("Error encoding address to ByteBuffer.");
+            throw new VISAException("Error encoding address to ByteBuffer.");
         }
 
         NativeLong status = lib.viOpen(
-                visaResourceManagerHandle,
-                pViString,         // byte buffer for instrument string
-                new NativeLong(0), // access mode (locking or not). 0:Use Visa default
-                new NativeLong(0), // timeout, only when access mode equals locking
-                pViInstrument      // pointer to instrument object
+            visaResourceManagerHandle,
+            pViString,         // byte buffer for instrument string
+            new NativeLong(0), // access mode (locking or not). 0:Use Visa default
+            new NativeLong(0), // timeout, only when access mode equals locking
+            pViInstrument      // pointer to instrument object
         );
 
         if (status.longValue() == VI_SUCCESS) {
 
-            return new VISAConnection(pViInstrument.getValue());
+            switch (address.getType()) {
+
+                case SERIAL:
+                case COM:
+                    return new VISASerialConnection(pViInstrument.getValue());
+
+                case GPIB:
+                    return new VISAGPIBConnection(pViInstrument.getValue());
+
+                case TCPIP:
+                    return new VISATCPIPConnection(pViInstrument.getValue());
+
+                case LXI:
+                    return new VISALXIConnection(pViInstrument.getValue());
+
+                case USB:
+                    return new VISAUSBConnection(pViInstrument.getValue());
+
+                default:
+                    return new VISAConnection(pViInstrument.getValue());
+
+            }
 
         } else {
 
             switch (status.intValue()) {
 
                 case VI_ERROR_INV_OBJECT:
-                    throw new jisa.visa.VISAException("No resource manager is open to open \"%s\".", address.toString());
+                    throw new VISAException("No resource manager is open to open \"%s\".", address.toString());
 
                 case VI_ERROR_INV_RSRC_NAME:
-                    throw new jisa.visa.VISAException("Invalid address: \"%s\".", address.toString());
+                    throw new VISAException("Invalid address: \"%s\".", address.toString());
 
                 case VI_ERROR_RSRC_NFOUND:
-                    throw new jisa.visa.VISAException("No resource found at \"%s\".", address.toString());
+                    throw new VISAException("No resource found at \"%s\".", address.toString());
 
                 case VI_ERROR_RSRC_BUSY:
-                    throw new jisa.visa.VISAException("Resource busy at \"%s\".", address.toString());
+                    throw new VISAException("Resource busy at \"%s\".", address.toString());
 
                 case VI_ERROR_TMO:
-                    throw new jisa.visa.VISAException("Open operation timed out.");
+                    throw new VISAException("Open operation timed out.");
 
                 default:
-                    throw new jisa.visa.VISAException("Error trying to open instrument connection. Status: %d", status.intValue());
+                    throw new VISAException("Error trying to open instrument connection. Status: %d", status.intValue());
 
             }
         }
@@ -194,11 +221,11 @@ public class RSVISADriver implements Driver
         ByteBuffer            pViString     = stringToByteBuffer(address);
 
         NativeLong status = lib.viOpen(
-                visaResourceManagerHandle,
-                pViString,
-                new NativeLong(0),
-                new NativeLong(0),
-                pViInstrument
+            visaResourceManagerHandle,
+            pViString,
+            new NativeLong(0),
+            new NativeLong(0),
+            pViInstrument
         );
 
         if (status.longValue() == VI_SUCCESS) {
@@ -209,8 +236,7 @@ public class RSVISADriver implements Driver
 
     }
 
-    protected String toVISASerial(SerialAddress address) throws jisa.visa.VISAException
-    {
+    protected String toVISASerial(SerialAddress address) throws VISAException {
 
         String raw = address.toString();
 
@@ -251,15 +277,14 @@ public class RSVISADriver implements Driver
 
             }
 
-            throw new jisa.visa.VISAException("No resource found at \"%s\"", address.toString());
+            throw new VISAException("No resource found at \"%s\"", address.toString());
 
         }
 
     }
 
     @Override
-    public List<Address> search() throws jisa.visa.VISAException
-    {
+    public List<Address> search() throws VISAException {
         return search(true);
     }
 
@@ -279,8 +304,7 @@ public class RSVISADriver implements Driver
 
     }
 
-    public List<Address> search(boolean changeSerial) throws jisa.visa.VISAException
-    {
+    public List<Address> search(boolean changeSerial) throws VISAException {
 
         // VISA RegEx for "Anything" (should be .* but they seem to use their own standard)
         ByteBuffer            expr       = stringToByteBuffer("?*");
@@ -290,11 +314,11 @@ public class RSVISADriver implements Driver
 
         // Perform the native call
         NativeLong status = lib.viFindRsrc(
-                visaResourceManagerHandle,
-                expr,
-                listHandle,
-                listCount,
-                desc
+            visaResourceManagerHandle,
+            expr,
+            listHandle,
+            listCount,
+            desc
         );
 
         if (status.longValue() == VI_ERROR_RSRC_NFOUND) {
@@ -304,20 +328,20 @@ public class RSVISADriver implements Driver
 
         if (status.longValue() != VI_SUCCESS) {
             lib.viClose(listHandle.getValue());
-            throw new jisa.visa.VISAException("Error searching for devices.");
+            throw new VISAException("Error searching for devices.");
         }
 
-        int                   count     = listCount.getValue().intValue();
-        ArrayList<Address>    addresses = new ArrayList<>();
-        NativeLong            handle    = listHandle.getValue();
-        String                address;
-        Pattern               dfind     = Pattern.compile("(COM([0-9]*))|(/dev/tty((S)|(USB))([0-9]*))");
+        int                count     = listCount.getValue().intValue();
+        ArrayList<Address> addresses = new ArrayList<>();
+        NativeLong         handle    = listHandle.getValue();
+        String             address;
+        Pattern            dfind     = Pattern.compile("(COM([0-9]*))|(/dev/tty((S)|(USB))([0-9]*))");
         do {
 
             try {
                 address = new String(desc.array(), 0, 1024, responseEncoding);
             } catch (UnsupportedEncodingException e) {
-                throw new jisa.visa.VISAException("Unable to encode address!");
+                throw new VISAException("Unable to encode address!");
             }
 
             Address strAddress = new StrAddress(address);
@@ -351,18 +375,17 @@ public class RSVISADriver implements Driver
         return addresses;
     }
 
-    public class VISAConnection implements Connection
-    {
+    public class VISAConnection implements Connection {
 
         protected NativeLong handle;
+        private   Charset    charset = StandardCharsets.UTF_8;
 
         public VISAConnection(NativeLong viHandle) {
             handle = viHandle;
         }
 
         @Override
-        public void writeBytes(byte[] bytes) throws jisa.visa.VISAException
-        {
+        public void writeBytes(byte[] bytes) throws VISAException {
 
             ByteBuffer pBuffer = ByteBuffer.wrap(bytes);
 
@@ -371,10 +394,10 @@ public class RSVISADriver implements Driver
             NativeLongByReference returnCount = new NativeLongByReference();
 
             NativeLong status = lib.viWrite(
-                    handle,
-                    pBuffer,
-                    new NativeLong(writeLength),
-                    returnCount
+                handle,
+                pBuffer,
+                new NativeLong(writeLength),
+                returnCount
             );
 
             if (status.longValue() < VI_SUCCESS) {
@@ -382,54 +405,58 @@ public class RSVISADriver implements Driver
                 switch (status.intValue()) {
 
                     case VI_ERROR_INV_OBJECT:
-                        throw new jisa.visa.VISAException("That connection is not open.");
+                        throw new VISAException("That connection is not open.");
 
                     case VI_ERROR_TMO:
-                        throw new jisa.visa.VISAException("Write operation timed out.");
+                        throw new VISAException("Write operation timed out.");
 
                     default:
-                        throw new jisa.visa.VISAException("Error writing to instrument.");
+                        throw new VISAException("Error writing to instrument.");
 
                 }
             }
 
             if (returnCount.getValue().longValue() != writeLength) {
-                throw new jisa.visa.VISAException("Command was not fully sent!");
+                throw new VISAException("Command was not fully sent!");
             }
 
         }
 
         @Override
-        public void clear() throws jisa.visa.VISAException
-        {
+        public void clear() throws VISAException {
 
             NativeLong status = lib.viClear(handle);
 
             if (status.intValue() != VI_SUCCESS) {
-                throw new jisa.visa.VISAException("Unable to clear connection.");
+                throw new VISAException("Unable to clear connection.");
             }
 
         }
 
         @Override
-        public void write(String toWrite) throws jisa.visa.VISAException
-        {
+        public void setEncoding(Charset charset) {
+            this.charset = charset;
+        }
+
+        @Override
+        public Charset getEncoding() {
+            return charset;
+        }
+
+        @Override
+        public void write(String toWrite) throws VISAException {
 
             // Convert string to bytes to send
-            ByteBuffer pBuffer = stringToByteBuffer(toWrite);
-            if (pBuffer == null) {
-                throw new jisa.visa.VISAException("Error converting command to ByteBuffer");
-            }
-
-            long writeLength = toWrite.length();
+            ByteBuffer pBuffer     = ByteBuffer.wrap(toWrite.getBytes(charset));
+            long       writeLength = toWrite.length();
 
             NativeLongByReference returnCount = new NativeLongByReference();
 
             NativeLong status = lib.viWrite(
-                    handle,
-                    pBuffer,
-                    new NativeLong(writeLength),
-                    returnCount
+                handle,
+                pBuffer,
+                new NativeLong(writeLength),
+                returnCount
             );
 
             if (status.intValue() != VI_SUCCESS) {
@@ -437,36 +464,35 @@ public class RSVISADriver implements Driver
                 switch (status.intValue()) {
 
                     case VI_ERROR_INV_OBJECT:
-                        throw new jisa.visa.VISAException("That connection is not open.");
+                        throw new VISAException("That connection is not open.");
 
                     case VI_ERROR_TMO:
-                        throw new jisa.visa.VISAException("Write operation timed out.");
+                        throw new VISAException("Write operation timed out.");
 
                     default:
-                        throw new jisa.visa.VISAException("Error writing to instrument.");
+                        throw new VISAException("Error writing to instrument.");
 
                 }
             }
 
             if (returnCount.getValue().longValue() != writeLength) {
-                throw new jisa.visa.VISAException("Command was not fully sent!");
+                throw new VISAException("Command was not fully sent!");
             }
 
         }
 
         @Override
-        public byte[] readBytes(int bufferSize) throws jisa.visa.VISAException
-        {
+        public byte[] readBytes(int bufferSize) throws VISAException {
 
-            ByteBuffer            response    = ByteBuffer.allocate(bufferSize);
-            NativeLongByReference returnCount = new NativeLongByReference();
+            ByteBuffer            response     = ByteBuffer.allocate(bufferSize);
+            NativeLongByReference returnCount  = new NativeLongByReference();
             ByteArrayOutputStream longResponse = new ByteArrayOutputStream();
 
             NativeLong status = lib.viRead(
-                    handle,
-                    response,
-                    new NativeLong(bufferSize),
-                    returnCount
+                handle,
+                response,
+                new NativeLong(bufferSize),
+                returnCount
             );
 
             switch (status.intValue()) {
@@ -474,124 +500,152 @@ public class RSVISADriver implements Driver
                 case VI_SUCCESS:
                 case VI_SUCCESS_TERM_CHAR:
                 case VI_SUCCESS_MAX_CNT:
-                    try
-                    {
-                        longResponse.write(Arrays.copyOfRange(response.array(),0,returnCount.getValue().intValue()));
-                        while (status.intValue() == VI_SUCCESS_MAX_CNT || status.intValue() == VI_SUCCESS_TERM_CHAR)
-                        {
+                    try {
+                        longResponse.write(Arrays.copyOfRange(response.array(), 0, returnCount.getValue().intValue()));
+                        while (status.intValue() == VI_SUCCESS_MAX_CNT || status.intValue() == VI_SUCCESS_TERM_CHAR) {
                             status = lib.viRead(
-                                    handle,
-                                    response,
-                                    new NativeLong(bufferSize),
-                                    returnCount
+                                handle,
+                                response,
+                                new NativeLong(bufferSize),
+                                returnCount
                             );
-                            longResponse.write(Arrays.copyOfRange(response.array(),0,returnCount.getValue().intValue()));
+                            longResponse.write(Arrays.copyOfRange(response.array(), 0, returnCount.getValue().intValue()));
                         }
                         return longResponse.toByteArray();
-                    }
-                    catch (IOException e)
-                    {
-                        throw new jisa.visa.VISAException("Error reading all bytes from instrument, code: 0x%08X", status.intValue());
+                    } catch (IOException e) {
+                        throw new VISAException("Error reading all bytes from instrument, code: 0x%08X", status.intValue());
                     }
                 case VI_ERROR_INV_OBJECT:
-                    throw new jisa.visa.VISAException("That connection is not open.");
+                    throw new VISAException("That connection is not open.");
 
                 case VI_ERROR_TMO:
-                    throw new jisa.visa.VISAException("Read operation timed out.");
+                    throw new VISAException("Read operation timed out.");
 
                 default:
-                    throw new jisa.visa.VISAException("Error reading from instrument, code: 0x%08X", status.intValue());
+                    throw new VISAException("Error reading from instrument, code: 0x%08X", status.intValue());
 
             }
 
         }
 
         @Override
-        public void setEOI(boolean set) throws jisa.visa.VISAException
-        {
-            setAttribute(VI_ATTR_SEND_END_EN, set ? VI_TRUE : VI_FALSE);
-        }
-
-        @Override
-        public void setReadTerminator(long character) throws jisa.visa.VISAException
-        {
+        public void setReadTerminator(long character) throws VISAException {
             setAttribute(VI_ATTR_TERMCHAR_EN, character != 0 ? VI_TRUE : VI_FALSE);
             setAttribute(VI_ATTR_TERMCHAR, character);
         }
 
         @Override
-        public void setTimeout(int duration) throws jisa.visa.VISAException
-        {
+        public void setTimeout(int duration) throws VISAException {
             setAttribute(VI_ATTR_TMO_VALUE, duration);
         }
 
         @Override
-        public void setSerial(int baud, int data, Parity parity, StopBits stop, Flow flow) throws jisa.visa.VISAException
-        {
-
-            setAttribute(VI_ATTR_ASRL_BAUD, baud);
-            setAttribute(VI_ATTR_ASRL_DATA_BITS, data);
-            setAttribute(VI_ATTR_ASRL_PARITY, parity.toInt());
-            setAttribute(VI_ATTR_ASRL_STOP_BITS, stop.toInt());
-            setAttribute(VI_ATTR_ASRL_FLOW_CNTRL, flow.toInt());
-
-        }
-
-        @Override
-        public void close() throws jisa.visa.VISAException
-        {
+        public void close() throws VISAException {
 
             NativeLong status = lib.viClose(handle);
 
             if (status.longValue() != VI_SUCCESS) {
-                throw new jisa.visa.VISAException("Error closing instrument!");
+                throw new VISAException("Error closing instrument!");
             }
 
         }
 
-        public void setAttribute(long attribute, long value) throws jisa.visa.VISAException
-        {
+        public void setAttribute(long attribute, long value) throws VISAException {
 
             NativeLong status = lib.viSetAttribute(
-                    handle,
-                    new NativeLong(attribute),
-                    new NativeLong(value)
+                handle,
+                new NativeLong(attribute),
+                new NativeLong(value)
             );
 
             if (status.longValue() != VI_SUCCESS) {
-                throw new jisa.visa.VISAException("Error setting attribute.");
+                throw new VISAException("Error setting attribute.");
             }
 
         }
 
-        public long getAttributeLong(long attribute) throws jisa.visa.VISAException
-        {
+        public long getAttributeLong(long attribute) throws VISAException {
 
             NativeLongByReference pointer = new NativeLongByReference();
 
             NativeLong status = lib.viGetAttribute(
-                    handle,
-                    new NativeLong(attribute),
-                    pointer.getPointer()
+                handle,
+                new NativeLong(attribute),
+                pointer.getPointer()
             );
 
             return pointer.getValue().longValue();
 
         }
 
-        public String getAttributeString(long attribute) throws VISAException
-        {
+        public String getAttributeString(long attribute) throws VISAException {
 
             Pointer pointer = new Memory(VI_FIND_BUFLEN);
 
             NativeLong status = lib.viGetAttribute(
-                    handle,
-                    new NativeLong(attribute),
-                    pointer
+                handle,
+                new NativeLong(attribute),
+                pointer
             );
 
             return pointer.getString(0);
 
+        }
+
+    }
+
+    public class VISASerialConnection extends VISAConnection implements SerialConnection {
+
+        public VISASerialConnection(NativeLong viHandle) {
+            super(viHandle);
+        }
+
+        @Override
+        public void setSerialParameters(int baud, int data, SerialConnection.Parity parity, SerialConnection.Stop stop, SerialConnection.FlowControl... flows) throws VISAException {
+
+            setAttribute(VI_ATTR_ASRL_BAUD, baud);
+            setAttribute(VI_ATTR_ASRL_DATA_BITS, data);
+            setAttribute(VI_ATTR_ASRL_PARITY, parity.toInt());
+            setAttribute(VI_ATTR_ASRL_STOP_BITS, stop.toInt());
+            setAttribute(VI_ATTR_ASRL_FLOW_CNTRL, Arrays.stream(flows).mapToInt(FlowControl::toInt).reduce((a, b) -> a | b).orElse(0));
+
+        }
+
+    }
+
+    public class VISAGPIBConnection extends VISAConnection implements GPIBConnection {
+
+        public VISAGPIBConnection(NativeLong viHandle) {
+            super(viHandle);
+        }
+
+        @Override
+        public void setEOIEnabled(boolean use) throws VISAException {
+            setAttribute(VI_ATTR_SEND_END_EN, use ? VI_TRUE : VI_FALSE);
+        }
+
+    }
+
+    public class VISATCPIPConnection extends VISAConnection implements TCPIPConnection {
+
+        public VISATCPIPConnection(NativeLong viHandle) {
+            super(viHandle);
+        }
+
+    }
+
+    public class VISAUSBConnection extends VISAConnection implements USBConnection {
+
+        public VISAUSBConnection(NativeLong viHandle) {
+            super(viHandle);
+        }
+
+    }
+
+    public class VISALXIConnection extends VISAConnection implements LXIConnection {
+
+        public VISALXIConnection(NativeLong viHandle) {
+            super(viHandle);
         }
 
     }

@@ -2,6 +2,7 @@ package jisa.visa.drivers;
 
 import jisa.addresses.Address;
 import jisa.visa.VISAException;
+import jisa.visa.connections.Connection;
 
 import java.util.List;
 
