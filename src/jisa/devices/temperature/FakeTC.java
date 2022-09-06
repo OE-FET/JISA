@@ -4,7 +4,6 @@ import jisa.addresses.Address;
 import jisa.control.RTask;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.TC;
-import jisa.devices.interfaces.TCouple;
 
 import java.io.IOException;
 import java.util.List;
@@ -14,24 +13,6 @@ public class FakeTC implements TC {
     public static String getDescription() {
         return "Fake TC";
     }
-
-    private double setPoint = 300.0;
-    private double current  = 300.0;
-    private final RTask  updater  = new RTask(500, () -> {
-
-        double diff = (setPoint - current) / 10;
-
-        if (Math.abs(diff) < 0.1) {
-            diff = Math.signum(diff) * 0.1;
-        }
-
-        if (Math.abs(diff) > Math.abs(setPoint - current)) {
-            diff = setPoint - current;
-        }
-
-        current += diff;
-
-    });
 
     public FakeTC(Address address) {
         updater.start();
@@ -53,142 +34,238 @@ public class FakeTC implements TC {
     }
 
     @Override
-    public double getPValue() throws IOException, DeviceException {
-        return 0;
+    public List<TMeter> getInputs() {
+        return List.of(THERMOMETER);
     }
 
     @Override
-    public void setPValue(double value) throws IOException, DeviceException {
-
+    public List<Heater> getOutputs() {
+        return List.of(HEATER);
     }
 
     @Override
-    public double getIValue() throws IOException, DeviceException {
-        return 0;
+    public List<Loop> getLoops() {
+        return List.of(LOOP);
     }
 
-    @Override
-    public void setIValue(double value) throws IOException, DeviceException {
+    private       double setPoint = 300.0;
+    private       double current  = 300.0;
+    private final RTask  updater  = new RTask(500, () -> {
 
-    }
+        double diff = (setPoint - current) / 10;
 
-    @Override
-    public double getDValue() throws IOException, DeviceException {
-        return 0;
-    }
+        if (Math.abs(diff) < 0.1) {
+            diff = Math.signum(diff) * 0.1;
+        }
 
-    @Override
-    public void setDValue(double value) throws IOException, DeviceException {
+        if (Math.abs(diff) > Math.abs(setPoint - current)) {
+            diff = setPoint - current;
+        }
 
-    }
+        current += diff;
 
-    @Override
-    public void useAutoPID(boolean flag) throws IOException, DeviceException {
+    });
 
-    }
+    private final TMeter THERMOMETER = new TMeter() {
 
-    @Override
-    public boolean isUsingAutoPID() throws IOException, DeviceException {
-        return false;
-    }
+        @Override
+        public String getName() {
+            return "Thermometer";
+        }
 
-    @Override
-    public List<Zone> getAutoPIDZones() throws IOException, DeviceException {
-        return null;
-    }
+        @Override
+        public String getSensorName() {
+            return getName();
+        }
 
-    @Override
-    public void setAutoPIDZones(Zone... zones) throws IOException, DeviceException {
+        @Override
+        public double getTemperature() {
+            return current;
+        }
 
-    }
+        @Override
+        public void setTemperatureRange(double range) {
 
-    @Override
-    public String getSensorName() {
-        return "Main Sensor";
-    }
+        }
 
-    @Override
-    public double getTemperature() throws IOException, DeviceException {
-        return current;
-    }
+        @Override
+        public double getTemperatureRange() {
+            return 999.999;
+        }
 
-    @Override
-    public void setTemperatureRange(double range) throws IOException, DeviceException {
+        @Override
+        public String getIDN() throws IOException, DeviceException {
+            return FakeTC.this.getIDN();
+        }
 
-    }
+        @Override
+        public Address getAddress() {
+            return FakeTC.this.getAddress();
+        }
 
-    @Override
-    public double getTemperatureRange() throws IOException, DeviceException {
-        return 999.9;
-    }
+    };
 
-    @Override
-    public double getTargetTemperature() throws IOException, DeviceException {
-        return setPoint;
-    }
+    private final Heater HEATER = new Heater() {
 
-    @Override
-    public void setTargetTemperature(double temperature) throws IOException, DeviceException {
-        setPoint = temperature;
-    }
+        @Override
+        public double getValue() {
+            return 0;
+        }
 
-    @Override
-    public double getTemperatureRampRate() throws IOException, DeviceException {
-        return 0;
-    }
+        @Override
+        public double getLimit() {
+            return 100.0;
+        }
 
-    @Override
-    public void setTemperatureRampRate(double kPerMin) throws IOException, DeviceException {
+        @Override
+        public void setLimit(double range) {
 
-    }
+        }
 
-    @Override
-    public double getHeaterPower() throws IOException, DeviceException {
-        return 0;
-    }
+        @Override
+        public String getName() {
+            return "Heater";
+        }
 
-    @Override
-    public void setHeaterPower(double powerPCT) throws IOException, DeviceException {
+        @Override
+        public String getIDN() throws IOException, DeviceException {
+            return FakeTC.this.getIDN();
+        }
 
-    }
+        @Override
+        public Address getAddress() {
+            return FakeTC.this.getAddress();
+        }
 
-    @Override
-    public double getFlow() throws IOException, DeviceException {
-        return 0;
-    }
+    };
 
-    @Override
-    public void setFlow(double outputPCT) throws IOException, DeviceException {
+    private final Loop LOOP = new ZonedLoop() {
 
-    }
+        @Override
+        public void setSetPoint(double temperature) {
+            setPoint = temperature;
+        }
 
-    @Override
-    public void useAutoHeater() throws IOException, DeviceException {
+        @Override
+        public double getSetPoint() {
+            return setPoint;
+        }
 
-    }
+        @Override
+        public String getName() {
+            return "PID Loop";
+        }
 
-    @Override
-    public boolean isUsingAutoHeater() throws IOException, DeviceException {
-        return false;
-    }
+        @Override
+        public void setRampEnabled(boolean flag) {
 
-    @Override
-    public void useAutoFlow() throws IOException, DeviceException {
+        }
 
-    }
+        @Override
+        public boolean isRampEnabled() {
+            return false;
+        }
 
-    @Override
-    public boolean isUsingAutoFlow() throws IOException, DeviceException {
-        return false;
-    }
+        @Override
+        public void setRampRate(double limit) {
 
-    @Override
-    public double getHeaterRange() throws IOException, DeviceException {
-        return 0;
-    }
+        }
 
-    @Override
-    public void setHeaterRange(double rangePCT) throws IOException, DeviceException {
+        @Override
+        public double getRampRate() {
+            return 0;
+        }
 
-    }
+        @Override
+        public double getPValue() {
+            return 0;
+        }
+
+        @Override
+        public double getIValue() {
+            return 0;
+        }
+
+        @Override
+        public double getDValue() {
+            return 0;
+        }
+
+        @Override
+        public void setPValue(double value) {
+
+        }
+
+        @Override
+        public void setIValue(double value) {
+
+        }
+
+        @Override
+        public void setDValue(double value) {
+
+        }
+
+        @Override
+        public Input getInput() {
+            return THERMOMETER;
+        }
+
+        @Override
+        public Output getOutput() {
+            return HEATER;
+        }
+
+        @Override
+        public void setInput(Input input) {
+
+        }
+
+        @Override
+        public void setOutput(Output output) {
+
+        }
+
+        @Override
+        public List<? extends Output> getAvailableOutputs() {
+            return List.of(HEATER);
+        }
+
+        @Override
+        public List<? extends Input> getAvailableInputs() {
+            return List.of(THERMOMETER);
+        }
+
+        @Override
+        public void setManualValue(double value) {
+
+        }
+
+        @Override
+        public double getManualValue() {
+            return 0;
+        }
+
+        @Override
+        public void setPIDEnabled(boolean flag) {
+
+        }
+
+        @Override
+        public boolean isPIDEnabled() {
+            return true;
+        }
+
+        @Override
+        public String getIDN() throws IOException, DeviceException {
+            return FakeTC.this.getIDN();
+        }
+
+        @Override
+        public Address getAddress() {
+            return FakeTC.this.getAddress();
+        }
+
+    };
+
 }

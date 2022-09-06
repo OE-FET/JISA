@@ -174,9 +174,9 @@ public class JFXElement implements Element {
 
         });
 
-        toolBar.setBackground(new Background(new BackgroundFill(Color.color(0, 0, 0, 0.1), null, null)));
+//        toolBar.setBackground(new Background(new BackgroundFill(Color.color(0, 0, 0, 0.1), null, null)));
+//        toolBar.setBorder(new Border(new BorderStroke(Color.SILVER, BorderStrokeStyle.SOLID, null, new BorderWidths(0, 0, 1, 0))));
         toolBar.setPadding(new Insets(5, GUI.SPACING, 5, GUI.SPACING));
-        toolBar.setBorder(new Border(new BorderStroke(Color.SILVER, BorderStrokeStyle.SOLID, null, new BorderWidths(0, 0, 1, 0))));
         BorderPane.setMargin(toolBar, new Insets(0));
         BorderPane.setMargin(borderPane.getCenter(), new Insets(GUI.SPACING));
         buttonBar.setPadding(new Insets(GUI.SPACING));

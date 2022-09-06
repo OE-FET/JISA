@@ -1,7 +1,5 @@
 package jisa.results;
 
-import org.python.antlr.ast.Num;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

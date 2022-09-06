@@ -4,8 +4,7 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Spectrometer;
 
-
-import java.io.*;
+import java.io.IOException;
 
 public class AgilentCary6000i implements Spectrometer {
 

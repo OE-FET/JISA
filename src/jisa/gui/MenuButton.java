@@ -1,15 +1,10 @@
 package jisa.gui;
 
-import javafx.geometry.Pos;
 import javafx.scene.control.CustomMenuItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-import javafx.scene.text.TextAlignment;
+import jisa.control.SRunnable;
 
 public interface MenuButton extends SubElement {
 
@@ -63,7 +58,7 @@ public interface MenuButton extends SubElement {
      *
      * @return Button object representing the menu item
      */
-    Button addItem(String text, ClickHandler onClick);
+    Button addItem(String text, SRunnable onClick);
 
     /**
      * Removes all items from the menu button's menu.
@@ -130,7 +125,7 @@ public interface MenuButton extends SubElement {
         }
 
         @Override
-        public Button addItem(String text, ClickHandler onClick) {
+        public Button addItem(String text, SRunnable onClick) {
 
             MenuItem item = new MenuItem(text);
             item.setOnAction(event -> onClick.start());

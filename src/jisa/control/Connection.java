@@ -74,11 +74,10 @@ public class Connection<T extends Instrument> {
                               .filter(c ->
                                   (c.isConnected() && target.isAssignableFrom(c.getDriver()))
                                       || target.isAssignableFrom(c.getType())
-                                      || (c instanceof MultiChannel && target.isAssignableFrom(((MultiChannel<?>) c).getChannelClass()))
-                                      || (c instanceof MultiOutput && target.isAssignableFrom(((MultiOutput<?>) c).getOutputClass()))
-                                      || (c instanceof MultiSensor && target.isAssignableFrom(((MultiSensor<?>) c).getSensorClass()))
-                              )
-                              .collect(Collectors.toList());
+                                      || (c.getInstrument() instanceof MultiChannel && target.isAssignableFrom(((MultiChannel<?>) c.getInstrument()).getChannelClass()))
+                                      || (c.getInstrument() instanceof MultiOutput && target.isAssignableFrom(((MultiOutput<?>) c.getInstrument()).getOutputClass()))
+                                      || (c.getInstrument() instanceof MultiSensor && target.isAssignableFrom(((MultiSensor<?>) c.getInstrument()).getSensorClass()))
+                              ).collect(Collectors.toList());
 
     }
 

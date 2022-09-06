@@ -6,7 +6,6 @@ import jisa.devices.interfaces.MCSMU;
 import jisa.enums.*;
 
 import java.io.IOException;
-import java.lang.ref.Cleaner;
 import java.util.Random;
 
 public class DummyMCSMU implements MCSMU {
@@ -15,13 +14,12 @@ public class DummyMCSMU implements MCSMU {
         return "Dummy SMU";
     }
 
-    private        Random    random  = new Random();
-    private        Double[]  current = {null, null, null, null};
-    private        Double[]  voltage = {null, null, null, null};
-    private        Source[]  mode    = {Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE};
-    private        boolean[] probes  = {true, true, true, true};
-    private        double[]  R       = {random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500};
-    private static Cleaner   cleaner = Cleaner.create();
+    private final Random    random  = new Random();
+    private final Double[]  current = {null, null, null, null};
+    private final Double[]  voltage = {null, null, null, null};
+    private final Source[]  mode    = {Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE};
+    private final boolean[] probes  = {true, true, true, true};
+    private final double[]  R       = {random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500};
 
     @Override
     public double getSetCurrent() throws DeviceException, IOException

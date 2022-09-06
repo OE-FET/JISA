@@ -1,5 +1,6 @@
 package jisa.experiment.queue;
 
+import jisa.experiment.Measurement;
 import jisa.gui.queue.SweepActionDisplay;
 
 import java.util.*;
@@ -9,6 +10,7 @@ public class SweepAction<T> extends AbstractAction<Void> {
 
     private       T                 lastValue;
     private       Action            lastAction;
+    private       Measurement       sweepMeasure   = null;
     private       boolean           isRunning      = false;
     private       Formatter<T>      formatter      = String::valueOf;
     private       boolean           isStopped      = false;
@@ -397,6 +399,14 @@ public class SweepAction<T> extends AbstractAction<Void> {
     @Override
     public SweepActionDisplay<T> getDisplay() {
         return new SweepActionDisplay<T>(this);
+    }
+
+    public void setMeasurement(Measurement measure) {
+        sweepMeasure = measure;
+    }
+
+    public Measurement getMeasurement() {
+        return sweepMeasure;
     }
 
     @Override

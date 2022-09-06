@@ -2,11 +2,10 @@ package jisa.devices.temperature;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.PID;
 import jisa.devices.interfaces.TC;
-import jisa.devices.interfaces.TCouple;
-import jisa.visa.Connection;
 import jisa.visa.VISADevice;
+import jisa.visa.connections.Connection;
+import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -19,14 +18,22 @@ public class ArroyoTEC extends VISADevice implements TC {
         return "Arroyo 585 TecPak";
     }
 
-    private boolean    autoPID = false;
-    private PID.Zone[] zones   = new PID.Zone[0];
-
     public ArroyoTEC(Address address) throws IOException, DeviceException {
 
         super(address);
 
-        setSerialParameters(38400, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
+        Connection connection = getConnection();
+
+        if (connection instanceof SerialConnection) {
+
+            ((SerialConnection) connection).setSerialParameters(
+                38400,
+                8,
+                SerialConnection.Parity.NONE,
+                SerialConnection.Stop.BITS_10
+            );
+
+        }
 
         setWriteTerminator("\n");
         setReadTerminator("\n");
@@ -43,177 +50,277 @@ public class ArroyoTEC extends VISADevice implements TC {
 
     }
 
-
     @Override
-    public String getSensorName() {
-        return "Main Sensor";
-    }
-
-    @Override
-    public double getTemperature() throws IOException {
-        return queryDouble("TEC:T?") + 273.15;
+    public List<Loop> getLoops() {
+        return List.of(LOOP);
     }
 
     @Override
-    public double getTemperatureRange() throws IOException {
-        return 100.0;
+    public List<TMeter> getInputs() {
+        return List.of(THERMOMETER);
     }
 
     @Override
-    public void setTemperatureRange(double range) throws IOException {
-
+    public List<Heater> getOutputs() {
+        return List.of(HEATER);
     }
 
-    @Override
-    public double getTargetTemperature() throws IOException {
-        return queryDouble("TEC:SET:T?") + 273.15;
-    }
+    private final TMeter THERMOMETER = new TMeter() {
 
-    @Override
-    public void setTargetTemperature(double temperature) throws IOException, DeviceException {
-        write("TEC:T %f", temperature - 273.15);
-        updateAutoPID();
-    }
+        @Override
+        public String getName() {
+            return "Thermometer";
+        }
 
-    @Override
-    public double getTemperatureRampRate() throws IOException, DeviceException {
-        return queryDouble("TEC:TRATE?");
-    }
+        @Override
+        public String getSensorName() {
+            return getName();
+        }
 
-    @Override
-    public void setTemperatureRampRate(double kPerMin) throws IOException {
-        write("TEC:TRATE %f", Math.min(100.0, Math.max(0, kPerMin)));
-    }
+        @Override
+        public double getTemperature() throws IOException {
+            return queryDouble("TEC:T?") + 273.15;
+        }
 
-    @Override
-    public double getHeaterPower() throws IOException {
-        return Math.pow(queryDouble("TEC:V?") / 2.5, 2) * 100.0;
-    }
+        @Override
+        public void setTemperatureRange(double range) {
+            // No ranging options
+        }
 
-    @Override
-    public void setHeaterPower(double powerPCT) throws IOException {
-        write("TEC:OUT 0");
-    }
+        @Override
+        public double getTemperatureRange() {
+            return 999.999;
+        }
 
-    @Override
-    public double getFlow() {
-        return 0.0;
-    }
+        @Override
+        public String getIDN() throws IOException {
+            return ArroyoTEC.this.getIDN();
+        }
 
-    @Override
-    public void useAutoHeater() throws IOException {
-        write("TEC:OUT 1");
-    }
+        @Override
+        public Address getAddress() {
+            return ArroyoTEC.this.getAddress();
+        }
 
-    @Override
-    public boolean isUsingAutoHeater() throws IOException {
-        return queryInt("TEC:OUT?") == 1;
-    }
+    };
 
-    @Override
-    public void useAutoFlow() {
-    }
+    private final Heater HEATER = new Heater() {
 
-    @Override
-    public void setFlow(double outputPCT) {
-    }
+        @Override
+        public double getValue() throws IOException {
+            return Math.pow(queryDouble("TEC:V?") / 2.5, 2) * 100.0;
+        }
 
-    @Override
-    public boolean isUsingAutoFlow() {
-        return false;
-    }
+        @Override
+        public double getLimit() {
+            return 100.0;
+        }
 
-    @Override
-    public double getPValue() throws IOException {
-        return Double.parseDouble(query("TEC:PID?").split(",")[0]);
-    }
+        @Override
+        public void setLimit(double range) {
+            // No limiting options
+        }
 
-    @Override
-    public void setPValue(double value) throws IOException {
-        setPIDValues(value, getIValue(), getDValue());
-    }
+        @Override
+        public String getName() {
+            return "Peltier Element";
+        }
 
-    @Override
-    public double getIValue() throws IOException {
-        return Double.parseDouble(query("TEC:PID?").split(",")[1]);
-    }
+        @Override
+        public String getIDN() throws IOException {
+            return ArroyoTEC.this.getIDN();
+        }
 
-    @Override
-    public void setIValue(double value) throws IOException {
-        setPIDValues(getPValue(), value, getDValue());
-    }
+        @Override
+        public Address getAddress() {
+            return ArroyoTEC.this.getAddress();
+        }
 
-    public void setPIDValues(double p, double i, double d) throws IOException {
+    };
 
-        write(
-            "TEC:PID %f,%f,%f",
-            Math.min(10.0, Math.max(0, p)),
-            Math.min(10.0, Math.max(0, i)),
-            Math.min(10.0, Math.max(0, d))
-        );
+    private final Loop LOOP = new ZonedLoop() {
 
-        write("TEC:GAIN PID");
+        private double rampRate = 0.0;
+        private boolean ramping = false;
 
-    }
+        @Override
+        public void setSetPoint(double temperature) throws IOException, DeviceException {
+            write("TEC:T %f", temperature - 273.15);
+            updatePID(temperature);
+        }
 
-    @Override
-    public void useAutoPID(boolean flag) throws IOException, DeviceException {
-        autoPID = flag;
-        updateAutoPID();
-    }
+        @Override
+        public double getSetPoint() throws IOException {
+            return queryDouble("TEC:SET:T?") + 273.15;
+        }
 
-    @Override
-    public boolean isUsingAutoPID() {
-        return autoPID;
-    }
+        @Override
+        public String getName() {
+            return "PID Loop";
+        }
 
-    @Override
-    public List<Zone> getAutoPIDZones() {
-        return Arrays.asList(zones);
-    }
+        @Override
+        public void setRampEnabled(boolean flag) throws IOException, DeviceException {
+            ramping = flag;
+            setRampRate(rampRate);
+        }
 
-    @Override
-    public void setAutoPIDZones(Zone... zones) throws IOException, DeviceException {
-        this.zones = zones;
-        updateAutoPID();
-    }
+        @Override
+        public boolean isRampEnabled() {
+            return ramping;
+        }
 
-    @Override
-    public double getDValue() throws IOException {
-        return Double.parseDouble(query("TEC:PID?").split(",")[2]);
-    }
+        @Override
+        public void setRampRate(double limit) throws IOException {
 
-    @Override
-    public void setDValue(double value) throws IOException {
-        setPIDValues(getPValue(), getIValue(), value);
-    }
+            rampRate = limit;
 
-    @Override
-    public double getHeaterRange() {
-        return 100.0;
-    }
+            if (ramping) {
+                write("TEC:TRATE %f", Math.min(100.0, Math.max(0, rampRate)));
+            }
 
-    @Override
-    public void setHeaterRange(double rangePCT) {
+        }
 
-    }
+        @Override
+        public double getRampRate() {
+            return rampRate;
+        }
 
-    public void setSensorType(SensorType type) throws IOException {
-        write("TEC:SEN %d", type.ordinal());
-    }
+        @Override
+        public double getPValue() throws IOException {
+            return Double.parseDouble(query("TEC:PID?").split(",")[0]);
+        }
 
-    public SensorType getSensorType() throws IOException {
-        int ordinal = queryInt("TEC:SEN?");
-        return SensorType.values()[ordinal];
-    }
+        @Override
+        public double getIValue() throws IOException {
+            return Double.parseDouble(query("TEC:PID?").split(",")[1]);
+        }
 
-    public List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+        @Override
+        public double getDValue() throws IOException {
+            return Double.parseDouble(query("TEC:PID?").split(",")[2]);
+        }
 
-        List<Parameter<?>> defaultList = TC.super.getConfigurationParameters(target);
-        defaultList.add(new Parameter<>("Sensor Type", SensorType.DISABLED, this::setSensorType, SensorType.values()));
-        return defaultList;
+        public void setPIDValues(double p, double i, double d) throws IOException {
 
-    }
+            write(
+                "TEC:PID %f,%f,%f",
+                Math.min(10.0, Math.max(0, p)),
+                Math.min(10.0, Math.max(0, i)),
+                Math.min(10.0, Math.max(0, d))
+            );
+
+            write("TEC:GAIN PID");
+
+        }
+
+        @Override
+        public void setPValue(double value) throws IOException {
+            double[] values = Arrays.stream(query("TEC:PID?").split(",")).mapToDouble(Double::parseDouble).toArray();
+            values[0] = value;
+            setPIDValues(values[0], values[1], values[2]);
+        }
+
+        @Override
+        public void setIValue(double value) throws IOException {
+            double[] values = Arrays.stream(query("TEC:PID?").split(",")).mapToDouble(Double::parseDouble).toArray();
+            values[1] = value;
+            setPIDValues(values[0], values[1], values[2]);
+        }
+
+        @Override
+        public void setDValue(double value) throws IOException {
+            double[] values = Arrays.stream(query("TEC:PID?").split(",")).mapToDouble(Double::parseDouble).toArray();
+            values[2] = value;
+            setPIDValues(values[0], values[1], values[2]);
+        }
+
+        @Override
+        public TMeter getInput() {
+            return THERMOMETER;
+        }
+
+        @Override
+        public Heater getOutput() {
+            return HEATER;
+        }
+
+        @Override
+        public void setInput(Input input) throws DeviceException {
+
+            if (input != THERMOMETER) {
+                throw new DeviceException("You cannot use that input for this loop");
+            }
+
+        }
+
+        @Override
+        public void setOutput(Output output) throws DeviceException {
+
+            if (output != HEATER) {
+                throw new DeviceException("You cannot use that output for this loop");
+            }
+
+        }
+
+        @Override
+        public List<Heater> getAvailableOutputs() {
+            return List.of(HEATER);
+        }
+
+        @Override
+        public List<TMeter> getAvailableInputs() {
+            return List.of(THERMOMETER);
+        }
+
+        @Override
+        public void setManualValue(double value) {
+            // Cannot set manual value other than "off"
+        }
+
+        @Override
+        public double getManualValue() {
+            return 0.0;
+        }
+
+        @Override
+        public void setPIDEnabled(boolean flag) throws IOException {
+            write("TEC:OUT %d", flag ? 1 : 0);
+        }
+
+        @Override
+        public boolean isPIDEnabled() throws IOException {
+            return queryInt("TEC:OUT?") == 1;
+        }
+
+        @Override
+        public String getIDN() throws IOException {
+            return ArroyoTEC.this.getIDN();
+        }
+
+        @Override
+        public Address getAddress() {
+            return ArroyoTEC.this.getAddress();
+        }
+
+        public void setSensorType(SensorType type) throws IOException {
+            write("TEC:SEN %d", type.ordinal());
+        }
+
+        public SensorType getSensorType() throws IOException {
+            int ordinal = queryInt("TEC:SEN?");
+            return SensorType.values()[ordinal];
+        }
+
+        public List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+
+            List<Parameter<?>> defaultList = super.getConfigurationParameters(target);
+            defaultList.add(new Parameter<>("Sensor Type", SensorType.DISABLED, this::setSensorType, SensorType.values()));
+            return defaultList;
+
+        }
+
+    };
 
     public enum SensorType {
         DISABLED,

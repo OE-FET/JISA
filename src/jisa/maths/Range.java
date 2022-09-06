@@ -52,8 +52,8 @@ public class Range<T extends Number> implements Iterable<T> {
         BigDecimal stopV       = BigDecimal.valueOf(stop.doubleValue());
         BigDecimal denominator = BigDecimal.valueOf(numSteps - 1);
 
-        BigDecimal[] values = new BigDecimal[numSteps];
-        BigDecimal   step   = stopV.subtract(startV, CONTEXT).divide(denominator, CONTEXT);
+        BigDecimal[] values  = new BigDecimal[numSteps];
+        BigDecimal   step    = stopV.subtract(startV, CONTEXT).divide(denominator, CONTEXT);
         values[0]            = startV;
         values[numSteps - 1] = stopV;
 

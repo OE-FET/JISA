@@ -1,286 +1,261 @@
 package jisa.devices.interfaces;
 
-import jisa.control.Synch;
 import jisa.devices.DeviceException;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Abstract class to define the standard functionality of temperature controllers
  */
-public interface TC extends PID, TMeter {
+public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSensor<TMeter> {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Temperature Controller";
     }
 
+    interface TMeter extends Input, jisa.devices.interfaces.TMeter {
 
-    @Override
-    default String getInputName() throws IOException, DeviceException {
-        return "Temperature";
+        default double getValue() throws IOException, DeviceException {
+            return getTemperature();
+        }
+
+        default void setRange(double range) throws IOException, DeviceException {
+            setTemperatureRange(range);
+        }
+
+        @Override
+        default String getSensorName() {
+            return Input.super.getSensorName();
+        }
+
+        default double getRange() throws IOException, DeviceException {
+            return getTemperatureRange();
+        }
+
+        default String getValueName() {
+            return "Temperature";
+        }
+
+        default String getUnits() {
+            return "K";
+        }
+
     }
 
-    @Override
-    default String getInputUnits() throws IOException, DeviceException {
-        return "K";
+    interface Heater extends Output {
+
+        default String getValueName() {
+            return "Power";
+        }
+
+        default String getUnits() {
+            return "%";
+        }
+
+        default double getPower() throws IOException, DeviceException {
+            return getValue();
+        }
+
     }
 
-    @Override
-    default double getSetPoint() throws IOException, DeviceException {
-        return getTargetTemperature();
+    interface Loop extends PID.Loop, Channel<Loop> {
+
+        default Class<Loop> getChannelClass() {
+            return Loop.class;
+        }
+
+        default String getChannelName() {
+
+            try {
+                return getName();
+            } catch (Exception e) {
+                return "Unknown Loop";
+            }
+
+        }
+
+        void setSetPoint(double temperature) throws IOException, DeviceException;
+
+        default void setTemperature(double temperature) throws IOException, DeviceException {
+            setSetPoint(temperature);
+        }
+
+        double getSetPoint() throws IOException, DeviceException;
+
+        default double getTemperature() throws IOException, DeviceException {
+            return getInput().getValue();
+        }
+
+        default void waitForStableTemperature(double target, double pct, long msec) {
+            waitForStableValue(target, pct, msec);
+        }
+
+        default List<TMeter> getAvailableThermometers() {
+
+            return getAvailableInputs().stream()
+                                       .filter(i -> i instanceof TMeter)
+                                       .map(i -> (TMeter) i)
+                                       .collect(Collectors.toUnmodifiableList());
+
+        }
+
+        default List<Heater> getAvailableHeaters() {
+
+            return getAvailableOutputs().stream()
+                                       .filter(i -> i instanceof Heater)
+                                       .map(i -> (Heater) i)
+                                       .collect(Collectors.toUnmodifiableList());
+
+        }
+
     }
 
-    @Override
-    default void setSetPoint(double value) throws IOException, DeviceException {
-        setTargetTemperature(value);
+    List<? extends Loop> getLoops() throws IOException, DeviceException;
+
+    default Loop getLoop(int index) throws IOException, DeviceException {
+        return getLoops().get(index);
     }
 
-    @Override
-    default double getInputValue() throws IOException, DeviceException {
-        return getTemperature();
+    abstract class ZonedLoop extends PID.ZonedLoop implements Loop {
+
     }
 
-    @Override
-    default double getOutputValue() throws IOException, DeviceException {
-        return getHeaterPower();
+    default List<? extends TMeter> getThermometers() throws IOException, DeviceException {
+
+        return getInputs().stream()
+                          .filter(i -> i instanceof TMeter)
+                          .map(i -> (TMeter) i)
+                          .collect(Collectors.toList());
+
     }
 
-    @Override
-    default void setOutputValue(double value) throws IOException, DeviceException {
-        setHeaterPower(value);
+    default List<? extends Heater> getHeaters() throws IOException, DeviceException {
+
+        return getInputs().stream()
+                          .filter(i -> i instanceof Heater)
+                          .map(i -> (Heater) i)
+                          .collect(Collectors.toList());
+
     }
 
-    @Override
-    default double getOutputRange() throws IOException, DeviceException {
-        return getHeaterRange();
-    }
+    default List<Class<? extends Instrument>> getMultiTypes() {
 
-    @Override
-    default void setOutputRange(double range) throws IOException, DeviceException {
-        setHeaterRange(range);
-    }
-
-    @Override
-    default void useAutoOutput() throws IOException, DeviceException {
-        useAutoHeater();
-    }
-
-    @Override
-    default boolean isUsingAutoOutput() throws IOException, DeviceException {
-        return isUsingAutoHeater();
-    }
-
-    /**
-     * Returns the temperature measured by the controller.
-     *
-     * @return Temperature, in Kelvin
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    double getTemperature() throws IOException, DeviceException;
-
-    default void setTemperature(double temperature) throws IOException, DeviceException {
-        setTargetTemperature(temperature);
-    }
-
-    /**
-     * Returns the target temperature set on the controller.
-     *
-     * @return Target temperature, in Kelvin
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    double getTargetTemperature() throws IOException, DeviceException;
-
-    /**
-     * Sets the target temperature of the temperature controller.
-     *
-     * @param temperature Target temperature, in Kelvin
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setTargetTemperature(double temperature) throws IOException, DeviceException;
-
-    /**
-     * Returns the maximum rate at which the temperature controller is set to allow temperature to change.
-     *
-     * @return Maximum rate, in Kelvin per minute
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    double getTemperatureRampRate() throws IOException, DeviceException;
-
-    /**
-     * Sets the maximum rate at which the temperature controller allows temperature to change.
-     *
-     * @param kPerMin Maximum rate, in Kelvin per minute
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setTemperatureRampRate(double kPerMin) throws IOException, DeviceException;
-
-    /**
-     * Returns the heater output power percentage.
-     *
-     * @return Heater power, percentage of max
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    double getHeaterPower() throws IOException, DeviceException;
-
-    /**
-     * Sets the heater to be operated manually with the specified power output percentage
-     *
-     * @param powerPCT Output power (percentage of max)
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setHeaterPower(double powerPCT) throws IOException, DeviceException;
-
-    /**
-     * Returns the gas flow in whatever units the controller uses
-     *
-     * @return Gas flow (arbitrary units)
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    double getFlow() throws IOException, DeviceException;
-
-    /**
-     * Sets the gas flow to be controlled manually with the specified output
-     *
-     * @param outputPCT Output
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setFlow(double outputPCT) throws IOException, DeviceException;
-
-    /**
-     * Sets the heater to be operated automatically
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    void useAutoHeater() throws IOException, DeviceException;
-
-    /**
-     * Returns whether the heater is currently operating automatically or manually
-     *
-     * @return Automatic?
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    boolean isUsingAutoHeater() throws IOException, DeviceException;
-
-    /**
-     * Sets the gas flow to be controlled automatically
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    void useAutoFlow() throws IOException, DeviceException;
-
-    /**
-     * Returns whether the gas flow is currently controlled automatically or manually
-     *
-     * @return Automatic?
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    boolean isUsingAutoFlow() throws IOException, DeviceException;
-
-    double getHeaterRange() throws IOException, DeviceException;
-
-    void setHeaterRange(double rangePCT) throws IOException, DeviceException;
-
-    default TMeter asThermometer() {
-        return this;
-    }
-
-    /**
-     * Halts the current thread until the temperature has stabilised to the specified value within the given percentage
-     * margin for at least the given amount of time.
-     *
-     * @param temperature Target temperature, in Kelvin
-     * @param pctMargin   Percentage margin
-     * @param time        Amount of time to be considered stable, in milliseconds
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default void waitForStableTemperature(double temperature, double pctMargin, long time) throws IOException, DeviceException, InterruptedException {
-
-        Synch.waitForStableTarget(
-            this::getTemperature,
-            temperature,
-            pctMargin,
-            1000,
-            time
+        return List.of(
+            PID.Loop.class,
+            jisa.devices.interfaces.TMeter.class
         );
 
     }
 
-    default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) throws IOException, DeviceException {
 
-        LinkedList<Parameter<?>> parameters = new LinkedList<>();
-
-        if (TC.class.isAssignableFrom(target)) {
-
-            parameters.add(new Parameter<>(
-                "PID Settings",
-                new TableQuantity(new String[]{"Min T [K]", "Max T [K]", "P", "I", "D", "Heater Range [%]"}, List.of(
-                    List.of(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0)
-                )),
-                q -> {
-
-                    List<List<Double>> values = q.getValue();
-
-                    if (values.size() == 0) {
-                        values.add(List.of(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0));
-                    }
-
-                    if (values.size() < 2) {
-
-                        useAutoPID(false);
-                        setPIDValues(values.get(0).get(2), values.get(0).get(3), values.get(0).get(4));
-                        setHeaterRange(values.get(0).get(5));
-
-                    } else {
-
-                        PID.Zone[] zones = values
-                            .stream().map(r -> new PID.Zone(r.get(0), r.get(1), r.get(2), r.get(3), r.get(4), r.get(5)))
-                            .toArray(PID.Zone[]::new);
-
-                        setAutoPIDZones(zones);
-                        useAutoPID(true);
-
-                    }
-
-                }
-
-            ));
-
-            parameters.add(new Parameter<>("Ramp Rate [K/min]", 0.0, this::setTemperatureRampRate));
-
+        if (jisa.devices.interfaces.TMeter.class.isAssignableFrom(type)) {
+            return getThermometers().stream().map(i -> (I) i).collect(Collectors.toUnmodifiableList());
+        } else if (Loop.class.isAssignableFrom(type)) {
+            return getLoops().stream().map(i -> (I) i).collect(Collectors.toUnmodifiableList());
+        } else {
+            return Collections.emptyList();
         }
 
-        parameters.addAll(TMeter.super.getConfigurationParameters(target));
+    }
 
-        return parameters;
+    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) throws IOException, DeviceException {
 
+        try {
+            return getSubInstruments(type).get(index);
+        } catch (IndexOutOfBoundsException e) {
+            throw new DeviceException("No \"%s\" with index %d found.", type.getSimpleName(), index);
+        }
+
+    }
+
+    @Override
+    default int getNumChannels() {
+
+        try {
+            return getLoops().size();
+        } catch (IOException | DeviceException e) {
+            return 0;
+        }
+
+    }
+
+    @Override
+    default String getChannelName(int channelNumber) {
+
+        try {
+            return getLoop(channelNumber).getChannelName();
+        } catch (IOException | DeviceException e) {
+            return "Unknown Loop";
+        }
+
+    }
+
+    @Override
+    default List<Loop> getChannels() {
+
+        try {
+            return (List<Loop>) getLoops();
+        } catch (IOException | DeviceException e) {
+            return Collections.emptyList();
+        }
+
+    }
+
+    @Override
+    default Loop getChannel(int channelNumber) throws IOException, DeviceException {
+        return getLoop(channelNumber);
+    }
+
+    @Override
+    default Class<Loop> getChannelClass() {
+        return Loop.class;
+    }
+
+    @Override
+    default int getNumSensors() {
+
+        try {
+            return getThermometers().size();
+        } catch (Exception e) {
+            return 0;
+        }
+
+    }
+
+    @Override
+    default String getSensorName(int sensorNumber) {
+
+        try {
+            return getThermometers().get(0).getName();
+        } catch (Exception e) {
+            return "Name Unknown";
+        }
+
+    }
+
+    @Override
+    default List<jisa.devices.interfaces.TMeter> getSensors() {
+
+        try {
+            return getThermometers().stream().map(t -> (jisa.devices.interfaces.TMeter) t).collect(Collectors.toUnmodifiableList());
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
+
+    }
+
+    @Override
+    default jisa.devices.interfaces.TMeter getSensor(int sensorNumber) throws IOException, DeviceException {
+        return getSensors().get(sensorNumber);
+    }
+
+    @Override
+    default Class<jisa.devices.interfaces.TMeter> getSensorClass() {
+        return jisa.devices.interfaces.TMeter.class;
     }
 
 }

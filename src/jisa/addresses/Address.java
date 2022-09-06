@@ -107,15 +107,15 @@ public interface Address {
 
     default USBAddress toUSBAddress() {
 
-        Pattern pattern = Pattern.compile("USB([0-9]*?)::(.*?)::(.*?)::(.*?)(?:::([0-9]+))?::INSTR");
+        Pattern pattern = Pattern.compile("USB([0-9]*?)::(.*?)::(.*?)(?:::(.*?))?(?:::([0-9]+))?::INSTR");
         Matcher matcher = pattern.matcher(toString().trim());
 
         if (matcher.matches()) {
-            int    board   = matcher.group(1).equals("") ? -1 : Integer.parseInt(matcher.group(1));
+            int    board   = matcher.group(1).isBlank() ? -1 : Integer.parseInt(matcher.group(1));
             int    vendor  = Integer.decode(matcher.group(2));
             int    product = Integer.decode(matcher.group(3));
-            String serial  = matcher.group(4);
-            int    intfce  = matcher.groupCount() <= 5 ? -1 : Integer.parseInt(matcher.group(5));
+            String serial  = (matcher.group(4) == null || matcher.group(4).isBlank()) ? null : matcher.group(4);
+            int    intfce  = (matcher.group(5) == null || matcher.group(5).isBlank()) ? -1 : Integer.parseInt(matcher.group(5));
             return new USBAddress(board, vendor, product, serial, intfce);
         } else {
             return null;

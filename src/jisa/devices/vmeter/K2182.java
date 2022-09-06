@@ -7,7 +7,7 @@ import jisa.devices.interfaces.VMeter;
 import jisa.enums.AMode;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
-import jisa.visa.Driver;
+import jisa.visa.drivers.Driver;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;

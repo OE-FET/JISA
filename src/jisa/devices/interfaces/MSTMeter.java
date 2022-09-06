@@ -1,8 +1,8 @@
 package jisa.devices.interfaces;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.control.Synch;
-import jisa.Util;
 import jisa.devices.DeviceException;
 
 import java.io.IOException;

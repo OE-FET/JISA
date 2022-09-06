@@ -33,18 +33,20 @@ public class JavaFX {
 
         int RETRY_COUNT = 10;
         int count = 0;
-        while(true)
-        {
-            try
-            {
+        while(true) {
+
+            try {
+
                 Util.sleep((100L * count));
                 Platform.runLater(semaphore::release);
                 break;
-            }
-            catch (IllegalStateException e)
-            {
+
+            } catch (IllegalStateException e) {
+
                 if(++count == RETRY_COUNT) throw e;
+
             }
+
         }
 
         try {

@@ -9,11 +9,12 @@ import jisa.visa.VISADevice;
 
 import java.io.IOException;
 
-import static jisa.devices.smu.Agilent415XX.AgilentRange.AUTO_RANGING;
 import static jisa.devices.interfaces.SMU.OffMode.HIGH_IMPEDANCE;
 import static jisa.devices.interfaces.SMU.OffMode.ZERO;
-import static jisa.enums.AMode.*;
-import static jisa.enums.Source.*;
+import static jisa.devices.smu.Agilent415XX.AgilentRange.AUTO_RANGING;
+import static jisa.enums.AMode.NONE;
+import static jisa.enums.Source.CURRENT;
+import static jisa.enums.Source.VOLTAGE;
 
 public abstract class Agilent415XX extends VISADevice implements SPA {
 

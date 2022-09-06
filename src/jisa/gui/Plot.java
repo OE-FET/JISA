@@ -1,29 +1,22 @@
 package jisa.gui;
 
-import de.gsi.chart.Chart;
-import de.gsi.chart.XYChart;
-import de.gsi.chart.axes.Axis;
-import de.gsi.chart.axes.spi.DefaultNumericAxis;
 import de.gsi.chart.axes.spi.TickMark;
 import de.gsi.chart.axes.spi.format.DefaultTimeFormatter;
-import de.gsi.chart.plugins.Zoomer;
-import de.gsi.chart.ui.geometry.Side;
 import de.gsi.dataset.DataSet;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.image.WritableImage;
-import javafx.scene.layout.*;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
-import javafx.util.StringConverter;
 import jisa.Util;
 import jisa.gui.plotting.*;
 import jisa.gui.svg.*;
 import jisa.maths.fits.Fit;
 import jisa.maths.functions.Function;
+import jisa.results.Column;
+import jisa.results.ResultTable;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -31,9 +24,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,9 +43,10 @@ public class Plot extends JFXElement implements Element, Clearable {
     private       JISAXYChart                     chart;
     private       JISAAxis                        xAxis;
     private       JISAAxis                        yAxis;
-    private final ObservableList<Series>          series    = FXCollections.observableArrayList();
-    private final Map<Series, ListChangeListener> listeners = new HashMap<>();
-    private final JISAZoomer                      zoomer    = new JISAZoomer();
+    private final ObservableList<Series>          series         = FXCollections.observableArrayList();
+    private final Map<Series, ListChangeListener> listeners      = new HashMap<>();
+    private final JISAZoomer                      zoomer         = new JISAZoomer();
+    private final List<ClickListener>             clickListeners = new LinkedList<>();
 
     public Plot(String title, String xLabel, String xUnits, String yLabel, String yUnits) {
 
@@ -120,6 +112,15 @@ public class Plot extends JFXElement implements Element, Clearable {
 
         }));
 
+        chart.getCanvas().setOnMouseClicked(event -> {
+
+            double x = xAxis.getValueForDisplay(event.getX());
+            double y = yAxis.getValueForDisplay(event.getY());
+
+            Util.runAsync(() -> clickListeners.forEach(l -> l.runRegardless(event, x, y)));
+
+        });
+
 
     }
 
@@ -131,6 +132,35 @@ public class Plot extends JFXElement implements Element, Clearable {
         this(title, "", "", "", "");
         setXLabel(xLabel);
         setYLabel(yLabel);
+    }
+
+    public Plot(String title) {
+        this(title, "", "", "", "");
+    }
+
+    public Plot() {
+        this("", "", "", "", "");
+    }
+
+    public Plot(String title, ResultTable table) {
+
+        this(title);
+
+        Column<? extends Number> xAxis = null;
+        for (int i = 0; i < table.getColumnCount(); i++) {
+
+            if (Number.class.isAssignableFrom(table.getColumn(i).getType())) {
+
+                if (xAxis == null) {
+                    xAxis = (Column<? extends Number>) table.getColumn(i);
+                } else {
+                    createSeries().watch(table, xAxis, (Column<? extends Number>) table.getColumn(i));
+                }
+
+            }
+
+        }
+
     }
 
     public void updateLegend() {
@@ -150,8 +180,12 @@ public class Plot extends JFXElement implements Element, Clearable {
     }
 
     public void setXLabel(String name, String units) {
-        xAxis.setName(name);
-        xAxis.setUnit(units);
+
+        GUI.runNow(() -> {
+            xAxis.setName(name);
+            xAxis.setUnit(units);
+        });
+
     }
 
     public void setXLabel(String name) {
@@ -167,11 +201,16 @@ public class Plot extends JFXElement implements Element, Clearable {
     }
 
     public void setXUnit(String unit) {
-        xAxis.setUnit(unit);
+        GUI.runNow(() -> xAxis.setUnit(unit));
     }
 
     public void setYUnit(String unit) {
-        yAxis.setUnit(unit);
+        GUI.runNow(() -> yAxis.setUnit(unit));
+    }
+
+    public void setTitle(String title) {
+        super.setTitle(title);
+        GUI.runNow(() -> chart.setTitle(title));
     }
 
     public String getXUnit() {
@@ -191,8 +230,12 @@ public class Plot extends JFXElement implements Element, Clearable {
     }
 
     public void setYLabel(String name, String units) {
-        yAxis.setName(name);
-        yAxis.setUnit(units);
+
+        GUI.runNow(() -> {
+            yAxis.setName(name);
+            yAxis.setUnit(units);
+        });
+
     }
 
     public void setYLabel(String name) {
@@ -573,7 +616,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
-    public void saveSVG(String fileName, double width, double height) throws IOException {
+    public SVG getSVG(double width, double height) {
 
         SVGElement main = new SVGElement("g");
 
@@ -616,7 +659,7 @@ public class Plot extends JFXElement implements Element, Clearable {
         main.add(title);
 
         List<TickMark> xTicks = this.xAxis.getTickMarks();
-        List<TickMark>   yTicks = this.yAxis.getTickMarks();
+        List<TickMark> yTicks = this.yAxis.getTickMarks();
 
         double xScale = (aEndX - aStartX) / this.xAxis.getWidth();
         double yScale = (aEndY - aStartY) / this.yAxis.getHeight();
@@ -724,7 +767,7 @@ public class Plot extends JFXElement implements Element, Clearable {
             List<String> terms = new LinkedList<>();
 
             SVGElement legendCircle = makeMarker(s.isMarkerVisible() ? p : Series.Shape.DASH, c, legendX + 15.0, legendY + (25 * i) + 15.0, 5.0);
-            SVGText legendText      = new SVGText(
+            SVGText legendText = new SVGText(
                 legendX + 15.0 + 5 + 3 + 10,
                 legendY + (25 * i) + 15.0 + 5,
                 "beginning",
@@ -758,12 +801,12 @@ public class Plot extends JFXElement implements Element, Clearable {
 
                 if (s.isMarkerVisible()) {
 
-                    if (s.getErrorPositive(DIM_Y, j) != s.getErrorNegative(DIM_Y, j)) {
+                    if (s.getErrorPositive(DIM_Y, j) + s.getErrorNegative(DIM_Y, j) > 0) {
 
-                        double yp    = aEndY - yScale * this.yAxis.getDisplayPosition(s.get(DIM_Y, j) + s.getErrorPositive(DIM_Y, j));
-                        double yn    = aEndY - yScale * this.yAxis.getDisplayPosition(s.get(DIM_Y, j) - s.getErrorPositive(DIM_Y, j));
-                        double xn    = x - 5;
-                        double xp    = x + 5;
+                        double yp = aEndY - yScale * this.yAxis.getDisplayPosition(s.get(DIM_Y, j) + s.getErrorPositive(DIM_Y, j));
+                        double yn = aEndY - yScale * this.yAxis.getDisplayPosition(s.get(DIM_Y, j) - s.getErrorNegative(DIM_Y, j));
+                        double xn = x - 5;
+                        double xp = x + 5;
 
                         String  erPath   = String.format("M%s %s L%s %s M%s %s L%s %s M%s %s L%s %s", xn, yp, xp, yp, x, yp, x, yn, xn, yn, xp, yn);
                         SVGPath errorBar = new SVGPath(erPath);
@@ -833,12 +876,21 @@ public class Plot extends JFXElement implements Element, Clearable {
         SVG svg = new SVG(width + legendW + 50.0 + 100.0, height + 60.0 + 100.0);
         svg.add(main);
 
-        svg.output(fileName);
-
+        return svg;
 
     }
 
+    public void saveSVG(String fileName, double width, double height) throws IOException {
+        getSVG(width, height).output(fileName);
+    }
 
+    public void outputSVG(PrintStream stream, double width, double height) {
+        getSVG(width, height).output(stream);
+    }
+
+    public void outputSVG(double width, double height) {
+        getSVG(width, height).output(System.out);
+    }
 
     private SVGElement makeMarker(Series.Shape p, Color c, double x, double y, double m) {
 
@@ -1013,10 +1065,29 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
+    public ClickListener addClickListener(ClickListener listener) {
+        clickListeners.add(listener);
+        return listener;
+    }
+
+    public void removeClickListener(ClickListener listener) {
+        clickListeners.remove(listener);
+    }
+
     public enum AxisType {
         LINEAR,
         LOGARITHMIC,
         TIME
+    }
+
+    public interface ClickListener {
+
+        void clicked(MouseEvent event, double x, double y) throws Exception;
+
+        default void runRegardless(MouseEvent event, double x, double y) {
+            Util.runRegardless(() -> clicked(event, x, y));
+        }
+
     }
 
 }

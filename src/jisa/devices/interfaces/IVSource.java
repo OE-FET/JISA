@@ -1,6 +1,7 @@
 package jisa.devices.interfaces;
 
 import jisa.devices.DeviceException;
+
 import java.io.IOException;
 
 public interface IVSource extends ISource, VSource {

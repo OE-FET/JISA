@@ -1,25 +1,20 @@
 package jisa.gui;
 
-import de.gsi.chart.renderer.Renderer;
 import de.gsi.dataset.DataSet;
 import javafx.collections.ObservableList;
-import javafx.scene.chart.XYChart;
 import javafx.scene.paint.Color;
 import jisa.Util;
 import jisa.gui.plotting.JISAMarker;
-import jisa.maths.matrices.Matrix;
 import jisa.maths.fits.Fit;
 import jisa.maths.fits.Fitting;
+import jisa.maths.matrices.Matrix;
 import jisa.results.Column;
 import jisa.results.ResultTable;
 import jisa.results.Row;
 import jisa.results.RowEvaluable;
-import org.python.antlr.ast.Num;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -88,6 +83,17 @@ public interface Series {
     default Series watch(ResultTable table, Column<? extends Number> xData, Column<? extends Number> yData) {
         return watch(table, r -> r.get(xData), r -> r.get(yData), r -> 0);
     }
+
+    /**
+     * Instructs the Series to only plot the last N points added to it. A value of 0 indicates no limit.
+     *
+     * @param count The maximum number of plots to point.
+     *
+     * @return Self-reference
+     */
+    Series setLimit(int count);
+
+    int getLimit();
 
     // == Split ========================================================================================================
 
@@ -168,6 +174,10 @@ public interface Series {
 
     Series addPoint(double x, double y, double errorX, double errorY);
 
+    Series removePoint(int index);
+
+    Series removePoints(int from, int to);
+
     default Series addPoint(double x, double y, double errorY) {
         return addPoint(x, y, 0.0, errorY);
     }
@@ -221,20 +231,35 @@ public interface Series {
 
     default Series addPoints(Matrix<Double> data) {
 
-        if (data.cols() == 2) {
+        switch (data.cols()) {
 
-            for (int i = 0; i < data.rows(); i++) {
-                addPoint(data.get(i, 0), data.get(i, 1));
-            }
+            case 2:
 
-        } else if (data.cols() == 3) {
+                for (int i = 0; i < data.rows(); i++) {
+                    addPoint(data.get(i, 0), data.get(i, 1));
+                }
 
-            for (int i = 0; i < data.rows(); i++) {
-                addPoint(data.get(i, 0), data.get(i, 1), data.get(i, 2));
-            }
+                break;
 
-        } else {
-            throw new IllegalArgumentException("Matrix must be nx2 or nx3!");
+            case 3:
+
+                for (int i = 0; i < data.rows(); i++) {
+                    addPoint(data.get(i, 0), data.get(i, 1), data.get(i, 2));
+                }
+
+                break;
+
+            case 4:
+
+                for (int i = 0; i < data.rows(); i++) {
+                    addPoint(data.get(i, 0), data.get(i, 1), data.get(i, 2), data.get(i, 3));
+                }
+
+                break;
+
+            default:
+                throw new IllegalArgumentException("Matrix must be nx2, nx3, or nx4!");
+
         }
 
         return this;
@@ -568,7 +593,7 @@ public interface Series {
         DOT_DASH(1.0, 5.0, 5.0, 5.0),
         LONG_DASH(40.0, 5.0);
 
-        private Double[] array;
+        private final Double[] array;
 
         Dash(Double... array) {
             this.array = array;

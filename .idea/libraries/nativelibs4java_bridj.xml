@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="nativelibs4java.bridj" type="repository">
+    <properties maven-id="com.nativelibs4java:bridj:0.7.0" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/bridj-0.7.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dx-1.7.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

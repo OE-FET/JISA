@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Abstract class to define the standard functionality of lock-in amplifiers
  */
-public interface LockIn extends Instrument {
+public interface LockIn extends Instrument, FMeter {
 
     public static String getDescription() {
         return "Lock-In Amplifier";

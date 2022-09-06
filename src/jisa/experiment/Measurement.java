@@ -1,7 +1,6 @@
 package jisa.experiment;
 
 import jisa.control.ConfigBlock;
-import jisa.control.Returnable;
 import jisa.devices.Configuration;
 import jisa.devices.interfaces.Instrument;
 import jisa.experiment.queue.Action;
@@ -267,11 +266,11 @@ public abstract class Measurement {
 
     public abstract class Parameter<T> {
 
-        private final String   section;
-        private final String   name;
-        private final String   units;
-        private       T        value;
-        private       Field<T> field = null;
+        private final     String   section;
+        private final     String   name;
+        private final     String   units;
+        private             T      value;
+        private transient Field<T> field = null;
 
         public Parameter(String section, String name, String units, T defaultValue) {
 
@@ -414,6 +413,19 @@ public abstract class Measurement {
 
     }
 
+    public class DecimalParameter extends Parameter<Double> {
+
+        public DecimalParameter(String section, String name, String units, Double defaultValue) {
+            super(section, name, units, defaultValue);
+        }
+
+        @Override
+        protected Field<Double> makeField(Fields fields) {
+            return fields.addDecimalField(getTitle(), getValue());
+        }
+
+    }
+
     public class IntegerParameter extends Parameter<Integer> {
 
         public IntegerParameter(String section, String name, String units, Integer defaultValue) {
@@ -423,6 +435,19 @@ public abstract class Measurement {
         @Override
         protected Field<Integer> makeField(Fields fields) {
             return fields.addIntegerField(getTitle(), getValue());
+        }
+
+    }
+
+    public class TimeParameter extends Parameter<Integer> {
+
+        public TimeParameter(String section, String name, Integer defaultValue) {
+            super(section, name, null, defaultValue);
+        }
+
+        @Override
+        protected Field<Integer> makeField(Fields fields) {
+            return fields.addTimeField(getTitle(), getValue());
         }
 
     }

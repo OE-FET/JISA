@@ -7,12 +7,11 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import jisa.Util;
 import jisa.experiment.queue.Action;
@@ -30,10 +29,11 @@ public class ActionQueueDisplay extends JFXElement {
         GUI.touch();
     }
 
+    private final VBox               container  = new VBox();
     private final ScrollPane         scrollPane;
-    private final VBox               list     = new VBox();
+    private final VBox               list       = new VBox();
     private final ActionQueue        queue;
-    private final Set<ActionDisplay> selected = new HashSet<>();
+    private final Set<ActionDisplay> selected   = new HashSet<>();
 
     public ActionQueueDisplay(String title, ActionQueue queue) {
 
@@ -42,15 +42,16 @@ public class ActionQueueDisplay extends JFXElement {
         this.scrollPane = (ScrollPane) getNode().getCenter();
         list.setMaxWidth(Double.MAX_VALUE);
         list.setMaxHeight(Double.MAX_VALUE);
-        scrollPane.setMinWidth(500.0);
-        scrollPane.setMinHeight(300.0);
-        scrollPane.setContent(list);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        container.setMinWidth(500.0);
+        container.setMinHeight(300.0);
+        scrollPane.setContent(container);
         scrollPane.setFitToHeight(false);
         scrollPane.setFitToWidth(true);
         scrollPane.setBackground(Background.EMPTY);
         scrollPane.widthProperty().addListener(l -> ((Region) scrollPane.lookup(".viewport")).setBackground(Background.EMPTY));
         BorderPane.setMargin(scrollPane, Insets.EMPTY);
-        scrollPane.setPadding(new Insets(GUI.SPACING));
+        container.setPadding(new Insets(GUI.SPACING));
         list.setBackground(Background.EMPTY);
         this.queue = queue;
 
@@ -63,6 +64,69 @@ public class ActionQueueDisplay extends JFXElement {
         }));
 
         addActions(queue.getActions());
+
+        if (queue.getStartActions() != null) {
+
+            Label label = new Label("Queue Start Actions");
+            label.setPadding(new Insets(5, 0, 5, 0));
+            label.setMaxWidth(Double.MAX_VALUE);
+            VBox.setMargin(label, new Insets(0, 0, 15, 0));
+            label.setBorder(new Border(new BorderStroke(Color.SILVER, BorderStrokeStyle.SOLID, null, new BorderWidths(0, 0, 1, 0))));
+            container.getChildren().add(label);
+
+            ActionQueueDisplay list = new ActionQueueDisplay("Start Actions", queue.getStartActions());
+            list.list.setPadding(new Insets(0, 0, 15, 0));
+            VBox.setMargin(list.list, new Insets(0, 0, 15, 0));
+            list.list.setBorder(label.getBorder());
+            container.getChildren().add(list.list);
+
+            list.queue.addListener((a, b, c) -> {
+                boolean show = list.queue.getActions().size() > 0;
+                list.list.setVisible(show);
+                list.list.setManaged(show);
+                label.setVisible(show);
+                label.setManaged(show);
+            });
+
+            boolean show = list.queue.getActions().size() > 0;
+            list.list.setVisible(show);
+            list.list.setManaged(show);
+            label.setVisible(show);
+            label.setManaged(show);
+            VBox.setVgrow(list.list, Priority.NEVER);
+
+        }
+
+        container.getChildren().add(list);
+
+        if (queue.getStopActions() != null) {
+
+            Label label = new Label("Queue Stop Actions");
+            label.setPadding(new Insets(0, 0, 5, 0));
+            label.setMaxWidth(Double.MAX_VALUE);
+            VBox.setMargin(label, new Insets(15, 0, 15, 0));
+            label.setBorder(new Border(new BorderStroke(Color.SILVER, BorderStrokeStyle.SOLID, null, new BorderWidths(0, 0, 1, 0))));
+            container.getChildren().add(label);
+            ActionQueueDisplay list = new ActionQueueDisplay("Stop Actions", queue.getStopActions());
+            list.list.setPadding(new Insets(0, 0, 15, 0));
+            container.getChildren().add(list.list);
+
+            list.queue.addListener((a, b, c) -> {
+                boolean show = list.queue.getActions().size() > 0;
+                list.list.setVisible(show);
+                list.list.setManaged(show);
+                label.setVisible(show);
+                label.setManaged(show);
+            });
+
+            boolean show = list.queue.getActions().size() > 0;
+            list.list.setVisible(show);
+            list.list.setManaged(show);
+            label.setVisible(show);
+            label.setManaged(show);
+            VBox.setVgrow(list.list, Priority.NEVER);
+
+        }
 
     }
 
@@ -251,7 +315,7 @@ public class ActionQueueDisplay extends JFXElement {
 
         for (Node node : parent.getChildrenUnmodifiable()) {
             nodes.add(node);
-            if (node instanceof Parent) { addAllDescendents((Parent) node, nodes); }
+            if (node instanceof Parent) {addAllDescendents((Parent) node, nodes);}
         }
 
     }

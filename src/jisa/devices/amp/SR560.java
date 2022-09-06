@@ -5,8 +5,9 @@ import jisa.devices.interfaces.VPreAmp;
 import jisa.enums.Coupling;
 import jisa.enums.Filter;
 import jisa.enums.Input;
-import jisa.visa.Connection;
 import jisa.visa.VISADevice;
+import jisa.visa.connections.Connection;
+import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
 
@@ -26,6 +27,7 @@ public class SR560 extends VISADevice implements VPreAmp {
     private static final String TERMINATOR    = "\r\n";
 
     private enum FMode {
+
         BYPASS(0, 0.0, Filter.NONE),
         LP_06DB(1, 6.0, Filter.LOW_PASS),
         LP_12DB(2, 12.0, Filter.LOW_PASS),
@@ -33,9 +35,9 @@ public class SR560 extends VISADevice implements VPreAmp {
         HP_12DB(4, 12.0, Filter.HIGH_PASS),
         BP(5, 12.0, Filter.BAND_PASS);
 
-        private int    mode;
-        private double db;
-        private Filter fMode;
+        private final int    mode;
+        private final double db;
+        private final Filter fMode;
 
         static FMode fromParams(Filter mode, double db) {
 
@@ -97,8 +99,8 @@ public class SR560 extends VISADevice implements VPreAmp {
         G_20K(13, 20e3),
         G_50K(14, 50e3);
 
-        private int    mode;
-        private double gain;
+        private final int    mode;
+        private final double gain;
 
         public static Gain fromDouble(double gain) {
 
@@ -149,8 +151,8 @@ public class SR560 extends VISADevice implements VPreAmp {
         F_300K_HZ(14, 300e3),
         F_1M_HZ(15, 1e6);
 
-        private int    mode;
-        private double frequency;
+        private final int    mode;
+        private final double frequency;
 
         public static Freq fromDouble(double freq) {
 
@@ -193,7 +195,11 @@ public class SR560 extends VISADevice implements VPreAmp {
 
         super(address);
 
-        setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.TWO, Connection.Flow.NONE);
+        Connection connection = getConnection();
+
+        if (connection instanceof SerialConnection) {
+            ((SerialConnection) connection).setSerialParameters(9600, 8, SerialConnection.Parity.NONE, SerialConnection.Stop.BITS_20);
+        }
 
         setWriteTerminator(TERMINATOR);
 

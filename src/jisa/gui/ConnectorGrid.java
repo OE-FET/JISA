@@ -1,5 +1,6 @@
 package jisa.gui;
 
+import javafx.scene.image.Image;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.Connection;
@@ -12,16 +13,33 @@ import java.util.stream.Collectors;
 
 public class ConnectorGrid extends Grid {
 
-    private final List<Connector<?>> connectors = new LinkedList<>();
+    private final List<Connector<?>>                       connectors   = new LinkedList<>();
+    private final ListDisplay<Class<? extends Instrument>> typeSelector = new ListDisplay<>("Add Connection");
 
     public ConnectorGrid(String title, int numCols) {
 
         super(title, numCols);
         setGrowth(true, false);
 
-        MenuButton button = addToolbarMenuButton("Add...");
-        button.addItem("Driver Interface:", () -> {}).setDisabled(true);
-        button.addSeparator();
+        Button button = addToolbarButton("Add...", () -> {
+
+            if (typeSelector.showAsConfirmation()) {
+
+                String[] input = GUI.inputWindow("Add Connection", "Add Connection", "Please enter a name for the new connection.", "Name");
+
+                if (input != null) {
+
+                    String name = input[0];
+
+                    addConnector(name, typeSelector.getSelected().getObject());
+
+                }
+
+            }
+
+        });
+
+        Image image = Util.invertImage(new Image(GUI.class.getResource("images/connection.png").toString()));
 
         (new Reflections("jisa.devices"))
             .getSubTypesOf(Instrument.class).stream()
@@ -29,12 +47,17 @@ public class ConnectorGrid extends Grid {
             .sorted(Comparator.comparing(Class::getSimpleName))
             .forEach(c -> {
                 String name;
+                String subtitle;
                 try {
-                    name = String.format("%s (%s)", c.getMethod("getDescription").invoke(null), c.getSimpleName());
-                } catch (Exception e){
-                    name = c.getSimpleName();
+                    name     = (String) c.getMethod("getDescription").invoke(null);
+                    subtitle = c.getSimpleName();
+                } catch (Exception e) {
+                    name     = c.getSimpleName();
+                    subtitle = "No description found";
                 }
-                button.addItem(name, () -> addConnector(c));
+
+                typeSelector.add(c, name, subtitle, image);
+
             });
 
         addToolbarButton("Connect All", () -> {

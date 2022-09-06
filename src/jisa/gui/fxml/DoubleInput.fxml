@@ -4,7 +4,7 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 
-<HBox fx:id="box" alignment="CENTER" styleClass="double-input" stylesheets="@DoubleInput.css" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+<HBox fx:id="box" alignment="CENTER" styleClass="text-field" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
 
         <TextField fx:id="mantissa" style="-fx-background-color: transparent; -fx-padding: 5 0 5 7.5;" HBox.hgrow="ALWAYS" />
         <Label alignment="CENTER" maxWidth="-Infinity" minWidth="-Infinity" text="x10^" HBox.hgrow="NEVER" />
