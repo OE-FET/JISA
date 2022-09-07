@@ -228,13 +228,13 @@ public class USBTMCDriver implements Driver {
             for (byte i = 0; i < nConf; i++) {
 
                 ConfigDescriptor config = new ConfigDescriptor();
-                LibUsb.getConfigDescriptor(device, i, config);
+                if (LibUsb.getConfigDescriptor(device, i, config) == 0) //http://usb4java.org/apidocs/org/usb4java/LibUsb.html#getConfigDescriptor-org.usb4java.Device-byte-org.usb4java.ConfigDescriptor-
+                {
+                    if (Arrays.stream(config.iface()).flatMap(in -> Arrays.stream(in.altsetting())).anyMatch(USBTMCDriver::isTMC)) {
 
-                if (Arrays.stream(config.iface()).flatMap(in -> Arrays.stream(in.altsetting())).anyMatch(USBTMCDriver::isTMC)) {
-
-                    addresses.add(new USBAddress(descriptor.idVendor(), descriptor.idProduct()));
-                    break;
-
+                        addresses.add(new USBAddress(descriptor.idVendor(), descriptor.idProduct()));
+                        break;
+                    }
                 }
 
             }
