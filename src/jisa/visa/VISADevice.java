@@ -4,6 +4,8 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
+import jisa.visa.connections.Connection;
+import jisa.visa.drivers.Driver;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -51,8 +53,8 @@ public class VISADevice implements Instrument {
     }
 
     private final List<String> toRemove       = new LinkedList<>();
-    private       Connection   connection;
-    private       Address      address;
+    private final Connection   connection;
+    private final Address      address;
     private       String       terminator     = "";
     private       String       lastCommand    = null;
     private       String       lastRead       = null;
@@ -69,7 +71,7 @@ public class VISADevice implements Instrument {
     /**
      * Opens the device at the specified address
      *
-     * @param address Some form of InstrumentAddress (eg GPIBAddress, USBAddress etc)
+     * @param address    Some form of InstrumentAddress (eg GPIBAddress, USBAddress etc)
      * @param prefDriver Preferred driver to try first
      *
      * @throws IOException Upon communications error
@@ -77,7 +79,12 @@ public class VISADevice implements Instrument {
     public VISADevice(Address address, Class<? extends Driver> prefDriver) throws IOException {
 
         if (address == null) {
+
+            this.connection = null;
+            this.address    = null;
+
             return;
+
         }
 
         try {
@@ -89,6 +96,11 @@ public class VISADevice implements Instrument {
 
         // Keep a weak reference to this
         opened.add(new WeakReference<>(this));
+
+    }
+
+    public Connection getConnection() {
+        return connection;
     }
 
     public synchronized void clearBuffers() throws IOException {
@@ -142,89 +154,8 @@ public class VISADevice implements Instrument {
         readBufferSize = bytes;
     }
 
-    public synchronized void setSerialParameters(int baudRate, int dataBits, Connection.Parity parity, Connection.StopBits stopBits, Connection.Flow flowControl) throws IOException {
-
-        try {
-            connection.setSerial(baudRate, dataBits, parity, stopBits, flowControl);
-        } catch (VISAException e) {
-            throw new IOException(e.getMessage());
-        }
-
-    }
-
-    /**
-     * Should we send an EOI signal at the end of writing to the device? Generally, this should be true and is by default
-     * however older devices from more anarchic times (such as the 70s) may needs this disabling.
-     *
-     * @param flag Do we, don't we?
-     *
-     * @throws IOException Upon communications error
-     */
-    public synchronized void setEOI(boolean flag) throws IOException {
-
-        try {
-            connection.setEOI(flag);
-        } catch (VISAException e) {
-            throw new IOException(e.getMessage());
-        }
-
-    }
-
-    /**
-     * Sets which character we should expect to read from the device to indicate that it's done talking to us.
-     *
-     * @param character The character code
-     *
-     * @throws IOException Upon communications error
-     */
-    public synchronized void setReadTerminator(long character) throws IOException {
-
-        try {
-            connection.setReadTerminator(character);
-        } catch (VISAException e) {
-            throw new IOException(e.getMessage());
-        }
-
-    }
-
-    /**
-     * Sets which character we should expect to read from the device to indicate that it's done talking to us.
-     *
-     * @param character The character
-     *
-     * @throws IOException Upon communications error
-     */
-    public synchronized void setReadTerminator(String character) throws IOException {
-
-        try {
-            connection.setReadTerminator(character);
-        } catch (VISAException e) {
-            throw new IOException(e.getMessage());
-        }
-
-    }
-
     public synchronized void addAutoRemove(String... phrases) {
         toRemove.addAll(List.of(phrases));
-    }
-
-    /**
-     * Sets the timeout, in milliseconds, for operations with the device
-     *
-     * @param timeoutMSec Timeout, milliseconds
-     *
-     * @throws IOException Upon communications error
-     */
-    public synchronized void setTimeout(int timeoutMSec) throws IOException {
-
-        try {
-            connection.setTimeout(timeoutMSec);
-        } catch (VISAException e) {
-            throw new IOException(e.getMessage());
-        }
-
-        timeout = timeoutMSec;
-
     }
 
     public synchronized void setRetryCount(int count) {
@@ -247,6 +178,14 @@ public class VISADevice implements Instrument {
      */
     public synchronized void setWriteTerminator(String term) {
         terminator = term;
+    }
+
+    public synchronized void setReadTerminator(String term) throws VISAException {
+        getConnection().setReadTerminator(term);
+    }
+
+    public synchronized void setReadTerminator(long term) throws VISAException {
+        getConnection().setReadTerminator(term);
     }
 
     /**
@@ -454,28 +393,25 @@ public class VISADevice implements Instrument {
      * Method to check limits of instruments values, throws DeviceException exceeded.
      *
      * @param valueName parameter to be checked (e.g. Voltage range)
-     * @param value value to set
-     * @param lower lower limit
-     * @param upper upper limit
-     * @param unit unit of value
+     * @param value     value to set
+     * @param lower     lower limit
+     * @param upper     upper limit
+     * @param unit      unit of value
      */
-    protected void checkLimit(String valueName, double value, double lower, double upper, String unit) throws DeviceException
-    {
-        if (value > upper) {
-            throw new DeviceException("%s %f %s exceeds device maximum value %f %s", valueName, value, unit, upper, unit);
+    protected void checkLimit(String valueName, Number value, Number lower, Number upper, String unit) throws DeviceException {
+
+        if (!Util.isBetween(value, lower, upper)) {
+            throw new DeviceException("%s = %e %s is out of range (%e to %e)", valueName, value, unit, lower, upper);
         }
-        else if (value < lower) {
-            throw new DeviceException("%s %f %s is below minimum value of device %f %s", valueName, value, unit, lower, unit);
-        }
+
     }
-    protected void checkLimit(String valueName, double value, double lower, double upper) throws DeviceException
-    {
-        if (value > upper) {
-            throw new DeviceException("%s %f exceeds device maximum value %f", valueName, value, upper);
+
+    protected void checkLimit(String valueName, Number value, Number lower, Number upper) throws DeviceException {
+
+        if (!Util.isBetween(value, lower, upper)) {
+            throw new DeviceException("%s = %e is out of range (%e to %e)", valueName, value, lower, upper);
         }
-        else if (value < lower) {
-            throw new DeviceException("%s %f is below minimum value of device %f", valueName, value, lower);
-        }
+
     }
 
 }

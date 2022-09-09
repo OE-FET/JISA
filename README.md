@@ -8,51 +8,96 @@
 In essence then, the purpose of `JISA` is to act as an alternative (and actually decent) means of creating experimental control systems. It comprises, largely, of three sections:
 ### 1. Standardised Instrument Control
 
-`JISA` implements standard interfaces for each "type" of instrument, meaning that instruments are easily interchangeable. If we connect to a Keithley SMU and an Agilent SPA
+`JISA` implements standard interfaces for each "type" of instrument, meaning that instruments are easily interchangeable. If we connect to a Keithley 2600 series multi-channel SMU, an Agilent SPA, and a Keithley 2450 single-channel SMU:
 
 ```kotlin
 // Connect to instruments
 val keithley = K2600B(TCPIPAddress("192.168.0.5"))
 val agilent  = Agilent4155X(GPIBAddress(20))
+val k2450    = K2450(USBAddress(0x05E6, 0x2450))
 ```
 
-then `JISA` simply represents them as collections of `SMU` channels
+then `JISA` simply represents them as collections of `SMU` objects, or simply as a single `SMU` object in the case of the K2450:
 
 ```kotlin
 // Get first channel from both instruments
-val smuK = keithley.getChannel(0)
-val smuA = agilent.getChannel(0)
+val smu1 = keithley.getChannel(0)
+val smu2 = agilent.getChannel(0)
+val smu3 = k2450
 ```
 
 meaning that operating them is done exactly the same way in JISA regardless of which make/model of instsrument they are from
 
 ```kotlin
-smuK.setIntegrationTime(0.1)     // Set the integration time
-smuK.useAutoRanges()             // Use auto ranging on current and voltage
-smuK.setVoltage(5.0)             // Set to source 5.0 V
-smuK.turnOn()                    // Enable output of channel
-val currentK = smuK.getCurrent() // Measure current
-smuK.turnOff()                   // Disable output of channel
+data class IVPoint(val V: Double, val I: Double)
 
-smuA.setIntegrationTime(0.1)     // Set the integration time
-smuA.useAutoRanges()             // Use auto ranging on current and voltage
-smuA.setVoltage(5.0)             // Set to source 5.0 V
-smuA.turnOn()                    // Enable output of channel
-val currentA = smuA.getCurrent() // Measure current
-smuA.turnOff()                   // Disable output of channel
+// Write a method expecting to be given an SMU channel without having to specify what make/model
+fun voltageSweep(smu: SMU): List<IVPoint> {
+
+    // Create list to hold results
+    val results = ArrayList<IVPoint>()
+
+    smu.setIntegrationTime(0.1) // Set the integration time
+    smu.useAutoRanges()         // Use auto ranging on current and voltage
+    smu.setVoltage(0.0)         // Set to source 0.0 V
+    smu.turnOn()                // Enable output of channel
+    
+    // Sweep voltage from 0V to 50V, recording measured currents in list
+    for (voltage in Range.linear(0, 50)) {
+    
+        smu.setVoltage(voltage)
+        
+        val current  = smu.getCurrent()
+        results     += IVPoint(voltage, current)
+        
+    }
+    
+    return results
+
+}
+
+// Can pass any SMU to it and it will run without needing to be changed
+val results1 = voltageSweep(smu1)
+val results2 = voltageSweep(smu2)
+val results3 = voltageSweep(smu3)
 ```
 ### 2. Data Handling
+
+JISA provides a simple means of creating tables of data which can then be directly output as CSV files:
+
 ```kotlin
 // Create results storage
-val results = ResultList("Voltage", "Current", "Temperature")
+val V     = DoubleColumn("Voltage", "V")
+val I     = DoubleColumn("Current", "A")
+val T     = DoubleColumn("Temperature", "K")
+val table = ResultList(V, I, T)
 
 // Take 10 readings
 repeat(10) {
-    results.addData(smu.getVoltage(), smu.getCurrent(), tc.getTemperature())
+
+    // Add data by specifying columns
+    table.addRow { row ->
+        row[I] = smu.getCurrent()
+        row[T] = tc.getTemperature()
+        row[V] = smu.getVoltage()
+    }
+    
+}
+
+// Take another 10 readings
+repeat(10) {
+
+    // Add data by providing it in column order
+    table.addData(
+        smu.getVoltage(), 
+        smu.getCurrent(), 
+        tc.getTemperature()
+    )
+    
 }
 
 // Easy output as CSV file
-results.output("data.csv")  
+table.output("data.csv")  
 ```
 ### 3. GUI Building Blocks
 ```kotlin
@@ -71,7 +116,7 @@ val plot = Plot("Results", "Voltage", "Current")
 val grid = Grid("Main Window", params, plot)
 
 // Add start button to toolbar
-grid.addToolbarButton("Start Sweep") {
+grid.addToolbarButton("Start Sweep") { // This code will run when clicked
 
     // Makes range starting at minV, ending at maxV in numV steps
     val voltages = Range.linear(
@@ -80,7 +125,9 @@ grid.addToolbarButton("Start Sweep") {
         numV.get()    // No. steps
     )   
     
-    // Code to run sweep
+    for (voltage in voltages) {
+        /*... do measurement here ...*/
+    }
     
 }
 
@@ -102,7 +149,7 @@ public class Main {
     public static void main(String[] args) throws Exception {
 
         SMU         smu     = new K2450(new GPIBAddress(0, 20));
-        ResultTable results = new ResultList(new Col("Voltage", "V"), new Col("Current", "A"));
+        ResultTable results = new ResultList("Voltage [V]", "Current [A]");
 
         smu.setVoltage(0.0);
         smu.turnOn();
@@ -127,16 +174,16 @@ public class Main {
 fun main() {
 
     val smu     = K2450(GPIBAddress(0,20))
-    val results = ResultList(Col("Voltage", "V"), Col("Current", "A"))
+    val results = ResultList("Voltage [V]", "Current [A]")
 
-    smu.setVoltage(0.0)
+    smu.voltage = 0.0
     smu.turnOn()
 
     for (v in Range.linear(0.0, 60.0, 61)) {
     
-        smu.setVoltage(v)
+        smu.voltage = v
         Util.sleep(500)
-        results.addData(smu.getVoltage(), smu.getCurrent())
+        results.addData(smu.voltage, smu.current)
         
     }
     
@@ -145,15 +192,16 @@ fun main() {
 
 }
 ```
-**Python (Jython) - "Screw your traditions, I'm a snake from the future"**
+**Python (GraalPython) - "Screw your traditions, I'm a snake from the future"**
 
-To use in Python, take a look at PyJISA [here](https://github.com/OE-FET/PyJISA).
+To use in CPython, take a look at PyJISA [here](https://github.com/OE-FET/PyJISA).
+Otherwise, take a look at GraalVM [here](https://www.graalvm.org/).
 
 ```python
 def main():
     
     smu     = K2450(GPIBAddress(0,20))
-    results = ResultList([Col("Voltage", "V"), Col("Current", "A")])
+    results = ResultList("Voltage [V]", "Current [A]")
 
     smu.setVoltage(0.0)
     smu.turnOn()
@@ -162,7 +210,7 @@ def main():
     
         smu.setVoltage(v)
         Util.sleep(500)
-        results.addData([smu.getVoltage(), smu.getCurrent()])
+        results.addData(smu.getVoltage(), smu.getCurrent())
     
     
     smu.turnOff()
@@ -176,9 +224,7 @@ main()
 function main()
     
     smu     = jisa.devices.K2450(JISA.Addresses.GPIBAddress(0,20));
-    results = jisa.experiment.ResultList({'Voltage', 'Current'});
-
-    results.setUnits({'V', 'A'});    
+    results = jisa.experiment.ResultList({'Voltage [V]', 'Current [A]'});
 
     smu.setVoltage(0.0);
     smu.turnOn();
@@ -201,7 +247,7 @@ We can then extend this program easily, with only two lines, to display a plot o
 fun main() {
 
     val smu     = K2450(GPIBAddress(0,20))
-    val results = ResultList(Col("Voltage", "V"), Col("Current", "A")) 
+    val results = ResultList("Voltage [V]", "Current [A]") 
 
     // Make a plot that watches our results
     val plot = Plot("Results", results)

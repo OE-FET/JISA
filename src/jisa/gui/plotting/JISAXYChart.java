@@ -3,7 +3,6 @@ package jisa.gui.plotting;
 import de.gsi.chart.XYChart;
 import de.gsi.chart.axes.Axis;
 import de.gsi.chart.ui.geometry.Side;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.layout.Background;
@@ -11,7 +10,6 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import jisa.gui.Colour;
-import jnr.ffi.annotations.In;
 
 public class JISAXYChart extends XYChart {
 
@@ -37,4 +35,8 @@ public class JISAXYChart extends XYChart {
         redrawCanvas();
     }
 
+    public void removeTitle() {
+        titleLabel.setVisible(false);
+        titleLabel.setPadding(Insets.EMPTY);
+    }
 }

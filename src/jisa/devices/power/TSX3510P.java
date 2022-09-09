@@ -4,6 +4,8 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.DCPower;
 import jisa.visa.VISADevice;
+import jisa.visa.connections.Connection;
+import jisa.visa.connections.GPIBConnection;
 
 import java.io.IOException;
 
@@ -21,8 +23,14 @@ public class TSX3510P extends VISADevice implements DCPower {
     public TSX3510P(Address address) throws IOException, DeviceException {
 
         super(address);
+
+        Connection connection = getConnection();
+
+        if (connection instanceof GPIBConnection) {
+            ((GPIBConnection) connection).setEOIEnabled(false);
+        }
+
         setWriteTerminator("\n");
-        setEOI(false);
         setReadTerminator(0xA);
         addAutoRemove("\n");
         addAutoRemove("^END");

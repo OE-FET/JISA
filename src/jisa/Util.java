@@ -15,8 +15,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -309,6 +307,44 @@ public class Util {
      */
     public static boolean isBetween(Number value, Number min, Number max) {
         return value.doubleValue() >= min.doubleValue() && value.doubleValue() <= max.doubleValue();
+    }
+
+    public static <K,V> Map<K,V> mapOf(Object... values) {
+
+        if (values.length % 2 != 0) {
+            throw new IllegalArgumentException("Every key needs a value.");
+        }
+
+        Map<K,V> map = new LinkedHashMap<>();
+
+        for (int i = 0; i < values.length; i += 2) {
+
+            K key = (K) values[i];
+            V val = (V) values[i + 1];
+
+            map.put(key, val);
+
+        }
+
+        return map;
+
+    }
+
+    public static <K,V> MapBuilder<K,V> buildMap(Class<K> keyType, Class<V> valueType) {
+        return new MapBuilder<>(keyType, valueType);
+    }
+
+    public static <K,V> Map<K,V> buildMap(MapBuild<K,V> build) {
+
+        Map<K,V> map = new LinkedHashMap<>();
+        build.map(map);
+        return map;
+
+    }
+
+    public static <T> T build(T toBuild, Build<T> builder) {
+        builder.build(toBuild);
+        return toBuild;
     }
 
     public static boolean isValidIndex(int index, Object[] array) {
@@ -798,6 +834,33 @@ public class Util {
 
         Class getClazz() {
             return clazz;
+        }
+
+    }
+
+    public interface MapBuild<K,V> {
+
+        void map(Map<K,V> map);
+
+    }
+
+    public interface Build<T> {
+        void build(T toBuild);
+    }
+
+    public static class MapBuilder<K,V> {
+
+        private final Map<K,V> map = new LinkedHashMap<>();
+
+        public MapBuilder(Class<K> keyType, Class<V> valueType) {}
+
+        public MapBuilder<K, V> put(K key, V value) {
+            map.put(key, value);
+            return this;
+        }
+
+        public Map<K, V> map() {
+            return map;
         }
 
     }

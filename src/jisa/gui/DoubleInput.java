@@ -2,6 +2,7 @@ package jisa.gui;
 
 
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.effect.DropShadow;
@@ -17,6 +18,7 @@ public class DoubleInput extends HBox {
 
     public TextField    mantissa;
     public TextField    exponent;
+    public int leading = 3;
     public HBox         root;
     public DoubleChange onChange = null;
 
@@ -30,6 +32,7 @@ public class DoubleInput extends HBox {
             HBox.setHgrow(root, Priority.ALWAYS);
             mantissa.setTextFormatter(new TextFormatter<Double>(new DoubleStringConverter(), 0.0, DBL_FILTER));
             exponent.setTextFormatter(new TextFormatter<Integer>(new IntegerStringConverter(), 0, INT_FILTER));
+            root.setPadding(Insets.EMPTY);
 
             mantissa.textProperty().addListener((observable, oldValue, newValue) -> {
                 if (onChange != null) {
@@ -47,10 +50,8 @@ public class DoubleInput extends HBox {
 
                 if (mantissa.isFocused()) {
                     root.getStyleClass().add("focused");
-                    root.setEffect(new DropShadow(3, Color.valueOf("#039ED3")));
                 } else {
                     root.getStyleClass().remove("focused");
-                    root.setEffect(null);
                 }
 
             });
@@ -59,10 +60,8 @@ public class DoubleInput extends HBox {
 
                 if (exponent.isFocused()) {
                     root.getStyleClass().add("focused");
-                    root.setEffect(new DropShadow(3, Color.valueOf("#039ED3")));
                 } else {
                     root.getStyleClass().remove("focused");
-                    root.setEffect(null);
                 }
 
             });
@@ -94,7 +93,7 @@ public class DoubleInput extends HBox {
 
     public void setValue(double value) {
 
-        int    exponent = value == 0 ? 0 : (int) (3 * Math.floor(Math.log10(Math.abs(value)) / 3));
+        int    exponent = value == 0 ? 0 : (int) (leading * Math.floor(Math.log10(Math.abs(value)) / leading));
         double mantissa = value / Math.pow(10, exponent);
 
         this.mantissa.setText(String.format("%f", mantissa));

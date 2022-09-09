@@ -1,10 +1,10 @@
 package jisa.devices.smu;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
-import jisa.Util;
 
 import java.io.IOException;
 

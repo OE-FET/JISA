@@ -8,55 +8,59 @@ import jisa.devices.interfaces.SMU;
 import jisa.enums.AMode;
 import jisa.enums.Function;
 import jisa.enums.Terminals;
-import jisa.visa.Connection;
-import jisa.visa.Driver;
 import jisa.visa.VISADevice;
-import lombok.SneakyThrows;
+import jisa.visa.connections.Connection;
+import jisa.visa.connections.GPIBConnection;
+import jisa.visa.connections.SerialConnection;
+import jisa.visa.drivers.Driver;
 
 import java.io.IOException;
 import java.util.HashMap;
 
 public abstract class KeithleySCPI extends VISADevice implements SMU {
 
-    protected static final String C_MEASURE_VOLTAGE       = ":MEAS:VOLT?";
-    protected static final String C_MEASURE_CURRENT       = ":MEAS:CURR?";
-    protected static final String C_MEASURE_RESISTANCE    = ":MEAS:RES?";
-    protected static final String C_SET_SOURCE_FUNCTION   = ":SOUR:FUNC %s";
-    protected static final String C_SET_OUTPUT_STATE      = ":OUTP:STATE %s";
-    protected static final String C_QUERY_SOURCE_FUNCTION = ":SOUR:FUNC?";
-    protected static final String C_QUERY_OUTPUT_STATE    = ":OUTP:STATE?";
-    protected static final String C_SET_SOURCE_VALUE      = ":SOUR:%s %e";
-    protected static final String C_QUERY_SOURCE_VALUE_MIN= ":SOUR:%s? MIN";
-    protected static final String C_QUERY_SOURCE_VALUE_MAX= ":SOUR:%s? MAX";
-    protected static final String C_SET_TERMINALS         = ":ROUT:TERM %s";
-    protected static final String C_QUERY_TERMINALS       = ":ROUT:TERM?";
-    protected static final String C_SET_PROBE_MODE        = ":SENS:%s:RSEN %s";
-    protected static final String C_QUERY_PROBE_MODE      = "CURR:RSEN?";
-    protected static final String C_SET_AVG_COUNT         = "AVER:COUNT %d";
-    protected static final String C_QUERY_AVG_COUNT       = "VOLT:AVER:COUNT?";
-    protected static final String C_SET_AVG_MODE          = "AVER:TCON %s";
-    protected static final String C_QUERY_AVG_MODE        = "VOLT:AVER:TCON?";
-    protected static final String C_SET_AVG_STATE         = "AVER %s";
-    protected static final String C_QUERY_AVG_STATE       = "VOLT:AVER?";
-    protected static final String C_SET_SRC_RANGE         = ":SOUR:%s:RANG %e";
-    protected static final String C_QUERY_SRC_RANGE       = ":SOUR:%s:RANG?";
-    protected static final String C_QUERY_SRC_RANGE_MIN   = ":SOUR:%s:RANG? MIN";
-    protected static final String C_QUERY_SRC_RANGE_MAX   = ":SOUR:%s:RANG? MAX";
-    protected static final String C_SET_SRC_AUTO_RANGE    = ":SOUR:%s:RANG:AUTO %s";
-    protected static final String C_QUERY_SRC_AUTO_RANGE  = ":SOUR:%s:RANG:AUTO?";
-    protected static final String C_SET_MEAS_RANGE        = ":SENS:%s:RANG %e";
-    protected static final String C_QUERY_MEAS_RANGE      = ":SENS:%s:RANG?";
-    protected static final String C_QUERY_MEAS_RANGE_MIN  = ":SENS:%s:RANG? MIN";
-    protected static final String C_QUERY_MEAS_RANGE_MAX  = ":SENS:%s:RANG? MAX";
-    protected static final String C_SET_MEAS_AUTO_RANGE   = ":SENS:%s:RANG:AUTO %s";
-    protected static final String C_QUERY_MEAS_AUTO_RANGE = ":SENS:%s:RANG:AUTO?";
-    protected static final String C_SET_NPLC              = ":SENS:NPLC %f";
-    protected static final String C_QUERY_NPLC            = ":SENS:%s:NPLC?";
-    protected static final String C_SET_OFF_STATE         = ":OUTP:%s:SMOD %s";
-    protected static final String C_QUERY_OFF_STATE       = ":OUTP:%s:SMOD?";
-    protected static final String C_SET_LIMIT             = ":SENS:%s:PROTECTION %e";
-    protected static final String C_QUERY_LIMIT           = ":SENS:%s:PROTECTION?";
-    protected static final String C_QUERY_LFR             = ":SYST:LFR?";
+    protected static final String C_MEASURE_VOLTAGE        = ":MEAS:VOLT?";
+    protected static final String C_MEASURE_CURRENT        = ":MEAS:CURR?";
+    protected static final String C_MEASURE_RESISTANCE     = ":MEAS:RES?";
+    protected static final String C_SET_SOURCE_FUNCTION    = ":SOUR:FUNC %s";
+    protected static final String C_SET_OUTPUT_STATE       = ":OUTP:STATE %s";
+    protected static final String C_QUERY_SOURCE_FUNCTION  = ":SOUR:FUNC?";
+    protected static final String C_QUERY_OUTPUT_STATE     = ":OUTP:STATE?";
+    protected static final String C_SET_SOURCE_VALUE       = ":SOUR:%s %e";
+    protected static final String C_QUERY_SOURCE_VALUE_MIN = ":SOUR:%s? MIN";
+    protected static final String C_QUERY_SOURCE_VALUE_MAX = ":SOUR:%s? MAX";
+    protected static final String C_SET_TERMINALS          = ":ROUT:TERM %s";
+    protected static final String C_QUERY_TERMINALS        = ":ROUT:TERM?";
+    protected static final String C_SET_PROBE_MODE         = ":SENS:RSEN %s";
+	//protected static final String C_SET_PROBE_MODE         = ":SENS:%s:RSEN %s"; // TODO rename ptx side, check usage
+    protected static final String C_QUERY_PROBE_MODE       = "CURR:RSEN?";
+    protected static final String C_SET_AVG_COUNT          = "AVER:COUNT %d";
+    protected static final String C_QUERY_AVG_COUNT        = "VOLT:AVER:COUNT?";
+    protected static final String C_SET_AVG_MODE           = "AVER:TCON %s";
+    protected static final String C_QUERY_AVG_MODE         = "VOLT:AVER:TCON?";
+    protected static final String C_SET_AVG_STATE          = "AVER %s";
+    protected static final String C_QUERY_AVG_STATE        = "VOLT:AVER?";
+    protected static final String C_SET_SRC_RANGE          = ":SOUR:%s:RANG %e";
+    protected static final String C_QUERY_SRC_RANGE        = ":SOUR:%s:RANG?";
+    protected static final String C_QUERY_SRC_RANGE_MIN    = ":SOUR:%s:RANG? MIN";
+    protected static final String C_QUERY_SRC_RANGE_MAX    = ":SOUR:%s:RANG? MAX";
+    protected static final String C_SET_SRC_AUTO_RANGE     = ":SOUR:%s:RANG:AUTO %s";
+    protected static final String C_QUERY_SRC_AUTO_RANGE   = ":SOUR:%s:RANG:AUTO?";
+    protected static final String C_SET_MEAS_RANGE         = ":SENS:%s:RANG %e";
+    protected static final String C_QUERY_MEAS_RANGE       = ":SENS:%s:RANG?";
+    protected static final String C_QUERY_MEAS_RANGE_MIN   = ":SENS:%s:RANG? MIN";
+    protected static final String C_QUERY_MEAS_RANGE_MAX   = ":SENS:%s:RANG? MAX";
+    protected static final String C_SET_MEAS_AUTO_RANGE    = ":SENS:%s:RANG:AUTO %s";
+    protected static final String C_QUERY_MEAS_AUTO_RANGE  = ":SENS:%s:RANG:AUTO?";
+    protected static final String C_SET_NPLC               = ":SENS:NPLC %f";
+    protected static final String C_QUERY_NPLC             = ":SENS:%s:NPLC?";
+    protected static final String C_SET_OFF_STATE          = ":OUTP:SMOD %s";
+    protected static final String C_QUERY_OFF_STATE        = ":OUTP:SMOD?";
+	//protected static final String C_SET_OFF_STATE         = ":OUTP:%s:SMOD %s";  // TODO rename ptx side, check usage
+    //protected static final String C_QUERY_OFF_STATE       = ":OUTP:%s:SMOD?";  // TODO rename ptx side, check usage
+    protected static final String C_SET_LIMIT              = ":SENS:%s:PROTECTION %e";
+    protected static final String C_QUERY_LIMIT            = ":SENS:%s:PROTECTION?";
+    protected static final String C_QUERY_LFR              = ":SYST:LFR?";
 
     protected static final String OFF_NORMAL = "NORM";
     protected static final String OFF_ZERO   = "ZERO";
@@ -72,44 +76,44 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     protected final double LINE_FREQUENCY;
 
     private final MedianRepeatFilter MEDIAN_REPEAT_V = new MedianRepeatFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
+        this::measureVoltage,
+        (c) -> disableAveraging()
     );
     private final MedianRepeatFilter MEDIAN_REPEAT_I = new MedianRepeatFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
+        this::measureCurrent,
+        (c) -> disableAveraging()
     );
     private final MedianMovingFilter MEDIAN_MOVING_V = new MedianMovingFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
+        this::measureVoltage,
+        (c) -> disableAveraging()
     );
     private final MedianMovingFilter MEDIAN_MOVING_I = new MedianMovingFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
+        this::measureCurrent,
+        (c) -> disableAveraging()
     );
     private final MeanRepeatFilter   MEAN_REPEAT_V   = new MeanRepeatFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
+        this::measureVoltage,
+        (c) -> disableAveraging()
     );
     private final MeanRepeatFilter   MEAN_REPEAT_I   = new MeanRepeatFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
+        this::measureCurrent,
+        (c) -> disableAveraging()
     );
     private final MeanMovingFilter   MEAN_MOVING_V   = new MeanMovingFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
+        this::measureVoltage,
+        (c) -> disableAveraging()
     );
     private final MeanMovingFilter   MEAN_MOVING_I   = new MeanMovingFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
+        this::measureCurrent,
+        (c) -> disableAveraging()
     );
     private final BypassFilter       NONE_V          = new BypassFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
+        this::measureVoltage,
+        (c) -> disableAveraging()
     );
     private final BypassFilter       NONE_I          = new BypassFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
+        this::measureCurrent,
+        (c) -> disableAveraging()
     );
     protected     double             vLimit;
     protected     double             iLimit;
@@ -122,18 +126,18 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
         super(address, prefDriver);
 
-        switch(address.getType()) {
+        Connection connection = getConnection();
 
-            case SERIAL:
-                setSerialParameters(9600, 8, Connection.Parity.NONE, Connection.StopBits.ONE, Connection.Flow.NONE);
-                setWriteTerminator("\r");
-                setReadTerminator("\r");
-                break;
+        if (connection instanceof SerialConnection) {
 
-            case GPIB:
-                setEOI(true);
-                break;
+            ((SerialConnection) connection).setSerialParameters(9600, 8, SerialConnection.Parity.NONE, SerialConnection.Stop.BITS_10);
+            setWriteTerminator("\r");
+            setReadTerminator("\r");
 
+        }
+
+        if (connection instanceof GPIBConnection) {
+            ((GPIBConnection) connection).setEOIEnabled(true);
         }
 
         addAutoRemove("\r");
@@ -240,14 +244,15 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
         return queryDouble(C_QUERY_SRC_RANGE, getSourceMode().getTag());
     }
 
-    @SneakyThrows
     @Override
-    public void setSourceRange(double value) throws IOException {
+    public void setSourceRange(double value) throws IOException, DeviceException {
 
         Source mode = getSourceMode();
-        double low = queryDouble(C_QUERY_SRC_RANGE_MIN, mode.getTag());
-        double upp = queryDouble(C_QUERY_SRC_RANGE_MAX, mode.getTag());
+        double low  = queryDouble(C_QUERY_SRC_RANGE_MIN, mode.getTag());
+        double upp  = queryDouble(C_QUERY_SRC_RANGE_MAX, mode.getTag());
+
         checkLimit(mode.name(), value, low, upp);
+
         write(C_SET_SRC_AUTO_RANGE, mode.getTag(), OUTPUT_OFF);
         write(C_SET_SRC_RANGE, mode.getTag(), value);
 
@@ -275,13 +280,14 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     }
 
     @Override
-    public void setMeasureRange(double value) throws IOException, DeviceException
-    {
+    public void setMeasureRange(double value) throws IOException, DeviceException {
 
         Source mode = getMeasureMode();
-        double low = queryDouble(C_QUERY_SRC_RANGE_MIN, mode.getTag());
-        double upp = queryDouble(C_QUERY_SRC_RANGE_MAX, mode.getTag());
+        double low  = queryDouble(C_QUERY_SRC_RANGE_MIN, mode.getTag());
+        double upp  = queryDouble(C_QUERY_SRC_RANGE_MAX, mode.getTag());
+
         checkLimit(mode.name(), value, low, upp);
+
         write(C_SET_SRC_AUTO_RANGE, mode.getTag(), OUTPUT_OFF);
         write(C_SET_SRC_RANGE, mode.getTag(), value);
 
@@ -321,14 +327,14 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     }
 
     @Override
-    public void setVoltageRange(double value) throws IOException, DeviceException
-    {
+    public void setVoltageRange(double value) throws IOException, DeviceException {
 
         boolean src = isSourcing(Source.VOLTAGE);
+        double  low = queryDouble(C_QUERY_MEAS_RANGE_MIN, Source.VOLTAGE.getTag());
+        double  upp = queryDouble(C_QUERY_MEAS_RANGE_MAX, Source.VOLTAGE.getTag());
 
-        double low = queryDouble(C_QUERY_MEAS_RANGE_MIN, Source.VOLTAGE.getTag());
-        double upp = queryDouble(C_QUERY_MEAS_RANGE_MAX, Source.VOLTAGE.getTag());
         checkLimit("Voltage range", value, low, upp, "V");
+
         write(src ? C_SET_SRC_AUTO_RANGE : C_SET_MEAS_AUTO_RANGE, Source.VOLTAGE.getTag(), OUTPUT_OFF);
         write(src ? C_SET_SRC_RANGE : C_SET_MEAS_RANGE, Source.VOLTAGE.getTag(), value);
 
@@ -338,9 +344,9 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     public void useAutoVoltageRange() throws IOException {
 
         write(
-                isSourcing(Source.VOLTAGE) ? C_SET_SRC_AUTO_RANGE : C_SET_MEAS_AUTO_RANGE,
-                Source.VOLTAGE.getTag(),
-                OUTPUT_ON
+            isSourcing(Source.VOLTAGE) ? C_SET_SRC_AUTO_RANGE : C_SET_MEAS_AUTO_RANGE,
+            Source.VOLTAGE.getTag(),
+            OUTPUT_ON
         );
 
     }
@@ -349,8 +355,8 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     public boolean isAutoRangingVoltage() throws IOException {
 
         return query(
-                isSourcing(Source.VOLTAGE) ? C_QUERY_SRC_AUTO_RANGE : C_QUERY_MEAS_AUTO_RANGE,
-                Source.VOLTAGE.getTag()
+            isSourcing(Source.VOLTAGE) ? C_QUERY_SRC_AUTO_RANGE : C_QUERY_MEAS_AUTO_RANGE,
+            Source.VOLTAGE.getTag()
         ).equals(OUTPUT_ON);
 
     }
@@ -363,8 +369,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     }
 
     @Override
-    public void setCurrentRange(double value) throws IOException, DeviceException
-    {
+    public void setCurrentRange(double value) throws IOException, DeviceException {
 
         boolean src = isSourcing(Source.CURRENT);
 
@@ -380,9 +385,9 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     public void useAutoCurrentRange() throws IOException {
 
         write(
-                isSourcing(Source.CURRENT) ? C_SET_SRC_AUTO_RANGE : C_SET_MEAS_AUTO_RANGE,
-                Source.CURRENT.getTag(),
-                OUTPUT_ON
+            isSourcing(Source.CURRENT) ? C_SET_SRC_AUTO_RANGE : C_SET_MEAS_AUTO_RANGE,
+            Source.CURRENT.getTag(),
+            OUTPUT_ON
         );
 
     }
@@ -391,8 +396,8 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     public boolean isAutoRangingCurrent() throws IOException {
 
         return query(
-                isSourcing(Source.CURRENT) ? C_QUERY_SRC_AUTO_RANGE : C_QUERY_MEAS_AUTO_RANGE,
-                Source.CURRENT.getTag()
+            isSourcing(Source.CURRENT) ? C_QUERY_SRC_AUTO_RANGE : C_QUERY_MEAS_AUTO_RANGE,
+            Source.CURRENT.getTag()
         ).equals(OUTPUT_ON);
 
     }
@@ -403,8 +408,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
     }
 
-    public void setVoltageLimit(double limit) throws IOException, DeviceException
-    {
+    public void setVoltageLimit(double limit) throws IOException, DeviceException {
 
         write(C_SET_LIMIT, Source.VOLTAGE.getTag(), limit);
         vLimit = limit;
@@ -542,8 +546,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
         return Source.fromTag(query(C_QUERY_SOURCE_FUNCTION)).getSMU();
     }
 
-    public void setSource(Source mode) throws IOException, DeviceException
-    {
+    public void setSource(Source mode) throws IOException, DeviceException {
 
         if (getSourceMode() != mode) {
             write(C_SET_SOURCE_FUNCTION, mode.getTag());
@@ -1013,8 +1016,8 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
         VOLTAGE("VOLT", "V", jisa.enums.Source.VOLTAGE),
         CURRENT("CURR", "I", jisa.enums.Source.CURRENT);
 
-        private static HashMap<String, Source>            lookup  = new HashMap<>();
-        private static HashMap<jisa.enums.Source, Source> convert = new HashMap<>();
+        private static final HashMap<String, Source>            lookup  = new HashMap<>();
+        private static final HashMap<jisa.enums.Source, Source> convert = new HashMap<>();
 
         static {
             for (Source mode : Source.values()) {
@@ -1023,9 +1026,9 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
             }
         }
 
-        private String            tag;
-        private String            symbol;
-        private jisa.enums.Source orig;
+        private final String            tag;
+        private final String            symbol;
+        private final jisa.enums.Source orig;
 
         Source(String tag, String symbol, jisa.enums.Source orig) {
             this.tag    = tag;

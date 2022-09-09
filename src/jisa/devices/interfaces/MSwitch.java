@@ -1,12 +1,12 @@
 package jisa.devices.interfaces;
 
-import jisa.addresses.Address;
 import jisa.Util;
+import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 
 import java.io.IOException;
 
-public interface MSwitch extends Switch {
+public interface MSwitch extends Switch, MultiChannel<Switch> {
 
     public static String getDescription() {
         return "Multi-Channel Switch";
@@ -64,6 +64,17 @@ public interface MSwitch extends Switch {
         checkChannel(channel);
 
         return new Switch() {
+
+            @Override
+            public String getChannelName() {
+                return MSwitch.this.getChannelName(channel);
+            }
+
+            @Override
+            public Class<Switch> getChannelClass() {
+                return MSwitch.this.getChannelClass();
+            }
+
             @Override
             public void turnOn() throws IOException, DeviceException {
                 MSwitch.this.turnOn(channel);

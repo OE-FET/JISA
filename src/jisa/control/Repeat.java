@@ -1,11 +1,11 @@
 package jisa.control;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import jisa.Util;
+
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class Repeat implements Iterable<Double> {
 
@@ -73,8 +73,8 @@ public class Repeat implements Iterable<Double> {
      */
     public static void runTogether(Repeat... repeats) throws Exception {
 
-        IntStream      counts = Arrays.stream(repeats).mapToInt(Repeat::getCount).distinct();
-        IntStream      delays = Arrays.stream(repeats).mapToInt(Repeat::getDelay).distinct();
+        IntStream counts = Arrays.stream(repeats).mapToInt(Repeat::getCount).distinct();
+        IntStream delays = Arrays.stream(repeats).mapToInt(Repeat::getDelay).distinct();
 
         if (counts.count() > 1 || delays.count() > 1) {
             throw new IllegalArgumentException("To run repeats together they must have matching repeat counts and delays!");
@@ -108,6 +108,50 @@ public class Repeat implements Iterable<Double> {
         }
 
         Arrays.stream(repeats).forEach(r -> r.hasRun = true);
+
+    }
+
+    public static void runInParallel(Repeat... repeats) throws InterruptedException, Exception {
+
+        CountDownLatch  start      = new CountDownLatch(1);
+        CountDownLatch  finish     = new CountDownLatch(repeats.length);
+        List<Exception> exceptions = new LinkedList<>();
+        List<Thread>    threads    = new ArrayList<>(repeats.length);
+
+        for (Repeat repeat : repeats) {
+
+            threads.add(new Thread(() -> {
+
+                Util.runRegardless(start::await);
+
+                try {
+                    repeat.run();
+                } catch (Exception e) {
+                    exceptions.add(e);
+                } finally {
+                    finish.countDown();
+                }
+
+            }));
+
+        }
+
+        // Start all threads, which will immediately start waiting on the start latch
+        threads.forEach(Thread::start);
+
+        // Release all threads and wait for them to finish
+        start.countDown();
+
+        try {
+            finish.await();
+        } catch (InterruptedException e) {
+            threads.forEach(Thread::stop); // Hacky and nasty, but does for now
+            throw e;
+        }
+
+        if (!exceptions.isEmpty()) {
+            throw new Exception(exceptions.stream().map(Exception::getMessage).collect(Collectors.joining("\n\n")));
+        }
 
     }
 

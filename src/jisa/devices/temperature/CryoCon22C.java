@@ -1,53 +1,63 @@
 package jisa.devices.temperature;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.MSMOTC;
-import jisa.devices.interfaces.TCouple;
-import jisa.visa.Connection;
+import jisa.devices.interfaces.TC;
 import jisa.visa.VISADevice;
+import jisa.visa.connections.Connection;
+import jisa.visa.connections.GPIBConnection;
+import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class CryoCon22C extends VISADevice implements MSMOTC {
+public class CryoCon22C extends VISADevice implements TC {
+
+    public final TMeter SENSOR_A = new TMeter("A");
+    public final TMeter SENSOR_B = new TMeter("B");
+    public final Heater HEATER_1 = new Heater(1);
+    public final Heater      HEATER_2 = new Heater(2);
+    public final Heater      HEATER_3 = new Heater(3);
+    public final Heater      HEATER_4 = new Heater(4);
+    public final Loop        LOOP_1   = new Loop(HEATER_1);
+    public final Loop        LOOP_2   = new Loop(HEATER_2);
+    public final Loop        LOOP_3   = new Loop(HEATER_3);
+    public final Loop        LOOP_4   = new Loop(HEATER_4);
 
     public static String getDescription() {
         return "Cryo-Con 22C";
     }
 
-    public static final List<String> SENSORS = List.of("A", "B");
-
-    private final List<List<Zone>> pidZones  = List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-    private final boolean[]        autoPID   = {false, false, false, false};
-
     public CryoCon22C(Address address) throws IOException, DeviceException {
 
         super(address);
 
-        if (address.getType() == Address.Type.SERIAL) {
+        Connection connection = getConnection();
 
-            setSerialParameters(
+        if (connection instanceof SerialConnection) {
+
+            ((SerialConnection) connection).setSerialParameters(
                 9600,
                 8,
-                Connection.Parity.NONE,
-                Connection.StopBits.ONE,
-                Connection.Flow.NONE
+                SerialConnection.Parity.NONE,
+                SerialConnection.Stop.BITS_10
             );
 
         }
 
-        if (address.getType() == Address.Type.GPIB) {
-            setEOI(true);
+        if (connection instanceof GPIBConnection) {
+
+            ((GPIBConnection) connection).setEOIEnabled(true);
+
         } else {
+
             setWriteTerminator("\n");
             setReadTerminator("\n");
+
         }
 
-        addAutoRemove("\n");
-        addAutoRemove("\r");
+        addAutoRemove("\n", "\r");
 
         String[] idn = getIDN().split(",");
 
@@ -60,352 +70,391 @@ public class CryoCon22C extends VISADevice implements MSMOTC {
 
     }
 
-
     @Override
-    public int getNumOutputs() {
-        return 4;
+    public List<TMeter> getInputs() {
+        return List.of(SENSOR_A, SENSOR_B);
     }
 
     @Override
-    public String getOutputName(int outputNumber) {
-        return String.format("Loop %d", outputNumber + 1);
+    public List<Heater> getOutputs() {
+        return List.of(HEATER_1, HEATER_2, HEATER_3, HEATER_4);
     }
 
     @Override
-    public void useSensor(int output, int sensor) throws IOException, DeviceException {
-
-        checkOutput(output);
-        checkSensor(sensor);
-
-        query("LOOP %d:SOURCE %s", output + 1, SENSORS.get(sensor));
-
+    public List<Loop> getLoops() {
+        return List.of(LOOP_1, LOOP_2, LOOP_3, LOOP_4);
     }
 
-    @Override
-    public int getUsedSensor(int output) throws IOException, DeviceException {
-        checkOutput(output);
+    private class TMeter implements TC.TMeter {
 
-        switch(query("LOOP %d:SOURCE?", output+1)) {
+        private final String sensor;
 
-            case "CHA":
-                return 0;
+        private TMeter(String sensor) {
+            this.sensor = sensor;
+        }
 
-            case "CHB":
-                return 1;
+        public String getSensor() {
+            return sensor;
+        }
 
-            default:
-                throw new IOException("Unexpected response from Cryo-Con 22C.");
+        @Override
+        public String getIDN() throws IOException, DeviceException {
+            return CryoCon22C.this.getIDN();
+        }
 
+        @Override
+        public Address getAddress() {
+            return CryoCon22C.this.getAddress();
+        }
+
+        @Override
+        public String getName() {
+
+            try {
+                return String.format("%s (%s)", sensor, query("INPUT %s:NAME?", sensor).trim());
+            } catch (IOException e) {
+                return String.format("%s (%s)", sensor, "Name Unknown");
+            }
+
+        }
+
+        @Override
+        public String getSensorName() {
+            return getName();
+        }
+
+        @Override
+        public double getTemperature() throws IOException, DeviceException {
+            return queryDouble("INPUT? %s", sensor);
+        }
+
+        @Override
+        public void setTemperatureRange(double range) throws IOException, DeviceException {
+            // No ranging options available
+        }
+
+        @Override
+        public double getTemperatureRange() throws IOException, DeviceException {
+            return 999.999;
         }
 
     }
 
-    @Override
-    public void setPValue(int output, double value) throws IOException, DeviceException {
-        checkOutput(output);
-        query("LOOP %d:PGAIN %e", output + 1, value);
-    }
+    private class Heater implements TC.Heater {
 
-    @Override
-    public void setIValue(int output, double value) throws IOException, DeviceException {
-        checkOutput(output);
-        query("LOOP %d:IGAIN %e", output + 1, value);
-    }
+        private final int number;
 
-    @Override
-    public void setDValue(int output, double value) throws IOException, DeviceException {
-        checkOutput(output);
-        query("LOOP %d:DGAIN %e", output + 1, value);
-    }
+        private Heater(int number) {
+            this.number = number;
+        }
 
-    @Override
-    public double getPValue(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return queryDouble("LOOP %d:PGAIN?");
-    }
+        public int getNumber() {
+            return number;
+        }
 
-    @Override
-    public double getIValue(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return queryDouble("LOOP %d:IGAIN?");
-    }
+        @Override
+        public String getIDN() throws IOException, DeviceException {
+            return CryoCon22C.this.getIDN();
+        }
 
-    @Override
-    public double getDValue(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return queryDouble("LOOP %d:DGAIN?");
-    }
+        @Override
+        public Address getAddress() {
+            return CryoCon22C.this.getAddress();
+        }
 
-    @Override
-    public void useAutoPID(int output, boolean flag) throws IOException, DeviceException {
-        checkOutput(output);
-        autoPID[output] = false;
-    }
+        @Override
+        public double getValue() throws IOException, DeviceException {
+            return queryDouble("LOOP %d:OUTPWR?", number);
+        }
 
-    @Override
-    public boolean isUsingAutoPID(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return autoPID[output];
-    }
+        @Override
+        public double getLimit() throws IOException {
 
-    @Override
-    public List<Zone> getAutoPIDZones(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return pidZones.get(output);
-    }
+            String response = query("LOOP %d:RANGE?", number);
+            Double range    = null;
 
-    @Override
-    public void setAutoPIDZones(int output, Zone... zones) throws IOException, DeviceException {
-        checkOutput(output);
-        pidZones.get(output).clear();
-        pidZones.get(output).addAll(Arrays.asList(zones));
-    }
+            switch (number) {
 
-    @Override
-    public void setHeaterRange(int output, double range) throws IOException, DeviceException {
+                case 1:
 
-        checkOutput(output);
+                    switch (response) {
 
-        String value;
+                        case "HIGH":
+                            range = 100.0;
+                            break;
 
-        switch (output) {
+                        case "MID":
+                            range = 10.0;
+                            break;
 
-            case 0:
+                        case "LOW":
+                            range = 1.0;
+                            break;
 
-                if (range > 10.0) { value = "HIGH"; } else if (range > 1.0) { value = "MID"; } else { value = "LOW"; }
+                    }
 
-                break;
+                    break;
 
-            case 1:
+                case 2:
 
-                if (range > 10.0) { value = "HIGH"; } else { value = "LOW"; }
+                    switch (response) {
 
-                break;
+                        case "HIGH":
+                            range = 100.0;
+                            break;
 
-            case 3:
-            case 4:
+                        case "LOW":
+                            range = 10.0;
+                            break;
 
-                if (range > 50.0) { value = "10V"; } else { value = "5V"; }
+                    }
 
-                break;
+                    break;
 
-            default:
-                throw new DeviceException("That range is not supported.");
+                case 3:
+                case 4:
+
+                    switch (response) {
+
+                        case "10V":
+                            range = 100.0;
+                            break;
+
+                        case "5V":
+                            range = 50.0;
+                            break;
+
+                    }
+
+                    break;
+
+            }
+
+            if (range == null) {
+                throw new IOException("Invalid response from Cryo-Con 22C.");
+            }
+
+            return range;
 
         }
 
-        query("LOOP %d:RANGE %s", output + 1, value);
+        @Override
+        public void setLimit(double range) throws IOException, DeviceException {
 
-    }
+            String value;
 
-    @Override
-    public double getHeaterRange(int output) throws IOException, DeviceException {
+            switch (number) {
 
-        checkOutput(output);
-        String response = query("LOOP %d:RANGE?", output + 1);
-        Double range    = null;
+                case 1:
+                    if (range > 10.0) {value = "HIGH";} else if (range > 1.0) {value = "MID";} else {value = "LOW";}
+                    break;
 
-        switch (output) {
+                case 2:
+                    if (range > 10.0) {value = "HIGH";} else {value = "LOW";}
+                    break;
 
-            case 1:
+                case 3:
+                case 4:
+                    if (range > 50.0) {value = "10V";} else {value = "5V";}
+                    break;
 
-                switch (response) {
+                default:
+                    throw new DeviceException("That range is not supported.");
 
-                    case "HIGH":
-                        range = 100.0;
-                        break;
+            }
 
-                    case "MID":
-                        range = 10.0;
-                        break;
-
-                    case "LOW":
-                        range = 1.0;
-                        break;
-
-                }
-
-                break;
-
-            case 2:
-
-                switch (response) {
-
-                    case "HIGH":
-                        range = 100.0;
-                        break;
-
-                    case "LOW":
-                        range = 10.0;
-                        break;
-
-                }
-
-                break;
-
-            case 3:
-            case 4:
-
-                switch (response) {
-
-                    case "10V":
-                        range = 100.0;
-                        break;
-
-                    case "5V":
-                        range = 50.0;
-                        break;
-
-                }
-
-                break;
+            query("LOOP %d:RANGE %s", number, value);
 
         }
 
-        if (range == null) {
-            throw new IOException("Invalid response from Cryo-Con 22C.");
-        }
-
-        return range;
-
-    }
-
-    @Override
-    public void setTargetTemperature(int output, double temperature) throws IOException, DeviceException {
-        checkOutput(output);
-        query("LOOP %d:SETPT %e", output + 1, temperature);
-        updateAutoPID(output);
-    }
-
-    @Override
-    public double getTargetTemperature(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return Double.parseDouble(query("LOOP %d:SETPT?", output + 1).replace("K", ""));
-    }
-
-    @Override
-    public void setTemperatureRampRate(int output, double kPerMin) throws IOException, DeviceException {
-
-        checkOutput(output);
-
-        query("LOOP %d:RATE %f", output + 1, kPerMin);
-
-        if (kPerMin == 0 && isUsingAutoHeater(output)) {
-            query("LOOP %d:TYPE PID", output + 1);
-        } else if (isUsingAutoHeater(output)) {
-            query("LOOP %d:TYPE RAMPP", output + 1);
+        @Override
+        public String getName() {
+            return String.format("Heater %d", number);
         }
 
     }
 
-    @Override
-    public double getTemperatureRampRate(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return queryDouble("LOOP %d:RATE?", output);
-    }
+    private class Loop extends ZonedLoop {
 
-    @Override
-    public double getHeaterPower(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return queryDouble("LOOP %d:OUTPWR?", output + 1);
-    }
+        private final Heater  heater;
+        private       boolean ramping = false;
 
-    @Override
-    public double getFlow(int output) throws DeviceException {
-        checkOutput(output);
-        return 0;
-    }
+        private Loop(Heater heater) {
+            this.heater = heater;
+        }
 
-    @Override
-    public void useAutoHeater(int output) throws IOException, DeviceException {
+        @Override
+        public String getIDN() throws IOException, DeviceException {
+            return CryoCon22C.this.getIDN();
+        }
 
-        checkOutput(output);
+        @Override
+        public Address getAddress() {
+            return CryoCon22C.this.getAddress();
+        }
 
-        if (getTemperatureRampRate(output) == 0) {
-            query("LOOP %d:TYPE PID", output + 1);
-        } else {
-            query("LOOP %d:TYPE RAMPP", output + 1);
+        @Override
+        public String getName() throws IOException, DeviceException {
+            return String.format("Loop %d", heater.getNumber());
+        }
+
+        @Override
+        public void setRampEnabled(boolean flag) throws IOException, DeviceException {
+
+            ramping = flag;
+
+            if (isPIDEnabled()) {
+                write("LOOP %d:TYPE RAMPP");
+            }
+
+        }
+
+        @Override
+        public boolean isRampEnabled() {
+            return ramping;
+        }
+
+        @Override
+        public void setRampRate(double limit) throws IOException {
+            query("LOOP %d:RATE %f", heater.getNumber(), limit);
+        }
+
+        @Override
+        public double getRampRate() throws IOException {
+            return queryDouble("LOOP %d:RATE?", heater.getNumber());
+        }
+
+        @Override
+        public double getPValue() throws IOException, DeviceException {
+            return queryDouble("LOOP %d:PGAIN?", heater.getNumber());
+        }
+
+        @Override
+        public double getIValue() throws IOException, DeviceException {
+            return queryDouble("LOOP %d:IGAIN?", heater.getNumber());
+        }
+
+        @Override
+        public double getDValue() throws IOException, DeviceException {
+            return queryDouble("LOOP %d:DGAIN?", heater.getNumber());
+        }
+
+        @Override
+        public void setPValue(double value) throws IOException, DeviceException {
+            query("LOOP %d:PGAIN %e", heater.getNumber(), value);
+        }
+
+        @Override
+        public void setIValue(double value) throws IOException, DeviceException {
+            query("LOOP %d:IGAIN %e", heater.getNumber(), value);
+        }
+
+        @Override
+        public void setDValue(double value) throws IOException, DeviceException {
+            query("LOOP %d:DGAIN %e", heater.getNumber(), value);
+        }
+
+        @Override
+        public Input getInput() throws IOException, DeviceException {
+
+            String used = query("LOOP %d:SOURCE?", heater.getNumber());
+
+            switch (used) {
+
+                case "CHA":
+                    return SENSOR_A;
+
+                case "CHB":
+                    return SENSOR_B;
+
+                default:
+                    throw new IOException("Invalid response from Cryo-Con 22C");
+
+            }
+
+        }
+
+        @Override
+        public Heater getOutput() throws IOException, DeviceException {
+            return heater;
+        }
+
+        @Override
+        public void setInput(Input input) throws IOException, DeviceException {
+
+            if (input instanceof TMeter && (input == SENSOR_A || input == SENSOR_B)) {
+                query("LOOP %d:SOURCE %s", heater.getNumber(), ((TMeter) input).getSensor());
+            } else {
+                throw new DeviceException("That input cannot be used for this TC/PID loop");
+            }
+
+        }
+
+        @Override
+        public void setOutput(Output output) throws DeviceException {
+
+            if (output != heater) {
+                throw new DeviceException("That output cannot be used for this TC/PID loop");
+            }
+
+        }
+
+        @Override
+        public List<Heater> getAvailableOutputs() {
+            return List.of(heater);
+        }
+
+        @Override
+        public List<TMeter> getAvailableInputs() {
+            return List.of(SENSOR_A, SENSOR_B);
+        }
+
+        @Override
+        public void setManualValue(double value) throws IOException, DeviceException {
+
+            if (!Util.isBetween(value, 0, 100)) {
+                throw new DeviceException("Heater power must be between 0 and 100, %s given", value);
+            }
+
+            query("LOOP %d:PMANUAL %e", heater.getNumber(), value);
+
+        }
+
+        @Override
+        public double getManualValue() throws IOException {
+            return queryDouble("LOOP %d:PMANUAL?", heater.getNumber());
+        }
+
+        @Override
+        public void setPIDEnabled(boolean flag) throws IOException, DeviceException {
+
+            if (isRampEnabled()) {
+                query("LOOP %d:TYPE RAMPP", heater.getNumber());
+                updatePID(getSetPoint());
+            } else {
+                query("LOOP %d:TYPE PID", heater.getNumber());
+                updatePID(getSetPoint());
+            }
+
+        }
+
+        @Override
+        public boolean isPIDEnabled() throws IOException {
+            return !query("LOOP %d:TYPE?", heater.getNumber()).trim().equalsIgnoreCase("MAN");
+        }
+
+        @Override
+        public void setSetPoint(double temperature) throws IOException, DeviceException {
+            query("LOOP %d:SETP %e", heater.getNumber(), temperature);
+            updatePID(temperature);
+        }
+
+        @Override
+        public double getSetPoint() throws IOException, DeviceException {
+            return queryDouble("LOOP %d:SETP?", heater.getNumber());
         }
 
     }
 
-    @Override
-    public boolean isUsingAutoHeater(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        String response = query("LOOP %d:TYPE?").trim().toUpperCase();
-        return response.equals("PID") || response.equals("RAMPP");
-    }
 
-    @Override
-    public void useAutoFlow(int output) throws IOException, DeviceException {
-        checkOutput(output);
-    }
-
-    @Override
-    public boolean isUsingAutoFlow(int output) throws IOException, DeviceException {
-        checkOutput(output);
-        return false;
-    }
-
-    @Override
-    public void setHeaterPower(int output, double powerPCT) throws IOException, DeviceException {
-        checkOutput(output);
-        query("LOOP %d:TYPE MAN");
-        query("LOOP %d:PMANUAL %e", powerPCT);
-    }
-
-    @Override
-    public void setFlow(int output, double outputPCT) throws IOException, DeviceException {
-        checkOutput(output);
-    }
-
-    @Override
-    public double getTemperature(int sensor) throws IOException, DeviceException {
-        checkSensor(sensor);
-        return queryDouble("INPUT? %s", SENSORS.get(sensor));
-    }
-
-    @Override
-    public int getNumSensors() {
-        return 2;
-    }
-
-    @Override
-    public String getSensorName(int sensorNumber) {
-
-        try {
-            checkSensor(sensorNumber);
-            return String.format("%s (%s)", SENSORS.get(sensorNumber), query("INPUT %s:NAME?", SENSORS.get(sensorNumber)));
-        } catch (Exception e) {
-            return "Unknown Sensor";
-        }
-
-    }
-
-    @Override
-    public void setTemperatureRange(int sensor, double range) throws IOException, DeviceException {
-        checkSensor(sensor);
-    }
-
-    @Override
-    public double getTemperatureRange(int sensor) throws IOException, DeviceException {
-        checkSensor(sensor);
-        return 999.999;
-    }
-
-    @Override
-    public String getOutputName() {
-        return getOutputName(0);
-    }
-
-    @Override
-    public String getSensorName() {
-
-        try {
-            return getSensorName(getUsedSensor());
-        } catch (IOException | DeviceException e) {
-            return "Unknown Sensor";
-        }
-
-    }
 }

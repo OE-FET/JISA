@@ -10,6 +10,7 @@ import jisa.results.ResultTable;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math.optimization.OptimizationException;
+import org.apache.commons.math.optimization.SimpleVectorialPointChecker;
 import org.apache.commons.math.optimization.fitting.CurveFitter;
 import org.apache.commons.math.optimization.fitting.GaussianFitter;
 import org.apache.commons.math.optimization.fitting.HarmonicFitter;
@@ -262,8 +263,8 @@ public class Fitting {
         ParametricRealFunction func = toPRFunction(toFit);
 
         AbstractLeastSquaresOptimizer optimiser = new LevenbergMarquardtOptimizer();
-        optimiser.setMaxIterations(1000);
-        optimiser.setMaxEvaluations(1000);
+        optimiser.setMaxIterations(10000);
+        optimiser.setMaxEvaluations(10000);
 
         CurveFitter fitter = new CurveFitter(optimiser);
 
@@ -278,6 +279,7 @@ public class Fitting {
             double[] params = fitter.fit(func, initial);
 
             return new Fit() {
+
                 @Override
                 public double getParameter(int order) {
                     return params[order];
@@ -302,6 +304,7 @@ public class Fitting {
                 public Function getFunction() {
                     return x1 -> toFit.calculate(x1, params);
                 }
+
             };
 
 

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<HBox fx:id="box" alignment="CENTER_LEFT" styleClass="text-field" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1">
+
+        <TextField fx:id="hours" alignment="CENTER_RIGHT" maxWidth="25" style="-fx-background-color: transparent; -fx-padding: 5 0 5 7.5;" HBox.hgrow="ALWAYS" />
+        <Label alignment="CENTER" maxWidth="-Infinity" minWidth="-Infinity" text="h" HBox.hgrow="NEVER" />
+        <TextField fx:id="minutes" alignment="CENTER_RIGHT" maxWidth="25" style="-fx-background-color: transparent; -fx-padding: 5 0 5 7.5;" HBox.hgrow="ALWAYS" />
+        <Label alignment="CENTER" maxWidth="-Infinity" minWidth="-Infinity" text="m" HBox.hgrow="NEVER" />
+        <TextField fx:id="seconds" alignment="CENTER_RIGHT" maxWidth="25" style="-fx-background-color: transparent; -fx-padding: 5 0 5 7.5;" HBox.hgrow="ALWAYS" />
+        <Label alignment="CENTER" maxWidth="-Infinity" minWidth="-Infinity" text="s" HBox.hgrow="NEVER" />
+        <TextField fx:id="millis" alignment="CENTER_RIGHT" maxWidth="35" style="-fx-background-color: transparent; -fx-padding: 5 0 5 7.5;" HBox.hgrow="ALWAYS" />
+        <Label alignment="CENTER" maxWidth="-Infinity" minWidth="-Infinity" text="ms" HBox.hgrow="NEVER"/>
+        <Pane maxWidth="Infinity" prefWidth="50" HBox.hgrow="ALWAYS"/>
+
+</HBox>

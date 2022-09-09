@@ -103,7 +103,7 @@ public class Configurator<I extends Instrument> extends Fields {
 
         if (configuration.isChoice()) {
 
-            Field<Integer> choice = addChoice(configuration.getChoiceName(), configuration.getChoice(), configuration.getChoices().toArray(new String[0]));
+            Field<Integer> choice = addChoice(configuration.getChoiceName(), configuration.getChoice(), configuration.getChoices().toArray(String[]::new));
 
             choice.setOnChange(() -> {
                 configuration.selectChoice(choice.get());

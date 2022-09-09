@@ -1,9 +1,16 @@
 package jisa.maths.fits;
 
+import jisa.Util;
+import jisa.maths.functions.Function;
 import jisa.maths.functions.PFunction;
 import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.MaxIterationsExceededException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
+import org.apache.commons.math.analysis.solvers.NewtonSolver;
+import org.apache.commons.math.optimization.*;
+import org.apache.commons.math.optimization.direct.NelderMead;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -12,24 +19,87 @@ public class Fitter {
 
     private final PFunction                function;
     private final MultivariateRealFunction minFunction;
-    private final List<Point>              points = new LinkedList<>();
+    private final MultivariateRealFunction leastSquares;
+    private final List<Point>              points            = new LinkedList<>();
     private       double[]                 start;
     private       double[]                 maxLimits;
     private       double[]                 minLimits;
     private       int                      maxIterations;
     private       int                      maxEvaluations;
-    private       double                   maxChange;
-    private       double                   minChange;
+    private       double                   relativeTolerance = 1e-50;
+    private       double                   absoluteTolerance = 1e-50;
+
+    public static double[] estimateErrors(MultivariateRealFunction leastSquares, double[] solution, int numPoints) throws FunctionEvaluationException {
+
+        double[] errors = new double[solution.length];
+
+        for (int i = 0; i < solution.length; i++) {
+
+            final int j = i;
+
+            NewtonSolver solver = new NewtonSolver();
+            double       minLS  = leastSquares.value(solution);
+            double       minLI  = numPoints * Math.log(2.0 * Math.PI * minLS / (numPoints - 1)) + ((numPoints - 1) * minLS / (2.0 * minLS));
+
+            Function function = x -> {
+
+                double[] point = solution.clone();
+                point[j] = x;
+
+                try {
+
+                    double ls         = leastSquares.value(point);
+                    double likelihood = numPoints * Math.log(2.0 * Math.PI * minLS / (numPoints - 1)) + ((numPoints - 1) * ls / (2.0 * minLS));
+
+                    return Math.abs((minLI + 0.5) - likelihood);
+
+                } catch (FunctionEvaluationException e) {
+
+                    return Double.POSITIVE_INFINITY;
+
+                }
+
+            };
+
+            try {
+                errors[i] = Math.abs(solver.solve(6000, function, -Double.MAX_VALUE, Double.MAX_VALUE, solution[i]) - solution[i]);
+            } catch (MaxIterationsExceededException e) {
+                errors[i] = Double.NaN;
+            }
+
+        }
+
+        return errors;
+
+    }
 
     public Fitter(PFunction function) {
 
         this.function    = function;
-        this.minFunction = parameters -> points
+        this.minFunction = parameters -> {
+
+            for (int i = 0; i < parameters.length; i++) {
+
+                if (!Util.isBetween(parameters[i], minLimits[i], maxLimits[i])) {
+                    return Double.POSITIVE_INFINITY;
+                }
+
+            }
+
+            return points
+                .stream()
+                .mapToDouble(p -> p.w * Math.pow((p.y - function.calculate(p.x, parameters)) / p.y, 2))
+                .sum() / points.stream().mapToDouble(p -> p.w).sum();
+
+        };
+
+        this.leastSquares = parameters -> points
             .stream()
-            .mapToDouble(p -> p.w * Math.pow((p.y - function.calculate(p.x, parameters)), 2))
+            .mapToDouble(p -> Math.pow((p.y - function.calculate(p.x, parameters)), 2))
             .sum();
 
     }
+
 
     public void addPoint(double x, double y, double w) {
         points.add(new Point(x, y, w));
@@ -113,31 +183,86 @@ public class Fitter {
         this.maxEvaluations = maxEvaluations;
     }
 
-    public double getMaxChange() {
-        return maxChange;
+    public double getRelativeTolerance() {
+        return relativeTolerance;
     }
 
-    public void setMaxChange(double maxChange) {
-        this.maxChange = maxChange;
+    public void setRelativeTolerance(double relativeTolerance) {
+        this.relativeTolerance = relativeTolerance;
     }
 
-    public double getMinChange() {
-        return minChange;
+    public double getAbsoluteTolerance() {
+        return absoluteTolerance;
     }
 
-    public void setMinChange(double minChange) {
-        this.minChange = minChange;
+    public void setAbsoluteTolerance(double absoluteTolerance) {
+        this.absoluteTolerance = absoluteTolerance;
     }
 
-    protected double[] gradient(final double[] parameters) {
-        return new double[0];
-    }
+    public Fit fit() {
 
-    public Fit fit() throws FunctionEvaluationException {
+        double[]   position = start.clone();
+        NelderMead opt      = new NelderMead();
 
-        double[] position = start.clone();
+        opt.setMaxEvaluations(maxEvaluations);
+        opt.setMaxIterations(maxIterations);
 
-        return null;
+        opt.setConvergenceChecker(new SimpleRealPointChecker(relativeTolerance, absoluteTolerance));
+
+        try {
+
+            RealPointValuePair pair = opt.optimize(minFunction, GoalType.MINIMIZE, start);
+            Function           func = x -> function.calculate(x, pair.getPoint());
+
+            return new Fit() {
+
+                private double[] errors = null;
+
+                @Override
+                public double getParameter(int order) {
+                    return pair.getPoint()[order];
+                }
+
+                @Override
+                public double[] getParameters() {
+                    return pair.getPoint();
+                }
+
+                @Override
+                public double getError(int order) {
+                    return getErrors()[order];
+                }
+
+                @Override
+                public double[] getErrors() {
+
+                    if (errors == null) {
+
+                        try {
+                            errors = estimateErrors(leastSquares, pair.getPoint(), points.size());
+                        } catch (Throwable e) {
+                            errors = new double[pair.getPoint().length];
+                            Arrays.fill(errors, Double.NaN);
+                        }
+
+                    }
+
+                    return errors.clone();
+
+                }
+
+                @Override
+                public Function getFunction() {
+                    return func;
+                }
+
+            };
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
 
     }
 

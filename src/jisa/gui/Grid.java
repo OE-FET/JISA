@@ -11,7 +11,6 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import javax.naming.event.NamingEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,15 +18,15 @@ public class Grid extends JFXElement implements Element, Container {
 
     private static final int DEFAULT_NUM_COLS = 3;
 
-    public  GridPane           pane;
-    public  ScrollPane         scroll;
-    private Stage              stage;
-    private int                nCols;
-    private int                r     = 0;
-    private int                c     = 0;
-    private boolean            hGrow = true;
-    private boolean            vGrow = true;
-    private ArrayList<Element> added = new ArrayList<>();
+    public        GridPane           pane;
+    public        ScrollPane         scroll;
+    private       Stage              stage;
+    private       int                nCols;
+    private       int                r     = 0;
+    private       int                c     = 0;
+    private       boolean            hGrow = true;
+    private       boolean            vGrow = true;
+    private final ArrayList<Element> added = new ArrayList<>();
 
     /**
      * Creates a Grid element with the given title and number of columns.
@@ -117,8 +116,8 @@ public class Grid extends JFXElement implements Element, Container {
         GUI.runNow(() -> {
 
             Timeline timeline = new Timeline(
-                    new KeyFrame(Duration.ZERO, new KeyValue(scroll.vvalueProperty(), scroll.getVvalue())),
-                    new KeyFrame(Duration.millis(250), new KeyValue(scroll.vvalueProperty(), percentage))
+                new KeyFrame(Duration.ZERO, new KeyValue(scroll.vvalueProperty(), scroll.getVvalue())),
+                new KeyFrame(Duration.millis(250), new KeyValue(scroll.vvalueProperty(), percentage))
             );
 
             scroll.applyCss();
@@ -230,8 +229,8 @@ public class Grid extends JFXElement implements Element, Container {
         Pane     child     = (Pane) pane.getChildren().get(index);
 
         animation.getKeyFrames().addAll(
-                new KeyFrame(Duration.ZERO, new KeyValue(child.maxWidthProperty(), child.getWidth()), new KeyValue(child.opacityProperty(), 1.0)),
-                new KeyFrame(Duration.millis(250), new KeyValue(child.maxWidthProperty(), 0.0), new KeyValue(child.opacityProperty(), 0.0))
+            new KeyFrame(Duration.ZERO, new KeyValue(child.maxWidthProperty(), child.getWidth()), new KeyValue(child.opacityProperty(), 1.0)),
+            new KeyFrame(Duration.millis(250), new KeyValue(child.maxWidthProperty(), 0.0), new KeyValue(child.opacityProperty(), 0.0))
         );
 
         animation.setOnFinished(event -> {
@@ -253,8 +252,8 @@ public class Grid extends JFXElement implements Element, Container {
         child.setOpacity(0.0);
 
         animation.getKeyFrames().addAll(
-                new KeyFrame(Duration.ZERO, new KeyValue(child.maxWidthProperty(), 0.0), new KeyValue(child.opacityProperty(), 0.0)),
-                new KeyFrame(Duration.millis(250), new KeyValue(child.maxWidthProperty(), Region.USE_PREF_SIZE), new KeyValue(child.opacityProperty(), 1.0))
+            new KeyFrame(Duration.ZERO, new KeyValue(child.maxWidthProperty(), 0.0), new KeyValue(child.opacityProperty(), 0.0)),
+            new KeyFrame(Duration.millis(250), new KeyValue(child.maxWidthProperty(), Region.USE_PREF_SIZE), new KeyValue(child.opacityProperty(), 1.0))
         );
 
         added.add(toAdd);

@@ -15,10 +15,25 @@ import static java.util.Collections.emptyMap;
 public class ActionQueue implements Serializable {
 
     private final List<Action<?>>               queue         = new LinkedList<>();
+    private       ActionQueue                   startActions  = null;
+    private       ActionQueue                   stopActions   = null;
     private final List<ListListener<Action<?>>> listListeners = new LinkedList<>();
 
     private boolean isRunning = false;
     private boolean isStopped = false;
+
+    public ActionQueue() {
+        this(true);
+    }
+
+    protected ActionQueue(boolean subQueues) {
+
+        if (subQueues) {
+            startActions = new ActionQueue(false);
+            stopActions  = new ActionQueue(false);
+        }
+
+    }
 
     /**
      * Adds an action to the queue.
@@ -36,8 +51,8 @@ public class ActionQueue implements Serializable {
     }
 
     public void saveActions(String path) throws IOException {
-        JSONObject object = new JSONObject(queue);
-        FileOutputStream out = new FileOutputStream(path);
+        JSONObject       object = new JSONObject(queue);
+        FileOutputStream out    = new FileOutputStream(path);
         out.write(object.toString(4).getBytes());
         out.close();
     }
@@ -262,6 +277,14 @@ public class ActionQueue implements Serializable {
         return start(true);
     }
 
+    public ActionQueue getStartActions() {
+        return startActions;
+    }
+
+    public ActionQueue getStopActions() {
+        return stopActions;
+    }
+
     protected Result start(boolean resume) {
 
         isRunning = true;
@@ -278,6 +301,10 @@ public class ActionQueue implements Serializable {
         }
 
         queue.forEach(Action::reset);
+
+        if (startActions != null) {
+            startActions.start(false);
+        }
 
         for (Action action : queue) {
 
@@ -297,19 +324,34 @@ public class ActionQueue implements Serializable {
             switch (action.getStatus()) {
 
                 case INTERRUPTED:
+
+                    if (stopActions != null) {
+                        stopActions.start(false);
+                    }
+
                     isRunning = false;
                     return Result.INTERRUPTED;
 
                 case ERROR:
 
                     if (action.isCritical()) {
+
+                        if (stopActions != null) {
+                            stopActions.start(false);
+                        }
+
                         isRunning = false;
                         return Result.ERROR;
+
                     }
                     break;
 
             }
 
+        }
+
+        if (stopActions != null) {
+            stopActions.start(false);
         }
 
         isRunning = false;

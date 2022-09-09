@@ -1,7 +1,6 @@
 package jisa.gui.plotting;
 
 import de.gsi.dataset.event.UpdateEvent;
-import de.gsi.dataset.spi.DoubleErrorDataSet;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.paint.Color;
@@ -13,7 +12,6 @@ import jisa.results.ResultTable;
 import jisa.results.Row;
 import jisa.results.RowEvaluable;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -24,6 +22,7 @@ public class JISASeries implements Series {
     private final ObservableList<JISAErrorDataSet> dataSets       = FXCollections.observableArrayList();
     private final Map<Object, JISAErrorDataSet>    mapping        = new TreeMap<>();
     private final Plot                             plot;
+    private       int                              limit          = 0;
     private       ResultTable                      watched        = null;
     private       ResultTable.RowListener          rowListener    = null;
     private       ResultTable.ClearListener        clearListener  = null;
@@ -39,7 +38,23 @@ public class JISASeries implements Series {
     public JISASeries(String name, Plot plot) {
 
         this.plot = plot;
-        dataSets.add(new JISAErrorDataSet(name, plot));
+
+        JISAErrorDataSet set = new JISAErrorDataSet(name, plot);
+
+        set.addListener(e -> {
+
+            if (limit > 0 && set.getDataCount() > limit) {
+
+                set.autoNotification().set(false);
+                set.remove(0, set.getDataCount() - limit);
+                set.autoNotification().set(true);
+                set.fireInvalidated(new UpdateEvent(set));
+
+            }
+
+        });
+
+        dataSets.add(set);
 
     }
 
@@ -56,13 +71,19 @@ public class JISASeries implements Series {
 
             r -> {
 
-                if (filter.test(r)) {
+                try {
 
-                    double errorX = Math.abs(eX.evaluate(r).doubleValue());
-                    double errorY = Math.abs(eY.evaluate(r).doubleValue());
+                    if (filter.test(r)) {
 
-                    selector.select(r).add(x.evaluate(r).doubleValue(), y.evaluate(r).doubleValue(), errorY, errorY, errorX, errorX);
+                        double errorX = Math.abs(eX.evaluate(r).doubleValue());
+                        double errorY = Math.abs(eY.evaluate(r).doubleValue());
 
+                        selector.select(r).add(x.evaluate(r).doubleValue(), y.evaluate(r).doubleValue(), errorY, errorY, errorX, errorX);
+
+                    }
+
+                } catch (RuntimeException e) {
+                    e.printStackTrace();
                 }
 
             }
@@ -82,19 +103,57 @@ public class JISASeries implements Series {
     }
 
     public Series watch(ResultTable table, Column<? extends Number> xData, Column<? extends Number> yData) {
+
         watch(table, r -> r.get(xData), r -> r.get(yData), r -> 0.0);
-        if (getName().startsWith("Series")) {setName(yData.getName());}
-        if (plot.getXLabel().trim().isBlank()) {plot.setXLabel(xData.getName(), xData.getUnits());}
-        if (plot.getYLabel().trim().isBlank()) {plot.setYLabel(yData.getName(), yData.getUnits());}
+
+        if (getName().startsWith("Series")) {
+            setName(yData.getName());
+        }
+
+        if (plot.getXLabel().trim().isBlank()) {
+            plot.setXLabel(xData.getName(), xData.getUnits());
+        }
+
+        if (plot.getYLabel().trim().isBlank()) {
+            plot.setYLabel(yData.getName(), yData.getUnits());
+        }
+
         return this;
+
+    }
+
+    @Override
+    public Series setLimit(int count) {
+
+        this.limit = count;
+        dataSets.forEach(s -> s.fireInvalidated(new UpdateEvent(s)));
+        return this;
+
+    }
+
+    @Override
+    public int getLimit() {
+        return limit;
     }
 
     public Series watch(ResultTable table, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> eData) {
+
         watch(table, r -> r.get(xData), r -> r.get(yData), r -> r.get(eData));
-        if (getName().startsWith("Series")) {setName(yData.getName());}
-        if (plot.getXLabel().trim().isBlank()) {plot.setXLabel(xData.getName(), xData.getUnits());}
-        if (plot.getYLabel().trim().isBlank()) {plot.setYLabel(yData.getName(), yData.getUnits());}
+
+        if (getName().startsWith("Series")) {
+            setName(yData.getName());
+        }
+
+        if (plot.getXLabel().trim().isBlank()) {
+            plot.setXLabel(xData.getName(), xData.getUnits());
+        }
+
+        if (plot.getYLabel().trim().isBlank()) {
+            plot.setYLabel(yData.getName(), yData.getUnits());
+        }
+
         return this;
+
     }
 
     protected void regeneratePoints() {
@@ -131,7 +190,22 @@ public class JISASeries implements Series {
                     set = dataSets.get(0);
                     set.setName(pattern.getName(r));
                 } else {
+
                     set = new JISAErrorDataSet(pattern.getName(r), plot);
+
+                    set.addListener(e -> {
+
+                        if (limit > 0 && set.getDataCount() > limit) {
+
+                            set.autoNotification().set(false);
+                            set.remove(0, set.getDataCount() - limit);
+                            set.autoNotification().set(true);
+                            set.fireInvalidated(new UpdateEvent(set));
+
+                        }
+
+                    });
+
                 }
 
                 set.copyStyleOf(dataSets.get(0));
@@ -169,14 +243,24 @@ public class JISASeries implements Series {
 
     @Override
     public Series addPoint(double x, double y, double errorX, double errorY) {
+
+        if (watched != null) {
+            throw new IllegalStateException("Cannot manually edit a series that is watching a ResultTable.");
+        }
+
         double eXHalf = Math.abs(errorX);
         double eYHalf = Math.abs(errorY);
         dataSets.get(0).add(x, y, eYHalf, eYHalf, eXHalf, eXHalf);
         return this;
+
     }
 
     @Override
     public Series addPoints(Iterable<? extends Number> x, Iterable<? extends Number> y, Iterable<? extends Number> eY) {
+
+        if (watched != null) {
+            throw new IllegalStateException("Cannot manually edit a series that is watching a ResultTable.");
+        }
 
         dataSets.get(0).autoNotification().set(false);
 
@@ -190,6 +274,30 @@ public class JISASeries implements Series {
 
         dataSets.get(0).autoNotification().set(true);
         dataSets.forEach(d -> d.fireInvalidated(new UpdateEvent(d, "add")));
+
+        return this;
+
+    }
+
+    public Series removePoint(int index) {
+
+        if (watched != null) {
+            throw new IllegalStateException("Cannot manually edit a series that is watching a ResultTable.");
+        }
+
+        dataSets.get(0).remove(index);
+
+        return this;
+
+    }
+
+    public Series removePoints(int from, int to) {
+
+        if (watched != null) {
+            throw new IllegalStateException("Cannot manually edit a series that is watching a ResultTable.");
+        }
+
+        dataSets.get(0).remove(from, to);
 
         return this;
 

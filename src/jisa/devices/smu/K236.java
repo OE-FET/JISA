@@ -1,5 +1,6 @@
 package jisa.devices.smu;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.control.*;
 import jisa.devices.DeviceException;
@@ -8,15 +9,12 @@ import jisa.enums.AMode;
 import jisa.enums.Function;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
-import jisa.Util;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
