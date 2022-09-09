@@ -47,10 +47,18 @@ public class USBTMCDriver implements Driver {
     }
 
     private static boolean matches(DeviceDescriptor descriptor, USBAddress address) {
+        boolean  matches;
+        try
+        {
+            matches = descriptor.idVendor() == address.getManufacturer()
+                    && descriptor.idProduct() == address.getModel()
+                    && (address.getSerialNumber() == null || descriptor.iSerialNumber() == Integer.parseInt(address.getSerialNumber()));
+        }
+        catch (NumberFormatException e) {
+            matches = false; // no match
+        }
 
-        return descriptor.idVendor() == address.getManufacturer()
-            && descriptor.idProduct() == address.getModel()
-            && (address.getSerialNumber() == null || descriptor.iSerialNumber() == Integer.parseInt(address.getSerialNumber()));
+        return matches;
 
     }
 
