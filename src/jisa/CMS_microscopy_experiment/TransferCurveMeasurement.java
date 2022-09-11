@@ -57,12 +57,12 @@ public class TransferCurveMeasurement extends MeasurementPlus {
 
     private void initializedMeasurementInstruments() throws IOException, InterruptedException, DeviceException {
         funcGen.reset();
-        funcGen.enableLogger("Func Gen K3390", null);
+        // funcGen.enableLogger("Func Gen K3390", null);
         funcGen.setStandardImpedanceMode();
         funcGen.outputDC(0);
 
         smu.reset();
-        smu.enableLogger("SMU K2400", null);
+        // smu.enableLogger("SMU K2400", null);
         smu.setFourProbeEnabled(false);
         smu.setSource(Source.VOLTAGE);
         // smu.useAutoVoltageRange();

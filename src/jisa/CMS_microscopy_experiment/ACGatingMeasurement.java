@@ -50,6 +50,12 @@ public class ACGatingMeasurement extends MeasurementPlus {
     private final SR830 lockInAmp;
     private final K2400 smu;
 
+    private boolean cameraAvailable;
+    private boolean useCamera;
+    private CameraWrapper camera;
+    private int cameraNFrames = -1;
+    private String cameraOutputFile = null;
+
     // configurators
     private StringParameter testName;
     private DoubleParameter gateVoltageHigh_V;
@@ -72,6 +78,11 @@ public class ACGatingMeasurement extends MeasurementPlus {
      * If currentConfig is null, some default values will be given here.
      */
     public ACGatingMeasurement(K3390 funcGen, SR830 lockInAmp, K2400 smu, TestConfigs currentConfig){
+        this(funcGen, lockInAmp, smu, null,  currentConfig);
+    }
+
+    public ACGatingMeasurement(K3390 funcGen, SR830 lockInAmp, K2400 smu, CameraWrapper camera, TestConfigs currentConfig)
+    {
         super();
         this.funcGen = funcGen;
         this.lockInAmp = lockInAmp;
@@ -87,6 +98,37 @@ public class ACGatingMeasurement extends MeasurementPlus {
                     1000, 50, "");
         }
         initializeConfigurators();
+
+        this.camera = camera;
+        if (this.camera == null) {
+            cameraAvailable = false;
+            useCamera = false;
+        } else{
+            cameraAvailable = true;
+            useCamera = false;
+        }
+    }
+
+    /**
+     * Set whether the camera should be used during data acquisition.
+     */
+    public void setUseCamera(boolean isUsing){
+        if (!cameraAvailable)
+            return;
+        useCamera = isUsing;
+    }
+
+    public void setCameraNFrames(int n)
+    {
+        if ((!cameraAvailable) || (n <=0))
+            return;
+        cameraNFrames = n;
+    }
+
+    public void setCameraOutputFile(String filename){
+        if (!cameraAvailable)
+            return;
+        cameraOutputFile = filename;
     }
 
     /**
@@ -179,8 +221,25 @@ public class ACGatingMeasurement extends MeasurementPlus {
      */
     private void initializedMeasurementInstruments() throws IOException, InterruptedException, DeviceException {
 
+        if (useCamera && cameraAvailable) {
+            // if camera is used, wait for the camera to be ready first
+            while (camera.isRecording()){
+                System.out.println("Waiting for the camera to be ready...");
+                sleep(1000);
+            }
+            // send camera settings
+            if (cameraNFrames > 0)
+                camera.setNFrame(cameraNFrames);
+            if (cameraOutputFile == null){
+                System.out.println("No camera output file available! Camera disabled!");
+                useCamera = false;
+            } else{
+                camera.setFileName(cameraOutputFile);
+            }
+        }
+
         funcGen.reset();
-        funcGen.enableLogger("Func Gen K3390", null);
+        // funcGen.enableLogger("Func Gen K3390", null);
         // might need to change it to low impedance mode later!
         funcGen.setStandardImpedanceMode();
         funcGen.turnOnSynchronizationSignal();
@@ -189,7 +248,7 @@ public class ACGatingMeasurement extends MeasurementPlus {
         // set up the SMU
         if (smuAvailable){
             smu.reset();
-            smu.enableLogger("SMU K2400", null);
+            // smu.enableLogger("SMU K2400", null);
             smu.setSource(Source.VOLTAGE);
             // smu.useAutoVoltageRange();
             smu.setVoltageLimit(MAX_ABS_VOLTAGE);    // 5 V voltage limit
@@ -202,7 +261,7 @@ public class ACGatingMeasurement extends MeasurementPlus {
 
         lockInAmp.reset();
 
-        lockInAmp.enableLogger("Lock-in SR830", null);
+        // lockInAmp.enableLogger("Lock-in SR830", null);
         lockInAmp.setRefMode(LockIn.RefMode.EXTERNAL);
         lockInAmp.setExternalTriggerMode(LockIn.TrigMode.POS_TTL);
         // wait for the PLL to get locked.
@@ -221,11 +280,19 @@ public class ACGatingMeasurement extends MeasurementPlus {
         if (currentConfig.gateFrequency_Hz < 200)
             lockInAmp.setSyncFilterEnabled(true);
         lockInAmp.setTimeConstant(currentConfig.timeConstant_ms*0.001);
-        Thread.sleep(20000);
+
+        System.out.println("Waiting for the system to stabilize");
+        Thread.sleep(5000);
+        lockInAmp.setRange(0.1);
+        Thread.sleep(5000);
+
+        System.out.println("Starting camera");
+        if (useCamera && cameraAvailable){
+            camera.startRecording();
+        }
         //lockInAmp.autoGain();
         // get a bit of reserve for the lock-in amp
         //lockInAmp.setRange(lockInAmp.getRange()*2);
-        lockInAmp.setRange(0.05);
     }
 
     @Override
@@ -254,6 +321,11 @@ public class ACGatingMeasurement extends MeasurementPlus {
                 timeToSleep = 0;
             // the timing might not be very precise...
             Thread.sleep(timeToSleep);
+            if (useCamera && cameraAvailable){
+                // if the camera is done, we can stop,
+                if (!camera.isRecording())
+                    break;
+            }
         }
         System.out.print("Measurement ended!");
     }
@@ -326,6 +398,11 @@ public class ACGatingMeasurement extends MeasurementPlus {
             i = i + 1;
             outputFilePath = Paths.get(currentConfig.outputPath, currentConfig.testName + i + "_config.json");
         }
+
+        // every time this is called, the camera name will be updated automatically
+        // not the best solution, but it does offer a quick fix.
+        cameraOutputFile = String.valueOf(Paths.get(currentConfig.outputPath, currentConfig.testName + i + "_video"));
+
         return new String[]{
                 String.valueOf(Paths.get(currentConfig.outputPath, currentConfig.testName + i + "_config.json")),
                 String.valueOf(Paths.get(currentConfig.outputPath, currentConfig.testName + i + "_data.csv"))};
