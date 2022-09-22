@@ -1,15 +1,15 @@
 package jisa.visa;
 
+import jisa.addresses.Address;
+import jisa.addresses.ModbusAddress;
+import jisa.devices.DeviceException;
+import jisa.devices.interfaces.Instrument;
 import com.intelligt.modbus.jlibmodbus.ModbusMaster;
 import com.intelligt.modbus.jlibmodbus.ModbusMasterFactory;
 import com.intelligt.modbus.jlibmodbus.exception.ModbusIOException;
 import com.intelligt.modbus.jlibmodbus.serial.SerialParameters;
 import com.intelligt.modbus.jlibmodbus.serial.SerialPort;
 import com.intelligt.modbus.jlibmodbus.serial.SerialPortException;
-import jisa.addresses.Address;
-import jisa.addresses.ModbusAddress;
-import jisa.devices.DeviceException;
-import jisa.devices.interfaces.Instrument;
 import jssc.SerialPortList;
 
 import java.io.IOException;

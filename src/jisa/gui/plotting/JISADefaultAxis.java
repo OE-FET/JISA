@@ -1,23 +1,23 @@
 package jisa.gui.plotting;
 
-import de.gsi.chart.axes.Axis;
-import de.gsi.chart.axes.AxisTransform;
-import de.gsi.chart.axes.LogAxisType;
-import de.gsi.chart.axes.TickUnitSupplier;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import de.gsi.chart.axes.spi.AbstractAxis;
 import de.gsi.chart.axes.spi.AbstractAxisParameter;
 import de.gsi.chart.axes.spi.AxisRange;
-import de.gsi.chart.axes.spi.transforms.DefaultAxisTransform;
-import de.gsi.chart.axes.spi.transforms.LogarithmicTimeAxisTransform;
+import de.gsi.dataset.event.AxisChangeEvent;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.chart.NumberAxis;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import de.gsi.chart.axes.Axis;
+import de.gsi.chart.axes.AxisTransform;
+import de.gsi.chart.axes.LogAxisType;
+import de.gsi.chart.axes.TickUnitSupplier;
+import de.gsi.chart.axes.spi.transforms.DefaultAxisTransform;
+import de.gsi.chart.axes.spi.transforms.LogarithmicTimeAxisTransform;
 
 /**
  * A axis class that plots a range of numbers with major tick marks every "tickUnit". You can use any Number type with

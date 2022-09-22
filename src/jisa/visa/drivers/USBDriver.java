@@ -9,6 +9,8 @@ import jisa.visa.VISAException;
 import jisa.visa.connections.Connection;
 import org.usb4java.*;
 
+import javax.usb.util.UsbUtil;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;

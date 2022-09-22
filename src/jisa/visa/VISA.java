@@ -3,12 +3,17 @@ package jisa.visa;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.TCPIPAddress;
+import jisa.addresses.VISAAddress;
 import jisa.gui.GUI;
 import jisa.visa.connections.Connection;
 import jisa.visa.drivers.*;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static jisa.visa.VISANativeInterface.VI_ATTR_INTF_INST_NAME;
 
 /**
  * Static class for accessing the native VISA library in a more Java-friendly way

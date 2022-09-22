@@ -7,6 +7,7 @@ import jisa.devices.interfaces.TC;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 

@@ -2,9 +2,12 @@ package jisa;
 
 import javafx.application.Platform;
 import jisa.addresses.Address;
+import jisa.devices.interfaces.SMU;
+import jisa.gui.Connector;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
+import jisa.results.Column;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
