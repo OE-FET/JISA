@@ -294,7 +294,7 @@ public class CryoCon22C extends VISADevice implements TC {
         }
 
         @Override
-        public String getName() throws IOException, DeviceException {
+        public String getName() {
             return String.format("Loop %d", heater.getNumber());
         }
 

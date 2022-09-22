@@ -132,7 +132,7 @@ public class K6430 extends KeithleySCPI {
     }
 
     @Override
-    public String getChannelName() {
+    public String getName() {
         return "Keithley 6430 SMU";
     }
 

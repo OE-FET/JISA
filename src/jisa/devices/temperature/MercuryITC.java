@@ -7,7 +7,6 @@ import jisa.devices.interfaces.TC;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -352,7 +351,7 @@ public class MercuryITC extends VISADevice implements TC {
         }
 
         @Override
-        public String getName() throws IOException, DeviceException {
+        public String getName() {
             return sensor.getName();
         }
 
@@ -439,14 +438,7 @@ public class MercuryITC extends VISADevice implements TC {
 
         @Override
         public List<Heater> getAvailableOutputs() {
-
-            try {
-                return (List<Heater>) getHeaters();
-            } catch (IOException | DeviceException e) {
-                e.printStackTrace();
-                return Collections.emptyList();
-            }
-
+            return (List<Heater>) getHeaters();
         }
 
         @Override

@@ -15,16 +15,10 @@ import java.util.List;
 /**
  * Interface for defining the standard functionality of Source-Measure Unit (SMU) instruments.
  */
-public interface SMU extends IVMeter, IVSource, Channel<SMU> {
+public interface SMU extends IVMeter, IVSource {
 
     public static String getDescription() {
         return "Source Measure Unit";
-    }
-
-    String getChannelName();
-
-    default Class<SMU> getChannelClass() {
-        return SMU.class;
     }
 
     /**

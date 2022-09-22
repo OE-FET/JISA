@@ -13,6 +13,7 @@ import jisa.visa.VISAException;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -339,6 +340,16 @@ public class Util {
         Map<K,V> map = new LinkedHashMap<>();
         build.map(map);
         return map;
+
+    }
+
+    public static <T> T castOrDefault(Object toCast, T orElse) {
+
+        try {
+            return (T) toCast;
+        } catch (ClassCastException e) {
+            return orElse;
+        }
 
     }
 
@@ -712,7 +723,7 @@ public class Util {
 
     }
 
-    public static byte[] trimArray(byte[] toTrim) {
+    public static byte[] trimBytes(byte[] toTrim) {
 
         int pos = toTrim.length - 1;
 
@@ -729,6 +740,18 @@ public class Util {
 
         System.arraycopy(toTrim, 0, trimmed, 0, trimmed.length);
 
+        return trimmed;
+
+    }
+
+    public static byte[] trimBytes(ByteBuffer buffer, int start, int length) {
+        return trimBytes(buffer.array(), start, length);
+    }
+
+    public static byte[] trimBytes(byte[] toTrim, int start, int length) {
+
+        byte[] trimmed = new byte[length];
+        System.arraycopy(toTrim, start, trimmed, 0, length);
         return trimmed;
 
     }

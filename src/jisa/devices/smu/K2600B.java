@@ -128,7 +128,7 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
-    public String getChannelName(int channel) {
+    public String getName(int channel) {
 
         switch (channel) {
 
@@ -784,7 +784,7 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
-    public String getChannelName() {
+    public String getName() {
         return "Keithley 2600B Series SMU";
     }
 

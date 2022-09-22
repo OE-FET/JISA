@@ -2,7 +2,6 @@ package jisa;
 
 import javafx.application.Platform;
 import jisa.addresses.Address;
-import jisa.addresses.StrAddress;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
@@ -77,7 +76,7 @@ public class Main {
                             break;
                         }
 
-                        DeviceShell conShell = new DeviceShell(new StrAddress(values[0]));
+                        DeviceShell conShell = new DeviceShell(Address.parse(values[0]));
                         conShell.connect();
                         conShell.showAndWait();
                         break;

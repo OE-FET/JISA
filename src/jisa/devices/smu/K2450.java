@@ -74,7 +74,7 @@ public class K2450 extends KeithleySCPI {
     }
 
     @Override
-    public String getChannelName() {
+    public String getName() {
         return "Main Channel";
     }
 

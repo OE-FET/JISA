@@ -1,26 +1,23 @@
 package jisa.gui.plotting;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
+import de.gsi.chart.axes.Axis;
+import de.gsi.chart.axes.AxisTransform;
+import de.gsi.chart.axes.LogAxisType;
+import de.gsi.chart.axes.TickUnitSupplier;
 import de.gsi.chart.axes.spi.AbstractAxis;
 import de.gsi.chart.axes.spi.AbstractAxisParameter;
 import de.gsi.chart.axes.spi.AxisRange;
-import de.gsi.dataset.event.AxisChangeEvent;
+import de.gsi.chart.axes.spi.transforms.DefaultAxisTransform;
+import de.gsi.chart.axes.spi.transforms.LogarithmicTimeAxisTransform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.chart.NumberAxis;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import de.gsi.chart.axes.Axis;
-import de.gsi.chart.axes.AxisTransform;
-import de.gsi.chart.axes.LogAxisType;
-import de.gsi.chart.axes.TickUnitSupplier;
-import de.gsi.chart.axes.spi.transforms.DefaultAxisTransform;
-import de.gsi.chart.axes.spi.transforms.LogarithmicTimeAxisTransform;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A axis class that plots a range of numbers with major tick marks every "tickUnit". You can use any Number type with
@@ -38,7 +35,6 @@ import de.gsi.chart.axes.spi.transforms.LogarithmicTimeAxisTransform;
  */
 public class JISADefaultAxis extends AbstractAxis implements Axis {
 
-    private static final    Logger                       LOGGER                = LoggerFactory.getLogger(JISADefaultAxis.class);
     public static final     double                       DEFAULT_LOG_MIN_VALUE = 1e-6;
     private static final    int                          DEFAULT_RANGE_LENGTH  = 2;
     private                 double                       offset;

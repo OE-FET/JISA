@@ -5,10 +5,11 @@ import jisa.devices.DeviceException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public interface PID extends Instrument {
+public interface PID extends Instrument, MultiInstrument {
 
     /**
      * Represents an input channel for a PID controller
@@ -144,11 +145,8 @@ public interface PID extends Instrument {
          * Returns the name of this loop.
          *
          * @return Name of loop
-         *
-         * @throws IOException     Upon communications error
-         * @throws DeviceException Upon compatibility error
          */
-        String getName() throws IOException, DeviceException;
+        String getName();
 
         /**
          * Sets the value of the set-point for this loop.
@@ -588,6 +586,41 @@ public interface PID extends Instrument {
 
     }
 
+    @Override
+    default List<Class<? extends Instrument>> getSubInstrumentTypes() {
+        return List.of(Input.class, Output.class, Loop.class);
+    }
+
+    @Override
+    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+
+        if (type.isAssignableFrom(Input.class)) {
+            return (List<I>) getInputs();
+        } else if (type.isAssignableFrom(Output.class)) {
+            return (List<I>) getOutputs();
+        } else if (type.isAssignableFrom(Loop.class)) {
+            return (List<I>) getLoops();
+        } else {
+            return Collections.emptyList();
+        }
+
+    }
+
+    @Override
+    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
+
+        if (type.isAssignableFrom(Input.class)) {
+            return (I) getInput(index);
+        } else if (type.isAssignableFrom(Output.class)) {
+            return (I) getOutput(index);
+        } else if (type.isAssignableFrom(Loop.class)) {
+            return (I) getLoop(index);
+        } else {
+            return null;
+        }
+
+    }
+
     /**
      * Returns a list of all input channels connected to this PID controller.
      *
@@ -596,7 +629,7 @@ public interface PID extends Instrument {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    List<? extends Input> getInputs() throws IOException, DeviceException;
+    List<? extends Input> getInputs();
 
     /**
      * Returns the input channel with a given index connected to this PID controller.
@@ -608,7 +641,7 @@ public interface PID extends Instrument {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    default Input getInput(int index) throws IOException, DeviceException {
+    default Input getInput(int index) {
         return getInputs().get(index);
     }
 
@@ -620,7 +653,7 @@ public interface PID extends Instrument {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    List<? extends Output> getOutputs() throws IOException, DeviceException;
+    List<? extends Output> getOutputs();
 
     /**
      * Returns the output channel with a given index connected to this PID controller.
@@ -632,7 +665,7 @@ public interface PID extends Instrument {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    default Output getOutput(int index) throws IOException, DeviceException {
+    default Output getOutput(int index) {
         return getOutputs().get(index);
     }
 
@@ -644,7 +677,7 @@ public interface PID extends Instrument {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    List<? extends Loop> getLoops() throws IOException, DeviceException;
+    List<? extends Loop> getLoops();
 
     /**
      * Returns the control loop with a given index, provided by this PID controller.
@@ -656,7 +689,7 @@ public interface PID extends Instrument {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    default Loop getLoop(int index) throws IOException, DeviceException {
+    default Loop getLoop(int index) {
         return getLoops().get(index);
     }
 

@@ -210,8 +210,8 @@ public class LS336 extends VISADevice implements TC {
         }
 
         @Override
-        public String getName() throws IOException, DeviceException {
-            return getOutput().getName();
+        public String getName() {
+            return output.getName();
         }
 
         @Override

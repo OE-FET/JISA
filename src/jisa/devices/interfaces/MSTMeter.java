@@ -7,18 +7,44 @@ import jisa.devices.DeviceException;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-public interface MSTMeter extends TMeter, MultiSensor<TMeter> {
+public interface MSTMeter extends TMeter, MultiInstrument {
 
     public static String getDescription() {
         return "Multi-Sensor Thermometer";
     }
 
-    default Class<TMeter> getSensorClass() {
-        return TMeter.class;
+    @Override
+    default List<Class<? extends Instrument>> getSubInstrumentTypes() {
+        return List.of(TMeter.class);
     }
+
+    @Override
+    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+
+        if (type.isAssignableFrom(TMeter.class)) {
+            return (List<I>) getSensors();
+        } else {
+            return Collections.emptyList();
+        }
+
+    }
+
+    @Override
+    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
+
+        if (type.isAssignableFrom(TMeter.class)) {
+            return (I) getSensor(index);
+        } else {
+            return null;
+        }
+
+    }
+
+    String getName(int channel);
 
     /**
      * Returns the temperature being reported by the specified sensor.
@@ -116,17 +142,17 @@ public interface MSTMeter extends TMeter, MultiSensor<TMeter> {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    default TMeter getSensor(int sensor) throws IOException, DeviceException {
+    default TMeter getSensor(int sensor) {
 
         if (!Util.isBetween(sensor, 0, getNumSensors() - 1)) {
-            throw new DeviceException("Sensor %d does not exist.", sensor);
+            return null;
         }
 
         return new TMeter() {
 
             @Override
-            public String getSensorName() {
-                return MSTMeter.this.getSensorName(sensor);
+            public String getName() {
+                return MSTMeter.this.getName(sensor);
             }
 
             @Override
@@ -163,18 +189,12 @@ public interface MSTMeter extends TMeter, MultiSensor<TMeter> {
 
     }
 
-
-    @Override
     default List<TMeter> getSensors() {
 
         List<TMeter> list = new ArrayList<>();
 
         for (int i = 0; i < getNumSensors(); i++) {
-            try {
-                list.add(getSensor(i));
-            } catch (IOException | DeviceException e) {
-                e.printStackTrace();
-            }
+            list.add(getSensor(i));
         }
 
         return list;

@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 /**
  * Abstract class to define the standard functionality of temperature controllers
  */
-public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSensor<TMeter> {
+public interface TC extends PID, MultiInstrument {
 
     static String getDescription() {
         return "Temperature Controller";
@@ -61,21 +61,7 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
 
     }
 
-    interface Loop extends PID.Loop, Channel<Loop> {
-
-        default Class<Loop> getChannelClass() {
-            return Loop.class;
-        }
-
-        default String getChannelName() {
-
-            try {
-                return getName();
-            } catch (Exception e) {
-                return "Unknown Loop";
-            }
-
-        }
+    interface Loop extends PID.Loop {
 
         void setSetPoint(double temperature) throws IOException, DeviceException;
 
@@ -113,9 +99,11 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
 
     }
 
-    List<? extends Loop> getLoops() throws IOException, DeviceException;
 
-    default Loop getLoop(int index) throws IOException, DeviceException {
+
+    List<? extends Loop> getLoops();
+
+    default Loop getLoop(int index) {
         return getLoops().get(index);
     }
 
@@ -123,7 +111,7 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
 
     }
 
-    default List<? extends TMeter> getThermometers() throws IOException, DeviceException {
+    default List<? extends TMeter> getThermometers() {
 
         return getInputs().stream()
                           .filter(i -> i instanceof TMeter)
@@ -132,7 +120,7 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
 
     }
 
-    default List<? extends Heater> getHeaters() throws IOException, DeviceException {
+    default List<? extends Heater> getHeaters() {
 
         return getInputs().stream()
                           .filter(i -> i instanceof Heater)
@@ -141,16 +129,11 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
 
     }
 
-    default List<Class<? extends Instrument>> getMultiTypes() {
-
-        return List.of(
-            PID.Loop.class,
-            jisa.devices.interfaces.TMeter.class
-        );
-
+    default List<Class<? extends Instrument>> getSubInstrumentTypes() {
+        return List.of(TMeter.class, Heater.class, Loop.class, Input.class, Output.class, PID.Loop.class);
     }
 
-    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) throws IOException, DeviceException {
+    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
 
         if (jisa.devices.interfaces.TMeter.class.isAssignableFrom(type)) {
             return getThermometers().stream().map(i -> (I) i).collect(Collectors.toUnmodifiableList());
@@ -162,100 +145,14 @@ public interface TC extends PID, MultiInstrument, MultiChannel<TC.Loop>, MultiSe
 
     }
 
-    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) throws IOException, DeviceException {
+    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
 
         try {
             return getSubInstruments(type).get(index);
         } catch (IndexOutOfBoundsException e) {
-            throw new DeviceException("No \"%s\" with index %d found.", type.getSimpleName(), index);
+            return null;
         }
 
-    }
-
-    @Override
-    default int getNumChannels() {
-
-        try {
-            return getLoops().size();
-        } catch (IOException | DeviceException e) {
-            return 0;
-        }
-
-    }
-
-    @Override
-    default String getChannelName(int channelNumber) {
-
-        try {
-            return getLoop(channelNumber).getChannelName();
-        } catch (IOException | DeviceException e) {
-            return "Unknown Loop";
-        }
-
-    }
-
-    @Override
-    default List<Loop> getChannels() {
-
-        try {
-            return (List<Loop>) getLoops();
-        } catch (IOException | DeviceException e) {
-            return Collections.emptyList();
-        }
-
-    }
-
-    @Override
-    default Loop getChannel(int channelNumber) throws IOException, DeviceException {
-        return getLoop(channelNumber);
-    }
-
-    @Override
-    default Class<Loop> getChannelClass() {
-        return Loop.class;
-    }
-
-    @Override
-    default int getNumSensors() {
-
-        try {
-            return getThermometers().size();
-        } catch (Exception e) {
-            return 0;
-        }
-
-    }
-
-    @Override
-    default String getSensorName(int sensorNumber) {
-
-        try {
-            return getThermometers().get(0).getName();
-        } catch (Exception e) {
-            return "Name Unknown";
-        }
-
-    }
-
-    @Override
-    default List<jisa.devices.interfaces.TMeter> getSensors() {
-
-        try {
-            return getThermometers().stream().map(t -> (jisa.devices.interfaces.TMeter) t).collect(Collectors.toUnmodifiableList());
-        } catch (Exception e) {
-            return Collections.emptyList();
-        }
-
-    }
-
-    @Override
-    default jisa.devices.interfaces.TMeter getSensor(int sensorNumber) throws IOException, DeviceException {
-        return getSensors().get(sensorNumber);
-    }
-
-    @Override
-    default Class<jisa.devices.interfaces.TMeter> getSensorClass() {
-        return jisa.devices.interfaces.TMeter.class;
     }
 
 }

@@ -1,50 +1,71 @@
 package jisa.addresses;
 
-public class PipeAddress implements Address {
-    
-    private final String value;
+import jisa.Util;
 
-    public PipeAddress(String value) {
-        this.value = value.trim();
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static jisa.Util.castOrDefault;
+
+public class PipeAddress implements Address {
+
+    private String pipeName = "";
+
+    public PipeAddress() {}
+
+    public PipeAddress(String pipeName) {
+        this.pipeName = pipeName;
     }
 
-    @Override
-    public String toString() {
-        return String.format("PIPE::%s::INSTR", value);
+    public PipeAddress(Map<String, Object> parameters) {
+        setParameters(parameters);
     }
 
     public String getPipeName() {
-        return value;
+        return pipeName;
     }
 
-    public PipeAddress toPipeAddress() {
-        return this;
+    public void setPipeName(String pipeName) {
+        this.pipeName = pipeName;
     }
 
-    public PipeParams createParams() {
-        PipeParams pipeParams = new PipeParams();
-        pipeParams.set(0, getPipeName());
-        return pipeParams;
+    @Override
+    public String getTypeName() {
+        return "Pipe";
     }
 
+    @Override
+    public String getVISAString() {
+        return String.format("PIPE::%s::INSTR", pipeName);
+    }
 
-    public static class PipeParams extends AddressParams<PipeAddress> {
+    @Override
+    public Map<String, Object> getParameters() {
+        return Util.buildMap(map -> map.put("Pipe Name", pipeName));
+    }
 
-        public PipeParams() {
+    @Override
+    public void setParameters(Map<String, Object> parameters) {
+        pipeName = castOrDefault(parameters.getOrDefault("Pipe Name", pipeName), pipeName);
+    }
 
-            addParam("Pipe Name", true);
+    @Override
+    public void parseString(String text) throws InvalidAddressFormatException {
 
+        Pattern pattern = Pattern.compile("PIPE::(.+?)::INSTR");
+        Matcher matcher = pattern.matcher(text);
+
+        if (matcher.find()) {
+            pipeName = matcher.group(1);
+        } else {
+            throw new InvalidAddressFormatException(text, "Pipe");
         }
 
-        @Override
-        public PipeAddress createAddress() {
-            return new PipeAddress(getString(0));
-        }
-
-        @Override
-        public String getName() {
-            return "Windows Named Pipe";
-        }
     }
-    
+
+    public String toString() {
+        return getJISAString();
+    }
+
 }

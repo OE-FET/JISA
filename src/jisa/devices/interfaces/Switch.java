@@ -4,7 +4,7 @@ import jisa.devices.DeviceException;
 
 import java.io.IOException;
 
-public interface Switch extends Instrument, Channel<Switch> {
+public interface Switch extends Instrument {
 
     public static String getDescription() {
         return "Switch";

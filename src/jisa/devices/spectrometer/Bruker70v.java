@@ -78,4 +78,9 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
 
             return response;
     }
+
+    @Override
+    public String getName() {
+        return "Bruker 70v FTIR";
+    }
 }

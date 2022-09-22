@@ -154,21 +154,21 @@ public class GPIBDriver implements Driver {
     @Override
     public Connection open(Address address) throws VISAException {
 
-        GPIBAddress addr = address.toGPIBAddress();
-
-        if (addr == null) {
+        if (!(address instanceof GPIBAddress)) {
             throw new VISAException("Can only open GPIB devices using GPIB driver!");
         }
 
-        lib.SendIFC(addr.getBus());
+        GPIBAddress addr = (GPIBAddress) address;
 
-        int ud = lib.ibdev(addr.getBus(), addr.getAddress(), 0, GPIBNativeInterface.T3s, 1, 0);
+        lib.SendIFC(addr.getBoardNumber());
+
+        int ud = lib.ibdev(Math.max(0, addr.getBoardNumber()), addr.getPrimaryAddress(), Math.max(0, addr.getSecondaryAddress()), GPIBNativeInterface.T3s, 1, 0);
 
         if (wasError()) {
-            throw new VISAException("Could not open %s using GPIB.", addr.toString());
+            throw new VISAException("Could not open %s using GPIB.", addr.getJISAString());
         }
 
-        lib.EnableRemote(addr.getBus(), new short[]{(short) addr.getAddress(), -1});
+        lib.EnableRemote(addr.getBoardNumber(), new short[]{(short) addr.getPrimaryAddress(), -1});
 
         if (wasError()) {
             throw new VISAException("Error putting %s into remote mode using GPIB.", addr.toString());
@@ -337,7 +337,7 @@ public class GPIBDriver implements Driver {
 
     @Override
     public boolean worksWith(Address address) {
-        return address.getType() == Address.Type.GPIB;
+        return address instanceof GPIBAddress;
     }
 
     public List<GPIBAddress> search(int board) throws VISAException {

@@ -24,6 +24,11 @@ public class FakeTC implements TC {
     }
 
     @Override
+    public String getName() {
+        return "Fake TC";
+    }
+
+    @Override
     public void close() throws IOException, DeviceException {
         updater.stop();
     }

@@ -760,8 +760,7 @@ public class K236 extends VISADevice implements SMU {
         return OffMode.NORMAL;
     }
 
-    @Override
-    public String getChannelName() {
+    public String getName() {
         return "Main Channel";
     }
 

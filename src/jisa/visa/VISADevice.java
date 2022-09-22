@@ -161,6 +161,11 @@ public class VISADevice implements Instrument {
         retryCount = count;
     }
 
+    public synchronized void setTimeout(int msec) throws IOException {
+        this.timeout = msec;
+        getConnection().setTimeout(msec);
+    }
+
     /**
      * Returns the address used to connect to the device
      *
@@ -359,6 +364,11 @@ public class VISADevice implements Instrument {
      */
     public synchronized String getIDN() throws IOException {
         return query(C_IDN);
+    }
+
+    @Override
+    public String getName() {
+        return "VISA Device";
     }
 
     /**

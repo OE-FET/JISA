@@ -20,11 +20,11 @@ public abstract class PipeDevice implements Instrument {
 
     public PipeDevice(Address address) throws IOException {
 
-        PipeAddress pipeAddress = address.toPipeAddress();
-
-        if (pipeAddress == null) {
+        if (!(address instanceof PipeAddress)) {
             throw new IOException("This instrument requires a windows named pipe address.");
         }
+
+        PipeAddress pipeAddress = (PipeAddress) address;
 
         this.pipe    = new RandomAccessFile(pipeAddress.getPipeName(), "rw");
         this.address = pipeAddress;

@@ -23,7 +23,8 @@ public class DDEDevice implements Instrument {
     }
 
     public DDEDevice(Address address) throws Exception {
-        LXIAddress tcp_addr = address.toTCPIPAddress();
+
+        LXIAddress tcp_addr = (LXIAddress) address;
 
         try {
             host = tcp_addr.getHost();
@@ -45,6 +46,11 @@ public class DDEDevice implements Instrument {
 
     @Override
     public String getIDN() throws IOException, DeviceException {
+        return "DDE Device";
+    }
+
+    @Override
+    public String getName() {
         return "DDE Device";
     }
 

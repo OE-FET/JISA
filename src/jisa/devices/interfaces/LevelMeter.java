@@ -4,16 +4,13 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
-public interface LevelMeter extends Instrument, MultiChannel<LevelMeter>, Channel<LevelMeter> {
+public interface LevelMeter extends Instrument, MultiInstrument {
 
     public static String getDescription() {
         return "Level Meter";
-    }
-
-    default Class<LevelMeter> getChannelClass() {
-        return LevelMeter.class;
     }
 
     double getLevel(int channel) throws IOException, DeviceException;
@@ -22,36 +19,42 @@ public interface LevelMeter extends Instrument, MultiChannel<LevelMeter>, Channe
         return getLevel(0);
     }
 
-    default String getChannelName() {
-        return getChannelName(0);
+    String getName(int i);
+
+    default String getName() {
+        return getName(0);
+    }
+
+    default List<Class<? extends Instrument>> getSubInstrumentTypes() {
+        return List.of(LevelMeter.class);
     }
 
     default LevelMeter getChannel(int channelNo) {
 
         return new LevelMeter() {
             @Override
-            public String getChannelName() {
-                return LevelMeter.this.getChannelName(channelNo);
+            public <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+                return Collections.emptyList();
             }
 
             @Override
-            public int getNumChannels() {
-                return 1;
-            }
-
-            @Override
-            public String getChannelName(int channelNumber) {
-                return "Channel " + channelNo;
-            }
-
-            @Override
-            public List<LevelMeter> getChannels() {
-                return List.of(this);
+            public <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
+                return null;
             }
 
             @Override
             public double getLevel(int channel) throws IOException, DeviceException {
+                return getLevel();
+            }
+
+            @Override
+            public double getLevel() throws IOException, DeviceException {
                 return LevelMeter.this.getLevel(channelNo);
+            }
+
+            @Override
+            public String getName(int i) {
+                return getName();
             }
 
             @Override

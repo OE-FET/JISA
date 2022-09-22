@@ -10,6 +10,7 @@ import jisa.visa.connections.GPIBConnection;
 import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
@@ -77,6 +78,8 @@ public class ITC503 extends VISADevice implements TC {
         super(address);
 
         Connection connection = getConnection();
+
+        connection.setEncoding(StandardCharsets.US_ASCII);
 
         if (connection instanceof GPIBConnection) {
             ((GPIBConnection) connection).setEOIEnabled(false);
@@ -695,12 +698,12 @@ public class ITC503 extends VISADevice implements TC {
 
         private static final Pattern PATTERN = Pattern.compile("X([0-9])A([0-9])C([0-9])S([0-9][0-9])H([0-9])L([0-9])");
 
-        public int X;
-        public int A;
-        public int C;
-        public int S;
-        public int H;
-        public int L;
+        public final int X;
+        public final int A;
+        public final int C;
+        public final int S;
+        public final int H;
+        public final int L;
 
         public Status(String response) throws IOException {
 

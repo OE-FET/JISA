@@ -117,7 +117,7 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
 
     }
 
-    public String getChannelName(int channel) {
+    public String getName(int channel) {
 
         try {
             checkChannel(channel);
@@ -128,7 +128,7 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
 
     }
 
-    public String getChannelName() {
+    public String getName() {
         return "Agilent SPA";
     }
 

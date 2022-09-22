@@ -3,11 +3,12 @@ package jisa.maths.fits;
 import jisa.Util;
 import jisa.maths.functions.Function;
 import jisa.maths.functions.PFunction;
+import jisa.maths.matrices.RealMatrix;
 import org.apache.commons.math.FunctionEvaluationException;
-import org.apache.commons.math.MaxIterationsExceededException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
-import org.apache.commons.math.analysis.solvers.NewtonSolver;
-import org.apache.commons.math.optimization.*;
+import org.apache.commons.math.optimization.GoalType;
+import org.apache.commons.math.optimization.RealPointValuePair;
+import org.apache.commons.math.optimization.SimpleRealPointChecker;
 import org.apache.commons.math.optimization.direct.NelderMead;
 
 import java.util.Arrays;
@@ -29,47 +30,52 @@ public class Fitter {
     private       double                   relativeTolerance = 1e-50;
     private       double                   absoluteTolerance = 1e-50;
 
-    public static double[] estimateErrors(MultivariateRealFunction leastSquares, double[] solution, int numPoints) throws FunctionEvaluationException {
+    public static double[] estimateErrors(MultivariateRealFunction leastSquares, double[] solution, int n) throws FunctionEvaluationException {
 
-        double[] errors = new double[solution.length];
+        final double                   minLS      = leastSquares.value(solution);
+        final double                   sig2       = minLS / (n - 1);
+        final MultivariateRealFunction likelihood = p -> n * 0.5 * Math.log(2.0 * Math.PI * sig2) + (leastSquares.value(p) / (2.0 * sig2));
 
-        for (int i = 0; i < solution.length; i++) {
+        RealMatrix hessian = new RealMatrix(
+            solution.length,
+            solution.length,
+            (r, c) -> secondDerivative(likelihood, solution, r, c)
+        );
 
-            final int j = i;
+        return hessian.invert().getDiagonal().map(Math::abs).map(Math::sqrt).divide(Math.sqrt(n)).getCol(0);
 
-            NewtonSolver solver = new NewtonSolver();
-            double       minLS  = leastSquares.value(solution);
-            double       minLI  = numPoints * Math.log(2.0 * Math.PI * minLS / (numPoints - 1)) + ((numPoints - 1) * minLS / (2.0 * minLS));
+    }
 
-            Function function = x -> {
+    private static double secondDerivative(MultivariateRealFunction function, double[] point, int dimX, int dimY) {
 
-                double[] point = solution.clone();
-                point[j] = x;
+        try {
 
-                try {
+            final double   diffX = Math.abs(point[dimX]) * 0.02;
+            final double   diffY = Math.abs(point[dimY]) * 0.02;
+            final double[] pnt   = point.clone();
 
-                    double ls         = leastSquares.value(point);
-                    double likelihood = numPoints * Math.log(2.0 * Math.PI * minLS / (numPoints - 1)) + ((numPoints - 1) * ls / (2.0 * minLS));
+            pnt[dimX]  = point[dimX];
+            pnt[dimY]  = point[dimY] - (diffY / 2.0);
+            pnt[dimX] -= diffX / 2.0;
+            final double val1 = function.value(pnt);
+            pnt[dimX] += diffX;
+            final double val2  = function.value(pnt);
+            final double grad1 = (val2 - val1) / diffX;
 
-                    return Math.abs((minLI + 0.5) - likelihood);
+            pnt[dimX]  = point[dimX];
+            pnt[dimY]  = point[dimY] + (diffY / 2.0);
+            pnt[dimX] -= diffX / 2.0;
+            final double val3 = function.value(pnt);
+            pnt[dimX] += diffX;
+            final double val4  = function.value(pnt);
+            final double grad2 = (val4 - val3) / diffX;
 
-                } catch (FunctionEvaluationException e) {
+            return (grad2 - grad1) / diffY;
 
-                    return Double.POSITIVE_INFINITY;
-
-                }
-
-            };
-
-            try {
-                errors[i] = Math.abs(solver.solve(6000, function, -Double.MAX_VALUE, Double.MAX_VALUE, solution[i]) - solution[i]);
-            } catch (MaxIterationsExceededException e) {
-                errors[i] = Double.NaN;
-            }
-
+        } catch (Exception e) {
+            return Double.NaN;
         }
 
-        return errors;
 
     }
 

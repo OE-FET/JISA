@@ -1,52 +1,71 @@
 package jisa.addresses;
 
+import jisa.Util;
+
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static jisa.Util.castOrDefault;
+
 public class IDAddress implements Address {
 
-    private final String value;
+    private String id = "";
 
-    public IDAddress(String value) {
-        this.value = value.trim();
+    public IDAddress() {}
+
+    public IDAddress(String id) {
+        this.id = id;
     }
 
-    @Override
-    public String toString() {
-        return String.format("SNID::%s::INSTR", value);
-    }
-
-    public IDAddress toIDAddress() {
-        return this;
-    }
-
-    public AddressParams createParams() {
-
-        AddressParams params = new IDParams();
-        params.set(0, value);
-
-        return params;
-
+    public IDAddress(Map<String, Object> parameters) {
+        setParameters(parameters);
     }
 
     public String getID() {
-        return value;
+        return id;
     }
 
-    public static class IDParams extends AddressParams<IDAddress> {
+    public void setID(String id) {
+        this.id = id;
+    }
 
-        public IDParams() {
+    @Override
+    public String getTypeName() {
+        return "SN/ID";
+    }
 
-            addParam("SN/ID", true);
+    @Override
+    public String getVISAString() {
+        return String.format("SNID::%s::INSTR", id);
+    }
 
+    @Override
+    public Map<String, Object> getParameters() {
+        return Util.buildMap(map -> map.put("ID", id));
+    }
+
+    @Override
+    public void setParameters(Map<String, Object> parameters) {
+        id = castOrDefault(parameters.getOrDefault("ID", id), id);
+    }
+
+    @Override
+    public void parseString(String text) throws InvalidAddressFormatException {
+
+        Pattern pattern = Pattern.compile("SNID::(.*?)::INSTR");
+        Matcher matcher = pattern.matcher(text);
+
+        if (matcher.find()) {
+            id = matcher.group(1).trim();
+        } else {
+            throw new InvalidAddressFormatException(text, "Serial Number or ID");
         }
 
-        @Override
-        public IDAddress createAddress() {
-            return new IDAddress(getString(0));
-        }
+    }
 
-        @Override
-        public String getName() {
-            return "Native SN/ID";
-        }
+    public String toString() {
+        return getJISAString();
     }
 
 }

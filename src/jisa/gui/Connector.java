@@ -18,11 +18,11 @@ import jisa.control.ConfigBlock;
 import jisa.control.Connection;
 import jisa.control.SRunnable;
 import jisa.devices.interfaces.Instrument;
-import jisa.devices.smu.SMUCluster;
 import org.reflections.Reflections;
 
 import java.lang.reflect.Modifier;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -30,21 +30,21 @@ public class Connector<T extends Instrument> extends JFXElement {
 
 
     @FXML
-    protected Label                                             errorText;
+    protected Label                               errorText;
     @FXML
-    protected ChoiceBox<Class<? extends T>>                     driverChoice;
+    protected ChoiceBox<Class<? extends T>>       driverChoice;
     @FXML
-    protected ChoiceBox<Class<? extends Address.AddressParams>> protocolChoice;
+    protected ChoiceBox<Class<? extends Address>> protocolChoice;
     @FXML
-    protected GridPane                                          parameters;
+    protected GridPane                            parameters;
     @FXML
-    protected ImageView icon;
+    protected ImageView                           icon;
     @FXML
-    protected Button    removeButton;
+    protected Button                              removeButton;
 
-    protected Connection<T>            connection;
-    protected Address.AddressParams<?> addressParams = null;
-    protected boolean                  connecting    = false;
+    protected Connection<T>       connection;
+    protected Map<String, Object> addressParams = null;
+    protected boolean             connecting    = false;
 
 
     public Connector(Connection<T> connection) {
@@ -88,31 +88,30 @@ public class Connector<T extends Instrument> extends JFXElement {
                 Modifier.isAbstract(driver.getModifiers())
                     || Modifier.isInterface(driver.getModifiers())
                     || driver.getSimpleName().trim().equals("")
-                    || driver.equals(SMUCluster.class)
                     || driver.getSimpleName().toLowerCase().contains("virtual")
                     || driver.getSimpleName().toLowerCase().contains("dummy")
             )
         ).sorted(Comparator.comparing(Class::getSimpleName)).collect(Collectors.toList())));
 
-        protocolChoice.getItems().setAll(reflections.getSubTypesOf(Address.AddressParams.class)
+        protocolChoice.getItems().setAll(reflections.getSubTypesOf(Address.class)
                                                     .stream()
-                                                    .filter(Objects::nonNull)
+                                                    .filter(c -> !c.isInterface() && !Modifier.isAbstract(c.getModifiers()))
                                                     .sorted(Comparator.comparing(Class::getSimpleName))
                                                     .collect(Collectors.toList()));
 
         protocolChoice.setConverter(new StringConverter<>() {
 
             @Override
-            public String toString(Class<? extends Address.AddressParams> aClass) {
+            public String toString(Class<? extends Address> aClass) {
                 try {
-                    return aClass.getConstructor().newInstance().getName();
+                    return aClass.getConstructor().newInstance().getTypeName();
                 } catch (Exception e) {
                     return "Unknown Protocol";
                 }
             }
 
             @Override
-            public Class<? extends Address.AddressParams> fromString(String s) {
+            public Class<? extends Address> fromString(String s) {
                 return null;
             }
 
@@ -125,8 +124,8 @@ public class Connector<T extends Instrument> extends JFXElement {
         }
 
         if (connection.getAddress() != null) {
-            addressParams = connection.getAddress().createParams();
-            protocolChoice.getSelectionModel().select(addressParams.getClass());
+            addressParams = connection.getAddress().getParameters();
+            protocolChoice.getSelectionModel().select(connection.getAddress().getClass());
             updateAddressParameters();
         }
 
@@ -181,10 +180,14 @@ public class Connector<T extends Instrument> extends JFXElement {
 
     private synchronized void changeProtocol() {
 
-        if (addressParams == null || addressParams.getClass() != protocolChoice.getValue()) {
+        if (protocolChoice.getValue().equals(connection.getAddress().getClass())) {
+
+            addressParams = connection.getAddress().getParameters();
+
+        } else {
 
             try {
-                addressParams = protocolChoice.getValue().getConstructor().newInstance();
+                addressParams = protocolChoice.getValue().getConstructor().newInstance().getParameters();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -204,8 +207,8 @@ public class Connector<T extends Instrument> extends JFXElement {
                 driverChoice.setValue(connection.getDriver());
 
                 if (connection.getAddress() != null) {
-                    addressParams = connection.getAddress().createParams();
-                    protocolChoice.setValue(addressParams.getClass());
+                    addressParams = connection.getAddress().getParameters();
+                    protocolChoice.setValue(connection.getAddress().getClass());
                     updateAddressParameters();
                 }
 
@@ -227,7 +230,9 @@ public class Connector<T extends Instrument> extends JFXElement {
                 return;
             }
 
-            addressParams.forEach((index, name, isText) -> {
+            addressParams.forEach((name, value) -> {
+
+                int index = parameters.getChildren().size() / 2;
 
                 Label label = new Label(name);
                 label.setAlignment(Pos.TOP_RIGHT);
@@ -237,16 +242,16 @@ public class Connector<T extends Instrument> extends JFXElement {
 
                 TextField field;
 
-                if (isText) {
-                    field = new TextField();
-                } else {
+                if (value instanceof Integer) {
                     field = new IntegerField();
+                    field.textProperty().addListener(o -> addressParams.put(name, ((IntegerField) field).getIntValue()));
+                } else {
+                    field = new TextField();
+                    field.textProperty().addListener(o -> addressParams.put(name, field.getText()));
                 }
 
-                field.setText(addressParams.getString(index));
+                field.setText(value.toString());
                 field.setMaxWidth(Double.MAX_VALUE);
-
-                field.textProperty().addListener(o -> addressParams.set(index, field.getText()));
 
                 parameters.add(label, 2 * (index % 2), index / 2);
                 parameters.add(field, 2 * (index % 2) + 1, index / 2);
@@ -273,13 +278,16 @@ public class Connector<T extends Instrument> extends JFXElement {
             errorText.setManaged(false);
         });
 
-        Address address = addressParams.createAddress();
-
         try {
+
+            Address address = protocolChoice.getValue().getConstructor().newInstance();
+            address.setParameters(addressParams);
+
             connecting = true;
             connection.setDriver(driverChoice.getValue());
             connection.setAddress(address);
             connection.connect();
+
         } catch (Exception e) {
 
             e.printStackTrace();
@@ -307,15 +315,18 @@ public class Connector<T extends Instrument> extends JFXElement {
             errorText.setManaged(false);
         });
 
-        Address address = addressParams.createAddress();
-
         Util.runAsync(() -> {
 
             try {
+
+                Address address = protocolChoice.getValue().getConstructor().newInstance();
+                address.setParameters(addressParams);
+
                 connecting = true;
                 connection.setDriver(driverChoice.getValue());
                 connection.setAddress(address);
                 connection.connect();
+
             } catch (Exception e) {
 
                 e.printStackTrace();
@@ -341,12 +352,17 @@ public class Connector<T extends Instrument> extends JFXElement {
             return;
         }
 
-        Address address = addressParams.createAddress();
+        try {
 
-        connecting = true;
-        connection.setDriver(driverChoice.getValue());
-        connection.setAddress(address);
-        connecting = false;
+            Address address = protocolChoice.getValue().getConstructor().newInstance();
+            address.setParameters(addressParams);
+
+            connecting = true;
+            connection.setDriver(driverChoice.getValue());
+            connection.setAddress(address);
+            connecting = false;
+
+        } catch (Exception ignored) {}
 
 
     }
