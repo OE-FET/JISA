@@ -67,9 +67,9 @@ JISA provides a simple means of creating tables of data which can then be direct
 
 ```kotlin
 // Create results storage
-val V     = DoubleColumn("Voltage", "V")
-val I     = DoubleColumn("Current", "A")
-val T     = DoubleColumn("Temperature", "K")
+val V     = Column.forDecimal("Voltage", "V")
+val I     = Column.forDecimal("Current", "A")
+val T     = Column.forDecimal("Temperature", "K")
 val table = ResultList(V, I, T)
 
 // Take 10 readings
