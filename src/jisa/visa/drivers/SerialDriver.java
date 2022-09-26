@@ -71,11 +71,11 @@ public class SerialDriver implements Driver {
             throw new VISAException("Error opening port \"%s\".", device.trim());
         }
 
-        return new NSConnection(port);
+        return new JSSCConnection(port);
 
     }
 
-    public static class NSConnection implements SerialConnection {
+    public static class JSSCConnection implements SerialConnection {
 
         private final SerialPort port;
         private       int        timeout;
@@ -83,7 +83,7 @@ public class SerialDriver implements Driver {
         private       byte[]     terminationSequence = {0x0A};
         private       Charset    charset             = Charset.defaultCharset();
 
-        public NSConnection(SerialPort comPort) throws VISAException {
+        public JSSCConnection(SerialPort comPort) throws VISAException {
             port = comPort;
             setSerialParameters(9600, 8);
         }
