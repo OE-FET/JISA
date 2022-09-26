@@ -333,7 +333,7 @@ public class LS331 extends VISADevice implements TC {
         @Override
         public TMeter getInput() throws IOException, DeviceException {
 
-            switch (query("CSET? %d", number).split(",")[0]) {
+            switch (query("CSET? %d", number).split(",")[0].trim()) {
 
                 case "A":
                     return INPUT_A;
@@ -357,7 +357,7 @@ public class LS331 extends VISADevice implements TC {
         public void setInput(Input input) throws IOException, DeviceException {
 
             if (input instanceof TMeter && (input == INPUT_A || input == INPUT_B)) {
-                write("CSET %d, %s, 1, 0, 2", number, ((TMeter) input).getLabel());
+                write("CSET %d,%s,1,0,2", number, ((TMeter) input).getLabel());
             } else {
                 throw new DeviceException("That input cannot be used with this loop.");
             }
@@ -405,7 +405,7 @@ public class LS331 extends VISADevice implements TC {
 
         @Override
         public void setPIDEnabled(boolean flag) throws IOException, DeviceException {
-            write("CMODE %d, %d", number, flag ? manual : 0.0);
+            write("MOUT %d,%f", number, flag ? manual : 0.0);
         }
 
         @Override
@@ -415,7 +415,7 @@ public class LS331 extends VISADevice implements TC {
 
         @Override
         public void setSetPoint(double temperature) throws IOException, DeviceException {
-            write("SETP %d, %f", number, temperature);
+            write("SETP %d,%f", number, temperature);
         }
 
         @Override

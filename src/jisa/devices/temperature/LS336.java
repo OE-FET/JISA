@@ -352,13 +352,7 @@ public class LS336 extends VISADevice implements TC {
 
         @Override
         public void setPIDEnabled(boolean flag) throws IOException {
-
-            if (flag) {
-                write(C_SET_HEATER, output.getNumber(), 0.0);
-            } else {
-                write(C_SET_HEATER, output.getNumber(), manual);
-            }
-
+            write(C_SET_HEATER, output.getNumber(), flag ? 0.0 : manual);
         }
 
         @Override
