@@ -101,7 +101,7 @@ public class TCPIPDriver implements Driver {
         public byte[] readBytes(int bufferSize) throws VISAException {
 
             ByteBuffer buffer    = ByteBuffer.allocate(bufferSize);
-            byte       single;
+            byte[]     single    = new byte[1];
             byte[]     lastBytes = new byte[terminationSequence.length];
             int        count     = 0;
             boolean    termChar  = false;
@@ -110,16 +110,16 @@ public class TCPIPDriver implements Driver {
 
                 while (!termChar && count < bufferSize) {
 
-                    single = (byte) in.read();
+                    in.read(single);
 
-                    buffer.put(single);
+                    buffer.put(single[0]);
                     count++;
 
                     if (terminationSequence.length > 0) {
 
                         System.arraycopy(lastBytes, 1, lastBytes, 0, lastBytes.length - 1);
 
-                        lastBytes[lastBytes.length - 1] = single;
+                        lastBytes[lastBytes.length - 1] = single[0];
 
                         if (Arrays.equals(lastBytes, terminationSequence)) {
                             termChar = true;
@@ -156,7 +156,7 @@ public class TCPIPDriver implements Driver {
 
             buffer.position(buffer.position() - 1);
 
-            terminationSequence = buffer.slice().array();
+            terminationSequence = Util.trimBytes(buffer, buffer.position(), buffer.remaining());
 
         }
 

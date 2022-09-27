@@ -78,7 +78,7 @@ public class SerialDriver implements Driver {
     public static class JSSCConnection implements SerialConnection {
 
         private final SerialPort port;
-        private       int        timeout;
+        private       int        timeout             = 2000;
         private       String     terms;
         private       byte[]     terminationSequence = {0x0A};
         private       Charset    charset             = Charset.defaultCharset();
@@ -200,14 +200,16 @@ public class SerialDriver implements Driver {
 
             buffer.rewind();
 
-            byte value = 0;
+            byte value;
 
-            while (value == 0) {
+            do {
                 value = buffer.get();
-            }
+            } while (value == 0);
 
 
-            terminationSequence = buffer.slice().array();
+            buffer.position(buffer.position() - 1);
+
+            terminationSequence = Util.trimBytes(buffer, buffer.position(), buffer.remaining());
 
         }
 

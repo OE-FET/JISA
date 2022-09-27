@@ -17,6 +17,10 @@ import java.util.stream.Collectors;
 
 public class LS336 extends VISADevice implements TC {
 
+    public static String getDescription() {
+        return "LakeShore 336";
+    }
+
     private static final String[]        CHANNELS             = {"A", "B", "C", "D"};
     private static final String          C_QUERY_SENSOR       = "KRDG? %s";
     private static final String          C_SET_SET_POINT      = "SETP %d,%f";

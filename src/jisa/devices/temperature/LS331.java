@@ -11,9 +11,14 @@ import jisa.visa.connections.GPIBConnection;
 import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class LS331 extends VISADevice implements TC {
+
+    public static String getDescription() {
+        return "LakeShore 331";
+    }
 
     public  final  TMeter       INPUT_A  = new TMeter("A");
     public  final  TMeter       INPUT_B  = new TMeter("B");
@@ -31,12 +36,14 @@ public class LS331 extends VISADevice implements TC {
 
         Connection connection = getConnection();
 
+        connection.setEncoding(StandardCharsets.US_ASCII);
+
         if (connection instanceof GPIBConnection) {
             ((GPIBConnection) connection).setEOIEnabled(false);
         }
 
         if (connection instanceof SerialConnection) {
-            ((SerialConnection) connection).setSerialParameters(9600, 8);
+            ((SerialConnection) connection).setSerialParameters(9600, 7, SerialConnection.Parity.ODD, SerialConnection.Stop.BITS_10);
         }
 
         setReadTerminator("\r\n");
