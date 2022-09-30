@@ -180,7 +180,7 @@ public class Connector<T extends Instrument> extends JFXElement {
 
     private synchronized void changeProtocol() {
 
-        if (protocolChoice.getValue().equals(connection.getAddress().getClass())) {
+        if (connection != null && connection.getAddress() != null && protocolChoice.getValue().equals(connection.getAddress().getClass())) {
 
             addressParams = connection.getAddress().getParameters();
 

@@ -57,9 +57,6 @@ public class K236 extends VISADevice implements SMU {
     private static final double MAX_VOLTAGE        = +110;
     private static final int    MIN_WRITE_INTERVAL = 50;
 
-    private double lineFrequency;
-    private double lastBias = 0.0;
-
     // == FILTERS ======================================================================================================
     private final MedianRepeatFilter MEDIAN_REPEAT_S = new MedianRepeatFilter(
         () -> readValue(OUTPUT_SOURCE),
@@ -113,30 +110,34 @@ public class K236 extends VISADevice implements SMU {
 
 
     // == INTERNAL VARIABLES ===========================================================================================
-    private       Source     source      = null;
-    private       Function   function    = null;
-    private       double     biasLevel   = 0;
-    private       boolean    on          = false;
-    private       boolean    remote      = true;
-    private       AMode      filterMode  = AMode.NONE;
-    private       ReadFilter filterS     = NONE_S;
-    private       ReadFilter filterM     = NONE_M;
-    private       int        filterCount = 1;
-    private       SRange     sRange      = SRange.AUTO;
-    private       SRange     mRange      = SRange.AUTO;
-    private       double     iLimit      = 0.1;
-    private       double     vLimit      = 110;
-    private       double     mLimit      = 0.1;
-    private final Semaphore  control     = new Semaphore(1);
-    private final Timer      timer       = new Timer();
+    private Source     source      = null;
+    private Function   function    = null;
+    private double     biasLevel   = 0;
+    private boolean    on          = false;
+    private boolean    remote      = true;
+    private AMode      filterMode  = AMode.NONE;
+    private ReadFilter filterS     = NONE_S;
+    private ReadFilter filterM     = NONE_M;
+    private int        filterCount = 1;
+    private SRange     sRange      = SRange.AUTO;
+    private SRange     mRange      = SRange.AUTO;
+    private double     iLimit      = 0.1;
+    private double     vLimit      = 110;
+    private double     mLimit      = 0.1;
+    private double     lastBias    = 0.0;
+    private double     lineFrequency;
 
     public K236(Address address) throws IOException, DeviceException {
 
         super(address);
+
+        setIOLimit(MIN_WRITE_INTERVAL, true, true);
         setWriteTerminator(C_TRIGGER + C_EXECUTE);
+
         write(C_RESET);
         write(C_NO_TERM);
         write(C_OPERATE, OPERATE_OFF);
+
         setSourceFunction(Source.VOLTAGE, Function.DC);
         useAutoSourceRange();
         useAutoMeasureRange();
@@ -155,11 +156,11 @@ public class K236 extends VISADevice implements SMU {
         try {
 
             if (!getIDN().trim().startsWith("236")) {
-                throw new DeviceException("Device at address %s is not a Keithley 236!", address.toString());
+                throw new DeviceException("Device at address \"%s\" is not a Keithley 236!", address.getJISAString());
             }
 
         } catch (IOException e) {
-            throw new DeviceException("Device at address %s is not responding!", address.toString());
+            throw new DeviceException("Device at address \"%s\" is not responding!", address.getJISAString());
         }
 
     }
@@ -169,30 +170,17 @@ public class K236 extends VISADevice implements SMU {
 
         IOException lastError = null;
 
-        for (int i = 0; i < 3; i ++) {
-
-            if (i > 0) {
-                clearBuffers();
-                Util.sleep(MIN_WRITE_INTERVAL);
-            }
+        for (int i = 0; i < 3; i++) {
 
             try {
 
-                try {
-
-                    control.acquire();
-                    super.write(data, params);
-                    return;
-
-                } catch (InterruptedException e) {
-                    throw new IOException("Interrupted acquiring permit to write.");
-                } finally {
-                    timer.schedule(new TimerTask() { public void run() { control.release(); } }, MIN_WRITE_INTERVAL);
-                }
+                super.write(data, params);
+                return;
 
             } catch (IOException e) {
                 lastError = e;
                 Util.errLog.printf("Error writing to K236 (attempt %d): %s%n", i + 1, e.getMessage());
+                clearBuffers();
             }
 
         }
@@ -205,31 +193,15 @@ public class K236 extends VISADevice implements SMU {
 
         IOException lastError = null;
 
-        for (int i = 0; i < 3; i ++) {
-
-            if (i > 0) {
-                clearBuffers();
-                Util.sleep(MIN_WRITE_INTERVAL);
-            }
+        for (int i = 0; i < 3; i++) {
 
             try {
-
-                try {
-
-                    control.acquire();
-                    return super.read();
-
-                } catch (InterruptedException e) {
-                    throw new IOException("Interrupted acquiring permit to write.");
-                } finally {
-                    timer.schedule(new TimerTask() {
-                        public void run() {control.release();}
-                    }, MIN_WRITE_INTERVAL);
-                }
+                return super.read();
 
             } catch (IOException e) {
                 lastError = e;
                 Util.errLog.printf("Error reading from K236 (attempt %d): %s%n", i + 1, e.getMessage());
+                clearBuffers();
             }
 
         }
@@ -284,6 +256,10 @@ public class K236 extends VISADevice implements SMU {
 
     private void setCompliance() throws IOException {
         write(C_SET_COMPLIANCE, mLimit, mRange.toInt());
+    }
+
+    public synchronized void manuallyClearReadBuffer() throws IOException {
+        // Do nothing -- this would otherwise never terminate for this instrument
     }
 
     public String getIDN() throws IOException {
@@ -435,6 +411,7 @@ public class K236 extends VISADevice implements SMU {
 
     @Override
     public void setMeasureRange(double value) throws IOException {
+
         SRange range;
 
         switch (source) {
@@ -692,14 +669,12 @@ public class K236 extends VISADevice implements SMU {
     }
 
     @Override
-    public double getSetCurrent() throws DeviceException, IOException
-    {
+    public double getSetCurrent() throws DeviceException, IOException {
         throw new DeviceException("Not implemented.");
     }
 
     @Override
-    public double getSetVoltage() throws DeviceException, IOException
-    {
+    public double getSetVoltage() throws DeviceException, IOException {
         throw new DeviceException("Not implemented.");
     }
 

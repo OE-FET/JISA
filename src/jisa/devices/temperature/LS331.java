@@ -46,6 +46,7 @@ public class LS331 extends VISADevice implements TC {
             ((SerialConnection) connection).setSerialParameters(9600, 7, SerialConnection.Parity.ODD, SerialConnection.Stop.BITS_10);
         }
 
+        setIOLimit(50, false, true);
         setReadTerminator("\r\n");
         setWriteTerminator("\r\n");
 

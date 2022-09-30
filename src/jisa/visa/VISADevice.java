@@ -11,20 +11,27 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * Generic instrument encapsulation via VISA
  */
 public class VISADevice implements Instrument {
 
-    public final static int    DEFAULT_TIMEOUT = 13;
-    public final static int    DEFAULT_EOI     = 1;
-    public final static int    DEFAULT_EOS     = 0;
-    public final static int    EOS_RETURN      = 5130;
-    public final static int    LF_TERMINATOR   = 0x0A;
-    public final static int    CR_TERMINATOR   = 0x0D;
-    public final static int    CRLF_TERMINATOR = 0x0D0A;
-    public final static String C_IDN           = "*IDN?";
+    public final static int                      DEFAULT_TIMEOUT = 13;
+    public final static int                      DEFAULT_EOI     = 1;
+    public final static int                      DEFAULT_EOS     = 0;
+    public final static int                      EOS_RETURN      = 5130;
+    public final static int                      LF_TERMINATOR   = 0x0A;
+    public final static int                      CR_TERMINATOR   = 0x0D;
+    public final static int                      CRLF_TERMINATOR = 0x0D0A;
+    public final static String                   C_IDN           = "*IDN?";
+    private             ScheduledExecutorService scheduler       = null;
+    private             int                      ioInterval      = 0;
+    private final       Semaphore                ioPermits       = new Semaphore(1);
+    private final       Runnable                 ioWait          = ioPermits::release;
+    private             boolean                  writeWait       = false;
+    private             boolean                  readWait        = false;
 
     private final static List<WeakReference<VISADevice>> opened = new LinkedList<>();
 
@@ -38,11 +45,13 @@ public class VISADevice implements Instrument {
             for (WeakReference<VISADevice> reference : opened) {
 
                 VISADevice device = reference.get();
+
                 if (device != null) {
+
                     try {
                         device.close();
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
+
                 }
 
             }
@@ -115,7 +124,8 @@ public class VISADevice implements Instrument {
 
     /**
      * Continuously reads from the read buffer until there's nothing left to read. (Clears the read buffer for the more
-     * stubborn of instruments)
+     * stubborn of instruments). Do not use on GPIB instruments programmed to respond to TALK requests (it will never
+     * terminate).
      *
      * @throws IOException Upon communications error
      */
@@ -128,12 +138,15 @@ public class VISADevice implements Instrument {
         }
 
         while (true) {
+
             try {
                 connection.readBytes(1);
             } catch (VISAException e) {
                 break;
             }
-            Util.sleep(25);
+
+            Util.sleep(Math.max(25, ioInterval));
+
         }
 
         try {
@@ -141,6 +154,33 @@ public class VISADevice implements Instrument {
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
+
+    }
+
+    /**
+     * Sets whether this VISADevice object should wait a minimum amount of time between successive read/write
+     * operations.
+     *
+     * @param interval The minimum interval, in milliseconds (0 will disable this feature)
+     * @param read     Whether this wait should apply to read operations
+     * @param write    Whether this wait should apply to write operations
+     */
+    public synchronized void setIOLimit(int interval, boolean read, boolean write) {
+
+        if (interval < 0) {
+            throw new IllegalArgumentException("Minimum I/O interval cannot be negative.");
+        }
+
+        if (interval > 0 && scheduler == null) {
+            scheduler = Executors.newSingleThreadScheduledExecutor();
+        } else if (interval == 0 && scheduler != null) {
+            scheduler.shutdown();
+            scheduler = null;
+        }
+
+        ioInterval = interval;
+        readWait   = read;
+        writeWait  = write;
 
     }
 
@@ -202,7 +242,12 @@ public class VISADevice implements Instrument {
      */
     public synchronized void write(String command, Object... args) throws IOException {
 
-        String commandParsed = String.format(command, args).concat(terminator);
+        String  commandParsed = String.format(command, args).concat(terminator);
+        boolean wait          = writeWait && ioInterval > 0;
+
+        if (wait) {
+            ioPermits.acquireUninterruptibly();
+        }
 
         lastCommand = commandParsed;
 
@@ -210,6 +255,12 @@ public class VISADevice implements Instrument {
             connection.write(commandParsed);
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
+        } finally {
+
+            if (wait) {
+                scheduler.schedule(ioWait, ioInterval, TimeUnit.MILLISECONDS);
+            }
+
         }
 
     }
@@ -246,10 +297,15 @@ public class VISADevice implements Instrument {
      */
     public synchronized String read(int attempts) throws IOException {
 
-        int count = 0;
+        int           count = 0;
+        final boolean wait  = readWait && ioInterval > 0;
 
         // Try n times
         while (true) {
+
+            if (wait) {
+                ioPermits.acquireUninterruptibly();
+            }
 
             try {
 
@@ -269,6 +325,12 @@ public class VISADevice implements Instrument {
                 }
 
                 System.out.printf("Retrying read from \"%s\", reason: %s%n", address.toString(), e.getMessage());
+
+            } finally {
+
+                if (wait) {
+                    scheduler.schedule(ioWait, ioInterval, TimeUnit.MILLISECONDS);
+                }
 
             }
 

@@ -14,6 +14,7 @@ import jisa.visa.connections.SerialConnection;
 import jisa.visa.drivers.Driver;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 public abstract class KeithleySCPI extends VISADevice implements SMU {
@@ -124,6 +125,8 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
         Connection connection = getConnection();
 
+        connection.setEncoding(StandardCharsets.US_ASCII);
+
         if (connection instanceof SerialConnection) {
 
             ((SerialConnection) connection).setSerialParameters(9600, 8, SerialConnection.Parity.NONE, SerialConnection.Stop.BITS_10);
@@ -142,7 +145,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
         write(":SYSTEM:CLEAR");
         write(":TRAC:CLE"); // clears all readings and statistics from default buffer
         write(":STAT:CLE"); // clears event registers and the event log
-        //manuallyClearReadBuffer();
+        
         setAverageMode(AMode.NONE);
 
         LINE_FREQUENCY = queryDouble(C_QUERY_LFR);
