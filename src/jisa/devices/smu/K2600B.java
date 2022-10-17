@@ -53,6 +53,7 @@ public class K2600B extends VISADevice implements MCSMU {
     private static final String   C_QUERY_OFF_FUNC           = "print(%s.source.offfunc)";
     private static final String   C_SET_OFF_LIMIT            = "%s.source.offlimit%s = %e";
     private static final String   C_QUERY_OFF_LIMIT          = "print(%s.source.offlimit%s)";
+    private static final String   C_SET_MEAS_FUNC            = "%s.trigger.measure.%s()";
     private static final String   SENSE_LOCAL                = "0";
     private static final String   SENSE_REMOTE               = "1";
     private static final String   OUTPUT_ON                  = "1";
@@ -507,6 +508,32 @@ public class K2600B extends VISADevice implements MCSMU {
         checkChannel(channel);
         return query(C_QUERY_SOURCE_AUTO_RANGE, CHANNELS[channel], getSourceMode(channel).getSymbol()).trim().equals(
             OUTPUT_ON);
+    }
+
+    @Override
+    public void setMeasureFunction(int channel, Function function) throws IOException, DeviceException
+    {
+        checkChannel(channel);
+        String func_value = null;
+        switch (function)
+        {
+            case VOLT:
+                func_value = "v";
+                break;
+            case CURR:
+                func_value = "i";
+                break;
+            case RES:
+                func_value = "r";
+                break;
+        }
+        write(C_SET_MEAS_FUNC, CHANNELS[channel], func_value);
+    }
+
+    @Override
+    public void setMeasureFunction(Function func) throws IOException, DeviceException
+    {
+        throw new DeviceException("Not implemented");
     }
 
     @Override

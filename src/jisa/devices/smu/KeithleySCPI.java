@@ -19,6 +19,7 @@ import java.util.HashMap;
 
 public abstract class KeithleySCPI extends VISADevice implements SMU {
 
+    protected static final String C_SELECT_MEASURE_FUNC    = ":FUNC \"%s\"";
     protected static final String C_MEASURE_VOLTAGE        = ":MEAS:VOLT?";
     protected static final String C_MEASURE_CURRENT        = ":MEAS:CURR?";
     protected static final String C_MEASURE_RESISTANCE     = ":MEAS:RES?";
@@ -157,6 +158,11 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
     public KeithleySCPI(Address address) throws IOException, DeviceException {
         this(address, null);
+    }
+
+    public void setMeasureFunction(Function func) throws IOException
+    {
+        write(C_SELECT_MEASURE_FUNC,func.name());
     }
 
     public void setFourProbeEnabled(boolean fourProbe) throws IOException {

@@ -269,6 +269,12 @@ public class SMUCluster implements MCSMU {
     }
 
     @Override
+    public void setMeasureFunction(int channel, Function function) throws IOException, DeviceException
+    {
+        devices.get(channel).setMeasureFunction(function);
+    }
+
+    @Override
     public void setMeasureRange(int channel, double value) throws DeviceException, IOException {
         checkChannel(channel);
         devices.get(channel).setMeasureRange(value);
@@ -455,5 +461,10 @@ public class SMUCluster implements MCSMU {
     @Override
     public String getChannelName() {
         return getChannelName(0);
+    }
+
+    @Override
+    public void setMeasureFunction(Function func) throws IOException {
+
     }
 }

@@ -172,6 +172,7 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
 
     }
 
+
     protected double measureVoltage(int channel) throws DeviceException, IOException {
         checkChannel(channel);
         if (states[channel]) {
@@ -382,6 +383,24 @@ public abstract class Agilent415XX extends VISADevice implements SPA {
 
         }
 
+    }
+
+    @Override
+    public void setMeasureFunction(int channel, Function function) throws DeviceException, IOException {
+        checkChannel(channel);
+        int func_num = 0;
+        switch (function)
+        {
+            case VOLT:
+                func_num = 2;
+                break;
+            case CURR:
+                func_num = 1;
+                break;
+            case RES:
+                throw new DeviceException("Not supported");
+        }
+        write("CMM %d,%d", channel, func_num);
     }
 
     @Override

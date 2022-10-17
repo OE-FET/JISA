@@ -299,6 +299,12 @@ public class K236 extends VISADevice implements SMU {
         return filterS.getValue();
     }
 
+    @Override
+    public void setMeasureFunction(jisa.enums.Function func) throws IOException, DeviceException
+    {
+        throw new DeviceException("Not supported");
+    }
+
     public double getMeasureValue() throws IOException, DeviceException {
         return filterM.getValue();
     }

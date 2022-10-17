@@ -364,4 +364,14 @@ public class DummyMCSMU implements MCSMU {
     public String getChannelName() {
         return "Dummy MCSMU";
     }
+
+    @Override
+    public void setMeasureFunction(int channel, Function function) {
+
+    }
+
+    @Override
+    public void setMeasureFunction(Function func) throws IOException {
+
+    }
 }

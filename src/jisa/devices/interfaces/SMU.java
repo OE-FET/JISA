@@ -227,6 +227,14 @@ public interface SMU extends IVMeter, IVSource, Channel<SMU> {
     double getSourceValue() throws DeviceException, IOException;
 
     /**
+     * Set the current function to measure.
+     *
+     * @param function measurement function, see {@link Function}
+     * @throws IOException     Upon communications error
+     */
+    void setMeasureFunction(Function function) throws IOException, DeviceException;
+
+    /**
      * Returns the value of whichever parameter is set as measure currently
      *
      * @return Value of measure

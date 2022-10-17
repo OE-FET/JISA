@@ -2,6 +2,7 @@ package jisa.devices.smu;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
+import jisa.enums.Function;
 
 import java.io.IOException;
 
@@ -9,6 +10,12 @@ public class Agilent4156X extends Agilent415XX {
 
     public static String getDescription() {
         return "Agilent 4156X Series SPA";
+    }
+
+    @Override
+    public void setMeasureFunction(Function function) throws IOException, DeviceException
+    {
+        throw new DeviceException("Not implemented.");
     }
 
     public Agilent4156X(Address address) throws IOException, DeviceException {
@@ -24,6 +31,7 @@ public class Agilent4156X extends Agilent415XX {
         }
 
     }
+
 
     @Override
     public double getSetCurrent() throws DeviceException, IOException
