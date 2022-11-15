@@ -239,6 +239,11 @@ public class TestFET implements MCSMU {
     }
 
     @Override
+    public void setMeasureFunction(int channel, Function function) throws IOException {
+
+    }
+
+    @Override
     public void setMeasureRange(int channel, double value) throws DeviceException, IOException {
 
     }
@@ -396,5 +401,11 @@ public class TestFET implements MCSMU {
     @Override
     public String getChannelName() {
         return "Test FET SMU";
+    }
+
+    @Override
+    public void setMeasureFunction(Function func) throws IOException
+    {
+
     }
 }

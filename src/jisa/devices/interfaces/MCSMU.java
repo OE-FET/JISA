@@ -595,6 +595,14 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
     }
 
     /**
+     * Set measurement function of a channel.
+     *
+     * @param channel channel number
+     * @param function function to be measured, see {@link Function}
+     */
+    void setMeasureFunction(int channel, Function function) throws IOException, DeviceException;
+
+    /**
      * Sets the range (and thus precision) to use for the measured quantity on the given channel.
      *
      * @param channel Channel number
@@ -1423,6 +1431,12 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
         @Override
         public double getSourceValue() throws DeviceException, IOException {
             return smu.getSourceValue(channel);
+        }
+
+        @Override
+        public void setMeasureFunction(Function function) throws IOException, DeviceException
+        {
+            smu.setMeasureFunction(channel, function);
         }
 
         @Override
