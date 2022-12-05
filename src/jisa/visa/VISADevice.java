@@ -26,6 +26,7 @@ public class VISADevice implements Instrument {
     public final static int                      CR_TERMINATOR   = 0x0D;
     public final static int                      CRLF_TERMINATOR = 0x0D0A;
     public final static String                   C_IDN           = "*IDN?";
+    public final static String                   C_CLS           = "*CLS";
     private             ScheduledExecutorService scheduler       = null;
     private             int                      ioInterval      = 0;
     private final       Semaphore                ioPermits       = new Semaphore(1);
@@ -472,5 +473,16 @@ public class VISADevice implements Instrument {
         }
 
     }
+
+    /**
+     * Clears the event registers in all the register sets and clears the error queue (*CLS).
+     * Only valid if device supports the IEEE448.2 standard.
+     *
+     * @throws IOException Upon communications error
+     */
+    public synchronized void clearErrorQueue() throws IOException {
+        write(C_CLS);
+    }
+
 
 }
