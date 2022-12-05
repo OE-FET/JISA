@@ -1,5 +1,7 @@
 package jisa.addresses;
 
+import jisa.devices.DeviceException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -27,6 +29,11 @@ public class USBTMCAddress extends USBAddress {
 
     public USBTMCAddress(int vendorID, int productID) {
         super(vendorID, productID);
+    }
+
+    public USBTMCAddress(String address) throws DeviceException
+    {
+        super(address);
     }
 
     @Override

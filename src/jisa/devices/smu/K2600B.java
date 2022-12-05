@@ -4,10 +4,7 @@ import jisa.addresses.Address;
 import jisa.control.*;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MCSMU;
-import jisa.enums.AMode;
-import jisa.enums.Source;
-import jisa.enums.TType;
-import jisa.enums.Terminals;
+import jisa.enums.*;
 import jisa.visa.VISADevice;
 import jisa.visa.drivers.TCPIPDriver;
 
@@ -18,6 +15,12 @@ public class K2600B extends VISADevice implements MCSMU {
 
     public static String getDescription() {
         return "Keithley 2600B Series";
+    }
+
+    @Override
+    public void setMeasureFunction(Function function) throws IOException, DeviceException
+    {
+
     }
 
     private static final String[] CHANNELS                   = {"smua", "smub"};
@@ -513,6 +516,12 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
+    public void setMeasureFunction(int channel, Function function) throws IOException, DeviceException
+    {
+        throw new DeviceException("Not implemented.");
+    }
+
+    @Override
     public void setMeasureRange(int channel, double value) throws DeviceException, IOException {
 
         switch (getMeasureMode(channel)) {
@@ -711,6 +720,12 @@ public class K2600B extends VISADevice implements MCSMU {
     public void setTerminals(int channel, Terminals terminals) throws DeviceException {
 
         checkChannel(channel);
+
+    }
+
+    @Override
+    public void setProbeMode(int channel, Function funcType, boolean enableSense) throws DeviceException, IOException
+    {
 
     }
 

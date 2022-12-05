@@ -6,6 +6,7 @@ import jisa.control.*;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.SMU;
 import jisa.enums.AMode;
+import jisa.enums.Function;
 import jisa.enums.Terminals;
 import jisa.visa.VISADevice;
 import jisa.visa.connections.Connection;
@@ -19,6 +20,7 @@ import java.util.HashMap;
 
 public abstract class KeithleySCPI extends VISADevice implements SMU {
 
+    protected static final String C_SELECT_MEASURE_FUNC    = ":FUNC \"%s\"";
     protected static final String C_MEASURE_VOLTAGE        = ":MEAS:VOLT?";
     protected static final String C_MEASURE_CURRENT        = ":MEAS:CURR?";
     protected static final String C_MEASURE_RESISTANCE     = ":MEAS:RES?";
@@ -156,6 +158,11 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
     public KeithleySCPI(Address address) throws IOException, DeviceException {
         this(address, null);
+    }
+
+    public void setMeasureFunction(Function func) throws IOException
+    {
+        write(C_SELECT_MEASURE_FUNC,func.name());
     }
 
     public void setFourProbeEnabled(boolean fourProbe) throws IOException {
@@ -951,6 +958,14 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
         Util.sleep(550);
         write("SYST:BEEP %s,%s", 380, 100.0 / 1000.0);
         Util.sleep(575);
+    }
+
+    @Override
+    public void setProbeMode(Function funcType, boolean enableSense) throws DeviceException, IOException{
+        if(enableSense)
+            write(C_SET_PROBE_MODE, funcType.toString(), "ON");
+        else
+            write(C_SET_PROBE_MODE, funcType.toString(), "OFF");
     }
 
     public Terminals getTerminals() throws IOException {

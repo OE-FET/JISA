@@ -1,6 +1,7 @@
 package jisa.addresses;
 
 import jisa.Util;
+import jisa.devices.DeviceException;
 
 import java.util.Map;
 
@@ -46,6 +47,23 @@ public abstract class USBAddress implements Address {
     public USBAddress(int vendorID, int productID) {
         this.vendorID     = vendorID;
         this.productID    = productID;
+    }
+
+    public USBAddress(String address) throws DeviceException
+    {
+        if (!address.contains("USB") && !address.contains("INSTR")) {
+            throw new DeviceException("Address is not not USB address, does not contain USB and INSTR");
+        }
+
+        String[] addressSplit = address.split("::");
+
+        int manufacturer = Integer.decode(addressSplit[1]);
+        int model = Integer.decode(addressSplit[2]);
+        String serialNumber = addressSplit[3];
+
+        this.vendorID = manufacturer;
+        this.productID = model;
+        this.serialNumber = serialNumber;
     }
 
     public int getInterfaceNumber() {

@@ -62,8 +62,8 @@ public class VISADevice implements Instrument {
     }
 
     private final List<String> toRemove       = new LinkedList<>();
-    private final Connection   connection;
-    private final Address      address;
+    private Connection   connection;
+    private Address      address;
     private       String       terminator     = "";
     private       String       lastCommand    = null;
     private       String       lastRead       = null;
@@ -102,6 +102,7 @@ public class VISADevice implements Instrument {
         } catch (VISAException e) {
             throw new IOException(e.getMessage());
         }
+
 
         // Keep a weak reference to this
         opened.add(new WeakReference<>(this));

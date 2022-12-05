@@ -23,28 +23,13 @@ public class VISA {
     private final static ArrayList<Driver>      drivers = new ArrayList<>();
     private final static HashMap<Class, Driver> lookup  = new HashMap<>();
 
-    static {
+    static {loadDrivers();}
+
+    private static void loadDrivers()
+    {
         Locale.setDefault(Locale.US);
 
         System.out.println("Attempting to load drivers.");
-
-        try {
-            System.out.print("Trying RS VISA driver...             \t");
-            RSVISADriver.init();
-            drivers.add(new RSVISADriver());
-            System.out.println("Success.");
-        } catch (VISAException ignored) {
-            System.out.println("Nope.");
-        }
-
-        try {
-            System.out.print("Trying Agilent VISA driver...        \t");
-            AgilentVISADriver.init();
-            drivers.add(new AgilentVISADriver());
-            System.out.println("Success.");
-        } catch (VISAException ignored) {
-            System.out.println("Nope.");
-        }
 
         try {
             System.out.print("Trying NI VISA driver...             \t");
@@ -54,7 +39,27 @@ public class VISA {
         } catch (VISAException ignored) {
             System.out.println("Nope.");
         }
+/*
 
+        try {
+            System.out.print("Trying RS VISA driver...             \t");
+            RSVISADriver.init();
+            drivers.add(new RSVISADriver());
+            System.out.println("Success.");
+        } catch (VISAException ignored) {
+            System.out.println("Nope.");
+        }
+*/
+
+        try {
+            System.out.print("Trying Agilent VISA driver...        \t");
+            AgilentVISADriver.init();
+            drivers.add(new AgilentVISADriver());
+            System.out.println("Success.");
+        } catch (VISAException ignored) {
+            System.out.println("Nope.");
+        }
+        /*
         try {
             System.out.print("Trying Linux GPIB (libgpib) driver...\t");
             GPIBDriver.init();
@@ -96,7 +101,7 @@ public class VISA {
         } catch (Exception | Error ignored) {
             System.out.println("Nope.");
         }
-
+*/
         for (Driver d : drivers) {
             lookup.put(d.getClass(), d);
         }
@@ -188,24 +193,39 @@ public class VISA {
         }
 
         boolean tried = false;
+        boolean drvWorked = false;
+        int maxTries = 24/drivers.size();
+        int count = 0;
 
-        // Try each driver in order
-        for (Driver d : drivers) {
+        do {
+            // Try each driver in order
+            for (Driver d : drivers) {
 
-            if (d.worksWith(address)) {
+                if (d.worksWith(address)) {
 
-                tried = true;
+                    tried = true;
 
-                try {
-                    connection = d.open(address);
-                    break;                      // If it worked, then let's use it!
-                } catch (VISAException e) {
-                    errors.add(String.format("* %s: %s", d.getClass().getSimpleName(), e.getMessage()));
+                    try {
+                        connection = d.open(address);
+                        drvWorked = true;
+                        break;                      // If it worked, then let's use it!
+                    } catch (VISAException e) {
+                        if (count == maxTries) {
+                            errors.add(String.format("* %s: %s", d.getClass().getSimpleName(), e.getMessage()));
+                            break;
+                        }
+                    }
                 }
-
             }
-
-        }
+            // if first time drivers did not work, reload drivers
+            if (count > 0)
+            {
+                drivers.clear();
+                lookup.clear();
+                loadDrivers();
+            }
+            count++;
+        } while(!drvWorked && (count != maxTries));
 
         if (!tried) {
             throw new VISAException("No drivers available that support connecting to %s", address.toString());
