@@ -1,60 +1,91 @@
 package jisa.addresses;
 
+import jisa.Util;
+
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static jisa.Util.castOrDefault;
+
 public class ModbusAddress implements Address {
 
-    private final String port;
-    private final int    address;
+    private String portName = "";
+    private int    address  = -1;
 
-    public ModbusAddress(String port, int address) {
-        this.port    = port;
-        this.address = address;
+    public ModbusAddress() {}
+
+    public ModbusAddress(String portName, int address) {
+        this.portName = portName;
+        this.address  = address;
     }
 
-    public String toString() {
-        return String.format("MODBUS::%s::%d::INSTR", port, address);
+    public ModbusAddress(Map<String, Object> parameters) {
+        setParameters(parameters);
     }
 
-    public String getPort() {
-        return port;
+    public String getPortName() {
+        return portName;
+    }
+
+    public void setPortName(String portName) {
+        this.portName = portName;
     }
 
     public int getAddress() {
         return address;
     }
 
-    public ModbusAddress toModbusAddress() {
-        return this;
+    public void setAddress(int address) {
+        this.address = address;
     }
 
-    public AddressParams createParams() {
-
-        AddressParams params = new ModbusParams();
-        params.set(0, port);
-        params.set(1, address);
-
-        return params;
-
+    @Override
+    public String getTypeName() {
+        return "MODBUS-RTU";
     }
 
-    public static class ModbusParams extends AddressParams<ModbusAddress> {
+    @Override
+    public String getVISAString() {
+        return String.format("MODBUS::%s::%d::INSTR", portName, address);
+    }
 
-        public ModbusParams() {
+    @Override
+    public Map<String, Object> getParameters() {
 
-            addParam("Port", true);
-            addParam("Unit", false);
-
-        }
-
-        @Override
-        public ModbusAddress createAddress() {
-            return new ModbusAddress(getString(0), getInt(1));
-        }
-
-        @Override
-        public String getName() {
-            return "MODBUS";
-        }
+        return Util.buildMap(map -> {
+            map.put("Port Name", portName);
+            map.put("Address", address);
+        });
 
     }
 
+    @Override
+    public void setParameters(Map<String, Object> parameters) {
+
+        portName = castOrDefault(parameters.getOrDefault("Port Name", portName), portName);
+        address  = castOrDefault(parameters.getOrDefault("Address", address), address);
+
+    }
+
+    @Override
+    public void parseString(String text) throws InvalidAddressFormatException {
+
+        Pattern pattern = Pattern.compile("MODBUS::(.+?)::([0-9]+)::INSTR");
+        Matcher matcher = pattern.matcher(text);
+
+        if (matcher.find()) {
+
+            portName = matcher.group(1);
+            address  = Integer.parseInt(matcher.group(2));
+
+        } else {
+            throw new InvalidAddressFormatException(text, "MODBUS");
+        }
+
+    }
+
+    public String toString() {
+        return getJISAString();
+    }
 }

@@ -9,6 +9,92 @@ public abstract class Column<T> {
     private final        Class<T>            type;
     private final        RowEvaluable<T>     evaluable;
 
+    public static <T> Column<T> forValue(String name, String units, T example) {
+
+        if (example instanceof Double) {
+            return (Column<T>) forDecimal(name, units);
+        }
+
+        if (example instanceof Integer) {
+            return (Column<T>) forInteger(name, units);
+        }
+
+        if (example instanceof Boolean) {
+            return (Column<T>) forBoolean(name, units);
+        }
+
+        if (example instanceof String) {
+            return (Column<T>) forText(name, units);
+        }
+
+        throw new IllegalArgumentException("Columns cannot be made for objects of type " + example.getClass().getName());
+
+    }
+
+    public static Column<String> forText(String name, String units) {
+        return new StringColumn(name, units);
+    }
+
+    public static Column<String> forText(String name) {
+        return new StringColumn(name);
+    }
+
+    public static Column<String> forText(String name, RowEvaluable<String> evaluable) {
+        return new StringColumn(name, evaluable);
+    }
+
+    public static Column<String> forText(String name, String units, RowEvaluable<String> evaluable) {
+        return new StringColumn(name, units, evaluable);
+    }
+
+    public static Column<Double> forDecimal(String name, String units) {
+        return new DoubleColumn(name, units);
+    }
+
+    public static Column<Double> forDecimal(String name) {
+        return new DoubleColumn(name);
+    }
+
+    public static Column<Double> forDecimal(String name, RowEvaluable<Double> evaluable) {
+        return new DoubleColumn(name, evaluable);
+    }
+
+    public static Column<Double> forDecimal(String name, String units, RowEvaluable<Double> evaluable) {
+        return new DoubleColumn(name, units, evaluable);
+    }
+
+    public static Column<Double> forInteger(String name, String units) {
+        return new DoubleColumn(name, units);
+    }
+
+    public static Column<Integer> forInteger(String name) {
+        return new IntColumn(name);
+    }
+
+    public static Column<Integer> forInteger(String name, RowEvaluable<Integer> evaluable) {
+        return new IntColumn(name, evaluable);
+    }
+
+    public static Column<Integer> forInteger(String name, String units, RowEvaluable<Integer> evaluable) {
+        return new IntColumn(name, units, evaluable);
+    }
+
+    public static Column<Boolean> forBoolean(String name, String units) {
+        return new BooleanColumn(name, units);
+    }
+
+    public static Column<Boolean> forBoolean(String name) {
+        return new BooleanColumn(name);
+    }
+
+    public static Column<Boolean> forBoolean(String name, RowEvaluable<Boolean> evaluable) {
+        return new BooleanColumn(name, evaluable);
+    }
+
+    public static Column<Boolean> forBoolean(String name, String units, RowEvaluable<Boolean> evaluable) {
+        return new BooleanColumn(name, units, evaluable);
+    }
+
     public Column(String name, String units, Class<T> type) {
         this(name, units, type, null);
     }

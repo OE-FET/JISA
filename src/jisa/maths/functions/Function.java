@@ -15,7 +15,7 @@ public interface Function extends DifferentiableUnivariateRealFunction {
         return x -> {
 
             double value = value(x);
-            double diff  = 0;
+            double diff  = 1e-6;
             double next;
             double prev;
 
@@ -23,13 +23,13 @@ public interface Function extends DifferentiableUnivariateRealFunction {
 
             do {
 
-                diff += 1e-6;
-                next = value(x + diff);
-                prev = value(x - diff);
+                diff *= 10;
+                next = value(x + (diff * Math.abs(x)));
+                prev = value(x - (diff * Math.abs(x)));
 
-            } while (n++ < 100 && (Double.isNaN(next) || Double.isNaN(prev) || (next == value && prev == value)));
+            } while (n++ < 5 && (Double.isNaN(next) || Double.isNaN(prev) || (next == value && prev == value)));
 
-            return (next - prev) / (2.0 * diff);
+            return (next - prev) / (2.0 * diff * Math.abs(x));
 
         };
 

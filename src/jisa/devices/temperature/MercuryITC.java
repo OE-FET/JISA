@@ -352,7 +352,7 @@ public class MercuryITC extends VISADevice implements TC {
         }
 
         @Override
-        public String getName() throws IOException, DeviceException {
+        public String getName() {
             return sensor.getName();
         }
 
@@ -439,14 +439,7 @@ public class MercuryITC extends VISADevice implements TC {
 
         @Override
         public List<Heater> getAvailableOutputs() {
-
-            try {
-                return (List<Heater>) getHeaters();
-            } catch (IOException | DeviceException e) {
-                e.printStackTrace();
-                return Collections.emptyList();
-            }
-
+            return (List<Heater>) getHeaters();
         }
 
         @Override

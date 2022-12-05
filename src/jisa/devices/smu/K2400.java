@@ -41,7 +41,7 @@ public class K2400 extends KeithleySCPI {
     }
 
     @Override
-    public String getChannelName() {
+    public String getName() {
         return "Keithley 2400 SMU";
     }
 

@@ -2,12 +2,18 @@ package jisa.visa;
 
 import jisa.Util;
 import jisa.addresses.Address;
+import jisa.addresses.TCPIPAddress;
+import jisa.addresses.VISAAddress;
 import jisa.gui.GUI;
 import jisa.visa.connections.Connection;
 import jisa.visa.drivers.*;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static jisa.visa.VISANativeInterface.VI_ATTR_INTF_INST_NAME;
 
 /**
  * Static class for accessing the native VISA library in a more Java-friendly way
@@ -23,15 +29,6 @@ public class VISA {
         System.out.println("Attempting to load drivers.");
 
         try {
-            System.out.print("Trying NI VISA driver...             \t");
-            NIVISADriver.init();
-            drivers.add(new NIVISADriver());
-            System.out.println("Success.");
-        } catch (VISAException ignored) {
-            System.out.println("Nope.");
-        }
-
-        try {
             System.out.print("Trying RS VISA driver...             \t");
             RSVISADriver.init();
             drivers.add(new RSVISADriver());
@@ -44,6 +41,15 @@ public class VISA {
             System.out.print("Trying Agilent VISA driver...        \t");
             AgilentVISADriver.init();
             drivers.add(new AgilentVISADriver());
+            System.out.println("Success.");
+        } catch (VISAException ignored) {
+            System.out.println("Nope.");
+        }
+
+        try {
+            System.out.print("Trying NI VISA driver...             \t");
+            NIVISADriver.init();
+            drivers.add(new NIVISADriver());
             System.out.println("Success.");
         } catch (VISAException ignored) {
             System.out.println("Nope.");
@@ -85,7 +91,7 @@ public class VISA {
 
         try {
             System.out.print("Trying USB-TMC driver...             \t");
-            drivers.add(new USBTMCDriver());
+            drivers.add(new USBDriver());
             System.out.println("Success.");
         } catch (Exception | Error ignored) {
             System.out.println("Nope.");
@@ -129,12 +135,14 @@ public class VISA {
 
         for (Driver driver : drivers) {
 
-            addresses.addAll(
-                driver.search()
-                      .stream()
-                      .filter(a -> addresses.stream().noneMatch(b -> b.toString().trim().equalsIgnoreCase(a.toString().trim())))
-                      .collect(Collectors.toUnmodifiableList())
-            );
+            try {
+                addresses.addAll(
+                    driver.search()
+                          .stream()
+                          .filter(a -> addresses.stream().noneMatch(b -> b.toString().trim().equalsIgnoreCase(a.toString().trim())))
+                          .collect(Collectors.toUnmodifiableList())
+                );
+            } catch (Exception ignored) {}
 
         }
 
@@ -170,7 +178,7 @@ public class VISA {
         }
 
         // Workaround to use internal TCP-IP implementation since there seems to be issues with TCP-IP Sockets and NI-VISA
-        if (address.getType() == Address.Type.TCPIP) {
+        if (address instanceof TCPIPAddress) {
 
             try {
                 connection = lookup.get(TCPIPDriver.class).open(address);

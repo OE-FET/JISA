@@ -6,9 +6,7 @@ import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.NativeLongByReference;
 import jisa.Util;
-import jisa.addresses.Address;
-import jisa.addresses.SerialAddress;
-import jisa.addresses.StrAddress;
+import jisa.addresses.*;
 import jisa.visa.VISAException;
 import jisa.visa.VISANativeInterface;
 import jisa.visa.connections.*;
@@ -21,8 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static jisa.visa.VISANativeInterface.*;
 
@@ -128,15 +124,7 @@ public class NIVISADriver implements Driver {
     public Connection open(Address address) throws VISAException {
 
         NativeLongByReference pViInstrument = new NativeLongByReference();
-
-        SerialAddress sAddr = address.toSerialAddress();
-        ByteBuffer    pViString;
-
-        if (sAddr != null) {
-            pViString = stringToByteBuffer(toVISASerial(sAddr));
-        } else {
-            pViString = stringToByteBuffer(address.toString());
-        }
+        ByteBuffer            pViString     = stringToByteBuffer(address.getVISAString());
 
         NativeLong status = lib.viOpen(
             visaResourceManagerHandle,
@@ -148,29 +136,31 @@ public class NIVISADriver implements Driver {
 
         if (status.longValue() == VI_SUCCESS) {
 
-            switch (address.getType()) {
+            if (address instanceof SerialAddress) {
 
-                case SERIAL:
-                case COM:
-                    return new VISASerialConnection(pViInstrument.getValue());
+                return new VISASerialConnection(pViInstrument.getValue());
 
-                case GPIB:
-                    return new VISAGPIBConnection(pViInstrument.getValue());
+            } else if (address instanceof GPIBAddress) {
 
-                case TCPIP:
-                    return new VISATCPIPConnection(pViInstrument.getValue());
+                return new VISAGPIBConnection(pViInstrument.getValue());
 
-                case LXI:
-                    return new VISALXIConnection(pViInstrument.getValue());
+            } else if (address instanceof TCPIPAddress) {
 
-                case USB:
-                    return new VISAUSBConnection(pViInstrument.getValue());
+                return new VISATCPIPConnection(pViInstrument.getValue());
 
-                default:
-                    return new VISAConnection(pViInstrument.getValue());
+            } else if (address instanceof LXIAddress) {
+
+                return new VISALXIConnection(pViInstrument.getValue());
+
+            } else if (address instanceof USBAddress) {
+
+                return new VISAUSBConnection(pViInstrument.getValue());
+
+            } else {
+
+                return new VISAConnection(pViInstrument.getValue());
 
             }
-
 
         } else {
 
@@ -221,75 +211,12 @@ public class NIVISADriver implements Driver {
 
     }
 
-    protected String toVISASerial(SerialAddress address) throws VISAException {
-
-        String raw = address.toString();
-
-        Pattern windows = Pattern.compile("ASRL::COM([0-9]*)::INSTR");
-        Matcher matcher = windows.matcher(raw);
-
-        if (matcher.find()) {
-
-            return String.format("ASRL%s::INSTR", matcher.group(1));
-
-        } else {
-
-            Pattern asrl  = Pattern.compile("ASRL([0-9]*?)::INSTR");
-            Pattern dfind = Pattern.compile("(COM([0-9]*))|(/dev/tty((S)|(USB))([0-9]*))");
-
-            for (Address found : search(false)) {
-
-                Matcher aMatch = asrl.matcher(found.toString());
-
-                if (aMatch.find()) {
-
-                    String         number      = aMatch.group(1);
-                    VISAConnection con         = (VISAConnection) open(found);
-                    String         desc        = con.getAttributeString(VI_ATTR_INTF_INST_NAME);
-                    Matcher        portMatcher = dfind.matcher(desc);
-
-                    if (portMatcher.find()) {
-
-                        String port = portMatcher.group(0);
-
-                        if (port.trim().equals(address.getPort().trim())) {
-                            return found.toString();
-                        }
-
-                    }
-
-                }
-
-            }
-
-            throw new VISAException("No resource found at \"%s\"", address.toString());
-
-        }
-
-    }
-
-    @Override
-    public List<Address> search() throws VISAException {
-        return search(true);
-    }
-
     @Override
     public boolean worksWith(Address address) {
-
-        switch (address.getType()) {
-
-            case ID:
-            case MODBUS:
-                return false;
-
-            default:
-                return true;
-
-        }
-
+        return !(address instanceof IDAddress || address instanceof ModbusAddress);
     }
 
-    public List<Address> search(boolean changeSerial) throws VISAException {
+    public List<Address> search() throws VISAException {
 
         // VISA RegEx for "Anything" (should be .* but they seem to use their own standard)
         ByteBuffer            expr       = stringToByteBuffer("?*");
@@ -320,44 +247,26 @@ public class NIVISADriver implements Driver {
         ArrayList<Address> addresses = new ArrayList<>();
         NativeLong         handle    = listHandle.getValue();
         String             address;
-        Pattern            dfind     = Pattern.compile("(COM([0-9]*))|(/dev/tty((S)|(USB))([0-9]*))");
+
         do {
 
             try {
-                address = new String(desc.array(), 0, 1024, responseEncoding);
+                address = new String(desc.array(), responseEncoding);
             } catch (UnsupportedEncodingException e) {
                 throw new VISAException("Unable to encode address!");
             }
 
-            Address strAddress = new StrAddress(address);
-
-            if (changeSerial && address.contains("ASRL")) {
-
-                try {
-
-                    VISAConnection c    = (VISAConnection) open(strAddress);
-                    String         intf = c.getAttributeString(VI_ATTR_INTF_INST_NAME);
-                    c.close();
-                    Matcher matcher = dfind.matcher(intf);
-
-                    if (matcher.find()) {
-                        String port = matcher.group(0);
-                        strAddress = new SerialAddress(port.trim());
-                    }
-
-                } catch (Exception ignored) {}
-
-            }
-
+            Address strAddress = Address.parse(address);
             addresses.add(strAddress);
 
-            desc = ByteBuffer.allocate(1024);
+            desc.clear();
 
         } while (lib.viFindNext(handle, desc).longValue() == VI_SUCCESS);
 
         lib.viClose(handle);
 
         return addresses;
+
     }
 
     public class VISAConnection implements Connection {
@@ -485,7 +394,7 @@ public class NIVISADriver implements Driver {
                 case VI_SUCCESS:
                 case VI_SUCCESS_TERM_CHAR:
                 case VI_SUCCESS_MAX_CNT:
-                    return Util.trimArray(response.array());
+                    return Util.trimBytes(response.array(), 0, returnCount.getValue().intValue());
 
                 case VI_ERROR_INV_OBJECT:
                     throw new VISAException("That connection is not open.");
@@ -603,6 +512,16 @@ public class NIVISADriver implements Driver {
 
         public VISATCPIPConnection(NativeLong viHandle) {
             super(viHandle);
+        }
+
+        @Override
+        public void setKeepAlive(boolean on) throws VISAException {
+            setAttribute(VI_ATTR_TCPIP_KEEPALIVE, on ? VI_TRUE : VI_FALSE);
+        }
+
+        @Override
+        public boolean isKeepAlive() throws VISAException {
+            return getAttributeLong(VI_ATTR_TCPIP_KEEPALIVE) == VI_TRUE;
         }
 
     }

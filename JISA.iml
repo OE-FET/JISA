@@ -22,5 +22,6 @@
     <orderEntry type="library" name="com.github.sarxos:webcam-capture:0.3.10" level="project" />
     <orderEntry type="library" name="de.gsi.chart.chartfx" level="project" />
     <orderEntry type="library" name="nativelibs4java.bridj" level="project" />
+    <orderEntry type="library" name="slf4j.simple" level="project" />
   </component>
 </module>

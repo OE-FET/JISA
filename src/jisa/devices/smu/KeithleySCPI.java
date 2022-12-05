@@ -6,7 +6,6 @@ import jisa.control.*;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.SMU;
 import jisa.enums.AMode;
-import jisa.enums.Function;
 import jisa.enums.Terminals;
 import jisa.visa.VISADevice;
 import jisa.visa.connections.Connection;
@@ -15,11 +14,11 @@ import jisa.visa.connections.SerialConnection;
 import jisa.visa.drivers.Driver;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 public abstract class KeithleySCPI extends VISADevice implements SMU {
 
-    protected static final String C_SELECT_MEASURE_FUNC    = ":FUNC \"%s\"";
     protected static final String C_MEASURE_VOLTAGE        = ":MEAS:VOLT?";
     protected static final String C_MEASURE_CURRENT        = ":MEAS:CURR?";
     protected static final String C_MEASURE_RESISTANCE     = ":MEAS:RES?";
@@ -33,7 +32,6 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     protected static final String C_SET_TERMINALS          = ":ROUT:TERM %s";
     protected static final String C_QUERY_TERMINALS        = ":ROUT:TERM?";
     protected static final String C_SET_PROBE_MODE         = ":SENS:RSEN %s";
-	//protected static final String C_SET_PROBE_MODE         = ":SENS:%s:RSEN %s"; // TODO rename ptx side, check usage
     protected static final String C_QUERY_PROBE_MODE       = "CURR:RSEN?";
     protected static final String C_SET_AVG_COUNT          = "AVER:COUNT %d";
     protected static final String C_QUERY_AVG_COUNT        = "VOLT:AVER:COUNT?";
@@ -57,8 +55,6 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
     protected static final String C_QUERY_NPLC             = ":SENS:%s:NPLC?";
     protected static final String C_SET_OFF_STATE          = ":OUTP:SMOD %s";
     protected static final String C_QUERY_OFF_STATE        = ":OUTP:SMOD?";
-	//protected static final String C_SET_OFF_STATE         = ":OUTP:%s:SMOD %s";  // TODO rename ptx side, check usage
-    //protected static final String C_QUERY_OFF_STATE       = ":OUTP:%s:SMOD?";  // TODO rename ptx side, check usage
     protected static final String C_SET_LIMIT              = ":SENS:%s:PROTECTION %e";
     protected static final String C_QUERY_LIMIT            = ":SENS:%s:PROTECTION?";
     protected static final String C_QUERY_LFR              = ":SYST:LFR?";
@@ -129,6 +125,8 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
         Connection connection = getConnection();
 
+        connection.setEncoding(StandardCharsets.US_ASCII);
+
         if (connection instanceof SerialConnection) {
 
             ((SerialConnection) connection).setSerialParameters(9600, 8, SerialConnection.Parity.NONE, SerialConnection.Stop.BITS_10);
@@ -147,7 +145,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
         write(":SYSTEM:CLEAR");
         write(":TRAC:CLE"); // clears all readings and statistics from default buffer
         write(":STAT:CLE"); // clears event registers and the event log
-        //manuallyClearReadBuffer();
+        
         setAverageMode(AMode.NONE);
 
         LINE_FREQUENCY = queryDouble(C_QUERY_LFR);
@@ -158,11 +156,6 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
     public KeithleySCPI(Address address) throws IOException, DeviceException {
         this(address, null);
-    }
-
-    public void setMeasureFunction(Function func) throws IOException
-    {
-        write(C_SELECT_MEASURE_FUNC,func.name());
     }
 
     public void setFourProbeEnabled(boolean fourProbe) throws IOException {
@@ -988,14 +981,6 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
         }
 
-    }
-
-    @Override
-    public void setProbeMode(Function funcType, boolean enableSense) throws DeviceException, IOException{
-        if(enableSense)
-            write(C_SET_PROBE_MODE, funcType.toString(), "ON");
-        else
-            write(C_SET_PROBE_MODE, funcType.toString(), "OFF");
     }
 
     @Override

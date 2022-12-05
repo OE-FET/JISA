@@ -24,6 +24,13 @@ public interface Instrument {
     String getIDN() throws IOException, DeviceException;
 
     /**
+     * Returns the name of the instrument or channel.
+     *
+     * @return Name
+     */
+    String getName();
+
+    /**
      * Closes the connection to the instrument.
      *
      * @throws DeviceException Upon incompatibility with device
@@ -43,7 +50,7 @@ public interface Instrument {
      *
      * @param msec Timeout, in milliseconds
      *
-     * @throws IOException     Upon communications error
+     * @throws IOException Upon communications error
      */
     default void setTimeout(int msec) throws IOException {
 

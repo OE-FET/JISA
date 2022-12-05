@@ -36,6 +36,11 @@ public class AgilentCary6000i implements Spectrometer {
     }
 
     @Override
+    public String getName() {
+        return "Agilent Cary6000i UV-vis Spectrometer";
+    }
+
+    @Override
     public void close() throws IOException, DeviceException {
 
     }

@@ -91,7 +91,7 @@ public class ET2408 extends ModbusRTUDevice implements TC {
     }
 
     @Override
-    public List<Heater> getOutputs() throws IOException, DeviceException {
+    public List<Heater> getOutputs() {
         return List.of(HEATER);
     }
 
@@ -336,4 +336,8 @@ public class ET2408 extends ModbusRTUDevice implements TC {
 
     };
 
+    @Override
+    public String getName() {
+        return "EuroTherm 2408";
+    }
 }

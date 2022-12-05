@@ -1,10 +1,7 @@
 package jisa.gui.plotting;
 
-import de.gsi.chart.axes.spi.transforms.AbstractAxisTransform;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.gsi.chart.axes.Axis;
+import de.gsi.chart.axes.spi.transforms.AbstractAxisTransform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 

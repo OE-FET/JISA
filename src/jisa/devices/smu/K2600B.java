@@ -4,7 +4,10 @@ import jisa.addresses.Address;
 import jisa.control.*;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MCSMU;
-import jisa.enums.*;
+import jisa.enums.AMode;
+import jisa.enums.Source;
+import jisa.enums.TType;
+import jisa.enums.Terminals;
 import jisa.visa.VISADevice;
 import jisa.visa.drivers.TCPIPDriver;
 
@@ -53,7 +56,6 @@ public class K2600B extends VISADevice implements MCSMU {
     private static final String   C_QUERY_OFF_FUNC           = "print(%s.source.offfunc)";
     private static final String   C_SET_OFF_LIMIT            = "%s.source.offlimit%s = %e";
     private static final String   C_QUERY_OFF_LIMIT          = "print(%s.source.offlimit%s)";
-    private static final String   C_SET_MEAS_FUNC            = "%s.trigger.measure.%s()";
     private static final String   SENSE_LOCAL                = "0";
     private static final String   SENSE_REMOTE               = "1";
     private static final String   OUTPUT_ON                  = "1";
@@ -126,7 +128,7 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
-    public String getChannelName(int channel) {
+    public String getName(int channel) {
 
         switch (channel) {
 
@@ -511,32 +513,6 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
-    public void setMeasureFunction(int channel, Function function) throws IOException, DeviceException
-    {
-        checkChannel(channel);
-        String func_value = null;
-        switch (function)
-        {
-            case VOLT:
-                func_value = "v";
-                break;
-            case CURR:
-                func_value = "i";
-                break;
-            case RES:
-                func_value = "r";
-                break;
-        }
-        write(C_SET_MEAS_FUNC, CHANNELS[channel], func_value);
-    }
-
-    @Override
-    public void setMeasureFunction(Function func) throws IOException, DeviceException
-    {
-        throw new DeviceException("Not implemented");
-    }
-
-    @Override
     public void setMeasureRange(int channel, double value) throws DeviceException, IOException {
 
         switch (getMeasureMode(channel)) {
@@ -739,11 +715,6 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
-    public void setProbeMode(int channel, Function funcType, boolean enableSense) throws DeviceException, IOException {
-        throw new DeviceException("Not implemented");
-    }
-
-    @Override
     public Terminals getTerminals(int channel) throws DeviceException {
 
         checkChannel(channel);
@@ -813,7 +784,7 @@ public class K2600B extends VISADevice implements MCSMU {
     }
 
     @Override
-    public String getChannelName() {
+    public String getName() {
         return "Keithley 2600B Series SMU";
     }
 

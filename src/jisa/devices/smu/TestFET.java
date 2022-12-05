@@ -64,7 +64,7 @@ public class TestFET implements MCSMU {
     }
 
     @Override
-    public String getChannelName(int channel) {
+    public String getName(int channel) {
 
         switch (channel) {
 
@@ -399,7 +399,7 @@ public class TestFET implements MCSMU {
     }
 
     @Override
-    public String getChannelName() {
+    public String getName() {
         return "Test FET SMU";
     }
 

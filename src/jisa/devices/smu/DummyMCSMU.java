@@ -22,19 +22,17 @@ public class DummyMCSMU implements MCSMU {
     private final double[]  R       = {random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500};
 
     @Override
-    public double getSetCurrent() throws DeviceException, IOException
-    {
+    public double getSetCurrent() throws DeviceException, IOException {
         throw new DeviceException("Not implemented.");
     }
 
     @Override
-    public double getSetVoltage() throws DeviceException, IOException
-    {
+    public double getSetVoltage() throws DeviceException, IOException {
         throw new DeviceException("Not implemented.");
     }
 
     @Override
-    public String getChannelName(int channel) {
+    public String getName(int channel) {
         String[] values = {"A", "B", "C", "D"};
         return "SMU " + values[channel];
     }
@@ -361,7 +359,7 @@ public class DummyMCSMU implements MCSMU {
     }
 
     @Override
-    public String getChannelName() {
+    public String getName() {
         return "Dummy MCSMU";
     }
 

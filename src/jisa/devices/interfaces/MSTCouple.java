@@ -34,10 +34,10 @@ public interface MSTCouple extends MSTMeter, TCouple {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
-    default TCouple getSensor(int sensor) throws IOException, DeviceException {
+    default TCouple getSensor(int sensor) {
 
         if (!Util.isBetween(sensor, 0, getNumSensors() - 1)) {
-            throw new DeviceException("Sensor %d does not exist.", sensor);
+            return null;
         }
 
         return new TCouple() {
@@ -53,8 +53,8 @@ public interface MSTCouple extends MSTMeter, TCouple {
             }
 
             @Override
-            public String getSensorName() {
-                return MSTCouple.this.getSensorName(sensor);
+            public String getName() {
+                return MSTCouple.this.getName(sensor);
             }
 
             @Override

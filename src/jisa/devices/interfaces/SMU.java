@@ -2,7 +2,10 @@ package jisa.devices.interfaces;
 
 import jisa.Util;
 import jisa.devices.DeviceException;
-import jisa.enums.*;
+import jisa.enums.AMode;
+import jisa.enums.Source;
+import jisa.enums.TType;
+import jisa.enums.Terminals;
 import jisa.experiment.IVPoint;
 
 import java.io.IOException;
@@ -12,16 +15,10 @@ import java.util.List;
 /**
  * Interface for defining the standard functionality of Source-Measure Unit (SMU) instruments.
  */
-public interface SMU extends IVMeter, IVSource, Channel<SMU> {
+public interface SMU extends IVMeter, IVSource {
 
     public static String getDescription() {
         return "Source Measure Unit";
-    }
-
-    String getChannelName();
-
-    default Class<SMU> getChannelClass() {
-        return SMU.class;
     }
 
     /**
@@ -225,14 +222,6 @@ public interface SMU extends IVMeter, IVSource, Channel<SMU> {
      * @throws IOException     Upon communications error
      */
     double getSourceValue() throws DeviceException, IOException;
-
-    /**
-     * Set the current function to measure.
-     *
-     * @param function measurement function, see {@link Function}
-     * @throws IOException     Upon communications error
-     */
-    void setMeasureFunction(Function function) throws IOException, DeviceException;
 
     /**
      * Returns the value of whichever parameter is set as measure currently
@@ -586,18 +575,6 @@ public interface SMU extends IVMeter, IVSource, Channel<SMU> {
      * @throws IOException     Upon communications error
      */
     void setTerminals(Terminals terminals) throws DeviceException, IOException;
-
-    /**
-     * Set the instrument for 4-wire or 2-wire sense with appropriate functions
-     *
-     * @param funcType set the function type to Current, Voltage, Resistance
-     * @param enableSense True to turn ON output, false to turn OFF output
-     *                    The sense lines are automatically reconnected when the output is turned ON
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setProbeMode(Function funcType, boolean enableSense) throws DeviceException, IOException;
 
     /**
      * Returns the mode used by the SMU channel when turned off.
