@@ -39,7 +39,6 @@ public class VISA {
         } catch (VISAException ignored) {
             System.out.println("Nope.");
         }
-/*
 
         try {
             System.out.print("Trying RS VISA driver...             \t");
@@ -49,7 +48,6 @@ public class VISA {
         } catch (VISAException ignored) {
             System.out.println("Nope.");
         }
-*/
 
         try {
             System.out.print("Trying Agilent VISA driver...        \t");
@@ -59,7 +57,7 @@ public class VISA {
         } catch (VISAException ignored) {
             System.out.println("Nope.");
         }
-        /*
+
         try {
             System.out.print("Trying Linux GPIB (libgpib) driver...\t");
             GPIBDriver.init();
@@ -101,7 +99,6 @@ public class VISA {
         } catch (Exception | Error ignored) {
             System.out.println("Nope.");
         }
-*/
         for (Driver d : drivers) {
             lookup.put(d.getClass(), d);
         }
@@ -194,7 +191,7 @@ public class VISA {
 
         boolean tried = false;
         boolean drvWorked = false;
-        int maxTries = 24/drivers.size();
+        int maxTries = 24/drivers.size(); // if less drivers are available, more retries needed to ensure successfully open
         int count = 0;
 
         do {
