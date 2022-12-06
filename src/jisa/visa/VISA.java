@@ -191,7 +191,7 @@ public class VISA {
 
         boolean tried = false;
         boolean drvWorked = false;
-        int maxTries = 24/drivers.size(); // if less drivers are available, more retries needed to ensure successfully open
+        int maxTries = 12; // max reloads of drivers if every fails to ensure successfully opening device
         int count = 0;
 
         do {
