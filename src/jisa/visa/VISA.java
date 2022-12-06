@@ -22,6 +22,7 @@ public class VISA {
 
     private final static ArrayList<Driver>      drivers = new ArrayList<>();
     private final static HashMap<Class, Driver> lookup  = new HashMap<>();
+    private static int loadCount = 0;
 
     static {loadDrivers();}
 
@@ -29,7 +30,13 @@ public class VISA {
     {
         Locale.setDefault(Locale.US);
 
-        System.out.println("Attempting to load drivers.");
+        if (loadCount > 0) {
+            System.out.println("Attempting to reload drivers.");
+        }
+        else
+        {
+            System.out.println("Attempting to load drivers.");
+        }
 
         try {
             System.out.print("Trying NI VISA driver...             \t");
@@ -118,7 +125,7 @@ public class VISA {
         } else {
             System.out.printf("Successfully loaded %d drivers.\n", drivers.size());
         }
-
+        loadCount++;
     }
 
     public static void init() {
