@@ -10,11 +10,9 @@ import jisa.visa.connections.GPIBConnection;
 import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,11 +52,9 @@ public class ITC503 extends VISADevice implements TC {
     private static final double MAX_HEATER_VOLTAGE            = 40.0;
     private static final long   STANDARD_TEMP_STABLE_DURATION = 5 * 60 * 1000;    // 5 mins
     private static final int    STANDARD_CHECK_INTERVAL       = 100;              // 0.1 sec
-    private static final double STANDARD_ERROR_PERC           = 10;
-    private static final int    MIN_WRITE_INTERVAL            = 5;
+    private static final double STANDARD_ERROR_PERC = 10;
+    private static final int    MIN_IO_INTERVAL     = 5;
 
-    private final Semaphore    timingControl = new Semaphore(1);
-    private final Timer        timingService = new Timer();
     private final List<TMeter> thermometers;
     private final List<Heater> heaters;
     private final List<Loop>   loops;
@@ -78,6 +74,8 @@ public class ITC503 extends VISADevice implements TC {
 
         Connection connection = getConnection();
 
+        connection.setEncoding(StandardCharsets.US_ASCII);
+
         if (connection instanceof GPIBConnection) {
             ((GPIBConnection) connection).setEOIEnabled(false);
         }
@@ -92,6 +90,9 @@ public class ITC503 extends VISADevice implements TC {
             );
 
         }
+
+        // Tell the object to limit the rate at which read/writes can be performed
+        setIOLimit(MIN_IO_INTERVAL, true, true);
 
         // The ITC503 has an unfortunate tendency to change which line terminator(s) it uses, so we need to
         // programmatically determine which one it has randomly selected this time
@@ -490,44 +491,6 @@ public class ITC503 extends VISADevice implements TC {
         super.setTimeout(value);
     }
 
-    @Override
-    public synchronized void write(String command, Object... args) throws IOException {
-
-        // Can only read/write from/to the device if we have waited enough time since the last write (5 ms)
-        try {
-            timingControl.acquire();
-        } catch (InterruptedException ignored) {
-        }
-
-        try {
-            super.write(command, args);
-        } finally {
-            timingService.schedule(new TimerTask() {
-                public void run() {timingControl.release();}
-            }, MIN_WRITE_INTERVAL);
-        }
-
-    }
-
-    @Override
-    public synchronized String read(int retryCount) throws IOException {
-
-        // Can only read/write from/to the device if we have waited enough time since the last write (5 ms)
-        try {
-            timingControl.acquire();
-        } catch (InterruptedException ignored) {
-        }
-
-        try {
-            return super.read(retryCount);
-        } finally {
-            timingService.schedule(new TimerTask() {
-                public void run() {timingControl.release();}
-            }, MIN_WRITE_INTERVAL);
-        }
-
-    }
-
     protected synchronized double readChannel(int channel) throws IOException {
 
         boolean success = false;
@@ -695,12 +658,12 @@ public class ITC503 extends VISADevice implements TC {
 
         private static final Pattern PATTERN = Pattern.compile("X([0-9])A([0-9])C([0-9])S([0-9][0-9])H([0-9])L([0-9])");
 
-        public int X;
-        public int A;
-        public int C;
-        public int S;
-        public int H;
-        public int L;
+        public final int X;
+        public final int A;
+        public final int C;
+        public final int S;
+        public final int H;
+        public final int L;
 
         public Status(String response) throws IOException {
 

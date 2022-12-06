@@ -3,9 +3,7 @@ package jisa.devices;
 import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
 import jisa.devices.interfaces.Instrument;
-import jisa.devices.interfaces.MultiChannel;
-import jisa.devices.interfaces.MultiOutput;
-import jisa.devices.interfaces.MultiSensor;
+import jisa.devices.interfaces.MultiInstrument;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -308,34 +306,14 @@ public class Configuration<T extends Instrument> {
             return;
         }
 
-        if (instrument instanceof MultiChannel && target.isAssignableFrom(((MultiChannel<?>) instrument).getChannelClass())) {
+        if (instrument instanceof MultiInstrument && ((MultiInstrument) instrument).getSubInstrumentTypes().stream().anyMatch(target::isAssignableFrom)) {
 
-            choiceName = "Channel";
+            choiceName = "Sub Instrument";
 
-            choices.addAll(((MultiChannel) instrument).getChannels());
-
-            for (int i = 0; i < choices.size(); i++) {
-                names.add(String.format("%d: %s", i, ((MultiChannel<?>) instrument).getChannelName(i)));
-            }
-
-        } else if (instrument instanceof MultiOutput && target.isAssignableFrom(((MultiOutput<?>) instrument).getOutputClass())) {
-
-            choiceName = "Output";
-
-            choices.addAll(((MultiOutput) instrument).getOutputs());
+            choices.addAll(((MultiInstrument) instrument).getSubInstruments(target));
 
             for (int i = 0; i < choices.size(); i++) {
-                names.add(String.format("%d: %s", i, ((MultiOutput<?>) instrument).getOutputName(i)));
-            }
-
-        } else if (instrument instanceof MultiSensor && target.isAssignableFrom(((MultiSensor<?>) instrument).getSensorClass())) {
-
-            choiceName = "Sensor";
-
-            choices.addAll(((MultiSensor) instrument).getSensors());
-
-            for (int i = 0; i < choices.size(); i++) {
-                names.add(String.format("%d: %s", i, ((MultiSensor<?>) instrument).getSensorName(i)));
+                names.add(String.format("%d: %s", i, choices.get(i).getName()));
             }
 
         } else if (target.isAssignableFrom(instrument.getClass())) {

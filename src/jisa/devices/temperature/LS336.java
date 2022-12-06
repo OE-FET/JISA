@@ -10,12 +10,13 @@ import jisa.visa.drivers.TCPIPDriver;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 
 public class LS336 extends VISADevice implements TC {
+
+    public static String getDescription() {
+        return "LakeShore 336";
+    }
 
     private static final String[]        CHANNELS             = {"A", "B", "C", "D"};
     private static final String          C_QUERY_SENSOR       = "KRDG? %s";
@@ -35,8 +36,6 @@ public class LS336 extends VISADevice implements TC {
     private static final String          C_SET_ZONE           = "ZONE %d,%d,%f,%f,%f,%f,%f,%d,0,0";
     private static final String          C_QUERY_ZONE         = "ZONE? %d,%d";
     private static final String          TERMINATOR           = "\r\n";
-    private final        Semaphore       timingControl        = new Semaphore(1);
-    private final        ExecutorService timingService        = Executors.newFixedThreadPool(1);
     private final        boolean[]       autoPID              = {false, false};
     private final        Zone[][]        zones                = new Zone[2][0];
 
@@ -64,6 +63,7 @@ public class LS336 extends VISADevice implements TC {
             ((SerialConnection) connection).setSerialParameters(57600, 7, SerialConnection.Parity.ODD, SerialConnection.Stop.BITS_10);
         }
 
+        setIOLimit(50, false, true);
         setReadTerminator(LF_TERMINATOR);
         setWriteTerminator(TERMINATOR);
         addAutoRemove("\r");
@@ -84,6 +84,7 @@ public class LS336 extends VISADevice implements TC {
         write("MODE 1");
 
     }
+
 
     public class TMeter implements TC.TMeter {
 
@@ -210,8 +211,8 @@ public class LS336 extends VISADevice implements TC {
         }
 
         @Override
-        public String getName() throws IOException, DeviceException {
-            return getOutput().getName();
+        public String getName() {
+            return output.getName();
         }
 
         @Override
@@ -240,7 +241,7 @@ public class LS336 extends VISADevice implements TC {
         public void setRampRate(double limit) throws IOException, DeviceException {
             rampRate = Math.abs(limit);
             boolean enabled = isRampEnabled();
-            write(C_SET_RAMP, getOutput().getNumber(), enabled, enabled ? rampRate : 0.0);
+            write(C_SET_RAMP, getOutput().getNumber(), enabled ? 1 : 0, enabled ? rampRate : 0.0);
         }
 
         @Override
@@ -352,13 +353,7 @@ public class LS336 extends VISADevice implements TC {
 
         @Override
         public void setPIDEnabled(boolean flag) throws IOException {
-
-            if (flag) {
-                write(C_SET_HEATER, output.getNumber(), 0.0);
-            } else {
-                write(C_SET_HEATER, output.getNumber(), manual);
-            }
-
+            write(C_SET_HEATER, output.getNumber(), flag ? 0.0 : manual);
         }
 
         @Override

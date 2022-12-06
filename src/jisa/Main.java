@@ -2,10 +2,12 @@ package jisa;
 
 import javafx.application.Platform;
 import jisa.addresses.Address;
-import jisa.addresses.StrAddress;
+import jisa.devices.interfaces.SMU;
+import jisa.gui.Connector;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
+import jisa.results.Column;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -77,7 +79,7 @@ public class Main {
                             break;
                         }
 
-                        DeviceShell conShell = new DeviceShell(new StrAddress(values[0]));
+                        DeviceShell conShell = new DeviceShell(Address.parse(values[0]));
                         conShell.connect();
                         conShell.showAndWait();
                         break;

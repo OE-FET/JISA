@@ -3,12 +3,9 @@ package jisa.control;
 import javafx.scene.image.Image;
 import jisa.Util;
 import jisa.addresses.Address;
-import jisa.addresses.StrAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
-import jisa.devices.interfaces.MultiChannel;
-import jisa.devices.interfaces.MultiOutput;
-import jisa.devices.interfaces.MultiSensor;
+import jisa.devices.interfaces.MultiInstrument;
 import jisa.experiment.queue.Action;
 
 import java.io.IOException;
@@ -74,9 +71,7 @@ public class Connection<T extends Instrument> {
                               .filter(c ->
                                   (c.isConnected() && target.isAssignableFrom(c.getDriver()))
                                       || target.isAssignableFrom(c.getType())
-                                      || (c.getInstrument() instanceof MultiChannel && target.isAssignableFrom(((MultiChannel<?>) c.getInstrument()).getChannelClass()))
-                                      || (c.getInstrument() instanceof MultiOutput && target.isAssignableFrom(((MultiOutput<?>) c.getInstrument()).getOutputClass()))
-                                      || (c.getInstrument() instanceof MultiSensor && target.isAssignableFrom(((MultiSensor<?>) c.getInstrument()).getSensorClass()))
+                                      || (c.getInstrument() instanceof MultiInstrument && ((MultiInstrument) c.getInstrument()).getSubInstrumentTypes().stream().anyMatch(target::isAssignableFrom))
                               ).collect(Collectors.toList());
 
     }
@@ -92,7 +87,7 @@ public class Connection<T extends Instrument> {
     public void writeToConfig(ConfigBlock block) {
 
         block.stringValue("Driver").set(driver == null ? null : driver.getName());
-        block.stringValue("Address").set(address == null ? null : address.toString());
+        block.stringValue("Address").set(address == null ? null : address.getJISAString());
         block.save();
 
     }
@@ -101,7 +96,7 @@ public class Connection<T extends Instrument> {
 
         try {
             driver  = (Class<? extends T>) Class.forName(block.stringValue("Driver").get());
-            address = new StrAddress(block.stringValue("Address").get());
+            address = Address.parse(block.stringValue("Address").get());
             triggerChange();
         } catch (Exception e) {
             e.printStackTrace();

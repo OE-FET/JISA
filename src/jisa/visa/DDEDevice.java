@@ -3,6 +3,7 @@ package jisa.visa;
 import com.pretty_tools.dde.client.DDEClientConversation;
 import jisa.addresses.Address;
 import jisa.addresses.LXIAddress;
+import jisa.addresses.TCPIPAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
 
@@ -23,7 +24,8 @@ public class DDEDevice implements Instrument {
     }
 
     public DDEDevice(Address address) throws Exception {
-        LXIAddress tcp_addr = address.toTCPIPAddress();
+
+        LXIAddress tcp_addr = (LXIAddress) address;
 
         try {
             host = tcp_addr.getHost();
@@ -45,6 +47,11 @@ public class DDEDevice implements Instrument {
 
     @Override
     public String getIDN() throws IOException, DeviceException {
+        return "DDE Device";
+    }
+
+    @Override
+    public String getName() {
         return "DDE Device";
     }
 

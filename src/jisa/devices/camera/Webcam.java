@@ -28,11 +28,11 @@ public class Webcam implements Camera {
 
     public Webcam(Address address) throws IOException, DeviceException {
 
-        IDAddress id = address.toIDAddress();
-
-        if (id == null) {
+        if (!(address instanceof IDAddress)) {
             throw new DeviceException("Webcam driver requires the name of the webcam to be given as an IDAddress object.");
         }
+
+        IDAddress id = (IDAddress) address;
 
         if (id.getID().trim().isBlank()) {
 
@@ -111,6 +111,11 @@ public class Webcam implements Camera {
     @Override
     public String getIDN() throws IOException, DeviceException {
         return "Webcam: " + webcam.getName();
+    }
+
+    @Override
+    public String getName() {
+        return "Webcam";
     }
 
     @Override

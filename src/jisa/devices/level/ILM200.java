@@ -2,6 +2,7 @@ package jisa.devices.level;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
+import jisa.devices.interfaces.Instrument;
 import jisa.devices.interfaces.LevelMeter;
 import jisa.devices.temperature.ITC503;
 import jisa.visa.VISADevice;
@@ -10,6 +11,7 @@ import jisa.visa.connections.GPIBConnection;
 import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -97,19 +99,36 @@ public class ILM200 extends VISADevice implements LevelMeter {
 
     }
 
-    @Override
     public int getNumChannels() {
         return 2;
     }
 
-    @Override
-    public String getChannelName(int channelNumber) {
+    public String getName(int channelNumber) {
         return String.format("Channel %d", channelNumber + 1);
     }
 
-    @Override
     public List<LevelMeter> getChannels() {
         return List.of(getChannel(0), getChannel(1));
+    }
+
+    @Override
+    public <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+
+        if (type.isAssignableFrom(LevelMeter.class)) {
+            return (List<I>) List.of(getChannel(0));
+        } else {
+            return Collections.emptyList();
+        }
+
+    }
+
+    @Override
+    public <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
+        if (type.isAssignableFrom(LevelMeter.class)) {
+            return (I) getChannel(index);
+        } else {
+            return null;
+        }
     }
 
     public enum Mode {

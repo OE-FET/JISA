@@ -1,47 +1,57 @@
 package jisa.addresses;
 
+import jisa.Util;
 import jisa.devices.DeviceException;
 
-import javax.usb.UsbDevice;
-import javax.usb.UsbDeviceDescriptor;
-import java.util.ArrayList;
+import java.util.Map;
 
-public class USBAddress implements Address {
+import static jisa.Util.castOrDefault;
 
-    private final int    board;
-    private final int    manufacturer;
-    private final int    model;
-    private final String serialNumber;
-    private final int    interfaceNumber;
+public abstract class USBAddress implements Address {
 
-    public USBAddress(int board, int manufacturer, int model, String serialNumber, int interfaceNumber) {
+    protected int    board           = -1;
+    protected int    vendorID        = -1;
+    protected int    productID       = -1;
+    protected String serialNumber    = "";
+    protected int    interfaceNumber = -1;
+
+    public USBAddress() {}
+
+    public USBAddress(int board, int vendorID, int productID, String serialNumber, int interfaceNumber) {
         this.board           = board;
-        this.manufacturer    = manufacturer;
-        this.model           = model;
+        this.vendorID        = vendorID;
+        this.productID       = productID;
         this.serialNumber    = serialNumber;
         this.interfaceNumber = interfaceNumber;
     }
 
-    public USBAddress(int board, int manufacturer, int model, String serialNumber) {
-        this(board, manufacturer, model, serialNumber, -1);
+    public USBAddress(int vendorID, int productID, String serialNumber, int interfaceNumber) {
+        this.vendorID        = vendorID;
+        this.productID       = productID;
+        this.serialNumber    = serialNumber;
+        this.interfaceNumber = interfaceNumber;
     }
 
-    public USBAddress(int manufacturer, int model, String serialNumber, int interfaceNumber) {
-        this(-1, manufacturer, model, serialNumber, interfaceNumber);
+    public USBAddress(int vendorID, int productID, String serialNumber) {
+        this.vendorID     = vendorID;
+        this.productID    = productID;
+        this.serialNumber = serialNumber;
     }
 
-    public USBAddress(int manufacturer, int model, String serialNumber) {
-        this(-1, manufacturer, model, serialNumber, -1);
+    public USBAddress(int vendorID, int productID, int interfaceNumber) {
+        this.vendorID        = vendorID;
+        this.productID       = productID;
+        this.interfaceNumber = interfaceNumber;
     }
 
-    public USBAddress(int manufacturer, int model) {
-        this(-1, manufacturer, model, null);
+    public USBAddress(int vendorID, int productID) {
+        this.vendorID     = vendorID;
+        this.productID    = productID;
     }
 
     public USBAddress(String address) throws DeviceException
     {
-        if (!address.contains("USB") && !address.contains("INSTR"))
-        {
+        if (!address.contains("USB") && !address.contains("INSTR")) {
             throw new DeviceException("Address is not not USB address, does not contain USB and INSTR");
         }
 
@@ -51,112 +61,77 @@ public class USBAddress implements Address {
         int model = Integer.decode(addressSplit[2]);
         String serialNumber = addressSplit[3];
 
-        this.board           = -1;
-        this.manufacturer    = manufacturer;
-        this.model           = model;
-        this.serialNumber    = serialNumber;
-        this.interfaceNumber = -1;
-    }
-
-    public static USBAddress fromUSBDevice(UsbDevice device) {
-
-        UsbDeviceDescriptor descriptor = device.getUsbDeviceDescriptor();
-        String              serialNumber;
-
-        try {
-            serialNumber = device.getSerialNumberString();
-        } catch (Exception e) {
-            serialNumber = String.valueOf(descriptor.iSerialNumber());
-        }
-
-        return new USBAddress(descriptor.idVendor(), descriptor.idProduct(), serialNumber);
-
-    }
-
-    public int getBoard() {
-        return board;
-    }
-
-    public int getManufacturer() {
-        return manufacturer;
-    }
-
-    public int getModel() {
-        return model;
-    }
-
-    public String getSerialNumber() {
-        return serialNumber;
+        this.vendorID = manufacturer;
+        this.productID = model;
+        this.serialNumber = serialNumber;
     }
 
     public int getInterfaceNumber() {
         return interfaceNumber;
     }
 
+    public void setInterfaceNumber(int interfaceNumber) {
+        this.interfaceNumber = interfaceNumber;
+    }
+
+    public int getBoard() {
+        return board;
+    }
+
+    public void setBoard(int board) {
+        this.board = board;
+    }
+
+    public int getVendorID() {
+        return vendorID;
+    }
+
+    public void setVendorID(int vendorID) {
+        this.vendorID = vendorID;
+    }
+
+    public int getProductID() {
+        return productID;
+    }
+
+    public void setProductID(int productID) {
+        this.productID = productID;
+    }
+
+    public String getSerialNumber() {
+        return serialNumber;
+    }
+
+    public void setSerialNumber(String serialNumber) {
+        this.serialNumber = serialNumber;
+    }
+
+    @Override
+    public Map<String, Object> getParameters() {
+
+        return Util.buildMap(map -> {
+            map.put("Board", board);
+            map.put("Vendor ID", vendorID);
+            map.put("Product ID", productID);
+            map.put("Serial Number", serialNumber);
+            map.put("Interface Number", interfaceNumber);
+        });
+
+    }
+
+    @Override
+    public void setParameters(Map<String, Object> parameters) {
+
+        board           = castOrDefault(parameters.getOrDefault("Board", board), board);
+        vendorID        = castOrDefault(parameters.getOrDefault("Vendor ID", vendorID), vendorID);
+        productID       = castOrDefault(parameters.getOrDefault("Product ID", productID), productID);
+        serialNumber    = castOrDefault(parameters.getOrDefault("Serial Number", serialNumber), serialNumber);
+        interfaceNumber = castOrDefault(parameters.getOrDefault("Interface Number", interfaceNumber), interfaceNumber);
+
+    }
+
     public String toString() {
-
-        ArrayList<String> parts = new ArrayList<>();
-
-        if (board == -1) {
-            parts.add("USB");
-        } else {
-            parts.add(String.format("USB%d", board));
-        }
-
-        parts.add(String.format("0x%04X", manufacturer));
-        parts.add(String.format("0x%04X", model));
-
-        if (serialNumber != null) {
-            parts.add(serialNumber);
-        }
-
-        if (interfaceNumber != -1) {
-            parts.add(String.format("%d", interfaceNumber));
-        }
-
-        parts.add("INSTR");
-
-        return String.join("::", parts);
-
-    }
-
-    public USBAddress toUSBAddress() {
-        return this;
-    }
-
-
-    public AddressParams createParams() {
-
-        AddressParams params = new USBParams();
-        params.set(0, board);
-        params.set(1, String.format("0x%04X", manufacturer));
-        params.set(2, String.format("0x%04X", model));
-        params.set(3, serialNumber);
-
-        return params;
-
-    }
-
-    public static class USBParams extends AddressParams<USBAddress> {
-
-        public USBParams() {
-
-            addParam("Board", false);
-            addParam("Vendor", true);
-            addParam("Product", true);
-            addParam("Serial", true);
-
-        }
-
-        @Override
-        public USBAddress createAddress() {
-            return new USBAddress(getInt(0), Integer.decode(getString(1)), Integer.decode(getString(2)), getString(3));
-        }
-
-        @Override
-        public String getName() {
-            return "USB-TMC";
-        }
+        return getJISAString();
     }
 
 }

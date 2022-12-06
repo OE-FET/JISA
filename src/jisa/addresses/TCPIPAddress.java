@@ -1,25 +1,68 @@
 package jisa.addresses;
 
+import jisa.Util;
+
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static jisa.Util.castOrDefault;
+
 public class TCPIPAddress implements Address {
 
-    private final int    board;
-    private final String host;
-    private final int    port;
+    private int    board = -1;
+    private String host  = "";
+    private int    port  = 0;
+
+    public TCPIPAddress() {}
 
     public TCPIPAddress(int board, String host, int port) {
         this.board = board;
+        this.host  = host;
+        this.port  = port;
+    }
+
+    public TCPIPAddress(String host, int port) {
+        this(-1, host, port);
+    }
+
+    public TCPIPAddress(Map<String, Object> parameters) {
+        setParameters(parameters);
+    }
+
+    public int getBoard() {
+        return board;
+    }
+
+    public void setBoard(int board) {
+        this.board = board;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
         this.host = host;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
         this.port = port;
     }
 
-    public TCPIPAddress(String address, int port) {
-        this(-1, address, port);
+    @Override
+    public String getTypeName() {
+        return "TCP-IP Socket";
     }
 
     @Override
-    public String toString() {
+    public String getVISAString() {
 
-        if (board == -1) {
+        if (board < 0) {
             return String.format("TCPIP::%s::%d::SOCKET", host, port);
         } else {
             return String.format("TCPIP%d::%s::%d::SOCKET", board, host, port);
@@ -27,52 +70,46 @@ public class TCPIPAddress implements Address {
 
     }
 
-    public int getBoard() {
-        return board;
-    }
+    @Override
+    public Map<String, Object> getParameters() {
 
-    public String getHost() {
-        return host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public AddressParams createParams() {
-
-        AddressParams params = new TCPIPSocketParams();
-        params.set(0, board);
-        params.set(1, host);
-        params.set(2, port);
-
-        return params;
+        return Util.buildMap(map -> {
+            map.put("Board Number", board);
+            map.put("Host", host);
+            map.put("Port", port);
+        });
 
     }
 
-    public TCPIPAddress toTCPIPSocketAddress() {
-        return this;
+    @Override
+    public void setParameters(Map<String, Object> parameters) {
+
+        board = castOrDefault(parameters.getOrDefault("Board", board), board);
+        host  = castOrDefault(parameters.getOrDefault("Host", host), host);
+        port  = castOrDefault(parameters.getOrDefault("Port", port), port);
+
     }
 
-    public static class TCPIPSocketParams extends AddressParams<TCPIPAddress> {
+    @Override
+    public void parseString(String text) throws InvalidAddressFormatException {
 
-        public TCPIPSocketParams() {
+        Pattern pattern = Pattern.compile("TCPIP([0-9]*)::(.*?)::([0-9]+)::SOCKET");
+        Matcher matcher = pattern.matcher(text);
 
-            addParam("Board", false);
-            addParam("Host", true);
-            addParam("Port", false);
+        if (matcher.find()) {
 
+            board = matcher.group(1).isBlank() ? -1 : Integer.parseInt(matcher.group(1));
+            host  = matcher.group(2);
+            port  = Integer.parseInt(matcher.group(3));
+
+        } else {
+            throw new InvalidAddressFormatException(text, "TCPIP Socket");
         }
 
-        @Override
-        public TCPIPAddress createAddress() {
-            return new TCPIPAddress(getInt(0), getString(1), getInt(2));
-        }
+    }
 
-        @Override
-        public String getName() {
-            return "TCP-IP Socket";
-        }
+    public String toString() {
+        return getJISAString();
     }
 
 }

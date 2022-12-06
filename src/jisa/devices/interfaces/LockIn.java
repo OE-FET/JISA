@@ -385,8 +385,6 @@ public interface LockIn extends Instrument, FMeter {
      *
      * @param factor
      *
-     * @param factor
-     *
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      * @throws InterruptedException Upon interruption error

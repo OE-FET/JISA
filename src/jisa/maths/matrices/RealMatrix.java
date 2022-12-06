@@ -97,6 +97,22 @@ public class RealMatrix implements Matrix<Double> {
         setAll(values);
     }
 
+    public RealMatrix(int rows, int cols, MatrixBuilder builder) {
+
+        this(rows, cols);
+
+        for (int r = 0; r < rows; r++) {
+
+            for (int c = 0; c < cols; c++) {
+
+                set(r, c, builder.get(r, c));
+
+            }
+
+        }
+
+    }
+
     public RealMatrix(double[][] data) {
         backing = MatrixUtils.createRealMatrix(data);
     }
@@ -919,6 +935,10 @@ public class RealMatrix implements Matrix<Double> {
         sums.mapSelf(Math::sqrt);
         return sums;
 
+    }
+
+    public interface MatrixBuilder {
+        double get(int row, int column);
     }
 
     public static class QR implements jisa.maths.matrices.QR<Double> {

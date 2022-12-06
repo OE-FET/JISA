@@ -124,11 +124,11 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         // Load native library
         super(LIBRARY_NAME, INSTANCE);
 
-        if (address.toIDAddress() == null) {
-            throw new DeviceException("This driver requires a serial number address.");
+        if (!(address instanceof IDAddress)) {
+            throw new DeviceException("This driver requires an ID or serial number address.");
         }
 
-        String serial = address.toIDAddress().getID();
+        String serial = ((IDAddress) address).getID();
 
         if (INSTANCE == null) {
             throw new IOException("Error loading usbtc08 library!");
@@ -263,7 +263,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     @Override
-    public String getSensorName(int sensorNumber) {
+    public String getName(int sensorNumber) {
         return String.format("Channel %d", sensorNumber);
     }
 
@@ -455,8 +455,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     @Override
-    public String getSensorName() {
-        return getSensorName(0);
+    public String getName() {
+        return getName(0);
     }
 
     /**

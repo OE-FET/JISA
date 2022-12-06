@@ -2,8 +2,7 @@ package jisa.gui;
 
 import com.github.sarxos.webcam.Webcam;
 import javafx.scene.image.Image;
-import jisa.addresses.Address;
-import jisa.addresses.IDAddress;
+import jisa.addresses.*;
 import jisa.enums.Icon;
 import jisa.visa.VISA;
 import jisa.visa.VISADevice;
@@ -34,31 +33,16 @@ public class VISABrowser extends ListDisplay<Address> {
 
                 URL icon;
 
-                switch (address.getType()) {
-
-                    case GPIB:
-                        icon = VISABrowser.class.getResource("images/gpib.png");
-                        break;
-
-                    case USB:
-                        icon = VISABrowser.class.getResource("images/usb.png");
-                        break;
-
-                    case LXI:
-                    case TCPIP:
-                        icon = VISABrowser.class.getResource("images/tcpip.png");
-                        break;
-
-                    case SERIAL:
-                    case MODBUS:
-                    case COM:
-                        icon = VISABrowser.class.getResource("images/serial.png");
-                        break;
-
-                    default:
-                        icon = VISABrowser.class.getResource("images/smu.png");
-                        break;
-
+                if (address instanceof GPIBAddress) {
+                    icon = VISABrowser.class.getResource("images/gpib.png");
+                } else if (address instanceof USBAddress){
+                    icon = VISABrowser.class.getResource("images/usb.png");
+                } else if (address instanceof LXIAddress || address instanceof TCPIPAddress) {
+                    icon = VISABrowser.class.getResource("images/tcpip.png");
+                } else if (address instanceof SerialAddress || address instanceof ModbusAddress) {
+                    icon = VISABrowser.class.getResource("images/serial.png");
+                } else {
+                    icon = VISABrowser.class.getResource("images/smu.png");
                 }
 
                 String name;
@@ -75,16 +59,19 @@ public class VISABrowser extends ListDisplay<Address> {
                     name = "Unidentified Device";
                 }
 
-                add(address, name, address.toString(), new Image(icon.toExternalForm()));
+                add(address, name, address.getJISAString(), new Image(icon.toExternalForm()));
 
             }
 
-            for (Webcam webcam : Webcam.getWebcams()) {
-                IDAddress address = new IDAddress(webcam.getName());
-                add(address, "Webcam: " + webcam.getName(), address.toString(), Icon.DEVICE.getBlackImage());
-            }
+            try {
+                for (Webcam webcam : Webcam.getWebcams()) {
+                    IDAddress address = new IDAddress(webcam.getName());
+                    add(address, "Webcam: " + webcam.getName(), address.getJISAString(), Icon.DEVICE.getBlackImage());
+                }
+            } catch (Exception ignored) {};
 
         } catch (Exception e) {
+            e.printStackTrace();
             GUI.errorAlert(e.getMessage());
         } finally {
             refresh.setDisabled(false);

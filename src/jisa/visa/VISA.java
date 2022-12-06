@@ -2,12 +2,18 @@ package jisa.visa;
 
 import jisa.Util;
 import jisa.addresses.Address;
+import jisa.addresses.TCPIPAddress;
+import jisa.addresses.VISAAddress;
 import jisa.gui.GUI;
 import jisa.visa.connections.Connection;
 import jisa.visa.drivers.*;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static jisa.visa.VISANativeInterface.VI_ATTR_INTF_INST_NAME;
 
 /**
  * Static class for accessing the native VISA library in a more Java-friendly way
@@ -16,11 +22,21 @@ public class VISA {
 
     private final static ArrayList<Driver>      drivers = new ArrayList<>();
     private final static HashMap<Class, Driver> lookup  = new HashMap<>();
+    private static int loadCount = 0;
 
-    static {
+    static {loadDrivers();}
+
+    private static void loadDrivers()
+    {
         Locale.setDefault(Locale.US);
 
-        System.out.println("Attempting to load drivers.");
+        if (loadCount > 0) {
+            System.out.println("Attempting to reload drivers.");
+        }
+        else
+        {
+            System.out.println("Attempting to load drivers.");
+        }
 
         try {
             System.out.print("Trying NI VISA driver...             \t");
@@ -85,12 +101,11 @@ public class VISA {
 
         try {
             System.out.print("Trying USB-TMC driver...             \t");
-            drivers.add(new USBTMCDriver());
+            drivers.add(new USBDriver());
             System.out.println("Success.");
         } catch (Exception | Error ignored) {
             System.out.println("Nope.");
         }
-
         for (Driver d : drivers) {
             lookup.put(d.getClass(), d);
         }
@@ -110,7 +125,7 @@ public class VISA {
         } else {
             System.out.printf("Successfully loaded %d drivers.\n", drivers.size());
         }
-
+        loadCount++;
     }
 
     public static void init() {
@@ -129,12 +144,14 @@ public class VISA {
 
         for (Driver driver : drivers) {
 
-            addresses.addAll(
-                driver.search()
-                      .stream()
-                      .filter(a -> addresses.stream().noneMatch(b -> b.toString().trim().equalsIgnoreCase(a.toString().trim())))
-                      .collect(Collectors.toUnmodifiableList())
-            );
+            try {
+                addresses.addAll(
+                    driver.search()
+                          .stream()
+                          .filter(a -> addresses.stream().noneMatch(b -> b.toString().trim().equalsIgnoreCase(a.toString().trim())))
+                          .collect(Collectors.toUnmodifiableList())
+                );
+            } catch (Exception ignored) {}
 
         }
 
@@ -170,7 +187,7 @@ public class VISA {
         }
 
         // Workaround to use internal TCP-IP implementation since there seems to be issues with TCP-IP Sockets and NI-VISA
-        if (address.getType() == Address.Type.TCPIP) {
+        if (address instanceof TCPIPAddress) {
 
             try {
                 connection = lookup.get(TCPIPDriver.class).open(address);
@@ -180,24 +197,39 @@ public class VISA {
         }
 
         boolean tried = false;
+        boolean drvWorked = false;
+        int maxTries = 12; // max reloads of drivers if every fails to ensure successfully opening device
+        int count = 0;
 
-        // Try each driver in order
-        for (Driver d : drivers) {
+        do {
+            // Try each driver in order
+            for (Driver d : drivers) {
 
-            if (d.worksWith(address)) {
+                if (d.worksWith(address)) {
 
-                tried = true;
+                    tried = true;
 
-                try {
-                    connection = d.open(address);
-                    break;                      // If it worked, then let's use it!
-                } catch (VISAException e) {
-                    errors.add(String.format("* %s: %s", d.getClass().getSimpleName(), e.getMessage()));
+                    try {
+                        connection = d.open(address);
+                        drvWorked = true;
+                        break;                      // If it worked, then let's use it!
+                    } catch (VISAException e) {
+                        if (count == maxTries) {
+                            errors.add(String.format("* %s: %s", d.getClass().getSimpleName(), e.getMessage()));
+                            break;
+                        }
+                    }
                 }
-
             }
-
-        }
+            // if first time drivers did not work, reload drivers
+            if (count > 0)
+            {
+                drivers.clear();
+                lookup.clear();
+                loadDrivers();
+            }
+            count++;
+        } while(!drvWorked && (count != maxTries));
 
         if (!tried) {
             throw new VISAException("No drivers available that support connecting to %s", address.toString());

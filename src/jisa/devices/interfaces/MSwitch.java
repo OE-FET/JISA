@@ -5,11 +5,37 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-public interface MSwitch extends Switch, MultiChannel<Switch> {
+public interface MSwitch extends Switch, MultiInstrument {
 
     public static String getDescription() {
         return "Multi-Channel Switch";
+    }
+
+    String getName(int channel);
+
+    @Override
+    default List<Class<? extends Instrument>> getSubInstrumentTypes() {
+        return List.of(Switch.class);
+    }
+
+    @Override
+    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+
+        if (type.isAssignableFrom(Switch.class)) {
+            return (List<I>) getChannels();
+        } else {
+            return Collections.emptyList();
+        }
+
+    }
+
+    @Override
+    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
+        return null;
     }
 
     void turnOn(int channel) throws IOException, DeviceException;
@@ -59,20 +85,29 @@ public interface MSwitch extends Switch, MultiChannel<Switch> {
 
     }
 
-    default Switch getChannel(int channel) throws DeviceException {
+    default List<Switch> getChannels() {
 
-        checkChannel(channel);
+        ArrayList<Switch> switches = new ArrayList<>(getNumChannels());
+
+        for (int i = 0; i < getNumChannels(); i++) {
+            switches.add(getChannel(i));
+        }
+
+        return switches;
+
+    }
+
+    default Switch getChannel(int channel) {
+
+        if (!Util.isBetween(channel, 0, getNumChannels()-1)) {
+            return null;
+        }
 
         return new Switch() {
 
             @Override
-            public String getChannelName() {
-                return MSwitch.this.getChannelName(channel);
-            }
-
-            @Override
-            public Class<Switch> getChannelClass() {
-                return MSwitch.this.getChannelClass();
+            public String getName() {
+                return MSwitch.this.getName(channel);
             }
 
             @Override

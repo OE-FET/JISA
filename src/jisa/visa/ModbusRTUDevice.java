@@ -26,13 +26,13 @@ public class ModbusRTUDevice implements Instrument {
 
     public ModbusRTUDevice(Address address, SerialPort.BaudRate baud, int dataBits, int stopBits, SerialPort.Parity parity) throws IOException, DeviceException {
 
-        ModbusAddress mba = address.toModbusAddress();
-
-        if (mba == null) {
+        if (!(address instanceof ModbusAddress)) {
             throw new DeviceException("This is a modbus RTU driver, therefore it needs a modbus address.");
         }
 
-        port = mba.getPort();
+        ModbusAddress mba = (ModbusAddress) address;
+
+        port = mba.getPortName();
         unit = mba.getAddress();
 
         String[] portNames = SerialPortList.getPortNames();
@@ -77,6 +77,11 @@ public class ModbusRTUDevice implements Instrument {
     @Override
     public String getIDN() throws IOException {
         return String.format("Modbus RTU device, unit address %d", unit);
+    }
+
+    @Override
+    public String getName() {
+        return "Modbus Device";
     }
 
     @Override

@@ -32,7 +32,7 @@ public class AgilentVISADriver extends NIVISADriver {
                 AgilentVISADriver.libName = "agvisa32";
                 AgilentVISADriver.libStatic     = Native.loadLibrary(AgilentVISADriver.libName, VISANativeInterface.class);
             } else if (OS_NAME.contains("linux") || OS_NAME.contains("mac")) {
-                AgilentVISADriver.libName = "visa";
+                AgilentVISADriver.libName = "agvisa";
                 AgilentVISADriver.libStatic     = Native.loadLibrary(AgilentVISADriver.libName, VISANativeInterface.class);
             } else {
                 throw new VISAException("Platform not yet supported!");

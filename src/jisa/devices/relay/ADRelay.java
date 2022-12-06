@@ -33,12 +33,12 @@ public class ADRelay extends VISADevice implements MSwitch {
 
         setTimeout(2000);
 
-        setReadTerminator(LF_TERMINATOR);
+        setReadTerminator("\n");
         setWriteTerminator("\n");
         addAutoRemove("\r");
         addAutoRemove("\n");
 
-        Util.sleep(1500); // Need to wait for Arduino to initialise serial routines.
+        Util.sleep(2000); // Need to wait for Arduino to initialise serial routines.
 
         String idn = getIDN().trim();
 
@@ -74,7 +74,7 @@ public class ADRelay extends VISADevice implements MSwitch {
     }
 
     @Override
-    public String getChannelName(int channelNumber) {
+    public String getName(int channelNumber) {
         return String.format("Relay %d", channelNumber + 1);
     }
 
@@ -87,9 +87,7 @@ public class ADRelay extends VISADevice implements MSwitch {
 
         for (int cn = 0; cn < numChannels; cn++) {
 
-            try {
-                list.add(getChannel(cn));
-            } catch (DeviceException ignored) { }
+            list.add(getChannel(cn));
 
         }
 
@@ -97,13 +95,4 @@ public class ADRelay extends VISADevice implements MSwitch {
 
     }
 
-    @Override
-    public String getChannelName() {
-        return "All Channels";
-    }
-
-    @Override
-    public Class<Switch> getChannelClass() {
-        return Switch.class;
-    }
 }

@@ -9,18 +9,46 @@ import jisa.experiment.MCIVPoint;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Abstract class defining the standard interface for controller Multiple-Channel SMUs.
  */
-public interface MCSMU extends SMU, MultiChannel<SMU> {
+public interface MCSMU extends SMU, MultiInstrument {
 
     public static String getDescription() {
         return "Multi-Channel Source Measure Unit";
     }
 
-    String getChannelName(int channel);
+    @Override
+    default List<Class<? extends Instrument>> getSubInstrumentTypes() {
+        return List.of(SMU.class);
+    }
+
+    @Override
+    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+
+        if (type.isAssignableFrom(SMU.class)) {
+            return (List<I>) getChannels();
+        } else {
+            return Collections.emptyList();
+        }
+
+    }
+
+    @Override
+    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
+
+        if (type.isAssignableFrom(SMU.class)) {
+            return (I) getChannel(index);
+        } else {
+            return null;
+        }
+
+    }
+
+    String getName(int channel);
 
     /**
      * Returns the voltage of the specified channel
@@ -1315,7 +1343,7 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
      *
      * @throws DeviceException If channel does not exist
      */
-    default SMU getChannel(int channel) throws DeviceException {
+    default SMU getChannel(int channel) {
 
         try {
             return new VirtualSMU(this, channel);
@@ -1331,11 +1359,7 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
 
         for (int i = 0; i < getNumChannels(); i++) {
 
-            try {
-                list.add(getChannel(i));
-            } catch (DeviceException e) {
-                e.printStackTrace();
-            }
+            list.add(getChannel(i));
 
         }
 
@@ -1374,8 +1398,8 @@ public interface MCSMU extends SMU, MultiChannel<SMU> {
         }
 
         @Override
-        public String getChannelName() {
-            return smu.getChannelName(channel);
+        public String getName() {
+            return smu.getName(channel);
         }
 
         @Override

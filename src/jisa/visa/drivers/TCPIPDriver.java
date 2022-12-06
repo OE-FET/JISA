@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -23,11 +24,11 @@ public class TCPIPDriver implements Driver {
     @Override
     public Connection open(Address address) throws VISAException {
 
-        TCPIPAddress addr = address.toTCPIPSocketAddress();
-
-        if (addr == null) {
+        if (!(address instanceof TCPIPAddress)) {
             throw new VISAException("Raw TCP-IP driver can only be used to open raw TCP-IP sockets!");
         }
+
+        TCPIPAddress addr = (TCPIPAddress) address;
 
         try {
             Socket socket = new Socket(InetAddress.getByName(addr.getHost()), addr.getPort());
@@ -46,7 +47,7 @@ public class TCPIPDriver implements Driver {
 
     @Override
     public boolean worksWith(Address address) {
-        return address.getType() == Address.Type.TCPIP;
+        return address instanceof TCPIPAddress;
     }
 
     public static class TCPIPConnection implements jisa.visa.connections.TCPIPConnection {
@@ -100,32 +101,35 @@ public class TCPIPDriver implements Driver {
         public byte[] readBytes(int bufferSize) throws VISAException {
 
             ByteBuffer buffer    = ByteBuffer.allocate(bufferSize);
-            byte       single;
+            byte[]     single    = new byte[1];
             byte[]     lastBytes = new byte[terminationSequence.length];
+            int        count     = 0;
+            boolean    termChar  = false;
 
             try {
 
-                for (int i = 0; i < bufferSize; i++) {
+                while (!termChar && count < bufferSize) {
 
-                    single = (byte) in.read();
+                    in.read(single);
 
-                    buffer.put(single);
+                    buffer.put(single[0]);
+                    count++;
 
                     if (terminationSequence.length > 0) {
 
                         System.arraycopy(lastBytes, 1, lastBytes, 0, lastBytes.length - 1);
 
-                        lastBytes[lastBytes.length - 1] = single;
+                        lastBytes[lastBytes.length - 1] = single[0];
 
                         if (Arrays.equals(lastBytes, terminationSequence)) {
-                            break;
+                            termChar = true;
                         }
 
                     }
 
                 }
 
-                return Util.trimArray(buffer.array());
+                return Util.trimBytes(buffer, 0, count);
 
             } catch (IOException e) {
                 throw new VISAException(e.getMessage());
@@ -152,7 +156,7 @@ public class TCPIPDriver implements Driver {
 
             buffer.position(buffer.position() - 1);
 
-            terminationSequence = buffer.slice().array();
+            terminationSequence = Util.trimBytes(buffer, buffer.position(), buffer.remaining());
 
         }
 
@@ -183,6 +187,28 @@ public class TCPIPDriver implements Driver {
 
                 throw new VISAException(e.getMessage());
 
+            }
+
+        }
+
+        @Override
+        public void setKeepAlive(boolean on) throws VISAException {
+
+            try {
+                socket.setKeepAlive(on);
+            } catch (SocketException e) {
+                throw new VISAException(e.getMessage());
+            }
+
+        }
+
+        @Override
+        public boolean isKeepAlive() throws VISAException {
+
+            try {
+                return socket.getKeepAlive();
+            } catch (SocketException e) {
+                throw new VISAException(e.getMessage());
             }
 
         }

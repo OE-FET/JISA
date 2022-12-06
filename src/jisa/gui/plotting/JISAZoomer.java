@@ -44,12 +44,9 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
 import org.controlsfx.control.RangeSlider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class JISAZoomer extends ChartPlugin {
 
-    private static final Logger                                LOGGER                      = LoggerFactory.getLogger(JISAZoomer.class);
     public static final  String                                ZOOMER_OMIT_AXIS            = "OmitAxisZoom";
     public static final  String                                STYLE_CLASS_ZOOM_RECT       = "chart-zoom-rect";
     private static final int                                   ZOOM_RECT_MIN_SIZE          = 5;

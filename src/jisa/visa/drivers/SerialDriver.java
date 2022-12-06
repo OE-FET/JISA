@@ -29,19 +29,19 @@ public class SerialDriver implements Driver {
 
     @Override
     public boolean worksWith(Address address) {
-        return address.getType() == Address.Type.SERIAL;
+        return address instanceof SerialAddress;
     }
 
     @Override
     public Connection open(Address address) throws VISAException {
 
-        SerialAddress addr = address.toSerialAddress();
-
-        if (addr == null) {
+        if (!(address instanceof SerialAddress)) {
             throw new VISAException("Can only open serial connections with the native serial driver!");
         }
 
-        String   device    = addr.getPort();
+        SerialAddress addr = (SerialAddress) address;
+
+        String   device    = addr.getPortName();
         String[] portNames = SerialPortList.getPortNames();
         String   found     = null;
 
@@ -71,19 +71,19 @@ public class SerialDriver implements Driver {
             throw new VISAException("Error opening port \"%s\".", device.trim());
         }
 
-        return new NSConnection(port);
+        return new JSSCConnection(port);
 
     }
 
-    public static class NSConnection implements SerialConnection {
+    public static class JSSCConnection implements SerialConnection {
 
         private final SerialPort port;
-        private       int        tmo;
+        private       int        timeout             = 2000;
         private       String     terms;
         private       byte[]     terminationSequence = {0x0A};
         private       Charset    charset             = Charset.defaultCharset();
 
-        public NSConnection(SerialPort comPort) throws VISAException {
+        public JSSCConnection(SerialPort comPort) throws VISAException {
             port = comPort;
             setSerialParameters(9600, 8);
         }
@@ -152,15 +152,19 @@ public class SerialDriver implements Driver {
 
             try {
 
-                for (int i = 0; i < bufferSize; i++) {
+                int     count    = 0;
+                boolean termChar = false;
 
-                    single = port.readBytes(1, tmo);
+                while (!termChar && count < bufferSize) {
+
+                    single = port.readBytes(1, timeout);
 
                     if (single.length != 1) {
                         throw new VISAException("Error reading from input stream!");
                     }
 
                     buffer.put(single[0]);
+                    count++;
 
                     if (terminationSequence.length > 0) {
 
@@ -169,14 +173,14 @@ public class SerialDriver implements Driver {
                         lastBytes[lastBytes.length - 1] = single[0];
 
                         if (Arrays.equals(lastBytes, terminationSequence)) {
-                            break;
+                            termChar = true;
                         }
 
                     }
 
                 }
 
-                return Util.trimArray(buffer.array());
+                return Util.trimBytes(buffer, 0, count);
 
             } catch (Exception e) {
                 throw new VISAException(e.getMessage());
@@ -196,15 +200,16 @@ public class SerialDriver implements Driver {
 
             buffer.rewind();
 
-            byte value = 0;
+            byte value;
 
-            while (value == 0) {
+            do {
                 value = buffer.get();
-            }
+            } while (value == 0);
+
 
             buffer.position(buffer.position() - 1);
 
-            terminationSequence = buffer.slice().array();
+            terminationSequence = Util.trimBytes(buffer, buffer.position(), buffer.remaining());
 
         }
 
@@ -214,8 +219,8 @@ public class SerialDriver implements Driver {
         }
 
         @Override
-        public void setTimeout(int duration) throws VISAException {
-            tmo = duration;
+        public void setTimeout(int timeout) throws VISAException {
+            this.timeout = timeout;
         }
 
         @Override
@@ -276,8 +281,7 @@ public class SerialDriver implements Driver {
             boolean result;
 
             try {
-                port.purgePort(1);
-                port.purgePort(2);
+                port.purgePort(SerialPort.PURGE_TXABORT | SerialPort.PURGE_RXABORT | SerialPort.PURGE_TXCLEAR | SerialPort.PURGE_RXCLEAR);
                 result = port.closePort();
             } catch (SerialPortException e) {
                 throw new VISAException(e.getMessage());
