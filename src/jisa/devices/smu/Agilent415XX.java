@@ -4,7 +4,11 @@ import jisa.addresses.Address;
 import jisa.control.*;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.SPA;
-import jisa.enums.*;
+import jisa.enums.AMode;
+import jisa.enums.Source;
+import jisa.enums.TType;
+import jisa.enums.Terminals;
+import jisa.enums.Function;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;

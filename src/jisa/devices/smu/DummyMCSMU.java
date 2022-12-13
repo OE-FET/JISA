@@ -3,7 +3,11 @@ package jisa.devices.smu;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MCSMU;
-import jisa.enums.*;
+import jisa.enums.AMode;
+import jisa.enums.Source;
+import jisa.enums.TType;
+import jisa.enums.Terminals;
+import jisa.enums.Function;
 
 import java.io.IOException;
 import java.util.Random;

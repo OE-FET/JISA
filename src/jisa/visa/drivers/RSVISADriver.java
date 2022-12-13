@@ -30,10 +30,10 @@ public class RSVISADriver extends NIVISADriver {
         try {
             if (OS_NAME.contains("win")) {
                 RSVISADriver.libName = "RsVisa32";
-                RSVISADriver.libStatic     = Native.loadLibrary(RSVISADriver.libName, VISANativeInterface.class);
+                RSVISADriver.libStatic = Native.loadLibrary(RSVISADriver.libName, VISANativeInterface.class);
             } else if (OS_NAME.contains("linux") || OS_NAME.contains("mac")) {
-                RSVISADriver.libName = "visa";
-                RSVISADriver.libStatic     = Native.loadLibrary(RSVISADriver.libName, VISANativeInterface.class);
+                RSVISADriver.libName = "rsvisa";
+                RSVISADriver.libStatic = Native.loadLibrary(RSVISADriver.libName, VISANativeInterface.class);
             } else {
                 throw new VISAException("Platform not yet supported!");
             }

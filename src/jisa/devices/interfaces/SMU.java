@@ -2,7 +2,11 @@ package jisa.devices.interfaces;
 
 import jisa.Util;
 import jisa.devices.DeviceException;
-import jisa.enums.*;
+import jisa.enums.AMode;
+import jisa.enums.Source;
+import jisa.enums.TType;
+import jisa.enums.Terminals;
+import jisa.enums.Function;
 import jisa.experiment.IVPoint;
 
 import java.io.IOException;
