@@ -22,7 +22,7 @@ then `JISA` simply represents them as collections of `SMU` objects, or simply as
 ```kotlin
 // Get first channel from both instruments
 val smu1 = keithley.getChannel(0)
-val smu2 = agilent.getChannel(0)
+val smu2 = agilent.getSMUChannel(0)
 val smu3 = k2450
 ```
 
@@ -67,9 +67,9 @@ JISA provides a simple means of creating tables of data which can then be direct
 
 ```kotlin
 // Create results storage
-val V     = Column.forDecimal("Voltage", "V")
-val I     = Column.forDecimal("Current", "A")
-val T     = Column.forDecimal("Temperature", "K")
+val V     = Column.ofDecimals("Voltage", "V")
+val I     = Column.ofDecimals("Current", "A")
+val T     = Column.ofDecimals("Temperature", "K")
 val table = ResultList(V, I, T)
 
 // Take 10 readings
