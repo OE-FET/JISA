@@ -6,7 +6,7 @@ import jisa.enums.AMode;
 
 import java.io.IOException;
 
-public interface IMeter extends Instrument {
+public interface IMeter extends Instrument, Switch {
 
     public static String getDescription() {
         return "Ammeter";

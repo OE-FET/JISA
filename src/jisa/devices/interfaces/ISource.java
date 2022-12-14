@@ -7,7 +7,7 @@ import java.io.IOException;
 /**
  * Interface to define the standard functionality of an instrument that can source current.
  */
-public interface ISource extends Instrument {
+public interface ISource extends Instrument, Switch {
 
     public static String getDescription() {
         return "Current Source";

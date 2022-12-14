@@ -10,9 +10,7 @@ import jisa.maths.matrices.exceptions.DimensionException;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
-import org.apache.commons.math.analysis.interpolation.LinearInterpolator;
-import org.apache.commons.math.analysis.interpolation.MicrosphereInterpolator;
-import org.apache.commons.math.analysis.interpolation.MultivariateRealInterpolator;
+import org.apache.commons.math.analysis.interpolation.*;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -45,7 +43,7 @@ public class Interpolation {
 
         }
 
-        double[][] params = new double[paramList.size()][3];
+        double[][] params = new double[paramList.size()][arguments.length];
         double[]   values = new double[paramList.size()];
 
         for (int i = 0; i < values.length; i++) {
@@ -239,7 +237,7 @@ public class Interpolation {
 
         list.sort(Map.Entry.comparingByKey());
 
-        Iterator<Map.Entry<Double,Double>> iterator = list.iterator();
+        Iterator<Map.Entry<Double, Double>> iterator = list.iterator();
 
         // Remove any entries that are not strictly increasing
         Double last = null;
@@ -280,6 +278,48 @@ public class Interpolation {
 
     }
 
+    public static Function interpolateSmooth(Iterable<Double> x, Iterable<Double> v) {
+
+        SplineInterpolator              interpolator = new SplineInterpolator();
+        List<Map.Entry<Double, Double>> list         = new LinkedList<>();
+
+        Iterator<Double> xi = x.iterator();
+        Iterator<Double> vi = v.iterator();
+
+        while (xi.hasNext() && vi.hasNext()) {
+            list.add(Map.entry(xi.next(), vi.next()));
+        }
+
+        list.sort(Map.Entry.comparingByKey());
+
+        Iterator<Map.Entry<Double, Double>> iterator = list.iterator();
+
+        // Remove any entries that are not strictly increasing
+        Double last = null;
+        while (iterator.hasNext()) {
+
+            Map.Entry<Double, Double> entry = iterator.next();
+
+            if (last != null && entry.getKey() <= last) {
+                iterator.remove();
+            }
+
+            last = entry.getKey();
+
+        }
+
+        double[] params = new double[list.size()];
+        double[] values = new double[list.size()];
+
+        for (int i = 0; i < values.length; i++) {
+            params[i] = list.get(i).getKey();
+            values[i] = list.get(i).getValue();
+        }
+
+        return new Function.WrappedFunction(interpolator.interpolate(params, values));
+
+    }
+
     public static class MultiIterable implements Iterable<double[]> {
 
         private final Iterable<Double>[] iterables;
@@ -305,7 +345,7 @@ public class Interpolation {
                 public boolean hasNext() {
 
                     for (Iterator<Double> i : iterators) {
-                        if (!i.hasNext()) { return false; }
+                        if (!i.hasNext()) {return false;}
                     }
 
                     return true;

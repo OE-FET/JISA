@@ -8,15 +8,15 @@ import java.io.IOException;
 
 public class MotorController {
 
-    private Returnable<Double>   frequency;
-    private SetGettable<Double>  voltage;
-    private SetGettable<Boolean> power;
-    private SimpleRegression     fit = null;
+    private final Returnable<Double>   frequency;
+    private final SetGettable<Double>  voltage;
+    private final SetGettable<Boolean> power;
+    private       SimpleRegression     fit = null;
 
     public MotorController(Returnable<Double> frequency, SetGettable<Double> voltage, SetGettable<Boolean> power) {
         this.frequency = frequency;
-        this.voltage = voltage;
-        this.power = power;
+        this.voltage   = voltage;
+        this.power     = power;
     }
 
     public double getVoltage() throws IOException, DeviceException {
@@ -37,14 +37,14 @@ public class MotorController {
         voltage.set(maxV);
         start();
 
-        Synch.waitForParamStable(() -> frequency.get(), 1.0, 100, 2 * maxPeriod);
+        Synch.waitForParamStable(frequency::get, 1.0, 100, 2 * maxPeriod);
 
         fit = new SimpleRegression();
 
         for (double v : values) {
 
             voltage.set(v);
-            Synch.waitForParamStable(() -> frequency.get(), 1.0, 100, 2 * maxPeriod);
+            Synch.waitForParamStable(frequency::get, 1.0, 100, 2 * maxPeriod);
             fit.addData(frequency.get(), voltage.get());
 
         }
@@ -62,21 +62,21 @@ public class MotorController {
         voltage.set(fit.predict(frequency));
     }
 
-    public void waitForFrequency(double f, double pctMargin) throws IOException, DeviceException {
+    public void waitForFrequency(double f, double pctMargin) throws IOException, DeviceException, InterruptedException {
         start();
-        Synch.waitForParamWithinError(() -> frequency.get(), f, pctMargin, 100);
+        Synch.waitForParamWithinError(frequency::get, f, pctMargin, 100);
     }
 
-    public void waitForFrequency(double f) throws IOException, DeviceException {
+    public void waitForFrequency(double f) throws IOException, DeviceException, InterruptedException {
         waitForFrequency(f, 1.0);
     }
 
-    public void setFrequencyAndWait(double f, double pctMargin) throws IOException, DeviceException {
+    public void setFrequencyAndWait(double f, double pctMargin) throws IOException, DeviceException, InterruptedException {
         setFrequency(f);
         waitForFrequency(f, pctMargin);
     }
 
-    public void setFrequencyAndWait(double f) throws IOException, DeviceException {
+    public void setFrequencyAndWait(double f) throws IOException, DeviceException, InterruptedException {
         setFrequency(f);
         waitForFrequency(f);
     }

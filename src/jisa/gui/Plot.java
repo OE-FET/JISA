@@ -143,23 +143,30 @@ public class Plot extends JFXElement implements Element, Clearable {
     }
 
     public Plot(String title, ResultTable table) {
+        this(title, table, null);
+    }
+
+    public Plot(String title, ResultTable table, Column<? extends Number> xAxis) {
 
         this(title);
 
-        Column<? extends Number> xAxis = null;
-        for (int i = 0; i < table.getColumnCount(); i++) {
+        if (xAxis != null) {
+            xAxis = table.findColumn(xAxis);
+        }
 
-            if (Number.class.isAssignableFrom(table.getColumn(i).getType())) {
+        List<String>             names = new LinkedList<>();
+        for (Column<? extends Number> column : table.getNumericColumns()) {
 
-                if (xAxis == null) {
-                    xAxis = (Column<? extends Number>) table.getColumn(i);
-                } else {
-                    createSeries().watch(table, xAxis, (Column<? extends Number>) table.getColumn(i));
-                }
-
+            if (xAxis == null) {
+                xAxis = column;
+            } else if (column != xAxis) {
+                createSeries().watch(table, xAxis, column).setName(column.getTitle());
+                names.add(column.getName());
             }
 
         }
+
+        setYLabel(String.join(" / ", names));
 
     }
 

@@ -20,22 +20,24 @@ public class Synch {
 
     }
 
-    public static void waitForParamWithinRange(DoubleReturn valueToCheck, double minValue, double maxValue, int interval) throws IOException, DeviceException {
+    public static void waitForParamWithinRange(DoubleReturn valueToCheck, double minValue, double maxValue, int interval) throws IOException, DeviceException, InterruptedException {
 
         double value = valueToCheck.getValue();
 
         while (minValue > value || maxValue < value) {
-            try {
-                Thread.sleep(interval);
-            } catch (InterruptedException e) {
-                throw new DeviceException("Could not sleep!");
-            }
+
+            Thread.sleep(interval);
             value = valueToCheck.getValue();
+
+            if (Thread.currentThread().isInterrupted()) {
+                throw new InterruptedException("Interrupted");
+            }
+
         }
 
     }
 
-    public static void waitForParamWithinError(DoubleReturn valueToCheck, double target, double errorPct, int interval) throws IOException, DeviceException {
+    public static void waitForParamWithinError(DoubleReturn valueToCheck, double target, double errorPct, int interval) throws IOException, DeviceException, InterruptedException {
 
         double minValue = (1D - (errorPct / 100D)) * target;
         double maxValue = (1D + (errorPct / 100D)) * target;
@@ -79,10 +81,10 @@ public class Synch {
     }
 
     public static void waitForParamStableMaxTime(DoubleReturn valueToCheck, double errorPct, int interval, long duration, long maxTime) throws IOException, DeviceException, InterruptedException {
-    long globalTime = 0;
+        long globalTime = 0;
 
-    if(globalTime > maxTime){
-        throw new DeviceException("Stabilization longer than max. time");
+        if (globalTime > maxTime) {
+            throw new DeviceException("Stabilization longer than max. time");
         }
 
         ArrayList<Double> list = new ArrayList<>();
@@ -146,10 +148,10 @@ public class Synch {
 
     public static void waitForStableTargetMaxTime(Returnable<Double> valueToCheck, double target, double pctMargin, int interval, long duration, long maxtime) throws IOException, DeviceException, InterruptedException {
 
-        long   time = 0;
+        long   time       = 0;
         long   globaltime = 0;
-        double min  = target * (1 - (pctMargin / 100D));
-        double max  = target * (1 + (pctMargin / 100D));
+        double min        = target * (1 - (pctMargin / 100D));
+        double max        = target * (1 + (pctMargin / 100D));
 
         while (time < duration) {
 
@@ -157,8 +159,8 @@ public class Synch {
                 throw new InterruptedException("Interrupted");
             }
 
-            if(globaltime > maxtime){
-                throw new DeviceException("Stabilization longer than max. time");
+            if (globaltime > maxtime) {
+                return;
             }
 
             double value = valueToCheck.get();

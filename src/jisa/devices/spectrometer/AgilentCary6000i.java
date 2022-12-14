@@ -19,9 +19,9 @@ public class AgilentCary6000i implements Spectrometer {
     @Override
     public String takeScan(String[] scan_params) throws Exception {
 
-        String scan_adl = scan_params[0];
+        String scan_adl    = scan_params[0];
         String script_path = "C:\\Varian\\CaryWinUV\\ADL\\" + scan_adl;
-        String exe_path = "C:\\Varian\\CaryWinUV\\ADLShell.exe";
+        String exe_path    = "C:\\Varian\\CaryWinUV\\ADLShell.exe";
 
         // Runs the runScan.adl script in a minimized window
         String cmdArr [] = {"cmd", "/c", "start", "/min", exe_path, script_path};

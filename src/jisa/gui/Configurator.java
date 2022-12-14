@@ -1,5 +1,9 @@
 package jisa.gui;
 
+import javafx.geometry.Insets;
+import javafx.scene.control.Accordion;
+import javafx.scene.control.TitledPane;
+import javafx.scene.layout.VBox;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.Connection;
@@ -9,20 +13,27 @@ import jisa.devices.interfaces.Instrument;
 import jisa.devices.interfaces.Instrument.AutoQuantity;
 import jisa.devices.interfaces.Instrument.OptionalQuantity;
 import jisa.devices.interfaces.Instrument.TableQuantity;
+import jnr.ffi.annotations.In;
 
 import java.util.LinkedList;
 import java.util.List;
 
-public class Configurator<I extends Instrument> extends Fields {
+public class Configurator<I extends Instrument> extends JFXElement {
 
     private final Configuration<I> configuration;
     private       Connection<?>    connection = null;
     private       boolean          sepLast    = false;
-
+    private final Fields           main       = new Fields("Instrument");
+    private final Fields           config     = new Fields("Configuration");
+    private final TitledPane       titled     = new TitledPane("Configuration", config.getNode());
+    private final Accordion        accordion  = new Accordion(titled);
 
     public Configurator(Configuration<I> configuration) {
 
-        super(configuration.getName());
+        super(configuration.getName(), new VBox());
+        VBox vBox = (VBox) getNode().getCenter();
+        vBox.getChildren().addAll(main.getNode(), accordion);
+        VBox.setMargin(main.getNode(), new Insets(-GUI.SPACING));
         this.configuration = configuration;
         this.connection    = Connection.findConnectionFor(configuration.getInputInstrument());
         update();
@@ -58,6 +69,7 @@ public class Configurator<I extends Instrument> extends Fields {
         configuration.loadFromConfig(block.subBlock("Configuration"));
 
         update();
+        GUI.runNow(() -> accordion.setExpandedPane(null));
 
     }
 
@@ -75,7 +87,8 @@ public class Configurator<I extends Instrument> extends Fields {
 
     private synchronized void update() {
 
-        clear();
+        main.clear();
+        config.clear();
 
         List<Connection<?>> connections = new LinkedList<>();
         connections.add(null);
@@ -91,7 +104,7 @@ public class Configurator<I extends Instrument> extends Fields {
 
         }).toArray(String[]::new);
 
-        Field<Integer> instruments = addChoice("Instrument", connections.indexOf(connection), names);
+        Field<Integer> instruments = main.addChoice("Instrument", connections.indexOf(connection), names);
 
         instruments.setOnChange(() -> {
 
@@ -103,7 +116,7 @@ public class Configurator<I extends Instrument> extends Fields {
 
         if (configuration.isChoice()) {
 
-            Field<Integer> choice = addChoice(configuration.getChoiceName(), configuration.getChoice(), configuration.getChoices().toArray(String[]::new));
+            Field<Integer> choice = main.addChoice(configuration.getChoiceName(), configuration.getChoice(), configuration.getChoices().toArray(String[]::new));
 
             choice.setOnChange(() -> {
                 configuration.selectChoice(choice.get());
@@ -112,9 +125,28 @@ public class Configurator<I extends Instrument> extends Fields {
 
         }
 
+        boolean flag = false;
         for (Configuration.Parameter parameter : configuration.getParameters()) {
             makeField(parameter);
+            flag = true;
         }
+
+        final boolean made = flag;
+
+        GUI.runNow(() -> {
+
+            boolean old = accordion.isVisible();
+
+            accordion.setVisible(made);
+            accordion.setManaged(made);
+
+            if (made)  {
+                accordion.setExpandedPane(titled);
+            } else {
+                accordion.setExpandedPane(null);
+            }
+
+        });
 
     }
 
@@ -127,11 +159,11 @@ public class Configurator<I extends Instrument> extends Fields {
 
             Configuration.Parameter quantity = new Configuration.Parameter(new Instrument.Parameter(parameter.getName(), value, i -> {}, parameter.getChoices().toArray()));
 
-            Separator s1 = addSeparator();
-            if (sepLast) { s1.remove(); }
+            Separator s1 = config.addSeparator();
+            if (sepLast) {s1.remove();}
             Field          qField    = makeField(quantity);
-            Field<Boolean> autoCheck = addCheckBox("Auto", auto);
-            Separator      s2        = addSeparator();
+            Field<Boolean> autoCheck = config.addCheckBox("Auto", auto);
+            Separator      s2        = config.addSeparator();
 
 
             autoCheck.setOnChange(() -> {
@@ -221,11 +253,11 @@ public class Configurator<I extends Instrument> extends Fields {
             Configuration.Parameter quantity = new Configuration.Parameter(new Instrument.Parameter(parameter.getName(), value, i -> {}, parameter.getChoices().toArray()));
 
 
-            Separator s1 = addSeparator();
-            if (sepLast) { s1.remove(); }
+            Separator s1 = config.addSeparator();
+            if (sepLast) {s1.remove();}
             Field          qField    = makeField(quantity);
-            Field<Boolean> autoCheck = addCheckBox("Use", auto);
-            Separator      s2        = addSeparator();
+            Field<Boolean> autoCheck = config.addCheckBox("Use", auto);
+            Separator      s2        = config.addSeparator();
 
 
             autoCheck.setOnChange(() -> {
@@ -311,7 +343,7 @@ public class Configurator<I extends Instrument> extends Fields {
         if (parameter.isChoice()) {
 
             String[]       options = (String[]) parameter.getChoices().stream().map(Object::toString).toArray(String[]::new);
-            Field<Integer> field   = addChoice(parameter.getName(), parameter.getChoices().indexOf(parameter.getValue()), options);
+            Field<Integer> field   = config.addChoice(parameter.getName(), parameter.getChoices().indexOf(parameter.getValue()), options);
             field.setOnChange(() -> parameter.setValue(parameter.getChoices().get(field.get())));
 
             sepLast = false;
@@ -319,28 +351,28 @@ public class Configurator<I extends Instrument> extends Fields {
             return field;
 
         } else if (parameter.getType() == Double.class) {
-            Field<Double> field = addDoubleField(parameter.getName(), (Double) parameter.getValue());
+            Field<Double> field = config.addDoubleField(parameter.getName(), (Double) parameter.getValue());
             field.setOnChange(() -> parameter.setValue(field.get()));
             sepLast = false;
             return field;
         } else if (parameter.getType() == Integer.class) {
-            Field<Integer> field = addIntegerField(parameter.getName(), (Integer) parameter.getValue());
+            Field<Integer> field = config.addIntegerField(parameter.getName(), (Integer) parameter.getValue());
             field.setOnChange(() -> parameter.setValue(field.get()));
             sepLast = false;
             return field;
         } else if (parameter.getType() == Boolean.class) {
-            Field<Boolean> field = addCheckBox(parameter.getName(), (Boolean) parameter.getValue());
+            Field<Boolean> field = config.addCheckBox(parameter.getName(), (Boolean) parameter.getValue());
             field.setOnChange(() -> parameter.setValue(field.get()));
             sepLast = false;
             return field;
         } else if (parameter.getType() == TableQuantity.class) {
-            Field<List<List<Double>>> field = addTable(parameter.getName(), ((TableQuantity) parameter.getValue()).getColumns());
+            Field<List<List<Double>>> field = config.addTable(parameter.getName(), ((TableQuantity) parameter.getValue()).getColumns());
             field.set(((TableQuantity) parameter.getValue()).getValue());
             field.setOnChange(() -> parameter.setValue(new TableQuantity(((TableQuantity) parameter.getValue()).getColumns(), field.get())));
             sepLast = false;
             return field;
         } else {
-            Field<String> field = addTextField(parameter.getName(), parameter.getValue().toString());
+            Field<String> field = config.addTextField(parameter.getName(), parameter.getValue().toString());
             field.setOnChange(() -> parameter.setValue(field.get()));
             sepLast = false;
             return field;

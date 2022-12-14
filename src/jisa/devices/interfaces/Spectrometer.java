@@ -7,4 +7,5 @@ public interface Spectrometer extends Instrument {
     String getDescription();
 
     String takeScan(String[] scan_params) throws Exception;
+
 }

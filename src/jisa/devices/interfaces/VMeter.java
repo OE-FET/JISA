@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-public interface VMeter extends Instrument {
+public interface VMeter extends Instrument, Switch {
 
     public static String getDescription() {
         return "Voltmeter";

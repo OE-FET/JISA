@@ -2,6 +2,7 @@ package jisa.results;
 
 import com.google.common.collect.Lists;
 import jisa.Util;
+import jisa.maths.functions.GFunction;
 import jisa.maths.matrices.RealMatrix;
 import jisa.results.ResultList.ColumnBuilder;
 import org.json.JSONObject;
@@ -332,7 +333,7 @@ public abstract class ResultTable implements Iterable<Row> {
 
                 int newDirection = Double.compare(value, lastValue);
 
-                if (newDirection != direction && newDirection != 0) {
+                if (newDirection != direction && direction != 0) {
                     table = ResultList.emptyCopyOf(this);
                     list.add(table);
                 }
@@ -372,6 +373,32 @@ public abstract class ResultTable implements Iterable<Row> {
         } else {
             return stream().sorted(Comparator.comparing(r -> expression.evaluate(r).toString())).collect(ResultList.collect(this));
         }
+
+    }
+
+    public ResultList transform(Map<Column<?>, RowEvaluable<?>> mappings) {
+
+        ResultList list = ResultList.emptyCopyOf(this);
+
+        for (Row row : this) {
+
+            RowBuilder builder = list.startRow();
+
+            for (Column column : columns) {
+
+                if (mappings.containsKey(column)) {
+                    builder.set(column, mappings.get(column).evaluate(row));
+                } else {
+                    builder.set(column, row.get(column));
+                }
+
+            }
+
+            builder.endRow();
+
+        }
+
+        return list;
 
     }
 
@@ -808,7 +835,7 @@ public abstract class ResultTable implements Iterable<Row> {
         return new RowBuilder();
     }
 
-    public void addRow(Rowable rowable) {
+    public void addRow(Rowable rowable) throws Exception {
 
         RowSetter builder = new RowSetter();
         rowable.build(builder);
@@ -841,7 +868,7 @@ public abstract class ResultTable implements Iterable<Row> {
     public abstract Stream<Row> stream();
 
     public interface Rowable {
-        void build(RowSetter row);
+        void build(RowSetter row) throws Exception;
     }
 
     public class RowSetter {

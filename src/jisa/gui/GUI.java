@@ -19,10 +19,12 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import jisa.Util;
 import jisa.addresses.Address;
+import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
 import jisa.experiment.Measurement;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -78,6 +80,34 @@ public class GUI extends Application {
         }
 
         return instrument;
+
+    }
+
+    public static <T extends Instrument> T askUserForInstrument(String message, Class<T> type) {
+
+        Connector<T>    connector    = new Connector<>("Connection", type);
+        Configurator<T> configurator = new Configurator<>("Configuration", type);
+        Doc             doc          = new Doc("Connect to Instrument");
+
+        doc.addText(message);
+        doc.setMinHeight(50);
+
+        Grid grid = new Grid("Instrument Connection", 1, doc, new Grid(2, connector, configurator));
+        grid.setGrowth(true, false);
+        grid.setWindowSize(1280, 720);
+
+        if (!grid.showAsConfirmation()) {
+
+            try {
+                return configurator.getConfiguration().get();
+            } catch (IOException | DeviceException e) {
+                e.printStackTrace();
+                GUI.errorAlert(e.getMessage());
+            }
+
+        }
+
+        return null;
 
     }
 

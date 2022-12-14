@@ -7,7 +7,7 @@ import java.io.IOException;
 /**
  * Interface to define the standard functionality of an instrument that can source voltage.
  */
-public interface VSource extends Instrument {
+public interface VSource extends Instrument, Switch {
 
     public static String getDescription() {
         return "Voltage Source";
