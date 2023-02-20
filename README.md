@@ -275,7 +275,7 @@ Resulting in:
 
 ## Supported Instruments 
 
-**Currently Implemented Devices:**
+**Some of our currently implemented devices** (the list is a bit too long to put here):
 
 | [](<>)                 | Model        | Type                        | Class           |
 | ---------------------- | ------------ | --------------------------- | --------------- |
