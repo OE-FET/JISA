@@ -42,7 +42,7 @@ public class MercuryITC extends VISADevice implements TC {
 
     private final List<TMeter> inputs  = new LinkedList<>();
     private final List<Heater> outputs = new LinkedList<>();
-    private final List<Loop>        loops   = new LinkedList<>();
+    private final List<Loop> loops = new LinkedList<>();
 
 
     public MercuryITC(Address address) throws IOException {
@@ -55,8 +55,7 @@ public class MercuryITC extends VISADevice implements TC {
 
         String[] responses = query("READ:SYS:CAT").split(":");
 
-        for (int i = 3; i < responses.length - 3; i += 3) {
-
+        for (int i = 3; i < responses.length - 2; i += 3) {
             String uid  = responses[i + 1].trim();
             String type = responses[i + 2].trim().toUpperCase();
 
@@ -67,11 +66,11 @@ public class MercuryITC extends VISADevice implements TC {
                     Loop        lp = new Loop(tm);
                     inputs.add(tm);
                     loops.add(lp);
-                    break;
+                    continue;
 
                 case "HTR":
                     outputs.add(new Heater(uid));
-                    break;
+                    continue;
 
             }
         }
