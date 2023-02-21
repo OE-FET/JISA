@@ -25,6 +25,7 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
         String sample_name = scan_params[1];
         String save_path = scan_params[2];
         String num_scans = scan_params[3];
+        String scan_type = scan_params[4];
 
         String response = super.sendRequest("COMMAND_LINE MeasureSample(0, {EXP='" + exp_file
                 + "', XPP='G:\\\\User XPM files', SNM='" + sample_name
@@ -44,7 +45,7 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
             String response3 = "";
 
             try {
-                response2 = super.sendRequest("COMMAND_LINE SaveAs ([<" + split[3] + ">:AB], {DAP='" + save_path + "', OEX='1', SAN='"
+                response2 = super.sendRequest("COMMAND_LINE SaveAs ([<" + split[3] + ">:" + scan_type + "], {DAP='" + save_path + "', OEX='1', SAN='"
                         + sample_name + ".dpt', COF=64});");
 
                 response3 = super.sendRequest("UNLOAD_FILE " + split[3]);
@@ -71,12 +72,12 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
     }
 
     public String takeReference(String exp_file, String save_path, int num_scans) throws Exception{
-            String response = super.sendRequest("COMMAND_LINE MeasureReference(0, {EXP='" + exp_file
-                    + "', XPP='G:\\\\User XPM files', PTH='" + save_path + "', NSR='" + num_scans + "'});");
+        String response = super.sendRequest("COMMAND_LINE MeasureReference(0, {EXP='" + exp_file
+                + "', XPP='G:\\\\User XPM files', PTH='" + save_path + "', NSR='" + num_scans + "'});");
 
-            String[] split = response.split("\n");
+        String[] split = response.split("\n");
 
-            return response;
+        return response;
     }
 
     @Override
