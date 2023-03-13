@@ -3,17 +3,14 @@ package jisa.visa;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.TCPIPAddress;
-import jisa.addresses.VISAAddress;
+import jisa.control.ConfigFile;
 import jisa.gui.GUI;
 import jisa.visa.connections.Connection;
 import jisa.visa.drivers.*;
 
+import java.nio.file.Paths;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import static jisa.visa.VISANativeInterface.VI_ATTR_INTF_INST_NAME;
 
 /**
  * Static class for accessing the native VISA library in a more Java-friendly way
@@ -24,6 +21,7 @@ public class VISA {
     private final static HashMap<Class, Driver> lookup  = new HashMap<>();
 
     static {
+
         Locale.setDefault(Locale.US);
 
         System.out.println("Attempting to load drivers.");
@@ -34,16 +32,16 @@ public class VISA {
             drivers.add(new RSVISADriver());
             System.out.println("Success.");
         } catch (VISAException ignored) {
-            System.out.println("Nope.");
+            System.out.println("Failed.");
         }
 
         try {
             System.out.print("Trying Agilent VISA driver...        \t");
-            AgilentVISADriver.init();
-            drivers.add(new AgilentVISADriver());
+            AGVISADriver.init();
+            drivers.add(new AGVISADriver());
             System.out.println("Success.");
         } catch (VISAException ignored) {
-            System.out.println("Nope.");
+            System.out.println("Failed.");
         }
 
         try {
@@ -52,7 +50,7 @@ public class VISA {
             drivers.add(new NIVISADriver());
             System.out.println("Success.");
         } catch (VISAException ignored) {
-            System.out.println("Nope.");
+            System.out.println("Failed.");
         }
 
         try {
@@ -61,7 +59,7 @@ public class VISA {
             drivers.add(new GPIBDriver());
             System.out.println("Success.");
         } catch (VISAException ignored) {
-            System.out.println("Nope.");
+            System.out.println("Failed.");
         }
 
         try {
@@ -70,7 +68,7 @@ public class VISA {
             drivers.add(new NIGPIBDriver());
             System.out.println("Success.");
         } catch (VISAException ignored) {
-            System.out.println("Nope.");
+            System.out.println("Failed.");
         }
 
         try {
@@ -78,7 +76,7 @@ public class VISA {
             drivers.add(new SerialDriver());
             System.out.println("Success.");
         } catch (Exception | Error ignored) {
-            System.out.println("Nope.");
+            System.out.println("Failed.");
         }
 
         try {
@@ -86,15 +84,22 @@ public class VISA {
             drivers.add(new TCPIPDriver());
             System.out.println("Success.");
         } catch (Exception | Error ignored) {
-            System.out.println("Nope.");
+            System.out.println("Failed.");
         }
 
         try {
-            System.out.print("Trying USB-TMC driver...             \t");
-            drivers.add(new USBDriver());
-            System.out.println("Success.");
+
+            System.out.print("Trying Experimental USB driver...   \t");
+
+            if (Paths.get(System.getProperty("user.home"), "jisa-usb.enable").toFile().exists()) {
+                drivers.add(new USBDriver());
+                System.out.println("Success.");
+            } else {
+                System.out.println("Not Enabled.");
+            }
+
         } catch (Exception | Error ignored) {
-            System.out.println("Nope.");
+            System.out.println("Failed.");
         }
 
         for (Driver d : drivers) {

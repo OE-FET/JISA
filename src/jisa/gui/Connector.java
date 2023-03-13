@@ -1,11 +1,10 @@
 package jisa.gui;
 
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.control.*;
 import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -240,17 +239,22 @@ public class Connector<T extends Instrument> extends JFXElement {
                 label.setMaxWidth(Double.MAX_VALUE);
                 label.setMinWidth(Region.USE_PREF_SIZE);
 
-                TextField field;
+                Control field;
 
                 if (value instanceof Integer) {
                     field = new IntegerField();
-                    field.textProperty().addListener(o -> addressParams.put(name, ((IntegerField) field).getIntValue()));
+                    ((TextField) field).textProperty().addListener(o -> addressParams.put(name, ((IntegerField) field).getIntValue()));
+                    ((TextField) field).setText(value.toString());
+                } else if (value.getClass().isEnum()) {
+                    field = new ChoiceBox<Object>(FXCollections.observableArrayList(value.getClass().getEnumConstants()));
+                    ((ChoiceBox) field).valueProperty().addListener(o -> addressParams.put(name, ((ChoiceBox) field).getValue()));
+                    ((ChoiceBox) field).setValue(value);
                 } else {
                     field = new TextField();
-                    field.textProperty().addListener(o -> addressParams.put(name, field.getText()));
+                    ((TextField) field).textProperty().addListener(o -> addressParams.put(name, ((TextField) field).getText()));
+                    ((TextField) field).setText(value.toString());
                 }
 
-                field.setText(value.toString());
                 field.setMaxWidth(Double.MAX_VALUE);
 
                 parameters.add(label, 2 * (index % 2), index / 2);

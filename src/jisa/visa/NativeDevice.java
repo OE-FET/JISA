@@ -62,6 +62,7 @@ public abstract class NativeDevice<I extends Library> implements Instrument {
         lib  = library;
 
         opened.add(new WeakReference<>(this));
+
     }
 
     public static List<NativeDevice<?>> search() {
@@ -78,8 +79,7 @@ public abstract class NativeDevice<I extends Library> implements Instrument {
                 try {
                     Method search = c.getMethod("find");
                     found.addAll((List<NativeDevice<?>>) search.invoke(null));
-                } catch (Throwable ignored) {
-                }
+                } catch (Throwable ignored) { }
 
             }
 

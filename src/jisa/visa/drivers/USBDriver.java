@@ -80,9 +80,9 @@ public class USBDriver implements Driver {
         int result;
 
         initialise();
-        USBAddress rawAddress = (USBAddress) address;
 
-        DeviceList list = new DeviceList();
+        USBAddress rawAddress = (USBAddress) address;
+        DeviceList list       = new DeviceList();
 
         result = LibUsb.getDeviceList(context, list);
 

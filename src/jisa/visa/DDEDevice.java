@@ -13,11 +13,11 @@ import java.net.InetAddress;
 
 public class DDEDevice implements Instrument {
 
-    private final String host;
+    private final String                host;
     private final DDEClientConversation convo;
 
-    public DDEDevice(LXIAddress address, String service, String topic, int timeout) throws Exception{
-        host = address.getHost();
+    public DDEDevice(LXIAddress address, String service, String topic, int timeout) throws Exception {
+        host  = address.getHost();
         convo = new DDEClientConversation();
         convo.setTimeout(timeout);
         convo.connect(service, topic);
@@ -28,19 +28,22 @@ public class DDEDevice implements Instrument {
         LXIAddress tcp_addr = (LXIAddress) address;
 
         try {
+
             host = tcp_addr.getHost();
             InetAddress inet = InetAddress.getByName(host);
-            if (inet.isReachable(5000)){
+
+            if (inet.isReachable(5000)) {
+
                 convo = new DDEClientConversation();
                 //Setting timeout to 200 minutes
                 convo.setTimeout(12000000);
                 convo.connect("Opus", "System");
-            }
-            else{
+
+            } else {
                 throw new Exception("Failed to connect to device IP address");
             }
-        }
-        catch (Exception e) {
+
+        } catch (Exception e) {
             throw e;
         }
     }
@@ -57,10 +60,9 @@ public class DDEDevice implements Instrument {
 
     @Override
     public void close() throws IOException, DeviceException {
-        try{
+        try {
             convo.disconnect();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new IOException("Failed to disconnect DDE conversation");
         }
     }

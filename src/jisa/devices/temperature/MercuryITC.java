@@ -42,7 +42,7 @@ public class MercuryITC extends VISADevice implements TC {
 
     private final List<TMeter> inputs  = new LinkedList<>();
     private final List<Heater> outputs = new LinkedList<>();
-    private final List<Loop>        loops   = new LinkedList<>();
+    private final List<Loop>   loops   = new LinkedList<>();
 
 
     public MercuryITC(Address address) throws IOException {
@@ -64,7 +64,7 @@ public class MercuryITC extends VISADevice implements TC {
 
                 case "TEMP":
                     TMeter tm = new TMeter(uid);
-                    Loop        lp = new Loop(tm);
+                    Loop   lp = new Loop(tm);
                     inputs.add(tm);
                     loops.add(lp);
                     break;
@@ -143,6 +143,21 @@ public class MercuryITC extends VISADevice implements TC {
 
         }
 
+        public String getDev(String dev, String... parts) throws IOException, DeviceException {
+
+            String[] full = new String[4 + parts.length];
+
+            full[0] = "READ";
+            full[1] = "DEV";
+            full[2] = uid;
+            full[3] = dev;
+
+            System.arraycopy(parts, 0, full, 4, parts.length);
+
+            return readITC(full)[0];
+
+        }
+
         public double getDouble(String... parts) throws IOException, DeviceException {
 
             String[] full = new String[4 + parts.length];
@@ -163,7 +178,42 @@ public class MercuryITC extends VISADevice implements TC {
 
         }
 
+        public double getDevDouble(String dev, String... parts) throws IOException, DeviceException {
+
+            String[] full = new String[4 + parts.length];
+
+            full[0] = "READ";
+            full[1] = "DEV";
+            full[2] = uid;
+            full[3] = dev;
+
+            System.arraycopy(parts, 0, full, 4, parts.length);
+
+            String[] response = readITC(full);
+
+            double value = Double.parseDouble(response[0].substring(0, response[0].length() - 1));
+            double scale = (parts[0].equals("SIG") && response.length > 1 && response[1].length() == 2) ? getScale(response[1].charAt(0)) : 1.0;
+
+            return value * scale;
+
+        }
+
         public String[] set(String... parts) throws IOException, DeviceException {
+
+            String[] full = new String[4 + parts.length];
+
+            full[0] = "SET";
+            full[1] = "DEV";
+            full[2] = uid;
+            full[3] = dev;
+
+            System.arraycopy(parts, 0, full, 4, parts.length);
+
+            return writeITC(full);
+
+        }
+
+        public String[] setDev(String dev, String... parts) throws IOException, DeviceException {
 
             String[] full = new String[4 + parts.length];
 
@@ -358,7 +408,7 @@ public class MercuryITC extends VISADevice implements TC {
 
         @Override
         public void setRampEnabled(boolean flag) throws IOException, DeviceException {
-            sensor.set("LOOP", "RENA", flag ? "ON" : "OFF");
+            sensor.setDev("LOOP", "RENA", flag ? "ON" : "OFF");
         }
 
         @Override

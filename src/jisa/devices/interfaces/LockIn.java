@@ -389,10 +389,10 @@ public interface LockIn extends Instrument, FMeter {
      * @throws DeviceException Upon compatibility error
      * @throws InterruptedException Upon interruption error
      */
-    void autoRange(double factor) throws IOException, DeviceException, InterruptedException;
+    void autoRange(double factor, double integrationTime, long waitTime) throws IOException, DeviceException, InterruptedException;
 
     default void autoRange() throws IOException, DeviceException, InterruptedException {
-        autoRange(1.0);
+        autoRange(1.0, 100e-3, 10000);
     }
 
     /**

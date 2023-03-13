@@ -387,19 +387,19 @@ public class SR830 extends VISADevice implements DPLockIn {
     }
 
     @Override
-    public void autoRange(double factor) throws IOException, DeviceException, InterruptedException {
+    public void autoRange(double factor, double intTime, long waitTime) throws IOException, DeviceException, InterruptedException {
 
         double timeConst = getTimeConstant();
-        setTimeConstant(100e-6);
+        setTimeConstant(intTime);
 
         Sensitivity found = Sensitivity.S_1V_uA;
 
         for (Sensitivity sensitivity : Arrays.stream(Sensitivity.values()).sorted(Comparator.comparingDouble(Sensitivity::toDouble)).collect(Collectors.toList())) {
 
             setRange(sensitivity.toDouble());
-            Thread.sleep(500);
+            Thread.sleep(waitTime);
             autoOffset();
-            Thread.sleep(500);
+            Thread.sleep(waitTime);
 
             if (Math.abs(getLockedX()) < (sensitivity.toDouble() * factor) && Math.abs(getLockedY()) < (sensitivity.toDouble() * factor)) {
                 found = sensitivity;

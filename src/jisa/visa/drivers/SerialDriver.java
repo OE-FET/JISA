@@ -71,7 +71,24 @@ public class SerialDriver implements Driver {
             throw new VISAException("Error opening port \"%s\".", device.trim());
         }
 
-        return new JSSCConnection(port);
+        JSSCConnection connection = new JSSCConnection(port);
+
+        if (addr.hasParametersSpecified()) {
+
+            connection.overrideSerialParameters(
+                addr.getBaudRate().getValue(),
+                addr.getDataBits().getValue(),
+                addr.getParity().getValue(),
+                addr.getStopBits().getValue()
+            );
+
+        } else {
+
+            connection.setSerialParameters(9600, 8);
+
+        }
+
+        return connection;
 
     }
 
@@ -82,10 +99,10 @@ public class SerialDriver implements Driver {
         private       String     terms;
         private       byte[]     terminationSequence = {0x0A};
         private       Charset    charset             = Charset.defaultCharset();
+        private       boolean    baudOverride        = false;
 
         public JSSCConnection(SerialPort comPort) throws VISAException {
             port = comPort;
-            setSerialParameters(9600, 8);
         }
 
         @Override
@@ -223,6 +240,11 @@ public class SerialDriver implements Driver {
             this.timeout = timeout;
         }
 
+        public void overrideSerialParameters(int baud, int data, SerialConnection.Parity parity, SerialConnection.Stop stop) throws VISAException {
+            setSerialParameters(baud, data, parity, stop);
+            baudOverride = true;
+        }
+
         @Override
         public void setSerialParameters(int baud, int data, SerialConnection.Parity parity, SerialConnection.Stop stop, SerialConnection.FlowControl... flows) throws VISAException {
 
@@ -247,7 +269,9 @@ public class SerialDriver implements Driver {
 
             try {
 
-                port.setParams(baud, data, stopBits, parity.toInt());
+                if (!baudOverride) {
+                    port.setParams(baud, data, stopBits, parity.toInt());
+                }
 
                 int flowControl = SerialPort.FLOWCONTROL_NONE;
 
