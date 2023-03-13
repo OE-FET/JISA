@@ -28,7 +28,7 @@ public class RSVISADriver extends VISADriver {
         try {
 
             if (OS_NAME.contains("win")) {
-                libName   = Platform.is64Bit() ? "RsVisa64" : "RsVisa32";
+                libName   = "RsVisa32";
                 libStatic = Native.loadLibrary(libName, VISANativeInterface.class);
             } else if (OS_NAME.contains("linux") || OS_NAME.contains("mac")) {
                 libName   = "rsvisa";
