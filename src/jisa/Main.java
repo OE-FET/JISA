@@ -22,29 +22,9 @@ public class Main {
     private final static int CHOICE_HELP = 2;
     private final static int CHOICE_EXIT = 3;
 
-    public void test_conn() throws DeviceException, IOException {
-
-        VISADevice a = new VISADevice(Address.parse("USB0::0x2A8D::0x1601::MY59008785::INSTR"));
-        VISADevice b = new VISADevice(Address.parse("USB0::0x2A8D::0x1701::MY59008786::INSTR"));
-        VISADevice c = new VISADevice(Address.parse("USB0::0x05E6::0x2280::4498668::INSTR"));
-
-        System.out.println(a.getIDN());
-        System.out.println(b.getIDN());
-        System.out.println(c.getIDN());
-
-        a.close();
-        b.close();
-        c.close();
-
-    }
-
     public static void main(String[] args) {
 
         try {
-
-            Connector<SMU> connector = new Connector<>("SMU", SMU.class);
-
-            connector.showAsAlert();
 
             Doc doc = new Doc("Help");
 
