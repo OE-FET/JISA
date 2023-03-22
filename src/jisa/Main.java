@@ -9,7 +9,10 @@ import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
 import jisa.results.Column;
+import jisa.visa.VISA;
 import jisa.visa.VISADevice;
+import jisa.visa.drivers.NIGPIBDriver;
+import jisa.visa.drivers.NIVISADriver;
 
 import java.io.IOException;
 import java.io.PrintWriter;

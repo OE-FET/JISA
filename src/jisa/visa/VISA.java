@@ -95,7 +95,7 @@ public class VISA {
 
     }
 
-    public <T extends Driver> T getDriver(Class<T> driverClass) {
+    public static <T extends Driver> T getDriver(Class<T> driverClass) {
         return (T) lookup.getOrDefault(driverClass, null);
     }
 
