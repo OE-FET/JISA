@@ -50,6 +50,11 @@ public class TCPIPDriver implements Driver {
         return address instanceof TCPIPAddress;
     }
 
+    @Override
+    public void reset() throws VISAException {
+
+    }
+
     public static class TCPIPConnection implements jisa.visa.connections.TCPIPConnection {
 
         private final Socket       socket;

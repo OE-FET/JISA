@@ -3,8 +3,6 @@ package jisa.visa;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.TCPIPAddress;
-import jisa.control.ConfigFile;
-import jisa.gui.GUI;
 import jisa.visa.connections.Connection;
 import jisa.visa.drivers.*;
 
@@ -17,114 +15,84 @@ import java.util.stream.Collectors;
  */
 public class VISA {
 
-    private final static ArrayList<Driver>      drivers = new ArrayList<>();
-    private final static HashMap<Class, Driver> lookup  = new HashMap<>();
+    private interface DriverInit {
+        Driver create() throws VISAException;
+    }
+
+    private final static Map<String, DriverInit> DRIVERS = Util.buildMap(map -> {
+
+        map.put("RS VISA", RSVISADriver::new);
+        map.put("AG VISA", AGVISADriver::new);
+        map.put("NI VISA", NIVISADriver::new);
+        map.put("Linux GPIB", GPIBDriver::new);
+        map.put("NI GPIB", NIGPIBDriver::new);
+        map.put("Serial", SerialDriver::new);
+        map.put("TCP-IP", TCPIPDriver::new);
+
+        map.put("Experimental USB", () -> {
+
+            if (Paths.get(System.getProperty("user.home"), "jisa-usb.enable").toFile().exists()) {
+                return new USBDriver();
+            } else {
+                throw new VISAException("Not Enabled");
+            }
+
+        });
+
+    });
+
+    private final static ArrayList<Driver>  loadedDrivers = new ArrayList<>();
+    private final static Map<Class, Driver> lookup;
 
     static {
 
         Locale.setDefault(Locale.US);
+        System.out.println("Attempting to load drivers:");
 
-        System.out.println("Attempting to load drivers.");
+        int maxLength = DRIVERS.keySet().stream().mapToInt(String::length).max().orElse(0);
 
-        try {
-            System.out.print("Trying RS VISA driver...             \t");
-            RSVISADriver.init();
-            drivers.add(new RSVISADriver());
-            System.out.println("Success.");
-        } catch (VISAException ignored) {
-            System.out.println("Failed.");
-        }
+        DRIVERS.forEach((name, inst) -> {
 
-        try {
-            System.out.print("Trying Agilent VISA driver...        \t");
-            AGVISADriver.init();
-            drivers.add(new AGVISADriver());
-            System.out.println("Success.");
-        } catch (VISAException ignored) {
-            System.out.println("Failed.");
-        }
+            System.out.printf("- Loading %s Driver...", name);
 
-        try {
-            System.out.print("Trying NI VISA driver...             \t");
-            NIVISADriver.init();
-            drivers.add(new NIVISADriver());
-            System.out.println("Success.");
-        } catch (VISAException ignored) {
-            System.out.println("Failed.");
-        }
-
-        try {
-            System.out.print("Trying Linux GPIB (libgpib) driver...\t");
-            GPIBDriver.init();
-            drivers.add(new GPIBDriver());
-            System.out.println("Success.");
-        } catch (VISAException ignored) {
-            System.out.println("Failed.");
-        }
-
-        try {
-            System.out.print("Trying NI-GPIB (ni4882) driver...    \t");
-            NIGPIBDriver.init();
-            drivers.add(new NIGPIBDriver());
-            System.out.println("Success.");
-        } catch (VISAException ignored) {
-            System.out.println("Failed.");
-        }
-
-        try {
-            System.out.print("Trying Serial driver...              \t");
-            drivers.add(new SerialDriver());
-            System.out.println("Success.");
-        } catch (Exception | Error ignored) {
-            System.out.println("Failed.");
-        }
-
-        try {
-            System.out.print("Trying Raw TCP-IP driver...          \t");
-            drivers.add(new TCPIPDriver());
-            System.out.println("Success.");
-        } catch (Exception | Error ignored) {
-            System.out.println("Failed.");
-        }
-
-        try {
-
-            System.out.print("Trying Experimental USB driver...   \t");
-
-            if (Paths.get(System.getProperty("user.home"), "jisa-usb.enable").toFile().exists()) {
-                drivers.add(new USBDriver());
-                System.out.println("Success.");
-            } else {
-                System.out.println("Not Enabled.");
+            for (int i = name.length(); i < maxLength; i++) {
+                System.out.print(" ");
             }
-
-        } catch (Exception | Error ignored) {
-            System.out.println("Failed.");
-        }
-
-        for (Driver d : drivers) {
-            lookup.put(d.getClass(), d);
-        }
-
-        if (drivers.isEmpty()) {
-
-            Util.sleep(500);
-            Util.errLog.println("ERROR: Could not load any drivers!");
 
             try {
-                GUI.errorAlert("JISA Library", "No Drivers", "Could not load any drivers for instrument control!\n\nCheck your driver installation(s).");
-            } catch (Exception | Error ignored) {
+                loadedDrivers.add(inst.create());
+                System.out.println(" [Success].");
+            } catch (VISAException exception) {
+                System.out.printf(" [Failed] (%s).%n", exception.getMessage());
             }
 
-            System.exit(1);
+        });
 
+        lookup = loadedDrivers.stream().collect(Collectors.toMap(Driver::getClass, d -> d));
+
+        if (loadedDrivers.isEmpty()) {
+            System.out.println("No drivers loaded.");
         } else {
-            System.out.printf("Successfully loaded %d drivers.\n", drivers.size());
+            System.out.printf("Successfully loaded %d drivers.%n", loadedDrivers.size());
         }
 
     }
 
     public static void init() {
+    }
+
+    public static void resetDrivers() {
+
+        for (Driver driver : loadedDrivers) {
+
+            try {
+                driver.reset();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+
     }
 
     /**
@@ -138,7 +106,7 @@ public class VISA {
 
         List<Address> addresses = new LinkedList<>();
 
-        for (Driver driver : drivers) {
+        for (Driver driver : loadedDrivers) {
 
             try {
                 addresses.addAll(
@@ -195,7 +163,7 @@ public class VISA {
         boolean tried = false;
 
         // Try each driver in order
-        for (Driver d : drivers) {
+        for (Driver d : loadedDrivers) {
 
             if (d.worksWith(address)) {
 

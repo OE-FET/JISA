@@ -30,4 +30,6 @@ public interface Driver {
 
     boolean worksWith(Address address);
 
+    void reset() throws VISAException;
+
 }

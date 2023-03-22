@@ -625,6 +625,8 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     public SVG getSVG(double width, double height) {
 
+        GUI.runNow(() -> chart.forceRedraw());
+
         SVGElement main = new SVGElement("g");
 
         main.setAttribute("font-family", "sans-serif")

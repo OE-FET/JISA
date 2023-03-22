@@ -41,9 +41,15 @@ public abstract class VISADriver implements Driver {
     protected static ByteBuffer stringToByteBuffer(String source) {
         return stringToByteBuffer(source, StandardCharsets.UTF_8);
     }
+    
+    @Override
+    public void reset() throws VISAException {
+        newRM();
+    }
 
     public VISADriver() throws VISAException {
 
+        initialise();
         newRM();
 
         Util.addShutdownHook(() -> {
@@ -61,6 +67,8 @@ public abstract class VISADriver implements Driver {
     }
 
     protected abstract VISANativeInterface lib();
+
+    protected abstract void initialise() throws VISAException;
 
     public synchronized void newRM() throws VISAException {
 

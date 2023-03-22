@@ -92,6 +92,24 @@ public class SerialDriver implements Driver {
 
     }
 
+    public void reset() {
+
+        for (String name : SerialPortList.getPortNames()) {
+
+            SerialPort port = new SerialPort(name);
+
+            try {
+                port.openPort();
+            } catch (Exception ignored) {}
+
+            try {
+                port.closePort();
+            } catch (Exception ignored) {}
+
+        }
+
+    }
+
     public static class JSSCConnection implements SerialConnection {
 
         private final SerialPort port;

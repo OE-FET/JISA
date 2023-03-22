@@ -20,7 +20,11 @@ public class NIVISADriver extends VISADriver {
         return libStatic;
     }
 
-    public static void init() throws VISAException {
+    protected void initialise() throws VISAException {
+
+        if (libStatic != null) {
+            return;
+        }
 
         try {
 

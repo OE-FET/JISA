@@ -290,6 +290,11 @@ public class USBDriver implements Driver {
         return address instanceof USBAddress;
     }
 
+    @Override
+    public void reset() throws VISAException {
+
+    }
+
     private static class USBConnection implements jisa.visa.connections.USBConnection {
 
         protected final DeviceHandle handle;

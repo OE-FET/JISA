@@ -10,8 +10,8 @@ import jisa.visa.VISANativeInterface;
 
 public class RSVISADriver extends VISADriver {
 
-    private static       VISANativeInterface libStatic;
-    private static final String              OS_NAME = System.getProperty("os.name").toLowerCase();
+    private static       VISANativeInterface libStatic = null;
+    private static final String              OS_NAME   = System.getProperty("os.name").toLowerCase();
     private static       String              libName;
 
     public RSVISADriver() throws VISAException {
@@ -23,7 +23,11 @@ public class RSVISADriver extends VISADriver {
         return libStatic;
     }
 
-    public static void init() throws VISAException {
+    protected void initialise() throws VISAException {
+
+        if (libStatic != null) {
+            return;
+        }
 
         try {
 

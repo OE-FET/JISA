@@ -18,7 +18,7 @@ import java.util.List;
 
 public class GPIBDriver implements Driver {
 
-    protected static       GPIBNativeInterface       lib;
+    protected static       GPIBNativeInterface       lib              = null;
     protected static final String                    OS_NAME          = System.getProperty("os.name").toLowerCase();
     protected static       String                    libName;
     protected static final String                    responseEncoding = "UTF8";
@@ -86,7 +86,19 @@ public class GPIBDriver implements Driver {
 
     }
 
-    public static void init() throws VISAException {
+    public GPIBDriver() throws VISAException {
+        initialise();
+    }
+
+    public void reset() {
+
+    }
+
+    protected void initialise() throws VISAException {
+
+        if (lib != null) {
+            return;
+        }
 
         try {
             if (OS_NAME.contains("win")) {

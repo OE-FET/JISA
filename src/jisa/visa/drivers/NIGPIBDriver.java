@@ -7,7 +7,11 @@ public class NIGPIBDriver extends GPIBDriver {
 
     protected static NIGPIBNativeInterface lib;
 
-    public static void init() throws VISAException {
+    public NIGPIBDriver() throws VISAException {
+        super();
+    }
+
+    protected void initialise() throws VISAException {
 
         try {
             if (OS_NAME.contains("win")) {
