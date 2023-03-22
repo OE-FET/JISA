@@ -95,6 +95,10 @@ public class VISA {
 
     }
 
+    public <T extends Driver> T getDriver(Class<T> driverClass) {
+        return (T) lookup.getOrDefault(driverClass, null);
+    }
+
     /**
      * Returns an array of all instrument addressed detected by VISA
      *
