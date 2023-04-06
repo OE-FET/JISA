@@ -5,7 +5,7 @@ import jisa.devices.DeviceException;
 import java.io.IOException;
 
 public interface XYTranslationStage extends Instrument {
-    public static String getDescription() {
+    static String getDescription() {
         return "XY Translation Stage";
     }
 

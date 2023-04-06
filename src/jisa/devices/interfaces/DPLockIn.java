@@ -9,7 +9,7 @@ import java.io.IOException;
  */
 public interface DPLockIn extends LockIn {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Dual-Phase Lock-In Amplifier";
     }
 

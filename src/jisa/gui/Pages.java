@@ -22,12 +22,12 @@ public class Pages extends JFXElement implements Element, Container {
 
     public  BorderPane          pane;
     public  VBox                sidebar;
-    public  ScrollPane          scrollPane;
-    private String              title;
-    private ArrayList<HBox>     tabs      = new ArrayList<>();
-    private ArrayList<Element>  added     = new ArrayList<>();
-    private ArrayList<Runnable> switchers = new ArrayList<>();
-    private ArrayList<Runnable> reseters  = new ArrayList<>();
+    public        ScrollPane      scrollPane;
+    private final String          title;
+    private final ArrayList<HBox> tabs  = new ArrayList<>();
+    private final ArrayList<Element> added = new ArrayList<>();
+    private final ArrayList<Runnable> switchers = new ArrayList<>();
+    private final ArrayList<Runnable> reseters  = new ArrayList<>();
 
     /**
      * Creates an element that displays other GUI elements in their own individual tabs.

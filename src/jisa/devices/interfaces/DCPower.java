@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface DCPower extends IVSource {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "DC Power Supply";
     }
 

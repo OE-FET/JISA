@@ -13,9 +13,9 @@ import java.io.IOException;
 public class DeviceShell extends JFXElement {
 
     public  ListView   terminal;
-    public  TextField  input;
-    private Address    address;
-    private VISADevice device = null;
+    public        TextField  input;
+    private final Address    address;
+    private       VISADevice device = null;
 
     public DeviceShell(Address address) {
 

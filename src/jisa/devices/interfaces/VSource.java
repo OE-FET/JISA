@@ -9,7 +9,7 @@ import java.io.IOException;
  */
 public interface VSource extends Instrument, Switch {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Voltage Source";
     }
 

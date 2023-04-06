@@ -26,8 +26,8 @@ public class TestFET implements MCSMU {
 
     private double vSD = 0;
     private double iSD = 0;
-    private double vSG = 0;
-    private double iSG = 0;
+    private       double vSG = 0;
+    private final double iSG = 0;
 
     public static final int CHANNEL_SD = 0;
     public static final int CHANNEL_SG = 1;

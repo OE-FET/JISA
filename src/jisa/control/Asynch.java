@@ -131,7 +131,7 @@ public class Asynch {
 
         TimerTask task = new TimerTask() {
 
-            private ArrayList<Double> list = new ArrayList<>();
+            private final ArrayList<Double> list = new ArrayList<>();
 
             @Override
             public void run() {
@@ -160,7 +160,7 @@ public class Asynch {
                     }
 
                     // Check if we've been going long enough
-                    if (list.size() * interval >= duration) {
+                    if ((long) list.size() * interval >= duration) {
                         timer.cancel();
                         onStable.run();
                     }

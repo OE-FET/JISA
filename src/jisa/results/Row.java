@@ -3,6 +3,7 @@ package jisa.results;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Row {
@@ -20,6 +21,18 @@ public class Row {
                   .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
         );
 
+    }
+
+    public Row(Map<Column<?>, Object> values) {
+        this.values = values;
+    }
+
+    public Column[] getColumnArray() {
+        return values.keySet().toArray(Column[]::new);
+    }
+
+    public Set<Column<?>> getColumnSet() {
+        return values.keySet();
     }
 
     public Object[] array() {

@@ -111,7 +111,7 @@ public class Repeat implements Iterable<Double> {
 
     }
 
-    public static void runInParallel(Repeat... repeats) throws InterruptedException, Exception {
+    public static void runInParallel(Repeat... repeats) throws Exception {
 
         CountDownLatch  start      = new CountDownLatch(1);
         CountDownLatch  finish     = new CountDownLatch(repeats.length);

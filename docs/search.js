@@ -148,12 +148,12 @@ $(function() {
         minLength: 1,
         delay: 100,
         source: function(request, response) {
-            var result = new Array();
-            var presult = new Array();
-            var tresult = new Array();
-            var mresult = new Array();
-            var tgresult = new Array();
-            var secondaryresult = new Array();
+            var result = [];
+            var presult = [];
+            var tresult = [];
+            var mresult = [];
+            var tgresult = [];
+            var secondaryresult = [];
             var displayCount = 0;
             var exactMatcher = new RegExp("^" + $.ui.autocomplete.escapeRegex(request.term) + "$", "i");
             camelCaseRegexp = ($.ui.autocomplete.escapeRegex(request.term)).split(/(?=[A-Z])/).join("([a-z0-9_$]*?)");

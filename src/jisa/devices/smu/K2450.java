@@ -185,7 +185,7 @@ public class K2450 extends KeithleySCPI {
     public void setMeasureRange(Function funcOpt, boolean measState) throws IOException, DeviceException{
         String cmd = ":SENS:"+funcOpt.toString()+":RANG:AUTO 0";
         if(measState)
-            cmd = ":SENS:"+funcOpt.toString()+":RANG:AUTO 1";
+            cmd = ":SENS:"+ funcOpt +":RANG:AUTO 1";
         write(cmd);
     }
 

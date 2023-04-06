@@ -2,21 +2,13 @@ package jisa;
 
 import javafx.application.Platform;
 import jisa.addresses.Address;
-import jisa.devices.DeviceException;
-import jisa.devices.interfaces.SMU;
-import jisa.gui.Connector;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
-import jisa.results.Column;
-import jisa.visa.VISA;
-import jisa.visa.VISADevice;
-import jisa.visa.drivers.NIGPIBDriver;
-import jisa.visa.drivers.NIVISADriver;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.LocalDateTime;
 
 public class Main {
 
@@ -53,7 +45,7 @@ public class Main {
                 // Ask the user if they want to perform a test
                 int result = GUI.choiceWindow(
                     "JISA",
-                    "JISA Library - William Wood - 2018-2020",
+                    "JISA Library - William Wood - 2018-" + LocalDateTime.now().getYear(),
                     "What would you like to do?",
                     "Scan for Instruments",
                     "Enter Address Manually",

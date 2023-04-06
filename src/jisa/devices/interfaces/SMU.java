@@ -17,7 +17,7 @@ import java.util.List;
  */
 public interface SMU extends IVMeter, IVSource {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Source Measure Unit";
     }
 

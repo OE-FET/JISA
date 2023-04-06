@@ -212,6 +212,11 @@ public class ConnectorGrid extends Grid {
                         item.setSubTitle("Connecting...");
                         break;
 
+                    case RECONNECTING:
+                        item.setImage(Action.Status.RUNNING.getImage());
+                        item.setSubTitle("Retrying...");
+                        break;
+
                     case CONNECTED:
                         item.setImage(Action.Status.COMPLETED.getImage());
                         item.setSubTitle("Connection Successful");

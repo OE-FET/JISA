@@ -21,7 +21,7 @@ public class Legend extends TilePane {
 
     // -------------- PRIVATE FIELDS ------------------------------------------
 
-    private ListChangeListener<Legend.LegendItem> itemsListener = c -> {
+    private final ListChangeListener<Legend.LegendItem> itemsListener = c -> {
         List<Label> labels = getItems().stream()
                                        .map(i -> i.label)
                                        .collect(Collectors.toList());
@@ -33,7 +33,7 @@ public class Legend extends TilePane {
     /** The legend items should be laid out vertically in columns rather than
      * horizontally in rows
      */
-    private BooleanProperty vertical = new BooleanPropertyBase(false) {
+    private final BooleanProperty vertical = new BooleanPropertyBase(false) {
         @Override protected void invalidated() {
             setOrientation(get() ? Orientation.VERTICAL : Orientation.HORIZONTAL);
         }
@@ -53,7 +53,7 @@ public class Legend extends TilePane {
     public final BooleanProperty verticalProperty() { return vertical; }
 
     /** The legend items to display in this legend */
-    private ObjectProperty<ObservableList<Legend.LegendItem>> items = new ObjectPropertyBase<ObservableList<Legend.LegendItem>>() {
+    private final ObjectProperty<ObservableList<Legend.LegendItem>> items = new ObjectPropertyBase<ObservableList<Legend.LegendItem>>() {
         ObservableList<Legend.LegendItem> oldItems = null;
         @Override protected void invalidated() {
             if (oldItems != null) oldItems.removeListener(itemsListener);
@@ -91,7 +91,7 @@ public class Legend extends TilePane {
     public Legend() {
         super(GAP, GAP);
         setTileAlignment(Pos.CENTER_LEFT);
-        setItems(FXCollections.<Legend.LegendItem>observableArrayList());
+        setItems(FXCollections.observableArrayList());
         getStyleClass().setAll("chart-legend");
     }
 
@@ -113,10 +113,10 @@ public class Legend extends TilePane {
     public static class LegendItem {
 
         /** Label used to represent the legend item */
-        private Label label = new Label();
+        private final Label label = new Label();
 
         /** The item text */
-        private StringProperty text = new StringPropertyBase() {
+        private final StringProperty text = new StringPropertyBase() {
             @Override protected void invalidated() {
                 label.setText(get());
             }
@@ -137,7 +137,7 @@ public class Legend extends TilePane {
 
         /** The symbol to use next to the item text, set to null for no symbol. The default is a simple square of symbolFill */
         //new Rectangle(8,8,null)
-        private ObjectProperty<Node> symbol = new ObjectPropertyBase<Node>(new Region()) {
+        private final ObjectProperty<Node> symbol = new ObjectPropertyBase<Node>(new Region()) {
             @Override protected void invalidated() {
                 Node symbol = get();
                 if(symbol != null) symbol.getStyleClass().setAll("chart-legend-item-symbol");

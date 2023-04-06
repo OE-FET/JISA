@@ -464,7 +464,7 @@ public class JISADefaultAxis extends AbstractAxis implements Axis {
         if (isLogAxis) {
 
             if (axisRange.getLowerBound() >= axisRange.getUpperBound()) {
-                return Arrays.asList(axisRange.getLowerBound()); // NOPMD NOSONAR -- cannot use singletonList since list needs to remain modifiable
+                return List.of(axisRange.getLowerBound()); // NOPMD NOSONAR -- cannot use singletonList since list needs to remain modifiable
             }
             double exp = Math.ceil(axisTransform.forward(axisRange.getLowerBound()));
             for (double tickValue = axisTransform.backward(exp); tickValue <= axisRange
@@ -478,7 +478,7 @@ public class JISADefaultAxis extends AbstractAxis implements Axis {
         }
 
         if (axisRange.getLowerBound() == axisRange.getUpperBound() || axisRange.getTickUnit() <= 0) {
-            return Arrays.asList(axisRange.getLowerBound()); // NOPMD NOSONAR -- cannot use singletonList since list needs to remain modifiable
+            return List.of(axisRange.getLowerBound()); // NOPMD NOSONAR -- cannot use singletonList since list needs to remain modifiable
         }
 
         final double firstTick = computeFistMajorTick(axisRange.getLowerBound(), axisRange.getTickUnit());

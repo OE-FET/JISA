@@ -8,7 +8,7 @@ import java.io.IOException;
 
 public interface IMeter extends Instrument, Switch {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Ammeter";
     }
     

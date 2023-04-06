@@ -10,14 +10,12 @@ import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 public class ResultList extends ResultTable {
 
-    private final List<Row> rows = new LinkedList<>();
+    private final List<Row> rows;
 
     public interface ColumnBuilder {
 
@@ -71,14 +69,20 @@ public class ResultList extends ResultTable {
 
     public ResultList(Column... columns) {
         super(columns);
+        rows = new LinkedList<>();
     }
 
     public ResultList(String... names) {
         this(Arrays.stream(names).map(DoubleColumn::new).toArray(DoubleColumn[]::new));
     }
 
-    public ResultList(List<Column> columns) {
+    public ResultList(Collection<Column> columns) {
         this(columns.toArray(Column[]::new));
+    }
+
+    protected ResultList(List<Row> rows, boolean dummy) {
+        super(rows.stream().flatMap(r -> r.getColumnSet().stream()).distinct().toArray(Column[]::new));
+        this.rows = rows;
     }
 
     @Override
@@ -147,6 +151,82 @@ public class ResultList extends ResultTable {
             @Override
             public Function<ResultList, ResultList> finisher() {
                 return (r) -> r;
+            }
+
+            @Override
+            public Set<Characteristics> characteristics() {
+                return Collections.emptySet();
+            }
+
+        };
+
+    }
+
+    public static Collector<Row, ?, ResultList> collect() {
+
+        return new Collector<Row, List<Row>, ResultList>() {
+
+            @Override
+            public Supplier<List<Row>> supplier() {
+                return LinkedList::new;
+            }
+
+            @Override
+            public BiConsumer<List<Row>, Row> accumulator() {
+                return List::add;
+            }
+
+            @Override
+            public BinaryOperator<List<Row>> combiner() {
+
+                return (left, right) -> {
+                    left.addAll(right);
+                    return left;
+                };
+
+            }
+
+            @Override
+            public Function<List<Row>, ResultList> finisher() {
+                return (r) -> new ResultList(r, true);
+            }
+
+            @Override
+            public Set<Characteristics> characteristics() {
+                return Collections.emptySet();
+            }
+
+        };
+
+    }
+
+    public static Collector<Map, ?, ResultList> mapCollector() {
+
+        return new Collector<Map, List<Row>, ResultList>() {
+
+            @Override
+            public Supplier<List<Row>> supplier() {
+                return LinkedList::new;
+            }
+
+            @Override
+            public BiConsumer<List<Row>, Map> accumulator() {
+                return (l, m) -> l.add(new Row(m));
+            }
+
+            @Override
+            public BinaryOperator<List<Row>> combiner() {
+
+                return (left, right) -> {
+                    left.addAll(right);
+                    return left;
+                };
+
+            }
+
+            @Override
+            public Function<List<Row>, ResultList> finisher() {
+                return (r) -> new ResultList(r, true);
             }
 
             @Override

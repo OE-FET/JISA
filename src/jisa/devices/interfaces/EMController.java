@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 public interface EMController extends Instrument {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Electromagnet Controller";
     }
 

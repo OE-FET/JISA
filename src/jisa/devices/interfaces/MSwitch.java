@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface MSwitch extends Switch, MultiInstrument {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Multi-Channel Switch";
     }
 

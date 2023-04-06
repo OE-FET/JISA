@@ -13,8 +13,8 @@ public class RangeInput extends Fields {
     private final Field<Integer> mode;
     private final Field<Double>  start;
     private final Field<Double>  stop;
-    private       Field<Integer> stepCount;
-    private       Field<Double>  stepSize;
+    private final Field<Integer> stepCount;
+    private final Field<Double>  stepSize;
     private final Field<Boolean> mirror;
 
     public RangeInput(String title, String units) {

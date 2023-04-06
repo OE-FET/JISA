@@ -9,7 +9,7 @@ import java.io.IOException;
  */
 public interface ISource extends Instrument, Switch {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Current Source";
     }
 

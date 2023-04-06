@@ -54,7 +54,7 @@ public interface TCouple extends TMeter {
         N,
         R,
         S,
-        T;
+        T
 
     }
 }

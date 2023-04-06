@@ -15,8 +15,8 @@ public class JISALegend extends GridPane {
     private int                                        cols      = 0;
     private int                                        rows      = 10;
     private int                                        r         = 0;
-    private int                                        c         = 0;
-    private Map<XYChart.Series<Double, Double>, Label> seriesMap = new LinkedHashMap<>();
+    private       int                                        c         = 0;
+    private final Map<XYChart.Series<Double, Double>, Label> seriesMap = new LinkedHashMap<>();
 
     public JISALegend() {
         getStyleClass().setAll("chart-legend");

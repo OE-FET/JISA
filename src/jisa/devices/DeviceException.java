@@ -2,7 +2,7 @@ package jisa.devices;
 
 public class DeviceException extends Exception {
 
-    private String message;
+    private final String message;
 
     public DeviceException(String message, Object... args) {
 

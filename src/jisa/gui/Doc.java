@@ -252,7 +252,7 @@ public class Doc extends JFXElement {
         return new List() {
 
             private int count = 0;
-            private SimpleObjectProperty<Color> colour = new SimpleObjectProperty<>(Colour.BLACK);
+            private final SimpleObjectProperty<Color> colour = new SimpleObjectProperty<>(Colour.BLACK);
 
             @Override
             public List addItem(String item) {

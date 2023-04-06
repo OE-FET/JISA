@@ -13,8 +13,8 @@ public class ConfigStore {
 
     private JSONObject json = null;
     private JSONObject gui  = null;
-    private JSONObject data = null;
-    private String     path;
+    private       JSONObject data = null;
+    private final String     path;
 
     public ConfigStore(String name) throws IOException {
 

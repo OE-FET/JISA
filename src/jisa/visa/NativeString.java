@@ -38,8 +38,8 @@ public class NativeString implements CharSequence, Comparable {
 
     static final String WIDE_STRING = "--WIDE-STRING--";
 
-    private Pointer pointer;
-    private String encoding;
+    private final Pointer pointer;
+    private final String  encoding;
 
     private class StringMemory extends Memory {
         public StringMemory(long size) { super(size); }

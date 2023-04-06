@@ -7,7 +7,7 @@ import java.util.List;
 
 public class DataFunction implements Function {
 
-    private List<XYPoint>  points;
+    private final List<XYPoint> points;
 
     public DataFunction(List<XYPoint> points) {
 

@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -866,6 +867,10 @@ public abstract class ResultTable implements Iterable<Row> {
     }
 
     public abstract Stream<Row> stream();
+
+    public Collector<Row, ?, ResultList> collector() {
+        return ResultList.collect(this);
+    }
 
     public interface Rowable {
         void build(RowSetter row) throws Exception;

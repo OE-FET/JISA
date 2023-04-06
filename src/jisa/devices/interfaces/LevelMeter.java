@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface LevelMeter extends Instrument, MultiInstrument {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Level Meter";
     }
 

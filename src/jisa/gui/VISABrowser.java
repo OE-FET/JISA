@@ -68,7 +68,7 @@ public class VISABrowser extends ListDisplay<Address> {
                     IDAddress address = new IDAddress(webcam.getName());
                     add(address, "Webcam: " + webcam.getName(), address.getJISAString(), Icon.DEVICE.getBlackImage());
                 }
-            } catch (Exception ignored) {};
+            } catch (Exception ignored) {}
 
         } catch (Exception e) {
             e.printStackTrace();

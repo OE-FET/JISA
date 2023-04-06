@@ -23,9 +23,9 @@ import java.util.stream.Collectors;
 
 public class Util {
 
-    public static  PrintStream     errLog     = System.err;
-    private static List<SRunnable> onShutdown = new LinkedList<>();
-    private static ERunnable       exHandler  = (e) -> {
+    public static        PrintStream     errLog     = System.err;
+    private static final List<SRunnable> onShutdown = new LinkedList<>();
+    private static       ERunnable       exHandler  = (e) -> {
 
         ExType exceptionType = ExType.fromClass(e.getClass());
 
@@ -837,7 +837,7 @@ public class Util {
         VISA_EXCEPTION(VISAException.class),
         UNKNOWN_EXCEPTION(Exception.class);
 
-        private static HashMap<Class, ExType> lookup = new HashMap<>();
+        private static final HashMap<Class, ExType> lookup = new HashMap<>();
 
         static {
             for (ExType e : ExType.values()) {
@@ -845,7 +845,7 @@ public class Util {
             }
         }
 
-        private Class clazz;
+        private final Class clazz;
 
         ExType(Class c) {
             clazz = c;

@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface VMeter extends Instrument, Switch {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Voltmeter";
     }
 

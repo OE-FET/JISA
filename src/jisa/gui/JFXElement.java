@@ -143,6 +143,7 @@ public class JFXElement implements Element {
         try {
             borderPane.setCenter(loader.load());
         } catch (IOException ignored) {
+            ignored.printStackTrace();
         }
 
         toolBar   = new ToolBar();

@@ -5,6 +5,7 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
+<?import com.sun.javafx.scene.control.IntegerField?>
 <BorderPane fx:id="pane" prefWidth="600.0" style="-fx-background-color: transparent;"
             xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1">
 
@@ -22,6 +23,8 @@
             <HBox alignment="CENTER_LEFT" spacing="15.0" VBox.vgrow="NEVER">
                 <Label alignment="TOP_RIGHT" minWidth="75.0" text="Driver" HBox.hgrow="NEVER"/>
                 <ChoiceBox fx:id="driverChoice" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS"/>
+                <Label alignment="TOP_RIGHT" minWidth="50.0" text="Retries" HBox.hgrow="NEVER"/>
+                <IntegerField fx:id="retries" maxWidth="40.0" minWidth="40.0" HBox.hgrow="NEVER"/>
             </HBox>
             <HBox alignment="CENTER_LEFT" spacing="15.0" VBox.vgrow="NEVER">
                 <Label alignment="TOP_RIGHT" minWidth="75.0" text="Protocol" HBox.hgrow="NEVER"/>

@@ -13,13 +13,15 @@ import jisa.gui.Colour;
 
 public class JISAXYChart extends XYChart {
 
+    private final JISARenderer renderer = new JISARenderer();
+
     public JISAXYChart(Axis... axes) {
         super(axes);
         titleLabel.setPadding(new Insets(15));
         getPlotArea().setBackground(new Background(new BackgroundFill(Colour.string("#f4f4f4"), null, null)));
         getAxesAndCanvasPane().setBackground(new Background(new BackgroundFill(Colour.WHITE, null, null)));
         getRenderers().clear();
-        getRenderers().add(new JISARenderer());
+        getRenderers().add(renderer);
         setLegendSide(Side.RIGHT);
         getLegend().setVertical(true);
         ((FlowPane) getLegend().getNode()).setBackground(Background.EMPTY);
@@ -29,10 +31,16 @@ public class JISAXYChart extends XYChart {
         GridPane.setMargin(getAxesPane(Side.RIGHT), new Insets(0, 15, 0, 0));
         ((FlowPane) getLegend().getNode()).setPadding(new Insets(0, 15, 0, 0));
         getGridRenderer().setDrawOnTop(false);
+
+        renderer.setAssumeSortedData(false);
+
     }
 
     public void forceRedraw() {
         redrawCanvas();
+        updateNumericAxis(getXAxis(), getDataSetForAxis(getXAxis()));
+        updateNumericAxis(getYAxis(), getDataSetForAxis(getYAxis()));
+        updateLegend(getDatasets(), getRenderers());
     }
 
     public void removeTitle() {

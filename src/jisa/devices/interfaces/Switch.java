@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public interface Switch extends Instrument {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Switch";
     }
 

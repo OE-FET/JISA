@@ -18,19 +18,19 @@ public interface Matrix<T> extends Iterable<T> {
      *
      * @return Same dimensions?
      */
-    public static boolean dimensionsMatch(Matrix a, Matrix b) {
+    static boolean dimensionsMatch(Matrix a, Matrix b) {
         return (a.rows() == b.rows()) && (a.cols() == b.cols());
     }
 
-    public static boolean rowMatrixMatch(Matrix a, Matrix b) {
+    static boolean rowMatrixMatch(Matrix a, Matrix b) {
         return (a.cols() == b.cols() && b.rows() == 1);
     }
 
-    public static boolean colMatrixMatch(Matrix a, Matrix b) {
+    static boolean colMatrixMatch(Matrix a, Matrix b) {
         return (a.rows() == b.rows() && b.cols() == 1);
     }
 
-    public static boolean isScalar(Matrix a) {
+    static boolean isScalar(Matrix a) {
         return a.rows() == 1 && a.cols() == 1;
     }
 
@@ -42,7 +42,7 @@ public interface Matrix<T> extends Iterable<T> {
      *
      * @return Can they multiply?
      */
-    public static boolean canMultiply(Matrix a, Matrix b) {
+    static boolean canMultiply(Matrix a, Matrix b) {
         return a.cols() == b.rows();
     }
 
@@ -941,8 +941,8 @@ public interface Matrix<T> extends Iterable<T> {
 
         return new Iterator<>() {
 
-            private int columns = cols();
-            private int size = size();
+            private final int columns = cols();
+            private final int size = size();
             private int i = 0;
 
             @Override

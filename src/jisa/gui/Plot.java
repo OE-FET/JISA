@@ -25,10 +25,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -154,7 +151,7 @@ public class Plot extends JFXElement implements Element, Clearable {
             xAxis = table.findColumn(xAxis);
         }
 
-        List<String>             names = new LinkedList<>();
+        List<String> names = new LinkedList<>();
         for (Column<? extends Number> column : table.getNumericColumns()) {
 
             if (xAxis == null) {
@@ -170,6 +167,25 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
+    public Plot(String title, ResultTable table, Column<? extends Number> xAxis, Column<? extends Number> yAxis) {
+        this(title);
+        createSeries().watch(table, xAxis, yAxis);
+    }
+
+    public Plot(String title, Iterable<? extends Number> xData, Iterable<? extends Number> yData) {
+
+        this(title);
+
+        Iterator<? extends Number> xIttr  = xData.iterator();
+        Iterator<? extends Number> yIttr  = yData.iterator();
+        Series                     series = createSeries();
+
+        while (xIttr.hasNext() && yIttr.hasNext()) {
+            series.addPoint(xIttr.next().doubleValue(), yIttr.next().doubleValue());
+        }
+
+    }
+
     public void updateLegend() {
         GUI.runNow(() -> chart.getLegend().updateLegend(chart.getDatasets(), chart.getRenderers(), true));
     }
@@ -178,14 +194,30 @@ public class Plot extends JFXElement implements Element, Clearable {
         GUI.runNow(() -> chart.forceRedraw());
     }
 
+    /**
+     * Returns whether the legend of this plot is currently visible.
+     *
+     * @return Is the legend visible?
+     */
     public boolean isLegendVisible() {
         return chart.isLegendVisible();
     }
 
+    /**
+     * Sets whether the legend of this plot should be visible or not.
+     *
+     * @param visible Should the legend be visible?
+     */
     public void setLegendVisible(boolean visible) {
         GUI.runNow(() -> chart.setLegendVisible(visible));
     }
 
+    /**
+     * Sets the label and units to display on the x-axis of this plot.
+     *
+     * @param name  The label text
+     * @param units The units of the axis
+     */
     public void setXLabel(String name, String units) {
 
         GUI.runNow(() -> {
@@ -195,6 +227,12 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
+    /**
+     * Sets the label to display on the x-axis of this plot. Units can be optionally specified in square brackets.
+     * For example: "Voltage [V]".
+     *
+     * @param name The label text, optionally including units in square brackets [...]
+     */
     public void setXLabel(String name) {
 
         Matcher matcher = UNIT_PATTERN.matcher(name);
@@ -207,23 +245,48 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
+    /**
+     * Sets the units of the x-axis of this plot.
+     *
+     * @param unit Units for x-axis
+     */
     public void setXUnit(String unit) {
         GUI.runNow(() -> xAxis.setUnit(unit));
     }
 
+    /**
+     * Sets the units of the y-axis of this plot.
+     *
+     * @param unit Units for y-axis
+     */
     public void setYUnit(String unit) {
         GUI.runNow(() -> yAxis.setUnit(unit));
     }
 
+    /**
+     * Sets the title of this plot.
+     *
+     * @param title Title of plot
+     */
     public void setTitle(String title) {
         super.setTitle(title);
         GUI.runNow(() -> chart.setTitle(title));
     }
 
+    /**
+     * Returns the units of the x-axis of this plot.
+     *
+     * @return X-axis units
+     */
     public String getXUnit() {
         return xAxis.getUnit();
     }
 
+    /**
+     * Returns the units of the y-axis of this plot.
+     *
+     * @return Y-axis units
+     */
     public String getYUnit() {
         return yAxis.getUnit();
     }
@@ -553,9 +616,9 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
-    public void setMouseEnabled(boolean flag) {
+    public void setMouseEnabled(boolean enabled) {
 
-        if (flag) {
+        if (enabled) {
 
             if (!chart.getPlugins().contains(zoomer)) {
                 GUI.runNow(() -> chart.getPlugins().add(zoomer));
@@ -625,7 +688,10 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     public SVG getSVG(double width, double height) {
 
-        GUI.runNow(() -> chart.forceRedraw());
+        if (!isShowing()) {
+            show();
+            close();
+        }
 
         SVGElement main = new SVGElement("g");
 
@@ -1068,7 +1134,7 @@ public class Plot extends JFXElement implements Element, Clearable {
         FileOutputStream writer = new FileOutputStream(path);
         PrintStream      stream = new PrintStream(writer);
 
-        stream.print(builder.toString());
+        stream.print(builder);
 
         stream.close();
 

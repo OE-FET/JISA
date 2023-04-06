@@ -8,7 +8,7 @@ import org.apache.commons.math.linear.*;
 public class RealMatrix implements Matrix<Double> {
 
     private final org.apache.commons.math.linear.RealMatrix backing;
-    private       LUDecomposition                           lu = null;
+    private final LUDecomposition                           lu = null;
 
     public static RealMatrix asRealMatrix(Matrix<Double> matrix) {
 

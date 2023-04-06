@@ -21,13 +21,13 @@ public class VISA {
 
     private final static Map<String, DriverInit> DRIVERS = Util.buildMap(map -> {
 
-        map.put("RS VISA", RSVISADriver::new);
-        map.put("AG VISA", AGVISADriver::new);
-        map.put("NI VISA", NIVISADriver::new);
-        map.put("Linux GPIB", GPIBDriver::new);
-        map.put("NI GPIB", NIGPIBDriver::new);
-        map.put("Serial", SerialDriver::new);
-        map.put("TCP-IP", TCPIPDriver::new);
+        map.put("RS VISA",    RSVISADriver::new);
+        map.put("AG VISA",    AGVISADriver::new);
+        map.put("NI VISA",    NIVISADriver::new);
+        map.put("Linux GPIB", LinuxGPIBDriver::new);
+        map.put("NI GPIB",    NIGPIBDriver::new);
+        map.put("Serial",     SerialDriver::new);
+        map.put("TCP-IP",     TCPIPDriver::new);
 
         map.put("Experimental USB", () -> {
 

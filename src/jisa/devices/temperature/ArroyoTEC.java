@@ -330,7 +330,7 @@ public class ArroyoTEC extends VISADevice implements TC {
         AD590,
         RTD,
         RTD_4_WIRE,
-        THERMISTOR_1mA;
+        THERMISTOR_1mA
     }
 
 }

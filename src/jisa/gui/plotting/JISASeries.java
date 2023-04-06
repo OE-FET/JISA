@@ -324,7 +324,7 @@ public class JISASeries implements Series {
 
     @Override
     public Shape getMarkerShape() {
-        return null;
+        return dataSets.get(0).getShape();
     }
 
     @Override

@@ -138,7 +138,7 @@ public class ILM200 extends VISADevice implements LevelMeter {
         LOCAL_UNLOCKED(2),
         REMOTE_UNLOCKED(3);
 
-        private static HashMap<Integer, ITC503.Mode> lookup = new HashMap<>();
+        private static final HashMap<Integer, ITC503.Mode> lookup = new HashMap<>();
 
         static {
             for (ITC503.Mode mode : ITC503.Mode.values()) {
@@ -146,7 +146,7 @@ public class ILM200 extends VISADevice implements LevelMeter {
             }
         }
 
-        private        int                           c;
+        private final int c;
 
         Mode(int code) {
             c = code;

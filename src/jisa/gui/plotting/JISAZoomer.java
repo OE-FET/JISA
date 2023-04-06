@@ -143,7 +143,7 @@ public class JISAZoomer extends ChartPlugin {
         this.omitAxisZoom              = FXCollections.observableArrayList();
         this.axisMode                  = new SimpleObjectProperty<AxisMode>(this, "axisMode", AxisMode.XY) {
             protected void invalidated() {
-                Objects.requireNonNull((AxisMode) this.get(), "The " + this.getName() + " must not be null");
+                Objects.requireNonNull(this.get(), "The " + this.getName() + " must not be null");
             }
         };
         this.dragCursor                = new SimpleObjectProperty(this, "dragCursor");
@@ -151,7 +151,7 @@ public class JISAZoomer extends ChartPlugin {
         this.animated                  = new SimpleBooleanProperty(this, "animated", false);
         this.zoomDuration              = new SimpleObjectProperty<Duration>(this, "zoomDuration", DEFAULT_ZOOM_DURATION) {
             protected void invalidated() {
-                Objects.requireNonNull((Duration) this.get(), "The " + this.getName() + " must not be null");
+                Objects.requireNonNull(this.get(), "The " + this.getName() + " must not be null");
             }
         };
         this.updateTickUnit            = new SimpleBooleanProperty(this, "updateTickUnit", true);
@@ -242,7 +242,7 @@ public class JISAZoomer extends ChartPlugin {
         this.chartProperty().addListener((change, o, n) -> {
             if (o != null) {
                 o.getToolBar().getChildren().remove(this.zoomButtons);
-                o.getPlotArea().setBottom((Node) null);
+                o.getPlotArea().setBottom(null);
                 this.xRangeSlider.prefWidthProperty().unbind();
             }
 
@@ -304,11 +304,11 @@ public class JISAZoomer extends ChartPlugin {
     }
 
     public final AxisMode getAxisMode() {
-        return (AxisMode) this.axisModeProperty().get();
+        return this.axisModeProperty().get();
     }
 
     public final Cursor getDragCursor() {
-        return (Cursor) this.dragCursorProperty().get();
+        return this.dragCursorProperty().get();
     }
 
     public RangeSlider getRangeSlider() {
@@ -316,11 +316,11 @@ public class JISAZoomer extends ChartPlugin {
     }
 
     public final Cursor getZoomCursor() {
-        return (Cursor) this.zoomCursorProperty().get();
+        return this.zoomCursorProperty().get();
     }
 
     public final Duration getZoomDuration() {
-        return (Duration) this.zoomDurationProperty().get();
+        return this.zoomDurationProperty().get();
     }
 
     public Predicate<MouseEvent> getZoomInMouseFilter() {
@@ -492,7 +492,7 @@ public class JISAZoomer extends ChartPlugin {
 
     public boolean zoomOrigin() {
         this.clearZoomStackIfAxisAutoRangingIsEnabled();
-        Map<Axis, ZoomState> zoomWindows = (Map) this.zoomStacks.peekLast();
+        Map<Axis, ZoomState> zoomWindows = this.zoomStacks.peekLast();
         if (zoomWindows != null && !zoomWindows.isEmpty()) {
             this.clear();
             this.performZoom(zoomWindows, false);
@@ -707,11 +707,11 @@ public class JISAZoomer extends ChartPlugin {
     }
 
     private void performZoom(Map.Entry<Axis, ZoomState> zoomStateEntry, boolean isZoomIn) {
-        ZoomState zoomState = (ZoomState) zoomStateEntry.getValue();
+        ZoomState zoomState = zoomStateEntry.getValue();
         if (zoomState.zoomRangeMax - zoomState.zoomRangeMin == 0.0) {
 
         } else {
-            Axis axis = (Axis) zoomStateEntry.getKey();
+            Axis axis = zoomStateEntry.getKey();
             if (isZoomIn && (axis.getSide().isHorizontal() && this.getAxisMode().allowsX() || axis.getSide().isVertical() && this.getAxisMode().allowsY())) {
                 axis.setAutoRanging(false);
             }
@@ -719,7 +719,7 @@ public class JISAZoomer extends ChartPlugin {
             if (this.isAnimated()) {
                 if (!hasBoundedRange(axis)) {
                     Timeline xZoomAnimation = new Timeline();
-                    xZoomAnimation.getKeyFrames().setAll(new KeyFrame[]{new KeyFrame(Duration.ZERO, new KeyValue[]{new KeyValue(axis.minProperty(), axis.getMin()), new KeyValue(axis.maxProperty(), axis.getMax())}), new KeyFrame(this.getZoomDuration(), new KeyValue[]{new KeyValue(axis.minProperty(), zoomState.zoomRangeMin), new KeyValue(axis.maxProperty(), zoomState.zoomRangeMax)})});
+                    xZoomAnimation.getKeyFrames().setAll(new KeyFrame(Duration.ZERO, new KeyValue(axis.minProperty(), axis.getMin()), new KeyValue(axis.maxProperty(), axis.getMax())), new KeyFrame(this.getZoomDuration(), new KeyValue(axis.minProperty(), zoomState.zoomRangeMin), new KeyValue(axis.maxProperty(), zoomState.zoomRangeMax)));
                     xZoomAnimation.play();
                 }
             } else if (!hasBoundedRange(axis)) {
@@ -739,7 +739,7 @@ public class JISAZoomer extends ChartPlugin {
 
         while (var3.hasNext()) {
             Map.Entry<Axis, ZoomState> entry = (Map.Entry) var3.next();
-            if (!this.isOmitZoomInternal((Axis) entry.getKey())) {
+            if (!this.isOmitZoomInternal(entry.getKey())) {
                 this.performZoom(entry, isZoomIn);
             }
         }
@@ -870,7 +870,7 @@ public class JISAZoomer extends ChartPlugin {
 
     private boolean zoomOut() {
         this.clearZoomStackIfAxisAutoRangingIsEnabled();
-        Map<Axis, ZoomState> zoomWindows = (Map) this.zoomStacks.pollFirst();
+        Map<Axis, ZoomState> zoomWindows = this.zoomStacks.pollFirst();
         if (zoomWindows != null && !zoomWindows.isEmpty()) {
             this.performZoom(zoomWindows, false);
             return true;
@@ -998,7 +998,7 @@ public class JISAZoomer extends ChartPlugin {
                         JISAZoomer.this.getChart().getPlotArea().setBottom(JISAZoomer.this.xRangeSlider);
                         this.prefWidthProperty().bind(JISAZoomer.this.getChart().getCanvasForeground().widthProperty());
                     } else {
-                        JISAZoomer.this.getChart().getPlotArea().setBottom((Node) null);
+                        JISAZoomer.this.getChart().getPlotArea().setBottom(null);
                         this.prefWidthProperty().unbind();
                     }
 

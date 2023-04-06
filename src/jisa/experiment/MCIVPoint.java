@@ -8,7 +8,7 @@ import java.util.Map;
  */
 public class MCIVPoint {
 
-    private HashMap<Integer, IVPoint> channels = new HashMap<>();
+    private final HashMap<Integer, IVPoint> channels = new HashMap<>();
 
     /**
      * Add IVPoint for the given channel.

@@ -9,7 +9,7 @@ import java.io.IOException;
 
 public interface VPreAmp extends Instrument {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Voltage Pre-Amplifier";
     }
 

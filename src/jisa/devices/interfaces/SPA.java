@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface SPA extends Instrument, MultiInstrument {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Semiconductor Parameter Analyser";
     }
 

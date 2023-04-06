@@ -65,7 +65,7 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
     }
 
     public String loadReference(String file_path, String file_name) throws Exception {
-        String load_str = super.sendRequest("COMMAND_LINE Load(0, {DAP=\'" + file_path + "\', DAF=\'" + file_name + "\'});");
+        String load_str = super.sendRequest("COMMAND_LINE Load(0, {DAP='" + file_path + "', DAF='" + file_name + "'});");
         String[] split = load_str.split("\n");
 
         return super.sendRequest("COMMAND_LINE LoadReference([<" + split[3] + ">:ScRf], { });");

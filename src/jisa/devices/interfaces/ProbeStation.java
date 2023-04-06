@@ -11,7 +11,7 @@ import java.io.IOException;
 
 public interface ProbeStation extends XYZTranslationStage {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Probe Station";
     }
 

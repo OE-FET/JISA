@@ -37,7 +37,12 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
         Connection connection = getConnection();
 
+        if (connection instanceof GPIBConnection) {
+            ((GPIBConnection) connection).setEOIEnabled(true);
+        }
+
         clearBuffers();
+        manuallyClearReadBuffer();
 
         setWriteTerminator("\n");
         setReadTerminator("\n");
@@ -55,10 +60,14 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
         for (String term : terminators) {
 
-            setWriteTerminator(term);
-            setReadTerminator(term);
-            clearBuffers();
-            manuallyClearReadBuffer();
+            try {
+                setWriteTerminator(term);
+                setReadTerminator(term);
+                clearBuffers();
+                manuallyClearReadBuffer();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             if (confirmIdentity()) {
                 match = true;
@@ -69,10 +78,6 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
         if (!match) {
             throw new DeviceException("Instrument at \"%s\" is not correctly identifying as an Agilent 415XX/B1500 series SPA.", address.toString());
-        }
-
-        if (connection instanceof GPIBConnection) {
-            ((GPIBConnection) connection).setEOIEnabled(true);
         }
 
         // For some reason, the SPA sometimes forgets that this happened, so need to do it again?

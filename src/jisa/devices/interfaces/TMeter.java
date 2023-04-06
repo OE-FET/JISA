@@ -12,7 +12,7 @@ import java.util.List;
  */
 public interface TMeter extends Instrument {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Thermometer";
     }
 

@@ -6,8 +6,8 @@ import java.io.InputStream;
 
 public class PythonScript {
 
-    private InputStream       stream;
-    private PythonInterpreter interpreter;
+    private final InputStream       stream;
+    private final PythonInterpreter interpreter;
 
     public PythonScript(String fileName) {
         interpreter = new PythonInterpreter();

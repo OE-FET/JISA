@@ -10,8 +10,8 @@ import javafx.scene.text.Font;
 public class Logger extends JFXElement {
 
     public  BorderPane     pane;
-    public  ListView<Node> list;
-    private String         title;
+    public        ListView<Node> list;
+    private final String         title;
 
 
     public Logger(String title) {

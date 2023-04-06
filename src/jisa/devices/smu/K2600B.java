@@ -793,8 +793,8 @@ public class K2600B extends VISADevice implements MCSMU {
         VOLTAGE("1", "v", Source.VOLTAGE),
         CURRENT("0", "i", Source.CURRENT);
 
-        private static HashMap<String, SFunc> fMap = new HashMap<>();
-        private static HashMap<Source, SFunc> sMap = new HashMap<>();
+        private static final HashMap<String, SFunc> fMap = new HashMap<>();
+        private static final HashMap<Source, SFunc> sMap = new HashMap<>();
 
         static {
             for (SFunc f : values()) {
@@ -803,9 +803,9 @@ public class K2600B extends VISADevice implements MCSMU {
             }
         }
 
-        private String tag;
-        private String symbol;
-        private Source smu;
+        private final String tag;
+        private final String symbol;
+        private final Source smu;
 
         SFunc(String tag, String symbol, Source smu) {
             this.tag    = tag;

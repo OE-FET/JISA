@@ -540,7 +540,7 @@ public class Range<T extends Number> implements Iterable<T> {
     public enum Type {
         LINEAR,
         EXPONENTIAL,
-        POLYNOMIAL;
+        POLYNOMIAL
     }
 
     public static class DoubleRange extends Range<Double> {

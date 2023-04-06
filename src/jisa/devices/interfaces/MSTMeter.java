@@ -13,7 +13,7 @@ import java.util.List;
 
 public interface MSTMeter extends TMeter, MultiInstrument {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Multi-Sensor Thermometer";
     }
 

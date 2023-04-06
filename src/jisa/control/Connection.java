@@ -27,6 +27,7 @@ public class Connection<T extends Instrument> {
     private       Address            address    = null;
     private       T                  instrument = null;
     private       Status             status     = Status.DISCONNECTED;
+    private       int                attempts   = 1;
 
     public Connection(String name, Class<T> type) {
         this.driverClass = type;
@@ -88,6 +89,7 @@ public class Connection<T extends Instrument> {
 
         block.stringValue("Driver").set(driver == null ? null : driver.getName());
         block.stringValue("Address").set(address == null ? null : address.getJISAString());
+        block.intValue("Attempts").set(attempts);
         block.save();
 
     }
@@ -95,8 +97,9 @@ public class Connection<T extends Instrument> {
     public void loadFromConfig(ConfigBlock block) {
 
         try {
-            driver  = (Class<? extends T>) Class.forName(block.stringValue("Driver").get());
-            address = Address.parse(block.stringValue("Address").get());
+            driver   = (Class<? extends T>) Class.forName(block.stringValue("Driver").get());
+            address  = Address.parse(block.stringValue("Address").get());
+            attempts = block.intValue("Attempts").getOrDefault(1);
             triggerChange();
         } catch (Exception e) {
             e.printStackTrace();
@@ -147,41 +150,72 @@ public class Connection<T extends Instrument> {
         return listener;
     }
 
-    public void connect() throws DriverException, DeviceException, IOException {
+    public void setAttempts(int attempts) {
+        this.attempts = attempts;
+    }
 
-        status = Status.CONNECTING;
-        triggerChange();
+    public int getAttempts() {
+        return attempts;
+    }
 
-        try {
+    public void connect() throws Exception {
 
-            Constructor<? extends T> constructor = driver.getConstructor(Address.class);
-            instrument = constructor.newInstance(address);
-            status     = Status.CONNECTED;
+        Exception caught = null;
 
-        } catch (IllegalAccessException | InstantiationException | NoSuchMethodException e) {
+        for (int i = 0; (i < attempts && status != Status.CONNECTED); i++) {
 
-            status = Status.ERROR;
-            throw new DriverException("Could not construct driver", e);
+            caught = null;
 
-        } catch (InvocationTargetException e) {
+            try {
 
-            status = Status.ERROR;
+                status = ((i == 0) ? Status.CONNECTING : Status.RECONNECTING);
+                triggerChange();
 
-            Throwable thrown = e.getTargetException();
+                if (i > 0) {
+                    System.err.printf("Retry connection to \"%s\": %d/%d...%n", name, i, attempts - 1);
+                }
 
-            if (thrown instanceof IOException) {
-                throw (IOException) thrown;
+                try {
+
+                    Constructor<? extends T> constructor = driver.getConstructor(Address.class);
+                    instrument = constructor.newInstance(address);
+                    status     = Status.CONNECTED;
+
+                } catch (IllegalAccessException | InstantiationException | NoSuchMethodException e) {
+
+                    status = Status.ERROR;
+                    throw new DriverException("Could not construct driver", e);
+
+                } catch (InvocationTargetException e) {
+
+                    status = Status.ERROR;
+
+                    Throwable thrown = e.getTargetException();
+
+                    if (thrown instanceof IOException) {
+                        throw (IOException) thrown;
+                    }
+
+                    if (thrown instanceof DeviceException) {
+                        throw (DeviceException) thrown;
+                    }
+
+                    throw new DriverException("Could not construct driver", e);
+
+                } finally {
+                    triggerChange();
+                    triggerListeners();
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                caught = e;
             }
 
-            if (thrown instanceof DeviceException) {
-                throw (DeviceException) thrown;
-            }
+        }
 
-            throw new DriverException("Could not construct driver", e);
-
-        } finally {
-            triggerChange();
-            triggerListeners();
+        if (caught != null) {
+            throw caught;
         }
 
     }
@@ -211,6 +245,7 @@ public class Connection<T extends Instrument> {
 
         DISCONNECTED(Action.Status.NOT_STARTED.getImage()),
         CONNECTING(Action.Status.RUNNING.getImage()),
+        RECONNECTING(Action.Status.RETRY.getImage()),
         CONNECTED(Action.Status.COMPLETED.getImage()),
         ERROR(Action.Status.ERROR.getImage());
 

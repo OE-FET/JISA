@@ -10,7 +10,7 @@ import java.io.IOException;
  */
 public interface IVMeter extends VMeter, IMeter {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Multimeter";
     }
 

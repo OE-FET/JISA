@@ -17,15 +17,15 @@ public class PIDController {
         void write(T value) throws IOException, DeviceException;
     }
 
-    private Input<Double>  input;
-    private Output<Double> output;
-    private double         P = 10;
+    private final Input<Double>  input;
+    private final Output<Double> output;
+    private       double         P = 10;
     private double         I = 2;
     private double         D = 0;
     private double         setPoint;
     private double         sum;
-    private double         last;
-    private RTask          control;
+    private       double last;
+    private final RTask  control;
 
     public PIDController(int interval, Input<Double> input, Output<Double> output) {
         INTERVAL = interval;

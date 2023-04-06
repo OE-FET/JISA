@@ -29,17 +29,19 @@ public class Connector<T extends Instrument> extends JFXElement {
 
 
     @FXML
-    protected Label                               errorText;
+    protected Label                                     errorText;
     @FXML
-    protected ChoiceBox<Class<? extends T>>       driverChoice;
+    protected ChoiceBox<Class<? extends T>>             driverChoice;
     @FXML
-    protected ChoiceBox<Class<? extends Address>> protocolChoice;
+    protected ChoiceBox<Class<? extends Address>>       protocolChoice;
     @FXML
-    protected GridPane                            parameters;
+    protected GridPane                                  parameters;
     @FXML
-    protected ImageView                           icon;
+    protected ImageView                                 icon;
     @FXML
-    protected Button                              removeButton;
+    protected Button                                    removeButton;
+    @FXML
+    protected com.sun.javafx.scene.control.IntegerField retries;
 
     protected Connection<T>       connection;
     protected Map<String, Object> addressParams = null;
@@ -91,6 +93,8 @@ public class Connector<T extends Instrument> extends JFXElement {
                     || driver.getSimpleName().toLowerCase().contains("dummy")
             )
         ).sorted(Comparator.comparing(Class::getSimpleName)).collect(Collectors.toList())));
+
+        retries.setValue(connection.getAttempts());
 
         protocolChoice.getItems().setAll(reflections.getSubTypesOf(Address.class)
                                                     .stream()
@@ -208,6 +212,7 @@ public class Connector<T extends Instrument> extends JFXElement {
                 if (connection.getAddress() != null) {
                     addressParams = connection.getAddress().getParameters();
                     protocolChoice.setValue(connection.getAddress().getClass());
+                    retries.setValue(connection.getAttempts());
                     updateAddressParameters();
                 }
 
@@ -290,11 +295,10 @@ public class Connector<T extends Instrument> extends JFXElement {
             connecting = true;
             connection.setDriver(driverChoice.getValue());
             connection.setAddress(address);
+            connection.setAttempts(Math.max(1, retries.getValue()));
             connection.connect();
 
         } catch (Exception e) {
-
-            e.printStackTrace();
 
             GUI.runNow(() -> {
                 errorText.setText("Error: " + e.getMessage());
@@ -329,11 +333,10 @@ public class Connector<T extends Instrument> extends JFXElement {
                 connecting = true;
                 connection.setDriver(driverChoice.getValue());
                 connection.setAddress(address);
+                connection.setAttempts(Math.max(1, retries.getValue()));
                 connection.connect();
 
             } catch (Exception e) {
-
-                e.printStackTrace();
 
                 GUI.runNow(() -> {
                     errorText.setText("Error: " + e.getMessage());
@@ -364,6 +367,7 @@ public class Connector<T extends Instrument> extends JFXElement {
             connecting = true;
             connection.setDriver(driverChoice.getValue());
             connection.setAddress(address);
+            connection.setAttempts(Math.max(1, retries.getValue()));
             connecting = false;
 
         } catch (Exception ignored) {}

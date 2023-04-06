@@ -573,8 +573,8 @@ public class SR830 extends VISADevice implements DPLockIn {
         EXTERNAL(0, LockIn.RefMode.EXTERNAL, "External"),
         INTERNAL(1, LockIn.RefMode.INTERNAL, "Internal");
 
-        private static HashMap<Integer, RefMode>        lookup  = new HashMap<>();
-        private static HashMap<LockIn.RefMode, RefMode> convert = new HashMap<>();
+        private static final HashMap<Integer, RefMode>        lookup  = new HashMap<>();
+        private static final HashMap<LockIn.RefMode, RefMode> convert = new HashMap<>();
 
         static {
             for (RefMode mode : RefMode.values()) {
@@ -583,9 +583,9 @@ public class SR830 extends VISADevice implements DPLockIn {
             }
         }
 
-        private int            c;
-        private LockIn.RefMode refMode;
-        private String         name;
+        private final int            c;
+        private final LockIn.RefMode refMode;
+        private final String         name;
 
         RefMode(int code, LockIn.RefMode mode, String name) {
             c         = code;
@@ -650,7 +650,7 @@ public class SR830 extends VISADevice implements DPLockIn {
         S_500mV_nA(25, 500e-3, 500e-9),
         S_1V_uA(26, 1.0, 1e-6);
 
-        private static HashMap<Integer, Sensitivity> lookup = new HashMap<>();
+        private static final HashMap<Integer, Sensitivity> lookup = new HashMap<>();
 
         static {
             for (Sensitivity mode : Sensitivity.values()) {
@@ -658,9 +658,9 @@ public class SR830 extends VISADevice implements DPLockIn {
             }
         }
 
-        private int    c;
-        private double volt;
-        private double current;
+        private final int    c;
+        private final double volt;
+        private       double current;
 
         Sensitivity(int code, double V, double I) {
             c    = code;
@@ -728,7 +728,7 @@ public class SR830 extends VISADevice implements DPLockIn {
         T_10ks(18, 10e3),
         T_30ks(19, 30e3);
 
-        private static HashMap<Integer, TimeConst> lookup = new HashMap<>();
+        private static final HashMap<Integer, TimeConst> lookup = new HashMap<>();
 
         static {
             for (TimeConst mode : TimeConst.values()) {
@@ -736,8 +736,8 @@ public class SR830 extends VISADevice implements DPLockIn {
             }
         }
 
-        private int    c;
-        private double value;
+        private final int    c;
+        private final double value;
 
         TimeConst(int code, double value) {
             c          = code;
@@ -785,8 +785,8 @@ public class SR830 extends VISADevice implements DPLockIn {
         F18(2, 18),
         F24(3, 24);
 
-        private int    tag;
-        private double db;
+        private final int    tag;
+        private final double db;
 
         FilterRO(int mode, double value) {
             tag = mode;

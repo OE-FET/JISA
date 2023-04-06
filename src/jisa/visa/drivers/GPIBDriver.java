@@ -4,6 +4,7 @@ import com.sun.jna.*;
 import jisa.addresses.Address;
 import jisa.addresses.GPIBAddress;
 import jisa.visa.NativeString;
+import jisa.visa.VISA;
 import jisa.visa.VISAException;
 import jisa.visa.connections.Connection;
 
@@ -16,11 +17,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class GPIBDriver implements Driver {
+public abstract class GPIBDriver implements Driver {
 
-    protected static       GPIBNativeInterface       lib              = null;
     protected static final String                    OS_NAME          = System.getProperty("os.name").toLowerCase();
-    protected static       String                    libName;
     protected static final String                    responseEncoding = "UTF8";
     protected static final long                      VISA_ERROR       = 0x7FFFFFFF;
     protected static final int                       _VI_ERROR        = -2147483648;
@@ -28,7 +27,6 @@ public class GPIBDriver implements Driver {
     protected static final int                       VI_NULL          = 0;
     protected static final int                       VI_TRUE          = 1;
     protected static final int                       VI_FALSE         = 0;
-    protected static       NativeLong                visaResourceManagerHandle;
     protected static       HashMap<Long, NativeLong> instruments      = new HashMap<>();
 
     private enum TMO {
@@ -94,56 +92,19 @@ public class GPIBDriver implements Driver {
 
     }
 
-    protected void initialise() throws VISAException {
+    protected abstract void initialise() throws VISAException;
 
-        if (lib != null) {
-            return;
-        }
-
-        try {
-            if (OS_NAME.contains("win")) {
-                libName = "ni4882";
-                lib     = Native.loadLibrary(libName, GPIBNativeInterface.class);
-            } else if (OS_NAME.contains("linux")) {
-                libName = "gpib";
-                lib     = Native.loadLibrary(libName, GPIBNativeInterface.class);
-            } else {
-                throw new VISAException("Platform not yet supported!");
-            }
-        } catch (UnsatisfiedLinkError e) {
-            lib = null;
-        }
-
-        if (lib == null) {
-            throw new VISAException("Could not load GPIB library");
-        }
-
-        try {
-            NativeLibrary nLib = NativeLibrary.getInstance(libName);
-            lib.ibsta.setPointer(nLib.getGlobalVariableAddress("ibsta"));
-            lib.iberr.setPointer(nLib.getGlobalVariableAddress("iberr"));
-            lib.ibcnt.setPointer(nLib.getGlobalVariableAddress("ibcnt"));
-        } catch (Exception | Error e) {
-            throw new VISAException("Could not link global variables");
-        }
-
-    }
+    protected abstract GPIBNativeInterface lib();
 
     protected boolean wasError() {
-        return (Ibsta() & GPIBNativeInterface.ERR) != 0;
+        return (getIBSTA() & GPIBNativeInterface.ERR) != 0;
     }
 
-    protected int Ibsta() {
-        return lib.ibsta.getValue();
-    }
+    protected abstract int getIBSTA();
 
-    protected int Iberr() {
-        return lib.iberr.getValue();
-    }
+    protected abstract int getIBERR();
 
-    protected int Ibcnt() {
-        return lib.ibcnt.getValue();
-    }
+    protected abstract int getIBCNT();
 
     /**
      * Converts a string to bytes in a ByteBuffer, used for sending to VISA library which expects binary strings.
@@ -172,15 +133,15 @@ public class GPIBDriver implements Driver {
 
         GPIBAddress addr = (GPIBAddress) address;
 
-        lib.SendIFC(addr.getBoardNumber());
+        lib().SendIFC(addr.getBoardNumber());
 
-        int ud = lib.ibdev(Math.max(0, addr.getBoardNumber()), addr.getPrimaryAddress(), Math.max(0, addr.getSecondaryAddress()), GPIBNativeInterface.T3s, 1, 0);
+        int ud = lib().ibdev(Math.max(0, addr.getBoardNumber()), addr.getPrimaryAddress(), Math.max(0, addr.getSecondaryAddress()), GPIBNativeInterface.T3s, 1, 0);
 
         if (wasError()) {
             throw new VISAException("Could not open %s using GPIB.", addr.getJISAString());
         }
 
-        lib.EnableRemote(addr.getBoardNumber(), new short[]{(short) addr.getPrimaryAddress(), -1});
+        lib().EnableRemote(addr.getBoardNumber(), new short[]{(short) addr.getPrimaryAddress(), -1});
 
         if (wasError()) {
             throw new VISAException("Error putting %s into remote mode using GPIB.", addr.toString());
@@ -210,7 +171,7 @@ public class GPIBDriver implements Driver {
         @Override
         public void clear() throws VISAException {
 
-            lib.ibclr(handle);
+            lib().ibclr(handle);
 
             if (wasError()) {
                 throw new VISAException("Error clearing GPIB device.");
@@ -233,7 +194,7 @@ public class GPIBDriver implements Driver {
 
             NativeString nToWrite = new NativeString(toWrite, charset.name());
 
-            lib.ibwrt(
+            lib().ibwrt(
                 handle,
                 nToWrite.getPointer(),
                 toWrite.length()
@@ -250,20 +211,20 @@ public class GPIBDriver implements Driver {
 
             Pointer ptr = new Memory(bufferSize);
 
-            lib.ibrd(handle, ptr, bufferSize);
+            lib().ibrd(handle, ptr, bufferSize);
 
             if (wasError()) {
                 throw new VISAException("Error reading from instrument.");
             }
 
-            return ptr.getByteArray(0, Ibcnt());
+            return ptr.getByteArray(0, getIBCNT());
 
         }
 
         @Override
         public void setEOIEnabled(boolean set) throws VISAException {
 
-            lib.ibconfig(
+            lib().ibconfig(
                 handle,
                 GPIBNativeInterface.IbcEOT,
                 set ? 1 : 0
@@ -278,7 +239,7 @@ public class GPIBDriver implements Driver {
         @Override
         public void setReadTerminator(long character) throws VISAException {
 
-            lib.ibconfig(
+            lib().ibconfig(
                 handle,
                 GPIBNativeInterface.IbcEOS,
                 (int) character
@@ -286,9 +247,9 @@ public class GPIBDriver implements Driver {
 
             if (wasError()) {
 
-                lib.ibeos(handle, ((int) character));
+                lib().ibeos(handle, ((int) character));
 
-                lib.ibconfig(
+                lib().ibconfig(
                     handle,
                     GPIBNativeInterface.IbcEOSrd,
                     (int) character
@@ -305,7 +266,7 @@ public class GPIBDriver implements Driver {
         @Override
         public void setTimeout(int duration) throws VISAException {
 
-            lib.ibconfig(
+            lib().ibconfig(
                 handle,
                 GPIBNativeInterface.IbcTMO,
                 TMO.fromMSec(duration).getCode()
@@ -320,7 +281,7 @@ public class GPIBDriver implements Driver {
         @Override
         public void close() throws VISAException {
 
-            lib.ibonl(handle, 0);
+            lib().ibonl(handle, 0);
 
             if (wasError()) {
                 throw new VISAException("Could not close instrument.");
@@ -354,7 +315,7 @@ public class GPIBDriver implements Driver {
 
     public List<GPIBAddress> search(int board) throws VISAException {
 
-        lib.SendIFC(board);
+        lib().SendIFC(board);
 
         short[] addrList = new short[31];
 
@@ -366,7 +327,7 @@ public class GPIBDriver implements Driver {
 
         ShortBuffer buffer = ShortBuffer.allocate(Short.BYTES * 31);
 
-        lib.FindLstn(board, addrList, buffer, 31);
+        lib().FindLstn(board, addrList, buffer, 31);
 
         if (wasError()) {
             throw new VISAException("Could not search for listeners");

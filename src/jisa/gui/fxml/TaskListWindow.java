@@ -116,11 +116,11 @@ public class TaskListWindow {
     public class Task {
 
         private double            max;
-        private double            value;
-        private boolean           progress;
-        private String            text;
-        private Label             label;
-        private ProgressIndicator indicator;
+        private       double  value;
+        private final boolean progress;
+        private final String  text;
+        private final Label   label;
+        private final ProgressIndicator indicator;
 
         public Task(String name, ProgressIndicator i, Label l) {
 

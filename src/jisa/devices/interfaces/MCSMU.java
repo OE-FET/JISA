@@ -20,7 +20,7 @@ import java.util.List;
  */
 public interface MCSMU extends SMU, MultiInstrument {
 
-    public static String getDescription() {
+    static String getDescription() {
         return "Multi-Channel Source Measure Unit";
     }
 

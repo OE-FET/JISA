@@ -7,9 +7,9 @@ import java.util.Arrays;
 
 public abstract class DeviceCommand {
 
-    private ArrayList<DeviceArgument> arguments = new ArrayList<>();
-    private String                    name;
-    private String                    description;
+    private final ArrayList<DeviceArgument> arguments = new ArrayList<>();
+    private final String                    name;
+    private final String                    description;
 
     public DeviceCommand(String name, String description, DeviceArgument... arguments) {
         this.name = name;
@@ -65,9 +65,9 @@ public abstract class DeviceCommand {
 
     public static class DeviceArgument<T> {
 
-        private String name;
-        private Class  type;
-        private T      value = null;
+        private final String name;
+        private final Class  type;
+        private       T      value = null;
 
         public DeviceArgument(String name, Class type) {
             this.name = name;

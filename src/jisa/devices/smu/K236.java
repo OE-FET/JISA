@@ -848,10 +848,10 @@ public class K236 extends VISADevice implements SMU {
         CURRENT(1, jisa.enums.Source.CURRENT),
         VOLTAGE(0, jisa.enums.Source.VOLTAGE);
 
-        private        int                                c;
-        private        jisa.enums.Source                  src;
-        private static HashMap<Integer, Source>           lookup  = new HashMap<>();
-        private static HashMap<jisa.enums.Source, Source> convert = new HashMap<>();
+        private final int               c;
+        private final jisa.enums.Source src;
+        private static final HashMap<Integer, Source> lookup  = new HashMap<>();
+        private static final HashMap<jisa.enums.Source, Source> convert = new HashMap<>();
 
         static Source fromInt(int i) {
             return lookup.getOrDefault(i, null);
@@ -888,8 +888,8 @@ public class K236 extends VISADevice implements SMU {
         DC(0),
         SWEEP(1);
 
-        private        int                        c;
-        private static HashMap<Integer, Function> lookup = new HashMap<>();
+        private final        int                        c;
+        private static final HashMap<Integer, Function> lookup = new HashMap<>();
 
         static Function fromInt(int i) {
             return lookup.getOrDefault(i, null);
@@ -963,9 +963,9 @@ public class K236 extends VISADevice implements SMU {
 
         }
 
-        private int    mode;
-        private double current;
-        private double voltage;
+        private final int    mode;
+        private final double current;
+        private final double voltage;
 
         SRange(int mode, double current, double voltage) {
             this.mode    = mode;
@@ -994,8 +994,8 @@ public class K236 extends VISADevice implements SMU {
         S2(2, 16.67e-3),
         S3(3, 20e-3);
 
-        private int    code;
-        private double time;
+        private final int    code;
+        private final double time;
 
         public static IntTime fromInt(int i) {
 
