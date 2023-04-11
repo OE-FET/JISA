@@ -192,7 +192,7 @@ fun main() {
 
 }
 ```
-**Python (GraalPython) - "Screw your traditions, I'm a snake from the future"**
+**Python (GraalPython) - "Screw your traditions, I'm a snake from the early 1990s"**
 
 To use in CPython, take a look at PyJISA [here](https://github.com/OE-FET/PyJISA).
 Otherwise, take a look at GraalVM [here](https://www.graalvm.org/).
@@ -277,30 +277,39 @@ Resulting in:
 
 **Some of our currently implemented devices** (the list is a bit too long to put here):
 
-| [](<>)                 | Model        | Type                        | Class           |
-| ---------------------- | ------------ | --------------------------- | --------------- |
-| **Keithley**           | 236          | SMU (Single-Channel)        | `K236`          |
-| [](<>)                 | 2400 Series  | SMU (Single-Channel)        | `K2400`         |
-| [](<>)                 | 2450         | SMU (Single-Channel)        | `K2450`         |
-| [](<>)                 | 2600B Series | SMU (Multi-Channel)         | `K2600B`        |
-| [](<>)                 | 6430         | SMU (Single-Channel)        | `K6430`         |
-| [](<>)                 | 2200         | DC Power Supply             | `K2200`         |
-| [](<>)                 | 2182         | Voltmeter                   | `K2182`         |
-| **Agilent / Keysight** | 4155B/C      | SPA / SMU (Multi-Channel)   | `Agilent4155X`  |
-| [](<>)                 | 4156B/C      | SPA / SMU (Multi-Channel)   | `Agilent4156X`  |
-| [](<>)                 | B1500A       | SPA / SMU (Multi-Channel)   | `AgilentB1500A` |
-| [](<>)                 | E3644A       | DC Power Supply             | `AgilentE3644A` |
-| **AIM-TTI**            | TSX3510P     | DC Power Supply             | `TSX3510P`      |
-| **Oxford Instruments** | ITC-503      | Temperature Controller      | `ITC503`        |
-| [](<>)                 | IPS-120      | Magnet Controller           | `IPS120`        |
-| [](<>)                 | ILM-200      | He Level Meter              | `ILM200`        |
-| [](<>)                 | MercuryITC   | Temperature Controller      | `MercuryITC`    |
-| **Lake Shore**         | 336          | Temperature Controller      | `LS336`         |
-| **CryoCon**            | 22C          | Temperature Controller      | `CryoCon22C`    |
-| **Stanford Research**  | SR830        | Lock-In Amplifier           | `SR830`         |
-| [](<>)                 | SR560        | Voltage Pre-Amp             | `SR560`         |
-| **Eurotherm**          | 2408         | Temperature Controller      | `ET2408`        |
-| **Pico Technology**    | USB-TC08     | Thermometer (Multi-Channel) | `USBTC08`       |
+> Spectrometers have relatively limited support to trigger scans as part of wider routines, we plan to improve this in the future.
+
+| [](<>)                 | Model        | Type                         | Class              |
+| ---------------------- | ------------ | ---------------------------- | ------------------ |
+| **Keithley**           | 236          | SMU (Single-Channel)         | `K236`             |
+| [](<>)                 | 2400 Series  | SMU (Single-Channel)         | `K2400`            |
+| [](<>)                 | 2450         | SMU (Single-Channel)         | `K2450`            |
+| [](<>)                 | 2600B Series | SMU (Multi-Channel)          | `K2600B`           |
+| [](<>)                 | 6430         | SMU (Single-Channel)         | `K6430`            |
+| [](<>)                 | 2200         | DC Power Supply              | `K2200`            |
+| [](<>)                 | 2182         | Voltmeter                    | `K2182`            |
+| **Agilent / Keysight** | 4155B/C      | SPA / SMU (Multi-Channel)    | `Agilent4155X`     |
+| [](<>)                 | 4156B/C      | SPA / SMU (Multi-Channel)    | `Agilent4156X`     |
+| [](<>)                 | B1500A       | SPA / SMU (Multi-Channel)    | `AgilentB1500A`    |
+| [](<>)                 | E3644A       | DC Power Supply              | `AgilentE3644A`    |
+| [](<>)                 | Cary6000i    | Spectrometer                 | `AgilentCary6000i` |
+| **AIM-TTI**            | TSX3510P     | DC Power Supply              | `TSX3510P`         |
+| **OI / Mercury**       | ITC-503      | Temperature Controller       | `ITC503`           |
+| [](<>)                 | IPS-120      | Magnet Controller            | `IPS120`           |
+| [](<>)                 | ILM-200      | He Level Meter               | `ILM200`           |
+| [](<>)                 | MercuryITC   | Temperature Controller       | `MercuryITC`       |
+| **Lake Shore**         | 336          | Temperature Controller       | `LS336`            |
+| **Lake Shore**         | 331          | Temperature Controller       | `LS331`            |
+| **CryoCon**            | 22C          | Temperature Controller       | `CryoCon22C`       |
+| **Stanford Research**  | SR830        | Dual-Phase Lock-In Amplifier | `SR830`            |
+| [](<>)                 | SR560        | Voltage Pre-Amp              | `SR560`            |
+| **Eurotherm**          | 2408         | Temperature Controller       | `ET2408`           |
+| **Pico Technology**    | USB-TC08     | Thermometer (Multi-Channel)  | `USBTC08`          |
+| **Arroyo**             | TEC          | Temperature Controller       | `ArroyoTEC`        |
+| **Bruker**             | 70v          | Spectrometer                 | `Bruker70v`        |
+| **Pegasus**            | Pegasus      | Translation Stage / Prober   | `Pegasus`          |
+
+
 
 ## Prerequisites
 
