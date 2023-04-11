@@ -12,7 +12,6 @@
       <root url="jar://$PROJECT_DIR$/lib/icu4j-65.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/pngj-2.1.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/commons-lang3-3.12.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/annotations-21.0.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

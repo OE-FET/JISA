@@ -11,7 +11,6 @@ import jisa.enums.Terminals;
 import jisa.visa.VISADevice;
 import jisa.visa.connections.Connection;
 import jisa.visa.connections.GPIBConnection;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Arrays;
