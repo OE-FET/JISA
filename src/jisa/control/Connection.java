@@ -7,6 +7,8 @@ import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
 import jisa.devices.interfaces.MultiInstrument;
 import jisa.experiment.queue.Action;
+import kotlin.jvm.JvmClassMappingKt;
+import kotlin.reflect.KClass;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -33,6 +35,10 @@ public class Connection<T extends Instrument> {
         this.driverClass = type;
         this.name        = name;
         registerConnection(this);
+    }
+
+    public Connection(String name, KClass<T> type) {
+        this(name, JvmClassMappingKt.getJavaClass(type));
     }
 
     public static Connection<?> findConnectionFor(Instrument instrument) {
@@ -66,13 +72,13 @@ public class Connection<T extends Instrument> {
         LISTENERS.forEach(SRunnable::runRegardless);
     }
 
-    public static <T> List<Connection<?>> getConnectionsByTarget(Class<T> target) {
+    public static <T extends Instrument> List<Connection<?>> getConnectionsByTarget(Class<T> target) {
 
         return ALL_CONNECTIONS.stream()
                               .filter(c ->
                                   (c.isConnected() && target.isAssignableFrom(c.getDriver()))
                                       || target.isAssignableFrom(c.getType())
-                                      || (c.getInstrument() instanceof MultiInstrument && ((MultiInstrument) c.getInstrument()).getSubInstrumentTypes().stream().anyMatch(target::isAssignableFrom))
+                                      || (c.getInstrument() instanceof MultiInstrument && ((MultiInstrument) c.getInstrument()).contains(target))
                               ).collect(Collectors.toList());
 
     }
@@ -115,6 +121,10 @@ public class Connection<T extends Instrument> {
         return driverClass;
     }
 
+    public KClass<T> getKotlinType() {
+        return JvmClassMappingKt.getKotlinClass(driverClass);
+    }
+
     public Status getStatus() {
         return status;
     }
@@ -123,9 +133,17 @@ public class Connection<T extends Instrument> {
         return driver;
     }
 
+    public KClass<? extends T> getKotlinDriver() {
+        return JvmClassMappingKt.getKotlinClass(getDriver());
+    }
+
     public void setDriver(Class<? extends T> driver) {
         this.driver = driver;
         triggerChange();
+    }
+
+    public void setDriver(KClass<? extends T> driver) {
+        setDriver(JvmClassMappingKt.getJavaClass(driver));
     }
 
     public Address getAddress() {

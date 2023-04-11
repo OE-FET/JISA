@@ -4,6 +4,8 @@ import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
 import jisa.devices.interfaces.Instrument;
 import jisa.devices.interfaces.MultiInstrument;
+import kotlin.jvm.JvmClassMappingKt;
+import kotlin.reflect.KClass;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -27,6 +29,10 @@ public class Configuration<T extends Instrument> {
     public Configuration(String name, Class<T> target) {
         this.name   = name;
         this.target = target;
+    }
+
+    public Configuration(String name, KClass<T> target) {
+        this(name, JvmClassMappingKt.getJavaClass(target));
     }
 
     public String getName() {
@@ -306,11 +312,11 @@ public class Configuration<T extends Instrument> {
             return;
         }
 
-        if (instrument instanceof MultiInstrument && ((MultiInstrument) instrument).getSubInstrumentTypes().stream().anyMatch(target::isAssignableFrom)) {
+        if (instrument instanceof MultiInstrument && ((MultiInstrument) instrument).contains(target)) {
 
             choiceName = "Sub Instrument";
 
-            choices.addAll(((MultiInstrument) instrument).getSubInstruments(target));
+            choices.addAll(((MultiInstrument) instrument).get(target));
 
             for (int i = 0; i < choices.size(); i++) {
                 names.add(String.format("%d: %s", i, choices.get(i).getName()));

@@ -23,5 +23,6 @@
     <orderEntry type="library" name="de.gsi.chart.chartfx" level="project" />
     <orderEntry type="library" name="nativelibs4java.bridj" level="project" />
     <orderEntry type="library" name="slf4j.simple" level="project" />
+    <orderEntry type="library" name="jetbrains.kotlin.reflect" level="project" />
   </component>
 </module>

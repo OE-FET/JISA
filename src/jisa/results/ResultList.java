@@ -155,7 +155,7 @@ public class ResultList extends ResultTable {
 
             @Override
             public Set<Characteristics> characteristics() {
-                return Collections.emptySet();
+                return Set.of(Characteristics.IDENTITY_FINISH);
             }
 
         };

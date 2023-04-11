@@ -135,7 +135,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         }
 
         // Search for all connected units
-        List<USBTC08> found = find();
+        List<USBTC08> found = findUnits();
 
         if (found.isEmpty()) {
             throw new IOException("No USB TC-08 unit found!");
@@ -180,7 +180,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      *
      * @return List of USBTC08 objects representing the found units
      */
-    public static List<USBTC08> find() {
+    public static List<USBTC08> findUnits() {
 
         List<USBTC08> devices = new LinkedList<>();
 

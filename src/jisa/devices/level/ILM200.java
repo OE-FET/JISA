@@ -112,7 +112,7 @@ public class ILM200 extends VISADevice implements LevelMeter {
     }
 
     @Override
-    public <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+    public <I extends Instrument> List<I> get(Class<I> type) {
 
         if (type.isAssignableFrom(LevelMeter.class)) {
             return (List<I>) List.of(getChannel(0));
@@ -122,7 +122,6 @@ public class ILM200 extends VISADevice implements LevelMeter {
 
     }
 
-    @Override
     public <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
         if (type.isAssignableFrom(LevelMeter.class)) {
             return (I) getChannel(index);

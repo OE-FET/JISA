@@ -30,7 +30,7 @@ public interface MCSMU extends SMU, MultiInstrument {
     }
 
     @Override
-    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+    default <I extends Instrument> List<I> get(Class<I> type) {
 
         if (type.isAssignableFrom(SMU.class)) {
             return (List<I>) getChannels();
@@ -40,7 +40,6 @@ public interface MCSMU extends SMU, MultiInstrument {
 
     }
 
-    @Override
     default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
 
         if (type.isAssignableFrom(SMU.class)) {

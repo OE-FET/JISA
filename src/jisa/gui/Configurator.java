@@ -13,7 +13,7 @@ import jisa.devices.interfaces.Instrument;
 import jisa.devices.interfaces.Instrument.AutoQuantity;
 import jisa.devices.interfaces.Instrument.OptionalQuantity;
 import jisa.devices.interfaces.Instrument.TableQuantity;
-import jnr.ffi.annotations.In;
+import kotlin.reflect.KClass;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -46,6 +46,10 @@ public class Configurator<I extends Instrument> extends JFXElement {
     }
 
     public Configurator(String name, Class<I> target) {
+        this(new Configuration<>(name, target));
+    }
+
+    public Configurator(String name, KClass<I> target) {
         this(new Configuration<>(name, target));
     }
 

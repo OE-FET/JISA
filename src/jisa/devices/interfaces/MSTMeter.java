@@ -23,7 +23,7 @@ public interface MSTMeter extends TMeter, MultiInstrument {
     }
 
     @Override
-    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+    default <I extends Instrument> List<I> get(Class<I> type) {
 
         if (type.isAssignableFrom(TMeter.class)) {
             return (List<I>) getSensors();
@@ -33,7 +33,6 @@ public interface MSTMeter extends TMeter, MultiInstrument {
 
     }
 
-    @Override
     default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
 
         if (type.isAssignableFrom(TMeter.class)) {

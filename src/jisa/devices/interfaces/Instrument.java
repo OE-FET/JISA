@@ -2,6 +2,8 @@ package jisa.devices.interfaces;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
+import kotlin.jvm.JvmClassMappingKt;
+import kotlin.reflect.KClass;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -62,6 +64,10 @@ public interface Instrument {
 
     default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
         return new LinkedList<>();
+    }
+
+    default List<Parameter<?>> getConfigurationParameters(KClass<?> target) {
+        return getConfigurationParameters(JvmClassMappingKt.getJavaClass(target));
     }
 
     interface Setter<S> {

@@ -3,8 +3,8 @@ package jisa.gui;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
 import javafx.scene.control.Button;
+import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -17,6 +17,7 @@ import jisa.control.ConfigBlock;
 import jisa.control.Connection;
 import jisa.control.SRunnable;
 import jisa.devices.interfaces.Instrument;
+import kotlin.reflect.KClass;
 import org.reflections.Reflections;
 
 import java.lang.reflect.Modifier;
@@ -145,6 +146,14 @@ public class Connector<T extends Instrument> extends JFXElement {
 
     }
 
+    public Connector(String name, Class<T> target) {
+        this(new Connection<>(name, target));
+    }
+
+    public Connector(String name, KClass<T> target) {
+        this(new Connection<>(name, target));
+    }
+
     public void setRemoveButton(SRunnable onClick) {
 
         GUI.runNow(() -> {
@@ -162,10 +171,6 @@ public class Connector<T extends Instrument> extends JFXElement {
 
     public void removeRemoveButton() {
         setRemoveButton(null);
-    }
-
-    public Connector(String name, Class<T> target) {
-        this(new Connection<>(name, target));
     }
 
     public void loadFromConfig(ConfigBlock block) {

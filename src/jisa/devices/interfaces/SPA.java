@@ -2,7 +2,6 @@ package jisa.devices.interfaces;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public interface SPA extends Instrument, MultiInstrument {
@@ -53,7 +52,7 @@ public interface SPA extends Instrument, MultiInstrument {
     }
 
     @Override
-    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+    default <I extends Instrument> List<I> get(Class<I> type) {
 
         List<I> list = new ArrayList<>();
 
@@ -77,9 +76,8 @@ public interface SPA extends Instrument, MultiInstrument {
 
     }
 
-    @Override
-    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
-        return getSubInstruments(type).get(index);
+    default <I extends Instrument> I get(Class<I> type, int index) {
+        return get(type).get(index);
     }
 
 }

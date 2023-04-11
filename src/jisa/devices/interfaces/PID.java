@@ -592,7 +592,7 @@ public interface PID extends Instrument, MultiInstrument {
     }
 
     @Override
-    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+    default <I extends Instrument> List<I> get(Class<I> type) {
 
         if (type.isAssignableFrom(Input.class)) {
             return (List<I>) getInputs();
@@ -606,7 +606,7 @@ public interface PID extends Instrument, MultiInstrument {
 
     }
 
-    @Override
+
     default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
 
         if (type.isAssignableFrom(Input.class)) {

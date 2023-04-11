@@ -9,6 +9,7 @@ import jisa.visa.drivers.*;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Static class for accessing the native VISA library in a more Java-friendly way
@@ -110,20 +111,13 @@ public class VISA {
 
         List<Address> addresses = new LinkedList<>();
 
-        for (Driver driver : loadedDrivers) {
-
-            try {
-                addresses.addAll(
-                    driver.search()
-                          .stream()
-                          .filter(a -> addresses.stream().noneMatch(b -> b.toString().trim().equalsIgnoreCase(a.toString().trim())))
-                          .collect(Collectors.toUnmodifiableList())
-                );
-            } catch (Exception ignored) {}
-
-        }
-
-        return addresses;
+        return loadedDrivers.stream()
+                            .flatMap(d -> {
+                                try {return d.search().stream();} catch (Exception e) {return Stream.empty();}
+                            })
+                            .map(a -> a.getJISAString().trim())
+                            .distinct().map(Address::parse)
+                            .collect(Collectors.toUnmodifiableList());
 
     }
 

@@ -133,7 +133,7 @@ public interface TC extends PID, MultiInstrument {
         return List.of(TMeter.class, Heater.class, Loop.class, Input.class, Output.class, PID.Loop.class);
     }
 
-    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+    default <I extends Instrument> List<I> get(Class<I> type) {
 
         if (jisa.devices.interfaces.TMeter.class.isAssignableFrom(type)) {
             return getThermometers().stream().map(i -> (I) i).collect(Collectors.toUnmodifiableList());
@@ -148,7 +148,7 @@ public interface TC extends PID, MultiInstrument {
     default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
 
         try {
-            return getSubInstruments(type).get(index);
+            return get(type).get(index);
         } catch (IndexOutOfBoundsException e) {
             return null;
         }

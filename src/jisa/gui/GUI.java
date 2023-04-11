@@ -22,6 +22,8 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
 import jisa.experiment.Measurement;
+import kotlin.jvm.JvmClassMappingKt;
+import kotlin.reflect.KClass;
 
 import java.io.File;
 import java.io.IOException;
@@ -109,6 +111,10 @@ public class GUI extends Application {
 
         return null;
 
+    }
+
+    public static <T extends Instrument> T askUserForInstrument(String message, KClass<T> type) {
+        return askUserForInstrument(message, JvmClassMappingKt.getJavaClass(type));
     }
 
     /**

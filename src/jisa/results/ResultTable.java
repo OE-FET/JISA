@@ -2,9 +2,11 @@ package jisa.results;
 
 import com.google.common.collect.Lists;
 import jisa.Util;
-import jisa.maths.functions.GFunction;
 import jisa.maths.matrices.RealMatrix;
 import jisa.results.ResultList.ColumnBuilder;
+import kotlin.Pair;
+import kotlin.jvm.JvmClassMappingKt;
+import kotlin.reflect.KClass;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -216,6 +218,10 @@ public abstract class ResultTable implements Iterable<Row> {
                                   .filter(c -> c.getMatcherName().equals(nameLower) && type.isAssignableFrom(c.getType()))
                                   .findFirst().orElse(null);
 
+    }
+
+    public <T> Column<T> findColumn(String name, KClass<T> type) {
+        return findColumn(name, JvmClassMappingKt.getJavaClass(type));
     }
 
     /**
@@ -849,7 +855,11 @@ public abstract class ResultTable implements Iterable<Row> {
     }
 
     public void mapRow(Map.Entry<Column, Object>... values) {
-        addRow(new Row(columns, Arrays.stream(values).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))));
+        mapRow(Arrays.stream(values).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+    }
+
+    public void mapRow(Pair<Column, Object>... values) {
+        mapRow(Arrays.stream(values).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
     }
 
     public void mapRows(Map<Column, Iterable> rows) {
@@ -864,6 +874,10 @@ public abstract class ResultTable implements Iterable<Row> {
             mapRow(iterators.stream().map(e -> Map.entry(e.getKey(), e.getValue().next())).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
         }
 
+    }
+
+    public void mapRows(Pair<Column, Iterable>... rows) {
+        mapRows(Arrays.stream(rows).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
     }
 
     public abstract Stream<Row> stream();

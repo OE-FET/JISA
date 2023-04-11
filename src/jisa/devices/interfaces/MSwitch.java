@@ -23,7 +23,7 @@ public interface MSwitch extends Switch, MultiInstrument {
     }
 
     @Override
-    default <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+    default <I extends Instrument> List<I> get(Class<I> type) {
 
         if (type.isAssignableFrom(Switch.class)) {
             return (List<I>) getChannels();
@@ -31,11 +31,6 @@ public interface MSwitch extends Switch, MultiInstrument {
             return Collections.emptyList();
         }
 
-    }
-
-    @Override
-    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
-        return null;
     }
 
     void turnOn(int channel) throws IOException, DeviceException;

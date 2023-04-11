@@ -33,11 +33,10 @@ public interface LevelMeter extends Instrument, MultiInstrument {
 
         return new LevelMeter() {
             @Override
-            public <I extends Instrument> List<I> getSubInstruments(Class<I> type) {
+            public <I extends Instrument> List<I> get(Class<I> type) {
                 return Collections.emptyList();
             }
 
-            @Override
             public <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
                 return null;
             }
