@@ -55,6 +55,7 @@ public class VISABrowser extends ListDisplay<Address> {
                     device.addAutoRemove("\r");
                     device.addAutoRemove("\n");
                     name = device.getIDN();
+                    device.close();
                 } catch (Exception e) {
                     name = "Unidentified Device";
                 }
