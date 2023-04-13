@@ -17,6 +17,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
+import static jisa.visa.connections.SerialConnection.Parity.NONE;
+import static jisa.visa.connections.SerialConnection.Stop.BITS_10;
+
 public abstract class KeithleySCPI extends VISADevice implements SMU {
 
     protected static final String C_MEASURE_VOLTAGE        = ":MEAS:VOLT?";
@@ -129,7 +132,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
         if (connection instanceof SerialConnection) {
 
-            ((SerialConnection) connection).setSerialParameters(9600, 8, SerialConnection.Parity.NONE, SerialConnection.Stop.BITS_10);
+            ((SerialConnection) connection).setSerialParameters(9600, 8, NONE, BITS_10);
             setWriteTerminator("\r");
             setReadTerminator("\r");
 

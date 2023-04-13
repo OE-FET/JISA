@@ -29,6 +29,7 @@ jisa.maths.functions
 jisa.maths.interpolation
 jisa.maths.matrices
 jisa.maths.matrices.exceptions
+jisa.maths.nd
 jisa.results
 jisa.visa
 jisa.visa.connections

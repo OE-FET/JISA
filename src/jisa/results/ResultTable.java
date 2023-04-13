@@ -22,11 +22,11 @@ public abstract class ResultTable implements Iterable<Row> {
 
     public static final Map<String, ColumnBuilder> STANDARD_TYPES = Util.build(new LinkedHashMap<>(), types -> {
 
-        types.put("String",  StringColumn::new);
-        types.put("Double",  DoubleColumn::new);
+        types.put("String", StringColumn::new);
+        types.put("Double", DoubleColumn::new);
         types.put("Integer", IntColumn::new);
         types.put("Boolean", BooleanColumn::new);
-        types.put("Long",    LongColumn::new);
+        types.put("Long", LongColumn::new);
 
     });
 
@@ -135,6 +135,11 @@ public abstract class ResultTable implements Iterable<Row> {
         return List.copyOf(columns);
     }
 
+    /**
+     * Returns a list of columns in this table that have a numerical data type.
+     *
+     * @return List of all numeric columns in table
+     */
     public List<Column<? extends Number>> getNumericColumns() {
 
         return columns.stream()
@@ -144,6 +149,11 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Returns the first column in this table that has a numerical data type.
+     *
+     * @return First numerical column, null if none
+     */
     public Column<? extends Number> getFirstNumericColumn() {
 
         return columns.stream()
@@ -152,14 +162,17 @@ public abstract class ResultTable implements Iterable<Row> {
                       .findFirst().orElse(null);
 
     }
-
+    /**
+     * Returns the nth column in this table that has a numerical data type.
+     *
+     * @param n Index of column
+     *
+     * @return nth numerical column, null if none
+     */
     public Column<? extends Number> getNthNumericColumn(int n) {
 
         try {
-            return columns.stream()
-                          .filter(c -> Number.class.isAssignableFrom(c.getType()))
-                          .map(c -> (Column<? extends Number>) c)
-                          .toArray(Column[]::new)[n];
+            return getNumericColumns().get(n);
         } catch (IndexOutOfBoundsException e) {
             return null;
         }
@@ -220,6 +233,15 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Tries to find the column in this ResultTable that matches the given name and type
+     *
+     * @param name Name to match
+     * @param type Data type class of the column to match
+     * @param <T>  Data type of Column object
+     *
+     * @return Matching column if found, otherwise null
+     */
     public <T> Column<T> findColumn(String name, KClass<T> type) {
         return findColumn(name, JvmClassMappingKt.getJavaClass(type));
     }
@@ -315,6 +337,14 @@ public abstract class ResultTable implements Iterable<Row> {
         return split(r -> r.get(splitBy));
     }
 
+    /**
+     * Splits this ResultTable into separate tables based on the direction of change of the specified expression for
+     * each row.
+     *
+     * @param splitBy Expression to split by
+     *
+     * @return List of resulting tables, in alternating order of direction
+     */
     public List<ResultList> directionalSplit(RowEvaluable<? extends Number> splitBy) {
 
         Integer          direction = null;
@@ -358,14 +388,36 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Splits this ResultTable into separate tables based on the direction of change of the specified column for
+     * each row.
+     *
+     * @param splitBy Column to split by
+     *
+     * @return List of resulting tables, in alternating order of direction
+     */
     public List<ResultList> directionalSplit(Column<? extends Number> splitBy) {
         return directionalSplit(r -> r.get(splitBy));
     }
 
+    /**
+     * Returns a filtered copy of this ResultTable containing only the rows that pass the provided test expression.
+     *
+     * @param test Test expression
+     *
+     * @return Filtered table
+     */
     public ResultList filter(Predicate<Row> test) {
-        return stream().filter(test).collect(ResultList.collect(this));
+        return stream().filter(test).collect(collector());
     }
 
+    /**
+     * Returns a copy of this ResultTable, sorted by the provided expression evaluated for each row.
+     *
+     * @param expression Expression to sort by
+     *
+     * @return Sorted table
+     */
     public ResultList sorted(RowEvaluable<?> expression) {
 
         if (getRowCount() < 2) {
@@ -376,13 +428,32 @@ public abstract class ResultTable implements Iterable<Row> {
 
         if (value instanceof Number) {
             RowEvaluable<? extends Number> byExpression = (RowEvaluable<? extends Number>) expression;
-            return stream().sorted(Comparator.comparingDouble(r -> byExpression.evaluate(r).doubleValue())).collect(ResultList.collect(this));
+            return stream().sorted(Comparator.comparingDouble(r -> byExpression.evaluate(r).doubleValue())).collect(collector());
         } else {
-            return stream().sorted(Comparator.comparing(r -> expression.evaluate(r).toString())).collect(ResultList.collect(this));
+            return stream().sorted(Comparator.comparing(r -> expression.evaluate(r).toString())).collect(collector());
         }
 
     }
 
+    /**
+     * Returns a copy of this ResultTable, sorted by the specified column.
+     *
+     * @param byColumn Column to sort by
+     *
+     * @return Sorted table
+     */
+    public ResultList sorted(Column<?> byColumn) {
+        return sorted(r -> r.get(byColumn));
+    }
+
+    /**
+     * Performs a multi-column mapping operation, returning a new ResultList of the results (with only the columns that
+     * have mappings specified).
+     *
+     * @param mappings Map of column mappings
+     *
+     * @return Transformed table
+     */
     public ResultList transform(Map<Column<?>, RowEvaluable<?>> mappings) {
 
         ResultList list = ResultList.emptyCopyOf(this);
@@ -409,9 +480,18 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Returns a copy of this table with only the specified columns present.
+     *
+     * @param columns Columns to copy
+     *
+     * @return Copied sub-table
+     */
     public ResultList subTable(Column... columns) {
 
         ResultList list = new ResultList(columns);
+
+        getAttributes().forEach(list::setAttribute);
 
         for (Row row : this) {
 
@@ -429,68 +509,255 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
-    public ResultList sorted(Column<?> byColumn) {
-        return sorted(r -> r.get(byColumn));
+    /**
+     * Returns a copy of this table with only the specified range of rows present.
+     *
+     * @param start Index to start at
+     * @param to    Index to end at
+     *
+     * @return Copied sub-table
+     */
+    public ResultList subTable(int start, int to) {
+
+        ResultList list = ResultList.emptyCopyOf(this);
+
+        for (int i = start; i <= to; i++) {
+            list.addRow(get(i));
+        }
+
+        return list;
+
     }
 
-    public ResultList reversed() {
-        return Lists.reverse(getRows()).stream().collect(ResultList.collect(this));
+    /**
+     * Returns a copy of this table with only the specified range of rows and columns present.
+     *
+     * @param start   Index to start at
+     * @param to      Index to end at
+     * @param columns Columns to copy
+     *
+     * @return Copied sub-table
+     */
+    public ResultList subTable(int start, int to, Column... columns) {
+
+        ResultList list = new ResultList(columns);
+
+        getAttributes().forEach(list::setAttribute);
+
+        for (int i = 0; i <= to; i++) {
+
+            RowBuilder builder = list.startRow();
+            Row        row     = get(i);
+
+            for (Column column : columns) {
+                builder.set(column, row.get(column));
+            }
+
+            builder.endRow();
+
+        }
+
+        return list;
+
     }
 
+    /**
+     * Returns a copy of this table with its rows in reverse order.
+     *
+     * @return Reversed table
+     */
+    public ResultList reverse() {
+        return Lists.reverse(getRows()).stream().collect(collector());
+    }
+
+    /**
+     * Returns all rows in this table as a List of Row objects.
+     *
+     * @return List of all rows
+     */
     public List<Row> getRows() {
         return stream().collect(Collectors.toList());
     }
 
+    /**
+     * Finds the first row that passes the given predicate.
+     *
+     * @param test Predicate to test each row with
+     *
+     * @return First matching row
+     */
     public Row findRow(Predicate<Row> test) {
         return stream().filter(test).findFirst().orElse(null);
     }
 
-    public double getMean(RowEvaluable<? extends Number> expression) {
+    /**
+     * Returns the mean value of the given expression evaluated across all rows.
+     *
+     * @param expression Expression to take the mean of
+     *
+     * @return Mean value
+     */
+    public double mean(RowEvaluable<? extends Number> expression) {
         return stream().mapToDouble(r -> expression.evaluate(r).doubleValue()).average().orElse(0.0);
     }
 
-    public double getMean(Column<? extends Number> column) {
-        return getMean(r -> r.get(column));
+    /**
+     * Returns the mean value of the given column.
+     *
+     * @param column Column to take the mean of
+     *
+     * @return Mean value
+     */
+    public double mean(Column<? extends Number> column) {
+        return mean(r -> r.get(column));
     }
 
-    public <T extends Number> T getMin(RowEvaluable<T> expression) {
+    /**
+     * Returns the minimum value of the provided expression when evaluated for each row.
+     *
+     * @param expression Expression to find minimum of
+     * @param <T>        Data type
+     *
+     * @return Min value
+     */
+    public <T extends Number> T min(RowEvaluable<T> expression) {
         return stream().map(expression::evaluate).min(Comparator.comparingDouble(Number::doubleValue)).orElse(null);
     }
 
-    public <T extends Number> T getMin(Column<T> column) {
-        return getMin(r -> r.get(column));
+    /**
+     * Returns the minimum value of the provided column in the table.
+     *
+     * @param column Column to find minimum of
+     * @param <T>    Data type
+     *
+     * @return Min value
+     */
+    public <T extends Number> T min(Column<T> column) {
+        return min(r -> r.get(column));
     }
 
-    public <T extends Number> T getMax(RowEvaluable<T> expression) {
+    /**
+     * Returns the maximum value of the provided expression when evaluated for each row.
+     *
+     * @param expression Expression to find maximum of
+     * @param <T>        Data type
+     *
+     * @return Max value
+     */
+    public <T extends Number> T max(RowEvaluable<T> expression) {
         return stream().map(expression::evaluate).max(Comparator.comparingDouble(Number::doubleValue)).orElse(null);
     }
 
-    public <T extends Number> T getMax(Column<T> column) {
-        return getMax(r -> r.get(column));
+    /**
+     * Returns the maximum value of the provided column in the table.
+     *
+     * @param column Column to find maximum of
+     * @param <T>    Data type
+     *
+     * @return Max value
+     */
+    public <T extends Number> T max(Column<T> column) {
+        return max(r -> r.get(column));
     }
 
+    /**
+     * Returns the row for which the given expression has its maximum value.
+     *
+     * @param expression Expression to evaluate
+     * @param <T>        Data type
+     *
+     * @return Max row
+     */
+    public <T extends Number> Row maxBy(RowEvaluable<T> expression) {
+        return stream().max(Comparator.comparingDouble(r -> expression.evaluate(r).doubleValue())).orElse(null);
+    }
+
+    /**
+     * Returns the row for which the given column has its maximum value.
+     *
+     * @param column Column to maximise
+     * @param <T>    Data type
+     *
+     * @return Max row
+     */
+    public <T extends Number> Row maxBy(Column<T> column) {
+        return maxBy(r -> r.get(column));
+    }
+
+    /**
+     * Returns the row for which the given expression has its minimum value.
+     *
+     * @param expression Expression to evaluate
+     * @param <T>        Data type
+     *
+     * @return Min row
+     */
+    public <T extends Number> Row minBy(RowEvaluable<T> expression) {
+        return stream().min(Comparator.comparingDouble(r -> expression.evaluate(r).doubleValue())).orElse(null);
+    }
+
+    /**
+     * Returns the row for which the given column has its minimum value.
+     *
+     * @param column Column to minimise
+     * @param <T>    Data type
+     *
+     * @return Min row
+     */
+    public <T extends Number> Row minBy(Column<T> column) {
+        return minBy(r -> r.get(column));
+    }
+
+    /**
+     * Tests whether all rows in this table pass the given predicate.
+     *
+     * @param test Predicate to test each row with
+     *
+     * @return Do all rows pass?
+     */
     public boolean allMatch(Predicate<Row> test) {
         return stream().allMatch(test);
     }
 
+    /**
+     * Tests whether no rows in this table pass the given predicate.
+     *
+     * @param test Predicate to test each row with
+     *
+     * @return Do no rows pass?
+     */
     public boolean noneMatch(Predicate<Row> test) {
         return stream().noneMatch(test);
     }
 
+    /**
+     * Returns a Matrix of the given numerical columns.
+     *
+     * @param columns Columns to use
+     *
+     * @return Matrix
+     */
     public RealMatrix toMatrix(Column<? extends Number>... columns) {
         return toMatrix(Arrays.stream(columns).map(c -> (RowEvaluable<? extends Number>) (row -> row.get(c))).toArray(RowEvaluable[]::new));
     }
 
-    public RealMatrix toMatrix(RowEvaluable<? extends Number>... columns) {
+    /**
+     * Returns a Matrix of the given expressions.
+     *
+     * @param expressions Expressions to use for each column
+     *
+     * @return Matrix
+     */
+    public RealMatrix toMatrix(RowEvaluable<? extends Number>... expressions) {
 
-        RealMatrix matrix = new RealMatrix(getRowCount(), columns.length);
+        RealMatrix matrix = new RealMatrix(getRowCount(), expressions.length);
 
         int i = 0;
         for (Row row : this) {
 
-            for (int j = 0; j < columns.length; j++) {
+            for (int j = 0; j < expressions.length; j++) {
 
-                matrix.set(i, j, columns[j].evaluate(row).doubleValue());
+                matrix.set(i, j, expressions[j].evaluate(row).doubleValue());
 
             }
 
@@ -502,52 +769,126 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Stores the given value in this table's header, using the specified key to identify it.
+     *
+     * @param key   Key (unique identifier of attribute)
+     * @param value Attribute value
+     */
     public void setAttribute(String key, Object value) {
         setAttribute(key, value.toString());
     }
 
+    /**
+     * Stores the given value in this table's header, using the specified key to identify it.
+     *
+     * @param key   Key (unique identifier of attribute)
+     * @param value Attribute value
+     */
     public void setAttribute(String key, String value) {
         attributes.put(key, value);
     }
 
+    /**
+     * Retrieves the value identified by the given key in the table's header.
+     *
+     * @param key Key (unique identifier of attribute)
+     *
+     * @return Attribute value
+     */
     public String getAttribute(String key) {
         return attributes.get(key);
     }
 
+    /**
+     * Returns a Key -> Value map of all attributes as Strings.
+     *
+     * @return Map of all attributes
+     */
     public Map<String, String> getAttributes() {
         return Map.copyOf(attributes);
     }
 
+    /**
+     * Returns the row with the given index as a Row object.
+     *
+     * @param index Row index
+     *
+     * @return Row object for given index
+     */
     public abstract Row getRow(int index);
 
+    /**
+     * Returns the row with the given index as a Row object. Alias for getRow(...).
+     *
+     * @param index Row index
+     *
+     * @return Row object for given index
+     */
     public Row get(int index) {
         return getRow(index);
     }
 
+    /**
+     * Implementation method for storing a given Row of data.
+     *
+     * @param row Row to store
+     */
     protected abstract void addRowData(Row row);
 
+    /**
+     * Add a new row to the table, by supplying a Row object.
+     *
+     * @param row Row to add
+     */
     public void addRow(Row row) {
         addRowData(row);
         rowListeners.forEach(l -> l.added(row));
     }
 
+    /**
+     * Implementation method for clearing all data from the table.
+     */
     protected abstract void clearData();
 
+    /**
+     * Clears this table of all data.
+     */
     public void clear() {
         clearData();
         clearListeners.forEach(ClearListener::cleared);
     }
 
+    /**
+     * Returns the number of rows in the table.
+     *
+     * @return Number of rows
+     */
     public abstract int getRowCount();
 
+    /**
+     * Returns the number of rows in the table. Alias of getRowCount().
+     *
+     * @return Number of rows
+     */
     public int size() {
         return getRowCount();
     }
 
+    /**
+     * Returns the number of columns in the table.
+     *
+     * @return Numnber of columns
+     */
     public int getColumnCount() {
         return columns.size();
     }
 
+    /**
+     * Adds a new row to the table by specifying data in column order.
+     *
+     * @param data Values to add, in column order
+     */
     public void addData(Object... data) {
 
         if (data.length != columns.size()) {
@@ -588,20 +929,40 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Outputs this table in CSV format to the standard output stream.
+     */
     public void output() {
         output(System.out);
     }
 
+    /**
+     * Outputs this table in CSV format to the specified file.
+     *
+     * @param file Path to file
+     *
+     * @throws IOException Upon error opening/writing file
+     */
     public void output(String file) throws IOException {
         PrintStream writer = new PrintStream(new FileOutputStream(file));
         output(writer);
         writer.close();
     }
 
+    /**
+     * Returns the attribute header line required for writing to file.
+     *
+     * @return Attribute header line
+     */
     protected String getAttributeLine() {
         return String.format("%% ATTRIBUTES: %s", new JSONObject(getAttributes()));
     }
 
+    /**
+     * Returns the column header line required for writing to file.
+     *
+     * @return Column header line
+     */
     protected String getColumnHeaderLine() {
 
         String[] header = new String[columns.size()];
@@ -614,6 +975,13 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Returns the CSV line for the given row, as required for writing to file.
+     *
+     * @param row Row to CSV-ify
+     *
+     * @return CSV line
+     */
     protected String getCSVLine(Row row) {
 
         String[] parts = new String[columns.size()];
@@ -633,6 +1001,13 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Parses a CSV-formatted line and converts it into a Row object, as required when reading from file.
+     *
+     * @param line Line to parse
+     *
+     * @return Parsed Row object
+     */
     protected Row parseCSVLine(String line) {
 
         if (line == null) {
@@ -654,6 +1029,11 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Outputs this table in CSV format to the given output (print) stream.
+     *
+     * @param out Output PrintStream
+     */
     public void output(PrintStream out) {
 
         out.println(getAttributeLine());
@@ -665,6 +1045,13 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Outputs this table as a terminal-friendly ASCII table, to the given output (print) stream, using the given format
+     * specifier for all columns.
+     *
+     * @param stream    Output stream to write to
+     * @param formatter Format specifier
+     */
     public void outputTable(PrintStream stream, String formatter) {
 
         int[] widths = new int[getColumnCount()];
@@ -675,7 +1062,7 @@ public abstract class ResultTable implements Iterable<Row> {
             int       max    = column.getTitle().length();
 
             for (Row r : this) {
-                max = Math.max(max, r.get(column).toString().length());
+                max = Math.max(max, String.format(formatter, r.get(column)).length());
             }
 
             widths[i] = max;
@@ -736,7 +1123,7 @@ public abstract class ResultTable implements Iterable<Row> {
                 Column<?> column = getColumn(i);
 
                 stream.print(" ");
-                String value = r.get(column).toString();
+                String value = String.format(formatter, r.get(column));
                 stream.print(value);
 
                 for (int n = 0; n < widths[i] - value.length(); n++) {
@@ -766,21 +1153,38 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Outputs this table as a terminal-friendly ASCII table, to the given output (print) stream.
+     *
+     * @param stream Output stream to write to
+     */
     public void outputTable(PrintStream stream) {
         outputTable(stream, "%s");
     }
 
-
+    /**
+     * Outputs this table as a terminal-friendly ASCII table, to the standard output stream.
+     */
     public void outputTable() {
         outputTable(System.out);
     }
 
+    /**
+     * Outputs this table as a terminal-friendly ASCII table, to the specified file.
+     *
+     * @param path Path to file
+     */
     public void outputTable(String path) throws FileNotFoundException {
         PrintStream writer = new PrintStream(new FileOutputStream(path));
         outputTable(writer);
         writer.close();
     }
 
+    /**
+     * Outputs this table as an HTML table node, to the given output (print) stream.
+     *
+     * @param stream Output stream to write to
+     */
     public void outputHTML(PrintStream stream) {
 
         stream.println("<table>");
@@ -819,16 +1223,29 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Outputs this table as an HTML table node, to the standard output stream.
+     */
     public void outputHTML() {
         outputHTML(System.out);
     }
 
+    /**
+     * Outputs this table as an HTML table node, to the specified file.
+     *
+     * @param file Path to file
+     */
     public void outputHTML(String file) throws FileNotFoundException {
         PrintStream stream = new PrintStream(new FileOutputStream(file));
         outputHTML(stream);
         stream.close();
     }
 
+    /**
+     * Returns this table as an HTML String.
+     *
+     * @return HTML table
+     */
     public String getHTML() {
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -838,10 +1255,22 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Starts a row-building chain call.
+     *
+     * @return RowBuilder object
+     */
     public RowBuilder startRow() {
         return new RowBuilder();
     }
 
+    /**
+     * Adds a new row by using a lambda expression.
+     *
+     * @param rowable Lambda expression to set each column
+     *
+     * @throws Exception Forwarded exceptions from lambda
+     */
     public void addRow(Rowable rowable) throws Exception {
 
         RowSetter builder = new RowSetter();
@@ -850,18 +1279,39 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Adds a new row based on Column -> Value mappings.
+     *
+     * @param data Map of data to add
+     */
     public void mapRow(Map<Column<?>, Object> data) {
         addRow(new Row(columns, data));
     }
 
+    /**
+     * Adds a new row based on Column -> Value mappings.
+     *
+     * @param values Map entries of data to add
+     */
     public void mapRow(Map.Entry<Column, Object>... values) {
         mapRow(Arrays.stream(values).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
     }
 
+    /**
+     * Adds a new row based on Column -> Value mappings.
+     *
+     * @param values Map entries of data to add
+     */
     public void mapRow(Pair<Column, Object>... values) {
         mapRow(Arrays.stream(values).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
     }
 
+    /**
+     * Adds multiple new rows based on Column -> Iterable<Value> mappings. Each map entry should be of a column mapped
+     * to an iterable collection of values to add in that column.
+     *
+     * @param rows Map of columns
+     */
     public void mapRows(Map<Column, Iterable> rows) {
 
         List<Map.Entry<Column, Iterator>> iterators = rows
@@ -876,18 +1326,47 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    /**
+     * Adds multiple new rows based on Column -> Iterable<Value> mappings. Each map entry should be of a column mapped
+     * to an iterable collection of values to add in that column.
+     *
+     * @param rows Map entries of columns
+     */
     public void mapRows(Pair<Column, Iterable>... rows) {
         mapRows(Arrays.stream(rows).collect(Collectors.toMap(Pair::getFirst, Pair::getSecond)));
     }
 
+    /**
+     * Returns a sequential Stream of Row objects with this table as its source
+     *
+     * @return Stream of rows
+     */
     public abstract Stream<Row> stream();
 
+    /**
+     * Returns a collector object for a stream sourced from this table, to collect its rows into a table with the same
+     * structure.
+     *
+     * @return Collector of ResultTable rows
+     */
     public Collector<Row, ?, ResultList> collector() {
         return ResultList.collect(this);
     }
 
+    /**
+     * Interface for building a row by use of a RowSetter
+     */
     public interface Rowable {
+
+        /**
+         * Build a new row using the given RowSetter.
+         *
+         * @param row RowSetter to build with
+         *
+         * @throws Exception Forwarded exception
+         */
         void build(RowSetter row) throws Exception;
+
     }
 
     public class RowSetter {
@@ -898,6 +1377,15 @@ public abstract class ResultTable implements Iterable<Row> {
             columns.forEach(c -> map.put(c, null));
         }
 
+        /**
+         * Set the specified column value for this new row to the given value.
+         *
+         * @param column Column to set
+         * @param value  Value to set column to
+         * @param <T>    Data type
+         *
+         * @return Self reference
+         */
         public <T> RowSetter set(Column<T> column, T value) {
 
             column = findColumn(column);
@@ -912,10 +1400,23 @@ public abstract class ResultTable implements Iterable<Row> {
 
         }
 
+        /**
+         * Gets the specified column value for this new row.
+         *
+         * @param column Column to get value of
+         * @param <T>    Data type
+         *
+         * @return Column value
+         */
         public <T> T get(Column<T> column) {
             return (T) map.getOrDefault(column, null);
         }
 
+        /**
+         * Ends the row-building process and adds the new row to the table that spawned it.
+         *
+         * @return ResultTable reference
+         */
         protected ResultTable endRow() {
             addRow(new Row(columns, map));
             return ResultTable.this;

@@ -1,5 +1,6 @@
 package jisa.visa;
 
+import com.sun.jna.Platform;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.TCPIPAddress;
@@ -20,6 +21,9 @@ public class VISA {
         Driver create() throws VISAException;
     }
 
+    private final static ArrayList<Driver>  loadedDrivers = new ArrayList<>();
+    private final static Map<Class, Driver> lookup;
+
     private final static Map<String, DriverInit> DRIVERS = Util.buildMap(map -> {
 
         map.put("RS VISA",    RSVISADriver::new);
@@ -32,7 +36,11 @@ public class VISA {
 
         map.put("Experimental USB", () -> {
 
-            if (Paths.get(System.getProperty("user.home"), "jisa-usb.enable").toFile().exists()) {
+            boolean isLinux   = Platform.isLinux();
+            boolean noVISA    = loadedDrivers.stream().noneMatch(d -> d instanceof VISADriver);
+            boolean isEnabled = Paths.get(System.getProperty("user.home"), "jisa-usb.enable").toFile().exists();
+
+            if (isLinux || noVISA || isEnabled) {
                 return new USBDriver();
             } else {
                 throw new VISAException("Not Enabled");
@@ -41,9 +49,6 @@ public class VISA {
         });
 
     });
-
-    private final static ArrayList<Driver>  loadedDrivers = new ArrayList<>();
-    private final static Map<Class, Driver> lookup;
 
     static {
 

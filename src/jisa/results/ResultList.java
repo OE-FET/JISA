@@ -121,7 +121,41 @@ public class ResultList extends ResultTable {
     }
 
     public static Collector<Row, ?, ResultList> collect(ResultTable source) {
-        return collect(source.getColumnsAsArray());
+
+        return new Collector<Row, ResultList, ResultList>() {
+
+            @Override
+            public Supplier<ResultList> supplier() {
+                return () -> ResultList.emptyCopyOf(source);
+            }
+
+            @Override
+            public BiConsumer<ResultList, Row> accumulator() {
+                return ResultTable::addRow;
+            }
+
+            @Override
+            public BinaryOperator<ResultList> combiner() {
+
+                return (left, right) -> {
+                    right.forEach(left::addRow);
+                    return left;
+                };
+
+            }
+
+            @Override
+            public Function<ResultList, ResultList> finisher() {
+                return (r) -> r;
+            }
+
+            @Override
+            public Set<Characteristics> characteristics() {
+                return Set.of(Characteristics.IDENTITY_FINISH);
+            }
+
+        };
+
     }
 
     public static Collector<Row, ?, ResultList> collect(Column... columns) {
