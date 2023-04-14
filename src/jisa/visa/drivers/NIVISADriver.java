@@ -7,7 +7,6 @@ import jisa.visa.VISANativeInterface;
 
 public class NIVISADriver extends VISADriver {
 
-    private static final String              OS_NAME = System.getProperty("os.name").toLowerCase();
     private static       VISANativeInterface libStatic;
     private static       String              libName;
 
@@ -28,10 +27,10 @@ public class NIVISADriver extends VISADriver {
 
         try {
 
-            if (OS_NAME.contains("win")) {
+            if (Platform.isWindows()) {
                 libName   = Platform.is64Bit() ? "nivisa64" : "visa32";
                 libStatic = Native.loadLibrary(libName, VISANativeInterface.class);
-            } else if (OS_NAME.contains("linux") || OS_NAME.contains("mac")) {
+            } else if (Platform.isLinux() || Platform.isMac()) {
                 libName   = "visa";
                 libStatic = Native.loadLibrary(libName, VISANativeInterface.class);
             } else {

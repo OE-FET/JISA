@@ -1,6 +1,7 @@
 package jisa.visa.drivers;
 
 import com.sun.jna.Native;
+import com.sun.jna.Platform;
 import jisa.visa.VISAException;
 
 public class NIGPIBDriver extends GPIBDriver {
@@ -16,10 +17,10 @@ public class NIGPIBDriver extends GPIBDriver {
 
         try {
 
-            if (OS_NAME.contains("win")) {
+            if (Platform.isWindows()) {
                 libName = "ni4882";
                 lib     = Native.loadLibrary(libName, NIGPIBNativeInterface.class);
-            } else if (OS_NAME.contains("linux")) {
+            } else if (Platform.isLinux()) {
                 libName = "gpibapi";
                 lib     = Native.loadLibrary(libName, NIGPIBNativeInterface.class);
             } else {

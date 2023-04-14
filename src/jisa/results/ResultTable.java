@@ -162,6 +162,7 @@ public abstract class ResultTable implements Iterable<Row> {
                       .findFirst().orElse(null);
 
     }
+
     /**
      * Returns the nth column in this table that has a numerical data type.
      *
@@ -231,6 +232,83 @@ public abstract class ResultTable implements Iterable<Row> {
                                   .filter(c -> c.getMatcherName().equals(nameLower) && type.isAssignableFrom(c.getType()))
                                   .findFirst().orElse(null);
 
+    }
+
+    /**
+     * Tries to find a column of doubles in this ResultTable that matches the given name.
+     *
+     * @param name Name to match
+     *
+     * @return Matching column if found, otherwise null
+     */
+    public Column<Double> findDoubleColumn(String name) {
+        return findColumn(name, Double.class);
+    }
+
+    /**
+     * Tries to find a column of doubles in this ResultTable that matches the given name. Alias for findDoubleColumn(...).
+     *
+     * @param name Name to match
+     *
+     * @return Matching column if found, otherwise null
+     */
+    public Column<Double> findDecimalColumn(String name) {
+        return findDoubleColumn(name);
+    }
+
+    /**
+     * Tries to find a column of integers in this ResultTable that matches the given name.
+     *
+     * @param name Name to match
+     *
+     * @return Matching column if found, otherwise null
+     */
+    public Column<Integer> findIntegerColumn(String name) {
+        return findColumn(name, Integer.class);
+    }
+
+    /**
+     * Tries to find a column of long integers in this ResultTable that matches the given name.
+     *
+     * @param name Name to match
+     *
+     * @return Matching column if found, otherwise null
+     */
+    public Column<Long> findLongColumn(String name) {
+        return findColumn(name, Long.class);
+    }
+
+    /**
+     * Tries to find a column of booleans in this ResultTable that matches the given name.
+     *
+     * @param name Name to match
+     *
+     * @return Matching column if found, otherwise null
+     */
+    public Column<Boolean> findBooleanColumn(String name) {
+        return findColumn(name, Boolean.class);
+    }
+
+    /**
+     * Tries to find a column of Strings in this ResultTable that matches the given name.
+     *
+     * @param name Name to match
+     *
+     * @return Matching column if found, otherwise null
+     */
+    public Column<String> findStringColumn(String name) {
+        return findColumn(name, String.class);
+    }
+
+    /**
+     * Tries to find a column of String in this ResultTable that matches the given name. Alias for findStringColumn(...).
+     *
+     * @param name Name to match
+     *
+     * @return Matching column if found, otherwise null
+     */
+    public Column<String> findTextColumn(String name) {
+        return findStringColumn(name);
     }
 
     /**
@@ -637,6 +715,31 @@ public abstract class ResultTable implements Iterable<Row> {
     }
 
     /**
+     * Returns the minimum value of the provided expression when evaluated for each row. Alias for min(...).
+     *
+     * @param expression Expression to find minimum of
+     * @param <T>        Data type
+     *
+     * @return Min value
+     */
+    public <T extends Number> T getMin(RowEvaluable<T> expression) {
+        return min(expression);
+    }
+
+    /**
+     * Returns the minimum value of the provided column in the table. Alias for min(...).
+     *
+     * @param column Column to find minimum of
+     * @param <T>    Data type
+     *
+     * @return Min value
+     */
+    public <T extends Number> T getMin(Column<T> column) {
+        return min(column);
+    }
+
+
+    /**
      * Returns the maximum value of the provided expression when evaluated for each row.
      *
      * @param expression Expression to find maximum of
@@ -658,6 +761,30 @@ public abstract class ResultTable implements Iterable<Row> {
      */
     public <T extends Number> T max(Column<T> column) {
         return max(r -> r.get(column));
+    }
+
+    /**
+     * Returns the maximum value of the provided expression when evaluated for each row. Alias for max(...).
+     *
+     * @param expression Expression to find maximum of
+     * @param <T>        Data type
+     *
+     * @return Max value
+     */
+    public <T extends Number> T getMax(RowEvaluable<T> expression) {
+        return max(expression);
+    }
+
+    /**
+     * Returns the maximum value of the provided column in the table. Alias for max(...).
+     *
+     * @param column Column to find maximum of
+     * @param <T>    Data type
+     *
+     * @return Max value
+     */
+    public <T extends Number> T getMax(Column<T> column) {
+        return max(column);
     }
 
     /**

@@ -2,6 +2,7 @@ package jisa.visa.drivers;
 
 import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
+import com.sun.jna.Platform;
 import jisa.visa.VISAException;
 
 public class LinuxGPIBDriver extends GPIBDriver {
@@ -21,7 +22,7 @@ public class LinuxGPIBDriver extends GPIBDriver {
 
         try {
 
-            if (OS_NAME.contains("linux")) {
+            if (Platform.isLinux()) {
                 libName = "gpib";
                 lib     = Native.loadLibrary(libName, GPIBNativeInterface.class);
             } else {

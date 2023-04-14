@@ -1,10 +1,11 @@
 package jisa.visa.drivers;
 
-import com.sun.jna.*;
+import com.sun.jna.Memory;
+import com.sun.jna.NativeLong;
+import com.sun.jna.Pointer;
 import jisa.addresses.Address;
 import jisa.addresses.GPIBAddress;
 import jisa.visa.NativeString;
-import jisa.visa.VISA;
 import jisa.visa.VISAException;
 import jisa.visa.connections.Connection;
 
@@ -19,7 +20,6 @@ import java.util.List;
 
 public abstract class GPIBDriver implements Driver {
 
-    protected static final String                    OS_NAME          = System.getProperty("os.name").toLowerCase();
     protected static final String                    responseEncoding = "UTF8";
     protected static final long                      VISA_ERROR       = 0x7FFFFFFF;
     protected static final int                       _VI_ERROR        = -2147483648;

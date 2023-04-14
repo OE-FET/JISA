@@ -688,7 +688,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     public SVG getSVG(double width, double height) {
 
-        if (!isShowing()) {
+        if (chart.getDatasets().filtered(DataSet::isVisible).isEmpty() && !isShowing()) {
             show();
             close();
         }

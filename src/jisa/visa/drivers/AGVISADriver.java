@@ -1,13 +1,13 @@
 package jisa.visa.drivers;
 
 import com.sun.jna.Native;
+import com.sun.jna.Platform;
 import jisa.visa.VISAException;
 import jisa.visa.VISANativeInterface;
 
 public class AGVISADriver extends VISADriver {
 
     private static       VISANativeInterface libStatic;
-    private static final String              OS_NAME = System.getProperty("os.name").toLowerCase();
     private static       String              libName;
 
     public AGVISADriver() throws VISAException {
@@ -27,10 +27,10 @@ public class AGVISADriver extends VISADriver {
 
         try {
 
-            if (OS_NAME.contains("win")) {
+            if (Platform.isWindows()) {
                 libName   = "agvisa32";
                 libStatic = Native.loadLibrary(libName, VISANativeInterface.class);
-            } else if (OS_NAME.contains("linux") || OS_NAME.contains("mac")) {
+            } else if (Platform.isLinux() || Platform.isMac()) {
                 libName   = "agvisa";
                 libStatic = Native.loadLibrary(libName, VISANativeInterface.class);
             } else {
