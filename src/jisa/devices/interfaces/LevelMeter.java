@@ -25,20 +25,12 @@ public interface LevelMeter extends Instrument, MultiInstrument {
         return getName(0);
     }
 
-    default List<Class<? extends Instrument>> getSubInstrumentTypes() {
-        return List.of(LevelMeter.class);
-    }
-
     default LevelMeter getChannel(int channelNo) {
 
         return new LevelMeter() {
-            @Override
-            public <I extends Instrument> List<I> get(Class<I> type) {
-                return Collections.emptyList();
-            }
 
-            public <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
-                return null;
+            public List<Instrument> getSubInstruments() {
+                return Collections.emptyList();
             }
 
             @Override

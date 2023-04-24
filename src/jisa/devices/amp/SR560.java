@@ -1,12 +1,12 @@
 package jisa.devices.amp;
 
 import jisa.addresses.Address;
+import jisa.devices.DeviceException;
 import jisa.devices.interfaces.VPreAmp;
 import jisa.enums.Coupling;
 import jisa.enums.Filter;
 import jisa.enums.Input;
 import jisa.visa.VISADevice;
-import jisa.visa.connections.Connection;
 import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
@@ -191,15 +191,11 @@ public class SR560 extends VISADevice implements VPreAmp {
     private Freq     highFreq     = null;
     private Freq     lowFreq      = null;
 
-    public SR560(Address address) throws IOException {
+    public SR560(Address address) throws IOException, DeviceException {
 
         super(address);
 
-        Connection connection = getConnection();
-
-        if (connection instanceof SerialConnection) {
-            ((SerialConnection) connection).setSerialParameters(9600, 8, SerialConnection.Parity.NONE, SerialConnection.Stop.BITS_20);
-        }
+        configSerial(serial -> serial.setSerialParameters(9600, 7, SerialConnection.Parity.NONE, 2));
 
         setWriteTerminator(TERMINATOR);
 

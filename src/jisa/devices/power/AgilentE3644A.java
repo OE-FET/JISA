@@ -4,8 +4,6 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.DCPower;
 import jisa.visa.VISADevice;
-import jisa.visa.connections.Connection;
-import jisa.visa.connections.GPIBConnection;
 
 import java.io.IOException;
 
@@ -22,11 +20,7 @@ public class AgilentE3644A extends VISADevice implements DCPower {
         setReadTerminator("\n");
         setWriteTerminator("\n");
 
-        Connection connection = getConnection();
-
-        if (connection instanceof GPIBConnection) {
-            ((GPIBConnection) connection).setEOIEnabled(false);
-        }
+        configGPIB(gpib -> gpib.setEOIEnabled(false));
 
         if (!getIDN().contains(",E3644A,")) {
             throw new DeviceException("Instrument at \"%s\" is not an Agilent E3644A.", address.toString());

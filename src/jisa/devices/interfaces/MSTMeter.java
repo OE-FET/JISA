@@ -7,9 +7,10 @@ import jisa.devices.DeviceException;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public interface MSTMeter extends TMeter, MultiInstrument {
 
@@ -17,30 +18,8 @@ public interface MSTMeter extends TMeter, MultiInstrument {
         return "Multi-Sensor Thermometer";
     }
 
-    @Override
-    default List<Class<? extends Instrument>> getSubInstrumentTypes() {
-        return List.of(TMeter.class);
-    }
-
-    @Override
-    default <I extends Instrument> List<I> get(Class<I> type) {
-
-        if (type.isAssignableFrom(TMeter.class)) {
-            return (List<I>) getSensors();
-        } else {
-            return Collections.emptyList();
-        }
-
-    }
-
-    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
-
-        if (type.isAssignableFrom(TMeter.class)) {
-            return (I) getSensor(index);
-        } else {
-            return null;
-        }
-
+    default List<Instrument> getSubInstruments() {
+        return IntStream.range(0, getNumSensors()).mapToObj(this::getSensor).collect(Collectors.toUnmodifiableList());
     }
 
     String getName(int channel);

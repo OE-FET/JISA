@@ -11,7 +11,6 @@ import jisa.visa.connections.GPIBConnection;
 import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -111,23 +110,8 @@ public class ILM200 extends VISADevice implements LevelMeter {
         return List.of(getChannel(0), getChannel(1));
     }
 
-    @Override
-    public <I extends Instrument> List<I> get(Class<I> type) {
-
-        if (type.isAssignableFrom(LevelMeter.class)) {
-            return (List<I>) List.of(getChannel(0));
-        } else {
-            return Collections.emptyList();
-        }
-
-    }
-
-    public <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
-        if (type.isAssignableFrom(LevelMeter.class)) {
-            return (I) getChannel(index);
-        } else {
-            return null;
-        }
+    public List<Instrument> getSubInstruments() {
+        return List.of(getChannel(0), getChannel(1));
     }
 
     public enum Mode {

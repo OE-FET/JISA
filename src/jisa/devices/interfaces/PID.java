@@ -5,7 +5,6 @@ import jisa.devices.DeviceException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -582,41 +581,6 @@ public interface PID extends Instrument, MultiInstrument {
 
             }
 
-        }
-
-    }
-
-    @Override
-    default List<Class<? extends Instrument>> getSubInstrumentTypes() {
-        return List.of(Input.class, Output.class, Loop.class);
-    }
-
-    @Override
-    default <I extends Instrument> List<I> get(Class<I> type) {
-
-        if (type.isAssignableFrom(Input.class)) {
-            return (List<I>) getInputs();
-        } else if (type.isAssignableFrom(Output.class)) {
-            return (List<I>) getOutputs();
-        } else if (type.isAssignableFrom(Loop.class)) {
-            return (List<I>) getLoops();
-        } else {
-            return Collections.emptyList();
-        }
-
-    }
-
-
-    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
-
-        if (type.isAssignableFrom(Input.class)) {
-            return (I) getInput(index);
-        } else if (type.isAssignableFrom(Output.class)) {
-            return (I) getOutput(index);
-        } else if (type.isAssignableFrom(Loop.class)) {
-            return (I) getLoop(index);
-        } else {
-            return null;
         }
 
     }

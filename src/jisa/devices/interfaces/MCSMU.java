@@ -13,6 +13,7 @@ import jisa.experiment.MCIVPoint;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -24,9 +25,16 @@ public interface MCSMU extends SMU, MultiInstrument {
         return "Multi-Channel Source Measure Unit";
     }
 
-    @Override
-    default List<Class<? extends Instrument>> getSubInstrumentTypes() {
-        return List.of(SMU.class);
+    default List<Instrument> getSubInstruments() {
+
+        List<Instrument> list = new LinkedList<>();
+
+        for (int i = 0; i < getNumChannels(); i++) {
+            list.add(getChannel(i));
+        }
+
+        return list;
+
     }
 
     @Override
@@ -40,7 +48,7 @@ public interface MCSMU extends SMU, MultiInstrument {
 
     }
 
-    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
+    default <I extends Instrument> I get(Class<I> type, int index) {
 
         if (type.isAssignableFrom(SMU.class)) {
             return (I) getChannel(index);

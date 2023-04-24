@@ -5,9 +5,7 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.TC;
 import jisa.visa.VISADevice;
-import jisa.visa.connections.Connection;
-import jisa.visa.connections.GPIBConnection;
-import jisa.visa.connections.SerialConnection;
+import jisa.visa.connections.SerialConnection.Parity;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -72,24 +70,11 @@ public class ITC503 extends VISADevice implements TC {
         // There's nothing super about an ITC503, but this needs to be called
         super(address);
 
-        Connection connection = getConnection();
+        getConnection().setEncoding(StandardCharsets.US_ASCII);
 
-        connection.setEncoding(StandardCharsets.US_ASCII);
+        configGPIB(gpib -> gpib.setEOIEnabled(false));
 
-        if (connection instanceof GPIBConnection) {
-            ((GPIBConnection) connection).setEOIEnabled(false);
-        }
-
-        if (connection instanceof SerialConnection) {
-
-            ((SerialConnection) connection).setSerialParameters(
-                9600,
-                8,
-                SerialConnection.Parity.NONE,
-                SerialConnection.Stop.BITS_20
-            );
-
-        }
+        configSerial(serial -> serial.setSerialParameters(9600, 8, Parity.NONE, 2));
 
         // Tell the object to limit the rate at which read/writes can be performed
         setIOLimit(MIN_IO_INTERVAL, true, true);

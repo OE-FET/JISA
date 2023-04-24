@@ -4,9 +4,7 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.TC;
 import jisa.visa.VISADevice;
-import jisa.visa.connections.Connection;
-import jisa.visa.connections.SerialConnection;
-import jisa.visa.drivers.TCPIPDriver;
+import jisa.visa.connections.SerialConnection.Parity;
 
 import java.io.IOException;
 import java.util.List;
@@ -55,19 +53,14 @@ public class LS336 extends VISADevice implements TC {
 
     public LS336(Address address) throws IOException, DeviceException {
 
-        super(address, TCPIPDriver.class);
+        super(address);
 
-        Connection connection = getConnection();
-
-        if (connection instanceof SerialConnection) {
-            ((SerialConnection) connection).setSerialParameters(57600, 7, SerialConnection.Parity.ODD, SerialConnection.Stop.BITS_10);
-        }
+        configSerial(serial -> serial.setSerialParameters(57600, 7, Parity.ODD, 1));
 
         setIOLimit(50, false, true);
         setReadTerminator(LF_TERMINATOR);
         setWriteTerminator(TERMINATOR);
-        addAutoRemove("\r");
-        addAutoRemove("\n");
+        addAutoRemove("\r", "\n");
 
         manuallyClearReadBuffer();
 

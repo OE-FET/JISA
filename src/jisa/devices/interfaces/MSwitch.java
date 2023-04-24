@@ -6,8 +6,8 @@ import jisa.devices.DeviceException;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public interface MSwitch extends Switch, MultiInstrument {
 
@@ -16,22 +16,6 @@ public interface MSwitch extends Switch, MultiInstrument {
     }
 
     String getName(int channel);
-
-    @Override
-    default List<Class<? extends Instrument>> getSubInstrumentTypes() {
-        return List.of(Switch.class);
-    }
-
-    @Override
-    default <I extends Instrument> List<I> get(Class<I> type) {
-
-        if (type.isAssignableFrom(Switch.class)) {
-            return (List<I>) getChannels();
-        } else {
-            return Collections.emptyList();
-        }
-
-    }
 
     void turnOn(int channel) throws IOException, DeviceException;
 
@@ -78,6 +62,10 @@ public interface MSwitch extends Switch, MultiInstrument {
             throw new DeviceException("That is not a valid channel number.");
         }
 
+    }
+
+    default List<Instrument> getSubInstruments() {
+        return getChannels().stream().collect(Collectors.toUnmodifiableList());
     }
 
     default List<Switch> getChannels() {

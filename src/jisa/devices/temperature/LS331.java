@@ -6,9 +6,7 @@ import jisa.devices.DeviceException;
 import jisa.devices.interfaces.PID;
 import jisa.devices.interfaces.TC;
 import jisa.visa.VISADevice;
-import jisa.visa.connections.Connection;
-import jisa.visa.connections.GPIBConnection;
-import jisa.visa.connections.SerialConnection;
+import jisa.visa.connections.SerialConnection.Parity;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -20,31 +18,25 @@ public class LS331 extends VISADevice implements TC {
         return "LakeShore 331";
     }
 
-    public  final  TMeter       INPUT_A  = new TMeter("A");
-    public  final  TMeter       INPUT_B  = new TMeter("B");
-    public  final  Heater       OUTPUT_1 = new Heater();
-    public  final  Analogue     OUTPUT_2 = new Analogue();
-    public  final  Loop         LOOP_1   = new Loop(OUTPUT_1);
-    public  final  Loop         LOOP_2   = new Loop(OUTPUT_2);
-    private final  List<TMeter> inputs   = List.of(INPUT_A, INPUT_B);
-    private final  List<Output> outputs  = List.of(OUTPUT_1, OUTPUT_2);
-    private final  List<Loop>   loops    = List.of(LOOP_1, LOOP_2);
+    public final  TMeter       INPUT_A  = new TMeter("A");
+    public final  TMeter       INPUT_B  = new TMeter("B");
+    public final  Heater       OUTPUT_1 = new Heater();
+    public final  Analogue     OUTPUT_2 = new Analogue();
+    public final  Loop         LOOP_1   = new Loop(OUTPUT_1);
+    public final  Loop         LOOP_2   = new Loop(OUTPUT_2);
+    private final List<TMeter> inputs   = List.of(INPUT_A, INPUT_B);
+    private final List<Output> outputs  = List.of(OUTPUT_1, OUTPUT_2);
+    private final List<Loop>   loops    = List.of(LOOP_1, LOOP_2);
 
     public LS331(Address address) throws IOException, DeviceException {
 
         super(address);
 
-        Connection connection = getConnection();
+        getConnection().setEncoding(StandardCharsets.US_ASCII);
 
-        connection.setEncoding(StandardCharsets.US_ASCII);
+        configGPIB(gpib -> gpib.setEOIEnabled(false));
 
-        if (connection instanceof GPIBConnection) {
-            ((GPIBConnection) connection).setEOIEnabled(false);
-        }
-
-        if (connection instanceof SerialConnection) {
-            ((SerialConnection) connection).setSerialParameters(9600, 7, SerialConnection.Parity.ODD, SerialConnection.Stop.BITS_10);
-        }
+        configSerial(serial -> serial.setSerialParameters(9600, 7, Parity.ODD, 1));
 
         setIOLimit(50, false, true);
         setReadTerminator("\r\n");

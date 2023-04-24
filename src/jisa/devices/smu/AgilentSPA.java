@@ -9,8 +9,6 @@ import jisa.enums.Source;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
 import jisa.visa.VISADevice;
-import jisa.visa.connections.Connection;
-import jisa.visa.connections.GPIBConnection;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -34,11 +32,7 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
         super(address);
 
-        Connection connection = getConnection();
-
-        if (connection instanceof GPIBConnection) {
-            ((GPIBConnection) connection).setEOIEnabled(true);
-        }
+        configGPIB(gpib -> gpib.setEOIEnabled(true));
 
         clearBuffers();
         manuallyClearReadBuffer();

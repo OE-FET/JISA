@@ -5,9 +5,6 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.TC;
 import jisa.visa.VISADevice;
-import jisa.visa.connections.Connection;
-import jisa.visa.connections.GPIBConnection;
-import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
 import java.util.List;
@@ -17,13 +14,13 @@ public class CryoCon22C extends VISADevice implements TC {
     public final TMeter SENSOR_A = new TMeter("A");
     public final TMeter SENSOR_B = new TMeter("B");
     public final Heater HEATER_1 = new Heater(1);
-    public final Heater      HEATER_2 = new Heater(2);
-    public final Heater      HEATER_3 = new Heater(3);
-    public final Heater      HEATER_4 = new Heater(4);
-    public final Loop        LOOP_1   = new Loop(HEATER_1);
-    public final Loop        LOOP_2   = new Loop(HEATER_2);
-    public final Loop        LOOP_3   = new Loop(HEATER_3);
-    public final Loop        LOOP_4   = new Loop(HEATER_4);
+    public final Heater HEATER_2 = new Heater(2);
+    public final Heater HEATER_3 = new Heater(3);
+    public final Heater HEATER_4 = new Heater(4);
+    public final Loop   LOOP_1   = new Loop(HEATER_1);
+    public final Loop   LOOP_2   = new Loop(HEATER_2);
+    public final Loop   LOOP_3   = new Loop(HEATER_3);
+    public final Loop   LOOP_4   = new Loop(HEATER_4);
 
     public static String getDescription() {
         return "Cryo-Con 22C";
@@ -33,29 +30,18 @@ public class CryoCon22C extends VISADevice implements TC {
 
         super(address);
 
-        Connection connection = getConnection();
+        setWriteTerminator("\n");
+        setReadTerminator("\n");
 
-        if (connection instanceof SerialConnection) {
+        configSerial(serial -> serial.setSerialParameters(9600, 8));
 
-            ((SerialConnection) connection).setSerialParameters(
-                9600,
-                8,
-                SerialConnection.Parity.NONE,
-                SerialConnection.Stop.BITS_10
-            );
+        configGPIB(gpib -> {
 
-        }
+            gpib.setEOIEnabled(true);
+            setReadTerminator("");
+            setWriteTerminator("");
 
-        if (connection instanceof GPIBConnection) {
-
-            ((GPIBConnection) connection).setEOIEnabled(true);
-
-        } else {
-
-            setWriteTerminator("\n");
-            setReadTerminator("\n");
-
-        }
+        });
 
         addAutoRemove("\n", "\r");
 

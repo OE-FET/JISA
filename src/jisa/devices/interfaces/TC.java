@@ -3,9 +3,9 @@ package jisa.devices.interfaces;
 import jisa.devices.DeviceException;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Abstract class to define the standard functionality of temperature controllers
@@ -99,8 +99,6 @@ public interface TC extends PID, MultiInstrument {
 
     }
 
-
-
     List<? extends Loop> getLoops();
 
     default Loop getLoop(int index) {
@@ -129,30 +127,8 @@ public interface TC extends PID, MultiInstrument {
 
     }
 
-    default List<Class<? extends Instrument>> getSubInstrumentTypes() {
-        return List.of(TMeter.class, Heater.class, Loop.class, Input.class, Output.class, PID.Loop.class);
-    }
-
-    default <I extends Instrument> List<I> get(Class<I> type) {
-
-        if (jisa.devices.interfaces.TMeter.class.isAssignableFrom(type)) {
-            return getThermometers().stream().map(i -> (I) i).collect(Collectors.toUnmodifiableList());
-        } else if (Loop.class.isAssignableFrom(type)) {
-            return getLoops().stream().map(i -> (I) i).collect(Collectors.toUnmodifiableList());
-        } else {
-            return Collections.emptyList();
-        }
-
-    }
-
-    default <I extends Instrument> I getSubInstrument(Class<I> type, int index) {
-
-        try {
-            return get(type).get(index);
-        } catch (IndexOutOfBoundsException e) {
-            return null;
-        }
-
+    default List<Instrument> getSubInstruments() {
+        return Stream.concat(getInputs().stream(), Stream.concat(getOutputs().stream(), getLoops().stream())).collect(Collectors.toUnmodifiableList());
     }
 
 }

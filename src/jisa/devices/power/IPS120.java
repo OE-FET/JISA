@@ -6,8 +6,6 @@ import jisa.devices.DeviceException;
 import jisa.devices.interfaces.EMController;
 import jisa.devices.temperature.ITC503;
 import jisa.visa.VISADevice;
-import jisa.visa.connections.Connection;
-import jisa.visa.connections.GPIBConnection;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -69,11 +67,7 @@ public class IPS120 extends VISADevice implements EMController {
 
         super(address);
 
-        Connection connection = getConnection();
-
-        if (connection instanceof GPIBConnection) {
-            ((GPIBConnection) connection).setEOIEnabled(false);
-        }
+        configGPIB(gpib -> gpib.setEOIEnabled(false));
 
         setWriteTerminator(TERMINATOR);
         write(C_SET_COMM_MODE);
