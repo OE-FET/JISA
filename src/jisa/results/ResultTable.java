@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 
 public abstract class ResultTable implements Iterable<Row> {
 
-    public static final Map<String, ColumnBuilder> STANDARD_TYPES = Util.build(new LinkedHashMap<>(), types -> {
+    public static final Map<String, ColumnBuilder> STANDARD_TYPES = Util.buildMap(types -> {
 
         types.put("String", StringColumn::new);
         types.put("Double", DoubleColumn::new);
@@ -119,7 +119,7 @@ public abstract class ResultTable implements Iterable<Row> {
     public Column<?> getColumn(int index) {
 
         if (index < 0 || index >= columns.size()) {
-            throw new IndexOutOfBoundsException("Column index is out of bounds. Must be 0 <= index <= " + (columns.size() - 1) + ".");
+            throw new IndexOutOfBoundsException(String.format("Column index is out of bounds. Must be 0 <= index <= %d.", columns.size() - 1));
         }
 
         return columns.get(index);
@@ -172,11 +172,10 @@ public abstract class ResultTable implements Iterable<Row> {
      */
     public Column<? extends Number> getNthNumericColumn(int n) {
 
-        try {
-            return getNumericColumns().get(n);
-        } catch (IndexOutOfBoundsException e) {
-            return null;
-        }
+        return columns.stream()
+                      .filter(c -> Number.class.isAssignableFrom(c.getType()))
+                      .map(c -> (Column<? extends Number>) c)
+                      .skip(n).findFirst().orElse(null);
 
     }
 

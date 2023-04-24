@@ -24,17 +24,17 @@ public class VISA {
     private final static ArrayList<Driver>  loadedDrivers = new ArrayList<>();
     private final static Map<Class, Driver> lookup;
 
-    private final static Map<String, DriverInit> DRIVERS = Util.buildMap(map -> {
+    private final static Map<String, DriverInit> DRIVERS = Util.buildMap(drivers -> {
 
-        map.put("RS VISA",    RSVISADriver::new);
-        map.put("AG VISA",    AGVISADriver::new);
-        map.put("NI VISA",    NIVISADriver::new);
-        map.put("Linux GPIB", LinuxGPIBDriver::new);
-        map.put("NI GPIB",    NIGPIBDriver::new);
-        map.put("Serial",     SerialDriver::new);
-        map.put("TCP-IP",     TCPIPDriver::new);
+        drivers.put("RS VISA",    RSVISADriver::new);
+        drivers.put("AG VISA",    AGVISADriver::new);
+        drivers.put("NI VISA",    NIVISADriver::new);
+        drivers.put("Linux GPIB", LinuxGPIBDriver::new);
+        drivers.put("NI GPIB",    NIGPIBDriver::new);
+        drivers.put("Serial",     SerialDriver::new);
+        drivers.put("TCP-IP",     TCPIPDriver::new);
 
-        map.put("Experimental USB", () -> {
+        drivers.put("Experimental USB", () -> {
 
             boolean isLinux   = Platform.isLinux();
             boolean noVISA    = loadedDrivers.stream().noneMatch(d -> d instanceof VISADriver);
@@ -108,7 +108,7 @@ public class VISA {
     /**
      * Returns an array of all instrument addressed detected by VISA
      *
-     * @return Array of instrument addresses
+     * @return List of instrument addresses
      *
      * @throws VISAException Upon error with VISA interface
      */

@@ -6,4 +6,6 @@ public interface GPIBConnection extends Connection {
 
     void setEOIEnabled(boolean use) throws VISAException;
 
+    boolean isEOIEnabled() throws VISAException;
+
 }

@@ -4,14 +4,19 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
-import jisa.visa.connections.Connection;
+import jisa.visa.connections.*;
 import jisa.visa.drivers.Driver;
+import kotlin.jvm.JvmClassMappingKt;
+import kotlin.reflect.KClass;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Generic instrument encapsulation via VISA
@@ -94,13 +99,9 @@ public class VISADevice implements Instrument {
             return;
 
         }
-
-        try {
-            this.connection = VISA.openInstrument(address, prefDriver);
-            this.address    = address;
-        } catch (VISAException e) {
-            throw new IOException(e.getMessage());
-        }
+        
+        this.connection = VISA.openInstrument(address, prefDriver);
+        this.address    = address;
 
         // Keep a weak reference to this
         opened.add(new WeakReference<>(this));
@@ -109,6 +110,38 @@ public class VISADevice implements Instrument {
 
     public Connection getConnection() {
         return connection;
+    }
+
+    public synchronized <T extends Connection> void config(Class<T> type, ConfigRun<T> run) throws IOException, DeviceException {
+
+        if (type.isAssignableFrom(getConnection().getClass())) {
+            run.config((T) getConnection());
+        }
+
+    }
+
+    public synchronized <T extends Connection> void config(KClass<T> type, ConfigRun<T> run) throws IOException, DeviceException {
+        config(JvmClassMappingKt.getJavaClass(type), run);
+    }
+
+    public synchronized void configGPIB(ConfigRun<GPIBConnection> run) throws IOException, DeviceException {
+        config(GPIBConnection.class, run);
+    }
+
+    public synchronized void configSerial(ConfigRun<SerialConnection> run) throws IOException, DeviceException {
+        config(SerialConnection.class, run);
+    }
+
+    public synchronized void configTCPIP(ConfigRun<TCPIPConnection> run) throws IOException, DeviceException {
+        config(TCPIPConnection.class, run);
+    }
+
+    public synchronized void configLXI(ConfigRun<LXIConnection> run) throws IOException, DeviceException {
+        config(LXIConnection.class, run);
+    }
+
+    public synchronized void configUSB(ConfigRun<USBConnection> run) throws IOException, DeviceException {
+        config(USBConnection.class, run);
     }
 
     public synchronized void clearBuffers() throws IOException {
@@ -321,7 +354,7 @@ public class VISADevice implements Instrument {
 
                 count++;
                 if (count >= attempts) {
-                    throw new IOException(e.getMessage());
+                    throw e;
                 }
 
                 System.out.printf("Retrying read from \"%s\", reason: %s%n", address.toString(), e.getMessage());
@@ -470,6 +503,12 @@ public class VISADevice implements Instrument {
         if (!Util.isBetween(value, lower, upper)) {
             throw new DeviceException("%s = %e is out of range (%e to %e)", valueName, value, lower, upper);
         }
+
+    }
+
+    public interface ConfigRun<T extends Connection> {
+
+        void config(T connection) throws DeviceException, IOException;
 
     }
 

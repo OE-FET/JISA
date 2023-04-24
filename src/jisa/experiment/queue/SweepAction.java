@@ -8,20 +8,19 @@ import java.util.stream.Collectors;
 
 public class SweepAction<T> extends AbstractAction<Void> {
 
-    private       T                 lastValue;
-    private       Action            lastAction;
-    private       Measurement       sweepMeasure   = null;
-    private       boolean           isRunning      = false;
-    private       Formatter<T>      formatter      = String::valueOf;
-    private       boolean           isStopped      = false;
-    private final List<Listener<T>> valueListeners = new LinkedList<>();
-    private final List<T>           sweepValues    = new LinkedList<>();
-    private final List<Action>      subActions     = new LinkedList<>();
-    private final List<Action>      finalActions   = new LinkedList<>();
-
-    private final Map<T, List<Action>> children   = new LinkedHashMap<>();
-    private final List<Exception>      exceptions = new LinkedList<>();
-    private final ActionGenerator<T>   generator;
+    private       int                lastIndex;
+    private       Action             lastAction;
+    private       Measurement        sweepMeasure   = null;
+    private       boolean            isRunning      = false;
+    private       Formatter<T>       formatter      = String::valueOf;
+    private       boolean            isStopped      = false;
+    private final List<Listener<T>>  valueListeners = new LinkedList<>();
+    private final List<T>            sweepValues    = new LinkedList<>();
+    private final List<Action>       subActions     = new LinkedList<>();
+    private final List<Action>       finalActions   = new LinkedList<>();
+    private final List<List<Action>> children       = new LinkedList<>();
+    private final List<Exception>    exceptions     = new LinkedList<>();
+    private final ActionGenerator<T> generator;
 
     public SweepAction(String name, Iterable<T> sweepValues, ActionGenerator<T> generator) {
         setName(name);
@@ -54,7 +53,7 @@ public class SweepAction<T> extends AbstractAction<Void> {
     @Override
     public void reset() {
         setStatus(Status.NOT_STARTED);
-        children.values().stream().flatMap(List::stream).forEach(Action::reset);
+        children.stream().flatMap(List::stream).forEach(Action::reset);
     }
 
     /**
@@ -125,8 +124,8 @@ public class SweepAction<T> extends AbstractAction<Void> {
      *
      * @return Current sweep value
      */
-    public T getCurrentSweepValue() {
-        return lastValue;
+    public int getCurrentSweepIndex() {
+        return lastIndex;
     }
 
     /**
@@ -135,29 +134,29 @@ public class SweepAction<T> extends AbstractAction<Void> {
      * @return String representation of current sweep value
      */
     public String getCurrentSweepString() {
-        return format(lastValue);
+        return format(sweepValues.get(lastIndex));
     }
 
     public void setAttribute(String key, String value) {
         super.setAttribute(key, value);
-        children.values().stream().flatMap(List::stream).forEach(it -> it.setAttribute(key, value));
+        children.stream().flatMap(List::stream).forEach(it -> it.setAttribute(key, value));
     }
 
     @Override
     public void addTag(String tag) {
         super.addTag(tag);
-        children.values().stream().flatMap(List::stream).forEach(it -> it.addTag(tag));
+        children.stream().flatMap(List::stream).forEach(it -> it.addTag(tag));
     }
 
     @Override
     public void removeTag(String tag) {
         super.removeTag(tag);
-        children.values().stream().flatMap(List::stream).forEach(it -> it.removeTag(tag));
+        children.stream().flatMap(List::stream).forEach(it -> it.removeTag(tag));
     }
 
     public void clearTags() {
         super.clearTags();
-        children.values().stream().flatMap(List::stream).forEach(Action::clearTags);
+        children.stream().flatMap(List::stream).forEach(Action::clearTags);
     }
 
     /**
@@ -180,14 +179,14 @@ public class SweepAction<T> extends AbstractAction<Void> {
     protected synchronized void regenerateActions() {
 
         children.clear();
-        lastValue = sweepValues.get(0);
+        lastIndex = 0;
 
         for (T value : sweepValues) {
-            children.put(value, generateActionsForValue(value));
+            children.add(generateActionsForValue(value));
         }
 
         childrenChanged();
-        valueListeners.forEach(l -> l.updateRegardless(lastValue));
+        valueListeners.forEach(l -> l.updateRegardless(sweepValues.get(lastIndex)));
 
     }
 
@@ -210,21 +209,22 @@ public class SweepAction<T> extends AbstractAction<Void> {
 
         onStart();
 
-        List<T> sweepValues;
+        int start = 0;
 
-        if (resume && this.sweepValues.contains(lastValue)) {
-            sweepValues = this.sweepValues.subList(this.sweepValues.indexOf(lastValue), this.sweepValues.size());
+        if (resume && lastIndex >= 0 && lastIndex < sweepValues.size()) {
+            start = lastIndex;
         } else {
-            sweepValues = this.sweepValues;
-            resume      = false;
+            resume = false;
         }
 
-        for (T value : sweepValues) {
+        for (int i = 0; i < sweepValues.size(); i++) {
 
-            lastValue = value;
+            lastIndex = i;
+
+            T            value   = sweepValues.get(i);
+            List<Action> actions = children.get(i);
+
             valueListeners.forEach(l -> l.updateRegardless(value));
-
-            List<Action> actions = getChildrenByValue(value);
 
             if (resume && actions.contains(lastAction)) {
                 actions = getChildrenByValue(value).subList(actions.indexOf(lastAction), actions.size());
@@ -280,8 +280,11 @@ public class SweepAction<T> extends AbstractAction<Void> {
         }
 
         isRunning = false;
+
         setStatus(failed ? Status.ERROR : Status.COMPLETED);
+
         runFinalActions();
+
         onFinish();
 
     }
@@ -355,7 +358,7 @@ public class SweepAction<T> extends AbstractAction<Void> {
 
     @Override
     public List<Action> getChildren() {
-        return children.values().stream().flatMap(List::stream).collect(Collectors.toList());
+        return children.stream().flatMap(List::stream).collect(Collectors.toList());
     }
 
     /**
@@ -366,7 +369,19 @@ public class SweepAction<T> extends AbstractAction<Void> {
      * @return List of actions
      */
     public List<Action> getChildrenByValue(T value) {
-        return List.copyOf(children.getOrDefault(value, Collections.emptyList()));
+
+        int index = sweepValues.indexOf(value);
+
+        if (index < 0) {
+            return Collections.emptyList();
+        }
+
+        return List.copyOf(children.get(index));
+
+    }
+
+    public List<Action> getChildrenByIndex(int index) {
+        return List.copyOf(children.get(index));
     }
 
     public List<Action> getFinalActions() {

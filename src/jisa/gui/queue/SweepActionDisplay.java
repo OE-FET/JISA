@@ -168,7 +168,7 @@ public class SweepActionDisplay<T> extends ActionDisplay {
             values.getItems().clear();
             values.getItems().add(null);
             values.getItems().addAll(action.getSweepValues());
-            values.setValue(action.getCurrentSweepValue());
+            values.getSelectionModel().select(action.getCurrentSweepIndex() + 1);
             drawFinalActions();
         }));
 
@@ -176,7 +176,7 @@ public class SweepActionDisplay<T> extends ActionDisplay {
 
         values.getItems().add(null);
         values.getItems().addAll(action.getSweepValues());
-        values.setValue(showAll ? null : action.getCurrentSweepValue());
+        values.getSelectionModel().select(showAll ? 0 : (action.getCurrentSweepIndex() + 1));
 
         drawTags();
         drawChildren();
@@ -217,7 +217,7 @@ public class SweepActionDisplay<T> extends ActionDisplay {
             childListeners.clear();
             children.getChildren().clear();
             children.getChildren().addAll(
-                (values.getValue() == null ? action.getChildren() : action.getChildrenByValue(values.getValue()))
+                (values.getValue() == null ? action.getChildren() : action.getChildrenByIndex(values.getSelectionModel().getSelectedIndex() - 1))
                     .stream()
                     .map(Action::getDisplay)
                     .peek(a -> a.setBorder(SUB_BORDER))
@@ -269,7 +269,7 @@ public class SweepActionDisplay<T> extends ActionDisplay {
         if (show) {
             GUI.runNow(() -> values.setValue(null));
         } else {
-            GUI.runNow(() -> values.setValue(action.getCurrentSweepValue()));
+            GUI.runNow(() -> values.getSelectionModel().select(action.getCurrentSweepIndex() + 1));
         }
 
     }

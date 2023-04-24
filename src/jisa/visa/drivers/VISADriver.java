@@ -482,6 +482,11 @@ public abstract class VISADriver implements Driver {
             setAttribute(VI_ATTR_SEND_END_EN, use ? VI_TRUE : VI_FALSE);
         }
 
+        @Override
+        public boolean isEOIEnabled() throws VISAException {
+            return getAttributeLong(VI_ATTR_SEND_END_EN) == VI_TRUE;
+        }
+
     }
 
     public class VISATCPIPConnection extends VISAConnection implements TCPIPConnection {
@@ -491,12 +496,12 @@ public abstract class VISADriver implements Driver {
         }
 
         @Override
-        public void setKeepAlive(boolean on) throws VISAException {
+        public void setKeepAliveEnabled(boolean on) throws VISAException {
             setAttribute(VI_ATTR_TCPIP_KEEPALIVE, on ? VI_TRUE : VI_FALSE);
         }
 
         @Override
-        public boolean isKeepAlive() throws VISAException {
+        public boolean isKeepAliveEnabled() throws VISAException {
             return getAttributeLong(VI_ATTR_TCPIP_KEEPALIVE) == VI_TRUE;
         }
 

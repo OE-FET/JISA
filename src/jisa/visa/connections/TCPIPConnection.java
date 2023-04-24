@@ -4,8 +4,8 @@ import jisa.visa.VISAException;
 
 public interface TCPIPConnection extends Connection {
 
-    void setKeepAlive(boolean on) throws VISAException;
+    void setKeepAliveEnabled(boolean on) throws VISAException;
 
-    boolean isKeepAlive() throws VISAException;
+    boolean isKeepAliveEnabled() throws VISAException;
 
 }

@@ -197,7 +197,7 @@ public class TCPIPDriver implements Driver {
         }
 
         @Override
-        public void setKeepAlive(boolean on) throws VISAException {
+        public void setKeepAliveEnabled(boolean on) throws VISAException {
 
             try {
                 socket.setKeepAlive(on);
@@ -208,7 +208,7 @@ public class TCPIPDriver implements Driver {
         }
 
         @Override
-        public boolean isKeepAlive() throws VISAException {
+        public boolean isKeepAliveEnabled() throws VISAException {
 
             try {
                 return socket.getKeepAlive();

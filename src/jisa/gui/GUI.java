@@ -2,11 +2,13 @@ package jisa.gui;
 
 //import javafx.JavaFx;
 
+import com.sun.glass.ui.GlassRobot;
 import com.sun.javafx.css.StyleManager;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.*;
@@ -16,6 +18,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import jisa.Util;
 import jisa.addresses.Address;
@@ -251,13 +254,29 @@ public class GUI extends Application {
     private static void alert(final Alert.AlertType type, final String title, final String header, final String text, final double width) {
 
         GUI.runNow(() -> {
+
             Alert alert = new Alert(type);
             alert.setTitle(title);
             alert.setHeaderText(header);
             alert.setContentText(text);
             alert.getDialogPane().setMinWidth(width);
             alert.setResizable(true);
+
+            Screen      screen = getCurrentScreen();
+            Rectangle2D bounds = screen.getVisualBounds();
+
+            alert.getDialogPane().getScene().getWindow().setOnShown(e -> {
+
+                double w = alert.getDialogPane().getScene().getWindow().getWidth();
+                double h = alert.getDialogPane().getScene().getWindow().getHeight();
+
+                alert.setX(((bounds.getMinX() + bounds.getMaxX()) / 2) - (w / 2));
+                alert.setY(((bounds.getMinY() + bounds.getMaxY()) / 2) - (h / 2));
+
+            });
+
             alert.showAndWait();
+
         });
 
     }
@@ -280,6 +299,9 @@ public class GUI extends Application {
             }
 
         }
+
+
+        Rectangle2D screen = getCurrentScreen().getVisualBounds();
 
         GUI.runNow(() -> file.set(FILE_CHOOSER.showSaveDialog(new Stage())));
 
@@ -423,13 +445,30 @@ public class GUI extends Application {
     public static boolean confirmWindow(String title, String header, String text) {
 
         AtomicReference<Optional<ButtonType>> response = new AtomicReference<>();
+
         GUI.runNow(() -> {
+
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle(title);
             alert.setHeaderText(header);
             alert.setContentText(text);
             alert.setResizable(true);
+
+            Screen      screen = getCurrentScreen();
+            Rectangle2D bounds = screen.getVisualBounds();
+
+            alert.getDialogPane().getScene().getWindow().setOnShown(e -> {
+
+                double w = alert.getDialogPane().getScene().getWindow().getWidth();
+                double h = alert.getDialogPane().getScene().getWindow().getHeight();
+
+                alert.setX(((bounds.getMinX() + bounds.getMaxX()) / 2) - (w / 2));
+                alert.setY(((bounds.getMinY() + bounds.getMaxY()) / 2) - (h / 2));
+
+            });
+
             response.set(alert.showAndWait());
+
         });
 
         return response.get().get() == ButtonType.OK;
@@ -515,6 +554,20 @@ public class GUI extends Application {
             });
 
             Util.runAsync(() -> GUI.runNow(() -> tFields.stream().findFirst().ifPresent(Node::requestFocus)));
+
+            Screen      screen = getCurrentScreen();
+            Rectangle2D bounds = screen.getVisualBounds();
+
+            dialog.getDialogPane().getScene().getWindow().setOnShown(e -> {
+
+                double w = dialog.getDialogPane().getScene().getWindow().getWidth();
+                double h = dialog.getDialogPane().getScene().getWindow().getHeight();
+
+                dialog.setX(((bounds.getMinX() + bounds.getMaxX()) / 2) - (w / 2));
+                dialog.setY(((bounds.getMinY() + bounds.getMaxY()) / 2) - (h / 2));
+
+            });
+
             Optional<String[]> values = dialog.showAndWait();
             toReturn.set(values.orElse(null));
 
@@ -572,6 +625,19 @@ public class GUI extends Application {
             }
 
             dialog.getDialogPane().setContent(list);
+
+            Screen      screen = getCurrentScreen();
+            Rectangle2D bounds = screen.getVisualBounds();
+
+            dialog.getDialogPane().getScene().getWindow().setOnShown(e -> {
+
+                double w = dialog.getDialogPane().getScene().getWindow().getWidth();
+                double h = dialog.getDialogPane().getScene().getWindow().getHeight();
+
+                dialog.setX(((bounds.getMinX() + bounds.getMaxX()) / 2) - (w / 2));
+                dialog.setY(((bounds.getMinY() + bounds.getMaxY()) / 2) - (h / 2));
+
+            });
 
             toReturn.set(dialog.showAndWait().orElse(-1));
 
@@ -636,6 +702,19 @@ public class GUI extends Application {
             }
 
         }
+
+    }
+
+    public static Screen getCurrentScreen() {
+
+        AtomicReference<Screen> screen = new AtomicReference<>();
+
+        GUI.runNow(() -> {
+            GlassRobot robot = com.sun.glass.ui.Application.GetApplication().createRobot();
+            screen.set(Screen.getScreensForRectangle(robot.getMouseX(), robot.getMouseY(), 1, 1).stream().findFirst().orElse(null));
+        });
+
+        return screen.get();
 
     }
 

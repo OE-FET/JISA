@@ -11,6 +11,7 @@ import jisa.visa.connections.Connection;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -224,15 +225,25 @@ public abstract class GPIBDriver implements Driver {
         @Override
         public void setEOIEnabled(boolean set) throws VISAException {
 
-            lib().ibconfig(
-                handle,
-                GPIBNativeInterface.IbcEOT,
-                set ? 1 : 0
-            );
+            lib().ibconfig(handle, GPIBNativeInterface.IbcEOT, set ? 1 : 0);
 
             if (wasError()) {
                 throw new VISAException("Error setting EOI");
             }
+
+        }
+
+        @Override
+        public boolean isEOIEnabled() throws VISAException {
+
+            IntBuffer buffer = IntBuffer.allocate(1);
+            lib().ibask(handle, GPIBNativeInterface.IbcEOT, buffer);
+
+            if (wasError()) {
+                throw new VISAException("Error getting EOI state");
+            }
+
+            return buffer.get(0) == 1;
 
         }
 

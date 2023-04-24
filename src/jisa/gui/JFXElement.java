@@ -1,7 +1,6 @@
 package jisa.gui;
 
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
@@ -14,12 +13,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ToolBar;
 import javafx.scene.image.Image;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import jisa.Util;
 import jisa.control.SRunnable;
 import jisa.enums.Icon;
 
@@ -496,10 +495,13 @@ public class JFXElement implements Element {
      */
     public void show() {
 
-        Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+        Screen      screen = GUI.getCurrentScreen();
+        Rectangle2D bounds = screen.getVisualBounds();
         Stage       stage  = getStage();
 
         if (stage.isMaximized()) {
+            stage.setX(bounds.getMinX());
+            stage.setY(bounds.getMinY());
             GUI.runNow(stage::show);
             return;
         }

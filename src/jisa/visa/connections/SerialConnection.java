@@ -11,6 +11,52 @@ public interface SerialConnection extends Connection {
         setSerialParameters(baud, data, Parity.NONE, Stop.BITS_10, FlowControl.NONE);
     }
 
+    default void setSerialParameters(int baud, int data, Parity parity, int stop, FlowControl... flow) throws VISAException {
+
+        Stop stopBits;
+
+        if (stop == 1) {
+            stopBits = Stop.BITS_10;
+        } else if (stop == 2) {
+            stopBits = Stop.BITS_20;
+        } else if (stop == 10) {
+            stopBits = Stop.BITS_10;
+        } else if (stop == 15) {
+            stopBits = Stop.BITS_15;
+        } else if (stop == 20) {
+            stopBits = Stop.BITS_20;
+        } else {
+            stopBits = Stop.BITS_10;
+        }
+
+        setSerialParameters(baud, data, parity, stopBits, flow);
+
+    }
+
+    default void setSerialParameters(int baud, int data, Parity parity, double stop, FlowControl... flow) throws VISAException {
+
+        Stop stopBits;
+
+        if (stop == 1) {
+            stopBits = Stop.BITS_10;
+        } else if (stop == 1.5) {
+            stopBits = Stop.BITS_15;
+        } else if (stop == 2) {
+            stopBits = Stop.BITS_20;
+        } else if (stop == 10) {
+            stopBits = Stop.BITS_10;
+        } else if (stop == 15) {
+            stopBits = Stop.BITS_15;
+        } else if (stop == 20) {
+            stopBits = Stop.BITS_20;
+        } else {
+            stopBits = Stop.BITS_10;
+        }
+
+        setSerialParameters(baud, data, parity, stopBits, flow);
+
+    }
+
     enum Parity {
 
         NONE(0),
