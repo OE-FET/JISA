@@ -1,6 +1,5 @@
 package jisa.results;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,24 +42,6 @@ public class Row {
      */
     public Set<Column<?>> getColumnSet() {
         return values.keySet();
-    }
-
-    /**
-     * Returns all values contained in this row as an array.
-     *
-     * @return Array of values
-     */
-    public Object[] array() {
-        return values.values().toArray();
-    }
-
-    /**
-     * Returns all values contained in this row as a List.
-     *
-     * @return List of values
-     */
-    public List<Object> list() {
-        return new ArrayList<>(values.values());
     }
 
     /**

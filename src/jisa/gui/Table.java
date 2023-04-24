@@ -9,9 +9,12 @@ import javafx.scene.control.TableView;
 import jisa.results.ResultTable;
 import jisa.results.Row;
 
+import java.util.stream.Collectors;
+
 public class Table extends JFXElement implements Element, Clearable {
 
-    public TableView  table;
+    public  TableView   table;
+    private ResultTable watching = null;
 
     /**
      * Creates an empty table.
@@ -70,7 +73,7 @@ public class Table extends JFXElement implements Element, Clearable {
             final int                                   finalI = i;
             TableColumn<ObservableList<Object>, Object> col    = new TableColumn(list.getColumn(i).getTitle());
             col.setCellValueFactory(param ->
-                    new ReadOnlyObjectWrapper<>(param.getValue().get(finalI))
+                new ReadOnlyObjectWrapper<>(param.getValue().get(finalI))
             );
             GUI.runNow(() -> table.getColumns().add(col));
         }
@@ -78,11 +81,14 @@ public class Table extends JFXElement implements Element, Clearable {
         for (Row row : list) {
 
             GUI.runNow(() -> {
-                table.getItems().add(FXCollections.observableArrayList(row.list()));
+                table.getItems().add(FXCollections.observableArrayList(
+                    list.getColumns().stream().map(row::get).collect(Collectors.toUnmodifiableList())
+                ));
                 table.scrollTo(table.getItems().size() - 1);
             });
         }
 
+        this.watching = list;
 
     }
 
@@ -90,7 +96,9 @@ public class Table extends JFXElement implements Element, Clearable {
 
         Platform.runLater(() -> {
             int index = table.getItems().size();
-            table.getItems().add(FXCollections.observableArrayList(row.list()));
+            table.getItems().add(FXCollections.observableArrayList(
+                watching.getColumns().stream().map(row::get).collect(Collectors.toUnmodifiableList())
+            ));
             table.scrollTo(index);
         });
 
