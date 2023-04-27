@@ -1,7 +1,5 @@
 package jisa.gui;
 
-//import javafx.JavaFx;
-
 import com.sun.glass.ui.GlassRobot;
 import com.sun.javafx.css.StyleManager;
 import javafx.application.Application;
@@ -34,6 +32,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
@@ -51,11 +50,11 @@ public class GUI extends Application {
      * the java library path
      */
     static {
-        Util.sleep(500);
+
         JavaFX.launch();
-        Util.sleep(500);
         Application.setUserAgentStylesheet(Application.STYLESHEET_MODENA);
-        StyleManager.getInstance().addUserAgentStylesheet(GUI.class.getResource("style/breeze.css").toString());
+        StyleManager.getInstance().addUserAgentStylesheet(Objects.requireNonNull(GUI.class.getResource("style/breeze.css")).toString());
+
     }
 
     /**
@@ -101,7 +100,7 @@ public class GUI extends Application {
         grid.setGrowth(true, false);
         grid.setWindowSize(1280, 720);
 
-        if (!grid.showAsConfirmation()) {
+        if (grid.showAsConfirmation()) {
 
             try {
                 return configurator.getConfiguration().get();
