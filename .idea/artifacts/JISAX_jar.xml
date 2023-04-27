@@ -33,10 +33,10 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/usb-api-1.0.2.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/pngj-2.1.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/commons-lang3-3.12.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/lib/slf4j-simple-1.7.36.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/lib/slf4j-api-1.7.36.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/kotlin.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/icu4j-65.1.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/guicedee/services/sl4j/1.0.13.5/sl4j-1.0.13.5.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/guicedee/services/log4j-core/1.0.13.5/log4j-core-1.0.13.5.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

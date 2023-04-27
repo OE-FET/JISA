@@ -38,7 +38,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-public class GUI extends Application {
+public class GUI {
 
     public static final double SPACING = 10.0;
 
@@ -714,11 +714,6 @@ public class GUI extends Application {
         });
 
         return screen.get();
-
-    }
-
-    @Override
-    public void start(Stage primaryStage) throws Exception {
 
     }
 
