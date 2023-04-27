@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="guicedee.services.sl4j" type="repository">
+    <properties maven-id="com.guicedee.services:sl4j:1.0.13.5" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/com/guicedee/services/sl4j/1.0.13.5/sl4j-1.0.13.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/guicedee/services/log4j-core/1.0.13.5/log4j-core-1.0.13.5.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
