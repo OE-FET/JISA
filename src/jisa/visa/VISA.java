@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Static class for accessing the native VISA library in a more Java-friendly way
+ * Static class for accessing VISA-like communication libraries
  */
 public class VISA {
 
@@ -118,7 +118,7 @@ public class VISA {
 
         return loadedDrivers.stream()
                             .flatMap(d -> {
-                                try {return d.search().stream();} catch (Exception e) {return Stream.empty();}
+                                try { return d.search().stream(); } catch (Exception e) { return Stream.empty(); }
                             })
                             .map(a -> a.getJISAString().trim())
                             .distinct().map(Address::parse)
@@ -174,7 +174,7 @@ public class VISA {
 
                 try {
                     connection = d.open(address);
-                    break;                      // If it worked, then let's use it!
+                    break; // If it worked, then let's use it!
                 } catch (VISAException e) {
                     errors.add(String.format("* %s: %s", d.getClass().getSimpleName(), e.getMessage()));
                 }

@@ -19,18 +19,22 @@ public class PIDController {
 
     private final Input<Double>  input;
     private final Output<Double> output;
-    private       double         P = 10;
-    private double         I = 2;
-    private double         D = 0;
-    private double         setPoint;
-    private double         sum;
-    private       double last;
-    private final RTask  control;
+    private       double         P         = 10;
+    private       double         I         = 2;
+    private       double         D         = 0;
+    private       double         setPoint;
+    private       double         sum;
+    private       double         last;
+    private       double         outputMax = Double.POSITIVE_INFINITY;
+    private       double         outputMin = Double.NEGATIVE_INFINITY;
+    private final RTask          control;
 
     public PIDController(int interval, Input<Double> input, Output<Double> output) {
-        INTERVAL = interval;
-        INT_SEC = INTERVAL / 1000D;
-        this.input = input;
+
+
+        INTERVAL    = interval;
+        INT_SEC     = INTERVAL / 1000D;
+        this.input  = input;
         this.output = output;
 
         control = new RTask(INTERVAL, () -> {
@@ -40,14 +44,14 @@ public class PIDController {
             last = error;
             sum += error * INT_SEC;
 
-            output.write(P * error + I * sum + D * diff);
+            output.write(Math.max(outputMin, Math.min(outputMax, P * error + I * sum + D * diff)));
 
         });
 
     }
 
     public void start() {
-        sum = 0;
+        sum  = 0;
         last = 0;
         control.start();
     }
@@ -58,6 +62,22 @@ public class PIDController {
 
     public void setTarget(double value) {
         setPoint = value;
+    }
+
+    public void setOutputMax(double max) {
+        outputMax = max;
+    }
+
+    public double getOutputMax() {
+        return outputMax;
+    }
+
+    public void setOutputMin(double min) {
+        outputMin = min;
+    }
+
+    public double getOutputMin() {
+        return outputMin;
     }
 
     public double getTarget() {

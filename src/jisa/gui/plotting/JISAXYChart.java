@@ -37,10 +37,20 @@ public class JISAXYChart extends XYChart {
     }
 
     public void forceRedraw() {
+
         redrawCanvas();
-        updateNumericAxis(getXAxis(), getDataSetForAxis(getXAxis()));
-        updateNumericAxis(getYAxis(), getDataSetForAxis(getYAxis()));
+
+        Axis xAxis = getXAxis();
+        Axis yAxis = getYAxis();
+
+        updateNumericAxis(xAxis, getDatasets());
+        updateNumericAxis(yAxis, getDatasets());
+
+        xAxis.forceRedraw();
+        yAxis.forceRedraw();
+
         updateLegend(getDatasets(), getRenderers());
+        redrawCanvas();
     }
 
     public void removeTitle() {

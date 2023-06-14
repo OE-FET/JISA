@@ -688,9 +688,20 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     public SVG getSVG(double width, double height) {
 
-        if (chart.getDatasets().filtered(DataSet::isVisible).isEmpty() && !isShowing()) {
-            show();
-            close();
+        if (xAxis.getWidth() == 0 || yAxis.getHeight() == 0) {
+
+            GUI.runNow(() -> {
+
+                xAxis.setWidth(100);
+                yAxis.setHeight(100);
+
+                chart.getCanvas().setWidth(150);
+                chart.getCanvas().setHeight(150);
+
+                chart.forceRedraw();
+
+            });
+
         }
 
         SVGElement main = new SVGElement("g");
@@ -801,11 +812,11 @@ public class Plot extends JFXElement implements Element, Clearable {
         main.add(yLabel);
         main.add(axisBox);
 
-        SVGElement legend = new SVGElement("rect");
+//        SVGElement legend = new SVGElement("rect");
 
-        legend.setStrokeWidth(1.0)
-              .setStrokeColour(Color.BLACK)
-              .setFillColour("none");
+//        legend.setStrokeWidth(1.0)
+//              .setStrokeColour(Color.BLACK)
+//              .setFillColour("none");
 
 
         double legendH = (chart.getDatasets().filtered(DataSet::isVisible).size() * 25) + 5.0;
@@ -818,16 +829,16 @@ public class Plot extends JFXElement implements Element, Clearable {
             legendW = Math.max(legendW, (10.0 * s.getName().length()) + 15.0 + 5 + 3 + 20.0);
         }
 
-        legend.setAttribute("x", legendX)
-              .setAttribute("y", legendY)
-              .setAttribute("width", legendW)
-              .setAttribute("height", legendH);
+//        legend.setAttribute("x", legendX)
+//              .setAttribute("y", legendY)
+//              .setAttribute("width", legendW)
+//              .setAttribute("height", legendH);
 
-        if (chart.isLegendVisible()) {
-            main.add(legend);
-        } else {
-            legendW = 0;
-        }
+//        if (chart.isLegendVisible()) {
+//            main.add(legend);
+//        } else {
+//            legendW = 0;
+//        }
 
         int i = 0;
         for (DataSet set : chart.getDatasets().filtered(DataSet::isVisible)) {

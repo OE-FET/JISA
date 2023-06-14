@@ -110,8 +110,7 @@ public class AgilentE3644A extends VISADevice implements DCPower {
     }
 
     @Override
-    public void setCurrentLimit(double current) throws IOException, DeviceException
-    {
+    public void setCurrentLimit(double current) throws IOException, DeviceException {
         throw new DeviceException("Device not available");
     }
 }

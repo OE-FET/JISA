@@ -31,4 +31,12 @@ public class JISAAxis extends JISADefaultAxis {
 
     }
 
+    public void setWidth(double width) {
+        super.setWidth(width);
+    }
+
+    public void setHeight(double height) {
+        super.setHeight(height);
+    }
+
 }
