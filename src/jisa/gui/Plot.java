@@ -834,11 +834,11 @@ public class Plot extends JFXElement implements Element, Clearable {
 //              .setAttribute("width", legendW)
 //              .setAttribute("height", legendH);
 
-//        if (chart.isLegendVisible()) {
+        if (chart.isLegendVisible()) {
 //            main.add(legend);
-//        } else {
-//            legendW = 0;
-//        }
+        } else {
+            legendW = 0;
+        }
 
         int i = 0;
         for (DataSet set : chart.getDatasets().filtered(DataSet::isVisible)) {
