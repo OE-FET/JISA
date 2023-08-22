@@ -5,7 +5,7 @@
 # JISA - "LabVIEW? Never heard of her."
 `JISA` is a library that I created, here in the Cavendish Laboratory, because I really (really really really) do not like LabVIEW. If you're ever in the mood to be forcibly bored into an early grave, ask me why.
 
-In essence then, the purpose of `JISA` is to act as an alternative (and actually decent) means of creating experimental control systems. It comprises, largely, of three sections:
+In essence then, the purpose of `JISA` is to act as an alternative (and standardised) means of creating experimental control systems. It comprises, largely, of three sections:
 ### 1. Standardised Instrument Control
 
 `JISA` implements standard interfaces for each "type" of instrument, meaning that instruments are easily interchangeable. If we connect to a Keithley 2600 series multi-channel SMU, an Agilent SPA, and a Keithley 2450 single-channel SMU:
