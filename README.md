@@ -134,7 +134,7 @@ grid.addToolbarButton("Start Sweep") { // This code will run when clicked
 // Show the grid in a window
 grid.show()
 ```
-![](https://i.imgur.com/5aO8bGQ.png)
+<p align="center"><img src="https://i.imgur.com/prgm8hO.png"/></p>
 
 
 ## JISA the Polyglot
@@ -271,7 +271,7 @@ fun main() {
 ```
 Resulting in:
 
-![](https://i.imgur.com/Rqs9n3R.png)
+<p align="center"><img src="https://i.imgur.com/9z7Z7fQ.png"/></p>
 
 ## Supported Instruments 
 
