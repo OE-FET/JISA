@@ -2,7 +2,7 @@
 
 <p align="center"><img src="https://i.imgur.com/MUXiBqM.png"/></p>
 
-# JISA - "Because no-one likes LabView"
+# JISA - "LabVIEW? Never heard of her."
 `JISA` is a library that I created, here in the Cavendish Laboratory, because I really (really really really) do not like LabView. Not to mention they named their language "G" as if it's somehow comparable to C. This hubris cannot and will not stand.
 
 In essence then, the purpose of `JISA` is to act as an alternative (and actually decent) means of creating experimental control systems. It comprises, largely, of three sections:
