@@ -1,6 +1,6 @@
 [![](https://img.shields.io/badge/Download-JISA-teal)](https://github.com/OE-FET/JISA/raw/master/JISA.jar)
 
-<p align="center"><img src="https://i.imgur.com/MUXiBqM.png"/></p>
+<p align="center"><img height="200" src="logo.svg"/></p>
 
 # JISA - "LabVIEW? Never heard of her."
 `JISA` is a library that I created, here in the Cavendish Laboratory, because I really (really really really) do not like LabView. Not to mention they named their language "G" as if it's somehow comparable to C. This hubris cannot and will not stand.
