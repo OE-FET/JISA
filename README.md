@@ -325,9 +325,9 @@ sudo apt install openjdk-11-jdk
 
 ### Windows and MacOS X
 
-You can download pre-built OpenJDK packages (with installers) from the Adopt Open JDK website:
+You can download pre-built OpenJDK packages (with installers) from the Adoptium (previously known as "Adopt OpenJDK") website:
 
-[https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=hotspot](https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=hotspot)
+[https://adoptium.net/en-GB/temurin/releases/?version=11&package=jdk&os=any&arch=x64](https://adoptium.net/en-GB/temurin/releases/?version=11&package=jdk&os=any&arch=x64)
 
 ## Using JISA
 
