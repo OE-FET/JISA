@@ -20,9 +20,9 @@ val k2450    = K2450(USBAddress(0x05E6, 0x2450))
 then `JISA` simply represents them as collections of `SMU` objects, or simply as a single `SMU` object in the case of the K2450:
 
 ```kotlin
-// Get first channel from both instruments
-val smu1 = keithley.getChannel(0)
-val smu2 = agilent.getSMUChannel(0)
+// Get first sub-instrument of type SMU from both instruments
+val smu1 = keithley[SMU::class, 0]
+val smu2 = agilent[SMU::class, 0]
 val smu3 = k2450
 ```
 
