@@ -17,12 +17,20 @@ val agilent  = Agilent4155X(GPIBAddress(20))
 val k2450    = K2450(USBAddress(0x05E6, 0x2450))
 ```
 
-then `JISA` simply represents them as collections of `SMU` objects, or simply as a single `SMU` object in the case of the K2450:
+then their individual sub-instruments can be extracted as stand-alone instruments. That is, for the Keithley 2600, its two SMU channels can be extracted as stand-alone `SMU` objects, whereas the Agilent SPA can be treated as a collection of `SMU`, `VMeter`, and `VSource` objects (representing its SMU, VMU, and VSU channels, respectively). `JISA` then allows you to extract sub-instruments, by specifying the class of instrument you want, like so:
 
 ```kotlin
-// Get first sub-instrument of type SMU from both instruments
+// Extract lists of sub-instruments
+val list1 = keithley[SMU::class]    // All channels with SMU capabilities
+val list2 = agilent[SMU::class]     // All channels with SMU capabilities
+val list3 = agilent[VMeter::class]  // All channels with voltmeter capabilities
+val list4 = agilent[VSource::class] // All channels with voltage-sourcing capabilities
+
+// To extract just the first (i.e., index 0) SMU sub-instruments in each
 val smu1 = keithley[SMU::class, 0]
 val smu2 = agilent[SMU::class, 0]
+
+// Keithley 2450 is just an SMU object (no sub-instruments)
 val smu3 = k2450
 ```
 
