@@ -156,8 +156,10 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        SMU         smu     = new K2450(new GPIBAddress(0, 20));
-        ResultTable results = new ResultList("Voltage [V]", "Current [A]");
+        SMU            smu     = new K2450(new GPIBAddress(0, 20));
+        Column<Double> V       = Column.ofDoubles("Voltage", "V");
+        Column<Double> I       = Column.ofDoubles("Current", "A");
+        ResultTable    results = new ResultList(V, I);
 
         smu.setVoltage(0.0);
         smu.turnOn();
@@ -166,7 +168,11 @@ public class Main {
 
             smu.setVoltage(v);
             Util.sleep(500);
-            results.addData(smu.getVoltage(), smu.getCurrent());
+
+            results.addRow(row -> {
+                row.set(V, smu.getVoltage());
+                row.set(I, smu.getCurrent());
+            });
 
         }
 
@@ -182,7 +188,9 @@ public class Main {
 fun main() {
 
     val smu     = K2450(GPIBAddress(0,20))
-    val results = ResultList("Voltage [V]", "Current [A]")
+    val V       = Column.ofDoubles("Voltage", "V")
+    val I       = Column.ofDoubles("Current", "A")
+    val results = ResultList(V, I)
 
     smu.voltage = 0.0
     smu.turnOn()
@@ -191,7 +199,11 @@ fun main() {
     
         smu.voltage = v
         Util.sleep(500)
-        results.addData(smu.voltage, smu.current)
+
+        results.mapRow(
+            V to smu.voltage,
+            I to smu.current
+        )
         
     }
     
@@ -207,20 +219,24 @@ Otherwise, take a look at GraalVM [here](https://www.graalvm.org/).
 
 ```python
 def main():
-    
     smu     = K2450(GPIBAddress(0,20))
-    results = ResultList("Voltage [V]", "Current [A]")
+    V       = Column.ofDoubles("Voltage", "V")
+    I       = Column.ofDoubles("Current", "A")
+    results = ResultList(V, I)
 
     smu.setVoltage(0.0)
     smu.turnOn()
     
     for v in Range.linear(0.0, 60.0, 61):
-    
         smu.setVoltage(v)
         Util.sleep(500)
-        results.addData(smu.getVoltage(), smu.getCurrent())
-    
-    
+
+        results.mapRow({
+            V: smu.getVoltage(),
+            I: smu.getCurrent()
+        })
+
+
     smu.turnOff()
     results.output("data.csv")
 
@@ -232,7 +248,9 @@ main()
 function main()
     
     smu     = jisa.devices.K2450(JISA.Addresses.GPIBAddress(0,20));
-    results = jisa.experiment.ResultList({'Voltage [V]', 'Current [A]'});
+    V       = jisa.results.Column.ofDoubles("Voltage", "V");
+    I       = jisa.results.Column.ofDoubles("Current", "I");
+    results = jisa.results.ResultList({V, I});
 
     smu.setVoltage(0.0);
     smu.turnOn();
@@ -255,7 +273,9 @@ We can then extend this program easily, with only two lines, to display a plot o
 fun main() {
 
     val smu     = K2450(GPIBAddress(0,20))
-    val results = ResultList("Voltage [V]", "Current [A]") 
+    val V       = Column.ofDoubles("Voltage", "V")
+    val I       = Column.ofDoubles("Current", "A")
+    val results = ResultList(V, I)
 
     // Make a plot that watches our results
     val plot = Plot("Results", results)
@@ -266,9 +286,13 @@ fun main() {
 
     for (v in Range.linear(0.0, 60.0, 61)) {
     
-        smu.setVoltage(v)
+        smu.voltage = v
         Util.sleep(500)
-        results.addData(smu.getVoltage(), smu.getCurrent())
+
+        results.mapRow(
+            V to smu.voltage,
+            I to smu.current
+        )
         
     }
     
