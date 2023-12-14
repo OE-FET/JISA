@@ -3,15 +3,30 @@
     <properties maven-id="de.gsi.chart:chartfx-chart:11.2.7" />
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/chartfx-chart-11.2.7.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-base-13.0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-base-13.0.1-win.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-controls-13.0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-controls-13.0.1-win.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-graphics-13.0.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-graphics-13.0.1-win.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/ikonli-javafx-11.5.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/ikonli-core-11.5.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/ikonli-fontawesome-pack-11.5.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/ikonli-fontawesome5-pack-11.5.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/chartfx-dataset-11.2.7.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/fastutil-8.3.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/chartfx-math-11.2.7.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/JTransforms-3.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/JLargeArrays-1.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/commons-math3-3.6.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/controlsfx-11.0.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-media-11.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-media-11-win.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/icu4j-65.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/pngj-2.1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-api-2.0.0-alpha0.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/commons-lang3-3.12.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/annotations-21.0.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
