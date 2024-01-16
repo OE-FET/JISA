@@ -42,7 +42,7 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
             String second_to_last = sample_name.substring(name_len - 2, name_len - 1);
             if (second_to_last.equals("_")) {
                 int cur_num = Integer.parseInt(sample_name.substring(name_len-1)) + 1;
-                scan_params[1] = sample_name.substring(name_len - 3) + cur_num;
+                scan_params[1] = sample_name.substring(0, name_len - 1) + cur_num;
             }
             else {
                 scan_params[1] = scan_params[1] + "_2";
