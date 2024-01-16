@@ -1,5 +1,6 @@
 package jisa.visa;
 
+import com.pretty_tools.dde.DDEException;
 import com.pretty_tools.dde.client.DDEClientConversation;
 import jisa.addresses.Address;
 import jisa.addresses.LXIAddress;
@@ -15,8 +16,12 @@ public class DDEDevice implements Instrument {
 
     private final String                host;
     private final DDEClientConversation convo;
+    private String service;
+    private String topic;
 
-    public DDEDevice(LXIAddress address, String service, String topic, int timeout) throws Exception {
+    public DDEDevice(LXIAddress address, String service_, String topic_, int timeout) throws Exception {
+        service = service_;
+        topic = topic_;
         host  = address.getHost();
         convo = new DDEClientConversation();
         convo.setTimeout(timeout);
@@ -74,6 +79,10 @@ public class DDEDevice implements Instrument {
 
     public String sendRequest(String request) throws Exception {
         return convo.request(request);
+    }
+
+    public void reconnect() throws Exception {
+        convo.connect(service, topic);
     }
 
 
