@@ -39,7 +39,6 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
             String unload = super.sendRequest("UNLOAD_FILE " + save_path + sample_name + ".0");
             System.out.println(unload);
             close();
-            reconnect();
             return takeScan(scan_params);
         }
         else {

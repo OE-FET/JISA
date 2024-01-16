@@ -15,13 +15,9 @@ import java.net.InetAddress;
 public class DDEDevice implements Instrument {
 
     private final String                host;
-    private final DDEClientConversation convo;
-    private String service;
-    private String topic;
+    private DDEClientConversation convo;
 
-    public DDEDevice(LXIAddress address, String service_, String topic_, int timeout) throws Exception {
-        service = service_;
-        topic = topic_;
+    public DDEDevice(LXIAddress address, String service, String topic, int timeout) throws Exception {
         host  = address.getHost();
         convo = new DDEClientConversation();
         convo.setTimeout(timeout);
@@ -82,7 +78,10 @@ public class DDEDevice implements Instrument {
     }
 
     public void reconnect() throws Exception {
-        convo.connect(service, topic);
+        convo = new DDEClientConversation();
+        //Setting timeout to 200 minutes
+        convo.setTimeout(12000000);
+        convo.connect("Opus", "System");
     }
 
 
