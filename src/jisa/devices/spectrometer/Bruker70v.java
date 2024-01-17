@@ -28,7 +28,7 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
         String scan_type = scan_params[4];
 
         String response = super.sendRequest("COMMAND_LINE MeasureSample(0, {EXP='" + exp_file
-                + "', XPP='G:\\\\User XPM files', SNM='" + sample_name
+                + "', XPP='O:\\\\OE-FET\\\\FTIR\\\\User XPM files', SNM='" + sample_name
                 + "', PTH='" + save_path + "', NSS='" + num_scans + "'});");
         String[] split = response.split("\n");
 
@@ -38,7 +38,6 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
             System.out.println(response);
             String unload = super.sendRequest("UNLOAD_FILE " + save_path + sample_name + ".0");
             System.out.println(unload);
-            close();
             return takeScan(scan_params);
         }
         else {
