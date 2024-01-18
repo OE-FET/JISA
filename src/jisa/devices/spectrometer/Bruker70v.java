@@ -9,6 +9,7 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
 
     public Bruker70v(LXIAddress address, int timeout) throws Exception {
         super(address, "Opus", "System", timeout);
+        super.sendRequest("EXECUTE_MODE");
     }
 
     public Bruker70v(Address address) throws Exception {
@@ -28,7 +29,7 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
         String scan_type = scan_params[4];
 
         String response = super.sendRequest("COMMAND_LINE MeasureSample(0, {EXP='" + exp_file
-                + "', XPP='O:\\\\OE-FET\\\\FTIR\\\\User XPM files', SNM='" + sample_name
+                + "', XPP='O:\\\\OE-FET\\FTIR\\User XPM files', SNM='" + sample_name
                 + "', PTH='" + save_path + "', NSS='" + num_scans + "'});");
         String[] split = response.split("\n");
 
