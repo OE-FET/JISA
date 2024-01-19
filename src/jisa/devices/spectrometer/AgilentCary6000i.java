@@ -12,6 +12,11 @@ public class AgilentCary6000i implements Spectrometer {
 
     }
 
+    @Override
+    public void setAccessory(boolean using_accessory) {
+
+    }
+
     public String getDescription() {
         return "Agilent Cary6000i UV-Vis Spectrophotometer";
     }

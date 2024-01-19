@@ -7,6 +7,8 @@ import jisa.visa.DDEDevice;
 
 public class Bruker70v extends DDEDevice implements Spectrometer {
 
+    public boolean using_tm_rf = false;
+
     public Bruker70v(LXIAddress address, int timeout) throws Exception {
         super(address, "Opus", "System", timeout);
     }
@@ -19,7 +21,12 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
         return "Bruker 70v FTIR";
     }
 
-    //String exp_file, String sample_name, String save_path, int num_scans
+    @Override
+    public void setAccessory(boolean using_accessory) {
+        using_tm_rf = using_accessory;
+    }
+
+    //String exp_file, String sample_name, String save_path, int num_scans, String scan_type, int num_fails
     public String takeScan(String[] scan_params) throws Exception {
         String exp_file = scan_params[0];
         String sample_name = scan_params[1];
