@@ -27,6 +27,9 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
         String save_path = scan_params[2];
         String num_scans = scan_params[3];
         String scan_type = scan_params[4];
+        int fail_count = Integer.valueOf(scan_params[5]);
+
+        int fail_limit = 5;
 
         String response = super.sendRequest("COMMAND_LINE MeasureSample(0, {EXP='" + exp_file
                 + "', XPP='O:\\\\OE-FET\\FTIR\\User XPM files', SNM='" + sample_name
@@ -39,7 +42,13 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
             System.out.println(response);
             String unload = super.sendRequest("UNLOAD_FILE " + save_path + sample_name + ".0");
             System.out.println(unload);
-            return takeScan(scan_params);
+            if (fail_count < fail_limit) {
+                scan_params[5] = Integer.toString(fail_count + 1);
+                return takeScan(scan_params);
+            }
+            else {
+                return "Maximum number of scan failures reached.  Skipping scan!";
+            }
         }
         else {
             String response2 = "";
