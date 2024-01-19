@@ -9,7 +9,6 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
 
     public Bruker70v(LXIAddress address, int timeout) throws Exception {
         super(address, "Opus", "System", timeout);
-        super.sendRequest("REQUEST_MODE");
     }
 
     public Bruker70v(Address address) throws Exception {
