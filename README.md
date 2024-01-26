@@ -109,6 +109,8 @@ table.output("data.csv")
 ```
 ### 3. GUI Building Blocks
 ```kotlin
+val smu = K236(SerialAddress("COM3"))
+
 // Create user-input panel
 val params = Fields("Parameters")
 
@@ -117,8 +119,12 @@ val minV = params.addDoubleField("Min V [V]", 0.0)
 val maxV = params.addDoubleField("Max V [V]", 60.0)
 val numV = params.addIntegerField("No. Steps", 61)
 
+val V       = Column.ofDecimals("Voltage", "V")
+val I       = Column.ofDecimals("Current", "A")
+val results = ResultList(V, I)
+
 // Create plot
-val plot = Plot("Results", "Voltage", "Current")
+val plot = Plot("Results", results)
 
 // Add panel and plot to a grid
 val grid = Grid("Main Window", params, plot)
@@ -126,15 +132,14 @@ val grid = Grid("Main Window", params, plot)
 // Add start button to toolbar
 grid.addToolbarButton("Start Sweep") { // This code will run when clicked
 
-    // Makes range starting at minV, ending at maxV in numV steps
-    val voltages = Range.linear(
-        minV.get(),   // Start at
-        maxV.get(),   // End at
-        numV.get()    // No. steps
-    )   
-    
-    for (voltage in voltages) {
-        /*... do measurement here ...*/
+    // Get whatever the current values in the input fields are
+    val start = minV.get()
+    val stop  = maxV.get()
+    val steps = numV.get()
+
+    // Loop over the range they define
+    for (voltage in Range.linear(start, stop, steps)) {
+        /* do measurements etc */
     }
     
 }
