@@ -120,6 +120,11 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
 
         super(address, prefDriver);
 
+        configTCPIP(tcpip -> {
+            setReadTerminator("\n");
+            setWriteTerminator("\n");
+        });
+
         getConnection().setEncoding(StandardCharsets.US_ASCII);
 
         configSerial(serial -> {

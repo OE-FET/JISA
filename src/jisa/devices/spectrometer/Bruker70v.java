@@ -7,6 +7,8 @@ import jisa.visa.DDEDevice;
 
 public class Bruker70v extends DDEDevice implements Spectrometer {
 
+    public boolean using_tm_rf = false;
+
     public Bruker70v(LXIAddress address, int timeout) throws Exception {
         super(address, "Opus", "System", timeout);
     }
@@ -19,16 +21,24 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
         return "Bruker 70v FTIR";
     }
 
-    //String exp_file, String sample_name, String save_path, int num_scans
+    @Override
+    public void setAccessory(boolean using_accessory) {
+        using_tm_rf = using_accessory;
+    }
+
+    //String exp_file, String sample_name, String save_path, int num_scans, String scan_type, int num_fails
     public String takeScan(String[] scan_params) throws Exception {
         String exp_file = scan_params[0];
         String sample_name = scan_params[1];
         String save_path = scan_params[2];
         String num_scans = scan_params[3];
         String scan_type = scan_params[4];
+        int fail_count = Integer.valueOf(scan_params[5]);
+
+        int fail_limit = 5;
 
         String response = super.sendRequest("COMMAND_LINE MeasureSample(0, {EXP='" + exp_file
-                + "', XPP='G:\\\\User XPM files', SNM='" + sample_name
+                + "', XPP='O:\\\\OE-FET\\FTIR\\User XPM files', SNM='" + sample_name
                 + "', PTH='" + save_path + "', NSS='" + num_scans + "'});");
         String[] split = response.split("\n");
 
@@ -38,7 +48,13 @@ public class Bruker70v extends DDEDevice implements Spectrometer {
             System.out.println(response);
             String unload = super.sendRequest("UNLOAD_FILE " + save_path + sample_name + ".0");
             System.out.println(unload);
-            return takeScan(scan_params);
+            if (fail_count < fail_limit) {
+                scan_params[5] = Integer.toString(fail_count + 1);
+                return takeScan(scan_params);
+            }
+            else {
+                return "Maximum number of scan failures reached.  Skipping scan!";
+            }
         }
         else {
             String response2 = "";

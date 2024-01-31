@@ -1,11 +1,11 @@
 [![](https://img.shields.io/badge/Download-JISA-teal)](https://github.com/OE-FET/JISA/raw/master/JISA.jar)
 
-<p align="center"><img src="https://i.imgur.com/MUXiBqM.png"/></p>
+<p align="center"><img height="200" src="logo.svg"/></p>
 
-# JISA - "Because no-one likes LabView"
-`JISA` is a library that I created, here in the Cavendish Laboratory, because I really (really really really) do not like LabView. Not to mention they named their language "G" as if it's somehow comparable to C. This hubris cannot and will not stand.
+# JISA - "LabVIEW? Never heard of her."
+`JISA` is a library that I created, here in the Cavendish Laboratory, because I really (really really really) do not like LabVIEW. If you're ever in the mood to be forcibly bored into an early grave, ask me why.
 
-In essence then, the purpose of `JISA` is to act as an alternative (and actually decent) means of creating experimental control systems. It comprises, largely, of three sections:
+In essence then, the purpose of `JISA` is to act as an alternative (and standardised) means of creating experimental control systems. It comprises, largely, of three sections:
 ### 1. Standardised Instrument Control
 
 `JISA` implements standard interfaces for each "type" of instrument, meaning that instruments are easily interchangeable. If we connect to a Keithley 2600 series multi-channel SMU, an Agilent SPA, and a Keithley 2450 single-channel SMU:
@@ -17,12 +17,20 @@ val agilent  = Agilent4155X(GPIBAddress(20))
 val k2450    = K2450(USBAddress(0x05E6, 0x2450))
 ```
 
-then `JISA` simply represents them as collections of `SMU` objects, or simply as a single `SMU` object in the case of the K2450:
+then their individual sub-instruments can be extracted as stand-alone instruments. That is, for the Keithley 2600, its two SMU channels can be extracted as stand-alone `SMU` objects, whereas the Agilent SPA can be treated as a collection of `SMU`, `VMeter`, and `VSource` objects (representing its SMU, VMU, and VSU channels, respectively). `JISA` then allows you to extract sub-instruments, by specifying the class of instrument you want, like so:
 
 ```kotlin
-// Get first channel from both instruments
-val smu1 = keithley.getChannel(0)
-val smu2 = agilent.getSMUChannel(0)
+// Extract lists of sub-instruments
+val list1 = keithley[SMU::class]    // All channels with SMU capabilities
+val list2 = agilent[SMU::class]     // All channels with SMU capabilities
+val list3 = agilent[VMeter::class]  // All channels with voltmeter capabilities
+val list4 = agilent[VSource::class] // All channels with voltage-sourcing capabilities
+
+// To extract just the first (i.e., index 0) SMU sub-instruments in each
+val smu1 = keithley[SMU::class, 0]
+val smu2 = agilent[SMU::class, 0]
+
+// Keithley 2450 is just an SMU object (no sub-instruments)
 val smu3 = k2450
 ```
 
@@ -101,6 +109,8 @@ table.output("data.csv")
 ```
 ### 3. GUI Building Blocks
 ```kotlin
+val smu = K236(SerialAddress("COM3"))
+
 // Create user-input panel
 val params = Fields("Parameters")
 
@@ -109,8 +119,12 @@ val minV = params.addDoubleField("Min V [V]", 0.0)
 val maxV = params.addDoubleField("Max V [V]", 60.0)
 val numV = params.addIntegerField("No. Steps", 61)
 
+val V       = Column.ofDecimals("Voltage", "V")
+val I       = Column.ofDecimals("Current", "A")
+val results = ResultList(V, I)
+
 // Create plot
-val plot = Plot("Results", "Voltage", "Current")
+val plot = Plot("Results", results)
 
 // Add panel and plot to a grid
 val grid = Grid("Main Window", params, plot)
@@ -118,15 +132,14 @@ val grid = Grid("Main Window", params, plot)
 // Add start button to toolbar
 grid.addToolbarButton("Start Sweep") { // This code will run when clicked
 
-    // Makes range starting at minV, ending at maxV in numV steps
-    val voltages = Range.linear(
-        minV.get(),   // Start at
-        maxV.get(),   // End at
-        numV.get()    // No. steps
-    )   
-    
-    for (voltage in voltages) {
-        /*... do measurement here ...*/
+    // Get whatever the current values in the input fields are
+    val start = minV.get()
+    val stop  = maxV.get()
+    val steps = numV.get()
+
+    // Loop over the range they define
+    for (voltage in Range.linear(start, stop, steps)) {
+        /* do measurements etc */
     }
     
 }
@@ -134,7 +147,7 @@ grid.addToolbarButton("Start Sweep") { // This code will run when clicked
 // Show the grid in a window
 grid.show()
 ```
-![](https://i.imgur.com/5aO8bGQ.png)
+<p align="center"><img src="https://i.imgur.com/prgm8hO.png"/></p>
 
 
 ## JISA the Polyglot
@@ -148,8 +161,10 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        SMU         smu     = new K2450(new GPIBAddress(0, 20));
-        ResultTable results = new ResultList("Voltage [V]", "Current [A]");
+        SMU            smu     = new K2450(new GPIBAddress(0, 20));
+        Column<Double> V       = Column.ofDoubles("Voltage", "V");
+        Column<Double> I       = Column.ofDoubles("Current", "A");
+        ResultTable    results = new ResultList(V, I);
 
         smu.setVoltage(0.0);
         smu.turnOn();
@@ -158,7 +173,11 @@ public class Main {
 
             smu.setVoltage(v);
             Util.sleep(500);
-            results.addData(smu.getVoltage(), smu.getCurrent());
+
+            results.addRow(row -> {
+                row.set(V, smu.getVoltage());
+                row.set(I, smu.getCurrent());
+            });
 
         }
 
@@ -174,7 +193,9 @@ public class Main {
 fun main() {
 
     val smu     = K2450(GPIBAddress(0,20))
-    val results = ResultList("Voltage [V]", "Current [A]")
+    val V       = Column.ofDoubles("Voltage", "V")
+    val I       = Column.ofDoubles("Current", "A")
+    val results = ResultList(V, I)
 
     smu.voltage = 0.0
     smu.turnOn()
@@ -183,7 +204,11 @@ fun main() {
     
         smu.voltage = v
         Util.sleep(500)
-        results.addData(smu.voltage, smu.current)
+
+        results.mapRow(
+            V to smu.voltage,
+            I to smu.current
+        )
         
     }
     
@@ -199,20 +224,24 @@ Otherwise, take a look at GraalVM [here](https://www.graalvm.org/).
 
 ```python
 def main():
-    
     smu     = K2450(GPIBAddress(0,20))
-    results = ResultList("Voltage [V]", "Current [A]")
+    V       = Column.ofDoubles("Voltage", "V")
+    I       = Column.ofDoubles("Current", "A")
+    results = ResultList(V, I)
 
     smu.setVoltage(0.0)
     smu.turnOn()
     
     for v in Range.linear(0.0, 60.0, 61):
-    
         smu.setVoltage(v)
         Util.sleep(500)
-        results.addData(smu.getVoltage(), smu.getCurrent())
-    
-    
+
+        results.mapRow({
+            V: smu.getVoltage(),
+            I: smu.getCurrent()
+        })
+
+
     smu.turnOff()
     results.output("data.csv")
 
@@ -224,7 +253,9 @@ main()
 function main()
     
     smu     = jisa.devices.K2450(JISA.Addresses.GPIBAddress(0,20));
-    results = jisa.experiment.ResultList({'Voltage [V]', 'Current [A]'});
+    V       = jisa.results.Column.ofDoubles("Voltage", "V");
+    I       = jisa.results.Column.ofDoubles("Current", "I");
+    results = jisa.results.ResultList({V, I});
 
     smu.setVoltage(0.0);
     smu.turnOn();
@@ -247,7 +278,9 @@ We can then extend this program easily, with only two lines, to display a plot o
 fun main() {
 
     val smu     = K2450(GPIBAddress(0,20))
-    val results = ResultList("Voltage [V]", "Current [A]") 
+    val V       = Column.ofDoubles("Voltage", "V")
+    val I       = Column.ofDoubles("Current", "A")
+    val results = ResultList(V, I)
 
     // Make a plot that watches our results
     val plot = Plot("Results", results)
@@ -258,9 +291,13 @@ fun main() {
 
     for (v in Range.linear(0.0, 60.0, 61)) {
     
-        smu.setVoltage(v)
+        smu.voltage = v
         Util.sleep(500)
-        results.addData(smu.getVoltage(), smu.getCurrent())
+
+        results.mapRow(
+            V to smu.voltage,
+            I to smu.current
+        )
         
     }
     
@@ -271,7 +308,7 @@ fun main() {
 ```
 Resulting in:
 
-![](https://i.imgur.com/Rqs9n3R.png)
+<p align="center"><img src="https://i.imgur.com/9z7Z7fQ.png"/></p>
 
 ## Supported Instruments 
 
@@ -325,9 +362,9 @@ sudo apt install openjdk-11-jdk
 
 ### Windows and MacOS X
 
-You can download pre-built OpenJDK packages (with installers) from the Adopt Open JDK website:
+You can download pre-built OpenJDK packages (with installers) from the Adoptium (previously known as "Adopt OpenJDK") website:
 
-[https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=hotspot](https://adoptopenjdk.net/?variant=openjdk11&jvmVariant=hotspot)
+[https://adoptium.net/en-GB/temurin/releases/?version=11&package=jdk&os=any&arch=x64](https://adoptium.net/en-GB/temurin/releases/?version=11&package=jdk&os=any&arch=x64)
 
 ## Using JISA
 
