@@ -1,7 +1,7 @@
 package jisa.visa.connections;
 
-import jisa.visa.VISAException;
 import jisa.visa.VISANativeInterface;
+import jisa.visa.exceptions.VISAException;
 
 public interface SerialConnection extends Connection {
 

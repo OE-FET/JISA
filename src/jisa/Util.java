@@ -9,7 +9,7 @@ import javafx.scene.shape.*;
 import jisa.control.ERunnable;
 import jisa.control.SRunnable;
 import jisa.devices.DeviceException;
-import jisa.visa.VISAException;
+import jisa.visa.exceptions.VISAException;
 
 import java.io.IOException;
 import java.io.PrintStream;

@@ -4,8 +4,6 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.ProbeStation;
 import jisa.visa.VISADevice;
-import jisa.visa.connections.Connection;
-import jisa.visa.connections.GPIBConnection;
 import jisa.visa.connections.SerialConnection;
 
 import java.io.IOException;
@@ -22,15 +20,16 @@ public class Pegasus extends VISADevice implements ProbeStation {
 
         super(address);
 
-        Connection connection = getConnection();
+        // GPIB-specific configuration
+        configGPIB(gpib -> gpib.setEOIEnabled(false));
 
-        if (connection instanceof GPIBConnection) {
-            ((GPIBConnection) connection).setEOIEnabled(false);
-        }
-
-        if (connection instanceof SerialConnection) {
-            ((SerialConnection) connection).setSerialParameters(38400, 7, SerialConnection.Parity.EVEN, SerialConnection.Stop.BITS_20);
-        }
+        // Serial-specific configuration
+        configSerial(serial -> serial.setSerialParameters(
+            38400,
+            7,
+            SerialConnection.Parity.EVEN,
+            SerialConnection.Stop.BITS_20
+        ));
 
         setWriteTerminator(TERMINATOR);
         setReadTerminator(TERMINATOR);

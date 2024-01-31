@@ -3,7 +3,7 @@ package jisa.visa.drivers;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
 import com.sun.jna.Platform;
-import jisa.visa.VISAException;
+import jisa.visa.exceptions.VISAException;
 
 public class LinuxGPIBDriver extends GPIBDriver {
 

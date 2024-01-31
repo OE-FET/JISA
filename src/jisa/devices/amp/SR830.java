@@ -4,16 +4,17 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.control.Nameable;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.DPLockIn;
+import jisa.devices.interfaces.DPIPALockIn;
 import jisa.devices.interfaces.LockIn;
-import jisa.enums.*;
+import jisa.enums.Coupling;
+import jisa.enums.Shield;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class SR830 extends VISADevice implements DPLockIn {
+public class SR830 extends VISADevice implements DPIPALockIn {
 
     public static String getDescription() {
         return "Stanford Research Systems SR830";
@@ -66,9 +67,24 @@ public class SR830 extends VISADevice implements DPLockIn {
     private static final int LINE_X2     = 2;
     private static final int LINE_X1_X2  = 3;
 
+    private int currentGain = SOURCE_CURR_LOW_IMP;
+
     public SR830(Address address) throws IOException, DeviceException {
 
         super(address);
+
+        configSerial(serial -> {
+            serial.setSerialParameters(9600, 8);
+            setReadTerminator("\r");
+            setWriteTerminator("\r");
+        });
+
+        configGPIB(gpib -> {
+            setReadTerminator("\n");
+            setWriteTerminator("\n");
+        });
+
+        addAutoRemove("\n", "\r");
 
         manuallyClearReadBuffer();
 
@@ -275,6 +291,38 @@ public class SR830 extends VISADevice implements DPLockIn {
     }
 
     @Override
+    public boolean isDifferentialInput() throws IOException, DeviceException {
+
+        int mode = queryInt(C_QUERY_SOURCE);
+
+        switch (mode) {
+
+            case SOURCE_CURR_LOW_IMP:
+            case SOURCE_CURR_HIGH_IMP:
+            case SOURCE_VOLT_SINGLE:
+                return false;
+
+            case SOURCE_VOLT_DIFF:
+                return true;
+
+        }
+
+        return false;
+
+    }
+
+    @Override
+    public void setDifferentialInput(boolean differential) throws IOException, DeviceException {
+
+        if (isCurrentInput()) {
+            throw new DeviceException("Differential input is disabled for current input.");
+        }
+
+        write(C_SET_SOURCE, differential ? SOURCE_VOLT_DIFF : SOURCE_VOLT_SINGLE);
+
+    }
+
+    @Override
     public List<Integer> getLineFilterHarmonics() throws IOException {
 
         switch (queryInt(C_QUERY_LINE)) {
@@ -446,126 +494,32 @@ public class SR830 extends VISADevice implements DPLockIn {
 
     }
 
-    private void changeSource(Input input, Source source, Impedance mode) throws IOException {
-
-        switch (source) {
-
-            case VOLTAGE:
-
-                switch (input) {
-
-                    case A:
-                    case B:
-                        write(C_SET_SOURCE, SOURCE_VOLT_SINGLE);
-                        break;
-
-                    case DIFF:
-                        write(C_SET_SOURCE, SOURCE_VOLT_DIFF);
-                        break;
-
-                }
-
-                break;
-
-            case CURRENT:
-
-                switch (mode) {
-
-                    case HIGH:
-                        write(C_SET_SOURCE, SOURCE_CURR_HIGH_IMP);
-                        break;
-
-                    case LOW:
-                        write(C_SET_SOURCE, SOURCE_CURR_LOW_IMP);
-                        break;
-
-                }
-
-                break;
-
-        }
-
-    }
-
-    public void setInput(Input input) throws IOException {
-        changeSource(input, getSource(), getImpedanceMode());
-    }
-
-    @Override
-    public Input getInput() throws IOException {
-
-        int value = queryInt(C_QUERY_SOURCE);
-
-        switch (value) {
-
-            case SOURCE_VOLT_SINGLE:
-            case SOURCE_CURR_HIGH_IMP:
-            case SOURCE_CURR_LOW_IMP:
-                return Input.A;
-
-            case SOURCE_VOLT_DIFF:
-                return Input.DIFF;
-
-            default:
-                throw new IOException("Improper response from SR830. How rude!");
-
-        }
-
-    }
-
-    public void setSource(Source source) throws IOException {
-        changeSource(getInput(), source, getImpedanceMode());
-    }
-
-    public Source getSource() throws IOException {
-
-        int mode = queryInt(C_QUERY_SOURCE);
-
-        switch (mode) {
-
-            case SOURCE_VOLT_SINGLE:
-            case SOURCE_VOLT_DIFF:
-                return Source.VOLTAGE;
-
-            case SOURCE_CURR_HIGH_IMP:
-            case SOURCE_CURR_LOW_IMP:
-                return Source.CURRENT;
-
-            default:
-                throw new IOException("Improper response from SR830. How rude!");
-
-        }
-
-    }
-
-    public void setImpedanceMode(Impedance mode) throws IOException {
-        changeSource(getInput(), getSource(), mode);
-    }
-
-    public Impedance getImpedanceMode() throws IOException {
-
-        int mode = queryInt(C_QUERY_SOURCE);
-
-        switch (mode) {
-
-            case SOURCE_VOLT_SINGLE:
-            case SOURCE_VOLT_DIFF:
-            case SOURCE_CURR_HIGH_IMP:
-                return Impedance.HIGH;
-
-            case SOURCE_CURR_LOW_IMP:
-                return Impedance.LOW;
-
-            default:
-                throw new IOException("Improper response from SR830. How rude!");
-
-        }
-
-    }
-
 
     public TimeConst getTimeConst() throws IOException {
         return TimeConst.fromInt(queryInt(C_QUERY_TIME_CONST));
+    }
+
+    @Override
+    public void setCurrentInput(boolean flag) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public boolean isCurrentInput() throws IOException, DeviceException {
+
+        int value = queryInt(C_QUERY_SOURCE);
+        return value == SOURCE_CURR_LOW_IMP || value == SOURCE_CURR_HIGH_IMP;
+
+    }
+
+    @Override
+    public void setCurrentGain(double voltsPerAmp) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public double getCurrentGain() throws IOException, DeviceException {
+        return 0;
     }
 
     public enum RefMode implements Nameable {

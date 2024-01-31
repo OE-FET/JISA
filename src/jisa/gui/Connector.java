@@ -255,6 +255,10 @@ public class Connector<T extends Instrument> extends JFXElement {
                     field = new IntegerField();
                     ((TextField) field).textProperty().addListener(o -> addressParams.put(name, ((IntegerField) field).getIntValue()));
                     ((TextField) field).setText(value.toString());
+                } else if (value instanceof Boolean) {
+                    field = new CheckBox();
+                    ((CheckBox) field).textProperty().addListener(o -> addressParams.put(name, ((CheckBox) field).isSelected()));
+                    ((CheckBox) field).setSelected((Boolean) value);
                 } else if (value.getClass().isEnum()) {
                     field = new ChoiceBox<Object>(FXCollections.observableArrayList(value.getClass().getEnumConstants()));
                     ((ChoiceBox) field).valueProperty().addListener(o -> addressParams.put(name, ((ChoiceBox) field).getValue()));

@@ -1,8 +1,8 @@
 package jisa.visa.drivers;
 
 import jisa.addresses.Address;
-import jisa.visa.VISAException;
 import jisa.visa.connections.Connection;
+import jisa.visa.exceptions.VISAException;
 
 import java.util.List;
 
@@ -26,10 +26,22 @@ public interface Driver {
      *
      * @throws VISAException If it goes wrong
      */
-    List<? extends Address> search() throws VISAException;
+    List<? extends Address> search();
 
+    /**
+     * Checks whether this driver can be used to open a connection to a device with the given address.
+     *
+     * @param address The address to check.
+     *
+     * @return Is it compatible?
+     */
     boolean worksWith(Address address);
 
+    /**
+     * Resets the driver. For instance, for VISA-based drivers this closes the current and opens a new resource manager.
+     *
+     * @throws VISAException If something goes wrong
+     */
     void reset() throws VISAException;
 
 }

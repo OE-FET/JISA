@@ -478,9 +478,6 @@ public class ITC503 extends VISADevice implements TC {
 
     protected synchronized double readChannel(int channel) throws IOException {
 
-        boolean success = false;
-        double  reply   = 0.0;
-
         for (int count = 0; count < 3; count++) {
 
             String response = query(C_READ, channel).trim();

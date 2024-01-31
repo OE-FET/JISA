@@ -2,7 +2,8 @@ package jisa.devices.interfaces;
 
 import jisa.control.Synch;
 import jisa.devices.DeviceException;
-import jisa.enums.*;
+import jisa.enums.Coupling;
+import jisa.enums.Shield;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -23,7 +24,7 @@ public interface LockIn extends Instrument, FMeter {
         List<Parameter<?>> parameters = new LinkedList<>();
 
         parameters.add(new Parameter<>("Reference", RefMode.EXTERNAL, this::setRefMode, RefMode.values()));
-        parameters.add(new Parameter<>("Input", Input.DIFF, this::setInput, Input.values()));
+        parameters.add(new Parameter<>("Differential Input", false, this::setDifferentialInput));
         parameters.add(new Parameter<>("Range", 1.0, this::setRange));
         parameters.add(new Parameter<>("Time Constant", 1.0, this::setTimeConstant));
         parameters.add(new Parameter<>("Coupling", Coupling.AC, this::setCoupling, Coupling.values()));
@@ -248,64 +249,24 @@ public interface LockIn extends Instrument, FMeter {
     void setShielding(Shield mode) throws IOException, DeviceException;
 
     /**
-     * Returns which input is currently being used by the lock-in.
+     * Returns whether the lock-in amplifier is using its differential input mode or not (i.e., A-B or just A).
      *
-     * @return Input: A, B or DIFF (A - B)
+     * @return Differential mode enabled?
      *
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    Input getInput() throws IOException, DeviceException;
+    boolean isDifferentialInput() throws IOException, DeviceException;
 
     /**
-     * Sets which input the lock-in should use.
+     * Sets whether the lock-in amplifier should use its differential input mode or not (i.e., A-B or just A).
      *
-     * @param source Input: A, B or DIFF (A - B)
-     *
-     * @throws IOException     Upon communication error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setInput(Input source) throws IOException, DeviceException;
-
-    /**
-     * Returns which quantity is being used for measurement (voltage or current).
-     *
-     * @return Source.VOLTAGE or Source.CURRENT
+     * @param differential Differential mode enabled?
      *
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    Source getSource() throws IOException, DeviceException;
-
-    /**
-     * Sets which source quantity to be using for measurement (voltage or current).
-     *
-     * @param source Source.VOLTAGE or Source.CURRENT
-     *
-     * @throws IOException     Upon communication error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setSource(Source source) throws IOException, DeviceException;
-
-    /**
-     * Returns whether HIGH or LOW impedance mode is currently in use.
-     *
-     * @return Impedance.HIGH or Impedance.LOW
-     *
-     * @throws IOException     Upon communication error
-     * @throws DeviceException Upon compatibility error
-     */
-    Impedance getImpedanceMode() throws IOException, DeviceException;
-
-    /**
-     * Sets whether to use HIGH or LOW impedance mode for input signals.
-     *
-     * @param mode Impedance.HIGH or Impedance.LOW
-     *
-     * @throws IOException     Upon communication error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setImpedanceMode(Impedance mode) throws IOException, DeviceException;
+    void setDifferentialInput(boolean differential) throws IOException, DeviceException;
 
     /**
      * Returns a list of all harmonics of the powerline frequency being filtered by the lock-in.
@@ -382,11 +343,10 @@ public interface LockIn extends Instrument, FMeter {
      * fits within after any offsetting. Does not return until completed.
      *
      * @param factor Multiplicative factor used to modify the range (i.e. 0.5 would mean the value must fit within half of the range selected)
-     *
      * @param factor
      *
-     * @throws IOException     Upon communication error
-     * @throws DeviceException Upon compatibility error
+     * @throws IOException          Upon communication error
+     * @throws DeviceException      Upon compatibility error
      * @throws InterruptedException Upon interruption error
      */
     void autoRange(double factor, double integrationTime, long waitTime) throws IOException, DeviceException, InterruptedException;
@@ -424,8 +384,8 @@ public interface LockIn extends Instrument, FMeter {
      * @param pctMargin Percentage margin within which to consider amplitude constant
      * @param duration  Minimum duration to be considered stable, in milliseconds
      *
-     * @throws IOException     Upon communication error
-     * @throws DeviceException Upon compatibility error
+     * @throws IOException          Upon communication error
+     * @throws DeviceException      Upon compatibility error
      * @throws InterruptedException Upon interruption error
      */
     default void waitForStableLock(double pctMargin, long duration) throws IOException, DeviceException, InterruptedException {
@@ -443,8 +403,8 @@ public interface LockIn extends Instrument, FMeter {
      * Halts the current thread (ie pauses the program) until the lock-in has a stable lock
      * (ie the locked-on amplitude has not varied by more than 0.1% in 5 seconds).
      *
-     * @throws IOException     Upon communication error
-     * @throws DeviceException Upon compatibility error
+     * @throws IOException          Upon communication error
+     * @throws DeviceException      Upon compatibility error
      * @throws InterruptedException Upon interruption error
      */
     default void waitForStableLock() throws IOException, DeviceException, InterruptedException {

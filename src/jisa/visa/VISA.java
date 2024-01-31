@@ -6,36 +6,42 @@ import jisa.addresses.Address;
 import jisa.addresses.TCPIPAddress;
 import jisa.visa.connections.Connection;
 import jisa.visa.drivers.*;
+import jisa.visa.exceptions.ConnectionFailedException;
+import jisa.visa.exceptions.NoCompatibleDriversException;
+import jisa.visa.exceptions.VISAException;
 
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Static class for accessing VISA-like communication libraries
  */
 public class VISA {
 
+    /**
+     * Functional interface for instantiating driver classes
+     */
     private interface DriverInit {
         Driver create() throws VISAException;
     }
 
-    private final static ArrayList<Driver>  loadedDrivers = new ArrayList<>();
+    private final static List<Driver>       loadedDrivers = new LinkedList<>();
     private final static Map<Class, Driver> lookup;
 
     private final static Map<String, DriverInit> DRIVERS = Util.buildMap(drivers -> {
 
-        drivers.put("RS VISA",    RSVISADriver::new);
-        drivers.put("AG VISA",    AGVISADriver::new);
-        drivers.put("NI VISA",    NIVISADriver::new);
+        drivers.put("RS VISA", RSVISADriver::new);
+        drivers.put("AG VISA", AGVISADriver::new);
+        drivers.put("NI VISA", NIVISADriver::new);
         drivers.put("Linux GPIB", LinuxGPIBDriver::new);
-        drivers.put("NI GPIB",    NIGPIBDriver::new);
-        drivers.put("Serial",     SerialDriver::new);
-        drivers.put("TCP-IP",     TCPIPDriver::new);
+        drivers.put("NI GPIB", NIGPIBDriver::new);
+        drivers.put("Serial", SerialDriver::new);
+        drivers.put("TCP-IP", TCPIPDriver::new);
 
         drivers.put("Experimental USB", () -> {
 
+            // Only use if Linux, no VISA driver loaded, or jisa-usb.enable file exists in home directory
             boolean isLinux   = Platform.isLinux();
             boolean noVISA    = loadedDrivers.stream().noneMatch(d -> d instanceof VISADriver);
             boolean isEnabled = Paths.get(System.getProperty("user.home"), "jisa-usb.enable").toFile().exists();
@@ -55,6 +61,7 @@ public class VISA {
         Locale.setDefault(Locale.US);
         System.out.println("Attempting to load drivers:");
 
+        // Need to know this to align text
         int maxLength = DRIVERS.keySet().stream().mapToInt(String::length).max().orElse(0);
 
         DRIVERS.forEach((name, inst) -> {
@@ -67,9 +74,9 @@ public class VISA {
 
             try {
                 loadedDrivers.add(inst.create());
-                System.out.println(" [Success].");
+                System.out.println(" [Success]");
             } catch (VISAException exception) {
-                System.out.printf(" [Failed] (%s).%n", exception.getMessage());
+                System.out.printf(" [Failed]\t(%s)%n", exception.getMessage());
             }
 
         });
@@ -85,8 +92,12 @@ public class VISA {
     }
 
     public static void init() {
+
     }
 
+    /**
+     * Resets all loaded drivers. This is liable to close all active connections.
+     */
     public static void resetDrivers() {
 
         for (Driver driver : loadedDrivers) {
@@ -101,27 +112,32 @@ public class VISA {
 
     }
 
+    /**
+     * Returns the loaded driver with the specified class. Returns null if no such driver is loaded.
+     *
+     * @param driverClass The class of the driver to return
+     * @param <T>         The class of the driver to return
+     *
+     * @return The matching driver object, or null.
+     */
     public static <T extends Driver> T getDriver(Class<T> driverClass) {
         return (T) lookup.getOrDefault(driverClass, null);
     }
 
     /**
-     * Returns an array of all instrument addressed detected by VISA
+     * Returns a List of all instrument addressed detected by VISA
      *
      * @return List of instrument addresses
-     *
-     * @throws VISAException Upon error with VISA interface
      */
-    public static List<Address> listInstruments() throws VISAException {
-
-        List<Address> addresses = new LinkedList<>();
+    public static List<Address> listInstruments() {
 
         return loadedDrivers.stream()
-                            .flatMap(d -> {
-                                try { return d.search().stream(); } catch (Exception e) { return Stream.empty(); }
-                            })
-                            .map(a -> a.getJISAString().trim())
-                            .distinct().map(Address::parse)
+                            .map(Driver::search)
+                            .flatMap(List::stream)
+                            .map(Address::getJISAString)
+                            .map(String::trim)
+                            .distinct()
+                            .map(Address::parse)
                             .collect(Collectors.toUnmodifiableList());
 
     }
@@ -137,62 +153,46 @@ public class VISA {
      *
      * @return Instrument handle
      *
-     * @throws VISAException Upon error with VISA interface
+     * @throws NoCompatibleDriversException If there are no VISA drivers loaded compatible with the given address
+     * @throws ConnectionFailedException    If no available and compatible drivers were able to open a connection
      */
     public static Connection openInstrument(Address address, Class<? extends Driver> preferredDriver) throws VISAException {
 
-        Connection        connection = null;
-        ArrayList<String> errors     = new ArrayList<>();
-
+        // If a preferred driver has been specified, try that first
         if (preferredDriver != null && lookup.containsKey(preferredDriver)) {
-
-            try {
-                connection = lookup.get(preferredDriver).open(address);
-                return connection;
-            } catch (Exception ignored) {}
-
+            try { return lookup.get(preferredDriver).open(address); } catch (Exception ignored) { }
         }
 
         // Workaround to use internal TCP-IP implementation since there seems to be issues with TCP-IP Sockets and NI-VISA
-        if (address instanceof TCPIPAddress) {
-
-            try {
-                connection = lookup.get(TCPIPDriver.class).open(address);
-                return connection;
-            } catch (Exception ignored) {}
-
+        if (address instanceof TCPIPAddress && lookup.containsKey(TCPIPDriver.class)) {
+            try { return lookup.get(TCPIPDriver.class).open(address); } catch (Exception ignored) { }
         }
 
-        boolean tried = false;
+        // Get a list of all compatible VISA Driver objects
+        List<Driver> compatible = loadedDrivers.stream()
+                                               .filter(driver -> driver.worksWith(address))
+                                               .collect(Collectors.toUnmodifiableList());
+
+        if (compatible.isEmpty()) {
+            throw new NoCompatibleDriversException(address);
+        }
+
+        // Map to record exceptions thrown by different drivers
+        Map<Driver, Exception> errors = new LinkedHashMap<>();
 
         // Try each driver in order
-        for (Driver d : loadedDrivers) {
+        for (Driver driver : compatible) {
 
-            if (d.worksWith(address)) {
-
-                tried = true;
-
-                try {
-                    connection = d.open(address);
-                    break; // If it worked, then let's use it!
-                } catch (VISAException e) {
-                    errors.add(String.format("* %s: %s", d.getClass().getSimpleName(), e.getMessage()));
-                }
-
+            try {
+                return driver.open(address);     // If it worked, then let's use it!
+            } catch (VISAException exception) {
+                errors.put(driver, exception);   // If it didn't, record the error
             }
 
         }
 
-        if (!tried) {
-            throw new VISAException("No drivers available that support connecting to %s", address.toString());
-        }
-
-        // If no drivers worked
-        if (connection == null) {
-            throw new VISAException("Could not open %s using any driver%n%s", address.toString(), String.join("\n", errors));
-        }
-
-        return connection;
+        // If we get here, then nothing worked
+        throw new ConnectionFailedException(address, errors);
 
     }
 

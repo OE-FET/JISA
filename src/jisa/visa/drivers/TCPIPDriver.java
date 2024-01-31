@@ -3,8 +3,8 @@ package jisa.visa.drivers;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.TCPIPAddress;
-import jisa.visa.VISAException;
 import jisa.visa.connections.Connection;
+import jisa.visa.exceptions.VISAException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,7 +41,7 @@ public class TCPIPDriver implements Driver {
     }
 
     @Override
-    public List<Address> search() throws VISAException {
+    public List<Address> search() {
         return Collections.emptyList();
     }
 

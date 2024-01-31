@@ -1,6 +1,6 @@
 package jisa.visa.connections;
 
-import jisa.visa.VISAException;
+import jisa.visa.exceptions.VISAException;
 
 public interface GPIBConnection extends Connection {
 

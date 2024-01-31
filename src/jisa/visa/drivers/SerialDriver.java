@@ -3,9 +3,9 @@ package jisa.visa.drivers;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.SerialAddress;
-import jisa.visa.VISAException;
 import jisa.visa.connections.Connection;
 import jisa.visa.connections.SerialConnection;
+import jisa.visa.exceptions.VISAException;
 import jssc.SerialPort;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
@@ -81,10 +81,6 @@ public class SerialDriver implements Driver {
                 addr.getParity().getValue(),
                 addr.getStopBits().getValue()
             );
-
-        } else {
-
-            connection.setSerialParameters(9600, 8);
 
         }
 
@@ -288,6 +284,7 @@ public class SerialDriver implements Driver {
             try {
 
                 if (!baudOverride) {
+                    System.out.printf("Baud: %d, Data: %d, Stop: %d, Parity: %d%n", baud, data, stopBits, parity.toInt());
                     port.setParams(baud, data, stopBits, parity.toInt());
                 }
 

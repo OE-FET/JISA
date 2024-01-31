@@ -6,8 +6,8 @@ import com.sun.jna.Pointer;
 import jisa.addresses.Address;
 import jisa.addresses.GPIBAddress;
 import jisa.visa.NativeString;
-import jisa.visa.VISAException;
 import jisa.visa.connections.Connection;
+import jisa.visa.exceptions.*;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -97,7 +97,7 @@ public abstract class GPIBDriver implements Driver {
 
     protected abstract GPIBNativeInterface lib();
 
-    protected boolean wasError() {
+    protected boolean errorOccurred() {
         return (getIBSTA() & GPIBNativeInterface.ERR) != 0;
     }
 
@@ -129,23 +129,58 @@ public abstract class GPIBDriver implements Driver {
     public Connection open(Address address) throws VISAException {
 
         if (!(address instanceof GPIBAddress)) {
-            throw new VISAException("Can only open GPIB devices using GPIB driver!");
+            throw new IncompatibleAddressException(address, this);
         }
 
         GPIBAddress addr = (GPIBAddress) address;
 
         lib().SendIFC(addr.getBoardNumber());
 
-        int ud = lib().ibdev(Math.max(0, addr.getBoardNumber()), addr.getPrimaryAddress(), Math.max(0, addr.getSecondaryAddress()), GPIBNativeInterface.T3s, 1, 0);
+        int ud = lib().ibdev(
+            Math.max(0, addr.getBoardNumber()),
+            addr.getPrimaryAddress(),
+            Math.max(0, addr.getSecondaryAddress()),
+            GPIBNativeInterface.T3s,
+            1,
+            0
+        );
 
-        if (wasError()) {
-            throw new VISAException("Could not open %s using GPIB.", addr.getJISAString());
+        if (errorOccurred()) {
+
+            switch (getIBERR()) {
+
+                case GPIBNativeInterface.EARG:
+                    throw new InvalidAddressException(address, this);
+
+                case GPIBNativeInterface.EBUS:
+                    throw new NoDeviceException(address, this);
+
+                case GPIBNativeInterface.ECIC:
+                    throw new DriverSpecificException(this, "The access board is not the controller-in-charge.");
+
+                case GPIBNativeInterface.EDVR:
+                    throw new DriverSpecificException(this, "The GPIB driver is not installed or configured correctly.");
+
+                case GPIBNativeInterface.ELCK:
+                    throw new DeviceLockedException(address, this);
+
+                case GPIBNativeInterface.ENEB:
+                    throw new DriverSpecificException(this, "The GPIB board is not installed or configured correctly.");
+
+                case GPIBNativeInterface.EOIP:
+                    throw new DriverSpecificException(this, "Asynchronous I/O is currently in progress.");
+
+                default:
+                    throw new DriverSpecificException(this, String.format("Unknown Error (%d).", getIBERR()));
+
+            }
+
         }
 
         lib().EnableRemote(addr.getBoardNumber(), new short[]{(short) addr.getPrimaryAddress(), -1});
 
-        if (wasError()) {
-            throw new VISAException("Error putting %s into remote mode using GPIB.", addr.toString());
+        if (errorOccurred()) {
+            throw new DriverSpecificException(this, String.format("Error putting %s into remote mode using GPIB.", addr.toString()));
         }
 
         return new GPIBConnection(ud);
@@ -174,7 +209,7 @@ public abstract class GPIBDriver implements Driver {
 
             lib().ibclr(handle);
 
-            if (wasError()) {
+            if (errorOccurred()) {
                 throw new VISAException("Error clearing GPIB device.");
             }
 
@@ -201,7 +236,7 @@ public abstract class GPIBDriver implements Driver {
                 toWrite.length()
             );
 
-            if (wasError()) {
+            if (errorOccurred()) {
                 throw new VISAException("Could not write to instrument.");
             }
 
@@ -214,7 +249,7 @@ public abstract class GPIBDriver implements Driver {
 
             lib().ibrd(handle, ptr, bufferSize);
 
-            if (wasError()) {
+            if (errorOccurred()) {
                 throw new VISAException("Error reading from instrument.");
             }
 
@@ -227,7 +262,7 @@ public abstract class GPIBDriver implements Driver {
 
             lib().ibconfig(handle, GPIBNativeInterface.IbcEOT, set ? 1 : 0);
 
-            if (wasError()) {
+            if (errorOccurred()) {
                 throw new VISAException("Error setting EOI");
             }
 
@@ -239,7 +274,7 @@ public abstract class GPIBDriver implements Driver {
             IntBuffer buffer = IntBuffer.allocate(1);
             lib().ibask(handle, GPIBNativeInterface.IbcEOT, buffer);
 
-            if (wasError()) {
+            if (errorOccurred()) {
                 throw new VISAException("Error getting EOI state");
             }
 
@@ -256,7 +291,7 @@ public abstract class GPIBDriver implements Driver {
                 (int) character
             );
 
-            if (wasError()) {
+            if (errorOccurred()) {
 
                 lib().ibeos(handle, ((int) character));
 
@@ -266,7 +301,7 @@ public abstract class GPIBDriver implements Driver {
                     (int) character
                 );
 
-                if (wasError()) {
+                if (errorOccurred()) {
                     throw new VISAException("Error setting read terminator...");
                 }
 
@@ -283,7 +318,7 @@ public abstract class GPIBDriver implements Driver {
                 TMO.fromMSec(duration).getCode()
             );
 
-            if (wasError()) {
+            if (errorOccurred()) {
                 throw new VISAException("Error setting TMO");
             }
 
@@ -294,7 +329,7 @@ public abstract class GPIBDriver implements Driver {
 
             lib().ibonl(handle, 0);
 
-            if (wasError()) {
+            if (errorOccurred()) {
                 throw new VISAException("Could not close instrument.");
             }
 
@@ -340,7 +375,7 @@ public abstract class GPIBDriver implements Driver {
 
         lib().FindLstn(board, addrList, buffer, 31);
 
-        if (wasError()) {
+        if (errorOccurred()) {
             throw new VISAException("Could not search for listeners");
         }
 

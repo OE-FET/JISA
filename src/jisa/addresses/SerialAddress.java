@@ -31,7 +31,7 @@ public class SerialAddress implements Address {
     }
 
     public SerialAddress(int asrlNum) {
-        this(null, asrlNum);
+        this("", asrlNum);
     }
 
     public SerialAddress(Map<String, Object> parameters) {

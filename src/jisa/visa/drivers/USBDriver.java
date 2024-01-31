@@ -5,22 +5,19 @@ import jisa.addresses.Address;
 import jisa.addresses.USBAddress;
 import jisa.addresses.USBRawAddress;
 import jisa.addresses.USBTMCAddress;
-import jisa.visa.VISAException;
 import jisa.visa.connections.Connection;
-import org.python.google.common.io.ByteStreams;
+import jisa.visa.exceptions.VISAException;
 import org.usb4java.*;
 
-import javax.usb.util.UsbUtil;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class USBDriver implements Driver {
 
@@ -235,9 +232,14 @@ public class USBDriver implements Driver {
     }
 
     @Override
-    public List<Address> search() throws VISAException {
+    public List<Address> search() {
 
-        initialise();
+        try {
+            initialise();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Collections.emptyList();
+        }
 
         DeviceList    list      = new DeviceList();
         List<Address> addresses = new LinkedList<>();

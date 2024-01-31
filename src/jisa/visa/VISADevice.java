@@ -6,6 +6,7 @@ import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
 import jisa.visa.connections.*;
 import jisa.visa.drivers.Driver;
+import jisa.visa.exceptions.VISAException;
 import kotlin.jvm.JvmClassMappingKt;
 import kotlin.reflect.KClass;
 

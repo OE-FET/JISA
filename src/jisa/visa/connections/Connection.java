@@ -1,6 +1,6 @@
 package jisa.visa.connections;
 
-import jisa.visa.VISAException;
+import jisa.visa.exceptions.VISAException;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;

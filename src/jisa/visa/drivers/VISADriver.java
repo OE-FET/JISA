@@ -6,9 +6,9 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.NativeLongByReference;
 import jisa.Util;
 import jisa.addresses.*;
-import jisa.visa.VISAException;
 import jisa.visa.VISANativeInterface;
 import jisa.visa.connections.*;
+import jisa.visa.exceptions.VISAException;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -21,6 +21,9 @@ import java.util.List;
 
 import static jisa.visa.VISANativeInterface.*;
 
+/**
+ * Abstract representation for VISA-library based drivers.
+ */
 public abstract class VISADriver implements Driver {
 
     protected static final long          VISA_ERROR    = 0x7FFFFFFF;
@@ -34,6 +37,14 @@ public abstract class VISADriver implements Driver {
 
     private NativeLong resourceManager;
 
+    /**
+     * Wraps a Java String in a ByteBuffer using the specified character encoding.
+     *
+     * @param source  String to wrap
+     * @param charset Character encoding to use
+     *
+     * @return ByteBuffer containing the byte representation of the provided String.
+     */
     protected static ByteBuffer stringToByteBuffer(String source, Charset charset) {
         return ByteBuffer.wrap(source.getBytes(charset));
     }
@@ -41,7 +52,7 @@ public abstract class VISADriver implements Driver {
     protected static ByteBuffer stringToByteBuffer(String source) {
         return stringToByteBuffer(source, StandardCharsets.UTF_8);
     }
-    
+
     @Override
     public void reset() throws VISAException {
         newRM();
@@ -96,30 +107,31 @@ public abstract class VISADriver implements Driver {
     @Override
     public synchronized Connection open(Address address) throws VISAException {
 
-        NativeLongByReference pViInstrument = new NativeLongByReference();
-        ByteBuffer            pViString     = stringToByteBuffer(address.getVISAString());
+        NativeLongByReference instrument    = new NativeLongByReference();
+        ByteBuffer            addressString = stringToByteBuffer(address.getVISAString());
 
         NativeLong status = lib().viOpen(
             rm(),
-            pViString,         // byte buffer for instrument string
+            addressString,     // byte buffer for instrument string
             new NativeLong(0), // access mode (locking or not). 0:Use Visa default
             new NativeLong(0), // timeout, only when access mode equals locking
-            pViInstrument      // pointer to instrument object
+            instrument         // pointer to instrument object
         );
 
         if (status.longValue() == VI_SUCCESS) {
 
             if (address instanceof SerialAddress) {
 
-                VISASerialConnection connection = new VISASerialConnection(pViInstrument.getValue());
+                SerialAddress        serialAddress = (SerialAddress) address;
+                VISASerialConnection connection    = new VISASerialConnection(instrument.getValue());
 
-                if (((SerialAddress) address).hasParametersSpecified()) {
+                if (serialAddress.hasParametersSpecified()) {
 
                     connection.overrideSerialParameters(
-                        ((SerialAddress) address).getBaudRate().getValue(),
-                        ((SerialAddress) address).getDataBits().getValue(),
-                        ((SerialAddress) address).getParity().getValue(),
-                        ((SerialAddress) address).getStopBits().getValue()
+                        serialAddress.getBaudRate().getValue(),
+                        serialAddress.getDataBits().getValue(),
+                        serialAddress.getParity().getValue(),
+                        serialAddress.getStopBits().getValue()
                     );
 
                 } else {
@@ -132,23 +144,23 @@ public abstract class VISADriver implements Driver {
 
             } else if (address instanceof GPIBAddress) {
 
-                return new VISAGPIBConnection(pViInstrument.getValue());
+                return new VISAGPIBConnection(instrument.getValue());
 
             } else if (address instanceof TCPIPAddress) {
 
-                return new VISATCPIPConnection(pViInstrument.getValue());
+                return new VISATCPIPConnection(instrument.getValue());
 
             } else if (address instanceof LXIAddress) {
 
-                return new VISALXIConnection(pViInstrument.getValue());
+                return new VISALXIConnection(instrument.getValue());
 
             } else if (address instanceof USBAddress) {
 
-                return new VISAUSBConnection(pViInstrument.getValue());
+                return new VISAUSBConnection(instrument.getValue());
 
             } else {
 
-                return new VISAConnection(pViInstrument.getValue());
+                return new VISAConnection(instrument.getValue());
 
             }
 
@@ -169,7 +181,7 @@ public abstract class VISADriver implements Driver {
                     throw new VISAException("Resource busy at \"%s\".", address.toString());
 
                 case VI_ERROR_TMO:
-                    throw new VISAException("Open operation timed out.");
+                    throw new VISAException("Open operation timed out for \"%s\".", address.toString());
 
                 default:
                     throw new VISAException("Error trying to open instrument connection (0x%08X).", status.intValue());
@@ -184,7 +196,7 @@ public abstract class VISADriver implements Driver {
         return !(address instanceof IDAddress || address instanceof ModbusAddress);
     }
 
-    public synchronized List<Address> search() throws VISAException {
+    public synchronized List<Address> search() {
 
         // VISA RegEx for "Anything" (should be .* but they seem to use their own standard)
         ByteBuffer            expr       = stringToByteBuffer("?*");
@@ -208,7 +220,7 @@ public abstract class VISADriver implements Driver {
 
         if (status.longValue() != VI_SUCCESS) {
             lib().viClose(listHandle.getValue());
-            throw new VISAException("Error searching for devices (0x%08X).", status.intValue());
+            return Collections.emptyList();
         }
 
         int                count     = listCount.getValue().intValue();
@@ -221,7 +233,7 @@ public abstract class VISADriver implements Driver {
             try {
                 address = new String(desc.array(), ENCODING);
             } catch (UnsupportedEncodingException e) {
-                throw new VISAException("Unable to encode address!");
+                continue;
             }
 
             Address strAddress = Address.parse(address);

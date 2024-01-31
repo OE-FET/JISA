@@ -12,9 +12,6 @@ import jisa.visa.VISADevice;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Semaphore;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

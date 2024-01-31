@@ -13,7 +13,7 @@ public interface MultiInstrument {
      *
      * @return List of sub-instruments
      */
-    List<Instrument> getSubInstruments();
+    List<? extends Instrument> getSubInstruments();
 
     /**
      * Returns a list of the classes of sub-instruments this instrument contains.

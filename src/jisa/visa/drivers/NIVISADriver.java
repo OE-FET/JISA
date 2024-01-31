@@ -2,8 +2,8 @@ package jisa.visa.drivers;
 
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
-import jisa.visa.VISAException;
 import jisa.visa.VISANativeInterface;
+import jisa.visa.exceptions.VISAException;
 
 public class NIVISADriver extends VISADriver {
 
