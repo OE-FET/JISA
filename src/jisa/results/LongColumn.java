@@ -27,4 +27,5 @@ public class LongColumn extends Column<Long> {
     public Long parse(String string) {
         return Long.parseLong(string);
     }
+
 }

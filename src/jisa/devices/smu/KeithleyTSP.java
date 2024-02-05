@@ -5,6 +5,7 @@ import jisa.control.*;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MCSMU;
 import jisa.devices.interfaces.SMU;
+import jisa.devices.interfaces.SubInstrument;
 import jisa.enums.AMode;
 import jisa.enums.Source;
 import jisa.enums.TType;
@@ -14,11 +15,7 @@ import jisa.visa.drivers.TCPIPDriver;
 
 import java.io.IOException;
 
-public abstract class KeithleyTSP extends VISADevice implements MCSMU {
-
-    public static String getDescription() {
-        return "Keithley 2600B Series";
-    }
+public abstract class KeithleyTSP extends VISADevice {
 
     private static final String   C_QUERY_VOLT               = "print(%s.measure.v())";
     private static final String   C_QUERY_CURR               = "print(%s.measure.i())";
@@ -120,7 +117,7 @@ public abstract class KeithleyTSP extends VISADevice implements MCSMU {
     /**
      * Subclass to represent each channel of the K2600B SMU
      */
-    public class KSMU implements SMU {
+    public class KSMU implements SMU, SubInstrument {
 
         private final String     channel;
         private       AMode      avMode        = AMode.NONE;

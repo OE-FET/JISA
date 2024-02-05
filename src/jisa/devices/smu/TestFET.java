@@ -38,6 +38,26 @@ public class TestFET implements MCSMU {
     public static final int CHANNEL_SD = 0;
     public static final int CHANNEL_SG = 1;
 
+    @Override
+    public String getIDN() throws IOException, DeviceException {
+        return "Test FET";
+    }
+
+    @Override
+    public String getName() {
+        return "Test FET";
+    }
+
+    @Override
+    public void close() throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public Address getAddress() {
+        return null;
+    }
+
     public class SMU implements jisa.devices.interfaces.SMU {
 
         private final int channel;

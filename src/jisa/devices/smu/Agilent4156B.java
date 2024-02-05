@@ -15,6 +15,10 @@ import java.util.List;
 
 public class Agilent4156B extends AgilentSPA {
 
+    public static String getDescription() {
+        return "Agilent 4156B SPA";
+    }
+
     /* All possible SMUs, VMUs, and VSUs */
     public final ASMU SMU1  = new ASMU("SMU 1", 1, SMUVoltageRanges.values(), SMUCurrentRanges.values());
     public final ASMU SMU2  = new ASMU("SMU 2", 2, SMUVoltageRanges.values(), SMUCurrentRanges.values());

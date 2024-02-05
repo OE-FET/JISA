@@ -569,7 +569,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
             try {
 
-                if (!file.get().trim().equals("")) {
+                if (!file.get().trim().isBlank()) {
 
                     switch (format.get()) {
 
@@ -713,6 +713,16 @@ public class Plot extends JFXElement implements Element, Clearable {
         double aStartY = height + 65.0;
         double aEndX   = 100.0 + width;
         double aEndY   = 65.0;
+
+        SVGElement background = new SVGElement("rect");
+
+        background.setAttribute("x", 0)
+                  .setAttribute("y", 0)
+                  .setAttribute("width", "100%")
+                  .setAttribute("height", "100%")
+                  .setFillColour("white");
+
+        main.add(background);
 
         SVGElement axisBox = new SVGElement("rect");
 

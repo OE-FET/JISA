@@ -4,11 +4,11 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/chartfx-chart-11.2.7.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/javafx-base-13.0.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/javafx-base-13.0.1-win.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-base-13.0.1-linux.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/javafx-controls-13.0.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/javafx-controls-13.0.1-win.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-controls-13.0.1-linux.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/javafx-graphics-13.0.1.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/javafx-graphics-13.0.1-win.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-graphics-13.0.1-linux.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/ikonli-javafx-11.5.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/ikonli-core-11.5.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/ikonli-fontawesome-pack-11.5.0.jar!/" />
@@ -21,7 +21,7 @@
       <root url="jar://$PROJECT_DIR$/lib/commons-math3-3.6.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/controlsfx-11.0.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/javafx-media-11.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/javafx-media-11-win.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javafx-media-11-linux.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/icu4j-65.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/pngj-2.1.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/slf4j-api-2.0.0-alpha0.jar!/" />

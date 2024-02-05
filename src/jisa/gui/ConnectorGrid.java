@@ -13,17 +13,23 @@ import java.util.stream.Collectors;
 
 public class ConnectorGrid extends Grid {
 
-    private final List<Connector<?>>                       connectors   = new LinkedList<>();
-    private final ListDisplay<Class<? extends Instrument>> typeSelector = new ListDisplay<>("Add Connection");
+    private final List<Class<? extends Instrument>>        interfaces;
+    private final List<Connector<?>>                       connectors       = new LinkedList<>();
+    private final ListDisplay<Class<? extends Instrument>> typeSelector     = new ListDisplay<>("Instrument Types");
+    private final Fields                                   searchBox        = new Fields("Search");
+    private final Field<String>                            search           = searchBox.addTextField("Search", "");
+    private final Grid                                     typeSelectorGrid = new Grid("Add Connection", 1, searchBox, typeSelector);
 
     public ConnectorGrid(String title, int numCols) {
 
         super(title, numCols);
         setGrowth(true, false);
 
+        search.setOnChange(this::updateList);
+
         Button button = addToolbarButton("Add...", () -> {
 
-            if (typeSelector.showAsConfirmation()) {
+            if (typeSelectorGrid.showAsConfirmation()) {
 
                 String[] input = GUI.inputWindow("Add Connection", "Add Connection", "Please enter a name for the new connection.", "Name");
 
@@ -39,31 +45,47 @@ public class ConnectorGrid extends Grid {
 
         });
 
-        Image image = Util.invertImage(new Image(GUI.class.getResource("images/connection.png").toString()));
-
-        (new Reflections("jisa.devices"))
+        interfaces = (new Reflections("jisa.devices"))
             .getSubTypesOf(Instrument.class).stream()
             .filter(Class::isInterface)
             .sorted(Comparator.comparing(Class::getSimpleName))
-            .forEach(c -> {
-                String name;
-                String subtitle;
-                try {
-                    name     = (String) c.getMethod("getDescription").invoke(null);
-                    subtitle = c.getSimpleName();
-                } catch (Exception e) {
-                    name     = c.getSimpleName();
-                    subtitle = "No description found";
-                }
+            .collect(Collectors.toUnmodifiableList());
 
-                typeSelector.add(c, name, subtitle, image);
-
-            });
 
         addToolbarButton("Connect All", () -> {
             Element list = connectAllWithList();
             Util.sleep(1000);
             list.close();
+        });
+
+        updateList();
+
+    }
+
+    protected void updateList() {
+
+        String term = search.get().toUpperCase().trim();
+
+        Image image = Util.invertImage(new Image(GUI.class.getResource("images/connection.png").toString()));
+
+        typeSelector.clear();
+
+        interfaces.forEach(c -> {
+
+            String name;
+            String subtitle;
+            try {
+                name     = (String) c.getMethod("getDescription").invoke(null);
+                subtitle = c.getSimpleName();
+            } catch (Exception e) {
+                name     = c.getSimpleName();
+                subtitle = "No description found";
+            }
+
+            if (name.toUpperCase().contains(term) || subtitle.toUpperCase().contains(term)) {
+                typeSelector.add(c, name, subtitle, image);
+            }
+
         });
 
     }

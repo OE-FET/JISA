@@ -124,31 +124,39 @@ public class JFXElement implements Element {
 
     protected JFXElement(String title, Icon icon, URL resource) {
 
-        // Make sure the GUI thread has started
-        GUI.touch();
-        this.title.set(title);
-
-        // Create a loader for our FXML file
-        FXMLLoader loader = new FXMLLoader(resource);
-
-        // Tell the loader to link the FXML file to this object
-        loader.setController(this);
-
-        borderPane = new BorderPane();
-        scene      = new Scene(borderPane);
-        scene.setFill(Colour.string("#f4f4f4"));
-        borderPane.setBackground(Background.EMPTY);
-
         try {
-            borderPane.setCenter(loader.load());
-        } catch (IOException ignored) {
-            ignored.printStackTrace();
+
+            // Make sure the GUI thread has started
+            GUI.touch();
+            this.title.set(title);
+
+            // Create a loader for our FXML file
+            FXMLLoader loader = new FXMLLoader(resource);
+
+            // Tell the loader to link the FXML file to this object
+            loader.setController(this);
+
+            borderPane = new BorderPane();
+            scene      = new Scene(borderPane);
+            scene.setFill(Colour.string("#f4f4f4"));
+            borderPane.setBackground(Background.EMPTY);
+
+            try {
+                borderPane.setCenter(loader.load());
+            } catch (IOException ignored) {
+                ignored.printStackTrace();
+            }
+
+            toolBar   = new ToolBar();
+            buttonBar = new ButtonBar();
+
+            setUpBars();
+
+        } catch (Throwable e) {
+            e.printStackTrace();
+            throw e;
         }
 
-        toolBar   = new ToolBar();
-        buttonBar = new ButtonBar();
-
-        setUpBars();
     }
 
     private void setUpBars() {

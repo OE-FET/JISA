@@ -84,7 +84,7 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
     protected abstract boolean confirmIdentity();
 
-    public class ASMU implements SMU {
+    public class ASMU implements SMU, SubInstrument {
 
         private final String     name;
         private final int        channel;
@@ -224,12 +224,12 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
         @Override
         public double getSetCurrent() throws DeviceException, IOException {
-            return 0;
+            return queryDouble("DI? %d", channel);
         }
 
         @Override
         public double getSetVoltage() throws DeviceException, IOException {
-            return 0;
+            return queryDouble("DV? %d", channel);
         }
 
         @Override
@@ -782,7 +782,7 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
     }
 
-    public class AVMU implements VMeter {
+    public class AVMU implements VMeter, SubInstrument {
 
         private final String     name;
         private final int        channel;
@@ -1008,7 +1008,7 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
         }
     }
 
-    public class AVSU implements VSource {
+    public class AVSU implements VSource, SubInstrument {
 
         private final String      name;
         private final int         channel;
@@ -1120,7 +1120,7 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
     }
 
-    public class GNDU implements Switch {
+    public class GNDU implements Switch, SubInstrument {
 
         private final String  name;
         private final int     channel;
@@ -1168,9 +1168,10 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
         public boolean isOn() throws IOException, DeviceException {
             return state;
         }
+
     }
 
-    protected interface Range {
+    public interface Range {
 
         Range AUTO_RANGING = new Range() {
 

@@ -23,11 +23,6 @@ public abstract class K26Single extends KeithleyTSP implements SMU {
         super(address, model);
     }
 
-    @Override
-    public List<SMU> getSMUChannels() {
-        return channels;
-    }
-
     public void waitForStableCurrent(double pctMargin, int interval, int duration) throws IOException, DeviceException, InterruptedException {
         SMU_A.waitForStableCurrent(pctMargin, interval, duration);
     }

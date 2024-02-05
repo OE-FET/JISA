@@ -7,6 +7,10 @@ import java.io.IOException;
 
 public class K2614B extends K26Dual {
 
+    public static String getDescription() {
+        return "Keithley 2614B Dual-Channel SMU";
+    }
+
     public K2614B(Address address) throws IOException, DeviceException {
         super(address, "MODEL 2614B");
     }

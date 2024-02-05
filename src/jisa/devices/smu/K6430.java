@@ -11,7 +11,7 @@ import java.io.IOException;
 public class K6430 extends KeithleySCPI {
 
     public static String getDescription() {
-        return "Keithley 6430";
+        return "Keithley 6430 SMU";
     }
 
     public K6430(Address address) throws IOException, DeviceException {

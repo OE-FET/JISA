@@ -172,7 +172,11 @@ public class ListDisplay<T> extends JFXElement implements Iterable<ListDisplay.I
 
         void setTitle(String title);
 
+        String getTitle();
+
         void setSubTitle(String subTitle);
+
+        String getSubTitle();
 
     }
 
@@ -290,8 +294,18 @@ public class ListDisplay<T> extends JFXElement implements Iterable<ListDisplay.I
             GUI.runNow(() -> this.title.setText(title));
         }
 
+        @Override
+        public String getTitle() {
+            return this.title.getText();
+        }
+
         public void setSubTitle(String subTitle) {
             GUI.runNow(() -> this.subTitle.setText(subTitle));
+        }
+
+        @Override
+        public String getSubTitle() {
+            return this.subTitle.getText();
         }
 
         protected void triggerOnSelected() {

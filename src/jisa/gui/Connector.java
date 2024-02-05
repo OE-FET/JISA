@@ -17,6 +17,8 @@ import jisa.control.ConfigBlock;
 import jisa.control.Connection;
 import jisa.control.SRunnable;
 import jisa.devices.interfaces.Instrument;
+import jisa.devices.interfaces.SubInstrument;
+import jisa.visa.VISADevice;
 import kotlin.reflect.KClass;
 import org.reflections.Reflections;
 
@@ -89,9 +91,8 @@ public class Connector<T extends Instrument> extends JFXElement {
             !(
                 Modifier.isAbstract(driver.getModifiers())
                     || Modifier.isInterface(driver.getModifiers())
+                    || SubInstrument.class.isAssignableFrom(driver)
                     || driver.getSimpleName().trim().equals("")
-                    || driver.getSimpleName().toLowerCase().contains("virtual")
-                    || driver.getSimpleName().toLowerCase().contains("dummy")
             )
         ).sorted(Comparator.comparing(Class::getSimpleName)).collect(Collectors.toList())));
 

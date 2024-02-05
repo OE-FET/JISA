@@ -4,6 +4,7 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MCSMU;
 import jisa.devices.interfaces.SMU;
+import jisa.devices.interfaces.SubInstrument;
 import jisa.enums.AMode;
 import jisa.enums.Source;
 import jisa.enums.TType;
@@ -23,7 +24,7 @@ public class DummyMCSMU implements MCSMU {
 
     @Override
     public List<SMU> getSMUChannels() {
-        return null;
+        return channels;
     }
 
     private final List<SMU> channels = Range.count(0, 3).stream().map(DSMU::new).collect(Collectors.toUnmodifiableList());
@@ -33,8 +34,30 @@ public class DummyMCSMU implements MCSMU {
     private final Source[]  mode     = {Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE};
     private final boolean[] probes   = {true, true, true, true};
     private final double[]  R        = {random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500};
+    private final String[] names     = {"SMU A", "SMU B", "SMU C", "SMU D"};
 
-    public class DSMU implements SMU {
+    @Override
+    public String getIDN() throws IOException, DeviceException {
+        return "Dummy MCSMU";
+    }
+
+    @Override
+    public String getName() {
+        return "Dummy MCSMU";
+    }
+
+    @Override
+    public void close() throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public Address getAddress() {
+        return null;
+    }
+
+
+    public class DSMU implements SMU, SubInstrument {
 
         private final int channel;
 
@@ -351,7 +374,9 @@ public class DummyMCSMU implements MCSMU {
 
         @Override
         public String getName() {
-            return "Dummy MCSMU";
+
+            return names[channel];
+
         }
 
     }
