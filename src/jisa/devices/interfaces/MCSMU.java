@@ -6,10 +6,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
- * Abstract class defining the standard interface for controller Multiple-Channel SMUs.
+ * Abstract class defining the standard interface for Multiple-Channel SMUs.
  */
 public interface MCSMU extends Instrument, MultiInstrument, Iterable<SMU> {
 

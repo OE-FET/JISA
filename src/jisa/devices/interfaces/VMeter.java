@@ -2,12 +2,12 @@ package jisa.devices.interfaces;
 
 import jisa.control.Synch;
 import jisa.devices.DeviceException;
+import jisa.devices.PList;
 import jisa.enums.AMode;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
 
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.List;
 
 public interface VMeter extends Instrument, Switch {
@@ -211,38 +211,24 @@ public interface VMeter extends Instrument, Switch {
         Synch.waitForParamStable(this::getVoltage, pctMargin, (int) (getIntegrationTime() * 4000.0), duration);
     }
 
-    /**
-     * Returns whether the voltmeter is using any line-frequency filtering
-     *
-     * @return Using line filter?
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    boolean isLineFilterEnabled() throws DeviceException, IOException;
-
-    /**
-     * Sets whether the voltmeter should use any line-frequency filtering (if available)
-     *
-     * @param enabled Use line filter?
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void setLineFilterEnabled(boolean enabled) throws DeviceException, IOException;
-
     default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
 
-        List<Parameter<?>> parameters = new LinkedList<>();
 
-        parameters.add(new Parameter<>("Terminals", Terminals.FRONT, this::setTerminals, Terminals.values()));
-        parameters.add(new Parameter<>("Voltage Range [V]", new AutoQuantity<Double>(true, 100.0), q -> {
-            if (q.isAuto()) useAutoVoltageRange();
-            else setVoltageRange(q.getValue());
-        }));
-        parameters.add(new Parameter<>("Integration Time [s]", 20e-3, this::setIntegrationTime));
+        PList params = new PList();
 
-        return parameters;
+        params.addChoice("Terminals", Terminals.FRONT, this::setTerminals, Terminals.values());
+        params.addAuto("Voltage Range [V]", true, 100.0, q -> useAutoVoltageRange(), this::setVoltageRange);
+        params.addValue("Integration Time [s]", 20e-3, this::setIntegrationTime);
+
+        if (this instanceof LineFilter) {
+            params.addValue("Line Filter", true, ((LineFilter) this)::setLineFilterEnabled);
+        }
+
+        if (this instanceof LineFilter2X) {
+            params.addValue("2x Line Filter", true, ((LineFilter2X) this)::set2xLineFilterEnabled);
+        }
+
+        return params;
 
     }
 

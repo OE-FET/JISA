@@ -22,6 +22,7 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.Instrument;
+import jisa.enums.Icon;
 import jisa.experiment.Measurement;
 import kotlin.jvm.JvmClassMappingKt;
 import kotlin.reflect.KClass;
@@ -265,6 +266,46 @@ public class GUI {
             Rectangle2D bounds = screen.getVisualBounds();
 
             alert.getDialogPane().getScene().getWindow().setOnShown(e -> {
+
+                double w = alert.getDialogPane().getScene().getWindow().getWidth();
+                double h = alert.getDialogPane().getScene().getWindow().getHeight();
+
+                alert.setX(((bounds.getMinX() + bounds.getMaxX()) / 2) - (w / 2));
+                alert.setY(((bounds.getMinY() + bounds.getMaxY()) / 2) - (h / 2));
+
+            });
+
+            alert.showAndWait();
+
+        });
+
+    }
+
+    public static void showException(Throwable e) {
+
+        ListDisplay<StackTraceElement> stackTrace = new ListDisplay<>("Stack Trace");
+
+        for (StackTraceElement ste : e.getStackTrace()) {
+            stackTrace.add(ste, String.format("%s.%s", ste.getClassName(), ste.getMethodName()), String.format("%s:%d", ste.getFileName(), ste.getLineNumber()), Icon.DATA.getBlackImage());
+        }
+
+        GUI.runNow(() -> {
+
+            VBox box = new VBox(new Label(e.getMessage()), stackTrace.getBorderedNode());
+            box.setSpacing(15.0);
+
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Exception Encountered");
+            alert.setHeaderText(e.getClass().getSimpleName());
+            alert.getDialogPane().setContent(box);
+            alert.getDialogPane().setMinWidth(600.0);
+            alert.getDialogPane().setMinHeight(400.0);
+            alert.setResizable(true);
+
+            Screen      screen = getCurrentScreen();
+            Rectangle2D bounds = screen.getVisualBounds();
+
+            alert.getDialogPane().getScene().getWindow().setOnShown(ev -> {
 
                 double w = alert.getDialogPane().getScene().getWindow().getWidth();
                 double h = alert.getDialogPane().getScene().getWindow().getHeight();

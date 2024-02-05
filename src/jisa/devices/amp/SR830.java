@@ -5,16 +5,19 @@ import jisa.addresses.Address;
 import jisa.control.Nameable;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.DPIPALockIn;
+import jisa.devices.interfaces.LineFilter;
+import jisa.devices.interfaces.LineFilter2X;
 import jisa.devices.interfaces.LockIn;
 import jisa.enums.Coupling;
-import jisa.enums.Shield;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
-public class SR830 extends VISADevice implements DPIPALockIn {
+public class SR830 extends VISADevice implements DPIPALockIn, LineFilter, LineFilter2X {
 
     public static String getDescription() {
         return "Stanford Research Systems SR830";
@@ -67,7 +70,8 @@ public class SR830 extends VISADevice implements DPIPALockIn {
     private static final int LINE_X2     = 2;
     private static final int LINE_X1_X2  = 3;
 
-    private int currentGain = SOURCE_CURR_LOW_IMP;
+    private int currentMode = SOURCE_CURR_LOW_IMP;
+    private int voltageMode = SOURCE_VOLT_SINGLE;
 
     public SR830(Address address) throws IOException, DeviceException {
 
@@ -255,39 +259,13 @@ public class SR830 extends VISADevice implements DPIPALockIn {
     }
 
     @Override
-    public Shield getShielding() throws IOException {
-
-        switch (queryInt(C_QUERY_GROUND)) {
-
-            case GND_FLOAT:
-                return Shield.FLOAT;
-
-            case GND_GROUND:
-                return Shield.GROUND;
-
-            default:
-                return null;
-
-        }
-
+    public boolean isShieldGrounded() throws IOException, DeviceException {
+        return queryInt(C_QUERY_GROUND) == GND_GROUND;
     }
 
     @Override
-    public void setShielding(Shield mode) throws IOException {
-
-        switch (mode) {
-
-            case FLOAT:
-                write(C_SET_GROUND, GND_FLOAT);
-                break;
-
-            case GROUND:
-                write(C_SET_GROUND, GND_GROUND);
-                break;
-
-
-        }
-
+    public void setShieldGrounded(boolean mode) throws IOException, DeviceException {
+        write(C_SET_GROUND, mode ? GND_GROUND : GND_FLOAT);
     }
 
     @Override
@@ -314,62 +292,10 @@ public class SR830 extends VISADevice implements DPIPALockIn {
     @Override
     public void setDifferentialInput(boolean differential) throws IOException, DeviceException {
 
-        if (isCurrentInput()) {
-            throw new DeviceException("Differential input is disabled for current input.");
-        }
+        voltageMode = differential ? SOURCE_VOLT_DIFF : SOURCE_VOLT_SINGLE;
 
-        write(C_SET_SOURCE, differential ? SOURCE_VOLT_DIFF : SOURCE_VOLT_SINGLE);
-
-    }
-
-    @Override
-    public List<Integer> getLineFilterHarmonics() throws IOException {
-
-        switch (queryInt(C_QUERY_LINE)) {
-
-            case LINE_NONE:
-                return Collections.emptyList();
-
-            case LINE_X1:
-                return Collections.singletonList(1);
-
-            case LINE_X2:
-                return Collections.singletonList(2);
-
-            case LINE_X1_X2:
-                return Arrays.asList(1, 2);
-
-            default:
-                throw new IOException("Improper response from SR830. How rude!");
-
-        }
-
-    }
-
-    @Override
-    public void setLineFilterHarmonics(int... harmonics) throws IOException {
-
-        boolean sgle = false;
-        boolean dble = false;
-
-        for (int harm : harmonics) {
-
-            if (harm == 1) {
-                sgle = true;
-            } else if (harm >= 2) {
-                dble = true;
-            }
-
-        }
-
-        if (sgle && dble) {
-            write(C_SET_LINE, LINE_X1_X2);
-        } else if (sgle) {
-            write(C_SET_LINE, LINE_X1);
-        } else if (dble) {
-            write(C_SET_LINE, LINE_X2);
-        } else {
-            write(C_SET_LINE, LINE_NONE);
+        if (!isCurrentInputEnabled()) {
+            write(C_SET_SOURCE, voltageMode);
         }
 
     }
@@ -500,26 +426,102 @@ public class SR830 extends VISADevice implements DPIPALockIn {
     }
 
     @Override
-    public void setCurrentInput(boolean flag) throws IOException, DeviceException {
+    public void setCurrentInputEnabled(boolean flag) throws IOException, DeviceException {
+        write(C_SET_SOURCE, flag ? currentMode : voltageMode);
+    }
+
+    @Override
+    public boolean isCurrentInputEnabled() throws IOException, DeviceException {
+
+        switch (queryInt(C_QUERY_SOURCE)) {
+
+            case SOURCE_CURR_LOW_IMP:
+            case SOURCE_CURR_HIGH_IMP:
+                return true;
+
+            default:
+                return false;
+
+        }
 
     }
 
     @Override
-    public boolean isCurrentInput() throws IOException, DeviceException {
+    public void setCurrentInputGain(double voltsPerAmp) throws IOException, DeviceException {
+        currentMode = voltsPerAmp >= 1e8 ? SOURCE_CURR_HIGH_IMP : SOURCE_CURR_LOW_IMP;
+        setCurrentInputEnabled(isCurrentInputEnabled());
+    }
 
-        int value = queryInt(C_QUERY_SOURCE);
-        return value == SOURCE_CURR_LOW_IMP || value == SOURCE_CURR_HIGH_IMP;
+    @Override
+    public double getCurrentInputGain() throws IOException, DeviceException {
+
+        switch (currentMode) {
+
+            case SOURCE_CURR_LOW_IMP:
+                return 1e6;
+
+            case SOURCE_CURR_HIGH_IMP:
+                return 1e8;
+
+            default:
+                throw new DeviceException("Unknown current mode");
+
+        }
 
     }
 
     @Override
-    public void setCurrentGain(double voltsPerAmp) throws IOException, DeviceException {
+    public void setLineFilterEnabled(boolean enabled) throws IOException, DeviceException {
+
+        if (is2xLineFilterEnabled()) {
+            write(C_SET_LINE, enabled ? LINE_X1_X2 : LINE_X2);
+        } else {
+            write(C_SET_LINE, enabled ? LINE_X1 : LINE_NONE);
+        }
 
     }
 
     @Override
-    public double getCurrentGain() throws IOException, DeviceException {
-        return 0;
+    public boolean isLineFilterEnabled() throws IOException, DeviceException {
+
+        switch (queryInt(C_QUERY_LINE)) {
+
+            case LINE_X1:
+            case LINE_X1_X2:
+                return true;
+
+            default:
+                return false;
+
+        }
+
+    }
+
+    @Override
+    public void set2xLineFilterEnabled(boolean enabled) throws IOException, DeviceException {
+
+        if (isLineFilterEnabled()) {
+            write(C_SET_LINE, enabled ? LINE_X1_X2 : LINE_X1);
+        } else {
+            write(C_SET_LINE, enabled ? LINE_X2 : LINE_NONE);
+        }
+
+    }
+
+    @Override
+    public boolean is2xLineFilterEnabled() throws IOException, DeviceException {
+
+        switch (queryInt(C_QUERY_LINE)) {
+
+            case LINE_X2:
+            case LINE_X1_X2:
+                return true;
+
+            default:
+                return false;
+
+        }
+
     }
 
     public enum RefMode implements Nameable {

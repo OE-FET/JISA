@@ -3,7 +3,6 @@ package jisa.devices.smu;
 import jisa.addresses.Address;
 import jisa.control.*;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.MCSMU;
 import jisa.devices.interfaces.SMU;
 import jisa.devices.interfaces.SubInstrument;
 import jisa.enums.AMode;
@@ -117,7 +116,7 @@ public abstract class KeithleyTSP extends VISADevice {
     /**
      * Subclass to represent each channel of the K2600B SMU
      */
-    public class KSMU implements SMU, SubInstrument {
+    public class KSMU implements SMU, SubInstrument<KeithleyTSP> {
 
         private final String     channel;
         private       AMode      avMode        = AMode.NONE;
@@ -145,11 +144,6 @@ public abstract class KeithleyTSP extends VISADevice {
         @Override
         public String getName() {
             return channel.toUpperCase().replace("SMU", "SMU ");
-        }
-
-        @Override
-        public void close() throws IOException, DeviceException {
-
         }
 
         @Override
@@ -731,6 +725,10 @@ public abstract class KeithleyTSP extends VISADevice {
             /* no line filtering */
         }
 
+        @Override
+        public KeithleyTSP getParentInstrument() {
+            return KeithleyTSP.this;
+        }
     }
 
 }

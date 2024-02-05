@@ -2,12 +2,10 @@ package jisa.devices.interfaces;
 
 import jisa.control.Synch;
 import jisa.devices.DeviceException;
+import jisa.devices.PList;
 import jisa.enums.Coupling;
-import jisa.enums.Shield;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Abstract class to define the standard functionality of lock-in amplifiers
@@ -19,21 +17,37 @@ public interface LockIn extends Instrument, FMeter {
     }
 
     @Override
-    default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+    default PList getConfigurationParameters(Class<?> target) {
 
-        List<Parameter<?>> parameters = new LinkedList<>();
+        PList params = new PList();
 
-        parameters.add(new Parameter<>("Reference", RefMode.EXTERNAL, this::setRefMode, RefMode.values()));
-        parameters.add(new Parameter<>("Differential Input", false, this::setDifferentialInput));
-        parameters.add(new Parameter<>("Range", 1.0, this::setRange));
-        parameters.add(new Parameter<>("Time Constant", 1.0, this::setTimeConstant));
-        parameters.add(new Parameter<>("Coupling", Coupling.AC, this::setCoupling, Coupling.values()));
-        parameters.add(new Parameter<>("Shielding", Shield.GROUND, this::setShielding, Shield.values()));
-        parameters.add(new Parameter<>("Filter Roll-Off", 24.0, this::setFilterRollOff));
-        parameters.add(new Parameter<>("Sync Filter", true, this::setSyncFilterEnabled));
-        parameters.add(new Parameter<>("Line Filter", true, b -> setLineFilterHarmonics(b ? new int[]{1, 2} : new int[0])));
+        params.addChoice("Reference", RefMode.EXTERNAL, this::setRefMode, RefMode.values());
+        params.addValue("Differential Input", false, this::setDifferentialInput);
+        params.addValue("Range [V]", 1.0, this::setRange);
+        params.addValue("Time Constant", 1.0, this::setTimeConstant);
+        params.addChoice("Input Coupling", Coupling.AC, this::setCoupling, Coupling.values());
+        params.addValue("Ground Input Shielding", false, this::setShieldGrounded);
+        params.addValue("Filter Roll-Off [dB/oct]", 24.0, this::setFilterRollOff);
+        params.addValue("Sync Filter", true, this::setSyncFilterEnabled);
 
-        return parameters;
+        if (this instanceof IPALockIn) {
+            params.addOptional("Current Input Gain [V/A]", false, 1e6,
+                q -> ((IPALockIn) this).setCurrentInputEnabled(false),
+                q -> {
+                    ((IPALockIn) this).setCurrentInputEnabled(true);
+                    ((IPALockIn) this).setCurrentInputGain(q);
+                });
+        }
+
+        if (this instanceof LineFilter) {
+            params.addValue("Line Filter", true, ((LineFilter) this)::setLineFilterEnabled);
+        }
+
+        if (this instanceof LineFilter2X) {
+            params.addValue("2x Line Filter", true, ((LineFilter2X) this)::set2xLineFilterEnabled);
+        }
+
+        return params;
 
     }
 
@@ -236,7 +250,7 @@ public interface LockIn extends Instrument, FMeter {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    Shield getShielding() throws IOException, DeviceException;
+    boolean isShieldGrounded() throws IOException, DeviceException;
 
     /**
      * Sets the shielding mode to use for input connections.
@@ -246,7 +260,7 @@ public interface LockIn extends Instrument, FMeter {
      * @throws IOException     Upon communication error
      * @throws DeviceException Upon compatibility error
      */
-    void setShielding(Shield mode) throws IOException, DeviceException;
+    void setShieldGrounded(boolean mode) throws IOException, DeviceException;
 
     /**
      * Returns whether the lock-in amplifier is using its differential input mode or not (i.e., A-B or just A).
@@ -267,27 +281,6 @@ public interface LockIn extends Instrument, FMeter {
      * @throws DeviceException Upon compatibility error
      */
     void setDifferentialInput(boolean differential) throws IOException, DeviceException;
-
-    /**
-     * Returns a list of all harmonics of the powerline frequency being filtered by the lock-in.
-     *
-     * @return List of harmonics (list of integers)
-     *
-     * @throws IOException     Upon communication error
-     * @throws DeviceException Upon compatibility error
-     */
-    List<Integer> getLineFilterHarmonics() throws IOException, DeviceException;
-
-    /**
-     * Attempts to set the lock-in to filter all the specified harmonics of the powerline frequency. Any unavailable
-     * harmonics will be ignored.
-     *
-     * @param harmonics Harmonics to filter, as integers (ie 1, 4, 5 for 1st 4th and 5th)
-     *
-     * @throws IOException     Upon communication error
-     * @throws DeviceException Upon compatibility error
-     */
-    void setLineFilterHarmonics(int... harmonics) throws IOException, DeviceException;
 
     /**
      * Returns the offset currently being used by the lock-in.

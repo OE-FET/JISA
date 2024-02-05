@@ -3,17 +3,17 @@ package jisa.devices.vmeter;
 import jisa.addresses.Address;
 import jisa.control.*;
 import jisa.devices.DeviceException;
+import jisa.devices.interfaces.LineFilter;
 import jisa.devices.interfaces.VMeter;
 import jisa.enums.AMode;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
-import jisa.visa.drivers.Driver;
 import jisa.visa.VISADevice;
+import jisa.visa.drivers.Driver;
 
 import java.io.IOException;
-import java.util.List;
 
-public class K2182 extends VISADevice implements VMeter {
+public class K2182 extends VISADevice implements VMeter, LineFilter {
 
     public static String getDescription() {
         return "Keithley 2182";
@@ -204,12 +204,4 @@ public class K2182 extends VISADevice implements VMeter {
         return Terminals.FRONT;
     }
 
-    @Override
-    public List<Parameter<?>> getConfigurationParameters(Class<?> target) {
-
-        List<Parameter<?>> parameters = VMeter.super.getConfigurationParameters(target);
-        parameters.add(new Parameter<>("Line Filtering", false, this::setLineFilterEnabled));
-        return parameters;
-
-    }
 }

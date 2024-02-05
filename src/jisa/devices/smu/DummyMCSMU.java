@@ -57,7 +57,7 @@ public class DummyMCSMU implements MCSMU {
     }
 
 
-    public class DSMU implements SMU, SubInstrument {
+    public class DSMU implements SMU, SubInstrument<DummyMCSMU> {
 
         private final int channel;
 
@@ -365,6 +365,11 @@ public class DummyMCSMU implements MCSMU {
         @Override
         public void close() throws IOException, DeviceException {
 
+        }
+
+        @Override
+        public DummyMCSMU getParentInstrument() {
+            return DummyMCSMU.this;
         }
 
         @Override

@@ -84,7 +84,7 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
     protected abstract boolean confirmIdentity();
 
-    public class ASMU implements SMU, SubInstrument {
+    public class ASMU implements SMU, SubInstrument<AgilentSPA> {
 
         private final String     name;
         private final int        channel;
@@ -245,6 +245,11 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
         @Override
         public void close() throws IOException, DeviceException {
 
+        }
+
+        @Override
+        public AgilentSPA getParentInstrument() {
+            return AgilentSPA.this;
         }
 
         @Override
@@ -782,7 +787,7 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
     }
 
-    public class AVMU implements VMeter, SubInstrument {
+    public class AVMU implements VMeter, SubInstrument<AgilentSPA> {
 
         private final String     name;
         private final int        channel;
@@ -887,6 +892,11 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
         @Override
         public void close() throws IOException, DeviceException {
 
+        }
+
+        @Override
+        public AgilentSPA getParentInstrument() {
+            return AgilentSPA.this;
         }
 
         @Override
@@ -997,18 +1007,9 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
             // Nothing to do
         }
 
-        @Override
-        public boolean isLineFilterEnabled() throws DeviceException, IOException {
-            return false;
-        }
-
-        @Override
-        public void setLineFilterEnabled(boolean enabled) throws DeviceException, IOException {
-            // No line filter
-        }
     }
 
-    public class AVSU implements VSource, SubInstrument {
+    public class AVSU implements VSource, SubInstrument<AgilentSPA> {
 
         private final String      name;
         private final int         channel;
@@ -1034,6 +1035,11 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
         @Override
         public void close() throws IOException, DeviceException {
 
+        }
+
+        @Override
+        public AgilentSPA getParentInstrument() {
+            return AgilentSPA.this;
         }
 
         @Override
@@ -1120,7 +1126,7 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
     }
 
-    public class GNDU implements Switch, SubInstrument {
+    public class GNDU implements Switch, SubInstrument<AgilentSPA> {
 
         private final String  name;
         private final int     channel;
@@ -1145,6 +1151,11 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
         @Override
         public void close() throws IOException, DeviceException {
 
+        }
+
+        @Override
+        public AgilentSPA getParentInstrument() {
+            return AgilentSPA.this;
         }
 
         @Override
