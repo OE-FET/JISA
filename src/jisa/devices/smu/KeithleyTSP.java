@@ -16,58 +16,58 @@ import java.io.IOException;
 
 public abstract class KeithleyTSP extends VISADevice {
 
-    private static final String   C_QUERY_VOLT               = "print(%s.measure.v())";
-    private static final String   C_QUERY_CURR               = "print(%s.measure.i())";
-    private static final String   C_QUERY_FUNC               = "print(%s.source.func)";
-    private static final String   C_QUERY_OUTPUT             = "print(%s.source.output)";
-    private static final String   C_QUERY_SENSE              = "print(%s.sense)";
-    private static final String   C_SET_SOURCE               = "%s.source.func = %s";
-    private static final String   C_SET_VOLT                 = "%s.source.levelv = %e";
-    private static final String   C_SET_CURR                 = "%s.source.leveli = %e";
-    private static final String   C_QUERY_SET_VOLT           = "print(%s.source.levelv)";
-    private static final String   C_QUERY_SET_CURR           = "print(%s.source.leveli)";
-    private static final String   C_SET_OUTPUT               = "%s.source.output = %s";
-    private static final String   C_SET_SENSE                = "%s.sense = %s";
-    private static final String   C_SET_AVG_COUNT            = "%s.measure.filter.count = %d";
-    private static final String   C_QUERY_AVG_COUNT          = "print(%s.measure.filter.count)";
-    private static final String   C_SET_AVG_MODE             = "%s.measure.filter.type = %s";
-    private static final String   C_QUERY_AVG_MODE           = "print(%s.measure.filter.type)";
-    private static final String   C_SET_AVG_STATE            = "%s.measure.filter.enable = %s";
-    private static final String   C_QUERY_AVG_STATE          = "print(%s.measure.filter.enable)";
-    private static final String   C_SET_LIMIT                = "%s.source.limit%s = %e";
-    private static final String   C_QUERY_LIMIT              = "print(%s.source.limit%s)";
-    private static final String   C_SET_SOURCE_RANGE         = "%s.source.range%s = %e";
-    private static final String   C_QUERY_SOURCE_RANGE       = "print(%s.source.range%s)";
-    private static final String   C_SET_MEASURE_RANGE        = "%s.measure.range%s = %e";
-    private static final String   C_QUERY_MEASURE_RANGE      = "print(%s.measure.range%s)";
-    private static final String   C_SET_SOURCE_AUTO_RANGE    = "%s.source.autorange%s = %s";
-    private static final String   C_QUERY_SOURCE_AUTO_RANGE  = "print(%s.source.autorange%s)";
-    private static final String   C_SET_MEASURE_AUTO_RANGE   = "%s.measure.autorange%s = %s";
-    private static final String   C_QUERY_MEASURE_AUTO_RANGE = "print(%s.measure.autorange%s)";
-    private static final String   C_SET_NPLC                 = "%s.measure.nplc = %f";
-    private static final String   C_QUERY_NPLC               = "print(%s.measure.nplc)";
-    private static final String   C_QUERY_LFR                = "print(localnode.linefreq)";
-    private static final String   C_SET_OFF_MODE             = "%s.source.offmode = %d";
-    private static final String   C_QUERY_OFF_MODE           = "print(%s.source.offmode)";
-    private static final String   C_SET_OFF_FUNC             = "%s.source.offfunc = %d";
-    private static final String   C_QUERY_OFF_FUNC           = "print(%s.source.offfunc)";
-    private static final String   C_SET_OFF_LIMIT            = "%s.source.offlimit%s = %e";
-    private static final String   C_QUERY_OFF_LIMIT          = "print(%s.source.offlimit%s)";
-    private static final String   SENSE_LOCAL                = "0";
-    private static final String   SENSE_REMOTE               = "1";
-    private static final String   OUTPUT_ON                  = "1";
-    private static final String   OUTPUT_OFF                 = "0";
-    private static final String   FILTER_MOVING_MEAN         = "0";
-    private static final String   FILTER_REPEAT_MEAN         = "1";
-    private static final String   FILTER_MOVING_MEDIAN       = "2";
-    private static final String   VOLTAGE                    = "v";
-    private static final String   CURRENT                    = "i";
-    private static final int      OFF_MODE_NORMAL            = 0;
-    private static final int      OFF_MODE_ZERO              = 1;
-    private static final int      OFF_MODE_HIGH_Z            = 2;
-    private static final int      OFF_SOURCE_CURR            = 0;
-    private static final int      OFF_SOURCE_VOLT            = 1;
-    private final        double   LINE_FREQUENCY;
+    private static final String C_QUERY_VOLT               = "print(%s.measure.v())";
+    private static final String C_QUERY_CURR               = "print(%s.measure.i())";
+    private static final String C_QUERY_FUNC               = "print(%s.source.func)";
+    private static final String C_QUERY_OUTPUT             = "print(%s.source.output)";
+    private static final String C_QUERY_SENSE              = "print(%s.sense)";
+    private static final String C_SET_SOURCE               = "%s.source.func = %s";
+    private static final String C_SET_VOLT                 = "%s.source.levelv = %e";
+    private static final String C_SET_CURR                 = "%s.source.leveli = %e";
+    private static final String C_QUERY_SET_VOLT           = "print(%s.source.levelv)";
+    private static final String C_QUERY_SET_CURR           = "print(%s.source.leveli)";
+    private static final String C_SET_OUTPUT               = "%s.source.output = %s";
+    private static final String C_SET_SENSE                = "%s.sense = %s";
+    private static final String C_SET_AVG_COUNT            = "%s.measure.filter.count = %d";
+    private static final String C_QUERY_AVG_COUNT          = "print(%s.measure.filter.count)";
+    private static final String C_SET_AVG_MODE             = "%s.measure.filter.type = %s";
+    private static final String C_QUERY_AVG_MODE           = "print(%s.measure.filter.type)";
+    private static final String C_SET_AVG_STATE            = "%s.measure.filter.enable = %s";
+    private static final String C_QUERY_AVG_STATE          = "print(%s.measure.filter.enable)";
+    private static final String C_SET_LIMIT                = "%s.source.limit%s = %e";
+    private static final String C_QUERY_LIMIT              = "print(%s.source.limit%s)";
+    private static final String C_SET_SOURCE_RANGE         = "%s.source.range%s = %e";
+    private static final String C_QUERY_SOURCE_RANGE       = "print(%s.source.range%s)";
+    private static final String C_SET_MEASURE_RANGE        = "%s.measure.range%s = %e";
+    private static final String C_QUERY_MEASURE_RANGE      = "print(%s.measure.range%s)";
+    private static final String C_SET_SOURCE_AUTO_RANGE    = "%s.source.autorange%s = %s";
+    private static final String C_QUERY_SOURCE_AUTO_RANGE  = "print(%s.source.autorange%s)";
+    private static final String C_SET_MEASURE_AUTO_RANGE   = "%s.measure.autorange%s = %s";
+    private static final String C_QUERY_MEASURE_AUTO_RANGE = "print(%s.measure.autorange%s)";
+    private static final String C_SET_NPLC                 = "%s.measure.nplc = %f";
+    private static final String C_QUERY_NPLC               = "print(%s.measure.nplc)";
+    private static final String C_QUERY_LFR                = "print(localnode.linefreq)";
+    private static final String C_SET_OFF_MODE             = "%s.source.offmode = %d";
+    private static final String C_QUERY_OFF_MODE           = "print(%s.source.offmode)";
+    private static final String C_SET_OFF_FUNC             = "%s.source.offfunc = %d";
+    private static final String C_QUERY_OFF_FUNC           = "print(%s.source.offfunc)";
+    private static final String C_SET_OFF_LIMIT            = "%s.source.offlimit%s = %e";
+    private static final String C_QUERY_OFF_LIMIT          = "print(%s.source.offlimit%s)";
+    private static final String SENSE_LOCAL                = "0";
+    private static final String SENSE_REMOTE               = "1";
+    private static final String OUTPUT_ON                  = "1";
+    private static final String OUTPUT_OFF                 = "0";
+    private static final String FILTER_MOVING_MEAN         = "0";
+    private static final String FILTER_REPEAT_MEAN         = "1";
+    private static final String FILTER_MOVING_MEDIAN       = "2";
+    private static final String VOLTAGE                    = "v";
+    private static final String CURRENT                    = "i";
+    private static final int    OFF_MODE_NORMAL            = 0;
+    private static final int    OFF_MODE_ZERO              = 1;
+    private static final int    OFF_MODE_HIGH_Z            = 2;
+    private static final int    OFF_SOURCE_CURR            = 0;
+    private static final int    OFF_SOURCE_VOLT            = 1;
+    private final        double LINE_FREQUENCY;
 
     public KeithleyTSP(Address address, String model) throws IOException, DeviceException {
 
@@ -85,11 +85,13 @@ public abstract class KeithleyTSP extends VISADevice {
         // Check that this is a Keithley 2600B series
         String idn = getIDN().toUpperCase();
         if (!(idn.contains("KEITHLEY") && idn.contains(model.toUpperCase()))) {
+
             throw new DeviceException(
                 "The instrument at address \"%s\" is not compatible with the %s driver",
                 address.toString(),
                 getClass().getSimpleName()
             );
+
         }
 
         // Store the power-line frequency
@@ -116,15 +118,19 @@ public abstract class KeithleyTSP extends VISADevice {
     /**
      * Subclass to represent each channel of the K2600B SMU
      */
-    public class KSMU implements SMU, SubInstrument<KeithleyTSP> {
+    public class KSMU<T extends KeithleyTSP> implements SMU, SubInstrument<KeithleyTSP> {
 
         private final String     channel;
         private       AMode      avMode        = AMode.NONE;
         private       int        avCount       = 1;
         private       ReadFilter voltageFilter = new BypassFilter(this::measureVoltage, c -> { });
         private       ReadFilter currentFilter = new BypassFilter(this::measureCurrent, c -> { });
+        private final T          parent;
 
-        public KSMU(String channel) { this.channel = channel; }
+        public KSMU(String channel, T parent) {
+            this.channel = channel;
+            this.parent  = parent;
+        }
 
         @Override
         public double getSetCurrent() throws DeviceException, IOException {
@@ -369,6 +375,8 @@ public abstract class KeithleyTSP extends VISADevice {
                     break;
 
             }
+
+            avMode = mode;
 
             resetFilters();
 
@@ -726,8 +734,8 @@ public abstract class KeithleyTSP extends VISADevice {
         }
 
         @Override
-        public KeithleyTSP getParentInstrument() {
-            return KeithleyTSP.this;
+        public T getParentInstrument() {
+            return parent;
         }
     }
 

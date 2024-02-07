@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Abstract class defining the standard interface for Multiple-Channel SMUs.
  */
-public interface MCSMU extends Instrument, MultiInstrument, Iterable<SMU> {
+public interface MCSMU<T extends SMU> extends Instrument, MultiInstrument, Iterable<T> {
 
     static String getDescription() {
         return "Multi-Channel Source Measure Unit";
@@ -21,7 +21,7 @@ public interface MCSMU extends Instrument, MultiInstrument, Iterable<SMU> {
      *
      * @return List of SMU channels
      */
-    List<SMU> getSMUChannels();
+    List<T> getSMUChannels();
 
     /**
      * Returns a list of all SMU channels in this multi-channel SMU.
@@ -29,15 +29,15 @@ public interface MCSMU extends Instrument, MultiInstrument, Iterable<SMU> {
      *
      * @return List of SMU channels
      */
-    default List<SMU> getChannels() {
+    default List<T> getChannels() {
         return getSMUChannels();
     }
 
-    default SMU getSMUChannel(int index) {
+    default T getSMUChannel(int index) {
         return getSMUChannels().get(index);
     }
 
-    default SMU getChannel(int index) {
+    default T getChannel(int index) {
         return getSMUChannel(index);
     }
 
@@ -56,9 +56,9 @@ public interface MCSMU extends Instrument, MultiInstrument, Iterable<SMU> {
         forEachSMU(SMU::turnOff);
     }
 
-    default void forEachSMU(SMUAcceptor forEach) throws IOException, DeviceException {
+    default void forEachSMU(SMUAcceptor<T> forEach) throws IOException, DeviceException {
 
-        for (SMU smu : this) {
+        for (T smu : this) {
             forEach.accept(smu);
         }
 
@@ -66,13 +66,13 @@ public interface MCSMU extends Instrument, MultiInstrument, Iterable<SMU> {
 
     @NotNull
     @Override
-    default Iterator<SMU> iterator() {
+    default Iterator<T> iterator() {
         return getSMUChannels().iterator();
     }
 
-    interface SMUAcceptor {
+    interface SMUAcceptor<T extends SMU> {
 
-        void accept(SMU smu) throws DeviceException, IOException;
+        void accept(T smu) throws DeviceException, IOException;
 
     }
 

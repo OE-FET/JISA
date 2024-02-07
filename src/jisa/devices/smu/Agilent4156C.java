@@ -2,7 +2,6 @@ package jisa.devices.smu;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.*;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -29,18 +28,18 @@ public class Agilent4156C extends AgilentSPA {
     public final AVMU VMU2  = new AVMU("VMU 2", 24, SMUVoltageRanges.values());
     public final GNDU GNDU  = new GNDU("GNDU", 26);
 
-    private final List<SMU>     smuChannels;
-    private final List<Switch>  switchChannels;
-    private final List<VMeter>  vmuChannels = List.of(VMU1, VMU2);
-    private final List<VSource> vsuChannels = List.of(VSU1, VSU2);
+    private final List<ASMU> smuChannels;
+    private final List<GNDU> switchChannels;
+    private final List<AVMU> vmuChannels = List.of(VMU1, VMU2);
+    private final List<AVSU> vsuChannels = List.of(VSU1, VSU2);
 
     public Agilent4156C(Address address) throws IOException, DeviceException {
 
         super(address, true);
 
-        String[]  options      = query("UNT?").split(";");
-        List<SMU> foundSMUs    = new LinkedList<>();
-        SMU[]     possibleSMUs = new SMU[]{SMU1, SMU2, SMU3, SMU4, SMU5, SMU6};
+        String[]   options      = query("UNT?").split(";");
+        List<ASMU> foundSMUs    = new LinkedList<>();
+        ASMU[]     possibleSMUs = new ASMU[]{SMU1, SMU2, SMU3, SMU4, SMU5, SMU6};
 
         boolean gndu = false;
 
@@ -78,22 +77,22 @@ public class Agilent4156C extends AgilentSPA {
     }
 
     @Override
-    public List<SMU> getSMUChannels() {
+    public List<ASMU> getSMUChannels() {
         return smuChannels;
     }
 
     @Override
-    public List<VMeter> getVMeterChannels() {
+    public List<AVMU> getVMeterChannels() {
         return vmuChannels;
     }
 
     @Override
-    public List<VSource> getVSourceChannels() {
+    public List<AVSU> getVSourceChannels() {
         return vsuChannels;
     }
 
     @Override
-    public List<Switch> getSwitchChannels() {
+    public List<GNDU> getSwitchChannels() {
         return switchChannels;
     }
 

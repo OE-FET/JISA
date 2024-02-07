@@ -1,14 +1,10 @@
 package jisa;
 
-import javafx.application.Platform;
 import jisa.addresses.Address;
-import jisa.gui.ConnectorGrid;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.time.LocalDateTime;
 
 public class Main {
@@ -99,15 +95,11 @@ public class Main {
             }
 
         } catch (Exception | Error e) {
-            Util.sleep(500);
-            StringWriter w = new StringWriter();
-            w.append(e.getMessage());
-            w.append("\n\n");
-            e.printStackTrace(new PrintWriter(w));
-            e.printStackTrace();
-            GUI.errorAlert("JISA Library", "Exception Encountered", w.toString(), 800);
-            Platform.exit();
+
+            GUI.showException(e);
+            GUI.stopGUI();
             System.exit(0);
+
         }
 
     }

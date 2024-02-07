@@ -7,20 +7,21 @@ import com.sun.jna.ptr.ShortByReference;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.MSTCouple;
+import jisa.devices.interfaces.MSTMeter;
 import jisa.devices.interfaces.TCouple;
 import jisa.visa.NativeDevice;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Driver class for Picotech USB-TC08 thermocouple data loggers. Requires proprietary usbtc08 library to be installed.
  */
-public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MSTCouple {
+public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MSTMeter<USBTC08.TC08TMeter> {
 
     public static String getDescription() {
         return "PicoTech USB-TC08";
@@ -64,18 +65,18 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
-    private final short          handle;
-    private final TCouple.Type[] types = {
-        TCouple.Type.UNKNOWN,
-        TCouple.Type.UNKNOWN,
-        TCouple.Type.UNKNOWN,
-        TCouple.Type.UNKNOWN,
-        TCouple.Type.UNKNOWN,
-        TCouple.Type.UNKNOWN,
-        TCouple.Type.UNKNOWN,
-        TCouple.Type.UNKNOWN,
-        TCouple.Type.UNKNOWN
-    };
+    private final short handle;
+
+    public final TC08TMeter       CHANNEL_0 = new TC08TMeter(0);
+    public final TC08TMeter       CHANNEL_1 = new TC08TMeter(1);
+    public final TC08TMeter       CHANNEL_2 = new TC08TMeter(2);
+    public final TC08TMeter       CHANNEL_3 = new TC08TMeter(3);
+    public final TC08TMeter       CHANNEL_4 = new TC08TMeter(4);
+    public final TC08TMeter       CHANNEL_5 = new TC08TMeter(5);
+    public final TC08TMeter       CHANNEL_6 = new TC08TMeter(6);
+    public final TC08TMeter       CHANNEL_7 = new TC08TMeter(7);
+    public final TC08TMeter       CHANNEL_8 = new TC08TMeter(8);
+    private      List<TC08TMeter> channels  = List.of(CHANNEL_0, CHANNEL_1, CHANNEL_2, CHANNEL_3, CHANNEL_4, CHANNEL_5, CHANNEL_6, CHANNEL_7, CHANNEL_8);
 
     private float[]   lastValues    = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     private long      lastTime      = 0;
@@ -108,6 +109,24 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         }
 
         interval = lib.usb_tc08_get_minimum_interval_ms(handle);
+
+    }
+
+    @Override
+    public List<TC08TMeter> getTMeterChannels() {
+        return channels;
+    }
+
+    @Override
+    public Map<TC08TMeter, Double> getTemperatures(TC08TMeter... channels) throws IOException, DeviceException {
+
+        if (channels.length == 0) {
+            channels = this.channels.toArray(TC08TMeter[]::new);
+        }
+
+        updateReadings();
+
+        return Arrays.stream(channels).collect(Collectors.toMap(c -> c, c -> (double) lastValues[c.channel]));
 
     }
 
@@ -218,19 +237,6 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
-    @Override
-    public synchronized double getTemperature(int sensor) throws DeviceException, IOException {
-
-        checkSensor(sensor);
-
-        if ((System.currentTimeMillis() - lastTime) > interval) {
-            updateReadings();
-        }
-
-        return lastValues[sensor];
-
-    }
-
     /**
      * Updates the currently held temperature readings for each sensor. This should be updated at most every minimum
      * measurement interval, as calculated by the USB-TC08 unit.
@@ -239,8 +245,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      */
     private synchronized void updateReadings() throws DeviceException {
 
-        lastTime   = System.currentTimeMillis();
-        interval   = lib.usb_tc08_get_minimum_interval_ms(handle);
+        lastTime = System.currentTimeMillis();
+        interval = lib.usb_tc08_get_minimum_interval_ms(handle);
 
         // Need a pointer to some memory to store our returned values
         Memory tempPointer = new Memory(9L * Native.getNativeSize(Float.TYPE));
@@ -257,83 +263,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
-    @Override
-    public int getNumSensors() {
-        return SENSORS_PER_UNIT;
-    }
-
-    @Override
-    public String getName(int sensorNumber) {
-        return String.format("Channel %d", sensorNumber);
-    }
-
-    @Override
-    public synchronized List<Double> getTemperatures() throws DeviceException {
-
-        List<Double> temperatures = new ArrayList<>(lastValues.length);
-
-        updateReadings();
-
-        // Convert to list of doubles
-        for (float value : lastValues) {
-            temperatures.add((double) value);
-        }
-
-        return temperatures;
-
-    }
-
-    @Override
-    public void setTemperatureRange(int sensor, double range) throws DeviceException, IOException {
-        checkSensor(sensor);
-    }
-
-    @Override
     public double getTemperatureRange(int sensor) {
         return 999.999;
-    }
-
-    /**
-     * Configures the sensor on the TC-08, specifying which type of thermocouple is installed.
-     *
-     * @param sensor Sensor number
-     * @param type   Thermocouple type
-     *
-     * @throws DeviceException Upon instrument error
-     */
-    public synchronized void setSensorType(int sensor, TCouple.Type type) throws DeviceException, IOException {
-
-        checkSensor(sensor);
-
-        int result = lib.usb_tc08_set_channel(
-            handle,
-            (short) sensor,
-            NativeInterface.TYPE_MAP.getOrDefault(type, NativeInterface.USB_TC08_DISABLE_CHANNEL)
-        );
-
-        if (result == ACTION_FAILED) {
-            throw new DeviceException(getLastError(handle));
-        } else {
-            types[sensor] = type;
-        }
-
-    }
-
-    /**
-     * Returns the sensor type that the given channel is configured for.
-     *
-     * @param sensor Sensor number
-     *
-     * @return Sensor type
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon instrument error
-     */
-    public TCouple.Type getSensorType(int sensor) throws DeviceException, IOException {
-
-        checkSensor(sensor);
-        return types[sensor];
-
     }
 
     /**
@@ -369,6 +300,11 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     @Override
     public String getIDN() throws DeviceException {
         return String.format("PICO TC-08, S/N: \"%s\"", getSerial());
+    }
+
+    @Override
+    public String getName() {
+        return "PICO USB-TC-08";
     }
 
     @Override
@@ -454,9 +390,79 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     }
 
-    @Override
-    public String getName() {
-        return getName(0);
+
+    public class TC08TMeter implements TCouple {
+
+        private final int  channel;
+        private       Type type = Type.UNKNOWN;
+
+        public TC08TMeter(int channel) {
+            this.channel = channel;
+        }
+
+        @Override
+        public String getIDN() throws IOException, DeviceException {
+            return USBTC08.this.getIDN();
+        }
+
+        @Override
+        public String getName() {
+            return String.format("Channel %d", channel);
+        }
+
+        @Override
+        public void close() throws IOException, DeviceException {
+
+        }
+
+        @Override
+        public Address getAddress() {
+            return USBTC08.this.getAddress();
+        }
+
+        @Override
+        public double getTemperature() throws IOException, DeviceException {
+
+            // If it's been long enough, update the readings buffer
+            if ((System.currentTimeMillis() - lastTime) > interval) {
+                updateReadings();
+            }
+
+            return lastValues[channel];
+
+        }
+
+        @Override
+        public void setTemperatureRange(double range) throws IOException, DeviceException {
+            /* nothing to do */
+        }
+
+        @Override
+        public double getTemperatureRange() throws IOException, DeviceException {
+            return 999.9;
+        }
+
+        @Override
+        public void setSensorType(Type type) throws IOException, DeviceException {
+
+            int result = lib.usb_tc08_set_channel(
+                handle,
+                (short) channel,
+                NativeInterface.TYPE_MAP.getOrDefault(type, NativeInterface.USB_TC08_DISABLE_CHANNEL)
+            );
+
+            if (result == ACTION_FAILED) {
+                throw new DeviceException(getLastError(handle));
+            } else {
+                this.type = type;
+            }
+
+        }
+
+        @Override
+        public Type getSensorType() throws IOException, DeviceException {
+            return type;
+        }
     }
 
     /**

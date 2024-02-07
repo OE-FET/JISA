@@ -2,10 +2,9 @@ package jisa.devices.interfaces;
 
 import jisa.control.Synch;
 import jisa.devices.DeviceException;
+import jisa.devices.PList;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Unified interface for thermometers
@@ -109,11 +108,11 @@ public interface TMeter extends Instrument {
         Synch.waitForStableTargetMaxTime(this::getTemperature, temperature, pctMargin, 1000, duration, maxTime);
     }
 
-    default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+    default PList getConfigurationParameters(Class<?> target) {
 
-        List<Parameter<?>> parameters = new LinkedList<>();
+        PList parameters = new PList();
 
-        parameters.add(new Parameter<>("Sensor Range [K]", 999.9, this::setTemperatureRange));
+        parameters.addValue("Sensor Range [K]", 999.9, this::setTemperatureRange);
 
         return parameters;
 

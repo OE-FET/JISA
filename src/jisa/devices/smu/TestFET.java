@@ -3,6 +3,7 @@ package jisa.devices.smu;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.interfaces.MCSMU;
+import jisa.devices.interfaces.SMU;
 import jisa.enums.AMode;
 import jisa.enums.Source;
 import jisa.enums.TType;
@@ -12,7 +13,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
-public class TestFET implements MCSMU {
+public class TestFET implements MCSMU<SMU> {
 
     public static String getDescription() {
         return "Virtual FET Simulator";

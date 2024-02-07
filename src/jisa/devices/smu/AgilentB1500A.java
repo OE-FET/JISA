@@ -1,12 +1,7 @@
 package jisa.devices.smu;
 
-import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.SMU;
-import jisa.devices.interfaces.Switch;
-import jisa.devices.interfaces.VMeter;
-import jisa.devices.interfaces.VSource;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,32 +11,32 @@ public class AgilentB1500A extends AgilentSPA {
 
     public final GNDU GNDU = new GNDU("GNDU", 0);
 
-    private final List<SMU>     smuChannels;
-    private final List<Switch>  switchChannels = List.of(GNDU);
-    private final List<VMeter>  vmuChannels;
-    private final List<VSource> vsuChannels;
+    private final List<ASMU> smuChannels;
+    private final List<GNDU> switchChannels = List.of(GNDU);
+    private final List<AVMU> vmuChannels;
+    private final List<AVSU> vsuChannels;
 
     public static String getDescription() {
         return "Agilent B1500A Series SPA";
     }
 
     @Override
-    public List<SMU> getSMUChannels() {
+    public List<ASMU> getSMUChannels() {
         return smuChannels;
     }
 
     @Override
-    public List<VMeter> getVMeterChannels() {
+    public List<AVMU> getVMeterChannels() {
         return vmuChannels;
     }
 
     @Override
-    public List<VSource> getVSourceChannels() {
+    public List<AVSU> getVSourceChannels() {
         return vsuChannels;
     }
 
     @Override
-    public List<Switch> getSwitchChannels() {
+    public List<GNDU> getSwitchChannels() {
         return switchChannels;
     }
 
@@ -49,10 +44,10 @@ public class AgilentB1500A extends AgilentSPA {
 
         super(address, false);
 
-        List<SMU>     smuChannels    = new ArrayList<>();
-        List<Switch>  switchChannels = new ArrayList<>();
-        List<VMeter>  vmuChannels    = new ArrayList<>();
-        List<VSource> vsuChannels    = new ArrayList<>();
+        List<ASMU> smuChannels    = new ArrayList<>();
+        List<GNDU> switchChannels = new ArrayList<>();
+        List<AVMU> vmuChannels    = new ArrayList<>();
+        List<AVSU> vsuChannels    = new ArrayList<>();
 
         String[] slots = query("UNT?").toUpperCase().split(";");
 
@@ -67,15 +62,15 @@ public class AgilentB1500A extends AgilentSPA {
                     break;
 
                 case "B1511A":
-                    smuChannels.add(new ASMU(String.format("MP-SMU %d", i+1), i + 1, null, null));
+                    smuChannels.add(new ASMU(String.format("MP-SMU %d", i + 1), i + 1, null, null));
                     break;
 
                 case "B1517A":
-                    smuChannels.add(new ASMU(String.format("HR-SMU %d", i+1), i + 1, null, null));
+                    smuChannels.add(new ASMU(String.format("HR-SMU %d", i + 1), i + 1, null, null));
                     break;
 
                 case "B1510A":
-                    smuChannels.add(new ASMU(String.format("HP-SMU %d", i+1), i + 1, null, null));
+                    smuChannels.add(new ASMU(String.format("HP-SMU %d", i + 1), i + 1, null, null));
                     break;
 
                 case "B1525A":

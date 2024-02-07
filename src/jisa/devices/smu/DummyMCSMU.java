@@ -16,25 +16,25 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-public class DummyMCSMU implements MCSMU {
+public class DummyMCSMU implements MCSMU<DummyMCSMU.DSMU> {
 
     public static String getDescription() {
         return "Dummy SMU";
     }
 
     @Override
-    public List<SMU> getSMUChannels() {
+    public List<DSMU> getSMUChannels() {
         return channels;
     }
 
-    private final List<SMU> channels = Range.count(0, 3).stream().map(DSMU::new).collect(Collectors.toUnmodifiableList());
-    private final Random    random   = new Random();
-    private final Double[]  current  = {null, null, null, null};
-    private final Double[]  voltage  = {null, null, null, null};
-    private final Source[]  mode     = {Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE};
-    private final boolean[] probes   = {true, true, true, true};
-    private final double[]  R        = {random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500};
-    private final String[] names     = {"SMU A", "SMU B", "SMU C", "SMU D"};
+    private final List<DSMU> channels = Range.count(0, 3).stream().map(DSMU::new).collect(Collectors.toUnmodifiableList());
+    private final Random     random   = new Random();
+    private final Double[]   current  = {null, null, null, null};
+    private final Double[]   voltage  = {null, null, null, null};
+    private final Source[]   mode     = {Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE, Source.VOLTAGE};
+    private final boolean[]  probes   = {true, true, true, true};
+    private final double[]   R        = {random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500, random.nextDouble() * 500};
+    private final String[]   names    = {"SMU A", "SMU B", "SMU C", "SMU D"};
 
     @Override
     public String getIDN() throws IOException, DeviceException {
@@ -61,7 +61,9 @@ public class DummyMCSMU implements MCSMU {
 
         private final int channel;
 
-        public DSMU(int channel) { this.channel = channel; }
+        public DSMU(int channel) {
+            this.channel = channel;
+        }
 
         @Override
         public double getSetCurrent() throws DeviceException, IOException {

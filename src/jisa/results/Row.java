@@ -73,6 +73,10 @@ public class Row {
 
     }
 
+    public <T> T __getitem__(Column<T> column) {
+        return get(column);
+    }
+
     /**
      * Returns the value in this row for the given column name and data type.
      *

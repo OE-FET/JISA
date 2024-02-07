@@ -5,7 +5,7 @@ import jisa.devices.DeviceException;
 
 import java.io.IOException;
 
-public class K2611B extends K26Single {
+public class K2611B extends K26Single<K2611B> {
 
     public static String getDescription() {
         return "Keithley 2611B SMU";

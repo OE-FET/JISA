@@ -14,9 +14,9 @@ import jisa.experiment.IVPoint;
 import java.io.IOException;
 import java.util.List;
 
-public abstract class K26Single extends KeithleyTSP implements SMU {
+public abstract class K26Single<T extends K26Single> extends KeithleyTSP implements SMU {
 
-    public final  KSMU      SMU_A    = new KSMU("smua");
+    public final  KSMU<T>   SMU_A    = new KSMU<>("smua", (T) this);
     private final List<SMU> channels = List.of(SMU_A);
 
     public K26Single(Address address, String model) throws IOException, DeviceException {

@@ -1,9 +1,9 @@
 package jisa.devices.interfaces;
 
 import jisa.devices.DeviceException;
+import jisa.devices.PList;
 
 import java.io.IOException;
-import java.util.List;
 
 public interface TCouple extends TMeter {
 
@@ -30,11 +30,11 @@ public interface TCouple extends TMeter {
     Type getSensorType() throws IOException, DeviceException;
 
 
-    default List<Parameter<?>> getConfigurationParameters(Class<?> target) {
+    default PList getConfigurationParameters(Class<?> target) {
 
-        List<Parameter<?>> parameters = TMeter.super.getConfigurationParameters(target);
+        PList parameters = TMeter.super.getConfigurationParameters(target);
 
-        parameters.add(new Parameter<>("Sensor Type", Type.UNKNOWN, this::setSensorType, Type.values()));
+        parameters.addChoice("Sensor Type", Type.UNKNOWN, this::setSensorType, Type.values());
 
         return parameters;
 

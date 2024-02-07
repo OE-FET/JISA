@@ -20,7 +20,9 @@ import static jisa.enums.AMode.NONE;
 import static jisa.enums.Source.CURRENT;
 import static jisa.enums.Source.VOLTAGE;
 
-public abstract class AgilentSPA extends VISADevice implements SPA {
+public abstract class AgilentSPA<T extends AgilentSPA>
+    extends    VISADevice
+    implements SPA<AgilentSPA<T>.ASMU, AgilentSPA<T>.AVMU, AgilentSPA<T>.AVSU, AgilentSPA<T>.GNDU> {
 
     public static final String C_RESET = "*RST";
     public static final String C_FLEX  = "US";
@@ -84,7 +86,7 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
     protected abstract boolean confirmIdentity();
 
-    public class ASMU implements SMU, SubInstrument<AgilentSPA> {
+    public class ASMU implements SMU, SubInstrument<T> {
 
         private final String     name;
         private final int        channel;
@@ -248,8 +250,8 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
         }
 
         @Override
-        public AgilentSPA getParentInstrument() {
-            return AgilentSPA.this;
+        public T getParentInstrument() {
+            return (T) AgilentSPA.this;
         }
 
         @Override
@@ -787,7 +789,7 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
     }
 
-    public class AVMU implements VMeter, SubInstrument<AgilentSPA> {
+    public class AVMU implements VMeter, SubInstrument<T> {
 
         private final String     name;
         private final int        channel;
@@ -895,8 +897,8 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
         }
 
         @Override
-        public AgilentSPA getParentInstrument() {
-            return AgilentSPA.this;
+        public T getParentInstrument() {
+            return (T) AgilentSPA.this;
         }
 
         @Override
@@ -1009,7 +1011,7 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
     }
 
-    public class AVSU implements VSource, SubInstrument<AgilentSPA> {
+    public class AVSU implements VSource, SubInstrument<T> {
 
         private final String      name;
         private final int         channel;
@@ -1038,8 +1040,8 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
         }
 
         @Override
-        public AgilentSPA getParentInstrument() {
-            return AgilentSPA.this;
+        public T getParentInstrument() {
+            return (T) AgilentSPA.this;
         }
 
         @Override
@@ -1126,7 +1128,7 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
 
     }
 
-    public class GNDU implements Switch, SubInstrument<AgilentSPA> {
+    public class GNDU implements Switch, SubInstrument<T> {
 
         private final String  name;
         private final int     channel;
@@ -1154,8 +1156,8 @@ public abstract class AgilentSPA extends VISADevice implements SPA {
         }
 
         @Override
-        public AgilentSPA getParentInstrument() {
-            return AgilentSPA.this;
+        public T getParentInstrument() {
+            return (T) AgilentSPA.this;
         }
 
         @Override

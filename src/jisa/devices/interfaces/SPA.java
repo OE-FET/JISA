@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public interface SPA extends Instrument, MultiInstrument {
+public interface SPA<A extends SMU, B extends VMeter, C extends VSource, D extends Switch> extends Instrument, MultiInstrument {
 
     static String getDescription() {
         return "Semiconductor Parameter Analyser";
@@ -15,7 +15,7 @@ public interface SPA extends Instrument, MultiInstrument {
      *
      * @return List of all SMU units in the SPA.
      */
-    List<SMU> getSMUChannels();
+    List<A> getSMUChannels();
 
     /**
      * Returns the SMU sub-instrument of the SPA with the given index.
@@ -24,30 +24,30 @@ public interface SPA extends Instrument, MultiInstrument {
      *
      * @return SMU subunit of given index
      */
-    default SMU getSMUChannel(int index) {
+    default A getSMUChannel(int index) {
         return getSMUChannels().get(index);
     }
 
-    List<VMeter> getVMeterChannels();
+    List<B> getVMeterChannels();
 
-    default VMeter getVMeterChannel(int index) {
+    default B getVMeterChannel(int index) {
         return getVMeterChannels().get(index);
     }
 
-    List<VSource> getVSourceChannels();
+    List<C> getVSourceChannels();
 
-    default VSource getVSourceChannel(int index) {
+    default C getVSourceChannel(int index) {
         return getVSourceChannels().get(index);
     }
 
-    List<Switch> getSwitchChannels();
+    List<D> getSwitchChannels();
 
-    default Switch getSwitchChannel(int index) {
+    default D getSwitchChannel(int index) {
         return getSwitchChannels().get(index);
     }
 
     @Override
-    default List<Instrument> getSubInstruments() {
+    default List<? extends Instrument> getSubInstruments() {
 
         return Stream.concat(
             Stream.concat(getSwitchChannels().stream(), getVMeterChannels().stream()),
