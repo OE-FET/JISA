@@ -39,7 +39,7 @@ meaning that operating them is done exactly the same way in JISA regardless of w
 ```kotlin
 data class IVPoint(val V: Double, val I: Double)
 
-// Write a method expecting to be given an SMU channel without having to specify what make/model
+// Write a method to be given an SMU channel without having to specify what make/model
 fun voltageSweep(smu: SMU): List<IVPoint> {
 
     // Create list to hold results
