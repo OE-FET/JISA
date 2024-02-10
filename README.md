@@ -157,6 +157,12 @@ For example, here's the same program written in Java, Kotlin, Python and even go
 
 **Java - Classic style, robust but verbose, like a northern grandparent.**
 ```java
+import jisa.devices.smu.K2450;
+import jisa.results.*;
+import jisa.addresses.*;
+import jisa.maths.Range;
+import jisa.Util;
+
 public class Main {
 
     public static void main(String[] args) throws Exception {
@@ -190,6 +196,12 @@ public class Main {
 ```
 **Kotlin - Slick, simplified and concise without rocking the boat**
 ```kotlin
+import jisa.devices.smu.K2450
+import jisa.results.*
+import jisa.addresses.*
+import jisa.maths.Range
+import jisa.Util
+
 fun main() {
 
     val smu     = K2450(GPIBAddress(0,20))
@@ -223,6 +235,16 @@ To use in regular Python, take a look at PyJISA [here](https://github.com/OE-FET
 Otherwise, take a look at GraalPy [here](https://www.graalvm.org/python/).
 
 ```python
+# Import and start PyJISA
+import pyjisa; pyjisa.load()
+
+# Import JISA classes as if they're Python classes
+from jisa.devices.smu import K2450
+from jisa.addresses import GPIBAddress
+from jisa.results import Column, ResultList
+from jisa.maths import Range
+from jisa import Util
+
 def main():
     
     smu     = K2450(GPIBAddress(0,20))
