@@ -224,18 +224,20 @@ Otherwise, take a look at GraalVM [here](https://www.graalvm.org/).
 
 ```python
 def main():
+    
     smu     = K2450(GPIBAddress(0,20))
     V       = Column.ofDoubles("Voltage", "V")
     I       = Column.ofDoubles("Current", "A")
     results = ResultList(V, I)
-
+    
     smu.setVoltage(0.0)
     smu.turnOn()
     
     for v in Range.linear(0.0, 60.0, 61):
+        
         smu.setVoltage(v)
         Util.sleep(500)
-
+        
         results.mapRow({
             V: smu.getVoltage(),
             I: smu.getCurrent()
