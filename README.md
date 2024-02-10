@@ -217,10 +217,10 @@ fun main() {
 
 }
 ```
-**Python (GraalPython) - "Screw your traditions, I'm a snake from the early 1990s"**
+**Python - "Screw your traditions, I'm a snake from the early 1990s"**
 
-To use in CPython, take a look at PyJISA [here](https://github.com/OE-FET/PyJISA).
-Otherwise, take a look at GraalVM [here](https://www.graalvm.org/).
+To use in regular Python, take a look at PyJISA [here](https://github.com/OE-FET/PyJISA).
+Otherwise, take a look at GraalPy [here](https://www.graalvm.org/python/).
 
 ```python
 def main():
