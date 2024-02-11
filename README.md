@@ -8,16 +8,37 @@
 In essence then, the purpose of `JISA` is to act as an alternative (and standardised) means of creating experimental control systems. It comprises, largely, of three sections:
 ### 1. Standardised Instrument Control
 
-`JISA` implements standard interfaces for each "type" of instrument, meaning that instruments are easily interchangeable. If we connect to a Keithley 2600 series multi-channel SMU, an Agilent SPA, and a Keithley 2450 single-channel SMU:
+`JISA` implements standard interfaces for each "type" of instrument, meaning that instruments are easily interchangeable. For instance:
+
+```kotlin
+// Routine that expects a DCPower object
+fun powerUp(power: DCPower) {
+
+    power.setCurrentLimit(1.0)
+    power.setVoltage(12.0)
+    power.turnOn()
+
+}
+
+// Both AgilentE3644A and K2200 implement the DCPower interface
+val power1 = AgilentE3644A(GPIBAddress(12))
+val power2 = K2200(SerialAddress("COM9"))
+
+// Thus they can both be used without altering the powerUp routine
+powerUp(power1)
+powerUp(power2)
+```
+
+That is, JISA ensures that no matter how the instrument functions "under the hood", its controls are always presented to you through a standard API. Furthermore, any instrument that can be thought of as being a collection of sub-instruments is treated as such, allowing further interchangeability. For instance, if we connect to a Keithley K2612B series dual-channel SMU, an Agilent SPA, and a Keithley 2450 single-channel SMU like so:
 
 ```kotlin
 // Connect to instruments
-val keithley = K2600B(TCPIPAddress("192.168.0.5"))
+val keithley = K2612B(TCPIPAddress("192.168.0.5"))
 val agilent  = Agilent4155X(GPIBAddress(20))
 val k2450    = K2450(USBAddress(0x05E6, 0x2450))
 ```
 
-then their individual sub-instruments can be extracted as stand-alone instruments. That is, for the Keithley 2600, its two SMU channels can be extracted as stand-alone `SMU` objects, whereas the Agilent SPA can be treated as a collection of `SMU`, `VMeter`, and `VSource` objects (representing its SMU, VMU, and VSU channels, respectively). `JISA` then allows you to extract sub-instruments, by specifying the class of instrument you want, like so:
+then their individual sub-instruments can be extracted as stand-alone instruments. That is, for the Keithley K2612B, its two SMU channels can be extracted as stand-alone `SMU` objects, whereas the Agilent SPA can be treated as a collection of `SMU`, `VMeter`, and `VSource` objects (representing its SMU, VMU, and VSU channels, respectively), and the Keithley 2450 is simply represented as an `SMU` object itself.
 
 ```kotlin
 // Extract lists of sub-instruments
@@ -34,7 +55,7 @@ val smu2 = agilent[SMU::class, 0]
 val smu3 = k2450
 ```
 
-meaning that operating them is done exactly the same way in JISA regardless of which make/model of instsrument they are from
+Therefore, if we have a measurement routine that expects a single `SMU`, then it can be run on any of these instruments without changing the routine itself:
 
 ```kotlin
 data class IVPoint(val V: Double, val I: Double)
@@ -69,6 +90,7 @@ val results1 = voltageSweep(smu1)
 val results2 = voltageSweep(smu2)
 val results3 = voltageSweep(smu3)
 ```
+
 ### 2. Data Handling
 
 JISA provides a simple means of creating tables of data which can then be directly output as CSV files:
