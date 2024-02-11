@@ -456,7 +456,7 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
                     tableView.getItems().removeListener(l);
                 }
 
-                l = l -> onChange.start();
+                l = l -> SRunnable.start(onChange);
                 tableView.getItems().addListener(l);
 
             }
@@ -1729,7 +1729,7 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
                     tableView.getItems().removeListener(l);
                 }
 
-                l = l -> onChange.start();
+                l = l -> SRunnable.start(onChange);
                 tableView.getItems().addListener(l);
 
             }

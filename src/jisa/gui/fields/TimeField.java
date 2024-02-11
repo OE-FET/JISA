@@ -32,7 +32,7 @@ public abstract class TimeField implements Field<Integer> {
 
     @Override
     public void setOnChange(SRunnable onChange) {
-        field.setOnChange(e -> onChange.start());
+        field.setOnChange(e -> SRunnable.start(onChange));
     }
 
     @Override

@@ -1,5 +1,6 @@
 package jisa.devices;
 
+import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
 import jisa.devices.interfaces.Instrument;
@@ -375,7 +376,7 @@ public class Configuration<T extends Instrument> {
             this.value = value;
 
             if (configuration != null) {
-                configuration.listeners.forEach(SRunnable::runRegardless);
+                configuration.listeners.forEach(Util::runRegardless);
             }
 
         }

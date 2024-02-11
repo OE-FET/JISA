@@ -150,7 +150,7 @@ public class ListDisplay<T> extends JFXElement implements Iterable<ListDisplay.I
     }
 
     protected void triggerOnChange() {
-        if (onChange != null) onChange.start();
+        if (onChange != null) SRunnable.start(onChange);
     }
 
     @Override
@@ -253,7 +253,7 @@ public class ListDisplay<T> extends JFXElement implements Iterable<ListDisplay.I
         public Button addMenuItem(String text, SRunnable action) {
 
             MenuItem menuItem = new MenuItem(text);
-            menuItem.setOnAction(event -> action.start());
+            menuItem.setOnAction(event -> SRunnable.start(action));
             contextMenu.getItems().add(menuItem);
 
             return new Button.MenuItemWrapper(menuItem) {
@@ -309,7 +309,7 @@ public class ListDisplay<T> extends JFXElement implements Iterable<ListDisplay.I
         }
 
         protected void triggerOnSelected() {
-            if (onSelected != null) onSelected.start();
+            if (onSelected != null) SRunnable.start(onSelected);
         }
 
     }

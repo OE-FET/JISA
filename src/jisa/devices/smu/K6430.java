@@ -28,12 +28,12 @@ public class K6430 extends KeithleySCPI {
 
     @Override
     public double getSetCurrent() throws DeviceException, IOException {
-        throw new DeviceException("Not implemented.");
+        return queryDouble(":SOUR:CURR?");
     }
 
     @Override
     public double getSetVoltage() throws DeviceException, IOException {
-        throw new DeviceException("Not implemented.");
+        return queryDouble(":SOUR:VOLT?");
     }
 
     @Override

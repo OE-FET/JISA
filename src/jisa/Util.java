@@ -57,7 +57,7 @@ public class Util {
 
     static {
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> onShutdown.forEach(SRunnable::runRegardless)));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> onShutdown.forEach(Util::runRegardless)));
 
     }
 
@@ -82,13 +82,19 @@ public class Util {
     }
 
     public static void runRegardless(SRunnable toRun) {
-        toRun.runRegardless();
+
+        try {
+            toRun.run();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     public static void runRegardless(SRunnable... toRun) {
 
         for (SRunnable run : toRun) {
-            run.runRegardless();
+            runRegardless(run);
         }
 
     }
@@ -258,7 +264,7 @@ public class Util {
         List<Thread> threads = new LinkedList<>();
 
         for (SRunnable runnable : runnables) {
-            threads.add(new Thread(runnable::runRegardless));
+            threads.add(new Thread(() -> runRegardless(runnable)));
         }
 
         threads.forEach(Thread::start);

@@ -1,25 +1,13 @@
 package jisa.control;
 
+import jisa.Util;
+
 public interface SRunnable {
 
     void run() throws Exception;
 
-    default void runRegardless() {
-
-        try {
-            run();
-        } catch (Exception ignored) {
-
-        }
-
-    }
-
-    default void start() {
-        (new Thread(this::runRegardless)).start();
-    }
-
-    static SRunnable fromJProxy(Runnable runnable) {
-        return runnable::run;
+    static void start(SRunnable runnable) {
+        Util.runAsync(() -> Util.runRegardless(runnable));
     }
 
 }

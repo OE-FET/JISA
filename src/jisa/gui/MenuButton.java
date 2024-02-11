@@ -128,7 +128,7 @@ public interface MenuButton extends SubElement {
         public Button addItem(String text, SRunnable onClick) {
 
             MenuItem item = new MenuItem(text);
-            item.setOnAction(event -> onClick.start());
+            item.setOnAction(event -> SRunnable.start(onClick));
             GUI.runNow(() -> button.getItems().add(item));
 
             return new Button.MenuItemWrapper(item) {

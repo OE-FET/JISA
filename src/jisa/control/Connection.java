@@ -60,16 +60,16 @@ public class Connection<T extends Instrument> {
 
     protected static void registerConnection(Connection<?> connection) {
         ALL_CONNECTIONS.add(connection);
-        LISTENERS.forEach(SRunnable::runRegardless);
+        LISTENERS.forEach(Util::runRegardless);
     }
 
     protected static void unregisterConnection(Connection<?> connection) {
         ALL_CONNECTIONS.remove(connection);
-        LISTENERS.forEach(SRunnable::runRegardless);
+        LISTENERS.forEach(Util::runRegardless);
     }
 
     protected static void triggerListeners() {
-        LISTENERS.forEach(SRunnable::runRegardless);
+        LISTENERS.forEach(Util::runRegardless);
     }
 
     public static <T extends Instrument> List<Connection<?>> getConnectionsByTarget(Class<T> target) {

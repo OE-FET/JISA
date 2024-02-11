@@ -162,7 +162,7 @@ public class Connector<T extends Instrument> extends JFXElement {
             if (onClick == null) {
                 removeButton.setVisible(false);
             } else {
-                removeButton.setOnAction(event -> onClick.start());
+                removeButton.setOnAction(event -> SRunnable.start(onClick));
                 removeButton.setVisible(true);
             }
 

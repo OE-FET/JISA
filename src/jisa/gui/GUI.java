@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -51,11 +52,7 @@ public class GUI {
      * the java library path
      */
     static {
-
         JavaFX.launch();
-        Application.setUserAgentStylesheet(Application.STYLESHEET_MODENA);
-        StyleManager.getInstance().addUserAgentStylesheet(Objects.requireNonNull(GUI.class.getResource("style/breeze.css")).toString());
-
     }
 
     /**

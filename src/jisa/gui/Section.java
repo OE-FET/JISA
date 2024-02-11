@@ -110,7 +110,7 @@ public class Section extends JFXElement {
     public Button addTitleButton(String text, SRunnable onClick) {
 
         javafx.scene.control.Button button = new javafx.scene.control.Button(text);
-        button.setOnAction(event -> onClick.start());
+        button.setOnAction(event -> SRunnable.start(onClick));
         button.setPadding(new Insets(1, 5, 1, 5));
 
         GUI.runNow(() -> toolBar.getChildren().add(button));

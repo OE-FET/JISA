@@ -104,7 +104,7 @@ public interface Button extends SubElement {
 
         @Override
         public void setOnClick(SRunnable onClick) {
-            button.setOnAction(event -> onClick.start());
+            button.setOnAction(event -> SRunnable.start(onClick));
         }
 
     }
@@ -149,7 +149,7 @@ public interface Button extends SubElement {
 
         @Override
         public void setOnClick(SRunnable onClick) {
-            button.setOnAction(event -> onClick.start());
+            button.setOnAction(event -> SRunnable.start(onClick));
         }
 
     }
