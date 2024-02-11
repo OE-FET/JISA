@@ -39,7 +39,7 @@ meaning that operating them is done exactly the same way in JISA regardless of w
 ```kotlin
 data class IVPoint(val V: Double, val I: Double)
 
-// Write a method expecting to be given an SMU channel without having to specify what make/model
+// Write a method to be given an SMU channel without having to specify what make/model
 fun voltageSweep(smu: SMU): List<IVPoint> {
 
     // Create list to hold results
@@ -157,6 +157,12 @@ For example, here's the same program written in Java, Kotlin, Python and even go
 
 **Java - Classic style, robust but verbose, like a northern grandparent.**
 ```java
+import jisa.devices.smu.K2450;
+import jisa.results.*;
+import jisa.addresses.*;
+import jisa.maths.Range;
+import jisa.Util;
+
 public class Main {
 
     public static void main(String[] args) throws Exception {
@@ -190,6 +196,12 @@ public class Main {
 ```
 **Kotlin - Slick, simplified and concise without rocking the boat**
 ```kotlin
+import jisa.devices.smu.K2450
+import jisa.results.*
+import jisa.addresses.*
+import jisa.maths.Range
+import jisa.Util
+
 fun main() {
 
     val smu     = K2450(GPIBAddress(0,20))
@@ -217,25 +229,37 @@ fun main() {
 
 }
 ```
-**Python (GraalPython) - "Screw your traditions, I'm a snake from the early 1990s"**
+**Python - "Screw your traditions, I'm a snake from the early 1990s"**
 
-To use in CPython, take a look at PyJISA [here](https://github.com/OE-FET/PyJISA).
-Otherwise, take a look at GraalVM [here](https://www.graalvm.org/).
+To use in regular Python, take a look at PyJISA [here](https://github.com/OE-FET/PyJISA).
+Otherwise, take a look at GraalPy [here](https://www.graalvm.org/python/).
 
 ```python
+# Import and start PyJISA
+import pyjisa; pyjisa.load()
+
+# Import JISA classes as if they're Python classes
+from jisa.devices.smu import K2450
+from jisa.addresses import GPIBAddress
+from jisa.results import Column, ResultList
+from jisa.maths import Range
+from jisa import Util
+
 def main():
+    
     smu     = K2450(GPIBAddress(0,20))
     V       = Column.ofDoubles("Voltage", "V")
     I       = Column.ofDoubles("Current", "A")
     results = ResultList(V, I)
-
+    
     smu.setVoltage(0.0)
     smu.turnOn()
     
     for v in Range.linear(0.0, 60.0, 61):
+        
         smu.setVoltage(v)
         Util.sleep(500)
-
+        
         results.mapRow({
             V: smu.getVoltage(),
             I: smu.getCurrent()
