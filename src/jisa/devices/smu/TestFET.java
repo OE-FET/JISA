@@ -432,7 +432,7 @@ public class TestFET implements MCSMU<SMU> {
     }
 
     @Override
-    public List<jisa.devices.interfaces.SMU> getSMUChannels() {
+    public List<jisa.devices.interfaces.SMU> getSMUs() {
         return channels;
     }
 

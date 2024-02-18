@@ -433,7 +433,7 @@ public class Plot extends JFXElement implements Element, Clearable {
                 GUI.runNow(() -> {
                     xAxis.setLogAxis(false);
                     xAxis.setTimeAxis(false);
-                    xAxis.setAutoUnitScaling(JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
+                    xAxis.setAutoUnitScaling(xAxis.getUnit() != null && JISAAxis.KNOWN_UNITS.contains(xAxis.getUnit()));
                 });
 
                 break;
@@ -443,7 +443,7 @@ public class Plot extends JFXElement implements Element, Clearable {
                 GUI.runNow(() -> {
                     xAxis.setLogAxis(true);
                     xAxis.setTimeAxis(false);
-                    xAxis.setAutoUnitScaling(JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
+                    xAxis.setAutoUnitScaling(xAxis.getUnit() != null && JISAAxis.KNOWN_UNITS.contains(xAxis.getUnit()));
                 });
 
                 break;
@@ -472,7 +472,7 @@ public class Plot extends JFXElement implements Element, Clearable {
                 GUI.runNow(() -> {
                     yAxis.setLogAxis(false);
                     yAxis.setTimeAxis(false);
-                    yAxis.setAutoUnitScaling(JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
+                    yAxis.setAutoUnitScaling(yAxis.getUnit() != null && JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
                 });
 
                 break;
@@ -482,7 +482,7 @@ public class Plot extends JFXElement implements Element, Clearable {
                 GUI.runNow(() -> {
                     yAxis.setLogAxis(true);
                     yAxis.setTimeAxis(false);
-                    yAxis.setAutoUnitScaling(JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
+                    yAxis.setAutoUnitScaling(yAxis.getUnit() != null && JISAAxis.KNOWN_UNITS.contains(yAxis.getUnit()));
                 });
 
                 break;

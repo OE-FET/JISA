@@ -69,7 +69,10 @@ public class ResultStream extends ResultTable {
         if (path != null) {
 
             // Make sure the directory we're wanting to write into exists.
-            new File(path).getParentFile().mkdirs();
+            try {
+                new File(path).getParentFile().mkdirs();
+            } catch (Throwable ignored) {}
+            
             this.path = path;
 
             file = new RandomAccessFile(path, "rw");

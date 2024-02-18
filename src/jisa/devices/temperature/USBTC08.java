@@ -113,7 +113,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     }
 
     @Override
-    public List<TC08TMeter> getTMeterChannels() {
+    public List<TC08TMeter> getThermometers() {
         return channels;
     }
 
@@ -124,7 +124,10 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             channels = this.channels.toArray(TC08TMeter[]::new);
         }
 
-        updateReadings();
+        // If it's been long enough, update the readings buffer
+        if ((System.currentTimeMillis() - lastTime) > interval) {
+            updateReadings();
+        }
 
         return Arrays.stream(channels).collect(Collectors.toMap(c -> c, c -> (double) lastValues[c.channel]));
 

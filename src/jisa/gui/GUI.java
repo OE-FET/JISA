@@ -77,7 +77,7 @@ public class GUI {
         try {
             instrument = constructor.newInstance(address);
         } catch (InvocationTargetException | IllegalAccessException | InstantiationException e) {
-            GUI.errorAlert("Error connecting to \"" + address.toString() + "\":\n" + e.getMessage());
+            GUI.showException(e);
             return null;
         }
 

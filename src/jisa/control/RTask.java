@@ -13,6 +13,7 @@ public class RTask {
     private       boolean   running = false;
     private       long      started;
     private       int       iteration;
+    private       int       total   = 0;
     private       TimerTask task;
 
     /**
@@ -82,6 +83,7 @@ public class RTask {
                 }
 
                 iteration++;
+                total++;
 
             }
 
@@ -140,6 +142,10 @@ public class RTask {
      */
     public int getCount() {
         return iteration;
+    }
+
+    public int getTotalCount() {
+        return total;
     }
 
     public interface Task {

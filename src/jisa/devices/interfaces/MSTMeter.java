@@ -8,14 +8,14 @@ import java.util.Map;
 
 public interface MSTMeter<T extends TMeter> extends MultiInstrument {
 
-    List<T> getTMeterChannels();
+    List<T> getThermometers();
 
-    default T getTMeterChannel(int n) {
-        return getTMeterChannels().get(n);
+    default T getThermometer(int n) {
+        return getThermometers().get(n);
     }
 
     default List<? extends Instrument> getSubInstruments() {
-        return getTMeterChannels();
+        return getThermometers();
     }
 
     /**

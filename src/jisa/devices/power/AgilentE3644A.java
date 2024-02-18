@@ -29,15 +29,13 @@ public class AgilentE3644A extends VISADevice implements DCPower {
     }
 
     @Override
-    public double getSetCurrent() throws DeviceException, IOException
-    {
-        throw new DeviceException("Not implemented");
+    public double getSetCurrent() throws DeviceException, IOException {
+        return queryDouble("CURRENT?");
     }
 
     @Override
-    public double getSetVoltage() throws DeviceException, IOException
-    {
-        throw new DeviceException("Not implemented");
+    public double getSetVoltage() throws DeviceException, IOException {
+        return queryDouble("VOLTAGE?");
     }
 
     @Override
@@ -53,7 +51,7 @@ public class AgilentE3644A extends VISADevice implements DCPower {
     @Override
     public boolean isOn() throws IOException, DeviceException {
 
-        switch(queryInt("OUTPUT:STATE?")) {
+        switch (queryInt("OUTPUT:STATE?")) {
 
             case 0:
                 return false;

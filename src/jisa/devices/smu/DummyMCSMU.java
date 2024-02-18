@@ -23,7 +23,7 @@ public class DummyMCSMU implements MCSMU<DummyMCSMU.DSMU> {
     }
 
     @Override
-    public List<DSMU> getSMUChannels() {
+    public List<DSMU> getSMUs() {
         return channels;
     }
 

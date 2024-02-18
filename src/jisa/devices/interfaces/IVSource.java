@@ -21,4 +21,5 @@ public interface IVSource extends ISource, VSource {
      * @return voltage setting [V]
      */
     double getSetVoltage() throws DeviceException, IOException;
+
 }

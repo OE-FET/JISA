@@ -320,12 +320,7 @@ public abstract class ResultTable implements Iterable<Row> {
      * @return Matching column if found, otherwise null
      */
     public <T> Column<T> findColumn(String name, KClass<T> type) {
-
-        return Objects.requireNonNullElse(
-            findColumn(name, JvmClassMappingKt.getJavaClass(type)),
-            findColumn(name, JvmClassMappingKt.getJavaPrimitiveType(type))
-        );
-
+        return findColumn(name, JvmClassMappingKt.getJavaObjectType(type));
     }
 
     /**

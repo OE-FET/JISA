@@ -21,7 +21,7 @@ public abstract class K26Dual<T extends K26Dual> extends KeithleyTSP implements 
     }
 
     @Override
-    public List<KSMU<T>> getSMUChannels() {
+    public List<KSMU<T>> getSMUs() {
         return channels;
     }
 

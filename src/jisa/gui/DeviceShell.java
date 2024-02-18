@@ -1,5 +1,7 @@
 package jisa.gui;
 
+import com.sun.javafx.scene.control.IntegerField;
+import javafx.scene.control.CheckBox;
 import jisa.addresses.Address;
 import jisa.visa.VISADevice;
 import javafx.scene.control.Label;
@@ -12,10 +14,16 @@ import java.io.IOException;
 
 public class DeviceShell extends JFXElement {
 
-    public  ListView   terminal;
-    public        TextField  input;
-    private final Address    address;
-    private       VISADevice device = null;
+    public        ListView     terminal;
+    public        TextField    input;
+    public        IntegerField timeOut;
+    public        TextField    writeTerm;
+    public        TextField    readTerm;
+    public        CheckBox     eoi;
+    public        IntegerField baud;
+    public        IntegerField data;
+    private final Address      address;
+    private       VISADevice   device = null;
 
     public DeviceShell(Address address) {
 
@@ -149,6 +157,37 @@ public class DeviceShell extends JFXElement {
 
     public void showAndWait() {
         GUI.runNow(() -> getStage().showAndWait());
+    }
+
+    public void updateParameters() {
+
+        if (device == null) {
+            addErrorLine("Error: Not Connected.");
+            return;
+        }
+
+        try {
+
+            int     timeout   = this.timeOut.getValue();
+            String  writeTerm = this.writeTerm.getText();
+            String  readTerm  = this.readTerm.getText();
+            boolean eoi       = this.eoi.isSelected();
+            int     baud      = this.baud.getValue();
+            int     data      = this.data.getValue();
+
+            device.setTimeout(timeout);
+            device.setWriteTerminator(writeTerm.replace("\\n", "\n").replace("\\r", "\r"));
+            device.setReadTerminator(readTerm.replace("\\n", "\n").replace("\\r", "\r"));
+            device.configGPIB(gpib -> gpib.setEOIEnabled(eoi));
+            device.configSerial(serial -> serial.setSerialParameters(baud, data));
+
+            addSuccessLine("Instrument settings applied");
+
+        } catch (Exception e) {
+            addErrorLine(String.format("Error when updating settings: [%s] %s", e.getClass().getSimpleName(), e.getMessage()));
+            GUI.showException(e);
+        }
+
     }
 
 }

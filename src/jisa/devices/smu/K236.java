@@ -845,9 +845,9 @@ public class K236 extends VISADevice implements SMU {
         CURRENT(1, jisa.enums.Source.CURRENT),
         VOLTAGE(0, jisa.enums.Source.VOLTAGE);
 
-        private final int               c;
-        private final jisa.enums.Source src;
-        private static final HashMap<Integer, Source> lookup  = new HashMap<>();
+        private final        int                                c;
+        private final        jisa.enums.Source                  src;
+        private static final HashMap<Integer, Source>           lookup  = new HashMap<>();
         private static final HashMap<jisa.enums.Source, Source> convert = new HashMap<>();
 
         static Source fromInt(int i) {

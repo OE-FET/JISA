@@ -21,7 +21,7 @@ public interface MCSMU<T extends SMU> extends Instrument, MultiInstrument, Itera
      *
      * @return List of SMU channels
      */
-    List<T> getSMUChannels();
+    List<T> getSMUs();
 
     /**
      * Returns a list of all SMU channels in this multi-channel SMU.
@@ -30,20 +30,20 @@ public interface MCSMU<T extends SMU> extends Instrument, MultiInstrument, Itera
      * @return List of SMU channels
      */
     default List<T> getChannels() {
-        return getSMUChannels();
+        return getSMUs();
     }
 
-    default T getSMUChannel(int index) {
-        return getSMUChannels().get(index);
+    default T getSMU(int index) {
+        return getSMUs().get(index);
     }
 
     default T getChannel(int index) {
-        return getSMUChannel(index);
+        return getSMU(index);
     }
 
     @Override
     default List<? extends Instrument> getSubInstruments() {
-        return getSMUChannels();
+        return getSMUs();
     }
 
     /**
@@ -67,7 +67,7 @@ public interface MCSMU<T extends SMU> extends Instrument, MultiInstrument, Itera
     @NotNull
     @Override
     default Iterator<T> iterator() {
-        return getSMUChannels().iterator();
+        return getSMUs().iterator();
     }
 
     interface SMUAcceptor<T extends SMU> {
