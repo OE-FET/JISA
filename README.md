@@ -5,7 +5,18 @@
 # JISA - "LabVIEW? Never heard of her."
 `JISA` is a library that I created, here in the Cavendish Laboratory, because I really (really really really) do not like LabVIEW. If you're ever in the mood to be forcibly bored into an early grave, ask me why.
 
-In essence then, the purpose of `JISA` is to act as an alternative (and standardised) means of creating experimental control systems. It comprises, largely, of three sections:
+In essence then, the purpose of `JISA` is to act as an alternative (and standardised) means of creating experimental control systems. Written in Java, it can be used in a variety of different languages, but works particularly well in:
+
+- Java
+- Kotlin (Used in examples below)
+- Python (See [PyJISA](https://github.com/OE-FET/PyJISA))
+
+It comprises, largely, of three sections:
+
+1. [Standardised Instrument Control](#1-standardised-instrument-control)
+2. [Data Handling](#2-data-handling)
+3. [GUI Building Blocks](#3-gui-building-blocks)
+
 ### 1. Standardised Instrument Control
 
 `JISA` implements standard interfaces for each "type" of instrument, meaning that instruments are easily interchangeable. For instance:
