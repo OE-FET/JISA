@@ -269,7 +269,7 @@ Otherwise, take a look at GraalPy [here](https://www.graalvm.org/python/).
 
 ```python
 # Import and start PyJISA
-import pyjisa; pyjisa.load()
+import pyjisa.autoload
 
 # Import JISA classes as if they're Python classes
 from jisa.devices.smu import K2450
