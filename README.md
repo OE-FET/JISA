@@ -3,6 +3,9 @@
 <p align="center"><img height="200" src="logo.svg"/></p>
 
 # JISA - "LabVIEW? Never heard of her."
+
+<p align="center"><img src="https://i.imgur.com/KSp85AN.png"/></p>
+
 `JISA` is a library that I created, here in the Cavendish Laboratory, because I really (really really really) do not like LabVIEW. If you're ever in the mood to be forcibly bored into an early grave, ask me why. You can read all about it, as well as how to use it, on the [JISA Wiki](https://github.com/OE-FET/JISA/wiki).
 
 In essence then, the purpose of `JISA` is to act as an alternative (and standardised) means of creating experimental control systems. Written in Java, it can be used in a variety of different languages, but works particularly well in:
