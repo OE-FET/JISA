@@ -4,7 +4,7 @@
 
 # JISA - "LabVIEW? Never heard of her."
 
-<p align="center"><img width="100%" src="tiles.svg"/></p>
+<p align="center"><img width="100%" src="info.svg"/></p>
 
 `JISA` is a library that I created, here in the Cavendish Laboratory, because I really (really really really) do not like LabVIEW. If you're ever in the mood to be forcibly bored into an early grave, ask me why. You can read all about it, as well as how to use it, on the [JISA Wiki](https://github.com/OE-FET/JISA/wiki).
 
