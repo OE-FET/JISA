@@ -1,15 +1,12 @@
 package jisa.gui.plotting;
 
-import de.gsi.chart.XYChartCss;
 import de.gsi.dataset.event.UpdateEvent;
 import de.gsi.dataset.spi.DoubleDataSet;
-import de.gsi.dataset.spi.DoubleErrorDataSet;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.paint.Color;
 import jisa.gui.Colour;
 import jisa.gui.Plot;
-import jisa.gui.Series;
 import jisa.gui.Series.Dash;
 import jisa.gui.Series.Ordering;
 import jisa.gui.Series.SeriesFitter;
@@ -20,9 +17,7 @@ import jisa.maths.functions.Function;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class JISAErrorDataSet extends TwoErrorDataSet {
 
@@ -97,6 +92,11 @@ public class JISAErrorDataSet extends TwoErrorDataSet {
 
         updateStyle();
 
+    }
+
+    public void setYValues(double[] yValues) {
+        System.arraycopy(yValues, 0, this.yValues.elements(), 0, yValues.length);
+        fireInvalidated(new UpdateEvent(this));
     }
 
     public void updateStyle() {

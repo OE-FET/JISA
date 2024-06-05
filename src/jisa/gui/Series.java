@@ -174,6 +174,24 @@ public interface Series {
 
     Series addPoint(double x, double y, double errorX, double errorY);
 
+    Series setPoints(double[] x, double[] y, double[] errorX, double[] errorY);
+
+    default Series setPoints(double[] x, double[] y, double[] errorY) {
+        return setPoints(x, y, null, errorY);
+    }
+
+    default Series setPoints(double[] x, double[] y) {
+        return setPoints(x, y, null, null);
+    }
+
+    default Series setXPoints(double[] x) {
+        return setPoints(x, null);
+    }
+
+    default Series setYPoints(double[] y){
+        return setPoints(null, y);
+    }
+
     Series removePoint(int index);
 
     Series removePoints(int from, int to);
@@ -197,6 +215,18 @@ public interface Series {
     default Series addPoints(Iterable<Double> x, Iterable<Double> y) {
 
         Util.iterateCombined(x, y, this::addPoint);
+        return this;
+
+    }
+
+    default Series addPoints(double[] x, double[] y) {
+
+        int count = Math.min(x.length, y.length);
+
+        for (int i = 0; i < count; i++) {
+            addPoint(x[i], y[i]);
+        }
+
         return this;
 
     }

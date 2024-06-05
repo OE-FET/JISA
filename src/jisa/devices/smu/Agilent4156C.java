@@ -5,10 +5,9 @@ import jisa.devices.DeviceException;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
-public class Agilent4156C extends AgilentSPA {
+public class Agilent4156C extends AgilentSPA<Agilent4156C> {
 
     public static String getDescription() {
         return "Agilent 4156C SPA";
@@ -37,42 +36,10 @@ public class Agilent4156C extends AgilentSPA {
 
         super(address, true);
 
-        String[]   options      = query("UNT?").split(";");
-        List<ASMU> foundSMUs    = new LinkedList<>();
-        ASMU[]     possibleSMUs = new ASMU[]{SMU1, SMU2, SMU3, SMU4, SMU5, SMU6};
+        String response = query("UNT?");
 
-        boolean gndu = false;
-
-        for (int i = 0; i < options.length; i++) {
-
-            String   option = options[i];
-            String[] parts  = option.split(",");
-
-            switch (parts[0]) {
-
-                case "MPSMU":
-                    foundSMUs.add(possibleSMUs[i - 1]);
-                    break;
-
-                case "HPSMU":
-                    foundSMUs.add(HPSMU);
-                    break;
-
-                case "GNDU":
-                    gndu = true;
-                    break;
-
-            }
-
-        }
-
-        smuChannels = List.copyOf(foundSMUs);
-
-        if (gndu) {
-            switchChannels = List.of(GNDU);
-        } else {
-            switchChannels = Collections.emptyList();
-        }
+        smuChannels    = parseUNTResponse(response, HPSMU, SMU1, SMU2, SMU3, SMU4, SMU5, SMU6);
+        switchChannels = response.contains("GNDU") ? List.of(GNDU) : Collections.emptyList();
 
     }
 

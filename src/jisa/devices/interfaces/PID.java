@@ -692,14 +692,14 @@ public interface PID extends Instrument, MultiInstrument {
          * @param range Output range
          */
         public Zone(double min, double max, double P, double I, double D, double range) {
-            this.min   = min;
-            this.max   = max;
-            this.P     = P;
-            this.I     = I;
-            this.D     = D;
-            this.limit = range;
-            auto       = true;
-            output     = 0;
+            this.min    = min;
+            this.max    = max;
+            this.P      = P;
+            this.I      = I;
+            this.D      = D;
+            this.limit  = range;
+            this.auto   = true;
+            this.output = 0;
         }
 
         /**
@@ -713,11 +713,11 @@ public interface PID extends Instrument, MultiInstrument {
         public Zone(double min, double max, double output, double range) {
             this.min    = min;
             this.max    = max;
-            P           = 0;
-            I           = 0;
-            D           = 0;
+            this.P      = 0;
+            this.I      = 0;
+            this.D      = 0;
             this.limit  = range;
-            auto        = false;
+            this.auto   = false;
             this.output = output;
         }
 

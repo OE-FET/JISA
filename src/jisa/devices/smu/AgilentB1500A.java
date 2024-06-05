@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AgilentB1500A extends AgilentSPA {
+public class AgilentB1500A extends AgilentSPA<AgilentB1500A> {
 
     public final GNDU GNDU = new GNDU("GNDU", 0);
 

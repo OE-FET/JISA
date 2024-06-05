@@ -25,7 +25,10 @@ import jisa.gui.fields.StringField;
 import jisa.gui.fields.TimeField;
 import jisa.maths.Range;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1854,6 +1857,85 @@ public class Fields extends JFXElement implements Element, Iterable<Field<?>> {
 
         fields.add(f);
         return f;
+
+    }
+
+    /**
+     * Adds a text box that only accepts numerical (decimal, floating point) values.
+     *
+     * @param name         Name of the field
+     * @param initialValue Initial value to display
+     *
+     * @return SetGettable to set or get the value as a double
+     */
+    public jisa.gui.Button addButton(String name, SRunnable onClick) {
+
+        HBox box = new HBox();
+        box.setSpacing(15);
+        box.setAlignment(Pos.CENTER_LEFT);
+
+        Button button = new Button(name);
+
+        button.setOnAction(e -> SRunnable.start(onClick));
+
+        GridPane.setVgrow(button, Priority.NEVER);
+        GridPane.setHgrow(button, Priority.NEVER);
+        GridPane.setHalignment(button, HPos.RIGHT);
+
+        GUI.runNow(() -> list.add(button, 1, rows++));
+
+        return new jisa.gui.Button() {
+
+            @Override
+            public boolean isDisabled() {
+                return button.isDisabled();
+            }
+
+            @Override
+            public void setDisabled(boolean disabled) {
+                GUI.runNow(() -> button.setDisable(disabled));
+            }
+
+            @Override
+            public boolean isVisible() {
+                return button.isVisible();
+            }
+
+            @Override
+            public void setVisible(boolean visible) {
+
+                GUI.runNow(() -> {
+                    button.setVisible(visible);
+                    button.setManaged(visible);
+                });
+
+            }
+
+            @Override
+            public String getText() {
+                return button.getText();
+            }
+
+            @Override
+            public void setText(String text) {
+                GUI.runNow(() -> button.setText(text));
+            }
+
+            @Override
+            public void setOnClick(SRunnable onClick) {
+                button.setOnAction(e -> SRunnable.start(onClick));
+            }
+
+            @Override
+            public void remove() {
+                GUI.runNow(() -> {
+                    list.getChildren().remove(button);
+                    updateGridding();
+                });
+
+            }
+
+        };
 
     }
 

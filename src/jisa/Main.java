@@ -66,6 +66,7 @@ public class Main {
                         shell.showAndWait();
                         break;
 
+
                     case CHOICE_ADDR:
 
                         String[] values = GUI.inputWindow("JISA", "Input Address", "Please type the VISA address to connect to...", "Address");
@@ -79,10 +80,12 @@ public class Main {
                         conShell.showAndWait();
                         break;
 
+
                     case CHOICE_HELP:
 
                         doc.showAsAlert();
                         break;
+
 
                     case CHOICE_EXIT:
 

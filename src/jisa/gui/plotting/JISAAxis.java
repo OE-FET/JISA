@@ -20,6 +20,7 @@ public class JISAAxis extends JISADefaultAxis {
         final double paddingScale = 1.0 + this.getAutoRangePadding();
         final double paddedMin    = isLogAxis ? min / paddingScale : min - padding;
         final double paddedMax    = isLogAxis ? max * paddingScale : max + padding;
+
         return this.computeRange(paddedMin, paddedMax, length, labelSize);
 
     }

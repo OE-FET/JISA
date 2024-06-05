@@ -13,6 +13,8 @@ import jisa.visa.VISADevice;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 
 import static jisa.devices.interfaces.SMU.OffMode.HIGH_IMPEDANCE;
 import static jisa.devices.interfaces.SMU.OffMode.ZERO;
@@ -20,15 +22,36 @@ import static jisa.enums.AMode.NONE;
 import static jisa.enums.Source.CURRENT;
 import static jisa.enums.Source.VOLTAGE;
 
-public abstract class AgilentSPA<T extends AgilentSPA>
-    extends    VISADevice
-    implements SPA<AgilentSPA<T>.ASMU, AgilentSPA<T>.AVMU, AgilentSPA<T>.AVSU, AgilentSPA<T>.GNDU> {
+public abstract class AgilentSPA<T extends AgilentSPA> extends VISADevice implements SPA<AgilentSPA<T>.ASMU, AgilentSPA<T>.AVMU, AgilentSPA<T>.AVSU, AgilentSPA<T>.GNDU> {
 
     public static final String C_RESET = "*RST";
     public static final String C_FLEX  = "US";
     public static final String C_FMT   = "FMT 2";
 
     private double lastIntTime = 0.0;
+
+    protected List<AgilentSPA<T>.ASMU> parseUNTResponse(String untResponse, AgilentSPA<T>.ASMU hpSMU, AgilentSPA<T>.ASMU... possibleSMUs) {
+
+        String[]                 units     = untResponse.split(";");
+        List<AgilentSPA<T>.ASMU> foundSMUs = new LinkedList<>();
+
+        for (int i = 0; i < units.length; i++) {
+
+            String   option = units[i];
+            String[] parts  = option.split(",");
+            String   name   = parts[0];
+
+            if (name.contains("HPSMU")) {
+                foundSMUs.add(hpSMU);
+            } else if (name.contains("SMU")) {
+                foundSMUs.add(possibleSMUs[i - 1]);
+            }
+
+        }
+
+        return List.copyOf(foundSMUs);
+
+    }
 
     public AgilentSPA(Address address, boolean setFLEX) throws IOException, DeviceException {
 
@@ -44,7 +67,7 @@ public abstract class AgilentSPA<T extends AgilentSPA>
         addAutoRemove("\n", "\r");
 
         write(C_RESET);
-        
+
         if (setFLEX) {
             write(C_FLEX);
         }
@@ -181,20 +204,20 @@ public abstract class AgilentSPA<T extends AgilentSPA>
             switch (type) {
 
                 case MEAN_REPEAT:
-                    return new MeanRepeatFilter(this::measureVoltage, (c) -> {});
+                    return new MeanRepeatFilter(this::measureVoltage, (c) -> { });
 
                 case MEAN_MOVING:
-                    return new MeanMovingFilter(this::measureVoltage, (c) -> {});
+                    return new MeanMovingFilter(this::measureVoltage, (c) -> { });
 
                 case MEDIAN_REPEAT:
-                    return new MedianRepeatFilter(this::measureVoltage, (c) -> {});
+                    return new MedianRepeatFilter(this::measureVoltage, (c) -> { });
 
                 case MEDIAN_MOVING:
-                    return new MedianMovingFilter(this::measureVoltage, (c) -> {});
+                    return new MedianMovingFilter(this::measureVoltage, (c) -> { });
 
                 default:
                 case NONE:
-                    return new BypassFilter(this::measureVoltage, (c) -> {});
+                    return new BypassFilter(this::measureVoltage, (c) -> { });
 
             }
 
@@ -205,20 +228,20 @@ public abstract class AgilentSPA<T extends AgilentSPA>
             switch (type) {
 
                 case MEAN_REPEAT:
-                    return new MeanRepeatFilter(this::measureCurrent, (c) -> {});
+                    return new MeanRepeatFilter(this::measureCurrent, (c) -> { });
 
                 case MEAN_MOVING:
-                    return new MeanMovingFilter(this::measureCurrent, (c) -> {});
+                    return new MeanMovingFilter(this::measureCurrent, (c) -> { });
 
                 case MEDIAN_REPEAT:
-                    return new MedianRepeatFilter(this::measureCurrent, (c) -> {});
+                    return new MedianRepeatFilter(this::measureCurrent, (c) -> { });
 
                 case MEDIAN_MOVING:
-                    return new MedianMovingFilter(this::measureCurrent, (c) -> {});
+                    return new MedianMovingFilter(this::measureCurrent, (c) -> { });
 
                 default:
                 case NONE:
-                    return new BypassFilter(this::measureCurrent, (c) -> {});
+                    return new BypassFilter(this::measureCurrent, (c) -> { });
 
             }
 
@@ -235,28 +258,13 @@ public abstract class AgilentSPA<T extends AgilentSPA>
         }
 
         @Override
-        public String getIDN() throws IOException, DeviceException {
-            return AgilentSPA.this.getIDN();
-        }
-
-        @Override
         public String getName() {
             return name;
         }
 
         @Override
-        public void close() throws IOException, DeviceException {
-
-        }
-
-        @Override
         public T getParentInstrument() {
             return (T) AgilentSPA.this;
-        }
-
-        @Override
-        public Address getAddress() {
-            return AgilentSPA.this.getAddress();
         }
 
         protected double measureVoltage() throws DeviceException, IOException {
@@ -813,20 +821,20 @@ public abstract class AgilentSPA<T extends AgilentSPA>
             switch (type) {
 
                 case MEAN_REPEAT:
-                    return new MeanRepeatFilter(this::measureVoltage, (c) -> {});
+                    return new MeanRepeatFilter(this::measureVoltage, (c) -> { });
 
                 case MEAN_MOVING:
-                    return new MeanMovingFilter(this::measureVoltage, (c) -> {});
+                    return new MeanMovingFilter(this::measureVoltage, (c) -> { });
 
                 case MEDIAN_REPEAT:
-                    return new MedianRepeatFilter(this::measureVoltage, (c) -> {});
+                    return new MedianRepeatFilter(this::measureVoltage, (c) -> { });
 
                 case MEDIAN_MOVING:
-                    return new MedianMovingFilter(this::measureVoltage, (c) -> {});
+                    return new MedianMovingFilter(this::measureVoltage, (c) -> { });
 
                 default:
                 case NONE:
-                    return new BypassFilter(this::measureVoltage, (c) -> {});
+                    return new BypassFilter(this::measureVoltage, (c) -> { });
 
             }
 
@@ -879,11 +887,6 @@ public abstract class AgilentSPA<T extends AgilentSPA>
 
             return Range.AUTO_RANGING;
 
-        }
-
-        @Override
-        public String getIDN() throws IOException, DeviceException {
-            return AgilentSPA.this.getIDN();
         }
 
         @Override

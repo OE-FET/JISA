@@ -129,7 +129,7 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
         final double  xMin          = xAxis.getValueForDisplay(xAxisInverted ? xAxisWidth : 0.0);
         final double  xMax          = xAxis.getValueForDisplay(xAxisInverted ? 0.0 : xAxisWidth);
 
-        for (int dataSetIndex = localDataSetList.size() - 1; dataSetIndex >= 0; dataSetIndex--) {
+        for (int dataSetIndex = 0; dataSetIndex < localDataSetList.size(); dataSetIndex++) {
 
             if (!(localDataSetList.get(dataSetIndex) instanceof JISAErrorDataSet)) {
                 continue;
@@ -138,13 +138,15 @@ public class JISARenderer extends AbstractErrorDataSetRendererParameter<JISARend
             final int              ldataSetIndex = dataSetIndex;
             final JISAErrorDataSet dataSet       = (JISAErrorDataSet) localDataSetList.get(dataSetIndex);
 
-            if (xAxis instanceof JISADefaultAxis) {
-                ((JISADefaultAxis) xAxis).recordLogValues(dataSet.xValues.toArray(new double[0]));
-            }
+            try {
+                if (xAxis instanceof JISADefaultAxis) {
+                    ((JISADefaultAxis) xAxis).recordLogValues(dataSet.xValues.toArray(new double[dataSet.xValues.size()]));
+                }
 
-            if (yAxis instanceof JISADefaultAxis) {
-                ((JISADefaultAxis) yAxis).recordLogValues(dataSet.yValues.toArray(new double[0]));
-            }
+                if (yAxis instanceof JISADefaultAxis) {
+                    ((JISADefaultAxis) yAxis).recordLogValues(dataSet.yValues.toArray(new double[dataSet.yValues.size()]));
+                }
+            } catch (Throwable ignored) {}
 
             if (!dataSet.isVisible()) {
                 continue;

@@ -71,7 +71,7 @@ public class CryoCon22C extends VISADevice implements TC {
         return List.of(LOOP_1, LOOP_2, LOOP_3, LOOP_4);
     }
 
-    private class TMeter implements TC.TMeter {
+    public class TMeter implements TC.TMeter {
 
         private final String sensor;
 
@@ -126,7 +126,7 @@ public class CryoCon22C extends VISADevice implements TC {
 
     }
 
-    private class Heater implements TC.Heater {
+    public class Heater implements TC.Heater {
 
         private final int number;
 
@@ -260,7 +260,7 @@ public class CryoCon22C extends VISADevice implements TC {
 
     }
 
-    private class Loop extends ZonedLoop {
+    public class Loop extends ZonedLoop {
 
         private final Heater  heater;
         private       boolean ramping = false;

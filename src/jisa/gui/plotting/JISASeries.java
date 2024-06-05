@@ -12,6 +12,7 @@ import jisa.results.ResultTable;
 import jisa.results.Row;
 import jisa.results.RowEvaluable;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -251,6 +252,40 @@ public class JISASeries implements Series {
         double eXHalf = Math.abs(errorX);
         double eYHalf = Math.abs(errorY);
         dataSets.get(0).add(x, y, eYHalf, eYHalf, eXHalf, eXHalf);
+        return this;
+
+    }
+
+    @Override
+    public Series setPoints(double[] x, double[] y, double[] errorX, double[] errorY) {
+
+        dataSets.get(0).autoNotification().set(false);
+
+        if (x != null) {
+            dataSets.get(0).xValues.setElements(x);
+            dataSets.get(0).getAxisDescription(0).setMin(Arrays.stream(x).min().getAsDouble());
+            dataSets.get(0).getAxisDescription(0).setMax(Arrays.stream(x).max().getAsDouble());
+        }
+
+        if (y != null) {
+            dataSets.get(0).yValues.setElements(y);
+            dataSets.get(0).getAxisDescription(1).setMin(Arrays.stream(y).min().getAsDouble());
+            dataSets.get(0).getAxisDescription(1).setMax(Arrays.stream(y).max().getAsDouble());
+        }
+
+        if (errorX != null) {
+            dataSets.get(0).xErrorsNeg.setElements(errorX);
+            dataSets.get(0).xErrorsPos.setElements(errorX);
+        }
+
+        if (errorY != null) {
+            dataSets.get(0).yErrorsNeg.setElements(errorY);
+            dataSets.get(0).yErrorsPos.setElements(errorY);
+        }
+
+        dataSets.get(0).autoNotification().set(true);
+        dataSets.get(0).fireInvalidated(null);
+
         return this;
 
     }

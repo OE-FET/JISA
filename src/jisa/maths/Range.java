@@ -38,12 +38,14 @@ public class Range<T extends Number> implements Iterable<T> {
      */
     public static Range<Double> linear(Number start, Number stop, int numSteps) {
 
+        // We must have at least one step in the range
         if (numSteps < 1) {
             throw new IllegalArgumentException("You cannot have fewer than 1 step.");
         } else if (numSteps == 1) {
             return new Range<>(new Double[]{start.doubleValue()});
         }
 
+        // If we're just counting integers, then easiest to use the integer overload
         if (start.intValue() == start.doubleValue() && stop.intValue() == stop.doubleValue() && (stop.intValue() - start.intValue() + 1) == numSteps) {
             return linear(start.intValue(), stop.intValue());
         }

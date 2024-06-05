@@ -73,6 +73,15 @@ public class Util {
         }
     }
 
+    /**
+     * Sleep function that doesn't throw interrupted exceptions. Upon an interrupt it will simply stop sleeping.
+     *
+     * @param msec Number of milliseconds to sleep for
+     */
+    public static void sleep(int msec) {
+        sleep((long) msec);
+    }
+
     public static String pluralise(String word, Number value) {
         return pluralise(word, word + "s", value);
     }
@@ -535,14 +544,38 @@ public class Util {
     }
 
     public static double[] primitiveArray(Double... values) {
+        return Arrays.stream(values).mapToDouble(i -> i).toArray();
+    }
 
-        double[] primitive = new double[values.length];
+    public static double[] arrayDiff(double[] a, double[] b) {
 
-        for (int i = 0; i < values.length; i++) {
-            primitive[i] = values[i];
+        double[] result = new double[Math.min(a.length, b.length)];
+
+        for (int i = 0; i < result.length; i++) {
+            result[i] = a[i] - b[i];
         }
 
-        return primitive;
+        return result;
+
+    }
+
+    public static double[] arrayAdd(double[] a, double[] b) {
+
+        double[] result = new double[Math.min(a.length, b.length)];
+
+        for (int i = 0; i < result.length; i++) {
+            result[i] = a[i] + b[i];
+        }
+
+        return result;
+
+    }
+
+    public static double[] arrayFill(int count, double value) {
+
+        double[] result = new double[count];
+        Arrays.fill(result, value);
+        return result;
 
     }
 
@@ -555,6 +588,46 @@ public class Util {
         }
 
         return array;
+
+    }
+
+    public static <T> boolean arraysSameSize(T[]... arrays) {
+
+        if (arrays.length == 0) {
+            return true;
+        }
+
+        int count = arrays[0].length;
+
+        for (T[] array : arrays) {
+
+            if (array.length != count) {
+                return false;
+            }
+
+        }
+
+        return true;
+
+    }
+
+    public static boolean arraysSameSize(double[]... arrays) {
+
+        if (arrays.length == 0) {
+            return true;
+        }
+
+        int count = arrays[0].length;
+
+        for (double[] array : arrays) {
+
+            if (array.length != count) {
+                return false;
+            }
+
+        }
+
+        return true;
 
     }
 

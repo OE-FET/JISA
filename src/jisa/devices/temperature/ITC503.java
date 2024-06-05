@@ -153,7 +153,7 @@ public class ITC503 extends VISADevice implements TC {
         return loops;
     }
 
-    private class TMeter implements TC.TMeter {
+    public class TMeter implements TC.TMeter {
 
         private final int number;
 
@@ -202,7 +202,7 @@ public class ITC503 extends VISADevice implements TC {
 
     }
 
-    private final TC.Heater heater = new Heater() {
+    public final TC.Heater heater = new Heater() {
 
         @Override
         public String getIDN() throws IOException {
@@ -237,7 +237,7 @@ public class ITC503 extends VISADevice implements TC {
 
     };
 
-    private final ZonedLoop loop = new ZonedLoop() {
+    public final ZonedLoop loop = new ZonedLoop() {
 
         private boolean ramping = false;
         private double rampRate = 0.0;
