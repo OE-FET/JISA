@@ -2,8 +2,6 @@ package jisa.devices.smu;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.MCSMU;
-import jisa.devices.interfaces.SMU;
 import jisa.enums.AMode;
 import jisa.enums.Source;
 import jisa.enums.TType;
@@ -22,7 +20,7 @@ public class TestFET implements MCSMU<SMU> {
     public final SMU SD_CHANNEL = new SMU(0);
     public final SMU SG_CHANNEL = new SMU(1);
 
-    private final List<jisa.devices.interfaces.SMU> channels = List.of(SD_CHANNEL, SG_CHANNEL);
+    private final List<jisa.devices.smu.SMU> channels = List.of(SD_CHANNEL, SG_CHANNEL);
 
     private static final double VT     = 1.0;
     private static final double MU     = 1.0;
@@ -59,7 +57,7 @@ public class TestFET implements MCSMU<SMU> {
         return null;
     }
 
-    public class SMU implements jisa.devices.interfaces.SMU {
+    public class SMU implements jisa.devices.smu.SMU {
 
         private final int channel;
 
@@ -432,7 +430,7 @@ public class TestFET implements MCSMU<SMU> {
     }
 
     @Override
-    public List<jisa.devices.interfaces.SMU> getSMUs() {
+    public List<jisa.devices.smu.SMU> getSMUs() {
         return channels;
     }
 

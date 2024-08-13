@@ -5,7 +5,6 @@ import jisa.addresses.Address;
 import jisa.addresses.GPIBAddress;
 import jisa.control.*;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.SMU;
 import jisa.enums.AMode;
 import jisa.enums.Source;
 import jisa.enums.TType;

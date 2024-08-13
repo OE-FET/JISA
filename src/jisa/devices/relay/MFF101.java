@@ -2,7 +2,6 @@ package jisa.devices.relay;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.Switch;
 import jisa.visa.VISADevice;
 import jisa.visa.connections.SerialConnection;
 

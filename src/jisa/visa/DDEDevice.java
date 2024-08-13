@@ -1,12 +1,10 @@
 package jisa.visa;
 
-import com.pretty_tools.dde.DDEException;
 import com.pretty_tools.dde.client.DDEClientConversation;
 import jisa.addresses.Address;
 import jisa.addresses.LXIAddress;
-import jisa.addresses.TCPIPAddress;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.Instrument;
+import jisa.devices.Instrument;
 
 import java.io.IOException;
 import java.net.InetAddress;

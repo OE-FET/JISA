@@ -2,10 +2,9 @@ package jisa.devices.spectrometer;
 
 import jisa.addresses.Address;
 import jisa.addresses.LXIAddress;
-import jisa.devices.interfaces.Spectrometer;
 import jisa.visa.DDEDevice;
 
-public class Bruker70v extends DDEDevice implements Spectrometer {
+public class Bruker70v extends DDEDevice implements OldSpectrometer {
 
     public boolean using_tm_rf = false;
 

@@ -1,8 +1,6 @@
 package jisa.gui;
 
 import com.sun.glass.ui.GlassRobot;
-import com.sun.javafx.css.StyleManager;
-import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -21,7 +19,7 @@ import javafx.stage.Stage;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.Instrument;
+import jisa.devices.Instrument;
 import jisa.enums.Icon;
 import jisa.experiment.Measurement;
 import kotlin.jvm.JvmClassMappingKt;
@@ -33,9 +31,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;

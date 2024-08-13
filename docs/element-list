@@ -2,7 +2,7 @@ jisa
 jisa.addresses
 jisa.control
 jisa.devices
-jisa.devices.amp
+jisa.devices.lockin
 jisa.devices.camera
 jisa.devices.interfaces
 jisa.devices.level
@@ -12,7 +12,7 @@ jisa.devices.relay
 jisa.devices.smu
 jisa.devices.spectrometer
 jisa.devices.temperature
-jisa.devices.vmeter
+jisa.devices.meter
 jisa.enums
 jisa.experiment
 jisa.experiment.queue

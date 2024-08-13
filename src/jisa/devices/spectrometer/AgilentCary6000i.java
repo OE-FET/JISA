@@ -2,11 +2,10 @@ package jisa.devices.spectrometer;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.Spectrometer;
 
 import java.io.IOException;
 
-public class AgilentCary6000i implements Spectrometer {
+public class AgilentCary6000i implements OldSpectrometer {
 
     public AgilentCary6000i(Address address) throws Exception {
 

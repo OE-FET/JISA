@@ -9,10 +9,10 @@ import jisa.control.ConfigBlock;
 import jisa.control.Connection;
 import jisa.control.SRunnable;
 import jisa.devices.Configuration;
-import jisa.devices.interfaces.Instrument;
-import jisa.devices.interfaces.Instrument.AutoQuantity;
-import jisa.devices.interfaces.Instrument.OptionalQuantity;
-import jisa.devices.interfaces.Instrument.TableQuantity;
+import jisa.devices.Instrument;
+import jisa.devices.Instrument.AutoQuantity;
+import jisa.devices.Instrument.OptionalQuantity;
+import jisa.devices.Instrument.TableQuantity;
 import kotlin.reflect.KClass;
 
 import java.util.LinkedList;

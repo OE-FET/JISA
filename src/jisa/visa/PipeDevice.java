@@ -3,7 +3,7 @@ package jisa.visa;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.PipeAddress;
-import jisa.devices.interfaces.Instrument;
+import jisa.devices.Instrument;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;

@@ -14,7 +14,7 @@ public class ConnectionFailedException extends VISAException {
     public ConnectionFailedException(Address address, Map<Driver, Exception> errors) {
 
         super(
-            "Could not open \"%s\" using any available, compatible driver. The following errors were given:%n%s",
+            "Could not open \"%s\" using any available, compatible driver. The following errors were given:%n%n%s",
             address.toString(),
             errors.entrySet().stream()
                   .map(e -> String.format(

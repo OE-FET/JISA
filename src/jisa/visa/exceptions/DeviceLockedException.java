@@ -17,4 +17,12 @@ public class DeviceLockedException extends VISAException {
 
     }
 
+    public Address getAddress() {
+        return address;
+    }
+
+    public Driver getDriver() {
+        return driver;
+    }
+
 }

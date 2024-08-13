@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class Util {
 
@@ -559,9 +560,33 @@ public class Util {
 
     }
 
+    public static long[] arrayDiff(long[] a, long[] b) {
+
+        long[] result = new long[Math.min(a.length, b.length)];
+
+        for (int i = 0; i < result.length; i++) {
+            result[i] = a[i] - b[i];
+        }
+
+        return result;
+
+    }
+
     public static double[] arrayAdd(double[] a, double[] b) {
 
         double[] result = new double[Math.min(a.length, b.length)];
+
+        for (int i = 0; i < result.length; i++) {
+            result[i] = a[i] + b[i];
+        }
+
+        return result;
+
+    }
+
+    public static long[] arrayAdd(long[] a, long[] b) {
+
+        long[] result = new long[Math.min(a.length, b.length)];
 
         for (int i = 0; i < result.length; i++) {
             result[i] = a[i] + b[i];
@@ -897,15 +922,7 @@ public class Util {
     }
 
     public static <T> List<T> iterableToList(Iterable<T> iterable) {
-
-        List<T> list = new LinkedList<>();
-
-        for (T v : iterable) {
-            list.add(v);
-        }
-
-        return list;
-
+        return StreamSupport.stream(iterable.spliterator(), false).collect(Collectors.toList());
     }
 
     enum ExType {

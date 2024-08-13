@@ -4,7 +4,7 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import jisa.Util;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.Instrument;
+import jisa.devices.Instrument;
 import org.reflections.Reflections;
 
 import java.io.IOException;
@@ -28,7 +28,7 @@ public abstract class NativeDevice<I extends Library> implements Instrument {
                 NativeDevice<?> device = reference.get();
 
                 try {
-                    if (device != null) device.close();
+                    if (device != null) { device.close(); }
                 } catch (Exception ignored) {
                     // Ignored
                 }
@@ -39,15 +39,15 @@ public abstract class NativeDevice<I extends Library> implements Instrument {
 
     }
 
-    protected I      lib;
-    protected String name;
+    protected final I      nativeLibrary;
+    protected final String name;
 
     public NativeDevice(String libraryName, Class<I> libraryInterface) throws IOException {
 
         name = libraryName;
 
         try {
-            lib = Native.loadLibrary(libraryName, libraryInterface);
+            nativeLibrary = Native.loadLibrary(libraryName, libraryInterface);
         } catch (Throwable e) {
             throw new IOException(String.format("Unable to load library \"%s\":\n\n%s", name, e.getMessage()));
         }
@@ -58,8 +58,8 @@ public abstract class NativeDevice<I extends Library> implements Instrument {
 
     public NativeDevice(String libraryName, I library) {
 
-        name = libraryName;
-        lib  = library;
+        name          = libraryName;
+        nativeLibrary = library;
 
         opened.add(new WeakReference<>(this));
 

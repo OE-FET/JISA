@@ -16,9 +16,8 @@ import jisa.addresses.Address;
 import jisa.control.ConfigBlock;
 import jisa.control.Connection;
 import jisa.control.SRunnable;
-import jisa.devices.interfaces.Instrument;
-import jisa.devices.interfaces.SubInstrument;
-import jisa.visa.VISADevice;
+import jisa.devices.Instrument;
+import jisa.devices.SubInstrument;
 import kotlin.reflect.KClass;
 import org.reflections.Reflections;
 

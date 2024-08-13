@@ -2,9 +2,8 @@ package jisa.devices.smu;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.IMeter;
-import jisa.devices.interfaces.SMU;
-import jisa.devices.interfaces.VMeter;
+import jisa.devices.meter.IMeter;
+import jisa.devices.meter.VMeter;
 import jisa.enums.AMode;
 import jisa.enums.Source;
 import jisa.enums.TType;

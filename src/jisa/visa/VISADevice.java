@@ -3,7 +3,7 @@ package jisa.visa;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.Instrument;
+import jisa.devices.Instrument;
 import jisa.visa.connections.*;
 import jisa.visa.drivers.Driver;
 import jisa.visa.exceptions.VISAException;
@@ -12,6 +12,7 @@ import kotlin.reflect.KClass;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -449,6 +450,30 @@ public class VISADevice implements Instrument {
     public synchronized String query(String command, Object... args) throws IOException {
         write(command, args);
         return read();
+    }
+
+    public synchronized String[] querySplit(String command, String delimiter, Object... args) throws IOException {
+        return query(command, args).split(delimiter);
+    }
+
+    public synchronized int[] querySplitInt(String command, String delimiter, Object... args) throws IOException {
+        return Arrays.stream(querySplit(command, delimiter, args)).mapToInt(Integer::parseInt).toArray();
+    }
+
+    public synchronized double[] querySplitDouble(String command, String delimiter, Object... args) throws IOException {
+        return Arrays.stream(querySplit(command, delimiter, args)).mapToDouble(Double::parseDouble).toArray();
+    }
+
+    public synchronized String querySplitSingle(String command, String delimiter, int index, Object... args) throws IOException {
+        return querySplit(command, delimiter, args)[index];
+    }
+
+    public synchronized int querySplitSingleInt(String command, String delimiter, int index, Object... args) throws IOException {
+        return Integer.parseInt(querySplitSingle(command, delimiter, index, args));
+    }
+
+    public synchronized double querySplitSingleDouble(String command, String delimiter, int index, Object... args) throws IOException {
+        return Double.parseDouble(querySplitSingle(command, delimiter, index, args));
     }
 
     /**

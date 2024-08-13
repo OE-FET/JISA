@@ -2,9 +2,7 @@ package jisa.devices.smu;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.MCSMU;
-import jisa.devices.interfaces.SMU;
-import jisa.devices.interfaces.SubInstrument;
+import jisa.devices.SubInstrument;
 import jisa.enums.AMode;
 import jisa.enums.Source;
 import jisa.enums.TType;

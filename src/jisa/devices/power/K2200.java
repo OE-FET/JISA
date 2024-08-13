@@ -2,7 +2,6 @@ package jisa.devices.power;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.DCPower;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;

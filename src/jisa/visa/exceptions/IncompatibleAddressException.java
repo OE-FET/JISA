@@ -17,4 +17,12 @@ public class IncompatibleAddressException extends VISAException {
 
     }
 
+    public Address getAddress() {
+        return address;
+    }
+
+    public Driver getDriver() {
+        return driver;
+    }
+
 }

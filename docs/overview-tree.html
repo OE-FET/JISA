@@ -100,7 +100,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <li><a href="jisa/addresses/package-tree.html">jisa.addresses</a>, </li>
 <li><a href="jisa/control/package-tree.html">jisa.control</a>, </li>
 <li><a href="jisa/devices/package-tree.html">jisa.devices</a>, </li>
-<li><a href="jisa/devices/amp/package-tree.html">jisa.devices.amp</a>, </li>
+<li><a href="jisa/devices/amp/package-tree.html">jisa.devices.lockin</a>, </li>
 <li><a href="jisa/devices/camera/package-tree.html">jisa.devices.camera</a>, </li>
 <li><a href="jisa/devices/interfaces/package-tree.html">jisa.devices.interfaces</a>, </li>
 <li><a href="jisa/devices/level/package-tree.html">jisa.devices.level</a>, </li>
@@ -110,7 +110,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <li><a href="jisa/devices/smu/package-tree.html">jisa.devices.smu</a>, </li>
 <li><a href="jisa/devices/spectrometer/package-tree.html">jisa.devices.spectrometer</a>, </li>
 <li><a href="jisa/devices/temperature/package-tree.html">jisa.devices.temperature</a>, </li>
-<li><a href="jisa/devices/vmeter/package-tree.html">jisa.devices.vmeter</a>, </li>
+<li><a href="jisa/devices/vmeter/package-tree.html">jisa.devices.meter</a>, </li>
 <li><a href="jisa/enums/package-tree.html">jisa.enums</a>, </li>
 <li><a href="jisa/experiment/package-tree.html">jisa.experiment</a>, </li>
 <li><a href="jisa/experiment/queue/package-tree.html">jisa.experiment.queue</a>, </li>
@@ -550,7 +550,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 </li>
 <li class="circle">jisa.experiment.<a href="jisa/experiment/Spectrum.html" title="class in jisa.experiment"><span class="typeNameLink">Spectrum</span></a> (implements java.lang.Iterable&lt;T&gt;)</li>
 <li class="circle">jisa.experiment.<a href="jisa/experiment/Spectrum.DataPoint.html" title="class in jisa.experiment"><span class="typeNameLink">Spectrum.DataPoint</span></a></li>
-<li class="circle">jisa.devices.amp.<a href="jisa/devices/amp/SR830.DataPacket.html" title="class in jisa.devices.amp"><span class="typeNameLink">SR830.DataPacket</span></a></li>
+<li class="circle">jisa.devices.lockin.<a href="jisa/devices/amp/SR830.DataPacket.html" title="class in jisa.devices.lockin"><span class="typeNameLink">SR830.DataPacket</span></a></li>
 <li class="circle">jisa.gui.fields.<a href="jisa/gui/fields/StringField.html" title="class in jisa.gui.fields"><span class="typeNameLink">StringField</span></a> (implements jisa.gui.<a href="jisa/gui/Field.html" title="interface in jisa.gui">Field</a>&lt;T&gt;)</li>
 <li class="circle">jisa.gui.svg.<a href="jisa/gui/svg/SVG.html" title="class in jisa.gui.svg"><span class="typeNameLink">SVG</span></a></li>
 <li class="circle">jisa.gui.svg.<a href="jisa/gui/svg/SVGElement.html" title="class in jisa.gui.svg"><span class="typeNameLink">SVGElement</span></a>
@@ -636,7 +636,7 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <li class="circle">jisa.devices.level.<a href="jisa/devices/level/ILM200.html" title="class in jisa.devices.level"><span class="typeNameLink">ILM200</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/LevelMeter.html" title="interface in jisa.devices.interfaces">LevelMeter</a>)</li>
 <li class="circle">jisa.devices.power.<a href="jisa/devices/power/IPS120.html" title="class in jisa.devices.power"><span class="typeNameLink">IPS120</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/EMController.html" title="interface in jisa.devices.interfaces">EMController</a>)</li>
 <li class="circle">jisa.devices.temperature.<a href="jisa/devices/temperature/ITC503.html" title="class in jisa.devices.temperature"><span class="typeNameLink">ITC503</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/TC.html" title="interface in jisa.devices.interfaces">TC</a>)</li>
-<li class="circle">jisa.devices.vmeter.<a href="jisa/devices/vmeter/K2182.html" title="class in jisa.devices.vmeter"><span class="typeNameLink">K2182</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/VMeter.html" title="interface in jisa.devices.interfaces">VMeter</a>)</li>
+<li class="circle">jisa.devices.meter.<a href="jisa/devices/vmeter/K2182.html" title="class in jisa.devices.meter"><span class="typeNameLink">K2182</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/VMeter.html" title="interface in jisa.devices.interfaces">VMeter</a>)</li>
 <li class="circle">jisa.devices.power.<a href="jisa/devices/power/K2200.html" title="class in jisa.devices.power"><span class="typeNameLink">K2200</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/DCPower.html" title="interface in jisa.devices.interfaces">DCPower</a>)</li>
 <li class="circle">jisa.devices.smu.<a href="jisa/devices/smu/K236.html" title="class in jisa.devices.smu"><span class="typeNameLink">K236</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/SMU.html" title="interface in jisa.devices.interfaces">SMU</a>)</li>
 <li class="circle">jisa.devices.smu.<a href="jisa/devices/smu/K2600B.html" title="class in jisa.devices.smu"><span class="typeNameLink">K2600B</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/MCSMU.html" title="interface in jisa.devices.interfaces">MCSMU</a>)</li>
@@ -651,8 +651,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <li class="circle">jisa.devices.temperature.<a href="jisa/devices/temperature/LS336.html" title="class in jisa.devices.temperature"><span class="typeNameLink">LS336</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/TC.html" title="interface in jisa.devices.interfaces">TC</a>)</li>
 <li class="circle">jisa.devices.temperature.<a href="jisa/devices/temperature/MercuryITC.html" title="class in jisa.devices.temperature"><span class="typeNameLink">MercuryITC</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/TC.html" title="interface in jisa.devices.interfaces">TC</a>)</li>
 <li class="circle">jisa.devices.probestation.<a href="jisa/devices/probestation/Pegasus.html" title="class in jisa.devices.probestation"><span class="typeNameLink">Pegasus</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/ProbeStation.html" title="interface in jisa.devices.interfaces">ProbeStation</a>)</li>
-<li class="circle">jisa.devices.amp.<a href="jisa/devices/amp/SR560.html" title="class in jisa.devices.amp"><span class="typeNameLink">SR560</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/VPreAmp.html" title="interface in jisa.devices.interfaces">VPreAmp</a>)</li>
-<li class="circle">jisa.devices.amp.<a href="jisa/devices/amp/SR830.html" title="class in jisa.devices.amp"><span class="typeNameLink">SR830</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/DPLockIn.html" title="interface in jisa.devices.interfaces">DPLockIn</a>)</li>
+<li class="circle">jisa.devices.lockin.<a href="jisa/devices/amp/SR560.html" title="class in jisa.devices.lockin"><span class="typeNameLink">SR560</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/VPreAmp.html" title="interface in jisa.devices.interfaces">VPreAmp</a>)</li>
+<li class="circle">jisa.devices.lockin.<a href="jisa/devices/amp/SR830.html" title="class in jisa.devices.lockin"><span class="typeNameLink">SR830</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/DPLockIn.html" title="interface in jisa.devices.interfaces">DPLockIn</a>)</li>
 <li class="circle">jisa.devices.power.<a href="jisa/devices/power/TSX3510P.html" title="class in jisa.devices.power"><span class="typeNameLink">TSX3510P</span></a> (implements jisa.devices.interfaces.<a href="jisa/devices/interfaces/DCPower.html" title="interface in jisa.devices.interfaces">DCPower</a>)</li>
 </ul>
 </li>
@@ -1084,8 +1084,8 @@ $('.navPadding').css('padding-top', $('.fixedNav').css("height"));
 <li class="circle">jisa.enums.<a href="jisa/enums/Shield.html" title="enum in jisa.enums"><span class="typeNameLink">Shield</span></a></li>
 <li class="circle">jisa.devices.interfaces.<a href="jisa/devices/interfaces/SMU.OffMode.html" title="enum in jisa.devices.interfaces"><span class="typeNameLink">SMU.OffMode</span></a></li>
 <li class="circle">jisa.enums.<a href="jisa/enums/Source.html" title="enum in jisa.enums"><span class="typeNameLink">Source</span></a></li>
-<li class="circle">jisa.devices.amp.<a href="jisa/devices/amp/SR830.RefMode.html" title="enum in jisa.devices.amp"><span class="typeNameLink">SR830.RefMode</span></a> (implements jisa.control.<a href="jisa/control/Nameable.html" title="interface in jisa.control">Nameable</a>)</li>
-<li class="circle">jisa.devices.amp.<a href="jisa/devices/amp/SR830.TimeConst.html" title="enum in jisa.devices.amp"><span class="typeNameLink">SR830.TimeConst</span></a> (implements jisa.control.<a href="jisa/control/Nameable.html" title="interface in jisa.control">Nameable</a>)</li>
+<li class="circle">jisa.devices.lockin.<a href="jisa/devices/amp/SR830.RefMode.html" title="enum in jisa.devices.lockin"><span class="typeNameLink">SR830.RefMode</span></a> (implements jisa.control.<a href="jisa/control/Nameable.html" title="interface in jisa.control">Nameable</a>)</li>
+<li class="circle">jisa.devices.lockin.<a href="jisa/devices/amp/SR830.TimeConst.html" title="enum in jisa.devices.lockin"><span class="typeNameLink">SR830.TimeConst</span></a> (implements jisa.control.<a href="jisa/control/Nameable.html" title="interface in jisa.control">Nameable</a>)</li>
 <li class="circle">jisa.devices.interfaces.<a href="jisa/devices/interfaces/TCouple.Type.html" title="enum in jisa.devices.interfaces"><span class="typeNameLink">TCouple.Type</span></a></li>
 <li class="circle">jisa.enums.<a href="jisa/enums/Terminals.html" title="enum in jisa.enums"><span class="typeNameLink">Terminals</span></a></li>
 <li class="circle">jisa.enums.<a href="jisa/enums/TType.html" title="enum in jisa.enums"><span class="typeNameLink">TType</span></a></li>

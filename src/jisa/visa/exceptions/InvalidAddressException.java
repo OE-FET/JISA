@@ -17,4 +17,12 @@ public class InvalidAddressException extends VISAException {
 
     }
 
+    public Address getAddress() {
+        return address;
+    }
+
+    public Driver getDriver() {
+        return driver;
+    }
+
 }

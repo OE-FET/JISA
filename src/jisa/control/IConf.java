@@ -1,6 +1,6 @@
 package jisa.control;
 
-import jisa.devices.interfaces.Instrument;
+import jisa.devices.Instrument;
 
 public interface IConf<T extends Instrument> {
 

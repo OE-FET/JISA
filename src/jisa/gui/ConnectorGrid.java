@@ -4,7 +4,7 @@ import javafx.scene.image.Image;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.Connection;
-import jisa.devices.interfaces.Instrument;
+import jisa.devices.Instrument;
 import jisa.experiment.queue.Action;
 import org.reflections.Reflections;
 

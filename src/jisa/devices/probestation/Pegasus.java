@@ -2,7 +2,7 @@ package jisa.devices.probestation;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.ProbeStation;
+import jisa.devices.translator.ProbeStation;
 import jisa.visa.VISADevice;
 import jisa.visa.connections.SerialConnection;
 

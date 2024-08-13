@@ -1,16 +1,13 @@
 package jisa.gui;
 
-import com.github.sarxos.webcam.Webcam;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.ImageView;
 import jisa.control.RTask;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.Camera;
+import jisa.devices.camera.OldCamera;
 
 import java.io.IOException;
-import java.util.List;
 
 public class CameraFeed extends JFXElement {
 
@@ -19,10 +16,10 @@ public class CameraFeed extends JFXElement {
     @FXML
     protected ScrollPane scroll;
 
-    private final Camera camera;
-    private final RTask  frameGrabber = new RTask((long) (1e3 / 30), task -> updateFrame());
+    private final OldCamera camera;
+    private final RTask     frameGrabber = new RTask((long) (1e3 / 30), task -> updateFrame());
 
-    public CameraFeed(String title, Camera camera) {
+    public CameraFeed(String title, OldCamera camera) {
 
         super(title, CameraFeed.class.getResource("fxml/Webcam.fxml"));
 
@@ -33,7 +30,7 @@ public class CameraFeed extends JFXElement {
 
     }
 
-    public Camera getCamera() {
+    public OldCamera getCamera() {
         return camera;
     }
 

@@ -1,14 +1,14 @@
 package jisa.control;
 
-import jisa.devices.DeviceException;
 import jisa.Util;
+import jisa.devices.DeviceException;
 
 import java.io.IOException;
 import java.util.ArrayList;
 
 public class Synch {
 
-    public static void waitForCondition(ICondition condition, int interval) throws Exception {
+    public static void waitForCondition(ICondition condition, int interval) throws InterruptedException, IOException, DeviceException {
 
         int i = 0;
 

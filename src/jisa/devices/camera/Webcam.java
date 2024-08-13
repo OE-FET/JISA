@@ -3,7 +3,6 @@ package jisa.devices.camera;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.Camera;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -13,7 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Webcam implements Camera {
+public class Webcam implements OldCamera {
 
     private final com.github.sarxos.webcam.Webcam webcam;
     private final List<Mode>                      modes;
@@ -53,7 +52,7 @@ public class Webcam implements Camera {
         }
 
         webcam.setViewSize(Arrays.stream(webcam.getViewSizes()).max(Comparator.comparingInt(v -> v.width * v.height)).orElse(webcam.getViewSize()));
-        modes = Arrays.stream(webcam.getViewSizes()).map(v -> new Camera.Mode(v.width, v.height)).collect(Collectors.toUnmodifiableList());
+        modes = Arrays.stream(webcam.getViewSizes()).map(v -> new OldCamera.Mode(v.width, v.height)).collect(Collectors.toUnmodifiableList());
 
     }
 

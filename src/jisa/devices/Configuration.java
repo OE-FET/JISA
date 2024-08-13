@@ -3,8 +3,6 @@ package jisa.devices;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
-import jisa.devices.interfaces.Instrument;
-import jisa.devices.interfaces.MultiInstrument;
 import kotlin.jvm.JvmClassMappingKt;
 import kotlin.reflect.KClass;
 
@@ -236,7 +234,7 @@ public class Configuration<T extends Instrument> {
 
         choice = choices.get(index);
 
-        List<Parameter<?>> newParameters = choice.getConfigurationParameters(target).stream().map(Parameter::new).collect(Collectors.toList());
+        List<Parameter<?>> newParameters = choice.getAllParameters(target).stream().map(Parameter::new).collect(Collectors.toList());
 
         pastParameters.addAll(parameters);
 

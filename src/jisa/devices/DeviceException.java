@@ -1,5 +1,8 @@
 package jisa.devices;
 
+/**
+ * Exception class for representing errors returned by devices.
+ */
 public class DeviceException extends Exception {
 
     private final String message;

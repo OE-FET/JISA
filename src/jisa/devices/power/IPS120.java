@@ -3,8 +3,8 @@ package jisa.devices.power;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.EMController;
-import jisa.devices.temperature.ITC503;
+import jisa.devices.electromagnet.EMController;
+import jisa.devices.pid.ITC503;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;

@@ -3,21 +3,22 @@ package jisa.devices.relay;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.MSwitch;
-import jisa.devices.interfaces.Switch;
+import jisa.devices.SubInstrument;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-public class ADRelay extends VISADevice implements MSwitch {
+public class ADRelay extends VISADevice implements MSwitch<ADRelay.Channel> {
 
     public static String getDescription() {
         return "Arduino-Controlled Relay";
     }
 
-    private final int NUM_CHANNELS;
+    private final int           NUM_CHANNELS;
+    private final List<Channel> channels;
 
     public ADRelay(Address address) throws IOException, DeviceException {
 
@@ -41,51 +42,54 @@ public class ADRelay extends VISADevice implements MSwitch {
         }
 
         NUM_CHANNELS = queryInt("NCHANS?");
+        channels     = IntStream.rangeClosed(1, NUM_CHANNELS)
+                                .mapToObj(Channel::new)
+                                .collect(Collectors.toUnmodifiableList());
 
     }
 
     @Override
-    public void turnOn(int channel) throws IOException, DeviceException {
-        checkChannel(channel);
-        write("OUTP %d 1", channel + 1);
+    public List<Channel> getSwitches() {
+        return channels;
     }
 
-    @Override
-    public void turnOff(int channel) throws IOException, DeviceException {
-        checkChannel(channel);
-        write("OUTP %d 0", channel + 1);
-    }
+    public class Channel implements Switch, SubInstrument<ADRelay> {
 
-    @Override
-    public boolean isOn(int channel) throws IOException, DeviceException {
-        checkChannel(channel);
-        return queryInt("OUTP? %d", channel + 1) == 1;
-    }
+        private final int channel;
 
-    @Override
-    public int getNumChannels() {
-        return NUM_CHANNELS;
-    }
-
-    @Override
-    public String getName(int channelNumber) {
-        return String.format("Relay %d", channelNumber + 1);
-    }
-
-    @Override
-    public List<Switch> getChannels() {
-
-        int numChannels = getNumChannels();
-
-        List<Switch> list = new ArrayList<>(numChannels);
-
-        for (int cn = 0; cn < numChannels; cn++) {
-
-            list.add(getChannel(cn));
-
+        public Channel(int channel) {
+            this.channel = channel;
         }
 
-        return list;
+        @Override
+        public ADRelay getParentInstrument() {
+            return ADRelay.this;
+        }
+
+        @Override
+        public void turnOn() throws IOException, DeviceException {
+            write("OUTP %d 1", channel);
+        }
+
+        @Override
+        public void turnOff() throws IOException, DeviceException {
+            write("OUTP %d 0", channel);
+        }
+
+        @Override
+        public boolean isOn() throws IOException, DeviceException {
+            return queryInt("OUTP? %d", channel) == 1;
+        }
+
+        /**
+         * Returns the name of the instrument or channel.
+         *
+         * @return Name
+         */
+        @Override
+        public String getName() {
+            return String.format("Relay %d", channel);
+        }
 
     }
 

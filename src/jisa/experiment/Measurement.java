@@ -2,7 +2,7 @@ package jisa.experiment;
 
 import jisa.control.ConfigBlock;
 import jisa.devices.Configuration;
-import jisa.devices.interfaces.Instrument;
+import jisa.devices.Instrument;
 import jisa.experiment.queue.Action;
 import jisa.gui.Element;
 import jisa.gui.Field;

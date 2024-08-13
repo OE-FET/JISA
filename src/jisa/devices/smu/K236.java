@@ -4,7 +4,6 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.control.*;
 import jisa.devices.DeviceException;
-import jisa.devices.interfaces.SMU;
 import jisa.enums.AMode;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
