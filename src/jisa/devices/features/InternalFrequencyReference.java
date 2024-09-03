@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface InternalFrequencyReference<F extends FSource> extends Feature, MultiInstrument {
 
-    static void addParameters(InternalFrequencyReference instrument, ParameterList parameters) {
+    static void addParameters(InternalFrequencyReference instrument, Class<?> target, ParameterList parameters) {
 
         FSource osc = instrument.getInternalReferenceOscillator();
 

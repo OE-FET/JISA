@@ -7,12 +7,14 @@ import javafx.scene.layout.VBox;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.Connection;
-import jisa.control.SRunnable;
 import jisa.devices.Configuration;
 import jisa.devices.Instrument;
 import jisa.devices.Instrument.AutoQuantity;
 import jisa.devices.Instrument.OptionalQuantity;
-import jisa.devices.Instrument.TableQuantity;
+import jisa.gui.form.Field;
+import jisa.gui.form.Form;
+import jisa.gui.form.TableField;
+import jisa.results.ResultTable;
 import kotlin.reflect.KClass;
 
 import java.util.LinkedList;
@@ -23,8 +25,8 @@ public class Configurator<I extends Instrument> extends JFXElement {
     private final Configuration<I> configuration;
     private       Connection<?>    connection = null;
     private       boolean          sepLast    = false;
-    private final Fields           main       = new Fields("Instrument");
-    private final Fields           config     = new Fields("Configuration");
+    private final Form             main       = new Form("Instrument");
+    private final Form             config     = new Form("Configuration");
     private final TitledPane       titled     = new TitledPane("Configuration", config.getNode());
     private final Accordion        accordion  = new Accordion(titled);
 
@@ -41,6 +43,25 @@ public class Configurator<I extends Instrument> extends JFXElement {
         Connection.addListener(() -> {
             configuration.setInputInstrument(connection == null ? null : connection.getInstrument());
             update();
+        });
+
+        accordion.heightProperty().addListener((observable, oldValue, newValue) -> {
+
+            if (isShowing()) {
+                autoAdjustSize();
+            }
+
+        });
+
+        accordion.expandedPaneProperty().addListener((observable, oldValue, newValue) -> {
+
+            if (isShowing()) {
+                Util.runAsync(() -> {
+                    Util.sleep(500);
+                    getStage().getScene().getWindow().setWidth(getStage().getScene().getWidth() + 0.001);
+                });
+            }
+
         });
 
     }
@@ -110,11 +131,17 @@ public class Configurator<I extends Instrument> extends JFXElement {
 
         Field<Integer> instruments = main.addChoice("Instrument", connections.indexOf(connection), names);
 
-        instruments.setOnChange(() -> {
+        instruments.addChangeListener(nv -> {
 
-            connection = connections.get(instruments.get());
-            configuration.setInputInstrument(connection != null ? connection.getInstrument() : null);
-            update();
+            try {
+
+                connection = connections.get(nv);
+                configuration.setInputInstrument(connection != null ? connection.getInstrument() : null);
+                update();
+
+            } catch (Throwable t) {
+                t.printStackTrace();
+            }
 
         });
 
@@ -122,7 +149,7 @@ public class Configurator<I extends Instrument> extends JFXElement {
 
             Field<Integer> choice = main.addChoice(configuration.getChoiceName(), configuration.getChoice(), configuration.getChoices().toArray(String[]::new));
 
-            choice.setOnChange(() -> {
+            choice.addChangeListener(nv -> {
                 configuration.selectChoice(choice.get());
                 update();
             });
@@ -144,10 +171,14 @@ public class Configurator<I extends Instrument> extends JFXElement {
             accordion.setVisible(made);
             accordion.setManaged(made);
 
-            if (made)  {
+            if (made) {
                 accordion.setExpandedPane(titled);
             } else {
                 accordion.setExpandedPane(null);
+            }
+
+            if (isShowing()) {
+                autoAdjustSize();
             }
 
         });
@@ -161,21 +192,21 @@ public class Configurator<I extends Instrument> extends JFXElement {
             Object  value = ((AutoQuantity) parameter.getValue()).getValue();
             boolean auto  = ((AutoQuantity) parameter.getValue()).isAuto();
 
-            Configuration.Parameter quantity = new Configuration.Parameter(new Instrument.Parameter(parameter.getName(), value, i -> {}, parameter.getChoices().toArray()));
+            Configuration.Parameter quantity = new Configuration.Parameter(new Instrument.Parameter(parameter.getName(), value, i -> { }, parameter.getChoices().toArray()));
 
             Separator s1 = config.addSeparator();
-            if (sepLast) {s1.remove();}
+            if (sepLast) { s1.remove(); }
             Field          qField    = makeField(quantity);
             Field<Boolean> autoCheck = config.addCheckBox("Auto", auto);
             Separator      s2        = config.addSeparator();
 
 
-            autoCheck.setOnChange(() -> {
+            autoCheck.addChangeListener(nv -> {
                 qField.setDisabled(autoCheck.get());
                 parameter.setValue(new AutoQuantity<>(autoCheck.get(), qField.get()));
             });
 
-            qField.setOnChange(() -> parameter.setValue(new AutoQuantity<>(autoCheck.get(), qField.get())));
+            qField.addChangeListener(nv -> parameter.setValue(new AutoQuantity<>(autoCheck.get(), qField.get())));
 
             qField.setDisabled(autoCheck.get());
 
@@ -195,12 +226,17 @@ public class Configurator<I extends Instrument> extends JFXElement {
                 }
 
                 @Override
-                public void setOnChange(SRunnable onChange) {
+                public Listener<AutoQuantity> addChangeListener(Listener<AutoQuantity> onChange) {
+
+                    autoCheck.addChangeListener(ac -> onChange.valueChanged(get()));
+                    qField.addChangeListener(ac -> onChange.valueChanged(get()));
+
+                    return onChange;
 
                 }
 
                 @Override
-                public void editValues(String... values) {
+                public void removeChangeListener(Listener<AutoQuantity> onChange) {
 
                 }
 
@@ -254,22 +290,22 @@ public class Configurator<I extends Instrument> extends JFXElement {
             Object  value = ((OptionalQuantity) parameter.getValue()).getValue();
             boolean auto  = ((OptionalQuantity) parameter.getValue()).isUsed();
 
-            Configuration.Parameter quantity = new Configuration.Parameter(new Instrument.Parameter(parameter.getName(), value, i -> {}, parameter.getChoices().toArray()));
+            Configuration.Parameter quantity = new Configuration.Parameter(new Instrument.Parameter(parameter.getName(), value, i -> { }, parameter.getChoices().toArray()));
 
 
             Separator s1 = config.addSeparator();
-            if (sepLast) {s1.remove();}
+            if (sepLast) { s1.remove(); }
             Field          qField    = makeField(quantity);
             Field<Boolean> autoCheck = config.addCheckBox("Use", auto);
             Separator      s2        = config.addSeparator();
 
 
-            autoCheck.setOnChange(() -> {
+            autoCheck.addChangeListener(nv -> {
                 qField.setDisabled(!autoCheck.get());
                 parameter.setValue(new OptionalQuantity<>(autoCheck.get(), qField.get()));
             });
 
-            qField.setOnChange(() -> parameter.setValue(new OptionalQuantity<>(autoCheck.get(), qField.get())));
+            qField.addChangeListener(nv -> parameter.setValue(new OptionalQuantity<>(autoCheck.get(), qField.get())));
 
             qField.setDisabled(!autoCheck.get());
 
@@ -289,12 +325,17 @@ public class Configurator<I extends Instrument> extends JFXElement {
                 }
 
                 @Override
-                public void setOnChange(SRunnable onChange) {
+                public Listener<OptionalQuantity> addChangeListener(Listener<OptionalQuantity> onChange) {
+
+                    autoCheck.addChangeListener(ac -> onChange.valueChanged(get()));
+                    qField.addChangeListener(ac -> onChange.valueChanged(get()));
+
+                    return onChange;
 
                 }
 
                 @Override
-                public void editValues(String... values) {
+                public void removeChangeListener(Listener<OptionalQuantity> onChange) {
 
                 }
 
@@ -348,7 +389,7 @@ public class Configurator<I extends Instrument> extends JFXElement {
 
             String[]       options = (String[]) parameter.getChoices().stream().map(Object::toString).toArray(String[]::new);
             Field<Integer> field   = config.addChoice(parameter.getName(), parameter.getChoices().indexOf(parameter.getValue()), options);
-            field.setOnChange(() -> parameter.setValue(parameter.getChoices().get(field.get())));
+            field.addChangeListener(nv -> parameter.setValue(parameter.getChoices().get(field.get())));
 
             sepLast = false;
 
@@ -356,28 +397,28 @@ public class Configurator<I extends Instrument> extends JFXElement {
 
         } else if (parameter.getType() == Double.class) {
             Field<Double> field = config.addDoubleField(parameter.getName(), (Double) parameter.getValue());
-            field.setOnChange(() -> parameter.setValue(field.get()));
+            field.addChangeListener(parameter::setValue);
             sepLast = false;
             return field;
         } else if (parameter.getType() == Integer.class) {
             Field<Integer> field = config.addIntegerField(parameter.getName(), (Integer) parameter.getValue());
-            field.setOnChange(() -> parameter.setValue(field.get()));
+            field.addChangeListener(parameter::setValue);
             sepLast = false;
             return field;
         } else if (parameter.getType() == Boolean.class) {
             Field<Boolean> field = config.addCheckBox(parameter.getName(), (Boolean) parameter.getValue());
-            field.setOnChange(() -> parameter.setValue(field.get()));
+            field.addChangeListener(parameter::setValue);
             sepLast = false;
             return field;
-        } else if (parameter.getType() == TableQuantity.class) {
-            Field<List<List<Double>>> field = config.addTable(parameter.getName(), ((TableQuantity) parameter.getValue()).getColumns());
-            field.set(((TableQuantity) parameter.getValue()).getValue());
-            field.setOnChange(() -> parameter.setValue(new TableQuantity(((TableQuantity) parameter.getValue()).getColumns(), field.get())));
+        } else if (ResultTable.class.isAssignableFrom(parameter.getType())) {
+            TableField field = config.addTable(parameter.getName(), ((ResultTable) parameter.getValue()).getColumnsAsArray());
+            field.set((ResultTable) parameter.getValue());
+            field.addChangeListener(parameter::setValue);
             sepLast = false;
             return field;
         } else {
             Field<String> field = config.addTextField(parameter.getName(), parameter.getValue().toString());
-            field.setOnChange(() -> parameter.setValue(field.get()));
+            field.addChangeListener(parameter::setValue);
             sepLast = false;
             return field;
         }

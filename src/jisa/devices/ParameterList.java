@@ -3,7 +3,6 @@ package jisa.devices;
 import jisa.devices.Instrument.Parameter;
 
 import java.util.LinkedList;
-import java.util.List;
 
 public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
 
@@ -68,12 +67,6 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
             }
 
         }));
-
-    }
-
-    public void addDoubleTable(String name, String[] Columns, List<List<Double>> values, Instrument.Setter<List<List<Double>>> setter) {
-
-        add(new Parameter<>(name, new Instrument.TableQuantity(Columns, values), q -> setter.set(q.getValue())));
 
     }
 

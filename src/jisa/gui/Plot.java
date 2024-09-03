@@ -11,6 +11,8 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import jisa.Util;
+import jisa.gui.form.Field;
+import jisa.gui.form.Form;
 import jisa.gui.plotting.*;
 import jisa.gui.svg.*;
 import jisa.maths.fits.Fit;
@@ -557,7 +559,7 @@ public class Plot extends JFXElement implements Element, Clearable {
      */
     public void showSaveDialog() {
 
-        Fields         save   = new Fields("Save Plot");
+        Form           save   = new Form("Save Plot");
         Field<Integer> format = save.addChoice("Format", 1, "svg", "png", "tex");
         Field<Integer> width  = save.addIntegerField("Width", 600);
         Field<Integer> height = save.addIntegerField("Height", 400);

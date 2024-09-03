@@ -28,4 +28,16 @@ public class BooleanColumn extends Column<Boolean> {
         return Boolean.parseBoolean(string);
     }
 
+    public RowEvaluable<Boolean> not() {
+        return r -> !this.evaluate(r);
+    }
+
+    public RowEvaluable<Boolean> and(RowEvaluable<Boolean> other) {
+        return r -> this.evaluate(r) && other.evaluate(r);
+    }
+
+    public RowEvaluable<Boolean> or(RowEvaluable<Boolean> column) {
+        return r -> this.evaluate(r) || column.evaluate(r);
+    }
+
 }

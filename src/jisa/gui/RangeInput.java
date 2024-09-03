@@ -1,8 +1,10 @@
 package jisa.gui;
 
+import jisa.gui.form.Field;
+import jisa.gui.form.Form;
 import jisa.maths.Range;
 
-public class RangeInput extends Fields {
+public class RangeInput extends Form {
 
     private static final int LINEAR      = 0;
     private static final int LOGARITHMIC = 1;
@@ -32,7 +34,7 @@ public class RangeInput extends Fields {
         mirror = addCheckBox("Mirrored", false);
 
         updateGUI();
-        mode.setOnChange(this::updateGUI);
+        mode.addChangeListener(nv -> updateGUI());
 
 
     }

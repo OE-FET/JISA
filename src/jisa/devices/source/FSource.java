@@ -70,7 +70,7 @@ public interface FSource extends Instrument {
     double getPhase() throws IOException, DeviceException;
 
 
-    default ParameterList parameters(Class<?> target) {
+    default ParameterList getBaseParameters(Class<?> target) {
 
         ParameterList parameters = new ParameterList();
 

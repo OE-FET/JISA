@@ -10,7 +10,7 @@ import java.io.IOException;
  */
 public interface LineFilter2X extends Feature {
 
-    static void addParameters(LineFilter2X instrument, ParameterList parameters) {
+    static void addParameters(LineFilter2X instrument, Class<?> target, ParameterList parameters) {
 
         try {
             parameters.addValue("2x Line Filter", instrument.is2xLineFilterEnabled(), instrument::set2xLineFilterEnabled);

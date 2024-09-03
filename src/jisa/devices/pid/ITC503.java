@@ -421,9 +421,9 @@ public class ITC503 extends VISADevice implements TC {
         }
 
         @Override
-        public List<Parameter<?>> parameters(Class<?> target) {
+        public List<Parameter<?>> getBaseParameters(Class<?> target) {
 
-            List<Parameter<?>> list = super.parameters(target);
+            List<Parameter<?>> list = super.getBaseParameters(target);
             list.add(new Parameter<>("Use Internal PID Table", true, v -> query(C_SET_AUTO_PID, v ? 1 : 0)));
             return list;
 
@@ -543,8 +543,8 @@ public class ITC503 extends VISADevice implements TC {
         query(C_SET_MODE, mode.toInt());
     }
 
-    public List<Parameter<?>> parameters(Class<?> target) {
-        List<Parameter<?>> parameters = TC.super.parameters(target);
+    public List<Parameter<?>> getBaseParameters(Class<?> target) {
+        List<Parameter<?>> parameters = TC.super.getBaseParameters(target);
         parameters.add(new Parameter<>("Use Internal PID Table", false, v -> query(C_SET_AUTO_PID, v ? 1 : 0)));
         return parameters;
     }

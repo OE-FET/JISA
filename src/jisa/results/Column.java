@@ -5,7 +5,7 @@ import kotlin.reflect.KClass;
 
 import java.util.Map;
 
-public abstract class Column<T> {
+public abstract class Column<T> implements RowEvaluable<T> {
 
     private final String          name;
     private final String          units;
@@ -106,7 +106,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<String> ofStrings(String name, String units) {
+    public static StringColumn ofStrings(String name, String units) {
         return new StringColumn(name, units);
     }
 
@@ -117,7 +117,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<String> ofStrings(String name) {
+    public static StringColumn ofStrings(String name) {
         return new StringColumn(name);
     }
 
@@ -130,7 +130,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<String> ofStrings(String name, RowEvaluable<String> evaluable) {
+    public static StringColumn ofStrings(String name, RowEvaluable<String> evaluable) {
         return new StringColumn(name, evaluable);
     }
 
@@ -143,7 +143,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<String> ofStrings(String name, String units, RowEvaluable<String> evaluable) {
+    public static StringColumn ofStrings(String name, String units, RowEvaluable<String> evaluable) {
         return new StringColumn(name, units, evaluable);
     }
 
@@ -155,7 +155,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<String> ofText(String name, String units) {
+    public static StringColumn ofText(String name, String units) {
         return ofStrings(name, units);
     }
 
@@ -166,7 +166,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<String> ofText(String name) {
+    public static StringColumn ofText(String name) {
         return ofStrings(name);
     }
 
@@ -178,7 +178,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<String> ofText(String name, RowEvaluable<String> evaluable) {
+    public static StringColumn ofText(String name, RowEvaluable<String> evaluable) {
         return ofStrings(name, evaluable);
     }
 
@@ -191,7 +191,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<String> ofText(String name, String units, RowEvaluable<String> evaluable) {
+    public static StringColumn ofText(String name, String units, RowEvaluable<String> evaluable) {
         return ofStrings(name, units, evaluable);
     }
 
@@ -203,7 +203,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<Double> ofDoubles(String name, String units) {
+    public static DoubleColumn ofDoubles(String name, String units) {
         return new DoubleColumn(name, units);
     }
 
@@ -214,7 +214,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<Double> ofDoubles(String name) {
+    public static DoubleColumn ofDoubles(String name) {
         return new DoubleColumn(name);
     }
 
@@ -226,7 +226,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<Double> ofDoubles(String name, RowEvaluable<Double> evaluable) {
+    public static DoubleColumn ofDoubles(String name, RowEvaluable<Double> evaluable) {
         return new DoubleColumn(name, evaluable);
     }
 
@@ -239,7 +239,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<Double> ofDoubles(String name, String units, RowEvaluable<Double> evaluable) {
+    public static DoubleColumn ofDoubles(String name, String units, RowEvaluable<Double> evaluable) {
         return new DoubleColumn(name, units, evaluable);
     }
 
@@ -251,7 +251,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<Double> ofDecimals(String name, String units) {
+    public static DoubleColumn ofDecimals(String name, String units) {
         return ofDoubles(name, units);
     }
 
@@ -262,7 +262,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<Double> ofDecimals(String name) {
+    public static DoubleColumn ofDecimals(String name) {
         return ofDoubles(name);
     }
 
@@ -274,7 +274,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<Double> ofDecimals(String name, RowEvaluable<Double> evaluable) {
+    public static DoubleColumn ofDecimals(String name, RowEvaluable<Double> evaluable) {
         return ofDoubles(name, evaluable);
     }
 
@@ -287,7 +287,7 @@ public abstract class Column<T> {
      *
      * @return The created column
      */
-    public static Column<Double> ofDecimals(String name, String units, RowEvaluable<Double> evaluable) {
+    public static DoubleColumn ofDecimals(String name, String units, RowEvaluable<Double> evaluable) {
         return ofDoubles(name, units, evaluable);
     }
 
@@ -607,5 +607,12 @@ public abstract class Column<T> {
     public Map.Entry<Column, Object> to(T value) {
         return Map.entry(this, value);
     }
+
+    @Override
+    public T evaluate(Row row) {
+        return row.get(this);
+    }
+
+
 
 }

@@ -30,9 +30,9 @@ public interface TCouple extends TMeter {
     Type getSensorType() throws IOException, DeviceException;
 
 
-    default ParameterList parameters(Class<?> target) {
+    default ParameterList getBaseParameters(Class<?> target) {
 
-        ParameterList parameters = TMeter.super.parameters(target);
+        ParameterList parameters = TMeter.super.getBaseParameters(target);
 
         parameters.addChoice("Sensor Type", Type.UNKNOWN, this::setSensorType, Type.values());
 

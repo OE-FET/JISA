@@ -3,6 +3,8 @@ package jisa.devices;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
+import jisa.results.ResultList;
+import jisa.results.ResultTable;
 import kotlin.jvm.JvmClassMappingKt;
 import kotlin.reflect.KClass;
 
@@ -80,28 +82,14 @@ public class Configuration<T extends Instrument> {
 
                 parameter.setValue(new Instrument.OptionalQuantity<>(use.get(), value.get()));
 
-            } else if (parameter.getType() == Instrument.TableQuantity.class && block.hasBlock(parameter.getName())) {
+            } else if (ResultTable.class.isAssignableFrom(parameter.getType()) && block.hasBlock(parameter.getName())) {
 
-                ConfigBlock              subBlock = block.subBlock(parameter.getName());
-                Instrument.TableQuantity quantity = (Instrument.TableQuantity) parameter.getValue();
+                ConfigBlock subBlock = block.subBlock(parameter.getName());
 
-                List<List<Double>> list = new LinkedList<>();
+                try {
+                    parameter.setValue(ResultList.fromCSVString(subBlock.stringValue("contents").getOrDefault("")));
+                } catch (Throwable ignored) { }
 
-                for (int i = 0; subBlock.hasBlock(String.valueOf(i)); i++) {
-
-                    ConfigBlock  row     = subBlock.subBlock(String.valueOf(i));
-                    List<Double> rowList = new LinkedList<>();
-
-                    for (int j = 0; j < quantity.getColumns().length; j++) {
-                        ConfigBlock.Value<Double> value = row.doubleValue(quantity.getColumns()[j]);
-                        rowList.add(value.getOrDefault(0.0));
-                    }
-
-                    list.add(rowList);
-
-                }
-
-                parameter.setValue(new Instrument.TableQuantity(((Instrument.TableQuantity) parameter.getValue()).getColumns(), list));
 
             } else if (block.hasValue(parameter.getName())) {
 
@@ -165,24 +153,12 @@ public class Configuration<T extends Instrument> {
                 use.set(((Instrument.OptionalQuantity<?>) parameter.getValue()).isUsed());
                 value.set(((Instrument.OptionalQuantity<?>) parameter.getValue()).getValue());
 
-            } else if (parameter.getType() == Instrument.TableQuantity.class) {
+            } else if (ResultTable.class.isAssignableFrom(parameter.getType())) {
 
                 ConfigBlock subBlock = block.subBlock(parameter.getName());
                 subBlock.clear();
-                Instrument.TableQuantity quantity = (Instrument.TableQuantity) parameter.getValue();
-
-                for (int i = 0; i < quantity.getValue().size(); i++) {
-
-                    ConfigBlock row = subBlock.subBlock(String.valueOf(i));
-
-                    for (int j = 0; j < quantity.getValue().get(i).size(); j++) {
-
-                        ConfigBlock.Value<Double> value = row.doubleValue(quantity.getColumns()[j]);
-                        value.set(quantity.getValue().get(i).get(j));
-
-                    }
-
-                }
+                ResultTable           quantity = (ResultTable) parameter.getValue();
+                subBlock.stringValue("contents").set(quantity.getCSV());
 
             } else {
 

@@ -137,7 +137,7 @@ public interface EMController extends Instrument {
 
     }
 
-    default List<Parameter<?>> parameters(Class<?> target) {
+    default List<Parameter<?>> getBaseParameters(Class<?> target) {
 
         List<Parameter<?>> list = new LinkedList<>();
 

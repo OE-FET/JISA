@@ -1,6 +1,6 @@
 package jisa.results;
 
-public class DoubleColumn extends Column<Double> {
+public class DoubleColumn extends Column<Double> implements DoubleRowEvaluable {
 
     public DoubleColumn(String name, String units) {
         super(name, units, Double.class);

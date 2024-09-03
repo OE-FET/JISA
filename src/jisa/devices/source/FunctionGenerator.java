@@ -4,7 +4,7 @@ import jisa.control.SRunnable;
 import jisa.devices.DeviceException;
 import jisa.enums.OscMode;
 import jisa.enums.WaveForm;
-import jisa.gui.Field;
+import jisa.gui.form.Field;
 
 import java.io.IOException;
 

@@ -5,8 +5,8 @@ import jisa.devices.Configuration;
 import jisa.devices.Instrument;
 import jisa.experiment.queue.Action;
 import jisa.gui.Element;
-import jisa.gui.Field;
-import jisa.gui.Fields;
+import jisa.gui.form.Field;
+import jisa.gui.form.Form;
 import jisa.maths.Range;
 import jisa.results.Column;
 import jisa.results.ResultList;
@@ -317,13 +317,13 @@ public abstract class Measurement {
             this.value = value;
         }
 
-        protected abstract Field<T> makeField(Fields fields);
+        protected abstract Field<T> makeField(Form fields);
 
         public Element getElement() {
             return null;
         }
 
-        public Field<T> createField(Fields fields) {
+        public Field<T> createField(Form fields) {
             field = makeField(fields);
             return field;
         }
@@ -365,7 +365,7 @@ public abstract class Measurement {
         }
 
         @Override
-        protected Field<T> makeField(Fields fields) {
+        protected Field<T> makeField(Form fields) {
             return null;
         }
 
@@ -407,7 +407,7 @@ public abstract class Measurement {
         }
 
         @Override
-        protected Field<Double> makeField(Fields fields) {
+        protected Field<Double> makeField(Form fields) {
             return fields.addDoubleField(getTitle(), getValue());
         }
 
@@ -420,7 +420,7 @@ public abstract class Measurement {
         }
 
         @Override
-        protected Field<Double> makeField(Fields fields) {
+        protected Field<Double> makeField(Form fields) {
             return fields.addDecimalField(getTitle(), getValue());
         }
 
@@ -433,7 +433,7 @@ public abstract class Measurement {
         }
 
         @Override
-        protected Field<Integer> makeField(Fields fields) {
+        protected Field<Integer> makeField(Form fields) {
             return fields.addIntegerField(getTitle(), getValue());
         }
 
@@ -446,7 +446,7 @@ public abstract class Measurement {
         }
 
         @Override
-        protected Field<Integer> makeField(Fields fields) {
+        protected Field<Integer> makeField(Form fields) {
             return fields.addTimeField(getTitle(), getValue());
         }
 
@@ -459,7 +459,7 @@ public abstract class Measurement {
         }
 
         @Override
-        protected Field<Boolean> makeField(Fields fields) {
+        protected Field<Boolean> makeField(Form fields) {
             return fields.addCheckBox(getTitle(), getValue());
         }
 
@@ -472,7 +472,7 @@ public abstract class Measurement {
         }
 
         @Override
-        protected Field<String> makeField(Fields fields) {
+        protected Field<String> makeField(Form fields) {
             return fields.addTextField(getTitle(), getValue());
         }
 
@@ -503,7 +503,7 @@ public abstract class Measurement {
             this(section, name, units, Range.linear(min, max, steps), min, max, steps, (max - min) / (steps - 1), 2);
         }
 
-        protected Field<Range<Double>> makeField(Fields fields) {
+        protected Field<Range<Double>> makeField(Form fields) {
             return fields.addDoubleRange(getTitle(), getValue(), min, max, count, step, order);
         }
 
@@ -518,7 +518,7 @@ public abstract class Measurement {
             this.options = options;
         }
 
-        protected Field<Integer> makeField(Fields fields) {
+        protected Field<Integer> makeField(Form fields) {
             return fields.addChoice(getTitle(), getValue(), options);
         }
 

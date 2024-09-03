@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public interface CurrentPreAmpInput extends Feature {
 
-    static void addParameters(CurrentPreAmpInput instrument, ParameterList parameters) {
+    static void addParameters(CurrentPreAmpInput instrument, Class<?> target, ParameterList parameters) {
 
         parameters.addValue("Use Current Input", instrument::isCurrentInputEnabled, false, instrument::setCurrentInputEnabled);
         parameters.addValue("Current Input Gain [V/A]", instrument::getCurrentGain, 1e-6, instrument::setCurrentGain);

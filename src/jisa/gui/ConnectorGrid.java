@@ -6,6 +6,8 @@ import jisa.control.ConfigBlock;
 import jisa.control.Connection;
 import jisa.devices.Instrument;
 import jisa.experiment.queue.Action;
+import jisa.gui.form.Field;
+import jisa.gui.form.Form;
 import org.reflections.Reflections;
 
 import java.util.*;
@@ -16,16 +18,16 @@ public class ConnectorGrid extends Grid {
     private final List<Class<? extends Instrument>>        interfaces;
     private final List<Connector<?>>                       connectors       = new LinkedList<>();
     private final ListDisplay<Class<? extends Instrument>> typeSelector     = new ListDisplay<>("Instrument Types");
-    private final Fields                                   searchBox        = new Fields("Search");
-    private final Field<String>                            search           = searchBox.addTextField("Search", "");
-    private final Grid                                     typeSelectorGrid = new Grid("Add Connection", 1, searchBox, typeSelector);
+    private final Form          searchBox        = new Form("Search");
+    private final Field<String> search           = searchBox.addTextField("Search", "");
+    private final Grid          typeSelectorGrid = new Grid("Add Connection", 1, searchBox, typeSelector);
 
     public ConnectorGrid(String title, int numCols) {
 
         super(title, numCols);
         setGrowth(true, false);
 
-        search.setOnChange(this::updateList);
+        search.addChangeListener(this::updateList);
 
         Button button = addToolbarButton("Add...", () -> {
 
@@ -114,7 +116,7 @@ public class ConnectorGrid extends Grid {
 
     public void removeConnectors() {
 
-        Fields                         input     = new Fields("Remove Connectors");
+        Form                           input     = new Form("Remove Connectors");
         Map<Connector, Field<Boolean>> selection = new HashMap<>();
 
         for (Connector connector : getConnectors()) {

@@ -955,6 +955,10 @@ public abstract class ResultTable implements Iterable<Row> {
         return getRow(index);
     }
 
+    public <T> T get(int index, Column<T> column) {
+        return get(index).get(column);
+    }
+
     /**
      * Implementation method for storing a given Row of data.
      *
@@ -1304,6 +1308,17 @@ public abstract class ResultTable implements Iterable<Row> {
         PrintStream writer = new PrintStream(new FileOutputStream(path));
         outputTable(writer);
         writer.close();
+    }
+
+    public String getCSV() {
+
+        OutputStream os     = new ByteArrayOutputStream();
+        PrintStream  writer = new PrintStream(os);
+        outputTable(writer);
+        writer.close();
+
+        return os.toString();
+
     }
 
     /**

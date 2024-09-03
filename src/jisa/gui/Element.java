@@ -5,8 +5,11 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.TitledPane;
 import javafx.scene.image.Image;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
+import jisa.control.SRunnable;
 
 /**
  * Base class to represent all GUI elements.
@@ -85,10 +88,55 @@ public interface Element {
 
     }
 
+    /**
+     * Shows the element to the user within its own window.
+     */
     void show();
 
+    /**
+     * Shows the element in its own window to the user and waits until the window is closed.
+     */
+    void showAndWait();
+
+    /**
+     * Shows the element to the user in its own window with an OK button at the bottom, waits until the user closes the window
+     * (by pressing OK or otherwise) before returning.
+     */
+    void showAsAlert();
+
+    /**
+     * Shows the element to the user in its own window with the specified buttons at the bottom, waits until the user
+     * clicks one of the buttons (or otherwise closes the window) before returning the index of the button chosen.
+     *
+     * @param buttons Text of buttons to show
+     *
+     * @return Index of button clicked
+     */
+    int showAsDialog(String... buttons);
+
+    /**
+     * Shows the element to the user in its own window with "OK" and "Cancel" buttons. Returns true when the user
+     * clicks "OK", false when they click "Cancel". Waits until a button is clicked (which also closes the window).
+     *
+     * @return OK or Cancel?
+     */
+    boolean showAsConfirmation();
+
+    /**
+     * Hide the window, without freeing up the graphical resources used to show it, allowing it to be shown again
+     * quickly.
+     */
     void hide();
 
+    /**
+     * Closes the window fully.
+     */
     void close();
+
+    boolean isShowing();
+
+    SRunnable addCloseListener(SRunnable onClose);
+
+    void removeCloseListener(SRunnable onClose);
 
 }

@@ -4,6 +4,8 @@ import jisa.control.ConfigBlock;
 import jisa.experiment.Measurement;
 import jisa.experiment.Measurement.CustomParameter;
 import jisa.experiment.Measurement.Parameter;
+import jisa.gui.form.Field;
+import jisa.gui.form.Form;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -11,7 +13,7 @@ import java.util.stream.Collectors;
 public class MeasurementConfigurator extends Tabs {
 
     private final Measurement           measurement;
-    private final Map<String, Fields>   sections          = new LinkedHashMap<>();
+    private final Map<String, Form>     sections          = new LinkedHashMap<>();
     private final Map<Parameter, Field> parameterFieldMap = new HashMap<>();
     private final List<CustomParameter> customs           = new LinkedList<>();
     private final Grid                  parameterGrid     = new Grid("Parameters", 1);
@@ -40,7 +42,7 @@ public class MeasurementConfigurator extends Tabs {
             } else {
 
                 if (!sections.containsKey(parameter.getSection())) {
-                    sections.put(parameter.getSection(), new Fields(parameter.getSection()));
+                    sections.put(parameter.getSection(), new Form(parameter.getSection()));
                 }
 
                 parameterFieldMap.put(parameter, parameter.createField(sections.get(parameter.getSection())));
@@ -65,7 +67,7 @@ public class MeasurementConfigurator extends Tabs {
 
         ConfigBlock block = config.subBlock(measurement.getClass().getName());
 
-        for (Fields fields : sections.values()) {
+        for (Form fields : sections.values()) {
             fields.loadFromConfig(block.subBlock("Standard Fields").subBlock(fields.getTitle()));
         }
 

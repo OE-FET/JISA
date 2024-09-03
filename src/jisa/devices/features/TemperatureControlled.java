@@ -8,7 +8,7 @@ import java.io.IOException;
 
 public interface TemperatureControlled extends Feature {
     
-    static void addParameters(TemperatureControlled instrument, ParameterList parameters) {
+    static void addParameters(TemperatureControlled instrument, Class<?> target, ParameterList parameters) {
 
         try {
 

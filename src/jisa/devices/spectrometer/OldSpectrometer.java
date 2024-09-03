@@ -16,7 +16,7 @@ public interface OldSpectrometer extends Instrument {
     void setAccessory(boolean using_accessory);
 
     @Override
-    default List<Parameter<?>> parameters(Class<?> target) {
+    default List<Parameter<?>> getBaseParameters(Class<?> target) {
 
         List<Parameter<?>> parameters = new LinkedList<>();
 

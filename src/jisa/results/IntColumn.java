@@ -27,4 +27,17 @@ public class IntColumn extends Column<Integer> {
     public Integer parse(String string) {
         return Integer.parseInt(string);
     }
+
+    public RowEvaluable<Double> pow(double power) {
+        return r -> Math.pow(r.get(this), power);
+    }
+
+    public RowEvaluable<Integer> abs() {
+        return r -> Math.abs(r.get(this));
+    }
+
+    public RowEvaluable<Integer> negate() {
+        return r -> -r.get(this);
+    }
+
 }

@@ -375,7 +375,7 @@ public interface Camera<F extends Frame> extends Instrument {
      */
     void setBinning(int x, int y) throws IOException, DeviceException;
 
-    default ParameterList parameters(Class<?> target) {
+    default ParameterList getBaseParameters(Class<?> target) {
 
         ParameterList parameters = new ParameterList();
 

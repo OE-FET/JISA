@@ -229,7 +229,7 @@ public interface VMeter extends Meter, Instrument {
         Synch.waitForParamStable(this::getVoltage, pctMargin, (int) (getIntegrationTime() * 4000.0), duration);
     }
 
-    default List<Parameter<?>> parameters(Class<?> target) {
+    default List<Parameter<?>> getBaseParameters(Class<?> target) {
 
 
         ParameterList params = new ParameterList();

@@ -298,9 +298,9 @@ public class ArroyoTEC extends VISADevice implements TC {
             return SensorType.values()[ordinal];
         }
 
-        public List<Parameter<?>> parameters(Class<?> target) {
+        public List<Parameter<?>> getBaseParameters(Class<?> target) {
 
-            List<Parameter<?>> defaultList = super.parameters(target);
+            List<Parameter<?>> defaultList = super.getBaseParameters(target);
             defaultList.add(new Parameter<>("Sensor Type", SensorType.DISABLED, this::setSensorType, SensorType.values()));
             return defaultList;
 

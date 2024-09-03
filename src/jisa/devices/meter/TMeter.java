@@ -109,7 +109,7 @@ public interface TMeter extends Instrument {
         Synch.waitForStableTargetMaxTime(this::getTemperature, temperature, pctMargin, 1000, duration, maxTime);
     }
 
-    default ParameterList parameters(Class<?> target) {
+    default ParameterList getBaseParameters(Class<?> target) {
 
         ParameterList parameters = new ParameterList();
 

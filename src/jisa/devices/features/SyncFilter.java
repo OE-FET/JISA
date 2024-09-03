@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public interface SyncFilter extends Feature {
 
-    static void addParameters(SyncFilter instrument, ParameterList parameters) {
+    static void addParameters(SyncFilter instrument, Class<?> target, ParameterList parameters) {
 
         try {
             parameters.addValue("Sync Filter", instrument.isSyncFilterEnabled(), instrument::setSyncFilterEnabled);

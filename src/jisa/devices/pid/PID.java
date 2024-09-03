@@ -4,6 +4,9 @@ import jisa.control.Synch;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.MultiInstrument;
+import jisa.devices.ParameterList;
+import jisa.results.ResultList;
+import jisa.results.ResultTable;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -444,9 +447,9 @@ public interface PID extends Instrument, MultiInstrument {
         default void close() throws IOException, DeviceException {}
 
         @Override
-        default List<Parameter<?>> parameters(Class<?> target) {
+        default List<Parameter<?>> getBaseParameters(Class<?> target) {
 
-            List<Parameter<?>> parameters = Instrument.super.parameters(target);
+            ParameterList parameters = new ParameterList();
 
             if (Loop.class.isAssignableFrom(target)) {
 
@@ -459,42 +462,40 @@ public interface PID extends Instrument, MultiInstrument {
                 parameters.add(new Parameter<>("Input", input.getName(), v -> getAvailableInputs().stream().filter(i -> i.getName().equals(v)).findFirst().orElse(null), getAvailableInputs().stream().map(Input::getName).toArray(String[]::new)));
                 parameters.add(new Parameter<>("Output", output.getName(), v -> getAvailableOutputs().stream().filter(i -> i.getName().equals(v)).findFirst().orElse(null), getAvailableOutputs().stream().map(Output::getName).toArray(String[]::new)));
 
-                parameters.add(new Parameter<>(
+                ResultTable values = new ResultList("Min", "Max", "P", "I", "D", "Output Limit");
 
-                    "PID Settings",
+                try {
+                    getPIDZones().stream().map(pid -> new Object[] { pid.getMin(), pid.getMax(), pid.getP(), pid.getI(), pid.getD(), pid.getOutput() }).forEach(values::addData);
+                } catch (Throwable ignored) { }
 
-                    new TableQuantity(new String[]{"Min", "Max", "P", "I", "D", "Output Limit"}, List.of(
-                        List.of(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0)
-                    )),
+                if (values.size() == 0) {
+                    values.addData(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0);
+                }
 
-                    q -> {
+                parameters.addValue("PID Settings", values, q -> {
 
-                        List<List<Double>> values = q.getValue();
+                    if (q.size() == 0) {
+                        q.addData(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0);
+                    }
 
-                        if (values.size() == 0) {
-                            values.add(List.of(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0));
-                        }
+                    if (q.size() < 2) {
 
-                        if (values.size() < 2) {
+                        setPIDZoningEnabled(false);
+                        setPIDValues(q.get(0).get(2), q.get(0).get(3), q.get(0).get(4));
+                        getOutput().setLimit(q.get(0).get(5));
 
-                            setPIDZoningEnabled(false);
-                            setPIDValues(values.get(0).get(2), values.get(0).get(3), values.get(0).get(4));
-                            getOutput().setLimit(values.get(0).get(5));
+                    } else {
 
-                        } else {
+                        PID.Zone[] zones = q
+                            .stream().map(r -> new PID.Zone(r.get(0), r.get(1), r.get(2), r.get(3), r.get(4), r.get(5)))
+                            .toArray(PID.Zone[]::new);
 
-                            PID.Zone[] zones = values
-                                .stream().map(r -> new PID.Zone(r.get(0), r.get(1), r.get(2), r.get(3), r.get(4), r.get(5)))
-                                .toArray(PID.Zone[]::new);
-
-                            setPIDZones(zones);
-                            setPIDZoningEnabled(true);
-
-                        }
+                        setPIDZones(zones);
+                        setPIDZoningEnabled(true);
 
                     }
 
-                ));
+                });
 
                 parameters.add(new Parameter<>("Ramp Rate [per min]", new OptionalQuantity<>(false, 1.0), r -> {
                     setRampRate(r.getValue());

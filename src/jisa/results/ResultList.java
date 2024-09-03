@@ -2,9 +2,7 @@ package jisa.results;
 
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -43,6 +41,33 @@ public class ResultList extends ResultTable {
     public static ResultList loadFile(String filePath) throws IOException {
 
         BufferedReader reader = new BufferedReader(new FileReader(filePath));
+        String         header = reader.readLine();
+
+        JSONObject attributes = null;
+
+        if (header.startsWith("% ATTRIBUTES: ")) {
+            attributes = new JSONObject(header.replaceFirst("% ATTRIBUTES: ", ""));
+            header     = reader.readLine();
+        }
+
+        ResultList list = new ResultList(ResultTable.parseColumnHeaderLine(header));
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            list.addRow(list.parseCSVLine(line));
+        }
+
+        if (attributes != null) {
+            attributes.toMap().forEach((k, v) -> list.setAttribute(k, v.toString()));
+        }
+
+        return list;
+
+    }
+
+    public static ResultList fromCSVString(String csv) throws IOException {
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(csv.getBytes())));
         String         header = reader.readLine();
 
         JSONObject attributes = null;

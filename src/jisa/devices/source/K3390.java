@@ -7,8 +7,8 @@ import jisa.control.SRunnable;
 import jisa.devices.DeviceException;
 import jisa.enums.OscMode;
 import jisa.enums.WaveForm;
-import jisa.gui.Field;
-import jisa.gui.Fields;
+import jisa.gui.form.Field;
+import jisa.gui.form.Form;
 import jisa.visa.VISADevice;
 import jisa.visa.drivers.NIGPIBDriver;
 
@@ -303,12 +303,12 @@ public class K3390 extends VISADevice implements FunctionGenerator {
             double        dutyCycle = WFvalues.DutyCycle;
 
             // Fields initialization
-            Fields fields = new Fields("K3390 - GUI");
+            Form fields = new Form("K3390 - GUI");
             fields.show();
             fields.setWindowSize(300, 400);
 
             // Turn off the instrument and exit the program when closing the GUI
-            fields.setOnClose(() -> {
+            fields.addCloseListener(() -> {
                 try {
                     // Turn off the instrument
                     k3390.turnOFF();
@@ -333,7 +333,7 @@ public class K3390 extends VISADevice implements FunctionGenerator {
                 dblFieldDutyCycle.setVisible(false); // Initially hide the field
             }
             // update function and make DutyCycle field appear if SQU is selected
-            functionField.setOnChange(() -> {
+            functionField.addChangeListener(nv -> {
                 int      intFunction = functionField.get();
                 WaveForm waveForm    = WaveForm.values()[intFunction];
                 System.out.printf("Selected function: %s\n", waveForm);
@@ -352,7 +352,7 @@ public class K3390 extends VISADevice implements FunctionGenerator {
             choiceBox.set(0); //Set default to "Frequency"
             dblFieldFrq.set(frequency); // Set fetched frequency
 
-            choiceBox.setOnChange(() -> {
+            choiceBox.addChangeListener(nv -> {
                 int     intOscMode   = choiceBox.get();
                 OscMode selectedMode = OscMode.values()[intOscMode]; // Retrieve the OscMode based on the integer
                 System.out.printf("Selected mode: %s\n", selectedMode);
@@ -365,7 +365,7 @@ public class K3390 extends VISADevice implements FunctionGenerator {
                 }
             });
 
-            dblFieldFrq.setOnChange(() -> {
+            dblFieldFrq.addChangeListener(nv -> {
                 double dblFrq = dblFieldFrq.get();
                 //System.out.printf("Frequency changed to: %.2f Hz\n", dblFrq);
             });
@@ -373,14 +373,14 @@ public class K3390 extends VISADevice implements FunctionGenerator {
             // Vos and Vpp fields
             Field<Double> dblFieldVos = fields.addDoubleField("Vos (V)");
             dblFieldVos.set(Vos); // Set fetched Vos
-            dblFieldVos.setOnChange(() -> {
+            dblFieldVos.addChangeListener(nv -> {
                 double dblVos = dblFieldVos.get();
                 //System.out.printf("Vos changed to: %.2f V\n", dblVos);
             });
 
             Field<Double> dblFieldVpp = fields.addDoubleField("Vpp (V)");
             dblFieldVpp.set(Vpp); // Set fetched Vpp
-            dblFieldVpp.setOnChange(() -> {
+            dblFieldVpp.addChangeListener(nv -> {
                 double dblVpp = dblFieldVpp.get();
                 //System.out.printf("Vpp changed to: %.2f V\n", dblVpp);
             });

@@ -28,4 +28,16 @@ public class LongColumn extends Column<Long> {
         return Long.parseLong(string);
     }
 
+    public RowEvaluable<Double> pow(double power) {
+        return r -> Math.pow(r.get(this), power);
+    }
+
+    public RowEvaluable<Long> abs() {
+        return r -> Math.abs(r.get(this));
+    }
+
+    public RowEvaluable<Long> negate() {
+        return r -> -r.get(this);
+    }
+
 }

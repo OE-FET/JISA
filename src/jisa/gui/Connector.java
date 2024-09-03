@@ -18,6 +18,7 @@ import jisa.control.Connection;
 import jisa.control.SRunnable;
 import jisa.devices.Instrument;
 import jisa.devices.SubInstrument;
+import jisa.gui.controls.IntegerField;
 import kotlin.reflect.KClass;
 import org.reflections.Reflections;
 
@@ -278,6 +279,10 @@ public class Connector<T extends Instrument> extends JFXElement {
                 GridPane.setHgrow(field, Priority.ALWAYS);
 
             });
+
+            if (isShowing()) {
+                autoAdjustSize();
+            }
 
         });
 

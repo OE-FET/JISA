@@ -8,7 +8,6 @@ import kotlin.reflect.KClass;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -63,18 +62,23 @@ public interface Instrument {
         return this;
     }
 
-    default List<Parameter<?>> parameters(Class<?> target) {
-        return new LinkedList<>();
+    default List<Parameter<?>> getBaseParameters(Class<?> target) {
+        return Collections.emptyList();
     }
 
-    default List<Parameter<?>> featureParameters() {
-        return Feature.getFeatureParameters(this);
+    default List<Parameter<?>> getInstrumentParameters(Class<?> target) {
+        return Collections.emptyList();
+    }
+
+    default List<Parameter<?>> getFeatureParameters(Class<?> target) {
+        return Feature.getFeatureParameters(this, target);
     }
 
     default List<Parameter<?>> getAllParameters(Class<?> target) {
 
-        List<Parameter<?>> parameters = parameters(target);
-        parameters.addAll(featureParameters());
+        List<Parameter<?>> parameters = getBaseParameters(target);
+        parameters.addAll(getFeatureParameters(target));
+        parameters.addAll(getInstrumentParameters(target));
         return parameters;
 
     }

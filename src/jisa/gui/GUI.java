@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -56,6 +57,10 @@ public class GUI {
      */
     public static void touch() {
 
+    }
+
+    public static URL getFXML(String name) {
+        return GUI.class.getResource(String.format("fxml/%s.fxml", name));
     }
 
     public static <T extends Instrument> T connectTo(Class<T> driver, Address address) {

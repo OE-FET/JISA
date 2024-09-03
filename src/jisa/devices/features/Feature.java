@@ -6,7 +6,7 @@ import org.reflections.Reflections;
 
 public interface Feature {
 
-    static ParameterList getFeatureParameters(Instrument instrument) {
+    static ParameterList getFeatureParameters(Instrument instrument, Class<?> target) {
 
         ParameterList parameters = new ParameterList();
 
@@ -27,8 +27,9 @@ public interface Feature {
                                    feature.getMethod(
                                        "addParameters",
                                        feature,
+                                       Class.class,
                                        ParameterList.class
-                                   ).invoke(null, inst, parameters);
+                                   ).invoke(null, inst, target, parameters);
 
                                } catch (Throwable ignored) { }
 

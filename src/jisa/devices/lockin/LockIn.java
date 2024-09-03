@@ -18,7 +18,7 @@ public interface LockIn extends Instrument, FMeter {
     }
 
     @Override
-    default ParameterList parameters(Class<?> target) {
+    default ParameterList getBaseParameters(Class<?> target) {
 
         ParameterList params = new ParameterList();
 

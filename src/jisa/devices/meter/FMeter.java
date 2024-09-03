@@ -58,7 +58,7 @@ public interface FMeter extends Meter {
      */
     void setFrequencyRange(double range) throws IOException, DeviceException;
 
-    default List<Parameter<?>> parameters(Class<?> target) {
+    default List<Parameter<?>> getBaseParameters(Class<?> target) {
 
         List<Parameter<?>> parameters = new LinkedList<>();
 

@@ -25,6 +25,8 @@ import jisa.enums.Icon;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,7 +44,7 @@ public class JFXElement implements Element {
     private final ToolBar                toolBar;
     private final ButtonBar              buttonBar;
     private final Scene                  scene;
-    private       SRunnable              onClose   = () -> { };
+    private final List<SRunnable>        onClose   = new LinkedList<>();
     private       Stage                  stage     = null;
     private       boolean                exit      = false;
 
@@ -396,7 +398,7 @@ public class JFXElement implements Element {
 
         }
 
-        setOnClose(semaphore::release);
+        addCloseListener(semaphore::release);
 
         show();
 
@@ -477,7 +479,7 @@ public class JFXElement implements Element {
 
                 stage.setOnCloseRequest(event -> {
 
-                    Util.runRegardless(onClose);
+                    onClose.forEach(Util::runRegardless);
 
                     if (exit) {
                         GUI.stopGUI();
@@ -559,6 +561,14 @@ public class JFXElement implements Element {
 
     }
 
+    @Override
+    public void showAndWait() {
+
+        Stage stage = getStage();
+
+
+    }
+
     /**
      * Hides the window
      */
@@ -587,6 +597,7 @@ public class JFXElement implements Element {
         GUI.runNow(() -> {
 
             Stage stage = getStage();
+            Scene scene = stage.getScene();
 
             double minHeight = stage.getMinHeight();
             double minWidth  = stage.getMinWidth();
@@ -661,8 +672,13 @@ public class JFXElement implements Element {
         return exit;
     }
 
-    public void setOnClose(SRunnable toRun) {
-        this.onClose = toRun;
+    public SRunnable addCloseListener(SRunnable onClose) {
+        this.onClose.add(onClose);
+        return onClose;
+    }
+
+    public void removeCloseListener(SRunnable onClose) {
+        this.onClose.remove(onClose);
     }
 
     public Image getIcon() {
