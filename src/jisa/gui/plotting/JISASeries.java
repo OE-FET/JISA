@@ -70,16 +70,16 @@ public class JISASeries implements Series {
         clearListener = table.addClearListener(this::clear);
         rowListener   = table.addRowListener(
 
-            r -> {
+            row -> {
 
                 try {
 
-                    if (filter.test(r)) {
+                    if (this.filter.test(row)) {
 
-                        double errorX = Math.abs(eX.evaluate(r).doubleValue());
-                        double errorY = Math.abs(eY.evaluate(r).doubleValue());
+                        double errorX = Math.abs(eX.evaluate(row).doubleValue());
+                        double errorY = Math.abs(eY.evaluate(row).doubleValue());
 
-                        selector.select(r).add(x.evaluate(r).doubleValue(), y.evaluate(r).doubleValue(), errorY, errorY, errorX, errorX);
+                        selector.select(row).add(x.evaluate(row).doubleValue(), y.evaluate(row).doubleValue(), errorY, errorY, errorX, errorX);
 
                     }
 
@@ -157,7 +157,7 @@ public class JISASeries implements Series {
 
     }
 
-    protected void regeneratePoints() {
+    protected synchronized void regeneratePoints() {
 
         clear();
 

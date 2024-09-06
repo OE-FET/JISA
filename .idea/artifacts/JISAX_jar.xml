@@ -37,6 +37,9 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/icu4j-65.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/guicedee/services/sl4j/1.0.13.5/sl4j-1.0.13.5.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/com/guicedee/services/log4j-core/1.0.13.5/log4j-core-1.0.13.5.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jhdf-0.8.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/compress-lzf-1.1.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/lz4-java-1.8.0.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

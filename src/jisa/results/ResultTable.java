@@ -1,6 +1,14 @@
 package jisa.results;
 
 import com.google.common.collect.Lists;
+import com.google.common.primitives.Booleans;
+import com.google.common.primitives.Doubles;
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
+import io.jhdf.HdfFile;
+import io.jhdf.WritableHdfFile;
+import io.jhdf.api.WritableGroup;
+import io.jhdf.api.WritiableDataset;
 import jisa.Util;
 import jisa.maths.matrices.RealMatrix;
 import jisa.results.ResultList.ColumnBuilder;
@@ -10,6 +18,7 @@ import kotlin.reflect.KClass;
 import org.json.JSONObject;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -1492,6 +1501,112 @@ public abstract class ResultTable implements Iterable<Row> {
      */
     public Collector<Row, ?, ResultList> collector() {
         return ResultList.collect(this);
+    }
+
+    public void outputHDF(WritableGroup group) {
+
+        for (Column column : columns) {
+
+            Class type = column.getType();
+            List  data = toList(column);
+
+            if (type == Double.class) {
+                group.putDataset(column.getTitle(), Doubles.toArray(data));
+            } else if (type == Integer.class) {
+                group.putDataset(column.getTitle(), Ints.toArray(data));
+            } else if (type == Long.class) {
+                group.putDataset(column.getTitle(), Longs.toArray(data));
+            } else if (type == Boolean.class) {
+                group.putDataset(column.getTitle(), Booleans.toArray(data));
+            } else {
+                group.putDataset(column.getTitle(), data.stream().map(Object::toString).toArray(String[]::new));
+            }
+
+        }
+
+        attributes.forEach(group::putAttribute);
+
+    }
+
+    public void outputHDF(String filePath, String groupPath) {
+
+        try (WritableHdfFile file = HdfFile.write(Path.of(filePath))) {
+
+            if (groupPath == null || groupPath.isBlank()) {
+                outputHDF(file);
+            } else {
+
+                WritableGroup group = file;
+
+                for (String part : groupPath.split("/")) {
+                    group = group.putGroup(part);
+                }
+
+                outputHDF(group);
+
+            }
+
+        }
+
+    }
+
+    public void outputHDF(String filePath) {
+        outputHDF(filePath, null);
+    }
+
+    public void outputHDFDataset(WritableGroup group, String name, Column<? extends Number>... columns) {
+
+        if (columns == null || columns.length == 0) {
+            columns = getNumericColumns().toArray(Column[]::new);
+        }
+
+        double[][] data = new double[size()][columns.length];
+
+        int i = 0;
+
+        for (Row row : this) {
+
+            for (int j = 0; j < columns.length; j++) {
+
+                data[i][j] = row.get(columns[j]).doubleValue();
+
+            }
+
+            i++;
+
+        }
+
+        WritiableDataset set = group.putDataset(name, data);
+
+        set.putAttribute("Columns", Arrays.stream(columns).map(Column::getTitle).toArray(String[]::new));
+
+    }
+
+    public void outputHDFDataset(String filePath, String datasetPath, Column<? extends Number>... columns) {
+
+        try (WritableHdfFile file = HdfFile.write(Path.of(filePath))) {
+
+            if (datasetPath == null || datasetPath.isBlank()) {
+                throw new IllegalArgumentException("datasetPath is null or empty");
+            } else {
+
+                WritableGroup group = file;
+                String[]      parts = datasetPath.split("/");
+
+                for (int i = 0; i < parts.length - 1; i++) {
+                    group = group.putGroup(parts[i]);
+                }
+
+                outputHDFDataset(group, parts[parts.length - 1], columns);
+
+            }
+
+        }
+
+    }
+
+    public void outputHDFDataset(String filePath, Column<? extends Number>... columns) {
+        outputHDFDataset(filePath, "Data", columns);
     }
 
     /**
