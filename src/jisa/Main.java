@@ -4,6 +4,7 @@ import jisa.addresses.Address;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
+import jisa.gui.HeatMap;
 
 import java.time.LocalDateTime;
 
@@ -17,6 +18,25 @@ public class Main {
     public static void main(String[] args) {
 
         try {
+
+
+            HeatMap map = new HeatMap("Heat Map");
+
+            double[][] data = new double[200][200];
+
+            for (int x = 0; x < 200; x++) {
+
+                for (int y = 0; y < 200; y++) {
+
+                    data[y][x] = Math.sqrt(x*x + y*y);
+
+                }
+
+            }
+
+            map.draw(data);
+
+            map.showAsAlert();
 
             Doc doc = new Doc("Help");
 
