@@ -356,18 +356,6 @@ public abstract class ResultTable implements Iterable<Row> {
     }
 
     /**
-     * Returns all values in the given column in a List.
-     *
-     * @param column Column to extract
-     * @param <T>    Data type of column
-     *
-     * @return Column values, as a list
-     */
-    public <T> List<T> toList(Column<T> column) {
-        return toList(r -> r.get(column));
-    }
-
-    /**
      * Returns a list of all unique values returned by the given expression applied to each row in this ResultTable.
      *
      * @param expression Expression to evaluate on each row
@@ -964,12 +952,12 @@ public abstract class ResultTable implements Iterable<Row> {
         return getRow(index);
     }
 
-    public <T> List<T> get(Column<T> column) {
+    public <T> List<T> get(RowEvaluable<T> column) {
         return toList(column);
     }
 
-    public <T> T get(int index, Column<T> column) {
-        return get(index).get(column);
+    public <T> T get(int index, RowEvaluable<T> column) {
+        return column.evaluate(get(index));
     }
 
     /**

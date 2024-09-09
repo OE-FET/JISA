@@ -13,7 +13,10 @@ import javafx.scene.text.TextAlignment;
 import jisa.maths.Range;
 import jisa.maths.functions.GFunction;
 import jisa.maths.matrices.Matrix;
+import jisa.results.ResultTable;
+import jisa.results.RowEvaluable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
@@ -31,7 +34,7 @@ public class HeatMap extends JFXElement {
     private final GraphicsContext gc;
 
     private double[][]                 lastData  = new double[0][0];
-    private GFunction<Color, Double>   colourMap = ColourMap.MATPLOTLIB;
+    private ColourMap                  colourMap = ColourMap.MATPLOTLIB;
     private GFunction<String, Integer> xMapper   = x -> String.format("%d", x);
     private GFunction<String, Integer> yMapper   = y -> String.format("%d", y);
 
@@ -63,7 +66,7 @@ public class HeatMap extends JFXElement {
 
     }
 
-    public void setColourMap(GFunction<Color, Double> colourMap) {
+    public void setColourMap(ColourMap colourMap) {
         this.colourMap = colourMap;
         draw(lastData);
     }
@@ -96,6 +99,49 @@ public class HeatMap extends JFXElement {
         draw(Stream.of(data).map(v -> Stream.of(v).mapToDouble(Double::doubleValue).toArray()).toArray(double[][]::new));
     }
 
+    public void drawMesh(double[] xValues, double[] yValues, double[] values) {
+
+        double[]   x    = DoubleStream.of(xValues).distinct().sorted().toArray();
+        double[]   y    = DoubleStream.of(yValues).distinct().sorted().toArray();
+        double[][] data = new double[y.length][x.length];
+
+        for (int i = 0; i < y.length; i++) {
+            for (int j = 0; j < x.length; j++) {
+                data[i][j] = 0.0;
+            }
+        }
+
+        IntStream.range(0, values.length).parallel().forEach(i -> {
+
+            int ix = Arrays.binarySearch(x, xValues[i]);
+            int iy = Arrays.binarySearch(y, yValues[i]);
+
+            data[iy][ix] = values[i];
+
+        });
+
+        draw(data);
+        setXTicks(i -> { try { return String.format("%.02g", x[i]); } catch (Throwable e) { return null; } } );
+        setYTicks(i -> { try { return String.format("%.02g", y[i]); } catch (Throwable e) { return null; } } );
+
+    }
+
+    public void drawMesh(Collection<? extends Number> xValues, Collection<? extends Number> yValues, Collection<? extends Number> values) {
+
+        drawMesh(
+            Doubles.toArray(xValues),
+            Doubles.toArray(yValues),
+            Doubles.toArray(values)
+        );
+
+    }
+
+    public void watch(ResultTable table, RowEvaluable<? extends Number> x, RowEvaluable<? extends Number> y, RowEvaluable<? extends Number> v) {
+        drawMesh(table.get(x), table.get(y), table.get(v));
+        table.addRowListener(row -> drawMesh(table.get(x), table.get(y), table.get(v)));
+        table.addClearListener(this::clear);
+    }
+
     public void draw(Collection<Collection<Double>> data) {
 
         double[][] converted = new double[data.size()][];
@@ -125,6 +171,14 @@ public class HeatMap extends JFXElement {
 
     public void setYTicks(String... values) {
         setYTicks(i -> values[i]);
+    }
+
+    public void setXTicks(Number... values) {
+        setXTicks(Stream.of(values).map(Number::toString).toArray(String[]::new));
+    }
+
+    public void setYTicks(Number... values) {
+        setYTicks(Stream.of(values).map(Number::toString).toArray(String[]::new));
     }
 
     public void draw(double[][] data) {
@@ -275,6 +329,10 @@ public class HeatMap extends JFXElement {
 
     }
 
+    public void clear() {
+        draw(new double[0][0]);
+    }
+
     private static class CanvasPane extends Pane {
 
         final Canvas canvas;
@@ -295,16 +353,18 @@ public class HeatMap extends JFXElement {
 
     }
 
-    public static class ColourMap {
+    public interface ColourMap {
 
-        public static final GFunction<Color, Double> JISA       = vv -> Color.hsb(330 - 234 * vv, 0.8, 0.3 + 0.68 * vv, 1.0);
-        public static final GFunction<Color, Double> MATPLOTLIB = vv -> Color.hsb(288 - 234 * vv, 0.8, 0.3 + 0.68 * vv, 1.0);
-        public static final GFunction<Color, Double> GREYSCALE  = Color::gray;
-        public static final GFunction<Color, Double> RAINBOW    = vv -> Color.hsb(300 * vv, 1.0, 1.0, 1.0);
-        public static final GFunction<Color, Double> RED        = vv -> Color.hsb(0, 1.0, vv, 1.0);
-        public static final GFunction<Color, Double> GREEN      = vv -> Color.hsb(120, 1.0, vv, 1.0);
-        public static final GFunction<Color, Double> BLUE       = vv -> Color.hsb(240, 1.0, vv, 1.0);
-        public static final GFunction<Color, Double> FRENCH     = vv -> Color.color(Math.min(1.0, 2 * vv), 1.0 - (2.0 * Math.abs(vv - 0.5)), Math.min(1.0, 2 * (1 - vv)));
+        ColourMap JISA       = vv -> Color.hsb(330 - 234 * vv, 0.8, 0.3 + 0.68 * vv, 1.0);
+        ColourMap MATPLOTLIB = vv -> Color.hsb(288 - 234 * vv, 0.8, 0.3 + 0.68 * vv, 1.0);
+        ColourMap GREYSCALE  = Color::gray;
+        ColourMap GAYSCALE   = vv -> Color.hsb(300 * vv, 1.0, 1.0, 1.0);
+        ColourMap RED        = vv -> Color.hsb(0, 1.0, vv, 1.0);
+        ColourMap GREEN      = vv -> Color.hsb(120, 1.0, vv, 1.0);
+        ColourMap BLUE       = vv -> Color.hsb(240, 1.0, vv, 1.0);
+        ColourMap FERAL      = vv -> Color.color(Math.min(1.0, 2 * vv), 1.0 - (2.0 * Math.abs(vv - 0.5)), Math.min(1.0, 2 * (1 - vv)));
+
+        Color value(double value);
 
     }
 
