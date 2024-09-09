@@ -11,12 +11,16 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import jisa.maths.Range;
+import jisa.maths.functions.Function;
+import jisa.maths.interpolation.Interpolation;
 import jisa.maths.matrices.Matrix;
 import jisa.results.ResultTable;
 import jisa.results.RowEvaluable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -28,12 +32,17 @@ public class HeatMap extends JFXElement {
     private static final double CBAR_SIZE  = 100;
     private static final double CBAR_GAP   = 10;
 
+    private static final List<Color> defaults = Arrays.stream(Series.defaultColours, 0, 6).collect(Collectors.toList());
+    private static final Function    r        = Interpolation.interpolate1D(Range.linear(0, 1, defaults.size()), defaults.stream().map(Color::getRed).collect(Collectors.toList()));
+    private static final Function    g        = Interpolation.interpolate1D(Range.linear(0, 1, defaults.size()), defaults.stream().map(Color::getGreen).collect(Collectors.toList()));
+    private static final Function    b        = Interpolation.interpolate1D(Range.linear(0, 1, defaults.size()), defaults.stream().map(Color::getBlue).collect(Collectors.toList()));
+
     private final CanvasPane      pane;
     private final Canvas          canvas;
     private final GraphicsContext gc;
 
     private double[][] lastData  = new double[0][0];
-    private ColourMap  colourMap = ColourMap.MATPLOTLIB;
+    private ColourMap  colourMap = ColourMap.JISA;
     private TickMapper xMapper   = TickMapper.DEFAULT;
     private TickMapper yMapper   = TickMapper.DEFAULT;
 
@@ -180,12 +189,19 @@ public class HeatMap extends JFXElement {
         setYTicks(Stream.of(values).map(n -> String.format("%.02g", n.doubleValue())).toArray(String[]::new));
     }
 
+    public void setXTicks(Collection<? extends Number> values) {
+        setXTicks(values.stream().map(n -> String.format("%.02g", n.doubleValue())).toArray(String[]::new));
+    }
+
+    public void setYTicks(Collection<? extends Number> values) {
+        setYTicks(values.stream().map(n -> String.format("%.02g", n.doubleValue())).toArray(String[]::new));
+    }
+
     public void draw(double[][] data) {
 
         lastData = data;
 
         GUI.runNow(() -> {
-
 
             final int ny       = data.length;
             final int nx       = ny > 0 ? data[0].length : 0;
@@ -354,7 +370,7 @@ public class HeatMap extends JFXElement {
 
     public interface ColourMap {
 
-        ColourMap JISA       = vv -> Color.hsb(330 - 234 * vv, 0.8, 0.3 + 0.68 * vv, 1.0);
+        ColourMap JISA       = vv -> Color.color(r.value(vv), g.value(vv), b.value(vv));
         ColourMap MATPLOTLIB = vv -> Color.hsb(288 - 234 * vv, 0.8, 0.3 + 0.68 * vv, 1.0);
         ColourMap GREYSCALE  = Color::gray;
         ColourMap GAYSCALE   = vv -> Color.hsb(300 * vv, 1.0, 1.0, 1.0);
