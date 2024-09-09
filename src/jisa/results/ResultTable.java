@@ -955,6 +955,10 @@ public abstract class ResultTable implements Iterable<Row> {
         return getRow(index);
     }
 
+    public <T> List<T> get(Column<T> column) {
+        return toList(column);
+    }
+
     public <T> T get(int index, Column<T> column) {
         return get(index).get(column);
     }

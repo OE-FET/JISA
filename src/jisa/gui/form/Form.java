@@ -33,11 +33,13 @@ import java.util.stream.Stream;
 
 public class Form extends JFXElement implements Element, Iterable<Field<?>> {
 
-    public        BorderPane      pane;
-    public        GridPane        list;
-    private final List<Field<?>>  fields   = new LinkedList<>();
-    public final  ExecutorService executor = Executors.newSingleThreadExecutor();
-    private       int             rows     = 0;
+    public final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    public BorderPane pane;
+    public GridPane   list;
+
+    private       int            rows   = 0;
+    private final List<Field<?>> fields = new LinkedList<>();
 
     private static <A, B> Property<B> mappedBind(Property<A> property, GFunction<B, A> ab, GFunction<A, B> ba) {
 
@@ -924,7 +926,7 @@ public class Form extends JFXElement implements Element, Iterable<Field<?>> {
      *
      * @return SetGettable to set and get the selected value, represented as an integer (0 = first option, 1 = second option etc)
      */
-    public Field<Integer> addChoice(String name, int initialValue, String... options) {
+    public ChoiceField<Integer> addChoice(String name, int initialValue, String... options) {
 
         ChoiceBox<String> control = new ChoiceBox<>();
         Label             label   = new Label(name);
@@ -965,7 +967,55 @@ public class Form extends JFXElement implements Element, Iterable<Field<?>> {
 
         });
 
-        Field<Integer> field = new BasicField<>(this, label, control, index);
+        ChoiceField<Integer> field = new BasicChoiceField<>(this, label, control, index, control.getItems());
+
+        fields.add(field);
+        return field;
+
+    }
+
+    public ChoiceField<String> addTextChoice(String name, String initialValue, String... options) {
+
+        ChoiceBox<String> control = new ChoiceBox<>();
+        Label             label   = new Label(name);
+
+        control.setMaxWidth(Integer.MAX_VALUE);
+        label.setMinWidth(Region.USE_PREF_SIZE);
+        GridPane.setVgrow(label, Priority.NEVER);
+        GridPane.setVgrow(control, Priority.NEVER);
+        GridPane.setHgrow(label, Priority.NEVER);
+        GridPane.setHgrow(control, Priority.ALWAYS);
+        GridPane.setHalignment(label, HPos.RIGHT);
+
+        GUI.runNow(() -> list.addRow(rows++, label, control));
+
+        control.getItems().addAll(options);
+        control.getSelectionModel().select(initialValue);
+
+        Property<String> index = new SimpleObjectProperty<>(control.getSelectionModel().getSelectedItem());
+
+
+        index.addListener((observable, oldValue, newValue) -> {
+
+            String current = control.getSelectionModel().getSelectedItem();
+
+            if (!Objects.equals(newValue, current)) {
+                control.getSelectionModel().select(newValue);
+            }
+
+        });
+
+        control.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
+
+            String current = index.getValue();
+
+            if (!Objects.equals(newValue, current)) {
+                index.setValue(newValue);
+            }
+
+        });
+
+        ChoiceField<String> field = new BasicChoiceField<>(this, label, control, index, control.getItems());
 
         fields.add(field);
         return field;

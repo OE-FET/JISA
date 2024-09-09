@@ -369,9 +369,7 @@ public class JFXElement implements Element {
     }
 
     public void clearDialogButtons() {
-
         GUI.runNow(() -> buttonBar.getButtons().clear());
-
     }
 
     public void showAsAlert() {
@@ -398,7 +396,7 @@ public class JFXElement implements Element {
 
         }
 
-        addCloseListener(semaphore::release);
+        SRunnable listener = addCloseListener(semaphore::release);
 
         show();
 
@@ -407,6 +405,8 @@ public class JFXElement implements Element {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
+        removeCloseListener(listener);
 
         close();
 
@@ -564,7 +564,7 @@ public class JFXElement implements Element {
     @Override
     public void showAndWait() {
 
-        Stage stage = getStage();
+
 
 
     }
