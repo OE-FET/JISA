@@ -11,7 +11,6 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import jisa.maths.Range;
-import jisa.maths.functions.GFunction;
 import jisa.maths.matrices.Matrix;
 import jisa.results.ResultTable;
 import jisa.results.RowEvaluable;
@@ -33,10 +32,10 @@ public class HeatMap extends JFXElement {
     private final Canvas          canvas;
     private final GraphicsContext gc;
 
-    private double[][]                 lastData  = new double[0][0];
-    private ColourMap                  colourMap = ColourMap.MATPLOTLIB;
-    private GFunction<String, Integer> xMapper   = x -> String.format("%d", x);
-    private GFunction<String, Integer> yMapper   = y -> String.format("%d", y);
+    private double[][] lastData  = new double[0][0];
+    private ColourMap  colourMap = ColourMap.MATPLOTLIB;
+    private TickMapper xMapper   = TickMapper.DEFAULT;
+    private TickMapper yMapper   = TickMapper.DEFAULT;
 
     public HeatMap(String title) {
 
@@ -121,8 +120,8 @@ public class HeatMap extends JFXElement {
         });
 
         draw(data);
-        setXTicks(i -> { try { return String.format("%.02g", x[i]); } catch (Throwable e) { return null; } } );
-        setYTicks(i -> { try { return String.format("%.02g", y[i]); } catch (Throwable e) { return null; } } );
+        setXTicks(i -> { try { return String.format("%.02g", x[i]); } catch (Throwable e) { return null; } });
+        setYTicks(i -> { try { return String.format("%.02g", y[i]); } catch (Throwable e) { return null; } });
 
     }
 
@@ -155,30 +154,30 @@ public class HeatMap extends JFXElement {
 
     }
 
-    public void setXTicks(GFunction<String, Integer> tickMapper) {
+    public void setXTicks(TickMapper tickMapper) {
         xMapper = tickMapper;
         draw(lastData);
     }
 
-    public void setYTicks(GFunction<String, Integer> tickMapper) {
+    public void setYTicks(TickMapper tickMapper) {
         yMapper = tickMapper;
         draw(lastData);
     }
 
     public void setXTicks(String... values) {
-        setXTicks(i -> values[i]);
+        setXTicks(TickMapper.fromArray(values));
     }
 
     public void setYTicks(String... values) {
-        setYTicks(i -> values[i]);
+        setXTicks(TickMapper.fromArray(values));
     }
 
     public void setXTicks(Number... values) {
-        setXTicks(Stream.of(values).map(Number::toString).toArray(String[]::new));
+        setXTicks(Stream.of(values).map(n -> String.format("%.02g", n.doubleValue())).toArray(String[]::new));
     }
 
     public void setYTicks(Number... values) {
-        setYTicks(Stream.of(values).map(Number::toString).toArray(String[]::new));
+        setYTicks(Stream.of(values).map(n -> String.format("%.02g", n.doubleValue())).toArray(String[]::new));
     }
 
     public void draw(double[][] data) {
@@ -365,6 +364,28 @@ public class HeatMap extends JFXElement {
         ColourMap FERAL      = vv -> Color.color(Math.min(1.0, 2 * vv), 1.0 - (2.0 * Math.abs(vv - 0.5)), Math.min(1.0, 2 * (1 - vv)));
 
         Color value(double value);
+
+    }
+
+    public interface TickMapper {
+
+        TickMapper DEFAULT = i -> String.format("%d", i);
+
+        static TickMapper fromArray(String... values) {
+
+            return i -> {
+
+                try {
+                    return values[i];
+                } catch (Throwable e) {
+                    return null;
+                }
+
+            };
+
+        }
+
+        String value(int tick);
 
     }
 
