@@ -20,6 +20,74 @@ It comprises, largely, of three sections:
 2. [Data Handling](#2-data-handling)
 3. [GUI Building Blocks](#3-gui-building-blocks)
 
+### Example Usage
+
+Using JISA, one can create measurement programs like this:
+
+<p align="center"><img src="https://i.imgur.com/1cLyGL6.png"></p>
+
+with minimal fuss like so:
+
+```kotlin
+fun measurement(source: ISource, meter: VMeter, tm: TMeter?) {
+
+    // Define data table
+    val I       = Column.ofDoubles("Current", "A")
+    val V       = Column.ofDoubles("Voltage", "V")
+    val T       = Column.ofDoubles("Temperature", "K")
+    val results = ResultList(I, V, T)
+
+    // Create user-input form
+    val form     = Form("Parameters")
+    val currents = form.addDoubleRange("Currents [A]", Range.linear(-1e-3, +1e-3, 11))
+    val iTime    = form.addDoubleField("Integration Time [s]", 20e-3)
+    val dTime    = form.addTimeField("Delay Time", 50)
+
+    // Create table and plot, put all together in a grid
+    val table = Table("Table of Results", results)
+    val plot  = Plot("Plot of Results", results, I, V)
+    val grid  = Grid("Measurement", form, table, plot)
+    
+    // Add a toolbar button to run the measurement
+    grid.addToolbarButton("Start") {
+        
+        // Configure instruments using values from form
+        meter.useAutoVoltageRange()
+        meter.setIntegrationTime(iTime.value)
+        source.setCurrent(currents.value.first())
+        meter.turnOn()
+        source.turnOn()
+        
+        // Set each current, wait, and measure in turn
+        for (current in currents.value) {
+            
+            source.setCurrent(current)
+            
+            Util.sleep(dTime.value)
+            
+            results.addRow { row ->
+                row[I] = current
+                row[V] = meter.getVoltage()
+                row[T] = tm?.getTemperature() ?: NaN
+            }
+            
+        }
+        
+        // Turn it all off at the end
+        smu.turnOff()
+        meter.turnOff()
+        
+    }
+    
+    // Show the grid in a window, exit program when closed
+    grid.setExitOnClose(true)
+    grid.showThenExit()
+    
+}
+```
+
+Running this by passing it the required instruments, and clicking the "Start" button, results in:
+
 ### 1. Standardised Instrument Control
 
 `JISA` implements standard interfaces for each "type" of instrument, meaning that instruments are easily interchangeable. For instance:
