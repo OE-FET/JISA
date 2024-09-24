@@ -5,10 +5,15 @@ import jisa.control.SRunnable;
 import jisa.devices.features.Feature;
 import kotlin.jvm.JvmClassMappingKt;
 import kotlin.reflect.KClass;
+import org.apache.commons.lang3.ClassUtils;
+import org.reflections.Reflections;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Interface for defining the base functionality of all instruments.
@@ -62,25 +67,90 @@ public interface Instrument {
         return this;
     }
 
+    /**
+     * Returns a list of all instrument parameters defined by its base type(s) --- i.e., configuration parameters
+     * common to all instruments of the same type. This may depend on what the instrument is intended to be used as,
+     * for instance an SMU being used as a VMeter will return an extra configuration option to set current to zero.
+     *
+     * @param target The target class that ths instrument is going to be used as.
+     *
+     * @return List of base instrument parameters.
+     */
     default List<Parameter<?>> getBaseParameters(Class<?> target) {
-        return Collections.emptyList();
+
+        ParameterList               parameters  = new ParameterList();
+        Reflections                 reflections = new Reflections("jisa.devices");
+        Class<? extends Instrument> thisClass   = getClass();
+
+        ClassUtils.getAllInterfaces(getClass()).stream().filter(Instrument.class::isAssignableFrom).forEach(type -> {
+
+            try {
+
+                type.getMethod(
+                    "addParameters",
+                    type,
+                    Class.class,
+                    ParameterList.class
+                ).invoke(null, this, target, parameters);
+
+            } catch (Throwable ignored) { }
+
+        });
+
+        Set<String> seen = ConcurrentHashMap.newKeySet();
+        return parameters.stream().filter(v -> seen.add(v.getName())).collect(Collectors.toList());
+
     }
 
+    /**
+     * Returns a list of all instrument-specific parameters --- i.e., configuration parameters specific to just this
+     * make/model of instrument.
+     *
+     * @param target The target class that this instrument is going to be used as.
+     *
+     * @return List of instrument-specific configuration parameters.
+     */
     default List<Parameter<?>> getInstrumentParameters(Class<?> target) {
         return Collections.emptyList();
     }
 
+    /**
+     * Returns a list of all configuration parameters from extra features this instrument implements.
+     *
+     * @param target The target class that this instrument is going to be used as (e.g., an SMU might be used as a VMeter).
+     *
+     * @return List of feature configuration parameters.
+     */
     default List<Parameter<?>> getFeatureParameters(Class<?> target) {
         return Feature.getFeatureParameters(this, target);
     }
 
+    /**
+     * Returns all configuration parameters for this instrument, for given target usage type. For instance if a
+     * measurement routine is to use a multimeter (IVMeter) simply as a voltmeter (VMeter), then options regarding
+     * current measurements will be omitted etc.
+     *
+     * @param target Target instrument type.
+     *
+     * @return List of parameters.
+     */
     default List<Parameter<?>> getAllParameters(Class<?> target) {
 
         List<Parameter<?>> parameters = getBaseParameters(target);
         parameters.addAll(getFeatureParameters(target));
         parameters.addAll(getInstrumentParameters(target));
+
         return parameters;
 
+    }
+
+    /**
+     * Returns all configuration parameters for this instrument.
+     *
+     * @return List of parameters
+     */
+    default List<Parameter<?>> getAllParameters() {
+        return getAllParameters(getClass());
     }
 
     default <I> void ifImplements(Class<I> target, InstrumentAcceptor<I> action) throws IOException, DeviceException, InterruptedException {

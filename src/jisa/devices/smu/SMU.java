@@ -2,6 +2,7 @@ package jisa.devices.smu;
 
 import jisa.Util;
 import jisa.devices.DeviceException;
+import jisa.devices.ParameterList;
 import jisa.devices.meter.IMeter;
 import jisa.devices.meter.IVMeter;
 import jisa.devices.meter.VMeter;
@@ -13,8 +14,6 @@ import jisa.enums.Terminals;
 import jisa.experiment.IVPoint;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Interface for defining the standard functionality of Source-Measure Unit (SMU) instruments.
@@ -23,6 +22,26 @@ public interface SMU extends IVMeter, IVSource {
 
     static String getDescription() {
         return "Source Measure Unit";
+    }
+
+    static void addParameters(SMU inst, Class target, ParameterList parameters) {
+
+        parameters.addChoice("Terminals", inst::getTerminals, Terminals.REAR, inst::setTerminals, Terminals.values());
+        parameters.addValue("Voltage Limit [V]", inst::getVoltageLimit, 200.0, inst::setVoltageLimit);
+        parameters.addValue("Current Limit [A]", inst::getCurrentLimit, 100e-3, inst::setCurrentLimit);
+        parameters.addAuto("Voltage Range [V]", true, 200.0, v -> inst.useAutoVoltageRange(), inst::setVoltageRange);
+        parameters.addAuto("Current Range [A]", true, 100e-3, v -> inst.useAutoCurrentRange(), inst::setCurrentRange);
+        parameters.addValue("Integration Time [s]", inst::getIntegrationTime, 20e-3, inst::setIntegrationTime);
+        parameters.addValue("Four-Wire Mode", inst::isFourProbeEnabled, false, inst::setFourProbeEnabled);
+
+        if (target.equals(IMeter.class)) {
+            parameters.addOptional("Set Voltage [V]", false, 0.0, v -> { }, inst::setVoltage);
+        }
+
+        if (target.equals(VMeter.class)) {
+            parameters.addOptional("Set Current [A]", false, 0.0, i -> { }, inst::setCurrent);
+        }
+
     }
 
     /**
@@ -701,31 +720,6 @@ public interface SMU extends IVMeter, IVSource {
     default void setLimits(double voltageLimit, double currentLimit) throws DeviceException, IOException {
         setVoltageLimit(voltageLimit);
         setCurrentLimit(currentLimit);
-    }
-
-    @Override
-    default List<Parameter<?>> getBaseParameters(Class<?> target) {
-
-        List<Parameter<?>> parameters = new LinkedList<>();
-
-        parameters.add(new Parameter<>("Terminals", Terminals.FRONT, this::setTerminals, Terminals.values()));
-        parameters.add(new Parameter<>("Voltage Limit [V]", 200.0, this::setVoltageLimit));
-        parameters.add(new Parameter<>("Current Limit [A]", 100e-3, this::setCurrentLimit));
-        parameters.add(new Parameter<>("Voltage Range [V]", new AutoQuantity<>(true, 0.0), q -> { if (q.isAuto()) this.useAutoVoltageRange(); else this.setVoltageRange(q.getValue()); }));
-        parameters.add(new Parameter<>("Current Range [A]", new AutoQuantity<>(true, 0.0), q -> { if (q.isAuto()) this.useAutoCurrentRange(); else this.setCurrentRange(q.getValue()); }));
-        parameters.add(new Parameter<>("Integration Time [s]", 20e-3, this::setIntegrationTime));
-        parameters.add(new Parameter<>("Four Point Probe", false, this::setFourProbeEnabled));
-
-        if (target.equals(IMeter.class)) {
-            parameters.add(new Parameter<>("Set Voltage [V]", new OptionalQuantity<>(false, 0.0), q -> { if (q.isUsed()) this.setVoltage(q.getValue()); }));
-        }
-
-        if (target.equals(VMeter.class)) {
-            parameters.add(new Parameter<>("Set Current [A]", new OptionalQuantity<>(false, 0.0), q -> { if (q.isUsed()) this.setCurrent(q.getValue()); }));
-        }
-
-        return parameters;
-
     }
 
     enum OffMode {

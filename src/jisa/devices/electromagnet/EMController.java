@@ -3,16 +3,43 @@ package jisa.devices.electromagnet;
 import jisa.Util;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
+import jisa.devices.ParameterList;
+import jisa.results.Column;
+import jisa.results.ResultList;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public interface EMController extends Instrument {
 
     static String getDescription() {
         return "Electromagnet Controller";
+    }
+
+    static void addParameters(EMController inst, Class target, ParameterList list) {
+
+        List<List<Double>> def = inst.getRampRates().stream()
+                                     .map(r -> List.of(r.getMinI(), r.getMaxI(), r.getRate()))
+                                     .collect(Collectors.toList());
+
+        Column<Double> MIN_I = Column.ofDoubles("Min I", "A");
+        Column<Double> MAX_I = Column.ofDoubles("Max I", "A");
+        Column<Double> RATE  = Column.ofDoubles("Rate", "A/min");
+
+        ResultList table = inst.getRampRates()
+                               .stream()
+                               .map(r -> Map.of(MIN_I, r.getMinI(), MAX_I, r.getMaxI(), RATE, r.getRate()))
+                               .collect(ResultList.mapCollector());
+
+        list.addValue(
+            "Ramp Zones",
+            table,
+            v -> inst.setRampRates(v.stream().map(r -> new Ramp(r.get(MIN_I), r.get(MAX_I), r.get(RATE))).toArray(Ramp[]::new))
+        );
+
     }
 
     /**
@@ -134,26 +161,6 @@ public interface EMController extends Instrument {
         }
 
         return legs;
-
-    }
-
-    default List<Parameter<?>> getBaseParameters(Class<?> target) {
-
-        List<Parameter<?>> list = new LinkedList<>();
-
-        List<List<Double>> def = getRampRates().stream()
-                                               .map(r -> List.of(r.getMinI(), r.getMaxI(), r.getRate()))
-                                               .collect(Collectors.toList());
-
-        list.add(
-            new Parameter<>(
-                "Ramp Zones",
-                new TableQuantity(new String[]{"Min I [A]", "Max I [A]", "Rate [A/min]"}, def),
-                q -> setRampRates(q.getValue().stream().map(r -> new Ramp(r.get(0), r.get(1), r.get(2))).toArray(Ramp[]::new))
-            )
-        );
-
-        return list;
 
     }
 

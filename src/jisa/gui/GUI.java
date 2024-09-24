@@ -21,7 +21,7 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.enums.Icon;
-import jisa.experiment.Measurement;
+import jisa.experiment.MeasurementOld;
 import kotlin.jvm.JvmClassMappingKt;
 import kotlin.reflect.KClass;
 
@@ -756,7 +756,7 @@ public class GUI {
 
     }
 
-    public void runMeasurement(Measurement measurement) {
+    public void runMeasurement(MeasurementOld measurement) {
 
         try {
 

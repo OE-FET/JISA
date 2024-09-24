@@ -3,6 +3,7 @@ package jisa.devices.pid;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
+import jisa.devices.ParameterList;
 import jisa.visa.VISADevice;
 import jisa.visa.connections.SerialConnection.Parity;
 
@@ -421,7 +422,7 @@ public class ITC503 extends VISADevice implements TC {
         }
 
         @Override
-        public List<Parameter<?>> getBaseParameters(Class<?> target) {
+        public List<Parameter<?>> getInstrumentParameters(Class<?> target) {
 
             List<Parameter<?>> list = super.getBaseParameters(target);
             list.add(new Parameter<>("Use Internal PID Table", true, v -> query(C_SET_AUTO_PID, v ? 1 : 0)));
@@ -543,10 +544,12 @@ public class ITC503 extends VISADevice implements TC {
         query(C_SET_MODE, mode.toInt());
     }
 
-    public List<Parameter<?>> getBaseParameters(Class<?> target) {
-        List<Parameter<?>> parameters = TC.super.getBaseParameters(target);
-        parameters.add(new Parameter<>("Use Internal PID Table", false, v -> query(C_SET_AUTO_PID, v ? 1 : 0)));
+    public List<Parameter<?>> getInstrumentParameters(Class<?> target) {
+
+        ParameterList parameters = new ParameterList();
+        parameters.addValue("Use Internal PID Table", false, v -> query(C_SET_AUTO_PID, v ? 1 : 0));
         return parameters;
+
     }
 
     public enum Mode {

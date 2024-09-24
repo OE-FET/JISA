@@ -42,8 +42,8 @@ public class USBDriver implements Driver {
 
     private static boolean matches(DeviceDescriptor descriptor, USBAddress address) {
 
-        return descriptor.idVendor() == address.getVendorID()
-            && descriptor.idProduct() == address.getProductID();
+        return ((int) descriptor.idVendor() & 0xffff) == address.getVendorID()
+            && ((int) descriptor.idProduct() & 0xffff) == address.getProductID();
 
     }
 
@@ -272,11 +272,11 @@ public class USBDriver implements Driver {
                 LibUsb.getConfigDescriptor(device, i, config);
 
                 if (Arrays.stream(config.iface()).flatMap(in -> Arrays.stream(in.altsetting())).anyMatch(USBDriver::isTMC)) {
-                    addresses.add(new USBTMCAddress(descriptor.idVendor(), descriptor.idProduct(), serialNumber));
+                    addresses.add(new USBTMCAddress(descriptor.idVendor() & 0xffff, descriptor.idProduct() & 0xffff, serialNumber));
                     break;
 
                 } else if (Arrays.stream(config.iface()).flatMap(in -> Arrays.stream(in.altsetting())).anyMatch(USBDriver::isRaw)) {
-                    addresses.add(new USBRawAddress(descriptor.idVendor(), descriptor.idProduct(), serialNumber));
+                    addresses.add(new USBRawAddress(descriptor.idVendor() & 0xffff, descriptor.idProduct() & 0xffff, serialNumber));
                 }
 
                 LibUsb.freeConfigDescriptor(config);

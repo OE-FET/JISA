@@ -25,5 +25,6 @@
     <orderEntry type="library" name="kotlin" level="project" />
     <orderEntry type="library" name="guicedee.services.sl4j" level="project" />
     <orderEntry type="library" name="io.jhdf" level="project" />
+    <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
   </component>
 </module>

@@ -1,22 +1,29 @@
 package jisa.gui;
 
 import com.google.common.primitives.Doubles;
+import com.google.common.primitives.Shorts;
 import javafx.geometry.VPos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.PixelBuffer;
+import javafx.scene.image.PixelFormat;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+import jisa.Util;
 import jisa.maths.Range;
 import jisa.maths.functions.Function;
+import jisa.maths.functions.XYFunction;
 import jisa.maths.interpolation.Interpolation;
 import jisa.maths.matrices.Matrix;
 import jisa.results.ResultTable;
 import jisa.results.RowEvaluable;
 
+import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -33,18 +40,44 @@ public class HeatMap extends JFXElement {
     private static final double CBAR_GAP   = 10;
 
     private static final List<Color> defaults = Arrays.stream(Series.defaultColours, 0, 6).collect(Collectors.toList());
-    private static final Function    r        = Interpolation.interpolate1D(Range.linear(0, 1, defaults.size()), defaults.stream().map(Color::getRed).collect(Collectors.toList()));
-    private static final Function    g        = Interpolation.interpolate1D(Range.linear(0, 1, defaults.size()), defaults.stream().map(Color::getGreen).collect(Collectors.toList()));
-    private static final Function    b        = Interpolation.interpolate1D(Range.linear(0, 1, defaults.size()), defaults.stream().map(Color::getBlue).collect(Collectors.toList()));
+    private static final Function    r        = Interpolation.interpolate1D(Range.linear(0, 1, defaults.size()), defaults.stream().map(c -> c.getRed() * 255).collect(Collectors.toList()));
+    private static final Function    g        = Interpolation.interpolate1D(Range.linear(0, 1, defaults.size()), defaults.stream().map(c -> c.getGreen() * 255).collect(Collectors.toList()));
+    private static final Function    b        = Interpolation.interpolate1D(Range.linear(0, 1, defaults.size()), defaults.stream().map(c -> c.getBlue() * 255).collect(Collectors.toList()));
 
-    private final CanvasPane      pane;
-    private final Canvas          canvas;
-    private final GraphicsContext gc;
+    private final CanvasPane             pane;
+    private final Canvas                 canvas;
+    private final GraphicsContext        gc;
+    private       PixelBuffer<IntBuffer> barBuffer = null;
+    private       WritableImage          bar       = new WritableImage(1, 100);
+    private       PixelBuffer<IntBuffer> buffer    = null;
+    private       WritableImage          image     = null;
 
-    private double[][] lastData  = new double[0][0];
     private ColourMap  colourMap = ColourMap.JISA;
     private TickMapper xMapper   = TickMapper.DEFAULT;
     private TickMapper yMapper   = TickMapper.DEFAULT;
+
+    private double height   = 500;
+    private double width    = 500;
+    private double min      = -1;
+    private double max      = 1;
+    private double pStartX  = AXIS_SIZE;
+    private double pStartY  = 2 * TITLE_SIZE;
+    private double pEndX    = 0;
+    private double pEndY    = 0;
+    private double pWidth   = 0;
+    private double pHeight  = 0;
+    private double cStartX  = 0;
+    private double cStartY  = pStartY;
+    private double cEndY    = 0;
+    private double stepX    = 0;
+    private double stepY    = 0;
+    private int    everyX   = 1;
+    private int    everyY   = 1;
+    private int    ny       = 1;
+    private int    nx       = 1;
+    private double maxTickX = 1.0;
+    private double maxTickY = 1.0;
+    private double maxTickW = 1.0;
 
     public HeatMap(String title) {
 
@@ -56,12 +89,36 @@ public class HeatMap extends JFXElement {
 
         GUI.runNow(() -> getStage().getScene().setFill(Color.WHITE));
 
-        pane   = (CanvasPane) getNode().getCenter();
-        canvas = pane.canvas;
-        gc     = canvas.getGraphicsContext2D();
+        pane     = (CanvasPane) getNode().getCenter();
+        canvas   = pane.canvas;
+        gc       = canvas.getGraphicsContext2D();
+        ny       = 1;
+        nx       = 1;
+        maxTickX = IntStream.range(0, nx).mapToObj(i -> new Text(xMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getWidth()).max().orElse(1.0);
+        maxTickY = IntStream.range(0, ny).mapToObj(i -> new Text(yMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getHeight()).max().orElse(1.0);
+        maxTickW = IntStream.range(0, ny).mapToObj(i -> new Text(yMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getWidth()).max().orElse(1.0);
+        height   = canvas.getHeight();
+        width    = canvas.getWidth();
+        pEndX    = width - CBAR_GAP - CBAR_SIZE;
+        pEndY    = height - AXIS_SIZE;
+        pWidth   = pEndX - pStartX;
+        pHeight  = pEndY - pStartY;
+        cStartX  = pEndX + CBAR_GAP;
+        cEndY    = pStartY + pHeight;
+        stepX    = pWidth / nx;
+        stepY    = pHeight / ny;
+        everyX   = (int) Math.ceil((maxTickX + 10.0) / stepX);
+        everyY   = (int) Math.ceil((maxTickY + 10.0) / stepY);
 
-        canvas.widthProperty().addListener((observable, oldValue, newValue) -> draw(lastData));
-        canvas.heightProperty().addListener((observable, oldValue, newValue) -> draw(lastData));
+        canvas.widthProperty().addListener((observable, oldValue, newValue) -> resized());
+        canvas.heightProperty().addListener((observable, oldValue, newValue) -> resized());
+
+        GUI.runNow(() -> {
+            drawTitle();
+            drawColourBar();
+            drawAxes();
+            drawMap();
+        });
 
     }
 
@@ -69,14 +126,20 @@ public class HeatMap extends JFXElement {
 
         GUI.runNow(() -> {
             super.setTitle(title);
-            draw(lastData);
+            drawTitle();
         });
 
     }
 
     public void setColourMap(ColourMap colourMap) {
+
         this.colourMap = colourMap;
-        draw(lastData);
+
+        GUI.runNow(() -> {
+            drawColourBar();
+            drawMap();
+        });
+
     }
 
     public HeatMap(String title, double[][] data) {
@@ -144,6 +207,30 @@ public class HeatMap extends JFXElement {
 
     }
 
+    public void drawInterpolate(Collection<? extends Number> xValues, Collection<? extends Number> yValues, Collection<? extends Number> values) {
+
+        XYFunction function = Interpolation.interpolate2D(xValues, yValues, values);
+
+        double[]   x    = xValues.stream().mapToDouble(Number::doubleValue).distinct().sorted().toArray();
+        double[]   y    = yValues.stream().mapToDouble(Number::doubleValue).distinct().sorted().toArray();
+        double[][] data = new double[y.length][x.length];
+
+        for (int i = 0; i < y.length; i++) {
+            for (int j = 0; j < x.length; j++) {
+                data[i][j] = function.value(x[i], y[j]);
+            }
+        }
+
+        draw(data);
+        setXTicks(i -> { try { return String.format("%.02g", x[i]); } catch (Throwable e) { return null; } });
+        setYTicks(i -> { try { return String.format("%.02g", y[i]); } catch (Throwable e) { return null; } });
+
+    }
+
+    public void drawInterpolate(double[] xValues, double[] yValues, double[] values) {
+        drawInterpolate(Doubles.asList(xValues), Doubles.asList(yValues), Doubles.asList(values));
+    }
+
     public void watch(ResultTable table, RowEvaluable<? extends Number> x, RowEvaluable<? extends Number> y, RowEvaluable<? extends Number> v) {
         drawMesh(table.get(x), table.get(y), table.get(v));
         table.addRowListener(row -> drawMesh(table.get(x), table.get(y), table.get(v)));
@@ -165,12 +252,12 @@ public class HeatMap extends JFXElement {
 
     public void setXTicks(TickMapper tickMapper) {
         xMapper = tickMapper;
-        draw(lastData);
+        updateAxes();
     }
 
     public void setYTicks(TickMapper tickMapper) {
         yMapper = tickMapper;
-        draw(lastData);
+        updateAxes();
     }
 
     public void setXTicks(String... values) {
@@ -197,150 +284,276 @@ public class HeatMap extends JFXElement {
         setYTicks(values.stream().map(n -> String.format("%.02g", n.doubleValue())).toArray(String[]::new));
     }
 
-    public void draw(double[][] data) {
+    public void draw(int[][] data) {
+        draw(Stream.of(data).map(r -> IntStream.of(r).boxed().map(Integer::doubleValue).toArray(Double[]::new)).toArray(Double[][]::new));
+    }
 
-        lastData = data;
+    public synchronized void draw(double[][] data) {
+
+        if (ny != data.length || nx != (data.length > 0 ? data[0].length : 0)) {
+
+            ny       = data.length;
+            nx       = ny > 0 ? data[0].length : 0;
+
+            updateAxes();
+
+        }
+
+        min = Stream.of(data).mapToDouble(Doubles::min).min().orElse(-1.0);
+        max = Stream.of(data).mapToDouble(Doubles::max).max().orElse(1.0);
+
+        double range = max - min;
+
+        if (image == null || image.getWidth() != nx || image.getHeight() != ny) {
+            buffer = new PixelBuffer<>(nx, ny, IntBuffer.allocate(nx * ny), PixelFormat.getIntArgbPreInstance());
+            image  = new WritableImage(buffer);
+        }
+
+        int[] pixels = buffer.getBuffer().array();
+
+        // Draw pixels
+        for (int y = 0; y < ny; y++) {
+
+
+            for (int x = 0; x < nx; x++) {
+
+                double vv = ((double) data[y][x] - min) / range;
+                pixels[(x % nx) + (y * nx)] = colourMap.value(vv);
+
+            }
+
+        }
+
+        GUI.runNow(() -> {
+            buffer.updateBuffer(b -> null);
+            drawMap();
+            drawColourBar();
+        });
+
+
+    }
+
+    public synchronized void draw(short[][] data) {
+
+        if (ny != data.length || nx != (data.length > 0 ? data[0].length : 0)) {
+
+            ny = data.length;
+            nx = ny > 0 ? data[0].length : 0;
+
+            updateAxes();
+
+        }
+
+        min = Stream.of(data).mapToDouble(Shorts::min).min().orElse(-1.0);
+        max = Stream.of(data).mapToDouble(Shorts::max).max().orElse(1.0);
+
+        double range = max - min;
+
+        if (image == null || image.getWidth() != nx || image.getHeight() != ny) {
+            buffer = new PixelBuffer<>(nx, ny, IntBuffer.allocate(nx * ny), PixelFormat.getIntArgbPreInstance());
+            image  = new WritableImage(buffer);
+        }
+
+        int[] pixels = buffer.getBuffer().array();
+
+        // Draw pixels
+        for (int y = 0; y < ny; y++) {
+
+
+            for (int x = 0; x < nx; x++) {
+
+                double vv = ((double) data[y][x] - min) / range;
+                pixels[(x % nx) + (y * nx)] = colourMap.value(vv);
+
+            }
+
+        }
 
         GUI.runNow(() -> {
 
-            final int ny       = data.length;
-            final int nx       = ny > 0 ? data[0].length : 0;
-            double    maxTickX = IntStream.range(0, nx).mapToObj(i -> new Text(xMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getWidth()).max().orElse(0.0);
-            double    maxTickY = IntStream.range(0, ny).mapToObj(i -> new Text(yMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getHeight()).max().orElse(0.0);
-            double    maxTickW = IntStream.range(0, ny).mapToObj(i -> new Text(yMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getWidth()).max().orElse(0.0);
+            gc.clearRect(cStartX, cStartY, 25, pHeight);
+            gc.clearRect(cStartX + 25, 0, CBAR_SIZE - 25, height);
 
-            // Calculate co-ordinates of elements
-            final double height  = canvas.getHeight();
-            final double width   = canvas.getWidth();
-            final double min     = Stream.of(data).flatMapToDouble(DoubleStream::of).min().orElse(-1.0);
-            final double max     = Stream.of(data).flatMapToDouble(DoubleStream::of).max().orElse(1.0);
-            final double pStartX = Math.max(AXIS_SIZE, maxTickW + 15.0);
-            final double pStartY = 2 * TITLE_SIZE;
-            final double pEndX   = width - CBAR_GAP - CBAR_SIZE;
-            final double pEndY   = height - AXIS_SIZE;
-            final double pWidth  = pEndX - pStartX;
-            final double pHeight = pEndY - pStartY;
-            final double cStartX = pEndX + CBAR_GAP;
-            final double cStartY = pStartY;
-            final double cEndY   = pStartY + pHeight;
-
-            // Draw the title
-            gc.clearRect(0, 0, width, height);
-            gc.setFill(Color.BLACK);
-            gc.setFont(Font.font(Font.getDefault().getFamily(), FontWeight.BOLD, 22));
-            gc.setTextAlign(TextAlignment.CENTER);
-            gc.setTextBaseline(VPos.CENTER);
-            gc.fillText(getTitle(), (pStartX + pEndX) / 2.0, TITLE_SIZE);
-
-            // Draw empty plotting area
-            gc.setStroke(Color.BLACK);
-            gc.setFill(colourMap.value(0.0));
-            gc.setStroke(Color.BLACK);
-            gc.setLineWidth(1);
-            gc.strokeRect(pStartX, pStartY, pWidth, pHeight);
-            gc.fillRect(pStartX, pStartY, pWidth, pHeight);
-
-            double px = Math.ceil(pWidth / nx);
-            double py = Math.ceil(pHeight / ny);
-
-            // Draw pixels
-            for (int y = 0; y < ny; y++) {
-
-                double yv = Math.floor(pStartY + ((double) y / ny) * pHeight);
-
-                for (int x = 0; x < nx; x++) {
-
-                    double xv = Math.floor(pStartX + ((double) x / nx) * pWidth);
-                    double vv = (data[y][x] - min) / (max - min);
-
-                    gc.setFill(colourMap.value(vv));
-                    gc.fillRect(xv, yv, px, py);
-
-                }
-
-            }
-
-            gc.setFill(Color.BLACK);
-            gc.setStroke(Color.BLACK);
-            gc.setTextAlign(TextAlignment.LEFT);
-            gc.setTextBaseline(VPos.CENTER);
-            gc.setFont(Font.getDefault());
-
-            double i = 10;
-            for (double y : Range.linear(cStartY, cEndY, 11)) {
-                gc.strokeLine(cStartX + 26, y, cStartX + 30, y);
-                gc.fillText(String.format("%.02e", min + (i-- / 10.0) * (max - min)), cStartX + 40, y);
-            }
-
-            // Draw Colour Bar
-            gc.setStroke(Color.BLACK);
-            gc.strokeRect(cStartX, cStartY, 25, pHeight);
-
-            for (double y = cStartY; y < cEndY; y++) {
-
-                double vv = 1.0 - ((y - cStartY) / pHeight);
-                gc.setFill(colourMap.value(vv));
-                gc.fillRect(cStartX, y, 25, 1);
-
-            }
-
-            double stepX = pWidth / nx;
-            double stepY = pHeight / ny;
-
-            gc.setTextAlign(TextAlignment.CENTER);
-            gc.setTextBaseline(VPos.TOP);
-            gc.setStroke(Color.BLACK);
-            gc.setFill(Color.BLACK);
-            gc.setFont(Font.getDefault());
-
-            int everyX = (int) Math.ceil((maxTickX + 10.0) / stepX);
-            int everyY = (int) Math.ceil((maxTickY + 10.0) / stepY);
-
-            // Draw x-axis ticks
-            int j = 0;
-            for (double x = pStartX + 0.5 * stepX; x < pEndX; x += stepX) {
-
-                if ((j % everyX) == 0) {
-
-                    String tick = xMapper.value(j);
-
-                    if (tick != null && !tick.isBlank()) {
-                        gc.strokeLine(x, pEndY + 1, x, pEndY + 5);
-                        gc.fillText(tick, x, pEndY + 10);
-                    }
-
-                }
-
-                j++;
-
-            }
-
-            gc.setTextAlign(TextAlignment.RIGHT);
-            gc.setTextBaseline(VPos.CENTER);
-            gc.setStroke(Color.BLACK);
-            gc.setFill(Color.BLACK);
-            gc.setFont(Font.getDefault());
-
-            // Draw y-axis ticks
-            j = 0;
-            for (double y = pStartY + 0.5 * stepY; y < pEndY; y += stepY) {
-
-                if ((j % everyY) == 0) {
-
-                    String tick = yMapper.value(j);
-
-                    if (tick != null && !tick.isBlank()) {
-                        gc.strokeLine(pStartX - 1, y, pStartX - 5, y);
-                        gc.fillText(tick, pStartX - 10, y);
-                    }
-
-                }
-
-                j++;
-
-            }
+            buffer.updateBuffer(b -> null);
+            drawMap();
+            drawColourBar();
 
         });
+
+    }
+
+    private void updateAxes() {
+
+        maxTickX = IntStream.range(0, nx).mapToObj(i -> new Text(xMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getWidth()).max().orElse(0.0);
+        maxTickY = IntStream.range(0, ny).mapToObj(i -> new Text(yMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getHeight()).max().orElse(0.0);
+        maxTickW = IntStream.range(0, ny).mapToObj(i -> new Text(yMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getWidth()).max().orElse(0.0);
+        stepX    = pWidth / nx;
+        stepY    = pHeight / ny;
+        everyX   = (int) Math.ceil((maxTickX + 10.0) / stepX);
+        everyY   = (int) Math.ceil((maxTickY + 10.0) / stepY);
+
+        GUI.runNow(() -> {
+
+            gc.clearRect(0, 0, width, height);
+
+            drawTitle();
+            drawColourBar();
+            drawAxes();
+            drawMap();
+
+        });
+
+    }
+
+    private void resized() {
+
+        if (maxTickX == 0 || maxTickY == 0 || maxTickW == 0) {
+            maxTickX = IntStream.range(0, nx).mapToObj(i -> new Text(xMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getWidth()).max().orElse(1.0);
+            maxTickY = IntStream.range(0, ny).mapToObj(i -> new Text(yMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getHeight()).max().orElse(1.0);
+            maxTickW = IntStream.range(0, ny).mapToObj(i -> new Text(yMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getWidth()).max().orElse(1.0);
+        }
+
+        height  = canvas.getHeight();
+        width   = canvas.getWidth();
+        pEndX   = width - CBAR_GAP - CBAR_SIZE;
+        pEndY   = height - AXIS_SIZE;
+        pWidth  = pEndX - pStartX;
+        pHeight = pEndY - pStartY;
+        cStartX = pEndX + CBAR_GAP;
+        cEndY   = pStartY + pHeight;
+        stepX   = pWidth / nx;
+        stepY   = pHeight / ny;
+        everyX  = (int) Math.ceil((maxTickX + 10.0) / stepX);
+        everyY  = (int) Math.ceil((maxTickY + 10.0) / stepY);
+
+        GUI.runNow(() -> {
+
+            gc.clearRect(0, 0, width, height);
+
+            drawTitle();
+            drawColourBar();
+            drawAxes();
+            drawMap();
+
+        });
+
+    }
+
+    private void drawMap() {
+        gc.setImageSmoothing(false);
+        gc.drawImage(image, pStartX, pStartY, pWidth, pHeight);
+    }
+
+    private void drawTitle() {
+
+        gc.clearRect(0, 0, canvas.getWidth(), 2.0 * TITLE_SIZE);
+        gc.setFill(Color.BLACK);
+        gc.setFont(Font.font(Font.getDefault().getFamily(), FontWeight.BOLD, 22));
+        gc.setTextAlign(TextAlignment.CENTER);
+        gc.setTextBaseline(VPos.CENTER);
+        gc.fillText(getTitle(), (pStartX + pEndX) / 2.0, TITLE_SIZE);
+
+    }
+
+    private void drawColourBar() {
+
+        gc.setFill(Color.BLACK);
+        gc.setStroke(Color.BLACK);
+        gc.setTextAlign(TextAlignment.LEFT);
+        gc.setTextBaseline(VPos.CENTER);
+        gc.setFont(Font.getDefault());
+
+        double i = 10;
+        for (double y : Range.linear(cStartY, cEndY, 11)) {
+
+            gc.strokeLine(cStartX + 26, y, cStartX + 30, y);
+            gc.fillText(String.format("%.02e", min + (i-- / 10.0) * (max - min)), cStartX + 40, y);
+
+        }
+
+        // Draw Colour Bar
+        gc.setStroke(Color.BLACK);
+        gc.strokeRect(cStartX, cStartY, 25, pHeight);
+
+        int height = (int) (cEndY - cStartY);
+
+        if (barBuffer == null || barBuffer.getHeight() != height) {
+            barBuffer = new PixelBuffer<>(1, height, IntBuffer.allocate(height), PixelFormat.getIntArgbPreInstance());
+            bar       = new WritableImage(barBuffer);
+        }
+
+        int[] pixels = barBuffer.getBuffer().array();
+
+        for (int j = 0; j < height; j++) {
+
+            double vv = (double) j / (height - 1);
+            pixels[j] = colourMap.value(1 - vv);
+
+        }
+
+        barBuffer.updateBuffer(b -> null);
+
+        gc.setImageSmoothing(false);
+        gc.drawImage(bar, cStartX, cStartY, 25, pHeight);
+
+    }
+
+    private void drawAxes() {
+
+        gc.setStroke(Color.BLACK);
+        gc.setStroke(Color.BLACK);
+        gc.setLineWidth(1);
+        gc.strokeRect(pStartX, pStartY, pWidth, pHeight);
+
+        gc.setTextAlign(TextAlignment.CENTER);
+        gc.setTextBaseline(VPos.TOP);
+        gc.setStroke(Color.BLACK);
+        gc.setFill(Color.BLACK);
+        gc.setFont(Font.getDefault());
+
+        // Draw x-axis ticks
+        int j = 0;
+        for (double x = pStartX + 0.5 * stepX; x < pEndX; x += stepX) {
+
+            if ((j % everyX) == 0) {
+
+                String tick = xMapper.value(j);
+
+                if (tick != null && !tick.isBlank()) {
+                    gc.strokeLine(x, pEndY + 1, x, pEndY + 5);
+                    gc.fillText(tick, x, pEndY + 10);
+                }
+
+            }
+
+            j++;
+
+        }
+
+        gc.setTextAlign(TextAlignment.RIGHT);
+        gc.setTextBaseline(VPos.CENTER);
+        gc.setStroke(Color.BLACK);
+        gc.setFill(Color.BLACK);
+        gc.setFont(Font.getDefault());
+
+        // Draw y-axis ticks
+        j = 0;
+        for (double y = pStartY + 0.5 * stepY; y < pEndY; y += stepY) {
+
+            if ((j % everyY) == 0) {
+
+                String tick = yMapper.value(j);
+
+                if (tick != null && !tick.isBlank()) {
+                    gc.strokeLine(pStartX - 1, y, pStartX - 5, y);
+                    gc.fillText(tick, pStartX - 10, y);
+                }
+
+            }
+
+            j++;
+
+        }
 
     }
 
@@ -370,16 +583,16 @@ public class HeatMap extends JFXElement {
 
     public interface ColourMap {
 
-        ColourMap JISA       = vv -> Color.color(r.value(vv), g.value(vv), b.value(vv));
-        ColourMap MATPLOTLIB = vv -> Color.hsb(288 - 234 * vv, 0.8, 0.3 + 0.68 * vv, 1.0);
-        ColourMap GREYSCALE  = Color::gray;
-        ColourMap GAYSCALE   = vv -> Color.hsb(300 * vv, 1.0, 1.0, 1.0);
-        ColourMap RED        = vv -> Color.hsb(0, 1.0, vv, 1.0);
-        ColourMap GREEN      = vv -> Color.hsb(120, 1.0, vv, 1.0);
-        ColourMap BLUE       = vv -> Color.hsb(240, 1.0, vv, 1.0);
-        ColourMap FERAL      = vv -> Color.color(Math.min(1.0, 2 * vv), 1.0 - (2.0 * Math.abs(vv - 0.5)), Math.min(1.0, 2 * (1 - vv)));
+        ColourMap JISA       = vv -> 255 << 24 | ((int) r.value(vv)) << 16 | ((int) g.value(vv)) << 8 | ((int) b.value(vv));
+        ColourMap MATPLOTLIB = vv -> Util.HSBtoARGB(288 - 234 * vv, 0.8, 0.3 + 0.68 * vv);
+        ColourMap GREYSCALE  = vv -> (255 << 24) | ((int) (vv * 255) << 16) | ((int) (vv * 255) << 8) | ((int) (vv * 255));
+        ColourMap GAYSCALE   = vv -> Util.HSBtoARGB(300 * vv, 1.0, 1.0);
+        ColourMap RED        = vv -> Util.HSBtoARGB(0, 1.0, vv);
+        ColourMap GREEN      = vv -> Util.HSBtoARGB(120, 1.0, vv);
+        ColourMap BLUE       = vv -> Util.HSBtoARGB(240, 1.0, vv);
+        ColourMap FERAL      = vv -> 255 << 24 | (int) (255 * Math.min(1.0, 2 * vv)) << 16 | (int) (255 * (1.0 - (2.0 * Math.abs(vv - 0.5)))) << 8 | (int) (255 * Math.min(1.0, 2 * (1 - vv)));
 
-        Color value(double value);
+        int value(double value);
 
     }
 

@@ -4,19 +4,24 @@ import jisa.control.Synch;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.ParameterList;
-import jisa.devices.features.LineFilter;
-import jisa.devices.features.LineFilter2X;
 import jisa.enums.AMode;
 import jisa.enums.TType;
 import jisa.enums.Terminals;
 
 import java.io.IOException;
-import java.util.List;
 
 public interface VMeter extends Meter, Instrument {
 
     static String getDescription() {
         return "Voltmeter";
+    }
+
+    static void addParameters(VMeter inst, Class target, ParameterList params) {
+
+        params.addChoice("Terminals", inst::getTerminals, Terminals.REAR, inst::setTerminals, Terminals.values());
+        params.addAuto("Voltage Range [V]", true, 100.0, q -> inst.useAutoVoltageRange(), inst::setVoltageRange);
+        params.addValue("Integration Time [s]", inst::getIntegrationTime, 20e-3, inst::setIntegrationTime);
+
     }
 
     @Override
@@ -227,27 +232,6 @@ public interface VMeter extends Meter, Instrument {
 
     default void waitForStableVoltage(double pctMargin, int duration) throws IOException, DeviceException, InterruptedException {
         Synch.waitForParamStable(this::getVoltage, pctMargin, (int) (getIntegrationTime() * 4000.0), duration);
-    }
-
-    default List<Parameter<?>> getBaseParameters(Class<?> target) {
-
-
-        ParameterList params = new ParameterList();
-
-        params.addChoice("Terminals", Terminals.FRONT, this::setTerminals, Terminals.values());
-        params.addAuto("Voltage Range [V]", true, 100.0, q -> useAutoVoltageRange(), this::setVoltageRange);
-        params.addValue("Integration Time [s]", 20e-3, this::setIntegrationTime);
-
-        if (this instanceof LineFilter) {
-            params.addValue("Line Filter", true, ((LineFilter) this)::setLineFilterEnabled);
-        }
-
-        if (this instanceof LineFilter2X) {
-            params.addValue("2x Line Filter", true, ((LineFilter2X) this)::set2xLineFilterEnabled);
-        }
-
-        return params;
-
     }
 
 }

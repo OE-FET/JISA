@@ -1,6 +1,6 @@
 package jisa.experiment.queue;
 
-import jisa.experiment.Measurement;
+import jisa.experiment.MeasurementOld;
 import jisa.gui.queue.SimpleActionDisplay;
 import jisa.results.ResultTable;
 
@@ -11,19 +11,19 @@ import java.util.List;
 
 public class MeasurementAction extends AbstractAction<ResultTable> {
 
-    private final Measurement   measurement;
-    private       boolean       skip          = false;
+    private final MeasurementOld measurement;
+    private       boolean        skip          = false;
     private       int           retryCount    = 1;
     private       Exception     lastException = null;
     private       ResultTable   data          = null;
     private       NameGenerator generator     = (parameters, label) -> null;
 
-    public MeasurementAction(String name, Measurement measurement) {
+    public MeasurementAction(String name, MeasurementOld measurement) {
         this.measurement = measurement;
         setName(name);
     }
 
-    public MeasurementAction(Measurement measurement) {
+    public MeasurementAction(MeasurementOld measurement) {
         this(String.format("%s (%s)", measurement.getName(), measurement.getLabel()), measurement);
     }
 
@@ -118,7 +118,7 @@ public class MeasurementAction extends AbstractAction<ResultTable> {
 
     }
 
-    public Measurement getMeasurement() {
+    public MeasurementOld getMeasurement() {
         return measurement;
     }
 

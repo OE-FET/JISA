@@ -8,6 +8,13 @@ import java.io.IOException;
 
 public interface FSource extends Instrument {
 
+    static void addParameters(FSource inst, Class target, ParameterList parameters) {
+
+        parameters.addValue("Frequency [Hz]", inst::getFrequency, 100.0, inst::setFrequency);
+        parameters.addValue("RMS Amplitude [V or A]", inst::getAmplitude, 1.0, inst::setAmplitude);
+
+    }
+
     /**
      * Sets the frequency to output from this frequency source.
      *
@@ -68,17 +75,5 @@ public interface FSource extends Instrument {
      * @throws IOException     Upon communications error
      */
     double getPhase() throws IOException, DeviceException;
-
-
-    default ParameterList getBaseParameters(Class<?> target) {
-
-        ParameterList parameters = new ParameterList();
-
-        parameters.addValue("Frequency [Hz]", this::getFrequency, 100.0, this::setFrequency);
-        parameters.addValue("RMS Amplitude [V or A]", this::getAmplitude, 1.0, this::setAmplitude);
-
-        return parameters;
-
-    }
 
 }

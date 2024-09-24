@@ -130,29 +130,6 @@ public interface Series {
         return split(splitBy, "%s");
     }
 
-    /**
-     * Cause the series to automatically split into a set of sub-series based on a value in each result.
-     *
-     * @param column  Column to use for the splitting
-     * @param pattern String formatting pattern for the split value to use as the name of each series
-     *
-     * @return Self-reference
-     */
-    default Series split(Column<?> column, String pattern) {
-        return split(r -> r.get(column), pattern);
-    }
-
-    /**
-     * Cause the series to automatically split into a set of sub-series based on a value in each result.
-     *
-     * @param column Column to use for the splitting
-     *
-     * @return Self-reference
-     */
-    default Series split(Column<?> column) {
-        return split(column, column.hasUnits() ? "%s " + column.getUnits() : "%s");
-    }
-
     // == Watch All ====================================================================================================
 
     /**

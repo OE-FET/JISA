@@ -5,31 +5,58 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
-public class Mono32BitFrame implements Frame.IntFrame {
+public class Mono32BitFrame implements Frame.IntFrame<Mono32BitFrame> {
 
-    protected final int[]     data;
-    private final   int       width;
-    private final   int       height;
+    protected final int[] data;
+    protected final int   width;
+    protected final int   height;
+
+    protected long timestamp;
+
+    public Mono32BitFrame(int[] data, int width, int height, long timestamp) {
+
+        this.data      = data;
+        this.width     = width;
+        this.height    = height;
+        this.timestamp = timestamp;
+
+    }
 
     public Mono32BitFrame(int[] data, int width, int height) {
+        this(data, width, height, System.nanoTime());
+    }
 
-        this.data   = data;
-        this.width  = width;
-        this.height = height;
+    public Mono32BitFrame(Integer[] data, int width, int height, long timestamp) {
+
+        this.data      = Arrays.stream(data).mapToInt(Integer::intValue).toArray();
+        this.width     = width;
+        this.height    = height;
+        this.timestamp = timestamp;
 
     }
 
     public Mono32BitFrame(Integer[] data, int width, int height) {
-
-        this.data   = Arrays.stream(data).mapToInt(Integer::intValue).toArray();
-        this.width  = width;
-        this.height = height;
-
+        this(data, width, height, System.nanoTime());
     }
 
     @Override
     public Mono32BitFrame copy() {
-        return new Mono32BitFrame(data.clone(), width, height);
+        return new Mono32BitFrame(data.clone(), width, height, timestamp);
+    }
+
+    @Override
+    public void copyFrom(Mono32BitFrame otherFrame) {
+        System.arraycopy(otherFrame.data, 0, data, 0, data.length);
+    }
+
+    @Override
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    @Override
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 
     @Override
@@ -97,7 +124,7 @@ public class Mono32BitFrame implements Frame.IntFrame {
             }
         }
 
-        return new Mono32BitFrame(subData, width, height);
+        return new Mono32BitFrame(subData, width, height, timestamp);
 
     }
 

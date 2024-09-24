@@ -1,9 +1,7 @@
 package jisa.devices.spectrometer;
 
 import jisa.devices.Instrument;
-
-import java.util.LinkedList;
-import java.util.List;
+import jisa.devices.ParameterList;
 
 public interface OldSpectrometer extends Instrument {
 
@@ -15,14 +13,9 @@ public interface OldSpectrometer extends Instrument {
 
     void setAccessory(boolean using_accessory);
 
-    @Override
-    default List<Parameter<?>> getBaseParameters(Class<?> target) {
+    static void addParameters(OldSpectrometer inst, Class target, ParameterList parameters) {
 
-        List<Parameter<?>> parameters = new LinkedList<>();
-
-        parameters.add(new Parameter<>("Using TM/RF Accessory?", false, this::setAccessory));
-
-        return parameters;
+        parameters.add(new Parameter<>("Using TM/RF Accessory?", false, inst::setAccessory));
 
     }
 

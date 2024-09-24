@@ -1,9 +1,13 @@
 package jisa;
 
 import jisa.addresses.Address;
+import jisa.devices.camera.Camera;
+import jisa.devices.camera.FakeCamera;
+import jisa.devices.camera.frame.Mono16BitFrame;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
+import jisa.gui.HeatMap;
 
 import java.time.LocalDateTime;
 
@@ -14,9 +18,27 @@ public class Main {
     private final static int CHOICE_HELP = 2;
     private final static int CHOICE_EXIT = 3;
 
+    public static Camera<Mono16BitFrame> camera;
+
     public static void main(String[] args) {
 
         try {
+
+            camera = new FakeCamera();
+            camera.setFrameWidth(500);
+            camera.setFrameHeight(500);
+
+            HeatMap image = new HeatMap("Image");
+            image.setColourMap(HeatMap.ColourMap.GREYSCALE);
+
+            camera.setIntegrationTime(50e-3);
+
+            image.addToolbarButton("Start", camera::startAcquisition);
+            image.addToolbarButton("Stop", camera::stopAcquisition);
+
+            camera.addFrameListener(frame -> image.draw(frame.image()));
+
+            image.showAsAlert();
 
             Doc doc = new Doc("Help");
 
@@ -42,7 +64,7 @@ public class Main {
                 // Ask the user if they want to perform a test
                 int result = GUI.choiceWindow(
                     "JISA",
-                    "JISA Library - William Wood - 2018-" + LocalDateTime.now().getYear(),
+                    String.format("JISA Library - William Wood - 2018-%d", LocalDateTime.now().getYear()),
                     "What would you like to do?",
                     "Scan for Instruments",
                     "Enter Address Manually",

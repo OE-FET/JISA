@@ -5,14 +5,13 @@ import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.MultiInstrument;
 import jisa.devices.spectrometer.spectrum.Spectrum;
+import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.Semaphore;
 
 public interface Spectrometer<C extends Spectrometer.Channel> extends Instrument, MultiInstrument {
 
@@ -64,6 +63,10 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Instrument
      * @throws DeviceException Upon device compatibility error
      */
     double getIntegrationTime() throws IOException, DeviceException;
+
+    double getMaxIntegrationTime() throws IOException, DeviceException;
+
+    double getMinIntegrationTime() throws IOException, DeviceException;
 
     /**
      * Sets the integration time, in seconds, for the spectrometer to use.
@@ -148,46 +151,29 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Instrument
          */
         void stopAcquisition() throws IOException, DeviceException;
 
+        boolean isAcquiring() throws IOException, DeviceException;
+
     }
 
     interface Listener {
         void newSpectrum(Spectrum spectrum);
     }
 
-    class SpectrumQueue extends LinkedBlockingQueue<Spectrum> {
+    class SpectrumListener {
 
-        /**
-         * Takes the spectrum at the head of the queue and returns it, removing it from the queue. If no spectrum is available, this method
-         * will block (i.e., wait) until one is available to return. If no spectrum ever becomes available, this method will never return.
-         *
-         * @return The next frame in the queue.
-         *
-         * @throws InterruptedException Upon the thread being interrupted while waiting for a frame.
-         */
-        public Spectrum takeSpectrum() throws InterruptedException {
-            return take();
+        private final Listener  listener;
+        private final Semaphore semaphore = new Semaphore(1);
+
+        public SpectrumListener(Listener listener) {
+            this.listener = listener;
         }
 
-        /**
-         * Takes the spectrum at the head of the queue and returns it, removing it from the queue. If no spectrum is available, this method
-         * will block (i.e., wait) until one is available to return, or the specified timeout expires.
-         *
-         * @param timeout Max time to wait, in milliseconds.
-         *
-         * @return The next frame in the queue.
-         *
-         * @throws InterruptedException Upon the thread being interrupted while waiting.
-         * @throws TimeoutException     Upon timing out before a frame becomes available.
-         */
-        public Spectrum takeSpectrum(long timeout) throws InterruptedException, TimeoutException {
+        public void newSpectrum(Spectrum spectrum) {
 
-            Spectrum frame = poll(timeout, TimeUnit.MILLISECONDS);
-
-            if (frame == null) {
-                throw new TimeoutException();
+            if (semaphore.tryAcquire()) {
+                listener.newSpectrum(spectrum);
+                semaphore.release();
             }
-
-            return frame;
 
         }
 

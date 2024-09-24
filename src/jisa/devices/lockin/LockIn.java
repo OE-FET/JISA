@@ -17,23 +17,14 @@ public interface LockIn extends Instrument, FMeter {
         return "Lock-In Amplifier";
     }
 
-    @Override
-    default ParameterList getBaseParameters(Class<?> target) {
+    static void addParameters(LockIn inst, Class target, ParameterList parameters) {
 
-        ParameterList params = new ParameterList();
-
-        try {
-
-            params.addValue("Differential Input", isDifferentialInputEnabled(), this::setDifferentialInputEnabled);
-            params.addValue("Range [V]", getVoltageRange(), this::setVoltageRange);
-            params.addValue("Integration Time [s]", getIntegrationTime(), this::setIntegrationTime);
-            params.addValue("AC Input Coupling", isCouplingAC(), this::setCouplingAC);
-            params.addValue("Ground Input Shielding", isShieldGrounded(), this::setShieldGrounded);
-            params.addValue("Low-Pass Filter Roll-Off [dB/oct]", getLowPassRollOff(), this::setLowPassRollOff);
-
-        } catch (Exception ignored) { }
-
-        return params;
+        parameters.addValue("Differential Input", inst::isDifferentialInputEnabled, false, inst::setDifferentialInputEnabled);
+        parameters.addValue("Range [V]", inst::getVoltageRange, 1.0, inst::setVoltageRange);
+        parameters.addValue("Integration Time [s]", inst::getIntegrationTime, 1e-3, inst::setIntegrationTime);
+        parameters.addValue("AC Input Coupling", inst::isCouplingAC, true, inst::setCouplingAC);
+        parameters.addValue("Ground Input Shielding", inst::isShieldGrounded, true, inst::setShieldGrounded);
+        parameters.addValue("Low-Pass Filter Roll-Off [dB/oct]", inst::getLowPassRollOff, 24.0, inst::setLowPassRollOff);
 
     }
 

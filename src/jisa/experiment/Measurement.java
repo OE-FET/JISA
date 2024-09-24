@@ -1,528 +1,563 @@
 package jisa.experiment;
 
-import jisa.control.ConfigBlock;
 import jisa.devices.Configuration;
-import jisa.devices.Instrument;
-import jisa.experiment.queue.Action;
-import jisa.gui.Element;
-import jisa.gui.form.Field;
-import jisa.gui.form.Form;
-import jisa.maths.Range;
-import jisa.results.Column;
-import jisa.results.ResultList;
-import jisa.results.ResultStream;
-import jisa.results.ResultTable;
+import jisa.devices.DeviceException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * Abstract class for implementing measurement routines. Allows for procedures that can be easily and safely
- * interrupted.
+ * Abstract class for encapsulating measurement routines. Allows one to define user-configurable parameters and
+ * instruments.
+ *
+ * @param <R> The class of the object used to store the data output of the measurement.
  */
-public abstract class Measurement {
+public abstract class Measurement<R> {
 
-    private final List<Parameter<?>>     parameters  = new ArrayList<>();
-    private final List<Configuration<?>> instruments = new ArrayList<>();
-    private       String                 label       = "";
-    private       boolean                running     = false;
-    private       boolean                stopped     = false;
-    private       ResultTable            results     = null;
-    private       Thread                 runThread   = Thread.currentThread();
+    private final List<InstrumentValue> instruments;
+    private final List<ParamValue>      parameters;
+    private final List<Listener>        listeners = new LinkedList<>();
+    private final String                name;
 
-    public <T extends Instrument> Configuration<T> addInstrument(Configuration<T> configuration) {
-        instruments.add(configuration);
-        return configuration;
+    private String  label;
+    private boolean running    = false;
+    private boolean interrupt  = false;
+    private Thread  runThread  = null;
+    private Status  status     = Status.STOPPED;
+    private R       cachedData = null;
+
+    protected Measurement(String name, String label) {
+
+        this.name   = name;
+        this.label  = label;
+
+        parameters  = Arrays.stream(getClass().getDeclaredFields())
+                            .filter(f -> f.isAnnotationPresent(Parameter.class))
+                            .filter(f -> f.canAccess(this))
+                            .map(f -> {
+                                Parameter annotation = f.getAnnotation(Parameter.class);
+                                return new ParamValue(annotation.section(), annotation.name(), f.getType(), annotation.type(), () -> f.get(this), v -> f.set(this, v), annotation.options());
+                            })
+                            .collect(Collectors.toList());
+
+        instruments = Arrays.stream(getClass().getDeclaredFields())
+                            .filter(f -> f.isAnnotationPresent(Instrument.class))
+                            .filter(f -> jisa.devices.Instrument.class.isAssignableFrom(f.getType()))
+                            .filter(f -> f.canAccess(this))
+                            .map(f -> {
+                                Instrument annotation = f.getAnnotation(Instrument.class);
+                                return new InstrumentValue(annotation.name(), f.getType(), () -> f.get(this), v -> f.set(this, v), annotation.required());
+                            })
+                            .collect(Collectors.toList());
+
     }
 
-    public <T extends Instrument> Configuration<T> addInstrument(String name, Class<T> type) {
-        return addInstrument(new Configuration<>(name, type));
+    public String getName() {
+        return name;
     }
 
-    /**
-     * Returns the name of this measurement.
-     *
-     * @return Name of the measurement
-     */
-    public abstract String getName();
-
-    /**
-     * Returns a user-given label for this measurement instance.
-     *
-     * @return Label
-     */
     public String getLabel() {
         return label;
     }
 
-    /**
-     * Sets the user-given label for this measurement instance.
-     *
-     * @param value Label to set
-     */
-    public void setLabel(String value) {
-        label = value;
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
+    public synchronized Status getStatus() {
+        return status;
+    }
+
+    protected void setStatus(Status status) {
+
+        synchronized (name) {
+
+            this.status = status;
+
+            for (Listener listener : listeners) {
+                listener.update(status);
+            }
+
+        }
+
+    }
+
+    public synchronized Listener addListener(Listener listener) {
+        listeners.add(listener);
+        return listener;
+    }
+
+    public synchronized void removeListener(Listener listener) {
+        listeners.remove(listener);
     }
 
     /**
-     * This method should perform the measurement itself and throw and exception if either something is wrong (ie
-     * missing instruments) or if something goes wrong during the measurement.
+     * Creates a new instance of whatever data structure this measurement is to use. This will be passed to all the
+     * measurement methods.
+     * <p>
+     * For instance, one might want this method to return a new ResultTable.
      *
-     * @param results The ResultTable to be used for results storage.
-     *
-     * @throws Exception Upon invalid configuration or measurement error
+     * @return New measurement data structure
      */
-    protected abstract void run(ResultTable results) throws Exception;
+    protected abstract R createData();
 
-    /**
-     * This method is always called whenever the measurement is ended prematurely by stop() (or other interrupt).
-     * This method in most cases can be left empty, as it would only really serve a purpose for logging an interrupted measurement.
-     *
-     * @throws Exception This method can throw exceptions
-     */
-    protected abstract void onInterrupt() throws Exception;
+    protected R getCachedData() {
 
-    /**
-     * This method is always called when a measurement ends in error (but not interrupt).
-     *
-     * @throws Exception This method can throw exceptions
-     */
-    protected abstract void onError() throws Exception;
+        R toReturn;
 
-    /**
-     * This method is always called whenever a measurement has ended, regardless of if it was successful, ended in error
-     * or was interrupted. This method should therefore contain any clean-up code that should be run at the end of a
-     * measurement (for instance turning off any instruments etc).
-     *
-     * @throws Exception This method can throw exceptions
-     */
-    protected abstract void onFinish() throws Exception;
+        if (cachedData == null) {
+            toReturn = createData();
+        } else {
+            toReturn   = cachedData;
+            cachedData = null;
+        }
 
-    /**
-     * This method should return an array of columns to be used when generating a new ResultTable for results storage.
-     *
-     * @return Array of columns
-     */
-    public abstract Column[] getColumns();
+        return toReturn;
 
-    /**
-     * Generates a new ResultTable for storing results, in memory.
-     *
-     * @return Results storage
-     */
-    public ResultTable newResults() {
-        results = new ResultList(getColumns());
-        return results;
     }
 
     /**
-     * Generates a new ResultTable for storing results, directly to a file.
+     * This method is called before the measurement is run.
      *
-     * @param path Path to file to write to
+     * @param data Data structure to use for this run of the measurement.
      *
-     * @return Results storage
-     *
-     * @throws IOException Upon error opening file for writing
+     * @throws Exception This method can throw exceptions, which will be caught by the measurement structure.
      */
-    public ResultTable newResults(String path) throws IOException {
-        results = new ResultStream(path, getColumns());
-        return results;
-    }
+    protected abstract void before(R data) throws Exception;
 
     /**
-     * Returns the currently used ResultTable for results storage
+     * This method should contain the main logic of the measurement.
      *
-     * @return Results storage being used
+     * @param data The data structure to use for this run of the measurement.
+     *
+     * @throws Exception This method can throw exceptions, which will be caught by the measurement structure.
      */
-    public ResultTable getResults() {
-        return results;
-    }
+    protected abstract void run(R data) throws Exception;
 
     /**
-     * Starts the measurement. Will run until completion if no errors are encountered. Will throw an InterruptedException
-     * if the measurement is stopped by calling stop(). Can throw any other type of exception if there is a measurement
-     * or instrumentation error.
+     * This method is always called after a measurement has finished --- regardless of how it finished. That is, it will
+     * be called if it succeeded, ended in error, or was interrupted.
      *
-     * @throws Exception Upon measurement error or interruption.
+     * @param data The data structure used for the measurement.
      */
-    public void start() throws Exception {
+    protected abstract void after(R data) throws Exception;
 
-        runThread = Thread.currentThread();
-        running   = true;
-        stopped   = false;
+    /**
+     * This method is called if the run() method is interrupted. This will run before after() is called.
+     *
+     * @param data The data structure used for the measurement.
+     */
+    protected abstract void interrupted(R data);
+
+    /**
+     * This method is called if the run() method throws an exception (other than InterruptedException). This is will
+     * before after() is called.
+     *
+     * @param data      The data structure used for the measurement.
+     * @param exception The exception that was thrown.
+     */
+    protected abstract void error(R data, List<Throwable> exception);
+
+    public List<InstrumentValue> getInstruments() {
+        return List.copyOf(instruments);
+    }
+
+    public List<ParamValue> getParameters() {
+        return List.copyOf(parameters);
+    }
+
+    protected void thread(R data) {
+
+        boolean interrupted = false;
+
+        List<Throwable> exceptions = new LinkedList<>();
+
+        for (InstrumentValue instrument : instruments) {
+
+            try {
+
+                instrument.set(instrument.getConfiguration().getInstrument());
+
+                if (instrument.isRequired() && instrument.get() == null) {
+                    throw new MissingInstrumentException("Required instrument \"" + instrument.name + "\" is not configured.");
+                }
+
+            } catch (Throwable e) {
+                exceptions.add(e);
+            }
+
+        }
+
+        if (!exceptions.isEmpty()) {
+            setStatus(Status.ERROR);
+            error(data, exceptions);
+            running   = false;
+            runThread = null;
+            return;
+        }
 
         try {
 
-            run(getResults());
+            setStatus(Status.PRE_RUN);
+            before(data);
+            setStatus(Status.RUNNING);
+            run(data);
 
         } catch (InterruptedException e) {
 
-            stopped = true;
+            setStatus(Status.POST_RUN);
+            interrupted = true;
+            interrupted(data);
 
-            try {
-                onInterrupt();
-            } catch (Exception ee) {
-                ee.printStackTrace();
-            }
+        } catch (Throwable e) {
 
-            throw e;
-
-        } catch (Exception e) {
-
-            try {
-                onError();
-            } catch (Exception ee) {
-                ee.printStackTrace();
-            }
-
-            throw e;
+            setStatus(Status.POST_RUN);
+            exceptions.add(e);
 
         } finally {
 
-            running = false;
-
             try {
-                onFinish();
-            } catch (Exception ee) {
-                ee.printStackTrace();
+                setStatus(Status.POST_RUN);
+                after(data);
+            } catch (Throwable e) {
+                exceptions.add(e);
             }
+
+            if (interrupted) {
+                setStatus(Status.INTERRUPTED);
+            } else if (!exceptions.isEmpty()) {
+                setStatus(Status.ERROR);
+                error(data, exceptions);
+            } else {
+                setStatus(Status.COMPLETE);
+            }
+
+            runThread = null;
+            running   = false;
 
         }
 
     }
 
-    public List<Parameter<?>> getParameters() {
-        return new ArrayList<>(parameters);
+    public synchronized R getData() {
+
+        if (cachedData == null) {
+            cachedData = createData();
+        }
+
+        return cachedData;
+
     }
 
-    public List<Configuration<? extends Instrument>> getInstruments() {
-        return new ArrayList<>(instruments);
+    public synchronized R start() {
+
+        if (running || runThread != null) {
+            throw new IllegalStateException("Measurement already started.");
+        }
+
+        running   = true;
+        interrupt = false;
+
+        R data = getCachedData();
+
+        runThread = new Thread(() -> thread(data));
+        runThread.start();
+
+        return data;
+
     }
 
-    /**
-     * Returns whether this measurement is currently running.
-     *
-     * @return Is it running?
-     */
-    public boolean isRunning() {
+    public Result startAndWait() throws InterruptedException {
+        start();
+        return awaitResult();
+    }
+
+    public synchronized void stop() {
+
+        if (!running || interrupt) {
+            throw new IllegalStateException("Measurement already stopped.");
+        }
+
+        interrupt = true;
+        runThread.interrupt();
+
+    }
+
+    public synchronized boolean isRunning() {
         return running;
     }
 
-    /**
-     * Returns whether the last execution of this measurement was interrupted by stop().
-     *
-     * @return Was it stopped?
-     */
-    public boolean wasStopped() {
-        return stopped;
-    }
+    public synchronized Result awaitResult() throws InterruptedException {
 
-    /**
-     * Stops the current execution of this measurement (if it is running at all).
-     */
-    public void stop() {
-        if (isRunning()) {
-            stopped = true;
-            runThread.interrupt();
+        if (running && runThread != null) {
+            runThread.join();
         }
+
+        switch (status) {
+
+            case ERROR:
+                return Result.ERROR;
+
+            case INTERRUPTED:
+                return Result.INTERRUPTED;
+
+            case COMPLETE:
+                return Result.SUCCESS;
+
+            default:
+                return Result.DID_NOT_RUN;
+
+        }
+
     }
 
     /**
-     * Makes the current thread wait for the given number of milliseconds with proper checks for any stop() calls.
+     * Call this to cause a delay in your routine. Includes checks for interrupts making it also double
+     * as a safe place to break your code should stop() be called.
      *
-     * @param mSec Time to wait for, in milliseconds
+     * @param timeout The amount of time to sleep for, in milliseconds.
      *
-     * @throws InterruptedException If stop() is called (or other interrupt occurs) during sleep
+     * @throws InterruptedException If interrupted.
      */
-    public void sleep(int mSec) throws InterruptedException {
+    public void sleep(long timeout) throws InterruptedException {
 
-        if (stopped) {
+        if (interrupt) {
             throw new InterruptedException();
-        } else {
-            Thread.sleep(mSec);
         }
 
-    }
+        Thread.sleep(timeout);
 
-    /**
-     * Checks if the stop() method has been called. To be called at safe points to stop a measurement during run().
-     * Will throw an InterruptedException if stop() has indeed been called, causing run() to end early as it should.
-     *
-     * @throws InterruptedException If stop() has indeed been called.
-     */
-    protected void checkPoint() throws InterruptedException {
-
-        if (stopped) {
+        if (interrupt) {
             throw new InterruptedException();
         }
 
     }
 
-    public List<Action> getActions() {
-        return Collections.emptyList();
+    /**
+     * Call this to cause a delay in your routine. Includes checks for interrupts making it also double
+     * as a safe place to break your code should stop() be called.
+     *
+     * @param timeout The amount of time to sleep for, in milliseconds.
+     *
+     * @throws InterruptedException If interrupted.
+     */
+    public void sleep(int timeout) throws InterruptedException {
+        sleep((long) timeout);
     }
 
-    public abstract class Parameter<T> {
+    /**
+     * Defines a point in your routine at which it is safe to break if stop() is called. If neither this nor sleep() are
+     * called anywhere in run(), the calling stop() may have no effect.
+     *
+     * @throws InterruptedException If stop() has been called.
+     */
+    public void checkPoint() throws InterruptedException {
 
-        private final     String   section;
-        private final     String   name;
-        private final     String   units;
-        private             T      value;
-        private transient Field<T> field = null;
-
-        public Parameter(String section, String name, String units, T defaultValue) {
-
-            this.section = section;
-            this.name    = name;
-            this.units   = units;
-            this.value   = defaultValue;
-
-            parameters.add(this);
-
+        if (interrupt) {
+            throw new InterruptedException();
         }
 
-        public String getSection() {
-            return section;
+    }
+
+    public static class ParamValue<T> {
+
+        private final String    section;
+        private final String    name;
+        private final Class<T>  dataType;
+        private final Type      type;
+        private final Getter<T> getter;
+        private final Setter<T> setter;
+        private final String[]  options;
+
+        public ParamValue(String section, String name, Class<T> dataType, Type type, Getter<T> getter, Setter<T> setter, String... options) {
+            this.section  = section;
+            this.name     = name;
+            this.dataType = dataType;
+            this.type     = type;
+            this.getter   = getter;
+            this.setter   = setter;
+            this.options  = options;
         }
 
         public String getName() {
             return name;
         }
 
-        public String getUnits() {
-            return units;
+        public String getSection() {
+            return section;
         }
 
-        public String getTitle() {
-            return units == null ? getName() : String.format("%s [%s]", name, units);
+        public Class<T> getDataType() {
+            return dataType;
         }
 
-        public T getValue() {
-            return value;
+        public Type getType() {
+            return type;
         }
 
-        public void setValue(T value) {
-
-            updateValue(value);
-
-            if (field != null) {
-                field.set(value);
+        public T get() {
+            try {
+                return getter.get();
+            } catch (IllegalAccessException ignored) {
+                return null;
             }
-
         }
 
-        protected void updateValue(T value) {
-            this.value = value;
+        public void set(T value) {
+            try {
+                setter.set(value);
+            } catch (IllegalAccessException ignored) {
+            }
         }
 
-        protected abstract Field<T> makeField(Form fields);
-
-        public Element getElement() {
-            return null;
+        public boolean isChoice() {
+            return options.length > 0;
         }
 
-        public Field<T> createField(Form fields) {
-            field = makeField(fields);
-            return field;
+        public List<String> getOptions() {
+            return List.of(options);
         }
 
-        public void update() {
-            updateValue(field.get());
+        public interface Getter<T> {
+            T get() throws IllegalAccessException;
         }
 
-    }
-
-    public class CustomParameter<T> extends Parameter<T> {
-
-        private final Element   element;
-        private final Getter<T> getter;
-        private final Setter<T> setter;
-        private final Reader<T> reader;
-        private final Writer<T> writer;
-
-        public CustomParameter(String name, Element element, Getter<T> getter, Setter<T> setter, Reader<T> reader, Writer<T> writer) {
-            super("", name, null, getter.get());
-            this.element = element;
-            this.getter  = getter;
-            this.setter  = setter;
-            this.reader  = reader;
-            this.writer  = writer;
-        }
-
-        public CustomParameter(String name, Element element, Getter<T> getter, Setter<T> setter) {
-            this(name, element, getter, setter, b -> (T) b.value(name).getOrDefault(getter.get()), (b,v) -> b.value(name).set(v));
-        }
-
-        public void setValue(T value) {
-            updateValue(value);
-            setter.set(value);
-        }
-
-        public void update() {
-            updateValue(getter.get());
-        }
-
-        @Override
-        protected Field<T> makeField(Form fields) {
-            return null;
-        }
-
-        public Element getElement() {
-            return element;
-        }
-
-        public void writeToConfig(ConfigBlock block) {
-            writer.write(block, getValue());
-        }
-
-        public void loadFromConfig(ConfigBlock block) {
-            setValue(reader.read(block));
+        public interface Setter<T> {
+            void set(T value) throws IllegalAccessException;
         }
 
     }
 
-    public interface Getter<T> {
-        T get();
-    }
+    public static class InstrumentValue<I extends jisa.devices.Instrument> {
 
-    public interface Setter<T> {
-        void set(T value);
-    }
+        private final String           name;
+        private final Configuration<I> configuration;
+        private final Getter<I>        getter;
+        private final Setter<I>        setter;
+        private final boolean          isRequired;
 
-    public interface Reader<T> {
-        T read(ConfigBlock block);
-    }
-
-    public interface Writer<T> {
-        void write(ConfigBlock block, T value);
-    }
-
-
-    public class DoubleParameter extends Parameter<Double> {
-
-        public DoubleParameter(String section, String name, String units, Double defaultValue) {
-            super(section, name, units, defaultValue);
+        public InstrumentValue(String name, Class<I> type, Getter<I> getter, Setter<I> setter, boolean isRequired) {
+            this.name          = name;
+            this.getter        = getter;
+            this.setter        = setter;
+            this.isRequired    = isRequired;
+            this.configuration = new Configuration<>(name, type);
         }
 
-        @Override
-        protected Field<Double> makeField(Form fields) {
-            return fields.addDoubleField(getTitle(), getValue());
+        public String getName() {
+            return name;
         }
 
-    }
-
-    public class DecimalParameter extends Parameter<Double> {
-
-        public DecimalParameter(String section, String name, String units, Double defaultValue) {
-            super(section, name, units, defaultValue);
+        public I get() {
+            try {
+                return getter.get();
+            } catch (IllegalAccessException ignored) {
+                return null;
+            }
         }
 
-        @Override
-        protected Field<Double> makeField(Form fields) {
-            return fields.addDecimalField(getTitle(), getValue());
+        public void set(I value) {
+            try {
+                setter.set(value);
+            } catch (IllegalAccessException ignored) {
+            }
         }
 
-    }
-
-    public class IntegerParameter extends Parameter<Integer> {
-
-        public IntegerParameter(String section, String name, String units, Integer defaultValue) {
-            super(section, name, units, defaultValue);
+        public Configuration<I> getConfiguration() {
+            return configuration;
         }
 
-        @Override
-        protected Field<Integer> makeField(Form fields) {
-            return fields.addIntegerField(getTitle(), getValue());
+        public boolean isRequired() {
+            return isRequired;
+        }
+
+        public interface Getter<T> {
+            T get() throws IllegalAccessException;
+        }
+
+        public interface Setter<T> {
+            void set(T value) throws IllegalAccessException;
         }
 
     }
 
-    public class TimeParameter extends Parameter<Integer> {
+    public enum Status {
 
-        public TimeParameter(String section, String name, Integer defaultValue) {
-            super(section, name, null, defaultValue);
-        }
+        STOPPED,
+        PRE_RUN,
+        RUNNING,
+        POST_RUN,
+        INTERRUPTED,
+        ERROR,
+        COMPLETE
 
-        @Override
-        protected Field<Integer> makeField(Form fields) {
-            return fields.addTimeField(getTitle(), getValue());
+    }
+
+    public enum Result {
+        SUCCESS,
+        ERROR,
+        INTERRUPTED,
+        DID_NOT_RUN
+    }
+
+    public interface Listener {
+        void update(Status status);
+    }
+
+    public interface Getter<I, T> {
+        T get(I instrument) throws DeviceException, IOException;
+    }
+
+    public interface Runner<I> {
+        void run(I instrument) throws DeviceException, IOException;
+    }
+
+    public static class MissingInstrumentException extends Exception {
+
+
+        public MissingInstrumentException(String message) {
+            super(message);
         }
 
     }
 
-    public class BooleanParameter extends Parameter<Boolean> {
+    @Target(ElementType.FIELD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Parameter {
 
-        public BooleanParameter(String section, String name, String units, Boolean defaultValue) {
-            super(section, name, units, defaultValue);
-        }
+        String section() default "Basic";
 
-        @Override
-        protected Field<Boolean> makeField(Form fields) {
-            return fields.addCheckBox(getTitle(), getValue());
-        }
+        String name();
 
-    }
+        String[] options() default {};
 
-    public class StringParameter extends Parameter<String> {
-
-        public StringParameter(String section, String name, String units, String defaultValue) {
-            super(section, name, units, defaultValue);
-        }
-
-        @Override
-        protected Field<String> makeField(Form fields) {
-            return fields.addTextField(getTitle(), getValue());
-        }
+        Type type() default Type.AUTO;
 
     }
 
-    public class RangeParameter extends Parameter<Range<Double>> {
+    @Target(ElementType.FIELD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Instrument {
 
-        private double min   = 0.0;
-        private double max   = 10.0;
-        private int    count = 11;
-        private double step  = 1.0;
-        private int    order = 2;
+        String name();
 
-        public RangeParameter(String section, String name, String units, Range<Double> defaultRange, double min, double max, int count, double step, int order) {
-            super(section, name, units, defaultRange);
-            this.min   = min;
-            this.max   = max;
-            this.count = count;
-            this.step  = step;
-            this.order = order;
-        }
-
-        public RangeParameter(String section, String name, String units, Range<Double> defaultRange) {
-            super(section, name, units, defaultRange);
-        }
-
-        public RangeParameter(String section, String name, String units, double min, double max, int steps) {
-            this(section, name, units, Range.linear(min, max, steps), min, max, steps, (max - min) / (steps - 1), 2);
-        }
-
-        protected Field<Range<Double>> makeField(Form fields) {
-            return fields.addDoubleRange(getTitle(), getValue(), min, max, count, step, order);
-        }
+        boolean required() default true;
 
     }
 
-    public class ChoiceParameter extends Parameter<Integer> {
-
-        private final String[] options;
-
-        public ChoiceParameter(String section, String name, int defaultValue, String... options) {
-            super(section, name, null, defaultValue);
-            this.options = options;
-        }
-
-        protected Field<Integer> makeField(Form fields) {
-            return fields.addChoice(getTitle(), getValue(), options);
-        }
-
+    public enum Type {
+        AUTO,
+        TIME,
+        FILE_OPEN,
+        FILE_SAVE,
+        DIRECTORY
     }
 
 }
-

@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.stream.IntStream;
 
-public class RGBFrame implements Frame<RGB> {
+public class RGBFrame implements Frame<RGB, RGBFrame> {
 
     private final short[] red;
     private final short[] green;
@@ -12,13 +12,16 @@ public class RGBFrame implements Frame<RGB> {
     private final int     width;
     private final int     height;
 
-    public RGBFrame(RGB[] data, int width, int height) {
+    private long timestamp;
 
-        this.width  = width;
-        this.height = height;
-        this.red    = new short[data.length];
-        this.green  = new short[data.length];
-        this.blue   = new short[data.length];
+    public RGBFrame(RGB[] data, int width, int height, long timestamp) {
+
+        this.width     = width;
+        this.height    = height;
+        this.timestamp = timestamp;
+        this.red       = new short[data.length];
+        this.green     = new short[data.length];
+        this.blue      = new short[data.length];
 
         for (int i = 0; i < data.length; i++) {
 
@@ -30,19 +33,45 @@ public class RGBFrame implements Frame<RGB> {
 
     }
 
+    public RGBFrame(RGB[] data, int width, int height) {
+        this(data, width, height, System.nanoTime());
+    }
+
+    public RGBFrame(short[] red, short[] green, short[] blue, int width, int height, long timestamp) {
+
+        this.width     = width;
+        this.height    = height;
+        this.red       = red;
+        this.green     = green;
+        this.blue      = blue;
+        this.timestamp = timestamp;
+
+    }
+
     public RGBFrame(short[] red, short[] green, short[] blue, int width, int height) {
-
-        this.width  = width;
-        this.height = height;
-        this.red    = red;
-        this.green  = green;
-        this.blue   = blue;
-
+        this(red, green, blue, width, height, System.nanoTime());
     }
 
     @Override
     public RGBFrame copy() {
-        return new RGBFrame(red.clone(), green.clone(), blue.clone(), width, height);
+        return new RGBFrame(red.clone(), green.clone(), blue.clone(), width, height, timestamp);
+    }
+
+    @Override
+    public void copyFrom(RGBFrame otherFrame) {
+        System.arraycopy(otherFrame.red, 0, this.red, 0, this.red.length);
+        System.arraycopy(otherFrame.green, 0, this.green, 0, this.green.length);
+        System.arraycopy(otherFrame.blue, 0, this.blue, 0, this.blue.length);
+    }
+
+    @Override
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    @Override
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 
     @Override
@@ -135,7 +164,7 @@ public class RGBFrame implements Frame<RGB> {
 
         }
 
-        return new RGBFrame(subRed, subGreen, subBlue, width, height);
+        return new RGBFrame(subRed, subGreen, subBlue, width, height, timestamp);
 
     }
 

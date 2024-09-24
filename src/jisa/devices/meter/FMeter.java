@@ -1,15 +1,20 @@
 package jisa.devices.meter;
 
 import jisa.devices.DeviceException;
+import jisa.devices.ParameterList;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Standard interface for instrument that provide frequency measurements.
  */
 public interface FMeter extends Meter {
+
+    static void addParameters(FMeter inst, Class target, ParameterList parameters) {
+
+        parameters.addValue("Frequency Range [Hz]", inst::getFrequencyRange, 999.9, inst::setFrequencyRange);
+
+    }
 
     @Override
     default double getValue() throws IOException, DeviceException {
@@ -57,15 +62,5 @@ public interface FMeter extends Meter {
      * @throws DeviceException Upon device compatibility error
      */
     void setFrequencyRange(double range) throws IOException, DeviceException;
-
-    default List<Parameter<?>> getBaseParameters(Class<?> target) {
-
-        List<Parameter<?>> parameters = new LinkedList<>();
-
-        parameters.add(new Parameter<>("Frequency Range [Hz]", 999.9, this::setFrequencyRange));
-
-        return parameters;
-
-    }
 
 }

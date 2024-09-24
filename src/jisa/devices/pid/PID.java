@@ -76,7 +76,8 @@ public interface PID extends Instrument, MultiInstrument {
          */
         String getUnits();
 
-        default void close() throws IOException, DeviceException {}
+        default void close() throws IOException, DeviceException {
+        }
 
     }
 
@@ -136,7 +137,8 @@ public interface PID extends Instrument, MultiInstrument {
          */
         String getUnits();
 
-        default void close() throws IOException, DeviceException {}
+        default void close() throws IOException, DeviceException {
+        }
 
     }
 
@@ -144,6 +146,63 @@ public interface PID extends Instrument, MultiInstrument {
      * Represents a single (independent) PID loop within a PID controller
      */
     interface Loop extends Instrument {
+        
+        static void addParameters(Loop inst, Class target, ParameterList parameters) {
+
+            if (Loop.class.isAssignableFrom(target)) {
+
+                Input  input;
+                Output output;
+
+                try { input = inst.getInput(); } catch (Exception e) { input = inst.getAvailableInputs().get(0); }
+                try { output = inst.getOutput(); } catch (Exception e) { output = inst.getAvailableOutputs().get(0); }
+
+                parameters.addChoice("Input", input.getName(), v -> inst.getAvailableInputs().stream().filter(i -> i.getName().equals(v)).findFirst().orElse(null), inst.getAvailableInputs().stream().map(Input::getName).toArray(String[]::new));
+                parameters.addChoice("Output", output.getName(), v -> inst.getAvailableOutputs().stream().filter(i -> i.getName().equals(v)).findFirst().orElse(null), inst.getAvailableOutputs().stream().map(Output::getName).toArray(String[]::new));
+
+                ResultTable values = new ResultList("Min", "Max", "P", "I", "D", "Output Limit");
+
+                try {
+                    inst.getPIDZones().stream().map(pid -> new Object[]{pid.getMin(), pid.getMax(), pid.getP(), pid.getI(), pid.getD(), pid.getOutput()}).forEach(values::addData);
+                } catch (Throwable ignored) { }
+
+                if (values.size() == 0) {
+                    values.addData(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0);
+                }
+
+                parameters.addValue("PID Settings", values, q -> {
+
+                    if (q.size() == 0) {
+                        q.addData(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0);
+                    }
+
+                    if (q.size() < 2) {
+
+                        inst.setPIDZoningEnabled(false);
+                        inst.setPIDValues(q.get(0).get(2), q.get(0).get(3), q.get(0).get(4));
+                        inst.getOutput().setLimit(q.get(0).get(5));
+
+                    } else {
+
+                        PID.Zone[] zones = q
+                            .stream().map(r -> new PID.Zone(r.get(0), r.get(1), r.get(2), r.get(3), r.get(4), r.get(5)))
+                            .toArray(PID.Zone[]::new);
+
+                        inst.setPIDZones(zones);
+                        inst.setPIDZoningEnabled(true);
+
+                    }
+
+                });
+
+                parameters.add(new Parameter<>("Ramp Rate [per min]", new OptionalQuantity<>(false, 1.0), r -> {
+                    inst.setRampRate(r.getValue());
+                    inst.setRampEnabled(r.isUsed());
+                }));
+
+            }
+
+        }
 
         /**
          * Returns the name of this loop.
@@ -444,68 +503,7 @@ public interface PID extends Instrument, MultiInstrument {
          */
         boolean isPIDEnabled() throws IOException, DeviceException;
 
-        default void close() throws IOException, DeviceException {}
-
-        @Override
-        default List<Parameter<?>> getBaseParameters(Class<?> target) {
-
-            ParameterList parameters = new ParameterList();
-
-            if (Loop.class.isAssignableFrom(target)) {
-
-                Input  input;
-                Output output;
-
-                try {input = getInput();} catch (Exception e) {input = getAvailableInputs().get(0);}
-                try {output = getOutput();} catch (Exception e) {output = getAvailableOutputs().get(0);}
-
-                parameters.add(new Parameter<>("Input", input.getName(), v -> getAvailableInputs().stream().filter(i -> i.getName().equals(v)).findFirst().orElse(null), getAvailableInputs().stream().map(Input::getName).toArray(String[]::new)));
-                parameters.add(new Parameter<>("Output", output.getName(), v -> getAvailableOutputs().stream().filter(i -> i.getName().equals(v)).findFirst().orElse(null), getAvailableOutputs().stream().map(Output::getName).toArray(String[]::new)));
-
-                ResultTable values = new ResultList("Min", "Max", "P", "I", "D", "Output Limit");
-
-                try {
-                    getPIDZones().stream().map(pid -> new Object[] { pid.getMin(), pid.getMax(), pid.getP(), pid.getI(), pid.getD(), pid.getOutput() }).forEach(values::addData);
-                } catch (Throwable ignored) { }
-
-                if (values.size() == 0) {
-                    values.addData(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0);
-                }
-
-                parameters.addValue("PID Settings", values, q -> {
-
-                    if (q.size() == 0) {
-                        q.addData(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0);
-                    }
-
-                    if (q.size() < 2) {
-
-                        setPIDZoningEnabled(false);
-                        setPIDValues(q.get(0).get(2), q.get(0).get(3), q.get(0).get(4));
-                        getOutput().setLimit(q.get(0).get(5));
-
-                    } else {
-
-                        PID.Zone[] zones = q
-                            .stream().map(r -> new PID.Zone(r.get(0), r.get(1), r.get(2), r.get(3), r.get(4), r.get(5)))
-                            .toArray(PID.Zone[]::new);
-
-                        setPIDZones(zones);
-                        setPIDZoningEnabled(true);
-
-                    }
-
-                });
-
-                parameters.add(new Parameter<>("Ramp Rate [per min]", new OptionalQuantity<>(false, 1.0), r -> {
-                    setRampRate(r.getValue());
-                    setRampEnabled(r.isUsed());
-                }));
-
-            }
-
-            return parameters;
-
+        default void close() throws IOException, DeviceException {
         }
 
         default void waitForStableValue(double target, double pct, long msec) {

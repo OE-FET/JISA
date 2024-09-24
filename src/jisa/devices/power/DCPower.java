@@ -2,11 +2,10 @@ package jisa.devices.power;
 
 import jisa.control.Synch;
 import jisa.devices.DeviceException;
+import jisa.devices.ParameterList;
 import jisa.devices.source.IVSource;
 
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 
 public interface DCPower extends IVSource {
 
@@ -14,17 +13,10 @@ public interface DCPower extends IVSource {
         return "DC Power Supply";
     }
 
-    @Override
-    default List<Parameter<?>> getBaseParameters(Class<?> target) {
-
-        List<Parameter<?>> parameters = new LinkedList<>();
-
-        parameters.add(new Parameter<>("Voltage Limit [V]", 10.0, this::setVoltageLimit));
-        parameters.add(new Parameter<>("Set Voltage [V]", new OptionalQuantity<>(false, 10.0), o -> {if (o.isUsed()) setVoltage(o.getValue());}));
-        parameters.add(new Parameter<>("Set Current [A]", new OptionalQuantity<>(false, 10.0), o -> {if (o.isUsed()) setCurrent(o.getValue());}));
-
-        return parameters;
-
+    static void addParameters(DCPower inst, Class target, ParameterList parameters) {
+        parameters.addValue("Voltage Limit [V]", inst::getVoltageLimit, 10.0, inst::setVoltageLimit);
+        parameters.addOptional("Set Voltage [V]", false, 10.0, v -> {}, inst::setVoltage);
+        parameters.addOptional("Set Current [A]", false, 1.0, i -> {}, inst::setCurrent);
     }
 
     /**

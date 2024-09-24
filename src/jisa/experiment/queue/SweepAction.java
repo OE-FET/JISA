@@ -1,6 +1,6 @@
 package jisa.experiment.queue;
 
-import jisa.experiment.Measurement;
+import jisa.experiment.MeasurementOld;
 import jisa.gui.queue.SweepActionDisplay;
 
 import java.util.*;
@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
 public class SweepAction<T> extends AbstractAction<Void> {
 
     private       int                lastIndex;
-    private       Action             lastAction;
-    private       Measurement        sweepMeasure   = null;
-    private       boolean            isRunning      = false;
+    private Action         lastAction;
+    private MeasurementOld sweepMeasure = null;
+    private boolean        isRunning    = false;
     private       Formatter<T>       formatter      = String::valueOf;
     private       boolean            isStopped      = false;
     private final List<Listener<T>>  valueListeners = new LinkedList<>();
@@ -416,11 +416,11 @@ public class SweepAction<T> extends AbstractAction<Void> {
         return new SweepActionDisplay<T>(this);
     }
 
-    public void setMeasurement(Measurement measure) {
+    public void setMeasurement(MeasurementOld measure) {
         sweepMeasure = measure;
     }
 
-    public Measurement getMeasurement() {
+    public MeasurementOld getMeasurement() {
         return sweepMeasure;
     }
 

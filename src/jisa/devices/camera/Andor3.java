@@ -15,10 +15,13 @@ import jisa.visa.NativeDevice;
 
 import java.io.IOException;
 import java.nio.*;
-import java.util.*;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -121,21 +124,21 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
 
     });
 
-    private final int                              handle;
-    private final LongBuffer                       longBuffer   = LongBuffer.allocate(1);
-    private final IntBuffer                        intBuffer    = IntBuffer.allocate(1);
-    private final DoubleBuffer                     doubleBuffer = DoubleBuffer.allocate(1);
-    private final CharBuffer                       charBuffer   = CharBuffer.allocate(1024);
-    private final List<Listener<Mono16BitFrame>>   listeners = new LinkedList<>();
-    private final List<FrameQueue<Mono16BitFrame>> queues    = new LinkedList<>();
+    private final int                             handle;
+    private final LongBuffer                      longBuffer      = LongBuffer.allocate(1);
+    private final IntBuffer                       intBuffer       = IntBuffer.allocate(1);
+    private final DoubleBuffer                    doubleBuffer    = DoubleBuffer.allocate(1);
+    private final CharBuffer                      charBuffer      = CharBuffer.allocate(1024);
+    private final ListenerManager<Mono16BitFrame> listenerManager = new ListenerManager<Mono16BitFrame>();
 
-    private ByteBuffer     queued            = null;
-    private Mono16BitFrame frameBuffer       = null;
-    private boolean        centreX           = false;
-    private int            timeout           = 0;
-    private boolean        acquiring         = false;
-    private Thread         acquisitionThread = null;
-    private Thread         processingThread  = null;
+    private final Object         queuedLock        = new Object();
+    private       ByteBuffer     queued            = null;
+    private       Mono16BitFrame frameBuffer       = null;
+    private       boolean        centreX           = false;
+    private       int            timeout           = 0;
+    private       boolean        acquiring         = false;
+    private       Thread         acquisitionThread = null;
+    private       Thread         processingThread  = null;
 
     public Andor3(Address address) throws DeviceException {
 
@@ -209,7 +212,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
         int result = nativeLibrary.AT_SetFloat(handle, new WString(feature), value);
 
         if (result != AT_SUCCESS) {
-            throw new DeviceException("SetFloat for feature \"%s\" failed: %d", feature, result);
+            throw new DeviceException("SetFloat for feature \"%s\" failed: %d (%s)", feature, result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
         }
 
     }
@@ -415,11 +418,11 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
     @Override
     public Mono16BitFrame getFrame() throws DeviceException, IOException, InterruptedException, TimeoutException {
 
-        // If we're already continuously acquiring, we can just open a FrameQueue wait for the next frame from that.
+        // If we're already continuously acquiring, we can just open a FrameQueue and wait for the next frame from that.
         if (isAcquiring()) {
 
             FrameQueue<Mono16BitFrame> queue = openFrameQueue();
-            Mono16BitFrame             frame = queue.takeFrame(timeout);
+            Mono16BitFrame             frame = queue.nextFrame(timeout);
 
             closeFrameQueue(queue);
             queue.clear();
@@ -500,7 +503,9 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
         PointerByReference pointer     = new PointerByReference();
         IntBuffer          intBuffer   = IntBuffer.allocate(1);
 
-        queued = ByteBuffer.allocateDirect(bufferSize);
+        synchronized (queuedLock) {
+            queued = ByteBuffer.allocateDirect(bufferSize);
+        }
 
         while (acquiring) {
 
@@ -516,7 +521,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
                 continue;
             }
 
-            synchronized (queued) {
+            synchronized (queuedLock) {
                 queued.rewind().put(frameBuffer.rewind());
             }
 
@@ -530,10 +535,8 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
 
     private void processing(int bufferSize, int width, int height, int stride, short[] data) {
 
-        Executor               executor    = Executors.newCachedThreadPool();
-        Map<Listener, Boolean> running     = new HashMap<>();
-        Map<Listener, Frame>   frames      = new HashMap<>();
-        ByteBuffer             frameBuffer = ByteBuffer.allocateDirect(bufferSize);
+        ExecutorService executor    = Executors.newCachedThreadPool();
+        ByteBuffer      frameBuffer = ByteBuffer.allocateDirect(bufferSize);
 
         while (acquiring) {
 
@@ -543,7 +546,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
                 break;
             }
 
-            synchronized (queued) {
+            synchronized (queuedLock) {
 
                 for (int y = 0; y < height; y++) {
                     for (int x = 0; x < width; x++) {
@@ -551,36 +554,13 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
                     }
                 }
 
+                this.frameBuffer.setTimestamp(System.nanoTime());
+
             }
 
             this.frameBuffer.notifyAll();
 
-            for (BlockingQueue<Mono16BitFrame> queue : queues) {
-                queue.add(this.frameBuffer.copy());
-            }
-
-            for (Listener<Mono16BitFrame> listener : listeners) {
-
-                if (!running.getOrDefault(listener, false)) {
-
-                    running.put(listener, true);
-
-                    if (!frames.containsKey(listener)) {
-                        frames.put(listener, new Frame(width, height));
-                    }
-
-                    Frame frame = frames.get(listener);
-
-                    frame.update(data);
-
-                    executor.execute(() -> {
-                        listener.newFrame(frame);
-                        running.put(listener, false);
-                    });
-
-                }
-
-            }
+            listenerManager.trigger(this.frameBuffer);
 
         }
 
@@ -651,14 +631,14 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
     @Override
     public List<Mono16BitFrame> getFrameSeries(int count) throws DeviceException, IOException, InterruptedException, TimeoutException {
 
-        // If we're already continuously acquiring, we can just open a FrameQueue wait for the next n frames from that
+        // If we're already continuously acquiring, we can just open a FrameQueue and wait for the next n frames from that
         if (isAcquiring()) {
 
             List<Mono16BitFrame>       frames = new ArrayList<>(count);
             FrameQueue<Mono16BitFrame> queue  = openFrameQueue();
 
             for (int i = 0; i < count; i++) {
-                frames.add(queue.takeFrame(timeout));
+                frames.add(queue.nextFrame(timeout));
             }
 
             closeFrameQueue(queue);
@@ -740,25 +720,29 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
 
     @Override
     public Listener<Mono16BitFrame> addFrameListener(Listener<Mono16BitFrame> listener) {
-        listeners.add(listener);
+
+        listenerManager.addListener(listener);
         return listener;
+
     }
 
     @Override
     public void removeFrameListener(Listener<Mono16BitFrame> listener) {
-        listeners.remove(listener);
+        listenerManager.removeListener(listener);
     }
 
     @Override
     public FrameQueue<Mono16BitFrame> openFrameQueue() {
+
         FrameQueue<Mono16BitFrame> queue = new FrameQueue<>();
-        queues.add(queue);
+        listenerManager.addQueue(queue);
         return queue;
+
     }
 
     @Override
     public void closeFrameQueue(FrameQueue<Mono16BitFrame> queue) {
-        queues.remove(queue);
+        listenerManager.removeQueue(queue);
         queue.close();
     }
 
@@ -1000,8 +984,36 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
             super(new short[width * height], width, height);
         }
 
-        protected void update(short[] data) {
+        protected void update(short[] data, long timestamp) {
             System.arraycopy(data, 0, this.data, 0, this.data.length);
+            this.timestamp = timestamp;
+        }
+
+        protected void update(short[] data) {
+            update(data, System.nanoTime());
+        }
+
+    }
+
+    private static class ListenerRunner {
+
+        private final Listener<Mono16BitFrame> listener;
+        private final Frame                    frame;
+        private final Semaphore                semaphore = new Semaphore(1);
+
+        private ListenerRunner(Listener<Mono16BitFrame> listener, Frame frame) {
+            this.listener = listener;
+            this.frame    = frame;
+        }
+
+        public void newFrame(short[] data, long timestamp) {
+
+            if (semaphore.tryAcquire()) {
+                frame.update(data, timestamp);
+                listener.newFrame(frame);
+                semaphore.release();
+            }
+
         }
 
     }

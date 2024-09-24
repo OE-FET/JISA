@@ -3,25 +3,33 @@ package jisa.devices.camera.frame;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class Mono16BitFrame implements Frame.ShortFrame {
+public class Mono16BitFrame implements Frame.ShortFrame<Mono16BitFrame> {
 
     protected final short[] data;
-    private final   int     width;
-    private final   int     height;
+    protected final int     width;
+    protected final int     height;
 
-    public Mono16BitFrame(short[] data, int width, int height) {
+    protected long timestamp;
+
+    public Mono16BitFrame(short[] data, int width, int height, long timestamp) {
 
         this.data   = data;
         this.width  = width;
         this.height = height;
 
+        this.timestamp = timestamp;
     }
 
-    public Mono16BitFrame(Short[] data, int width, int height) {
+    public Mono16BitFrame(short[] data, int width, int height) {
+        this(data, width, height, System.nanoTime());
+    }
 
-        this.data   = new short[data.length];
-        this.width  = width;
-        this.height = height;
+    public Mono16BitFrame(Short[] data, int width, int height, long timestamp) {
+
+        this.data      = new short[data.length];
+        this.width     = width;
+        this.height    = height;
+        this.timestamp = timestamp;
 
         for (int i = 0; i < data.length; i++) {
             this.data[i] = data[i];
@@ -29,9 +37,27 @@ public class Mono16BitFrame implements Frame.ShortFrame {
 
     }
 
+    public Mono16BitFrame(Short[] data, int width, int height) {
+        this(data, width, height, System.nanoTime());
+    }
+
     @Override
     public Mono16BitFrame copy() {
-        return new Mono16BitFrame(data.clone(), width, height);
+        return new Mono16BitFrame(data.clone(), width, height, timestamp);
+    }
+
+    @Override
+    public void copyFrom(Mono16BitFrame otherFrame) {
+        System.arraycopy(otherFrame.data, 0, data, 0, data.length);
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    @Override
+    public long getTimestamp() {
+        return timestamp;
     }
 
     @Override
@@ -111,10 +137,8 @@ public class Mono16BitFrame implements Frame.ShortFrame {
     public void writeToStream(OutputStream stream) throws IOException {
 
         for (short value : data) {
-
             stream.write((byte) (value & 0xFF));
             stream.write((byte) ((value >> 8) & 0xFF));
-
         }
 
     }
@@ -130,7 +154,7 @@ public class Mono16BitFrame implements Frame.ShortFrame {
             }
         }
 
-        return new Mono16BitFrame(subData, width, height);
+        return new Mono16BitFrame(subData, width, height, timestamp);
 
     }
 

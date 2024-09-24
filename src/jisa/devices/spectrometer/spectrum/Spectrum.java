@@ -1,6 +1,7 @@
 package jisa.devices.spectrometer.spectrum;
 
 import com.google.common.primitives.Doubles;
+import com.google.common.primitives.Longs;
 import jisa.Util;
 import org.jetbrains.annotations.NotNull;
 
@@ -116,7 +117,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      * @return Point Stream.
      */
     public Stream<Point> stream() {
-        return IntStream.range(0, size()).mapToObj(i -> new Point(getWavelength(i), getCounts(i)));
+        return IntStream.range(0, size()).mapToObj(i -> new Point(getWavelength(i), getCount(i)));
     }
 
     /**
@@ -141,7 +142,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
         for (int i = 0; i < size; i++) {
             data[i][0] = getWavelength(i);
-            data[i][1] = getCounts(i);
+            data[i][1] = getCount(i);
         }
 
         return data;
@@ -157,6 +158,36 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         return wavelengths.clone();
     }
 
+    public List<Double> getWavelengthList() {
+        return Doubles.asList(getWavelengths());
+    }
+
+    /**
+     * Returns a copy of the inverse wavelengths in this spectrum, as an array.
+     *
+     * @return Array of wavenumbers.
+     */
+    public double[] getWavenumbers() {
+        return Arrays.stream(wavelengths).map(v -> 1.0 / v).toArray();
+    }
+
+    public List<Double> getWavenumberList() {
+        return Doubles.asList(getWavenumbers());
+    }
+
+    /**
+     * Returns a copy of the inverse wavelengths multiplied by 2 PI in this spectrum, as an array.
+     *
+     * @return Array of angular wavenumbers.
+     */
+    public double[] getAngularWavenumbers() {
+        return Arrays.stream(wavelengths).map(v -> 2.0 * Math.PI / v).toArray();
+    }
+
+    public List<Double> getAngularWavelenumberList() {
+        return Doubles.asList(getAngularWavenumbers());
+    }
+
     /**
      * Returns a copy of the values in this spectrum, as an array.
      *
@@ -164,6 +195,10 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      */
     public long[] getCounts() {
         return counts.clone();
+    }
+
+    public List<Long> getCountList() {
+        return Longs.asList(getCounts());
     }
 
     public double getWavelength(int index) {
@@ -178,7 +213,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         return 2.0 * Math.PI / getWavelength(index);
     }
 
-    public long getCounts(int index) {
+    public long getCount(int index) {
         return counts[index];
     }
 
@@ -195,7 +230,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
             throw new IndexOutOfBoundsException();
         }
 
-        return new Point(getWavelength(index), getCounts(index));
+        return new Point(getWavelength(index), getCount(index));
 
     }
 

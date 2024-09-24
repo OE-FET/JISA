@@ -10,7 +10,10 @@ import jisa.maths.matrices.exceptions.DimensionException;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.analysis.MultivariateRealFunction;
-import org.apache.commons.math.analysis.interpolation.*;
+import org.apache.commons.math.analysis.interpolation.LinearInterpolator;
+import org.apache.commons.math.analysis.interpolation.MicrosphereInterpolator;
+import org.apache.commons.math.analysis.interpolation.MultivariateRealInterpolator;
+import org.apache.commons.math.analysis.interpolation.SplineInterpolator;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -166,20 +169,20 @@ public class Interpolation {
 
     }
 
-    public static XYFunction interpolate2D(Iterable<Double> x, Iterable<Double> y, Iterable<Double> v) {
+    public static XYFunction interpolate2D(Iterable<? extends Number> x, Iterable<? extends Number> y, Iterable<? extends Number> v) {
 
         MultivariateRealInterpolator interpolator = new MicrosphereInterpolator();
         List<double[]>               paramList    = new LinkedList<>();
         List<Double>                 valueList    = new LinkedList<>();
 
-        Iterator<Double> xi = x.iterator();
-        Iterator<Double> yi = y.iterator();
-        Iterator<Double> vi = v.iterator();
+        Iterator<? extends Number> xi = x.iterator();
+        Iterator<? extends Number> yi = y.iterator();
+        Iterator<? extends Number> vi = v.iterator();
 
         while (xi.hasNext() && yi.hasNext() && vi.hasNext()) {
 
-            paramList.add(new double[]{xi.next(), yi.next()});
-            valueList.add(vi.next());
+            paramList.add(new double[]{xi.next().doubleValue(), yi.next().doubleValue()});
+            valueList.add(vi.next().doubleValue());
 
         }
 

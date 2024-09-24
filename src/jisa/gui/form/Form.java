@@ -31,6 +31,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 
+/**
+ * GUI element for providing user input.
+ */
 public class Form extends JFXElement implements Element, Iterable<Field<?>> {
 
     public final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -39,6 +42,7 @@ public class Form extends JFXElement implements Element, Iterable<Field<?>> {
     public GridPane   list;
 
     private       int            rows   = 0;
+    private       boolean        shown  = false;
     private final List<Field<?>> fields = new LinkedList<>();
 
     private static <A, B> Property<B> mappedBind(Property<A> property, GFunction<B, A> ab, GFunction<A, B> ba) {
@@ -78,6 +82,17 @@ public class Form extends JFXElement implements Element, Iterable<Field<?>> {
 
         super(title, GUI.getFXML("InputWindow"));
         BorderPane.setMargin(getNode().getCenter(), new Insets(15.0));
+
+    }
+
+    public void show() {
+
+        super.show();
+
+        if (!shown) {
+            autoAdjustSize();
+            shown = true;
+        }
 
     }
 
@@ -252,7 +267,7 @@ public class Form extends JFXElement implements Element, Iterable<Field<?>> {
 
                 for (Field.Listener<Range<Double>> l : listeners) {
 
-                    executor.submit(() -> l.valueChanged(value));
+                    executor.execute(() -> l.valueChanged(value));
 
                 }
 
@@ -798,6 +813,14 @@ public class Form extends JFXElement implements Element, Iterable<Field<?>> {
 
     public TableField addTable(String name, String... columns) {
         return addTable(name, Stream.of(columns).map(Column::ofDoubles).toArray(Column[]::new));
+    }
+
+    public TableField addTable(String name, ResultTable table) {
+
+        TableField field = addTable(name, table.getColumnsAsArray());
+        field.set(table);
+        return field;
+
     }
 
     /**

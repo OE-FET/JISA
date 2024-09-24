@@ -16,7 +16,7 @@ public class FrameQueue<F extends Frame> extends LinkedBlockingQueue<F> {
      *
      * @throws InterruptedException Upon the thread being interrupted while waiting for a frame.
      */
-    public F takeFrame() throws InterruptedException {
+    public F nextFrame() throws InterruptedException {
         return take();
     }
 
@@ -31,7 +31,7 @@ public class FrameQueue<F extends Frame> extends LinkedBlockingQueue<F> {
      * @throws InterruptedException Upon the thread being interrupted while waiting.
      * @throws TimeoutException     Upon timing out before a frame becomes available.
      */
-    public F takeFrame(long timeout) throws InterruptedException, TimeoutException {
+    public F nextFrame(long timeout) throws InterruptedException, TimeoutException {
 
         F frame = poll(timeout, TimeUnit.MILLISECONDS);
 

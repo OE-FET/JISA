@@ -16,6 +16,10 @@ public interface TMeter extends Instrument {
         return "Thermometer";
     }
 
+    static void addParameters(TMeter inst, Class target, ParameterList parameters) {
+        parameters.addValue("Sensor Range [K]", inst::getTemperatureRange, 999.9, inst::setTemperatureRange);
+    }
+
     /**
      * Returns the temperature being reported by the thermometer.
      *
@@ -107,16 +111,6 @@ public interface TMeter extends Instrument {
      */
     default void waitForStableTemperatureMaxTime(double temperature, double pctMargin, long duration, long maxTime) throws IOException, DeviceException, InterruptedException {
         Synch.waitForStableTargetMaxTime(this::getTemperature, temperature, pctMargin, 1000, duration, maxTime);
-    }
-
-    default ParameterList getBaseParameters(Class<?> target) {
-
-        ParameterList parameters = new ParameterList();
-
-        parameters.addValue("Sensor Range [K]", 999.9, this::setTemperatureRange);
-
-        return parameters;
-
     }
 
 }

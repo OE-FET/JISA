@@ -2,15 +2,38 @@ package jisa.devices.camera.frame;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
-public interface Frame<D> {
+public interface Frame<D, F extends Frame> {
 
     /**
      * Returns a deep copy of this frame.
      *
      * @return Copy of this frame.
      */
-    Frame<D> copy();
+    F copy();
+
+    void copyFrom(F otherFrame);
+
+    /**
+     * Returns the timestamp at which this frame was taken (or best approximation thereof) in nanoseconds.
+     *
+     * @return Timestamp, in nanoseconds.
+     */
+    long getTimestamp();
+
+    /**
+     * Sets the timestamp of this frame.
+     *
+     * @param timestamp Timestamp, in nanoseconds.
+     */
+    void setTimestamp(long timestamp);
+
+    default LocalDateTime getTime() {
+        long stamp = getTimestamp();
+        return LocalDateTime.ofEpochSecond(stamp / 1000000, (int) (stamp % 1000000), ZoneOffset.UTC);
+    }
 
     /**
      * Returns the pixel value at the given x and y co-ordinates/indices.
@@ -74,7 +97,7 @@ public interface Frame<D> {
      *
      * @return Sub-image
      */
-    Frame<D> subFrame(int x, int y, int width, int height);
+    F subFrame(int x, int y, int width, int height);
 
     /**
      * Loop over each (x, y) value and the value of the pixel at each pair.
@@ -91,7 +114,7 @@ public interface Frame<D> {
 
     }
 
-    interface ShortFrame extends Frame<Short> {
+    interface ShortFrame<F extends ShortFrame> extends Frame<Short, F> {
 
         /**
          * Directly returns the unboxed (memory-efficient) value for the specified pixel.
@@ -109,7 +132,7 @@ public interface Frame<D> {
 
     }
 
-    interface IntFrame extends Frame<Integer> {
+    interface IntFrame<F extends IntFrame> extends Frame<Integer, F> {
 
         int value(int x, int y);
 

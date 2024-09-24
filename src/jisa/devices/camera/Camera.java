@@ -375,49 +375,45 @@ public interface Camera<F extends Frame> extends Instrument {
      */
     void setBinning(int x, int y) throws IOException, DeviceException;
 
-    default ParameterList getBaseParameters(Class<?> target) {
+    static void addParameters(Camera inst, Class<?> target, ParameterList parameters) {
 
-        ParameterList parameters = new ParameterList();
-
-        parameters.addValue("Integration Time [s]", this::getIntegrationTime, 20e-3, this::setIntegrationTime);
-        parameters.addValue("X Binning", this::getBinningX, 1, this::setBinningX);
-        parameters.addValue("Y Binning", this::getBinningY, 1, this::setBinningY);
-        parameters.addValue("Frame Width", this::getFrameWidth, 1024, this::setFrameWidth);
-        parameters.addValue("Frame Height", this::getFrameHeight, 1024, this::setFrameHeight);
+        parameters.addValue("Integration Time [s]", inst::getIntegrationTime, 20e-3, inst::setIntegrationTime);
+        parameters.addValue("X Binning", inst::getBinningX, 1, inst::setBinningX);
+        parameters.addValue("Y Binning", inst::getBinningY, 1, inst::setBinningY);
+        parameters.addValue("Frame Width", inst::getFrameWidth, 1024, inst::setFrameWidth);
+        parameters.addValue("Frame Height", inst::getFrameHeight, 1024, inst::setFrameHeight);
 
         try {
 
-            parameters.addAuto("Frame X Offset", isFrameCentredX(), getFrameOffsetX(), offset -> this.setFrameCentredX(true), offset -> {
-                this.setFrameCentredX(false);
-                this.setFrameOffsetX(offset);
+            parameters.addAuto("Frame X Offset", inst.isFrameCentredX(), inst.getFrameOffsetX(), offset -> inst.setFrameCentredX(true), offset -> {
+                inst.setFrameCentredX(false);
+                inst.setFrameOffsetX(offset);
             });
 
         } catch (Throwable e) {
 
-            parameters.addAuto("Frame X Offset", true, 0, offset -> this.setFrameCentredX(true), offset -> {
-                this.setFrameCentredX(false);
-                this.setFrameOffsetX(offset);
+            parameters.addAuto("Frame X Offset", true, 0, offset -> inst.setFrameCentredX(true), offset -> {
+                inst.setFrameCentredX(false);
+                inst.setFrameOffsetX(offset);
             });
 
         }
 
         try {
 
-            parameters.addAuto("Frame Y Offset", isFrameCentredY(), getFrameOffsetY(), offset -> this.setFrameCentredY(true), offset -> {
-                this.setFrameCentredY(false);
-                this.setFrameOffsetY(offset);
+            parameters.addAuto("Frame Y Offset", inst.isFrameCentredY(), inst.getFrameOffsetY(), offset -> inst.setFrameCentredY(true), offset -> {
+                inst.setFrameCentredY(false);
+                inst.setFrameOffsetY(offset);
             });
 
         } catch (Throwable e) {
 
-            parameters.addAuto("Frame Y Offset", true, 0, offset -> this.setFrameCentredY(true), offset -> {
-                this.setFrameCentredY(false);
-                this.setFrameOffsetY(offset);
+            parameters.addAuto("Frame Y Offset", true, 0, offset -> inst.setFrameCentredY(true), offset -> {
+                inst.setFrameCentredY(false);
+                inst.setFrameOffsetY(offset);
             });
 
         }
-
-        return parameters;
 
     }
 

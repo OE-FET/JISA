@@ -6,6 +6,10 @@ import jisa.devices.ParameterList;
 import java.io.IOException;
 
 public interface TCouple extends TMeter {
+    
+    static void addParameters(TCouple inst, Class target, ParameterList parameters) {
+        parameters.addChoice("Sensor Type", inst::getSensorType, Type.UNKNOWN, inst::setSensorType, Type.values());
+    }
 
     /**
      * Sets the type of thermal sensor being used for this thermometer. If instrument has no ability to set the sensor
@@ -28,17 +32,6 @@ public interface TCouple extends TMeter {
      * @throws IOException     Upon communications error
      */
     Type getSensorType() throws IOException, DeviceException;
-
-
-    default ParameterList getBaseParameters(Class<?> target) {
-
-        ParameterList parameters = TMeter.super.getBaseParameters(target);
-
-        parameters.addChoice("Sensor Type", Type.UNKNOWN, this::setSensorType, Type.values());
-
-        return parameters;
-
-    }
 
 
     /**

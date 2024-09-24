@@ -20,6 +20,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public class Util {
@@ -119,11 +120,11 @@ public class Util {
 
         List<String> parts = new LinkedList<>();
 
-        if (d > 0) {parts.add(String.format("%dd", d));}
-        if (h > 0) {parts.add(String.format("%dh", h));}
-        if (m > 0) {parts.add(String.format("%dm", m));}
-        if (s > 0) {parts.add(String.format("%ds", s));}
-        if (ms > 0) {parts.add(String.format("%dms", ms));}
+        if (d > 0) { parts.add(String.format("%dd", d)); }
+        if (h > 0) { parts.add(String.format("%dh", h)); }
+        if (m > 0) { parts.add(String.format("%dm", m)); }
+        if (s > 0) { parts.add(String.format("%ds", s)); }
+        if (ms > 0) { parts.add(String.format("%dms", ms)); }
 
         return String.join(" ", parts);
 
@@ -139,10 +140,10 @@ public class Util {
 
         List<String> parts = new LinkedList<>();
 
-        if (d > 0) {parts.add(String.format("%dd", d));}
-        if (h > 0) {parts.add(String.format("%02dh", h));}
-        if (m > 0) {parts.add(String.format("%02dm", m));}
-        if (s > 0) {parts.add(String.format("%02ds", s));}
+        if (d > 0) { parts.add(String.format("%dd", d)); }
+        if (h > 0) { parts.add(String.format("%02dh", h)); }
+        if (m > 0) { parts.add(String.format("%02dm", m)); }
+        if (s > 0) { parts.add(String.format("%02ds", s)); }
         parts.add(String.format("%03dms", ms));
 
         return String.join(" ", parts);
@@ -174,15 +175,15 @@ public class Util {
         double niceFraction;
 
         if (round) {
-            if (fraction < 1.5) {niceFraction = 1;} else if (fraction < 3) {
+            if (fraction < 1.5) { niceFraction = 1; } else if (fraction < 3) {
                 niceFraction = 2;
-            } else if (fraction < 7) {niceFraction = 5;} else {
+            } else if (fraction < 7) { niceFraction = 5; } else {
                 niceFraction = 10;
             }
         } else {
-            if (fraction <= 1) {niceFraction = 1;} else if (fraction <= 2) {
+            if (fraction <= 1) { niceFraction = 1; } else if (fraction <= 2) {
                 niceFraction = 2;
-            } else if (fraction <= 5) {niceFraction = 5;} else {
+            } else if (fraction <= 5) { niceFraction = 5; } else {
                 niceFraction = 10;
             }
         }
@@ -326,13 +327,13 @@ public class Util {
         return value.doubleValue() >= min.doubleValue() && value.doubleValue() <= max.doubleValue();
     }
 
-    public static <K,V> Map<K,V> mapOf(Object... values) {
+    public static <K, V> Map<K, V> mapOf(Object... values) {
 
         if (values.length % 2 != 0) {
             throw new IllegalArgumentException("Every key needs a value.");
         }
 
-        Map<K,V> map = new LinkedHashMap<>();
+        Map<K, V> map = new LinkedHashMap<>();
 
         for (int i = 0; i < values.length; i += 2) {
 
@@ -347,13 +348,13 @@ public class Util {
 
     }
 
-    public static <K,V> MapBuilder<K,V> buildMap(Class<K> keyType, Class<V> valueType) {
+    public static <K, V> MapBuilder<K, V> buildMap(Class<K> keyType, Class<V> valueType) {
         return new MapBuilder<>(keyType, valueType);
     }
 
-    public static <K,V> Map<K,V> buildMap(MapBuild<K,V> build) {
+    public static <K, V> Map<K, V> buildMap(MapBuild<K, V> build) {
 
-        Map<K,V> map = new LinkedHashMap<>();
+        Map<K, V> map = new LinkedHashMap<>();
         build.map(map);
         return map;
 
@@ -613,6 +614,120 @@ public class Util {
         }
 
         return array;
+
+    }
+
+    public static class Pair<A, B> {
+
+        private final A a;
+        private final B b;
+
+        public Pair(A a, B b) {
+            this.a = a;
+            this.b = b;
+        }
+
+        public A a() {
+            return a;
+        }
+
+        public B b() {
+            return b;
+        }
+
+    }
+
+    public static class Trio<A, B, C> extends Pair<A, B> {
+
+        private final C c;
+
+        public Trio(A a, B b, C c) {
+            super(a, b);
+            this.c = c;
+        }
+
+        public C c() {
+            return c;
+        }
+
+    }
+
+    public static int HSBtoARGB(double hue, double saturation, double brightness) {
+
+        double normalizedHue = ((hue % 360) + 360) % 360;
+        hue = normalizedHue/360;
+
+        double r = 0, g = 0, b = 0;
+        if (saturation == 0) {
+            r = g = b = brightness;
+        } else {
+            double h = (hue - Math.floor(hue)) * 6.0;
+            double f = h - java.lang.Math.floor(h);
+            double p = brightness * (1.0 - saturation);
+            double q = brightness * (1.0 - saturation * f);
+            double t = brightness * (1.0 - (saturation * (1.0 - f)));
+            switch ((int) h) {
+                case 0:
+                    r = brightness;
+                    g = t;
+                    b = p;
+                    break;
+                case 1:
+                    r = q;
+                    g = brightness;
+                    b = p;
+                    break;
+                case 2:
+                    r = p;
+                    g = brightness;
+                    b = t;
+                    break;
+                case 3:
+                    r = p;
+                    g = q;
+                    b = brightness;
+                    break;
+                case 4:
+                    r = t;
+                    g = p;
+                    b = brightness;
+                    break;
+                case 5:
+                    r = brightness;
+                    g = p;
+                    b = q;
+                    break;
+            }
+        }
+
+        return (255 << 24) | ((int) (r * 255) << 16) | ((int)(g * 255) << 8) | ((int) (b * 255));
+
+    }
+
+    public static <A, B> Stream<Pair<A, B>> zipStream(Iterable<A> a, Iterable<B> b) {
+
+        Iterator<A> iteratorA = a.iterator();
+        Iterator<B> iteratorB = b.iterator();
+
+        return Stream.iterate(
+            new Pair<>(iteratorA.next(), iteratorB.next()),
+            p -> iteratorA.hasNext() && iteratorB.hasNext(),
+            p -> new Pair<>(iteratorA.next(), iteratorB.next())
+        );
+
+    }
+
+    public static <A, B, C> Stream<Trio<A, B, C>> zipStream(Iterable<A> a, Iterable<B> b, Iterable<C> c) {
+
+        Iterator<A> iteratorA = a.iterator();
+        Iterator<B> iteratorB = b.iterator();
+        Iterator<C> iteratorC = c.iterator();
+
+        return Stream.iterate(
+            new Trio<>(iteratorA.next(), iteratorB.next(), iteratorC.next()),
+            p -> iteratorA.hasNext() && iteratorB.hasNext() && iteratorC.hasNext(),
+            p -> new Trio<>(iteratorA.next(), iteratorB.next(), iteratorC.next())
+        );
 
     }
 
@@ -957,9 +1072,9 @@ public class Util {
 
     }
 
-    public interface MapBuild<K,V> {
+    public interface MapBuild<K, V> {
 
-        void map(Map<K,V> map);
+        void map(Map<K, V> map);
 
     }
 
@@ -967,11 +1082,12 @@ public class Util {
         void build(T toBuild);
     }
 
-    public static class MapBuilder<K,V> {
+    public static class MapBuilder<K, V> {
 
-        private final Map<K,V> map = new LinkedHashMap<>();
+        private final Map<K, V> map = new LinkedHashMap<>();
 
-        public MapBuilder(Class<K> keyType, Class<V> valueType) {}
+        public MapBuilder(Class<K> keyType, Class<V> valueType) {
+        }
 
         public MapBuilder<K, V> put(K key, V value) {
             map.put(key, value);
