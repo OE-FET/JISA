@@ -67,6 +67,14 @@ public class ListenerManager<F extends Frame<?, F>> {
 
     }
 
+    public void clearListenerBuffers() {
+
+        synchronized (listeners) {
+            listeners.forEach(Runner::clearBuffer);
+        }
+
+    }
+
     public static class Runner<F extends Frame<?, F>> {
 
         private final Camera.Listener<F> listener;
@@ -86,16 +94,20 @@ public class ListenerManager<F extends Frame<?, F>> {
 
             if (semaphore.tryAcquire()) {
 
-                if (buffer == null) {
-                    buffer = frame.copy();
-                } else {
-                    buffer.copyFrom(frame);
-                    buffer.setTimestamp(frame.getTimestamp());
+                try {
+
+                    if (buffer == null) {
+                        buffer = frame.copy();
+                    } else {
+                        buffer.copyFrom(frame);
+                        buffer.setTimestamp(frame.getTimestamp());
+                    }
+
+                    listener.newFrame(buffer);
+
+                } finally {
+                    semaphore.release();
                 }
-
-                listener.newFrame(buffer);
-
-                semaphore.release();
 
             }
 

@@ -3,7 +3,9 @@ package jisa.devices.features;
 import jisa.devices.Instrument;
 import jisa.devices.ParameterList;
 import org.apache.commons.lang3.ClassUtils;
-import org.reflections.Reflections;
+
+import java.util.Collections;
+import java.util.List;
 
 public interface Feature {
 
@@ -13,11 +15,11 @@ public interface Feature {
 
         if (instrument instanceof Feature) {
 
-            Reflections reflections = new Reflections("jisa.devices.features");
-            Feature     inst        = (Feature) instrument;
+            List<Class<?>> interfaces = ClassUtils.getAllInterfaces(instrument.getClass());
 
-            ClassUtils.getAllInterfaces(inst.getClass())
-                      .stream()
+            Collections.reverse(interfaces);
+
+            interfaces.stream()
                       .filter(Feature.class::isAssignableFrom)
                       .forEach(feature -> {
 
@@ -28,7 +30,7 @@ public interface Feature {
                                   feature,
                                   Class.class,
                                   ParameterList.class
-                              ).invoke(null, inst, target, parameters);
+                              ).invoke(null, instrument, target, parameters);
 
                           } catch (Throwable ignored) { }
 

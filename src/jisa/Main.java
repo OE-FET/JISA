@@ -1,13 +1,9 @@
 package jisa;
 
 import jisa.addresses.Address;
-import jisa.devices.camera.Camera;
-import jisa.devices.camera.FakeCamera;
-import jisa.devices.camera.frame.Mono16BitFrame;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
-import jisa.gui.HeatMap;
 
 import java.time.LocalDateTime;
 
@@ -18,27 +14,9 @@ public class Main {
     private final static int CHOICE_HELP = 2;
     private final static int CHOICE_EXIT = 3;
 
-    public static Camera<Mono16BitFrame> camera;
-
     public static void main(String[] args) {
 
         try {
-
-            camera = new FakeCamera();
-            camera.setFrameWidth(500);
-            camera.setFrameHeight(500);
-
-            HeatMap image = new HeatMap("Image");
-            image.setColourMap(HeatMap.ColourMap.GREYSCALE);
-
-            camera.setIntegrationTime(50e-3);
-
-            image.addToolbarButton("Start", camera::startAcquisition);
-            image.addToolbarButton("Stop", camera::stopAcquisition);
-
-            camera.addFrameListener(frame -> image.draw(frame.image()));
-
-            image.showAsAlert();
 
             Doc doc = new Doc("Help");
 
@@ -52,7 +30,8 @@ public class Main {
 
             doc.addList(false)
                .addItem("Scan for instruments, to see what instruments JISA can detect")
-               .addItem("Enter address manually, to connect to an instrument with a known address").addItem("Exit, to exit this utility");
+               .addItem("Enter address manually, to connect to an instrument with a known address")
+               .addItem("Exit, to exit this utility");
 
             doc.addText("For more information regarding how to include and use this library in your project, take a look at the JISA wiki at:");
 

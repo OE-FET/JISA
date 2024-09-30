@@ -53,7 +53,7 @@ public abstract class Measurement<R> {
                             .filter(f -> f.canAccess(this))
                             .map(f -> {
                                 Instrument annotation = f.getAnnotation(Instrument.class);
-                                return new InstrumentValue(annotation.name(), f.getType(), () -> f.get(this), v -> f.set(this, v), annotation.required());
+                                return new InstrumentValue(annotation.name() + (annotation.required() ? " (Required)" : " (Optional)"), f.getType(), () -> f.get(this), v -> f.set(this, v), annotation.required());
                             })
                             .collect(Collectors.toList());
 

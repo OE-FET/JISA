@@ -348,6 +348,11 @@ public class Connector<T extends Instrument> extends JFXElement {
                 connection.setDriver(driverChoice.getValue());
                 connection.setAddress(address);
                 connection.setAttempts(Math.max(1, retries.getValue()));
+
+                if (connection.isConnected()) {
+                    connection.disconnect();
+                }
+
                 connection.connect();
 
             } catch (Exception e) {

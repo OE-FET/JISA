@@ -20,14 +20,14 @@ import java.util.Map;
 public class Setup<R extends Measurement<?>> extends Tabs {
 
     public static final Map<Class, FieldCreator> DEFAULT_TYPES = Util.buildMap(map -> {
-        map.put(String.class,       (FieldCreator<String>)        Form::addTextField);
-        map.put(Double.class,       (FieldCreator<Double>)        Form::addDoubleField);
-        map.put(Integer.class,      (FieldCreator<Integer>)       Form::addIntegerField);
-        map.put(Boolean.class,      (FieldCreator<Boolean>)       Form::addCheckBox);
-        map.put(Range.class,        (FieldCreator<Range<Double>>) Form::addDoubleRange);
-        map.put(ResultTable.class,  (FieldCreator<ResultTable>)   Form::addTable);
-        map.put(ResultList.class,   (FieldCreator<ResultTable>)   Form::addTable);
-        map.put(ResultStream.class, (FieldCreator<ResultTable>)   Form::addTable);
+        map.put(String.class, (FieldCreator<String>) Form::addTextField);
+        map.put(Double.class, (FieldCreator<Double>) Form::addDoubleField);
+        map.put(Integer.class, (FieldCreator<Integer>) Form::addIntegerField);
+        map.put(Boolean.class, (FieldCreator<Boolean>) Form::addCheckBox);
+        map.put(Range.class, (FieldCreator<Range<Double>>) Form::addDoubleRange);
+        map.put(ResultTable.class, (FieldCreator<ResultTable>) Form::addTable);
+        map.put(ResultList.class, (FieldCreator<ResultTable>) Form::addTable);
+        map.put(ResultStream.class, (FieldCreator<ResultTable>) Form::addTable);
     });
 
     private final R    measurement;

@@ -82,7 +82,11 @@ public interface Instrument {
         Reflections                 reflections = new Reflections("jisa.devices");
         Class<? extends Instrument> thisClass   = getClass();
 
-        ClassUtils.getAllInterfaces(getClass()).stream().filter(Instrument.class::isAssignableFrom).forEach(type -> {
+        List<Class<?>> interfaces = ClassUtils.getAllInterfaces(getClass());
+
+        Collections.reverse(interfaces);
+
+        interfaces.stream().filter(Instrument.class::isAssignableFrom).forEach(type -> {
 
             try {
 

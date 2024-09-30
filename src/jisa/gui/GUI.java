@@ -63,7 +63,7 @@ public class GUI {
         return GUI.class.getResource(String.format("fxml/%s.fxml", name));
     }
 
-    public static <T extends Instrument> T connectTo(Class<T> driver, Address address) {
+    public static <T extends Instrument> T connectAndConfigure(Class<T> driver, Address address) {
 
         Constructor<T> constructor;
 
@@ -86,26 +86,26 @@ public class GUI {
 
     }
 
-    public static <T extends Instrument> T askUserForInstrument(String message, Class<T> type) {
+    public static <T extends Instrument> T connectAndConfigure(Class<T> type) {
 
-        Connector<T>    connector    = new Connector<>("Connection", type);
-        Configurator<T> configurator = new Configurator<>("Configuration", type);
-        Doc             doc          = new Doc("Connect to Instrument");
+        Connector<Instrument> connector    = new Connector<>("Connection", Instrument.class);
+        Configurator<T>       configurator = new Configurator<>("Configuration", type);
 
-        doc.addText(message);
-        doc.setMinHeight(50);
 
-        Grid grid = new Grid("Instrument Connection", 1, doc, new Grid(2, connector, configurator));
-        grid.setGrowth(true, false);
-        grid.setWindowSize(1280, 720);
+        var window = new Grid("Instrument Connection", 1, connector, configurator);
 
-        if (grid.showAsConfirmation()) {
+        window.setGrowth(true, false);
+        window.setWindowSize(800, 1024);
+
+        connector.getConnection().addChangeListener(() -> configurator.setConnection(connector.getConnection()));
+
+        if (window.showAsConfirmation()) {
 
             try {
                 return configurator.getConfiguration().get();
             } catch (IOException | DeviceException e) {
                 e.printStackTrace();
-                GUI.errorAlert(e.getMessage());
+                GUI.showException(e);
             }
 
         }
@@ -114,8 +114,8 @@ public class GUI {
 
     }
 
-    public static <T extends Instrument> T askUserForInstrument(String message, KClass<T> type) {
-        return askUserForInstrument(message, JvmClassMappingKt.getJavaClass(type));
+    public static <T extends Instrument> T connectAndConfigure(KClass<T> type) {
+        return connectAndConfigure(JvmClassMappingKt.getJavaClass(type));
     }
 
     /**

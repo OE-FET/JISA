@@ -110,6 +110,15 @@ public class Configurator<I extends Instrument> extends JFXElement {
         Util.addShutdownHook(() -> writeToConfig(block));
     }
 
+    public void setConnection(Connection connection) {
+
+        if (Connection.getConnectionsByTarget(configuration.getTarget()).contains(connection)) {
+            this.connection = connection;
+            update();
+        }
+
+    }
+
     private synchronized void update() {
 
         main.clear();

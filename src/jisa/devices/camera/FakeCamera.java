@@ -4,15 +4,16 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.camera.frame.FrameQueue;
-import jisa.devices.camera.frame.Mono16BitFrame;
+import jisa.devices.camera.frame.U16BitFrame;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
-public class FakeCamera implements Camera<Mono16BitFrame> {
+public class FakeCamera implements MTCamera<U16BitFrame> {
 
     private int     width           = 1024;
     private int     height          = 1024;
@@ -21,8 +22,8 @@ public class FakeCamera implements Camera<Mono16BitFrame> {
     private boolean running         = false;
     private Thread  acquireThread;
 
-    private final Random                          random          = new Random();
-    private final ListenerManager<Mono16BitFrame> listenerManager = new ListenerManager<>();
+    private final Random                       random          = new Random();
+    private final ListenerManager<U16BitFrame> listenerManager = new ListenerManager<>();
 
     public FakeCamera() {
     }
@@ -33,7 +34,7 @@ public class FakeCamera implements Camera<Mono16BitFrame> {
     protected void generate(short[] data) {
 
         for (int i = 0; i < data.length; i++) {
-            data[i] = (short) random.nextInt(Short.MAX_VALUE);
+            data[i] = (short) (0.3 * random.nextInt(Short.MAX_VALUE) + 0.7 * Short.MAX_VALUE * ((double) i / data.length));
         }
 
     }
@@ -49,12 +50,12 @@ public class FakeCamera implements Camera<Mono16BitFrame> {
     }
 
     @Override
-    public Mono16BitFrame getFrame() throws IOException, DeviceException, InterruptedException, TimeoutException {
+    public U16BitFrame getFrame() throws IOException, DeviceException, InterruptedException, TimeoutException {
 
         if (isAcquiring()) {
 
-            FrameQueue<Mono16BitFrame> frameQueue = openFrameQueue();
-            Mono16BitFrame             frame      = frameQueue.nextFrame(timeout);
+            FrameQueue<U16BitFrame> frameQueue = openFrameQueue();
+            U16BitFrame             frame      = frameQueue.nextFrame(timeout);
             closeFrameQueue(frameQueue);
 
             return frame;
@@ -66,7 +67,7 @@ public class FakeCamera implements Camera<Mono16BitFrame> {
 
         Thread.sleep(integrationTime);
 
-        return new Mono16BitFrame(data, width, height);
+        return new U16BitFrame(data, width, height);
 
     }
 
@@ -85,8 +86,8 @@ public class FakeCamera implements Camera<Mono16BitFrame> {
 
         acquireThread = new Thread(() -> {
 
-            short[]        data  = new short[width * height];
-            Mono16BitFrame frame = new Mono16BitFrame(data, width, height);
+            short[]     data  = new short[width * height];
+            U16BitFrame frame = new U16BitFrame(data, width, height);
 
             while (running) {
 
@@ -123,12 +124,12 @@ public class FakeCamera implements Camera<Mono16BitFrame> {
     }
 
     @Override
-    public List<Mono16BitFrame> getFrameSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
+    public List<U16BitFrame> getFrameSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
 
         if (isAcquiring()) {
 
-            List<Mono16BitFrame>       frames     = new ArrayList<>(count);
-            FrameQueue<Mono16BitFrame> frameQueue = openFrameQueue();
+            List<U16BitFrame>       frames     = new ArrayList<>(count);
+            FrameQueue<U16BitFrame> frameQueue = openFrameQueue();
 
             for (int i = 0; i < count; i++) {
                 frames.add(frameQueue.nextFrame(timeout));
@@ -138,7 +139,7 @@ public class FakeCamera implements Camera<Mono16BitFrame> {
 
         }
 
-        List<Mono16BitFrame> series = new ArrayList<>(count);
+        List<U16BitFrame> series = new ArrayList<>(count);
 
         for (int i = 0; i < count; i++) {
             series.add(getFrame());
@@ -149,27 +150,27 @@ public class FakeCamera implements Camera<Mono16BitFrame> {
     }
 
     @Override
-    public Listener<Mono16BitFrame> addFrameListener(Listener<Mono16BitFrame> listener) {
+    public Listener<U16BitFrame> addFrameListener(Listener<U16BitFrame> listener) {
         listenerManager.addListener(listener);
         return listener;
     }
 
     @Override
-    public void removeFrameListener(Listener<Mono16BitFrame> listener) {
+    public void removeFrameListener(Listener<U16BitFrame> listener) {
         listenerManager.removeListener(listener);
     }
 
     @Override
-    public FrameQueue<Mono16BitFrame> openFrameQueue() {
+    public FrameQueue<U16BitFrame> openFrameQueue() {
 
-        FrameQueue<Mono16BitFrame> queue = new FrameQueue<>();
+        FrameQueue<U16BitFrame> queue = new FrameQueue<>();
         listenerManager.addQueue(queue);
         return queue;
 
     }
 
     @Override
-    public void closeFrameQueue(FrameQueue<Mono16BitFrame> queue) {
+    public void closeFrameQueue(FrameQueue<U16BitFrame> queue) {
         listenerManager.removeQueue(queue);
         queue.close();
     }
@@ -307,5 +308,25 @@ public class FakeCamera implements Camera<Mono16BitFrame> {
     @Override
     public Address getAddress() {
         return null;
+    }
+
+    @Override
+    public void setMultiTrackEnabled(boolean enabled) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public boolean isMultiTrackEnabled() throws IOException, DeviceException {
+        return false;
+    }
+
+    @Override
+    public void setMultiTracks(Collection<Track> tracks) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public List<Track> getMultiTracks() throws IOException, DeviceException {
+        return List.of();
     }
 }

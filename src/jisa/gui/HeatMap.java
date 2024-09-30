@@ -15,6 +15,7 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import jisa.Util;
+import jisa.devices.camera.frame.Frame;
 import jisa.maths.Range;
 import jisa.maths.functions.Function;
 import jisa.maths.functions.XYFunction;
@@ -73,8 +74,8 @@ public class HeatMap extends JFXElement {
     private double stepY    = 0;
     private int    everyX   = 1;
     private int    everyY   = 1;
-    private int    ny       = 1;
-    private int    nx       = 1;
+    private int    ny       = 0;
+    private int    nx       = 0;
     private double maxTickX = 1.0;
     private double maxTickY = 1.0;
     private double maxTickW = 1.0;
@@ -92,8 +93,8 @@ public class HeatMap extends JFXElement {
         pane     = (CanvasPane) getNode().getCenter();
         canvas   = pane.canvas;
         gc       = canvas.getGraphicsContext2D();
-        ny       = 1;
-        nx       = 1;
+        ny       = 0;
+        nx       = 0;
         maxTickX = IntStream.range(0, nx).mapToObj(i -> new Text(xMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getWidth()).max().orElse(1.0);
         maxTickY = IntStream.range(0, ny).mapToObj(i -> new Text(yMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getHeight()).max().orElse(1.0);
         maxTickW = IntStream.range(0, ny).mapToObj(i -> new Text(yMapper.value(i))).mapToDouble(t -> t.getBoundsInLocal().getWidth()).max().orElse(1.0);
@@ -292,8 +293,8 @@ public class HeatMap extends JFXElement {
 
         if (ny != data.length || nx != (data.length > 0 ? data[0].length : 0)) {
 
-            ny       = data.length;
-            nx       = ny > 0 ? data[0].length : 0;
+            ny = data.length;
+            nx = ny > 0 ? data[0].length : 0;
 
             updateAxes();
 
@@ -379,6 +380,99 @@ public class HeatMap extends JFXElement {
             drawColourBar();
 
         });
+
+    }
+
+    public synchronized void draw(Frame<? extends Number, ?> frame) {
+
+        if (frame instanceof Frame.IntFrame) {
+            drawIntFrame((Frame.IntFrame) frame);
+            return;
+        }
+
+        if (ny != frame.getHeight() || nx != frame.getHeight()) {
+
+            ny = frame.getHeight();
+            nx = frame.getWidth();
+
+            updateAxes();
+
+        }
+
+        double[] data = Arrays.stream(frame.getData()).mapToDouble(Number::doubleValue).toArray();
+
+        min = Arrays.stream(data).min().orElse(-1.0);
+        max = Arrays.stream(data).max().orElse(+1.0);
+
+        double range = max - min;
+
+        if (image == null || image.getWidth() != nx || image.getHeight() != ny) {
+            buffer = new PixelBuffer<>(nx, ny, IntBuffer.allocate(nx * ny), PixelFormat.getIntArgbPreInstance());
+            image  = new WritableImage(buffer);
+        }
+
+        int[] pixels = buffer.getBuffer().array();
+
+        // Draw pixels
+        for (int i = 0; i < pixels.length; i++) {
+            pixels[i] = colourMap.value((data[i] - min) / range);
+        }
+
+        GUI.runNow(() -> {
+
+            gc.clearRect(cStartX, cStartY, 25, pHeight);
+            gc.clearRect(cStartX + 25, 0, CBAR_SIZE - 25, height);
+
+            buffer.updateBuffer(b -> null);
+            drawMap();
+            drawColourBar();
+
+        });
+
+
+    }
+
+    public synchronized void drawIntFrame(Frame.IntFrame frame) {
+
+        if (ny != frame.getHeight() || nx != frame.getHeight()) {
+
+            ny = frame.getHeight();
+            nx = frame.getWidth();
+
+            updateAxes();
+
+        }
+
+        int[] data = frame.data();
+
+        min = IntStream.of(data).min().orElse(-1);
+        max = IntStream.of(data).max().orElse(+1);
+
+        double range = max - min;
+
+        if (image == null || image.getWidth() != nx || image.getHeight() != ny) {
+            buffer = new PixelBuffer<>(nx, ny, IntBuffer.allocate(nx * ny), PixelFormat.getIntArgbPreInstance());
+            image  = new WritableImage(buffer);
+        }
+
+        int[] pixels = buffer.getBuffer().array();
+
+        // Draw pixels
+        for (int i = 0; i < pixels.length; i++) {
+            pixels[i] = colourMap.value((data[i] - min) / range);
+        }
+
+        GUI.runNow(() -> {
+
+            gc.clearRect(cStartX, cStartY, 25, pHeight);
+            gc.clearRect(cStartX + 25, 0, CBAR_SIZE - 25, height);
+
+            buffer.updateBuffer(b -> null);
+            drawMap();
+            drawColourBar();
+
+        });
+
 
     }
 
@@ -583,14 +677,15 @@ public class HeatMap extends JFXElement {
 
     public interface ColourMap {
 
-        ColourMap JISA       = vv -> 255 << 24 | ((int) r.value(vv)) << 16 | ((int) g.value(vv)) << 8 | ((int) b.value(vv));
-        ColourMap MATPLOTLIB = vv -> Util.HSBtoARGB(288 - 234 * vv, 0.8, 0.3 + 0.68 * vv);
-        ColourMap GREYSCALE  = vv -> (255 << 24) | ((int) (vv * 255) << 16) | ((int) (vv * 255) << 8) | ((int) (vv * 255));
-        ColourMap GAYSCALE   = vv -> Util.HSBtoARGB(300 * vv, 1.0, 1.0);
-        ColourMap RED        = vv -> Util.HSBtoARGB(0, 1.0, vv);
-        ColourMap GREEN      = vv -> Util.HSBtoARGB(120, 1.0, vv);
-        ColourMap BLUE       = vv -> Util.HSBtoARGB(240, 1.0, vv);
-        ColourMap FERAL      = vv -> 255 << 24 | (int) (255 * Math.min(1.0, 2 * vv)) << 16 | (int) (255 * (1.0 - (2.0 * Math.abs(vv - 0.5)))) << 8 | (int) (255 * Math.min(1.0, 2 * (1 - vv)));
+        ColourMap JISA      = vv -> 255 << 24 | ((int) (r.value(1 - vv))) << 16 | ((int) (g.value(1 - vv))) << 8 | ((int) (b.value(1 - vv)));
+        ColourMap VIRIDIS   = vv -> Util.HSBtoARGB(288 - 234 * vv, 0.8, 0.3 + 0.68 * vv);
+        ColourMap INFERNO   = vv -> Util.HSBtoARGB(288 + 142 * vv, 0.8, Math.sqrt(vv));
+        ColourMap GREYSCALE = vv -> (255 << 24) | ((int) (vv * 255) << 16) | ((int) (vv * 255) << 8) | ((int) (vv * 255));
+        ColourMap RAINBOW   = vv -> Util.HSBtoARGB(300 * vv, 1.0, 1.0);
+        ColourMap RED       = vv -> Util.HSBtoARGB(0, 1.0, vv);
+        ColourMap GREEN     = vv -> Util.HSBtoARGB(120, 1.0, vv);
+        ColourMap BLUE      = vv -> Util.HSBtoARGB(240, 1.0, vv);
+        ColourMap FRENCH    = vv -> 255 << 24 | (int) (255 * Math.min(1.0, 2 * vv)) << 16 | (int) (255 * (1.0 - (2.0 * Math.abs(vv - 0.5)))) << 8 | (int) (255 * Math.min(1.0, 2 * (1 - vv)));
 
         int value(double value);
 

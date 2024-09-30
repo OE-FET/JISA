@@ -1,5 +1,8 @@
 package jisa.devices.camera;
 
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
+import com.google.common.primitives.Shorts;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
 import com.sun.jna.ptr.PointerByReference;
@@ -8,24 +11,18 @@ import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.camera.frame.FrameQueue;
-import jisa.devices.camera.frame.Mono16BitFrame;
+import jisa.devices.camera.frame.U16BitFrame;
 import jisa.devices.camera.nat.ATCoreLibrary;
 import jisa.devices.features.TemperatureControlled;
 import jisa.visa.NativeDevice;
 
 import java.io.IOException;
 import java.nio.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16BitFrame>, TemperatureControlled {
+public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16BitFrame>, TemperatureControlled {
 
     static {
         ATCoreLibrary.INSTANCE.AT_InitialiseLibrary();
@@ -124,21 +121,23 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
 
     });
 
-    private final int                             handle;
-    private final LongBuffer                      longBuffer      = LongBuffer.allocate(1);
-    private final IntBuffer                       intBuffer       = IntBuffer.allocate(1);
-    private final DoubleBuffer                    doubleBuffer    = DoubleBuffer.allocate(1);
-    private final CharBuffer                      charBuffer      = CharBuffer.allocate(1024);
-    private final ListenerManager<Mono16BitFrame> listenerManager = new ListenerManager<Mono16BitFrame>();
+    private final int handle;
 
-    private final Object         queuedLock        = new Object();
-    private       ByteBuffer     queued            = null;
-    private       Mono16BitFrame frameBuffer       = null;
-    private       boolean        centreX           = false;
-    private       int            timeout           = 0;
-    private       boolean        acquiring         = false;
-    private       Thread         acquisitionThread = null;
-    private       Thread         processingThread  = null;
+    private final LongBuffer   longBuffer   = LongBuffer.allocate(1);
+    private final IntBuffer    intBuffer    = IntBuffer.allocate(1);
+    private final DoubleBuffer doubleBuffer = DoubleBuffer.allocate(1);
+    private final CharBuffer   charBuffer   = CharBuffer.allocate(1024);
+
+    private final ListenerManager<U16BitFrame> listenerManager = new ListenerManager<U16BitFrame>();
+
+    private final Object     queuedLock        = new Object();
+    private       ByteBuffer queued            = null;
+    private       Frame      frameBuffer       = null;
+    private       boolean    centreX           = false;
+    private       int        timeout           = 0;
+    private       boolean    acquiring         = false;
+    private       Thread     acquisitionThread = null;
+    private       Thread     processingThread  = null;
 
     public Andor3(Address address) throws DeviceException {
 
@@ -154,11 +153,63 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
             throw new DeviceException("ID must be an integer");
         }
 
+        setBoolean("MetadataEnable", true);
+        setBoolean("MetadataFrameInfo", false);
+        setBoolean("MetadataTimestamp", true);
+        setEnum("PixelEncoding", "Mono16");
+
     }
 
     public Andor3(int cameraIndex) throws DeviceException {
         super("atcore", ATCoreLibrary.INSTANCE);
         handle = open(cameraIndex);
+    }
+
+    protected static void fillFrame(byte[] buffer, Frame frameBuffer, int stride, long startClock, long startTime, long frequency) {
+
+        frameBuffer.setTimestamp(System.nanoTime());
+
+        final long    nsPerTick  = (long) (1e9 / frequency);
+        final int     bufferSize = buffer.length;
+        final short[] data       = frameBuffer.array();
+        final int     height     = frameBuffer.getHeight();
+        final int     width      = frameBuffer.getWidth();
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                data[y * width + x] = Shorts.fromBytes(buffer[2 * (y * stride + x) + 1], buffer[2 * (y * stride + x)]);
+            }
+        }
+
+        int length;
+        int cid;
+
+        for (int i = bufferSize - 1; i >= data.length; i -= length) {
+
+            length = Ints.fromBytes(buffer[i], buffer[i - 1], buffer[i - 2], buffer[i - 3]);
+            cid    = Ints.fromBytes(buffer[i - 4], buffer[i - 5], buffer[i - 6], buffer[i - 7]);
+
+            if (cid == 1) {
+
+                long ticks = Longs.fromBytes(
+                    buffer[i - 8],
+                    buffer[i - 9],
+                    buffer[i - 10],
+                    buffer[i - 11],
+                    buffer[i - 12],
+                    buffer[i - 13],
+                    buffer[i - 14],
+                    buffer[i - 15]
+                );
+
+                frameBuffer.setTimestamp(startTime + (nsPerTick * (ticks - startClock)));
+
+                break;
+
+            }
+
+        }
+
     }
 
     private synchronized int open(int cameraIndex) throws DeviceException {
@@ -365,7 +416,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
         int result = nativeLibrary.AT_Command(handle, new WString(feature));
 
         if (result != AT_SUCCESS) {
-            throw new DeviceException("Command for feature \"%s\" failed: %d (%s)", feature, result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
+            throw new DeviceException("Command \"%s\" failed: %d (%s)", feature, result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
         }
 
     }
@@ -416,13 +467,13 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
     }
 
     @Override
-    public Mono16BitFrame getFrame() throws DeviceException, IOException, InterruptedException, TimeoutException {
+    public U16BitFrame getFrame() throws DeviceException, IOException, InterruptedException, TimeoutException {
 
         // If we're already continuously acquiring, we can just open a FrameQueue and wait for the next frame from that.
         if (isAcquiring()) {
 
-            FrameQueue<Mono16BitFrame> queue = openFrameQueue();
-            Mono16BitFrame             frame = queue.nextFrame(timeout);
+            FrameQueue<U16BitFrame> queue = openFrameQueue();
+            U16BitFrame             frame = queue.nextFrame(timeout);
 
             closeFrameQueue(queue);
             queue.clear();
@@ -434,6 +485,9 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
         long       tmo         = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
         int        bufferSize  = getInt("ImageSizeBytes");
         ByteBuffer frameBuffer = ByteBuffer.allocateDirect(bufferSize);
+        long       startTime   = System.nanoTime();
+        long       startClock  = getLong("TimestampClock");
+        long       frequency   = getLong("TimestampClockFrequency");
 
         flush();
 
@@ -471,171 +525,22 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
 
         }
 
-        short[] data = new short[imageSize];
+        Frame frame = new Frame(width, height);
 
-        frameBuffer.rewind();
+        fillFrame(frameBuffer.array(), frame, stride, startClock, startTime, frequency);
 
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                data[y * width + x] = frameBuffer.getShort(y * stride + x);
-            }
-        }
-
-        return new Mono16BitFrame(data, width, height);
+        return frame;
 
     }
 
     @Override
-    public void setAcquisitionTimeOut(int timeout) throws IOException, DeviceException {
-        this.timeout = Math.max(0, timeout);
-    }
-
-    @Override
-    public int getAcquisitionTimeOut() throws IOException, DeviceException {
-        return timeout;
-    }
-
-    private void acquisition(int bufferSize) {
-
-        long tmo = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
-
-        ByteBuffer         frameBuffer = ByteBuffer.allocateDirect(bufferSize);
-        PointerByReference pointer     = new PointerByReference();
-        IntBuffer          intBuffer   = IntBuffer.allocate(1);
-
-        synchronized (queuedLock) {
-            queued = ByteBuffer.allocateDirect(bufferSize);
-        }
-
-        while (acquiring) {
-
-            int result = nativeLibrary.AT_QueueBuffer(handle, frameBuffer, bufferSize);
-
-            if (result != AT_SUCCESS) {
-                continue;
-            }
-
-            result = nativeLibrary.AT_WaitBuffer(handle, pointer, intBuffer, tmo);
-
-            if (result != AT_SUCCESS) {
-                continue;
-            }
-
-            synchronized (queuedLock) {
-                queued.rewind().put(frameBuffer.rewind());
-            }
-
-            processingThread.notifyAll();
-
-        }
-
-        processingThread.notifyAll();
-
-    }
-
-    private void processing(int bufferSize, int width, int height, int stride, short[] data) {
-
-        ExecutorService executor    = Executors.newCachedThreadPool();
-        ByteBuffer      frameBuffer = ByteBuffer.allocateDirect(bufferSize);
-
-        while (acquiring) {
-
-            try {
-                processingThread.wait();
-            } catch (InterruptedException e) {
-                break;
-            }
-
-            synchronized (queuedLock) {
-
-                for (int y = 0; y < height; y++) {
-                    for (int x = 0; x < width; x++) {
-                        data[y * width + x] = queued.getShort(y * stride + x);
-                    }
-                }
-
-                this.frameBuffer.setTimestamp(System.nanoTime());
-
-            }
-
-            this.frameBuffer.notifyAll();
-
-            listenerManager.trigger(this.frameBuffer);
-
-        }
-
-    }
-
-    @Override
-    public synchronized void startAcquisition() throws IOException, DeviceException {
-
-        if (isAcquiring()) {
-            return;
-        }
-
-        final int     width      = getFrameWidth();
-        final int     height     = getFrameHeight();
-        final int     stride     = getInt("AOIStride");
-        final int     size       = getFrameSize();
-        final int     bufferSize = getInt("ImageSizeBytes");
-        final short[] data       = new short[size];
-
-        frameBuffer = new Mono16BitFrame(data, width, height);
-
-        setEnum("CycleMode", "Continuous");
-        flush();
-
-        acquisitionThread = new Thread(() -> acquisition(bufferSize));
-        processingThread  = new Thread(() -> processing(bufferSize, width, height, stride, data));
-
-        acquiring = true;
-
-        acquisitionThread.start();
-        processingThread.start();
-
-        acquisitionStart();
-
-    }
-
-    @Override
-    public synchronized void stopAcquisition() throws IOException, DeviceException {
-
-        if (!isAcquiring()) {
-            return;
-        }
-
-        acquiring = false;
-
-        acquisitionThread.interrupt();
-        processingThread.interrupt();
-
-        try {
-            acquisitionThread.join();
-            processingThread.join();
-        } catch (InterruptedException ignored) { }
-
-        acquisitionStop();
-
-        acquisitionThread = null;
-        processingThread  = null;
-
-        flush();
-
-    }
-
-    @Override
-    public synchronized boolean isAcquiring() throws IOException, DeviceException {
-        return acquiring;
-    }
-
-    @Override
-    public List<Mono16BitFrame> getFrameSeries(int count) throws DeviceException, IOException, InterruptedException, TimeoutException {
+    public List<U16BitFrame> getFrameSeries(int count) throws DeviceException, IOException, InterruptedException, TimeoutException {
 
         // If we're already continuously acquiring, we can just open a FrameQueue and wait for the next n frames from that
         if (isAcquiring()) {
 
-            List<Mono16BitFrame>       frames = new ArrayList<>(count);
-            FrameQueue<Mono16BitFrame> queue  = openFrameQueue();
+            List<U16BitFrame>       frames = new ArrayList<>(count);
+            FrameQueue<U16BitFrame> queue  = openFrameQueue();
 
             for (int i = 0; i < count; i++) {
                 frames.add(queue.nextFrame(timeout));
@@ -650,11 +555,14 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
 
         long tmo = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
 
-        int bufferSize = getInt("ImageSizeBytes");
-        int width      = getInt("AOIWidth");
-        int height     = getInt("AOIHeight");
-        int stride     = getInt("AOIStride");
-        int imageSize  = width * height;
+        int  bufferSize = getInt("ImageSizeBytes");
+        int  width      = getInt("AOIWidth");
+        int  height     = getInt("AOIHeight");
+        int  stride     = getInt("AOIStride");
+        int  imageSize  = width * height;
+        long startTime  = System.nanoTime();
+        long startClock = getLong("TimestampClock");
+        long frequency  = getLong("TimestampClockFrequency");
 
         setEnum("CycleMode", "Fixed");
         setLong("FrameCount", count);
@@ -697,20 +605,16 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
         acquisitionStop();
         flush();
 
-        List<Mono16BitFrame> frames = new ArrayList<>(count);
+        List<U16BitFrame> frames = new ArrayList<>(count);
 
         for (int i = 0; i < count; i++) {
 
             ByteBuffer frameBuffer = pointers[i].getByteBuffer(0, bufferSize).rewind();
             short[]    data        = new short[imageSize];
 
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < width; x++) {
-                    data[y * width + x] = frameBuffer.getShort(y * stride + x);
-                }
-            }
-
-            frames.add(new Mono16BitFrame(data, width, height));
+            Frame frame = new Frame(width, height);
+            fillFrame(frameBuffer.array(), frame, stride, startClock, startTime, frequency);
+            frames.add(frame);
 
         }
 
@@ -719,7 +623,143 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
     }
 
     @Override
-    public Listener<Mono16BitFrame> addFrameListener(Listener<Mono16BitFrame> listener) {
+    public void setAcquisitionTimeOut(int timeout) throws IOException, DeviceException {
+        this.timeout = Math.max(0, timeout);
+    }
+
+    @Override
+    public int getAcquisitionTimeOut() throws IOException, DeviceException {
+        return timeout;
+    }
+
+    private void acquisition(int bufferSize) {
+
+        long tmo = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
+
+        ByteBuffer         frameBuffer = ByteBuffer.allocateDirect(bufferSize);
+        PointerByReference pointer     = new PointerByReference();
+        IntBuffer          intBuffer   = IntBuffer.allocate(1);
+
+        listenerManager.clearListenerBuffers();
+
+        synchronized (queuedLock) {
+            queued = ByteBuffer.allocateDirect(bufferSize);
+        }
+
+        while (acquiring) {
+
+            int result = nativeLibrary.AT_QueueBuffer(handle, frameBuffer, bufferSize);
+
+            if (result != AT_SUCCESS) {
+                continue;
+            }
+
+            result = nativeLibrary.AT_WaitBuffer(handle, pointer, intBuffer, tmo);
+
+            if (result != AT_SUCCESS) {
+                continue;
+            }
+
+            synchronized (queuedLock) {
+                queued.rewind().put(frameBuffer.rewind());
+            }
+
+            processingThread.notifyAll();
+
+        }
+
+        processingThread.notifyAll();
+
+    }
+
+    private void processing(int bufferSize, int width, int height, int stride, short[] data, long startClock, long startTime, long frequency) {
+
+        while (acquiring) {
+
+            try {
+                processingThread.wait();
+            } catch (InterruptedException e) {
+                break;
+            }
+
+            synchronized (queuedLock) {
+                fillFrame(queued.array(), frameBuffer, stride, startClock, startTime, frequency);
+            }
+
+            frameBuffer.notifyAll();
+            listenerManager.trigger(frameBuffer);
+
+        }
+
+    }
+
+    @Override
+    public synchronized void startAcquisition() throws IOException, DeviceException {
+
+        if (isAcquiring()) {
+            return;
+        }
+
+        final int     width      = getFrameWidth();
+        final int     height     = getFrameHeight();
+        final int     stride     = getInt("AOIStride");
+        final int     size       = getFrameSize();
+        final int     bufferSize = getInt("ImageSizeBytes");
+        final short[] data       = new short[size];
+        final long    clock      = getLong("TimestampClock");
+        final long    time       = System.nanoTime();
+        final long    frequency  = getLong("TimestampClockFrequency");
+
+        frameBuffer = new Frame(data, width, height);
+
+        setEnum("CycleMode", "Continuous");
+        flush();
+
+        acquisitionThread = new Thread(() -> acquisition(bufferSize));
+        processingThread  = new Thread(() -> processing(bufferSize, width, height, stride, data, clock, time, frequency));
+
+        acquiring = true;
+
+        acquisitionThread.start();
+        processingThread.start();
+
+        acquisitionStart();
+
+    }
+
+    @Override
+    public synchronized void stopAcquisition() throws IOException, DeviceException {
+
+        if (!isAcquiring()) {
+            return;
+        }
+
+        acquiring = false;
+
+        acquisitionThread.interrupt();
+        processingThread.interrupt();
+
+        try {
+            acquisitionThread.join();
+            processingThread.join();
+        } catch (InterruptedException ignored) { }
+
+        acquisitionStop();
+
+        acquisitionThread = null;
+        processingThread  = null;
+
+        flush();
+
+    }
+
+    @Override
+    public synchronized boolean isAcquiring() throws IOException, DeviceException {
+        return acquiring;
+    }
+
+    @Override
+    public Listener<U16BitFrame> addFrameListener(Listener<U16BitFrame> listener) {
 
         listenerManager.addListener(listener);
         return listener;
@@ -727,21 +767,21 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
     }
 
     @Override
-    public void removeFrameListener(Listener<Mono16BitFrame> listener) {
+    public void removeFrameListener(Listener<U16BitFrame> listener) {
         listenerManager.removeListener(listener);
     }
 
     @Override
-    public FrameQueue<Mono16BitFrame> openFrameQueue() {
+    public FrameQueue<U16BitFrame> openFrameQueue() {
 
-        FrameQueue<Mono16BitFrame> queue = new FrameQueue<>();
+        FrameQueue<U16BitFrame> queue = new FrameQueue<>();
         listenerManager.addQueue(queue);
         return queue;
 
     }
 
     @Override
-    public void closeFrameQueue(FrameQueue<Mono16BitFrame> queue) {
+    public void closeFrameQueue(FrameQueue<U16BitFrame> queue) {
         listenerManager.removeQueue(queue);
         queue.close();
     }
@@ -850,10 +890,11 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
     public void setFrameOffsetX(int offsetX) throws DeviceException {
 
         if (isFrameCentredX()) {
-            throw new DeviceException("Cannot change frame x offset when x-centering is enabled.");
+            throw new DeviceException("Cannot change frame x offset when x-centring is enabled.");
         }
 
         setInt("AOILeft", offsetX);
+
     }
 
     @Override
@@ -865,7 +906,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
     public void setFrameOffsetY(int offsetY) throws DeviceException {
 
         if (isFrameCentredY()) {
-            throw new DeviceException("Cannot change frame y offset when y-centering is enabled.");
+            throw new DeviceException("Cannot change frame y offset when y-centring is enabled.");
         }
 
         setInt("AOITop", offsetY);
@@ -904,7 +945,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
         int result = nativeLibrary.AT_Close(handle);
 
         if (result != AT_SUCCESS) {
-            throw new DeviceException("Close failed: %d", result);
+            throw new DeviceException("Close failed: %d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
         }
 
     }
@@ -970,7 +1011,60 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
         return getEnum("TemperatureStatus").getText().equals("Stabilised");
     }
 
-    private static class Frame extends Mono16BitFrame {
+    @Override
+    public void setMultiTrackEnabled(boolean enabled) throws IOException, DeviceException {
+        setEnum("AOILayout", enabled ? "Multitrack" : "Image");
+    }
+
+    @Override
+    public boolean isMultiTrackEnabled() throws IOException, DeviceException {
+        return getEnum("AOILayout").getText().equalsIgnoreCase("MULTITRACK");
+    }
+
+    @Override
+    public void setMultiTracks(Collection<Track> tracks) throws IOException, DeviceException {
+
+        if (tracks.size() > 256) {
+            throw new DeviceException("Maximum number of tracks is 256, %d supplied.", tracks.size());
+        }
+
+        setInt("MultitrackCount", tracks.size());
+
+        int i = 0;
+        for (Track track : tracks) {
+
+            setInt("MultitrackSelector", i++);
+            setInt("MultitrackStart", track.getStartRow());
+            setInt("MultitrackEnd", track.getEndRow());
+            setBoolean("MultitrackBinned", track.isBinned());
+
+        }
+
+    }
+
+    @Override
+    public List<Track> getMultiTracks() throws IOException, DeviceException {
+
+        int         count  = getInt("MultitrackCount");
+        List<Track> tracks = new ArrayList<>(count);
+
+        for (int i = 0; i < count; i++) {
+
+            setInt("MultitrackSelector", i);
+
+            tracks.add(new Track(
+                getInt("MultitrackStart"),
+                getInt("MultitrackEnd"),
+                getBoolean("MultitrackBinned")
+            ));
+
+        }
+
+        return tracks;
+
+    }
+
+    protected static class Frame extends U16BitFrame {
 
         public Frame(short[] data, int width, int height) {
             super(data, width, height);
@@ -991,29 +1085,6 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<Mono16
 
         protected void update(short[] data) {
             update(data, System.nanoTime());
-        }
-
-    }
-
-    private static class ListenerRunner {
-
-        private final Listener<Mono16BitFrame> listener;
-        private final Frame                    frame;
-        private final Semaphore                semaphore = new Semaphore(1);
-
-        private ListenerRunner(Listener<Mono16BitFrame> listener, Frame frame) {
-            this.listener = listener;
-            this.frame    = frame;
-        }
-
-        public void newFrame(short[] data, long timestamp) {
-
-            if (semaphore.tryAcquire()) {
-                frame.update(data, timestamp);
-                listener.newFrame(frame);
-                semaphore.release();
-            }
-
         }
 
     }
