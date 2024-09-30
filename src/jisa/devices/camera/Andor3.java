@@ -475,7 +475,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16B
             FrameQueue<U16BitFrame> queue = openFrameQueue();
             U16BitFrame             frame = queue.nextFrame(timeout);
 
-            closeFrameQueue(queue);
+            queue.close();
             queue.clear();
 
             return frame;
@@ -774,7 +774,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16B
     @Override
     public FrameQueue<U16BitFrame> openFrameQueue() {
 
-        FrameQueue<U16BitFrame> queue = new FrameQueue<>();
+        FrameQueue<U16BitFrame> queue = new FrameQueue<>(this);
         listenerManager.addQueue(queue);
         return queue;
 

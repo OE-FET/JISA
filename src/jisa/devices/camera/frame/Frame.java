@@ -198,6 +198,8 @@ public interface Frame<D, F extends Frame> {
             return IntStream.range(0, data.length).mapToObj(i -> data[i]).toArray(Short[]::new);
         }
 
+        short[] array();
+
     }
 
     interface IntFrame<F extends IntFrame> extends Frame<Integer, F> {

@@ -56,7 +56,8 @@ public class FakeCamera implements MTCamera<U16BitFrame> {
 
             FrameQueue<U16BitFrame> frameQueue = openFrameQueue();
             U16BitFrame             frame      = frameQueue.nextFrame(timeout);
-            closeFrameQueue(frameQueue);
+
+            frameQueue.close();
 
             return frame;
 
@@ -135,6 +136,8 @@ public class FakeCamera implements MTCamera<U16BitFrame> {
                 frames.add(frameQueue.nextFrame(timeout));
             }
 
+            frameQueue.close();
+
             return frames;
 
         }
@@ -163,7 +166,7 @@ public class FakeCamera implements MTCamera<U16BitFrame> {
     @Override
     public FrameQueue<U16BitFrame> openFrameQueue() {
 
-        FrameQueue<U16BitFrame> queue = new FrameQueue<>();
+        FrameQueue<U16BitFrame> queue = new FrameQueue<>(this);
         listenerManager.addQueue(queue);
         return queue;
 

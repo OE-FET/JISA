@@ -1,12 +1,24 @@
 package jisa.devices.camera.frame;
 
+import jisa.devices.camera.Camera;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class FrameQueue<F extends Frame> extends LinkedBlockingQueue<F> {
 
-    private boolean open = true;
+    private       boolean      open    = true;
+    private final Camera<F>    camera;
+    private final List<Thread> threads = Collections.synchronizedList(new ArrayList<>(1));
+
+    public FrameQueue(Camera<F> camera) {
+        this.camera = camera;
+    }
 
     /**
      * Takes the frame at the head of the queue and returns it, removing it from the queue. If no frame is available, this method
@@ -17,7 +29,13 @@ public class FrameQueue<F extends Frame> extends LinkedBlockingQueue<F> {
      * @throws InterruptedException Upon the thread being interrupted while waiting for a frame.
      */
     public F nextFrame() throws InterruptedException {
-        return take();
+
+        threads.add(Thread.currentThread());
+        F frame = take();
+        threads.remove(Thread.currentThread());
+
+        return frame;
+
     }
 
     /**
@@ -33,7 +51,9 @@ public class FrameQueue<F extends Frame> extends LinkedBlockingQueue<F> {
      */
     public F nextFrame(long timeout) throws InterruptedException, TimeoutException {
 
+        threads.add(Thread.currentThread());
         F frame = poll(timeout, TimeUnit.MILLISECONDS);
+        threads.remove(Thread.currentThread());
 
         if (frame == null) {
             throw new TimeoutException("Timed out waiting for frame.");
@@ -44,11 +64,30 @@ public class FrameQueue<F extends Frame> extends LinkedBlockingQueue<F> {
     }
 
     public void close() {
-        open = false;
+
+        if (open) {
+
+            open = false;
+            camera.closeFrameQueue(this);
+
+            if (isEmpty()) {
+                threads.forEach(Thread::interrupt);
+            }
+
+        }
+
     }
 
     public boolean isOpen() {
         return open;
+    }
+
+    public boolean hasFrames() {
+        return !isEmpty();
+    }
+
+    public boolean isAlive() {
+        return isOpen() || hasFrames();
     }
 
 }
