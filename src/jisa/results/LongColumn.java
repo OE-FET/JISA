@@ -1,5 +1,11 @@
 package jisa.results;
 
+import com.google.common.primitives.Longs;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 public class LongColumn extends Column<Long> {
 
     public LongColumn(String name, String units) {
@@ -26,6 +32,16 @@ public class LongColumn extends Column<Long> {
     @Override
     public Long parse(String string) {
         return Long.parseLong(string);
+    }
+
+    @Override
+    public void writeToStream(OutputStream stream, Long value) throws IOException {
+        stream.write(Longs.toByteArray(value));
+    }
+
+    @Override
+    public Long readFromStream(InputStream stream) throws IOException {
+        return Longs.fromByteArray(stream.readNBytes(Long.BYTES));
     }
 
     public RowEvaluable<Double> pow(double power) {

@@ -1,9 +1,5 @@
 package jisa.devices.camera;
 
-import io.jhdf.HdfFile;
-import io.jhdf.WritableHdfFile;
-import io.jhdf.api.Group;
-import io.jhdf.api.WritableGroup;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.ParameterList;
@@ -11,10 +7,11 @@ import jisa.devices.camera.frame.Frame;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameThread;
 
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Path;
+import java.lang.Exception;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -155,22 +152,13 @@ public interface Camera<F extends Frame> extends Instrument {
         return new FrameThread<>(this, listener);
     }
 
-    default FrameThread<F> startFrameStream(OutputStream stream) {
+    default FrameThread<F> stream(OutputStream stream) {
         return startFrameThread(f -> f.writeToStream(stream));
     }
 
     default FrameThread<F> streamToFile(String path) throws IOException {
         FileOutputStream fos = new FileOutputStream(path);
         return new FrameThread<>(this, f -> f.writeToStream(fos), fos::close);
-    }
-
-    default FrameThread<F> streamToHDF(WritableGroup group) {
-        return startFrameThread((i, f) -> group.putDataset(String.format("Frame %d", i), f.getImage()));
-    }
-
-    default FrameThread<F> streamToHDF(String path) {
-        WritableHdfFile file = HdfFile.write(Path.of(path));
-        return new FrameThread<>(this, (i, f) -> file.putDataset(String.format("Frame %d", i), f.getImage()), file::close);
     }
 
     /**

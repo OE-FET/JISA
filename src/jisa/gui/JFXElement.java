@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class JFXElement implements Element {
 
@@ -564,8 +566,16 @@ public class JFXElement implements Element {
     @Override
     public void showAndWait() {
 
+        Semaphore semaphore     = new Semaphore(0);
+        SRunnable closeListener = addCloseListener(semaphore::release);
 
+        show();
 
+        try {
+            semaphore.acquireUninterruptibly();
+        } finally {
+            removeCloseListener(closeListener);
+        }
 
     }
 

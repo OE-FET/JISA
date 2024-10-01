@@ -1,5 +1,9 @@
 package jisa.results;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 public class BooleanColumn extends Column<Boolean> {
 
     public BooleanColumn(String name, String units) {
@@ -26,6 +30,16 @@ public class BooleanColumn extends Column<Boolean> {
     @Override
     public Boolean parse(String string) {
         return Boolean.parseBoolean(string);
+    }
+
+    @Override
+    public void writeToStream(OutputStream stream, Boolean value) throws IOException {
+        stream.write(value ? 1 : 0);
+    }
+
+    @Override
+    public Boolean readFromStream(InputStream stream) throws IOException {
+        return stream.read() == 1;
     }
 
     public RowEvaluable<Boolean> not() {

@@ -4,7 +4,7 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.camera.frame.FrameQueue;
-import jisa.devices.camera.frame.U16BitFrame;
+import jisa.devices.camera.frame.U16Frame;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
-public class FakeCamera implements MTCamera<U16BitFrame> {
+public class FakeCamera implements MTCamera<U16Frame> {
 
     private int     width           = 1024;
     private int     height          = 1024;
@@ -22,8 +22,8 @@ public class FakeCamera implements MTCamera<U16BitFrame> {
     private boolean running         = false;
     private Thread  acquireThread;
 
-    private final Random                       random          = new Random();
-    private final ListenerManager<U16BitFrame> listenerManager = new ListenerManager<>();
+    private final Random                    random          = new Random();
+    private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
 
     public FakeCamera() {
     }
@@ -50,12 +50,12 @@ public class FakeCamera implements MTCamera<U16BitFrame> {
     }
 
     @Override
-    public U16BitFrame getFrame() throws IOException, DeviceException, InterruptedException, TimeoutException {
+    public U16Frame getFrame() throws IOException, DeviceException, InterruptedException, TimeoutException {
 
         if (isAcquiring()) {
 
-            FrameQueue<U16BitFrame> frameQueue = openFrameQueue();
-            U16BitFrame             frame      = frameQueue.nextFrame(timeout);
+            FrameQueue<U16Frame> frameQueue = openFrameQueue();
+            U16Frame             frame      = frameQueue.nextFrame(timeout);
 
             frameQueue.close();
 
@@ -68,7 +68,7 @@ public class FakeCamera implements MTCamera<U16BitFrame> {
 
         Thread.sleep(integrationTime);
 
-        return new U16BitFrame(data, width, height);
+        return new U16Frame(data, width, height);
 
     }
 
@@ -87,8 +87,8 @@ public class FakeCamera implements MTCamera<U16BitFrame> {
 
         acquireThread = new Thread(() -> {
 
-            short[]     data  = new short[width * height];
-            U16BitFrame frame = new U16BitFrame(data, width, height);
+            short[]  data  = new short[width * height];
+            U16Frame frame = new U16Frame(data, width, height);
 
             while (running) {
 
@@ -125,12 +125,12 @@ public class FakeCamera implements MTCamera<U16BitFrame> {
     }
 
     @Override
-    public List<U16BitFrame> getFrameSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
+    public List<U16Frame> getFrameSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
 
         if (isAcquiring()) {
 
-            List<U16BitFrame>       frames     = new ArrayList<>(count);
-            FrameQueue<U16BitFrame> frameQueue = openFrameQueue();
+            List<U16Frame>       frames     = new ArrayList<>(count);
+            FrameQueue<U16Frame> frameQueue = openFrameQueue();
 
             for (int i = 0; i < count; i++) {
                 frames.add(frameQueue.nextFrame(timeout));
@@ -142,7 +142,7 @@ public class FakeCamera implements MTCamera<U16BitFrame> {
 
         }
 
-        List<U16BitFrame> series = new ArrayList<>(count);
+        List<U16Frame> series = new ArrayList<>(count);
 
         for (int i = 0; i < count; i++) {
             series.add(getFrame());
@@ -153,27 +153,27 @@ public class FakeCamera implements MTCamera<U16BitFrame> {
     }
 
     @Override
-    public Listener<U16BitFrame> addFrameListener(Listener<U16BitFrame> listener) {
+    public Listener<U16Frame> addFrameListener(Listener<U16Frame> listener) {
         listenerManager.addListener(listener);
         return listener;
     }
 
     @Override
-    public void removeFrameListener(Listener<U16BitFrame> listener) {
+    public void removeFrameListener(Listener<U16Frame> listener) {
         listenerManager.removeListener(listener);
     }
 
     @Override
-    public FrameQueue<U16BitFrame> openFrameQueue() {
+    public FrameQueue<U16Frame> openFrameQueue() {
 
-        FrameQueue<U16BitFrame> queue = new FrameQueue<>(this);
+        FrameQueue<U16Frame> queue = new FrameQueue<>(this);
         listenerManager.addQueue(queue);
         return queue;
 
     }
 
     @Override
-    public void closeFrameQueue(FrameQueue<U16BitFrame> queue) {
+    public void closeFrameQueue(FrameQueue<U16Frame> queue) {
         listenerManager.removeQueue(queue);
         queue.close();
     }

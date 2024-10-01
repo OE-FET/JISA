@@ -1,5 +1,11 @@
 package jisa.results;
 
+import com.google.common.primitives.Ints;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 public class IntColumn extends Column<Integer> {
 
     public IntColumn(String name, String units) {
@@ -26,6 +32,16 @@ public class IntColumn extends Column<Integer> {
     @Override
     public Integer parse(String string) {
         return Integer.parseInt(string);
+    }
+
+    @Override
+    public void writeToStream(OutputStream stream, Integer value) throws IOException {
+        stream.write(Ints.toByteArray(value));
+    }
+
+    @Override
+    public Integer readFromStream(InputStream stream) throws IOException {
+        return Ints.fromByteArray(stream.readNBytes(Integer.BYTES));
     }
 
     public RowEvaluable<Double> pow(double power) {

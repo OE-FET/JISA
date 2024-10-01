@@ -260,6 +260,7 @@ grid.show()
 For example, here's the same program written in Java, Kotlin, Python and even gosh-darn MATLAB:
 
 **Java - Classic style, robust but verbose, like a northern grandparent.**
+
 ```java
 import jisa.devices.smu.K2450;
 import jisa.results.*;
@@ -292,7 +293,7 @@ public class Main {
         }
 
         smu.turnOff();
-        results.output("data.csv");
+        results.outputCSV("data.csv");
 
     }
 

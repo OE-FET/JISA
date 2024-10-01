@@ -11,7 +11,7 @@ import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.camera.frame.FrameQueue;
-import jisa.devices.camera.frame.U16BitFrame;
+import jisa.devices.camera.frame.U16Frame;
 import jisa.devices.camera.nat.ATCoreLibrary;
 import jisa.devices.features.TemperatureControlled;
 import jisa.visa.NativeDevice;
@@ -22,7 +22,7 @@ import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16BitFrame>, TemperatureControlled {
+public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16Frame>, TemperatureControlled {
 
     static {
         ATCoreLibrary.INSTANCE.AT_InitialiseLibrary();
@@ -128,7 +128,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16B
     private final DoubleBuffer doubleBuffer = DoubleBuffer.allocate(1);
     private final CharBuffer   charBuffer   = CharBuffer.allocate(1024);
 
-    private final ListenerManager<U16BitFrame> listenerManager = new ListenerManager<U16BitFrame>();
+    private final ListenerManager<U16Frame> listenerManager = new ListenerManager<U16Frame>();
 
     private final Object     queuedLock        = new Object();
     private       ByteBuffer queued            = null;
@@ -467,13 +467,13 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16B
     }
 
     @Override
-    public U16BitFrame getFrame() throws DeviceException, IOException, InterruptedException, TimeoutException {
+    public U16Frame getFrame() throws DeviceException, IOException, InterruptedException, TimeoutException {
 
         // If we're already continuously acquiring, we can just open a FrameQueue and wait for the next frame from that.
         if (isAcquiring()) {
 
-            FrameQueue<U16BitFrame> queue = openFrameQueue();
-            U16BitFrame             frame = queue.nextFrame(timeout);
+            FrameQueue<U16Frame> queue = openFrameQueue();
+            U16Frame             frame = queue.nextFrame(timeout);
 
             queue.close();
             queue.clear();
@@ -534,13 +534,13 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16B
     }
 
     @Override
-    public List<U16BitFrame> getFrameSeries(int count) throws DeviceException, IOException, InterruptedException, TimeoutException {
+    public List<U16Frame> getFrameSeries(int count) throws DeviceException, IOException, InterruptedException, TimeoutException {
 
         // If we're already continuously acquiring, we can just open a FrameQueue and wait for the next n frames from that
         if (isAcquiring()) {
 
-            List<U16BitFrame>       frames = new ArrayList<>(count);
-            FrameQueue<U16BitFrame> queue  = openFrameQueue();
+            List<U16Frame>       frames = new ArrayList<>(count);
+            FrameQueue<U16Frame> queue  = openFrameQueue();
 
             for (int i = 0; i < count; i++) {
                 frames.add(queue.nextFrame(timeout));
@@ -605,7 +605,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16B
         acquisitionStop();
         flush();
 
-        List<U16BitFrame> frames = new ArrayList<>(count);
+        List<U16Frame> frames = new ArrayList<>(count);
 
         for (int i = 0; i < count; i++) {
 
@@ -759,7 +759,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16B
     }
 
     @Override
-    public Listener<U16BitFrame> addFrameListener(Listener<U16BitFrame> listener) {
+    public Listener<U16Frame> addFrameListener(Listener<U16Frame> listener) {
 
         listenerManager.addListener(listener);
         return listener;
@@ -767,21 +767,21 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16B
     }
 
     @Override
-    public void removeFrameListener(Listener<U16BitFrame> listener) {
+    public void removeFrameListener(Listener<U16Frame> listener) {
         listenerManager.removeListener(listener);
     }
 
     @Override
-    public FrameQueue<U16BitFrame> openFrameQueue() {
+    public FrameQueue<U16Frame> openFrameQueue() {
 
-        FrameQueue<U16BitFrame> queue = new FrameQueue<>(this);
+        FrameQueue<U16Frame> queue = new FrameQueue<>(this);
         listenerManager.addQueue(queue);
         return queue;
 
     }
 
     @Override
-    public void closeFrameQueue(FrameQueue<U16BitFrame> queue) {
+    public void closeFrameQueue(FrameQueue<U16Frame> queue) {
         listenerManager.removeQueue(queue);
         queue.close();
     }
@@ -1064,7 +1064,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16B
 
     }
 
-    protected static class Frame extends U16BitFrame {
+    protected static class Frame extends U16Frame {
 
         public Frame(short[] data, int width, int height) {
             super(data, width, height);

@@ -1,8 +1,10 @@
 package jisa.results;
 
+import com.google.common.primitives.Ints;
 import org.json.JSONObject;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -38,7 +40,7 @@ public class ResultList extends ResultTable {
 
     }
 
-    public static ResultList loadFile(String filePath) throws IOException {
+    public static ResultList loadCSVFile(String filePath) throws IOException {
 
         BufferedReader reader = new BufferedReader(new FileReader(filePath));
         String         header = reader.readLine();
@@ -59,6 +61,73 @@ public class ResultList extends ResultTable {
 
         if (attributes != null) {
             attributes.toMap().forEach((k, v) -> list.setAttribute(k, v.toString()));
+        }
+
+        return list;
+
+    }
+
+    public static ResultList loadBinaryFile(String filePath) throws IOException {
+
+        ResultList list;
+
+        try (FileInputStream file = new FileInputStream(filePath)) {
+
+            Map<String, Object> attributes = null;
+            List<Column>        columns    = new LinkedList<>();
+
+            int code = file.read();
+
+            while (code != 3) {
+
+                switch (code) {
+
+                    case 1:
+
+                        int length = Ints.fromByteArray(file.readNBytes(4));
+                        attributes = new JSONObject(new String(file.readNBytes(length), StandardCharsets.UTF_8)).toMap();
+                        break;
+
+                    case 2:
+
+                        int nameLength = Ints.fromByteArray(file.readNBytes(4));
+                        String name = new String(file.readNBytes(nameLength), StandardCharsets.UTF_8);
+                        int unitsLength = Ints.fromByteArray(file.readNBytes(4));
+                        String units = new String(file.readNBytes(unitsLength), StandardCharsets.UTF_8);
+                        int typeLength = Ints.fromByteArray(file.readNBytes(4));
+                        String type = new String(file.readNBytes(typeLength), StandardCharsets.UTF_8);
+
+                        columns.add(STANDARD_TYPES.get(type).create(name, units));
+
+                        break;
+
+                    default:
+                        throw new IOException("Not a valid binary ResultTable file!");
+
+                }
+
+                code = file.read();
+
+            }
+
+            list = new ResultList(columns);
+
+            if (attributes != null) {
+                attributes.forEach((k, v) -> list.setAttribute(k, v.toString()));
+            }
+
+            while (file.available() > 0) {
+
+                RowBuilder builder = list.startRow();
+
+                for (Column column : columns) {
+                    builder.set(column, column.readFromStream(file));
+                }
+
+                builder.endRow();
+
+            }
+
         }
 
         return list;

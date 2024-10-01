@@ -1,14 +1,7 @@
 package jisa.results;
 
 import com.google.common.collect.Lists;
-import com.google.common.primitives.Booleans;
-import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
-import io.jhdf.HdfFile;
-import io.jhdf.WritableHdfFile;
-import io.jhdf.api.WritableGroup;
-import io.jhdf.api.WritiableDataset;
 import jisa.Util;
 import jisa.maths.matrices.RealMatrix;
 import jisa.results.ResultList.ColumnBuilder;
@@ -18,7 +11,7 @@ import kotlin.reflect.KClass;
 import org.json.JSONObject;
 
 import java.io.*;
-import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -854,17 +847,6 @@ public abstract class ResultTable implements Iterable<Row> {
     }
 
     /**
-     * Returns a Matrix of the given numerical columns.
-     *
-     * @param columns Columns to use
-     *
-     * @return Matrix
-     */
-    public RealMatrix toMatrix(Column<? extends Number>... columns) {
-        return toMatrix(Arrays.stream(columns).map(c -> (RowEvaluable<? extends Number>) (row -> row.get(c))).toArray(RowEvaluable[]::new));
-    }
-
-    /**
      * Returns a Matrix of the given expressions.
      *
      * @param expressions Expressions to use for each column
@@ -1060,11 +1042,15 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    public void output(String path) throws IOException {
+        outputCSV(path);
+    }
+
     /**
      * Outputs this table in CSV format to the standard output stream.
      */
-    public void output() {
-        output(System.out);
+    public void outputCSV() {
+        outputCSV(System.out);
     }
 
     /**
@@ -1074,10 +1060,12 @@ public abstract class ResultTable implements Iterable<Row> {
      *
      * @throws IOException Upon error opening/writing file
      */
-    public void output(String file) throws IOException {
-        PrintStream writer = new PrintStream(new FileOutputStream(file));
-        output(writer);
-        writer.close();
+    public void outputCSV(String file) throws IOException {
+
+        try (PrintStream writer = new PrintStream(new FileOutputStream(file))) {
+            outputCSV(writer);
+        }
+
     }
 
     /**
@@ -1165,7 +1153,7 @@ public abstract class ResultTable implements Iterable<Row> {
      *
      * @param out Output PrintStream
      */
-    public void output(PrintStream out) {
+    public void outputCSV(PrintStream out) {
 
         out.println(getAttributeLine());
         out.println(getColumnHeaderLine());
@@ -1306,9 +1294,11 @@ public abstract class ResultTable implements Iterable<Row> {
      * @param path Path to file
      */
     public void outputTable(String path) throws FileNotFoundException {
-        PrintStream writer = new PrintStream(new FileOutputStream(path));
-        outputTable(writer);
-        writer.close();
+
+        try (PrintStream writer = new PrintStream(new FileOutputStream(path))) {
+            outputTable(writer);
+        }
+
     }
 
     public String getCSV() {
@@ -1406,6 +1396,51 @@ public abstract class ResultTable implements Iterable<Row> {
         return new RowBuilder();
     }
 
+    public void outputBinary(OutputStream stream) throws IOException {
+
+        byte[] attributes = new JSONObject(getAttributes()).toString().getBytes(StandardCharsets.UTF_8);
+
+        stream.write(1);
+        stream.write(Ints.toByteArray(attributes.length));
+        stream.write(attributes);
+
+        for (Column<?> column : columns) {
+
+            byte[] name  = column.getName().getBytes(StandardCharsets.UTF_8);
+            byte[] units = column.hasUnits() ? column.getUnits().getBytes(StandardCharsets.UTF_8) : new byte[0];
+            byte[] type  = column.getType().getSimpleName().getBytes(StandardCharsets.UTF_8);
+
+            stream.write(2);
+            stream.write(Ints.toByteArray(name.length));
+            stream.write(name);
+            stream.write(Ints.toByteArray(units.length));
+            stream.write(units);
+            stream.write(Ints.toByteArray(type.length));
+            stream.write(type);
+
+        }
+
+        stream.write(3);
+
+        for (Row row : this) {
+
+            for (Column column : columns) {
+                column.writeToStream(stream, row.get(column));
+            }
+
+        }
+
+    }
+
+
+    public void outputBinary(String path) throws IOException {
+
+        try (FileOutputStream stream = new FileOutputStream(path)) {
+            outputBinary(stream);
+        }
+
+    }
+
     /**
      * Adds a new row by using a lambda expression.
      *
@@ -1493,112 +1528,6 @@ public abstract class ResultTable implements Iterable<Row> {
      */
     public Collector<Row, ?, ResultList> collector() {
         return ResultList.collect(this);
-    }
-
-    public void outputHDF(WritableGroup group) {
-
-        for (Column column : columns) {
-
-            Class type = column.getType();
-            List  data = toList(column);
-
-            if (type == Double.class) {
-                group.putDataset(column.getTitle(), Doubles.toArray(data));
-            } else if (type == Integer.class) {
-                group.putDataset(column.getTitle(), Ints.toArray(data));
-            } else if (type == Long.class) {
-                group.putDataset(column.getTitle(), Longs.toArray(data));
-            } else if (type == Boolean.class) {
-                group.putDataset(column.getTitle(), Booleans.toArray(data));
-            } else {
-                group.putDataset(column.getTitle(), data.stream().map(Object::toString).toArray(String[]::new));
-            }
-
-        }
-
-        attributes.forEach(group::putAttribute);
-
-    }
-
-    public void outputHDF(String filePath, String groupPath) {
-
-        try (WritableHdfFile file = HdfFile.write(Path.of(filePath))) {
-
-            if (groupPath == null || groupPath.isBlank()) {
-                outputHDF(file);
-            } else {
-
-                WritableGroup group = file;
-
-                for (String part : groupPath.split("/")) {
-                    group = group.putGroup(part);
-                }
-
-                outputHDF(group);
-
-            }
-
-        }
-
-    }
-
-    public void outputHDF(String filePath) {
-        outputHDF(filePath, null);
-    }
-
-    public void outputHDFDataset(WritableGroup group, String name, Column<? extends Number>... columns) {
-
-        if (columns == null || columns.length == 0) {
-            columns = getNumericColumns().toArray(Column[]::new);
-        }
-
-        double[][] data = new double[size()][columns.length];
-
-        int i = 0;
-
-        for (Row row : this) {
-
-            for (int j = 0; j < columns.length; j++) {
-
-                data[i][j] = row.get(columns[j]).doubleValue();
-
-            }
-
-            i++;
-
-        }
-
-        WritiableDataset set = group.putDataset(name, data);
-
-        set.putAttribute("Columns", Arrays.stream(columns).map(Column::getTitle).toArray(String[]::new));
-
-    }
-
-    public void outputHDFDataset(String filePath, String datasetPath, Column<? extends Number>... columns) {
-
-        try (WritableHdfFile file = HdfFile.write(Path.of(filePath))) {
-
-            if (datasetPath == null || datasetPath.isBlank()) {
-                throw new IllegalArgumentException("datasetPath is null or empty");
-            } else {
-
-                WritableGroup group = file;
-                String[]      parts = datasetPath.split("/");
-
-                for (int i = 0; i < parts.length - 1; i++) {
-                    group = group.putGroup(parts[i]);
-                }
-
-                outputHDFDataset(group, parts[parts.length - 1], columns);
-
-            }
-
-        }
-
-    }
-
-    public void outputHDFDataset(String filePath, Column<? extends Number>... columns) {
-        outputHDFDataset(filePath, "Data", columns);
     }
 
     /**

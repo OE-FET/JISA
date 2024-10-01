@@ -3,6 +3,9 @@ package jisa.results;
 import kotlin.jvm.JvmClassMappingKt;
 import kotlin.reflect.KClass;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 
 public abstract class Column<T> implements RowEvaluable<T> {
@@ -501,6 +504,10 @@ public abstract class Column<T> implements RowEvaluable<T> {
      * @return Parsed data
      */
     public abstract T parse(String string);
+
+    public abstract void writeToStream(OutputStream stream, T value) throws IOException;
+
+    public abstract T readFromStream(InputStream stream) throws IOException;
 
     /**
      * Returns the name of this column.
