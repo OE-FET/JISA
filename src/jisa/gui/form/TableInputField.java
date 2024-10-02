@@ -5,15 +5,15 @@ import javafx.scene.control.Labeled;
 import jisa.gui.GUI;
 import jisa.gui.controls.TableInput;
 import jisa.results.Column;
-import jisa.results.ResultTable;
+import jisa.results.DataTable;
 
 import java.util.LinkedList;
 import java.util.List;
 
 public class TableInputField implements TableField {
 
-    private final List<Listener<ResultTable>> listeners = new LinkedList<>();
-    private final Form                        form;
+    private final List<Listener<DataTable>> listeners = new LinkedList<>();
+    private final Form                      form;
     private final Labeled                     label;
     private final TableInput                  table;
 
@@ -25,11 +25,11 @@ public class TableInputField implements TableField {
 
         table.getTableView().getItems().addListener((InvalidationListener) il -> {
 
-            ResultTable value = get();
+            DataTable value = get();
 
             synchronized (listeners) {
 
-                for (Listener<ResultTable> listener : listeners) {
+                for (Listener<DataTable> listener : listeners) {
                     form.executor.submit(() -> listener.valueChanged(value));
                 }
 
@@ -50,17 +50,17 @@ public class TableInputField implements TableField {
     }
 
     @Override
-    public void set(ResultTable value) {
+    public void set(DataTable value) {
         table.setContents(value);
     }
 
     @Override
-    public ResultTable get() {
+    public DataTable get() {
         return table.getContents();
     }
 
     @Override
-    public Listener<ResultTable> addChangeListener(Listener<ResultTable> onChange) {
+    public Listener<DataTable> addChangeListener(Listener<DataTable> onChange) {
 
         synchronized (listeners) {
             listeners.add(onChange);
@@ -71,7 +71,7 @@ public class TableInputField implements TableField {
     }
 
     @Override
-    public void removeChangeListener(Listener<ResultTable> onChange) {
+    public void removeChangeListener(Listener<DataTable> onChange) {
 
         synchronized (listeners) {
             listeners.remove(onChange);

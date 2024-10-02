@@ -3,8 +3,8 @@ package jisa.devices;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.SRunnable;
-import jisa.results.ResultList;
-import jisa.results.ResultTable;
+import jisa.results.DataList;
+import jisa.results.DataTable;
 import kotlin.jvm.JvmClassMappingKt;
 import kotlin.reflect.KClass;
 
@@ -82,12 +82,12 @@ public class Configuration<T extends Instrument> {
 
                 parameter.setValue(new Instrument.OptionalQuantity<>(use.get(), value.get()));
 
-            } else if (ResultTable.class.isAssignableFrom(parameter.getType()) && block.hasBlock(parameter.getName())) {
+            } else if (DataTable.class.isAssignableFrom(parameter.getType()) && block.hasBlock(parameter.getName())) {
 
                 ConfigBlock subBlock = block.subBlock(parameter.getName());
 
                 try {
-                    parameter.setValue(ResultList.fromCSVString(subBlock.stringValue("contents").getOrDefault("")));
+                    parameter.setValue(DataList.fromCSVString(subBlock.stringValue("contents").getOrDefault("")));
                 } catch (Throwable ignored) { }
 
 
@@ -153,11 +153,11 @@ public class Configuration<T extends Instrument> {
                 use.set(((Instrument.OptionalQuantity<?>) parameter.getValue()).isUsed());
                 value.set(((Instrument.OptionalQuantity<?>) parameter.getValue()).getValue());
 
-            } else if (ResultTable.class.isAssignableFrom(parameter.getType())) {
+            } else if (DataTable.class.isAssignableFrom(parameter.getType())) {
 
                 ConfigBlock subBlock = block.subBlock(parameter.getName());
                 subBlock.clear();
-                ResultTable           quantity = (ResultTable) parameter.getValue();
+                DataTable quantity = (DataTable) parameter.getValue();
                 subBlock.stringValue("contents").set(quantity.getCSV());
 
             } else {

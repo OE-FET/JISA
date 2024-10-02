@@ -5,8 +5,8 @@ import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.MultiInstrument;
 import jisa.devices.ParameterList;
-import jisa.results.ResultList;
-import jisa.results.ResultTable;
+import jisa.results.DataList;
+import jisa.results.DataTable;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -160,7 +160,7 @@ public interface PID extends Instrument, MultiInstrument {
                 parameters.addChoice("Input", input.getName(), v -> inst.getAvailableInputs().stream().filter(i -> i.getName().equals(v)).findFirst().orElse(null), inst.getAvailableInputs().stream().map(Input::getName).toArray(String[]::new));
                 parameters.addChoice("Output", output.getName(), v -> inst.getAvailableOutputs().stream().filter(i -> i.getName().equals(v)).findFirst().orElse(null), inst.getAvailableOutputs().stream().map(Output::getName).toArray(String[]::new));
 
-                ResultTable values = new ResultList("Min", "Max", "P", "I", "D", "Output Limit");
+                DataTable values = new DataList("Min", "Max", "P", "I", "D", "Output Limit");
 
                 try {
                     inst.getPIDZones().stream().map(pid -> new Object[]{pid.getMin(), pid.getMax(), pid.getP(), pid.getI(), pid.getD(), pid.getOutput()}).forEach(values::addData);

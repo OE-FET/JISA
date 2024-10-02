@@ -14,7 +14,7 @@ import jisa.devices.Instrument.OptionalQuantity;
 import jisa.gui.form.Field;
 import jisa.gui.form.Form;
 import jisa.gui.form.TableField;
-import jisa.results.ResultTable;
+import jisa.results.DataTable;
 import kotlin.reflect.KClass;
 
 import java.util.LinkedList;
@@ -419,9 +419,9 @@ public class Configurator<I extends Instrument> extends JFXElement {
             field.addChangeListener(parameter::setValue);
             sepLast = false;
             return field;
-        } else if (ResultTable.class.isAssignableFrom(parameter.getType())) {
-            TableField field = config.addTable(parameter.getName(), ((ResultTable) parameter.getValue()).getColumnsAsArray());
-            field.set((ResultTable) parameter.getValue());
+        } else if (DataTable.class.isAssignableFrom(parameter.getType())) {
+            TableField field = config.addTable(parameter.getName(), ((DataTable) parameter.getValue()).getColumnsAsArray());
+            field.set((DataTable) parameter.getValue());
             field.addChangeListener(parameter::setValue);
             sepLast = false;
             return field;

@@ -21,7 +21,7 @@ import jisa.maths.functions.Function;
 import jisa.maths.functions.XYFunction;
 import jisa.maths.interpolation.Interpolation;
 import jisa.maths.matrices.Matrix;
-import jisa.results.ResultTable;
+import jisa.results.DataTable;
 import jisa.results.RowEvaluable;
 
 import java.nio.IntBuffer;
@@ -232,7 +232,7 @@ public class HeatMap extends JFXElement {
         drawInterpolate(Doubles.asList(xValues), Doubles.asList(yValues), Doubles.asList(values));
     }
 
-    public void watch(ResultTable table, RowEvaluable<? extends Number> x, RowEvaluable<? extends Number> y, RowEvaluable<? extends Number> v) {
+    public void watch(DataTable table, RowEvaluable<? extends Number> x, RowEvaluable<? extends Number> y, RowEvaluable<? extends Number> v) {
         drawMesh(table.get(x), table.get(y), table.get(v));
         table.addRowListener(row -> drawMesh(table.get(x), table.get(y), table.get(v)));
         table.addClearListener(this::clear);

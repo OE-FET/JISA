@@ -9,9 +9,9 @@ import jisa.gui.form.ChoiceField;
 import jisa.gui.form.Field;
 import jisa.gui.form.Form;
 import jisa.maths.Range;
-import jisa.results.ResultList;
-import jisa.results.ResultStream;
-import jisa.results.ResultTable;
+import jisa.results.DataList;
+import jisa.results.DataStream;
+import jisa.results.DataTable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,9 +25,9 @@ public class Setup<R extends Measurement<?>> extends Tabs {
         map.put(Integer.class, (FieldCreator<Integer>) Form::addIntegerField);
         map.put(Boolean.class, (FieldCreator<Boolean>) Form::addCheckBox);
         map.put(Range.class, (FieldCreator<Range<Double>>) Form::addDoubleRange);
-        map.put(ResultTable.class, (FieldCreator<ResultTable>) Form::addTable);
-        map.put(ResultList.class, (FieldCreator<ResultTable>) Form::addTable);
-        map.put(ResultStream.class, (FieldCreator<ResultTable>) Form::addTable);
+        map.put(DataTable.class, (FieldCreator<DataTable>) Form::addTable);
+        map.put(DataList.class, (FieldCreator<DataTable>) Form::addTable);
+        map.put(DataStream.class, (FieldCreator<DataTable>) Form::addTable);
     });
 
     private final R    measurement;

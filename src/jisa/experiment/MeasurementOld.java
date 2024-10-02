@@ -9,9 +9,9 @@ import jisa.gui.form.Field;
 import jisa.gui.form.Form;
 import jisa.maths.Range;
 import jisa.results.Column;
-import jisa.results.ResultList;
-import jisa.results.ResultStream;
-import jisa.results.ResultTable;
+import jisa.results.DataList;
+import jisa.results.DataStream;
+import jisa.results.DataTable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,9 +28,9 @@ public abstract class MeasurementOld {
     private final List<Configuration<?>> instruments = new ArrayList<>();
     private       String                 label       = "";
     private       boolean                running     = false;
-    private       boolean                stopped     = false;
-    private       ResultTable            results     = null;
-    private       Thread                 runThread   = Thread.currentThread();
+    private boolean   stopped   = false;
+    private DataTable results   = null;
+    private Thread    runThread = Thread.currentThread();
 
     public <T extends Instrument> Configuration<T> addInstrument(Configuration<T> configuration) {
         instruments.add(configuration);
@@ -74,7 +74,7 @@ public abstract class MeasurementOld {
      *
      * @throws Exception Upon invalid configuration or measurement error
      */
-    protected abstract void run(ResultTable results) throws Exception;
+    protected abstract void run(DataTable results) throws Exception;
 
     /**
      * This method is always called whenever the measurement is ended prematurely by stop() (or other interrupt).
@@ -112,8 +112,8 @@ public abstract class MeasurementOld {
      *
      * @return Results storage
      */
-    public ResultTable newResults() {
-        results = new ResultList(getColumns());
+    public DataTable newResults() {
+        results = new DataList(getColumns());
         return results;
     }
 
@@ -126,8 +126,8 @@ public abstract class MeasurementOld {
      *
      * @throws IOException Upon error opening file for writing
      */
-    public ResultTable newResults(String path) throws IOException {
-        results = new ResultStream(path, getColumns());
+    public DataTable newResults(String path) throws IOException {
+        results = new DataStream(path, getColumns());
         return results;
     }
 
@@ -136,7 +136,7 @@ public abstract class MeasurementOld {
      *
      * @return Results storage being used
      */
-    public ResultTable getResults() {
+    public DataTable getResults() {
         return results;
     }
 

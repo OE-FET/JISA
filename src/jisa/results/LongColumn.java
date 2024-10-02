@@ -44,6 +44,11 @@ public class LongColumn extends Column<Long> {
         return Longs.fromByteArray(stream.readNBytes(Long.BYTES));
     }
 
+    @Override
+    public void skipBytes(InputStream stream) throws IOException {
+        stream.skip(Long.BYTES);
+    }
+
     public RowEvaluable<Double> pow(double power) {
         return r -> Math.pow(r.get(this), power);
     }

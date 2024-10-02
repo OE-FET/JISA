@@ -10,8 +10,8 @@ import jisa.gui.GUI;
 import jisa.gui.form.Field;
 import jisa.gui.form.Form;
 import jisa.results.Column;
-import jisa.results.ResultList;
-import jisa.results.ResultTable;
+import jisa.results.DataList;
+import jisa.results.DataTable;
 import jisa.results.Row;
 
 import java.util.*;
@@ -155,7 +155,7 @@ public class TableInput extends VBox {
 
     }
 
-    public TableInput(ResultTable table) {
+    public TableInput(DataTable table) {
 
         this(table.getColumnsAsArray());
         setContents(table);
@@ -175,15 +175,15 @@ public class TableInput extends VBox {
         return List.copyOf(columns);
     }
 
-    public ResultTable getContents() {
+    public DataTable getContents() {
 
-        ResultTable list = new ResultList(columns);
+        DataTable list = new DataList(columns);
         table.getItems().forEach(list::addRow);
         return list;
 
     }
 
-    public void setContents(ResultTable table) {
+    public void setContents(DataTable table) {
         setColumns(table.getColumnsAsArray());
         GUI.runNow(() -> this.table.getItems().addAll(table.getRows()));
     }

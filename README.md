@@ -275,7 +275,7 @@ public class Main {
         SMU            smu     = new K2450(new GPIBAddress(0, 20));
         Column<Double> V       = Column.ofDoubles("Voltage", "V");
         Column<Double> I       = Column.ofDoubles("Current", "A");
-        ResultTable    results = new ResultList(V, I);
+        DataTable      results = new DataList(V, I);
 
         smu.setVoltage(0.0);
         smu.turnOn();
@@ -384,7 +384,7 @@ function main()
     smu     = jisa.devices.K2450(JISA.Addresses.GPIBAddress(0,20));
     V       = jisa.results.Column.ofDoubles("Voltage", "V");
     I       = jisa.results.Column.ofDoubles("Current", "I");
-    results = jisa.results.ResultList({V, I});
+    results = jisa.results.DataList({V, I});
 
     smu.setVoltage(0.0);
     smu.turnOn();

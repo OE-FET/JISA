@@ -509,6 +509,8 @@ public abstract class Column<T> implements RowEvaluable<T> {
 
     public abstract T readFromStream(InputStream stream) throws IOException;
 
+    public abstract void skipBytes(InputStream stream) throws IOException;
+
     /**
      * Returns the name of this column.
      *

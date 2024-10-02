@@ -20,8 +20,8 @@ import jisa.gui.controls.*;
 import jisa.maths.Range;
 import jisa.maths.functions.GFunction;
 import jisa.results.Column;
-import jisa.results.ResultList;
-import jisa.results.ResultTable;
+import jisa.results.DataList;
+import jisa.results.DataTable;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -130,7 +130,7 @@ public class Form extends JFXElement implements Element, Iterable<Field<?>> {
 
                 field.writeOtherDefaults(sub);
 
-            } else if (ResultTable.class.isAssignableFrom(type)) {
+            } else if (DataTable.class.isAssignableFrom(type)) {
 
                 block.stringValue(field.getText()).set(((TableField) field).getValue().getCSV());
 
@@ -172,9 +172,9 @@ public class Form extends JFXElement implements Element, Iterable<Field<?>> {
 
                 field.loadOtherDefaults(sub);
 
-            } else if (ResultTable.class.isAssignableFrom(type) && block.hasBlock(field.getText())) {
+            } else if (DataTable.class.isAssignableFrom(type) && block.hasBlock(field.getText())) {
                 try {
-                    field.set(ResultList.fromCSVString(block.stringValue(field.getText()).get()));
+                    field.set(DataList.fromCSVString(block.stringValue(field.getText()).get()));
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
@@ -815,7 +815,7 @@ public class Form extends JFXElement implements Element, Iterable<Field<?>> {
         return addTable(name, Stream.of(columns).map(Column::ofDoubles).toArray(Column[]::new));
     }
 
-    public TableField addTable(String name, ResultTable table) {
+    public TableField addTable(String name, DataTable table) {
 
         TableField field = addTable(name, table.getColumnsAsArray());
         field.set(table);

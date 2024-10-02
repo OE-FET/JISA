@@ -42,6 +42,11 @@ public class BooleanColumn extends Column<Boolean> {
         return stream.read() == 1;
     }
 
+    @Override
+    public void skipBytes(InputStream stream) throws IOException {
+        stream.skip(1);
+    }
+
     public RowEvaluable<Boolean> not() {
         return r -> !this.evaluate(r);
     }

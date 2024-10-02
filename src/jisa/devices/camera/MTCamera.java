@@ -4,8 +4,8 @@ import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
 import jisa.devices.camera.frame.Frame;
 import jisa.results.Column;
-import jisa.results.ResultList;
-import jisa.results.ResultTable;
+import jisa.results.DataList;
+import jisa.results.DataTable;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -150,7 +150,7 @@ public interface MTCamera<F extends Frame> extends Camera<F> {
         Column<Integer> start  = Column.ofIntegers("Start Row");
         Column<Integer> end    = Column.ofIntegers("End Row");
         Column<Boolean> binned = Column.ofBooleans("Binned");
-        ResultTable     table  = new ResultList(start, end, binned);
+        DataTable       table  = new DataList(start, end, binned);
 
         parameters.addOptional("Multi-Track", false, table, t -> inst.setMultiTrackEnabled(false), t -> {
 

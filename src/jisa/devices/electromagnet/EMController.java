@@ -5,7 +5,7 @@ import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.ParameterList;
 import jisa.results.Column;
-import jisa.results.ResultList;
+import jisa.results.DataList;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -29,10 +29,10 @@ public interface EMController extends Instrument {
         Column<Double> MAX_I = Column.ofDoubles("Max I", "A");
         Column<Double> RATE  = Column.ofDoubles("Rate", "A/min");
 
-        ResultList table = inst.getRampRates()
-                               .stream()
-                               .map(r -> Map.of(MIN_I, r.getMinI(), MAX_I, r.getMaxI(), RATE, r.getRate()))
-                               .collect(ResultList.mapCollector());
+        DataList table = inst.getRampRates()
+                             .stream()
+                             .map(r -> Map.of(MIN_I, r.getMinI(), MAX_I, r.getMaxI(), RATE, r.getRate()))
+                             .collect(DataList.mapCollector());
 
         list.addValue(
             "Ramp Zones",

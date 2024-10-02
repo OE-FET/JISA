@@ -6,15 +6,15 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import jisa.results.ResultTable;
+import jisa.results.DataTable;
 import jisa.results.Row;
 
 import java.util.stream.Collectors;
 
 public class Table extends JFXElement implements Element, Clearable {
 
-    public  TableView   table;
-    private ResultTable watching = null;
+    public  TableView table;
+    private DataTable watching = null;
 
     /**
      * Creates an empty table.
@@ -33,7 +33,7 @@ public class Table extends JFXElement implements Element, Clearable {
      * @param title Window title
      * @param list  ResultTable to display
      */
-    public Table(String title, ResultTable list) {
+    public Table(String title, DataTable list) {
         this(title);
         watchList(list);
     }
@@ -43,7 +43,7 @@ public class Table extends JFXElement implements Element, Clearable {
      *
      * @param list ResultTable to watch
      */
-    public synchronized void watchList(ResultTable list) {
+    public synchronized void watchList(DataTable list) {
 
         list.addRowListener(this::update);
         setUp(list);
@@ -56,11 +56,11 @@ public class Table extends JFXElement implements Element, Clearable {
      *
      * @param list ResultTable to watch
      */
-    public void watch(ResultTable list) {
+    public void watch(DataTable list) {
         watchList(list);
     }
 
-    private synchronized void setUp(ResultTable list) {
+    private synchronized void setUp(DataTable list) {
 
         GUI.runNow(() -> {
             table.getItems().clear();

@@ -1,6 +1,5 @@
 package jisa.results;
 
-import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 
 import java.io.IOException;
@@ -46,6 +45,11 @@ public class StringColumn extends Column<String> {
     @Override
     public String readFromStream(InputStream stream) throws IOException {
         return new String(stream.readNBytes(Ints.fromByteArray(stream.readNBytes(Integer.BYTES))), StandardCharsets.UTF_8);
+    }
+
+    @Override
+    public void skipBytes(InputStream stream) throws IOException {
+        stream.skip(Ints.fromByteArray(stream.readNBytes(Integer.BYTES)));
     }
 
 }

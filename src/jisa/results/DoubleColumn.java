@@ -44,4 +44,9 @@ public class DoubleColumn extends Column<Double> implements DoubleRowEvaluable {
         return Double.longBitsToDouble(Longs.fromByteArray(stream.readNBytes(Double.BYTES)));
     }
 
+    @Override
+    public void skipBytes(InputStream stream) throws IOException {
+        stream.skip(Double.BYTES);
+    }
+
 }

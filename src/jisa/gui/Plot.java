@@ -18,7 +18,7 @@ import jisa.gui.svg.*;
 import jisa.maths.fits.Fit;
 import jisa.maths.functions.Function;
 import jisa.results.Column;
-import jisa.results.ResultTable;
+import jisa.results.DataTable;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -141,11 +141,11 @@ public class Plot extends JFXElement implements Element, Clearable {
         this("", "", "", "", "");
     }
 
-    public Plot(String title, ResultTable table) {
+    public Plot(String title, DataTable table) {
         this(title, table, null);
     }
 
-    public Plot(String title, ResultTable table, Column<? extends Number> xAxis) {
+    public Plot(String title, DataTable table, Column<? extends Number> xAxis) {
 
         this(title);
 
@@ -169,7 +169,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
-    public Plot(String title, ResultTable table, Column<? extends Number> xAxis, Column<? extends Number> yAxis) {
+    public Plot(String title, DataTable table, Column<? extends Number> xAxis, Column<? extends Number> yAxis) {
         this(title);
         createSeries().watch(table, xAxis, yAxis);
     }

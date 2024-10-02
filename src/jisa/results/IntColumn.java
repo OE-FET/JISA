@@ -44,6 +44,11 @@ public class IntColumn extends Column<Integer> {
         return Ints.fromByteArray(stream.readNBytes(Integer.BYTES));
     }
 
+    @Override
+    public void skipBytes(InputStream stream) throws IOException {
+        stream.skip(Integer.BYTES);
+    }
+
     public RowEvaluable<Double> pow(double power) {
         return r -> Math.pow(r.get(this), power);
     }

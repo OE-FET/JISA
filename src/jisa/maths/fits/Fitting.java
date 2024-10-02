@@ -6,11 +6,10 @@ import jisa.maths.functions.Function;
 import jisa.maths.functions.PFunction;
 import jisa.maths.matrices.RealMatrix;
 import jisa.results.Column;
-import jisa.results.ResultTable;
+import jisa.results.DataTable;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math.optimization.OptimizationException;
-import org.apache.commons.math.optimization.SimpleVectorialPointChecker;
 import org.apache.commons.math.optimization.fitting.CurveFitter;
 import org.apache.commons.math.optimization.fitting.GaussianFitter;
 import org.apache.commons.math.optimization.fitting.HarmonicFitter;
@@ -83,7 +82,7 @@ public class Fitting {
 
     }
 
-    public static LinearFit linearFit(ResultTable data, Column<? extends Number> xCol, Column<? extends Number> yCol) {
+    public static LinearFit linearFit(DataTable data, Column<? extends Number> xCol, Column<? extends Number> yCol) {
         return linearFit(data.toMatrix(xCol), data.toMatrix(yCol));
     }
 
@@ -196,7 +195,7 @@ public class Fitting {
         return polyFit(separateX(data), separateY(data), degree);
     }
 
-    public static PolyFit polyFit(ResultTable data, Column<? extends Number> xCol, Column<? extends Number> yCol, int degree) {
+    public static PolyFit polyFit(DataTable data, Column<? extends Number> xCol, Column<? extends Number> yCol, int degree) {
         return polyFit(data.toMatrix(xCol), data.toMatrix(yCol), degree);
     }
 
@@ -220,7 +219,7 @@ public class Fitting {
         return gaussianFit(separateX(data), separateY(data));
     }
 
-    public static GaussianFit gaussianFit(ResultTable data, Column<? extends Number> xCol, Column<? extends Number> yCol) {
+    public static GaussianFit gaussianFit(DataTable data, Column<? extends Number> xCol, Column<? extends Number> yCol) {
         return gaussianFit(data.toMatrix(xCol), data.toMatrix(yCol));
     }
 
@@ -319,7 +318,7 @@ public class Fitting {
         return fit(separateX(data), separateY(data), toFit, initial);
     }
 
-    public static Fit fit(ResultTable data, Column<? extends Number> xCol, Column<? extends Number> yCol, PFunction toFit, double... initial) {
+    public static Fit fit(DataTable data, Column<? extends Number> xCol, Column<? extends Number> yCol, PFunction toFit, double... initial) {
         return fit(data.toMatrix(xCol), data.toMatrix(yCol), toFit, initial);
     }
 
@@ -341,7 +340,7 @@ public class Fitting {
         return cosFit(separateX(data), separateY(data));
     }
 
-    public static CosFit cosFit(ResultTable data, Column<? extends Number> xCol, Column<? extends Number> yCol) {
+    public static CosFit cosFit(DataTable data, Column<? extends Number> xCol, Column<? extends Number> yCol) {
         return cosFit(data.toMatrix(xCol), data.toMatrix(yCol));
     }
 
