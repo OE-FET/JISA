@@ -20,25 +20,18 @@ public class DataList extends DataTable {
 
     private final List<Row> rows;
 
-    public interface ColumnBuilder {
+    public static DataList emptyCopyOf(DataTable original) {
 
-        Column<?> create(String name, String unit);
+        DataList copy = new DataList(original.getColumnsAsArray());
+        original.getAttributes().forEach(copy::setAttribute);
+        return copy;
 
     }
 
     public static DataList copyOf(DataTable original) {
 
-        DataList copy = new DataList(original.getColumnsAsArray());
-        original.getAttributes().forEach(copy::setAttribute);
+        DataList copy = emptyCopyOf(original);
         original.forEach(copy::addRow);
-        return copy;
-
-    }
-
-    public static DataList emptyCopyOf(DataTable original) {
-
-        DataList copy = new DataList(original.getColumnsAsArray());
-        original.getAttributes().forEach(copy::setAttribute);
         return copy;
 
     }

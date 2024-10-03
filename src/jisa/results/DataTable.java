@@ -4,7 +4,6 @@ import com.google.common.collect.Lists;
 import com.google.common.primitives.Ints;
 import jisa.Util;
 import jisa.maths.matrices.RealMatrix;
-import jisa.results.DataList.ColumnBuilder;
 import kotlin.Pair;
 import kotlin.jvm.JvmClassMappingKt;
 import kotlin.reflect.KClass;
@@ -33,10 +32,11 @@ public abstract class DataTable implements Iterable<Row> {
 
     });
 
-    protected final List<Column<?>>     columns;
-    private final   Map<String, String> attributes     = new LinkedHashMap<>();
-    private final   List<RowListener>   rowListeners   = new LinkedList<>();
-    private final   List<ClearListener> clearListeners = new LinkedList<>();
+    protected final List<Column<?>> columns;
+
+    private final Map<String, String> attributes     = new LinkedHashMap<>();
+    private final List<RowListener>   rowListeners   = new LinkedList<>();
+    private final List<ClearListener> clearListeners = new LinkedList<>();
 
     public interface RowListener {
         void added(Row row);
@@ -1562,6 +1562,12 @@ public abstract class DataTable implements Iterable<Row> {
          * @throws Exception Forwarded exception
          */
         void build(RowSetter row) throws Exception;
+
+    }
+
+    public interface ColumnBuilder {
+
+        Column<?> create(String name, String unit);
 
     }
 
