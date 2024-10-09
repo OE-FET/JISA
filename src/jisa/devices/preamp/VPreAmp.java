@@ -55,15 +55,27 @@ public interface VPreAmp extends Instrument {
     void setInput(Input source) throws IOException, DeviceException;
 
     /**
-     * Returns a list of available inputs for use on the pre-amplifier.
+     * Returns a list of available input configurations for use on the pre-amplifier.
      *
      * @return List of available inputs
      *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
-    List<? extends Input> getInputs() throws IOException, DeviceException;
+    List<Input> getInputs() throws IOException, DeviceException;
 
+    /**
+     * Finds the input configuration that is either differential or not (depending on the supplied boolean)
+     * and has the lowest input impedance that is at least that specified.
+     *
+     * @param differential Should this method find a differential input configuration?
+     * @param minImpedance The minimum impedance the found input should have.
+     *
+     * @return Found configuration.
+     *
+     * @throws IOException     Upon communications error.
+     * @throws DeviceException Upon no suitable configuration being found.
+     */
     default Input findInput(boolean differential, double minImpedance) throws IOException, DeviceException {
 
         return getInputs().stream().filter(i -> i.isDifferential() == differential && i.getInputImpedance() >= minImpedance)
@@ -72,13 +84,33 @@ public interface VPreAmp extends Instrument {
 
     }
 
+    /**
+     * Finds the greatest-impedance input configuration that is either differential or not depending on the supplied boolean.
+     *
+     * @param differential Should it be differential?
+     *
+     * @return Found configuration.
+     *
+     * @throws IOException     Upon communications error.
+     * @throws DeviceException Upon no suitable configuration being found.
+     */
     default Input findInput(boolean differential) throws IOException, DeviceException {
 
         return getInputs().stream().filter(i -> i.isDifferential() == differential)
-                          .min(Comparator.comparingDouble(Input::getInputImpedance))
+                          .max(Comparator.comparingDouble(Input::getInputImpedance))
                           .orElseThrow(() -> new DeviceException("No input found matching those specifications."));
     }
 
+    /**
+     * Finds the lowest-impedance input configuration that at least has the specified minimum impedance.
+     *
+     * @param minImpedance Minimum input impedance the found input should have.
+     *
+     * @return Found configuration.
+     *
+     * @throws IOException     Upon communications error.
+     * @throws DeviceException Upon no suitable configuration being found.
+     */
     default Input findInput(double minImpedance) throws IOException, DeviceException {
 
         return getInputs().stream().filter(i -> i.getInputImpedance() >= minImpedance)

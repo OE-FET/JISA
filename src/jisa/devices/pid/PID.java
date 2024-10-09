@@ -1,6 +1,6 @@
 package jisa.devices.pid;
 
-import jisa.control.Synch;
+import jisa.control.Sync;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.MultiInstrument;
@@ -509,7 +509,7 @@ public interface PID extends Instrument, MultiInstrument {
         default void waitForStableValue(double target, double pct, long msec) {
 
             try {
-                Synch.waitForStableTarget(
+                Sync.waitForStableTarget(
                     getInput()::getValue,
                     target,
                     pct,

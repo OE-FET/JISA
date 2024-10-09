@@ -7,7 +7,6 @@ import com.sun.jna.ptr.ShortByReference;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
-import jisa.devices.pid.MSTMeter;
 import jisa.visa.NativeDevice;
 
 import java.io.IOException;
@@ -66,16 +65,17 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     private final short handle;
 
-    public final TC08TMeter       CHANNEL_0 = new TC08TMeter(0);
-    public final TC08TMeter       CHANNEL_1 = new TC08TMeter(1);
-    public final TC08TMeter       CHANNEL_2 = new TC08TMeter(2);
-    public final TC08TMeter       CHANNEL_3 = new TC08TMeter(3);
-    public final TC08TMeter       CHANNEL_4 = new TC08TMeter(4);
-    public final TC08TMeter       CHANNEL_5 = new TC08TMeter(5);
-    public final TC08TMeter       CHANNEL_6 = new TC08TMeter(6);
-    public final TC08TMeter       CHANNEL_7 = new TC08TMeter(7);
-    public final TC08TMeter       CHANNEL_8 = new TC08TMeter(8);
-    private      List<TC08TMeter> channels  = List.of(CHANNEL_0, CHANNEL_1, CHANNEL_2, CHANNEL_3, CHANNEL_4, CHANNEL_5, CHANNEL_6, CHANNEL_7, CHANNEL_8);
+    public final TC08TMeter CHANNEL_0 = new TC08TMeter((short) 0);
+    public final TC08TMeter CHANNEL_1 = new TC08TMeter((short) 1);
+    public final TC08TMeter CHANNEL_2 = new TC08TMeter((short) 2);
+    public final TC08TMeter CHANNEL_3 = new TC08TMeter((short) 3);
+    public final TC08TMeter CHANNEL_4 = new TC08TMeter((short) 4);
+    public final TC08TMeter CHANNEL_5 = new TC08TMeter((short) 5);
+    public final TC08TMeter CHANNEL_6 = new TC08TMeter((short) 6);
+    public final TC08TMeter CHANNEL_7 = new TC08TMeter((short) 7);
+    public final TC08TMeter CHANNEL_8 = new TC08TMeter((short) 8);
+
+    private final List<TC08TMeter> channels = List.of(CHANNEL_0, CHANNEL_1, CHANNEL_2, CHANNEL_3, CHANNEL_4, CHANNEL_5, CHANNEL_6, CHANNEL_7, CHANNEL_8);
 
     private float[]   lastValues    = {0, 0, 0, 0, 0, 0, 0, 0, 0};
     private long      lastTime      = 0;
@@ -395,10 +395,10 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     public class TC08TMeter implements TCouple {
 
-        private final int  channel;
-        private       Type type = Type.UNKNOWN;
+        private final short channel;
+        private       Type  type = Type.UNKNOWN;
 
-        public TC08TMeter(int channel) {
+        public TC08TMeter(short channel) {
             this.channel = channel;
         }
 
@@ -449,7 +449,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
             int result = nativeLibrary.usb_tc08_set_channel(
                 handle,
-                (short) channel,
+                channel,
                 NativeInterface.TYPE_MAP.getOrDefault(type, NativeInterface.USB_TC08_DISABLE_CHANNEL)
             );
 

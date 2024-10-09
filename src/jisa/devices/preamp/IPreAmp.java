@@ -6,6 +6,9 @@ import jisa.devices.ParameterList;
 
 import java.io.IOException;
 
+/**
+ * Interface for defining the standard functionality of current(-to-voltage) pre-amplifiers.
+ */
 public interface IPreAmp extends Instrument {
 
     static String getDescription() {
@@ -101,8 +104,26 @@ public interface IPreAmp extends Instrument {
      */
     double getFilterRollOff() throws IOException, DeviceException;
 
+    /**
+     * Returns whether this pre-amp is inverting its output signal relative to its input signal
+     * (i.e., introducing a 180 deg phase shift).
+     *
+     * @return Is it inverting?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
     boolean isInverting() throws IOException, DeviceException;
 
+    /**
+     * Sets whether this pre-amp should invert is output signal relative to its input signal
+     * (i.e., intoduce a 180 deg phase shift).
+     *
+     * @param inverting Should it invert?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
     void setInverting(boolean inverting) throws IOException, DeviceException;
 
 }

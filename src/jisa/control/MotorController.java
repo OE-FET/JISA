@@ -1,7 +1,7 @@
 package jisa.control;
 
-import jisa.devices.DeviceException;
 import jisa.Util;
+import jisa.devices.DeviceException;
 import org.apache.commons.math.stat.regression.SimpleRegression;
 
 import java.io.IOException;
@@ -37,14 +37,14 @@ public class MotorController {
         voltage.set(maxV);
         start();
 
-        Synch.waitForParamStable(frequency::get, 1.0, 100, 2 * maxPeriod);
+        Sync.waitForParamStable(frequency::get, 1.0, 100, 2 * maxPeriod);
 
         fit = new SimpleRegression();
 
         for (double v : values) {
 
             voltage.set(v);
-            Synch.waitForParamStable(frequency::get, 1.0, 100, 2 * maxPeriod);
+            Sync.waitForParamStable(frequency::get, 1.0, 100, 2 * maxPeriod);
             fit.addData(frequency.get(), voltage.get());
 
         }
@@ -64,7 +64,7 @@ public class MotorController {
 
     public void waitForFrequency(double f, double pctMargin) throws IOException, DeviceException, InterruptedException {
         start();
-        Synch.waitForParamWithinError(frequency::get, f, pctMargin, 100);
+        Sync.waitForParamWithinError(frequency::get, f, pctMargin, 100);
     }
 
     public void waitForFrequency(double f) throws IOException, DeviceException, InterruptedException {

@@ -40,7 +40,7 @@ public class SR560 extends VISADevice implements VPreAmp {
         public static final Input<Integer> B    = new Input<>(2, false, 100e6, "B");
         public static final Input<Integer> DIFF = new Input<>(1, true, 100e6, "A-B");
 
-        public static final List<Input<Integer>> ALL = List.of(A, B, DIFF);
+        public static final List<Input> ALL = List.of(A, B, DIFF);
 
     }
 
@@ -77,14 +77,14 @@ public class SR560 extends VISADevice implements VPreAmp {
     }
 
     @Override
-    public void setGain(double gain) throws IOException {
+    public synchronized void setGain(double gain) throws IOException {
         Gain mode = Gain.fromDouble(gain);
         write(C_GAIN, mode.toInt());
         gainMode = mode;
     }
 
     @Override
-    public void setInput(Input source) throws IOException, DeviceException {
+    public synchronized void setInput(Input source) throws IOException, DeviceException {
 
         if (!Inputs.ALL.contains(source)) {
             throw new DeviceException("That is not a valid input for this SR560!");
@@ -97,12 +97,12 @@ public class SR560 extends VISADevice implements VPreAmp {
     }
 
     @Override
-    public List<Input<Integer>> getInputs() throws IOException, DeviceException {
+    public List<Input> getInputs() throws IOException, DeviceException {
         return Inputs.ALL;
     }
 
     @Override
-    public void setCoupling(Coupling mode) throws IOException {
+    public synchronized void setCoupling(Coupling mode) throws IOException {
 
         switch (mode) {
 
@@ -125,26 +125,26 @@ public class SR560 extends VISADevice implements VPreAmp {
     }
 
     @Override
-    public void setHighPassFrequency(double frequency) throws IOException {
+    public synchronized void setHighPassFrequency(double frequency) throws IOException {
         setFilter(lowFreq, frequency, rollOff);
     }
 
     @Override
-    public double getHighPassFrequency() {
+    public synchronized double getHighPassFrequency() {
         return highFreq;
     }
 
     @Override
-    public void setLowPassFrequency(double frequency) throws IOException {
+    public synchronized void setLowPassFrequency(double frequency) throws IOException {
         setFilter(frequency, highFreq, rollOff);
     }
 
     @Override
-    public double getLowPassFrequency() {
+    public synchronized double getLowPassFrequency() {
         return lowFreq;
     }
 
-    protected void setFilter(double lowFreq, double highFreq, double rollOff) throws IOException {
+    protected synchronized void setFilter(double lowFreq, double highFreq, double rollOff) throws IOException {
 
         FMode mode;
 
@@ -158,8 +158,8 @@ public class SR560 extends VISADevice implements VPreAmp {
             mode = FMode.fromParams(Filter.BAND_PASS, rollOff);
         }
 
-        Freq low  = Freq.fromDouble(lowFreq);
-        Freq high = Freq.fromDouble(highFreq);
+        Freq low  = Freq.nearestTo(lowFreq);
+        Freq high = Freq.nearestTo(highFreq);
 
         write(C_FILTER_MODE, mode.toInt());
         this.rollOff = mode.getDB();
@@ -181,37 +181,37 @@ public class SR560 extends VISADevice implements VPreAmp {
     }
 
     @Override
-    public void setFilterRollOff(double dbPerOct) throws IOException {
+    public synchronized void setFilterRollOff(double dbPerOct) throws IOException {
         setFilter(lowFreq, highFreq, dbPerOct);
     }
 
     @Override
-    public double getGain() {
+    public synchronized double getGain() {
         return gainMode.getGain();
     }
 
     @Override
-    public Input getInput() {
+    public synchronized Input getInput() {
         return sourceMode;
     }
 
     @Override
-    public Coupling getCoupling() {
+    public synchronized Coupling getCoupling() {
         return couplingMode;
     }
 
     @Override
-    public double getFilterRollOff() {
+    public synchronized double getFilterRollOff() {
         return rollOff;
     }
 
     @Override
-    public boolean isInverting() {
+    public synchronized boolean isInverting() {
         return inverting;
     }
 
     @Override
-    public void setInverting(boolean inverting) throws IOException {
+    public synchronized void setInverting(boolean inverting) throws IOException {
         write(C_INVERT, inverting ? 1 : 0);
         this.inverting = inverting;
     }
@@ -333,7 +333,7 @@ public class SR560 extends VISADevice implements VPreAmp {
         private final int    mode;
         private final double frequency;
 
-        public static Freq fromDouble(double freq) {
+        public static Freq nearestTo(double freq) {
             return Arrays.stream(values()).min(Comparator.comparingDouble(f -> Math.abs(f.frequency - freq))).orElse(F_0_03_HZ);
         }
 

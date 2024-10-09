@@ -1,6 +1,6 @@
 package jisa.devices.features;
 
-import jisa.control.Synch;
+import jisa.control.Sync;
 import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
 
@@ -108,7 +108,7 @@ public interface TemperatureControlled extends Feature {
      * @throws InterruptedException Upon waiting being interrupted by a thread interrupt
      */
     default void waitForStableControlledTemperature() throws IOException, DeviceException, InterruptedException {
-        Synch.waitForCondition(i -> isTemperatureControlStable(), 1000);
+        Sync.waitForCondition(i -> isTemperatureControlStable(), 1000);
     }
 
 }

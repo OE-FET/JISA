@@ -1,6 +1,6 @@
 package jisa.devices.meter;
 
-import jisa.control.Synch;
+import jisa.control.Sync;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.ParameterList;
@@ -231,7 +231,7 @@ public interface VMeter extends Meter, Instrument {
     void setTerminals(Terminals terminals) throws DeviceException, IOException;
 
     default void waitForStableVoltage(double pctMargin, int duration) throws IOException, DeviceException, InterruptedException {
-        Synch.waitForParamStable(this::getVoltage, pctMargin, (int) (getIntegrationTime() * 4000.0), duration);
+        Sync.waitForParamStable(this::getVoltage, pctMargin, (int) (getIntegrationTime() * 4000.0), duration);
     }
 
 }

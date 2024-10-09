@@ -1,6 +1,6 @@
 package jisa.devices.lockin;
 
-import jisa.control.Synch;
+import jisa.control.Sync;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.ParameterList;
@@ -274,7 +274,7 @@ public interface LockIn extends Instrument, FMeter {
      */
     default void waitForStableLock(double pctMargin, long duration) throws IOException, DeviceException, InterruptedException {
 
-        Synch.waitForParamStable(
+        Sync.waitForParamStable(
             this::getLockedAmplitude,
             pctMargin,
             100,

@@ -1,6 +1,6 @@
 package jisa.devices.meter;
 
-import jisa.control.Synch;
+import jisa.control.Sync;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.enums.AMode;
@@ -210,7 +210,7 @@ public interface IMeter extends Meter, Instrument {
 
     default void waitForStableCurrent(double pctMargin, int interval, int duration) throws IOException, DeviceException, InterruptedException {
 
-        Synch.waitForParamStable(this::getCurrent, pctMargin, interval, duration);
+        Sync.waitForParamStable(this::getCurrent, pctMargin, interval, duration);
 
     }
 

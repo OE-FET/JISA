@@ -1,6 +1,6 @@
 package jisa.devices.power;
 
-import jisa.control.Synch;
+import jisa.control.Sync;
 import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
 import jisa.devices.source.IVSource;
@@ -144,7 +144,7 @@ public interface DCPower extends IVSource {
     default void waitForStableVoltage(double pctError, long time) throws IOException, DeviceException, InterruptedException {
 
 
-        Synch.waitForParamStable(
+        Sync.waitForParamStable(
                 this::getVoltage,
                 pctError,
                 100,
@@ -165,7 +165,7 @@ public interface DCPower extends IVSource {
      */
     default void waitForStableCurrent(double pctError, long time) throws IOException, DeviceException, InterruptedException {
 
-        Synch.waitForParamStable(
+        Sync.waitForParamStable(
                 this::getCurrent,
                 pctError,
                 100,

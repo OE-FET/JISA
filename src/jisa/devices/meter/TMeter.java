@@ -1,11 +1,12 @@
 package jisa.devices.meter;
 
-import jisa.control.Synch;
+import jisa.control.Sync;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.ParameterList;
 
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Unified interface for thermometers
@@ -17,7 +18,7 @@ public interface TMeter extends Instrument {
     }
 
     static void addParameters(TMeter inst, Class target, ParameterList parameters) {
-        parameters.addValue("Sensor Range [K]", inst::getTemperatureRange, 999.9, inst::setTemperatureRange);
+        parameters.addValue("Temperature Range [K]", inst::getTemperatureRange, 999.9, inst::setTemperatureRange);
     }
 
     /**
@@ -63,7 +64,7 @@ public interface TMeter extends Instrument {
      * @throws InterruptedException Upon wait being interrupted
      */
     default void waitForStableTemperature(double temperature, double pctMargin, long duration) throws IOException, DeviceException, InterruptedException {
-        Synch.waitForStableTarget(this::getTemperature, temperature, pctMargin, 1000, duration);
+        Sync.waitForStableTarget(this::getTemperature, temperature, pctMargin, 1000, duration);
     }
 
     /**
@@ -77,7 +78,7 @@ public interface TMeter extends Instrument {
      * @throws InterruptedException Upon wait being interrupted
      */
     default void waitForStableTemperature(double pctMargin, long duration) throws IOException, DeviceException, InterruptedException {
-        Synch.waitForParamStable(this::getTemperature, pctMargin, 1000, duration);
+        Sync.waitForParamStable(this::getTemperature, pctMargin, 1000, duration);
     }
 
 
@@ -86,31 +87,32 @@ public interface TMeter extends Instrument {
      *
      * @param pctMargin Percentage range to stay within
      * @param duration  Minimum time needed to be in range.
-     * @param maxTime Maximum time of stabilization
+     * @param timeOut   Maximum time to wait before timing out.
      *
-     * @throws IOException          Upon communications error
-     * @throws DeviceException      Upon compatibility error
-     * @throws InterruptedException Upon wait being interrupted
+     * @throws IOException          Upon communications error.
+     * @throws DeviceException      Upon compatibility error.
+     * @throws InterruptedException Upon wait being interrupted.
+     * @throws TimeoutException     Upon timing out.
      */
-    default void waitForStableTemperatureMaxTime(double pctMargin, long duration, long maxTime) throws IOException, DeviceException, InterruptedException {
-        Synch.waitForParamStableMaxTime(this::getTemperature, pctMargin, 1000, duration, maxTime);
+    default void waitForStableTemperature(double pctMargin, long duration, long timeOut) throws IOException, DeviceException, InterruptedException, TimeoutException {
+        Sync.waitForParamStable(this::getTemperature, pctMargin, 1000, duration, timeOut);
     }
 
     /**
      * Wait for the temperature to remain within a range of a given value for at least a specified amount of time, with maximum time.
      *
-     * @param temperature Temperature to be in range of
-     * @param pctMargin   Percentage range to stay within
+     * @param temperature Temperature to be in range of.
+     * @param pctMargin   Percentage range to stay within.
      * @param duration    Minimum time needed to be in range.
-     * @param maxTime Maximum time of stabilization
+     * @param timeOut     Maximum time to wait before timing out.
      *
-     *
-     * @throws IOException          Upon communications error
-     * @throws DeviceException      Upon compatibility error
-     * @throws InterruptedException Upon wait being interrupted
+     * @throws IOException          Upon communications error.
+     * @throws DeviceException      Upon compatibility error.
+     * @throws InterruptedException Upon wait being interrupted.
+     * @throws TimeoutException     Upon timing out.
      */
-    default void waitForStableTemperatureMaxTime(double temperature, double pctMargin, long duration, long maxTime) throws IOException, DeviceException, InterruptedException {
-        Synch.waitForStableTargetMaxTime(this::getTemperature, temperature, pctMargin, 1000, duration, maxTime);
+    default void waitForStableTemperature(double temperature, double pctMargin, long duration, long timeOut) throws IOException, DeviceException, InterruptedException, TimeoutException {
+        Sync.waitForStableTarget(this::getTemperature, temperature, pctMargin, 1000, duration, timeOut);
     }
 
 }

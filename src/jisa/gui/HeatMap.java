@@ -551,6 +551,9 @@ public class HeatMap extends JFXElement {
 
     private void drawColourBar() {
 
+        gc.clearRect(cStartX, cStartY, CBAR_SIZE, pHeight);
+        gc.clearRect(cStartX + 26, 0, CBAR_SIZE, height);
+
         gc.setFill(Color.BLACK);
         gc.setStroke(Color.BLACK);
         gc.setTextAlign(TextAlignment.LEFT);
