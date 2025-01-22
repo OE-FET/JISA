@@ -5,8 +5,8 @@ import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.MultiInstrument;
 import jisa.devices.ParameterList;
-import jisa.results.DataList;
-import jisa.results.DataTable;
+import jisa.results.ResultList;
+import jisa.results.ResultTable;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -14,6 +14,78 @@ import java.util.LinkedList;
 import java.util.List;
 
 public interface PID extends Instrument, MultiInstrument {
+
+    /**
+     * Returns a list of all input channels connected to this PID controller.
+     *
+     * @return List of input channels
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    List<? extends Input> getInputs();
+
+    /**
+     * Returns the input channel with a given index connected to this PID controller.
+     *
+     * @param index Input index
+     *
+     * @return Input channel with specified index
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    default Input getInput(int index) {
+        return getInputs().get(index);
+    }
+
+    /**
+     * Returns a list of all output channels connected to this PID controller.
+     *
+     * @return List of output channels
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    List<? extends Output> getOutputs();
+
+    /**
+     * Returns the output channel with a given index connected to this PID controller.
+     *
+     * @param index Output index
+     *
+     * @return Output channel with specified index
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    default Output getOutput(int index) {
+        return getOutputs().get(index);
+    }
+
+    /**
+     * Returns a list of all control loops provided by this PID controller.
+     *
+     * @return List of control loops
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    List<? extends Loop> getLoops();
+
+    /**
+     * Returns the control loop with a given index, provided by this PID controller.
+     *
+     * @param index Control loop index
+     *
+     * @return PID control loop with specified index
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon compatibility error
+     */
+    default Loop getLoop(int index) {
+        return getLoops().get(index);
+    }
 
     /**
      * Represents an input channel for a PID controller
@@ -146,7 +218,7 @@ public interface PID extends Instrument, MultiInstrument {
      * Represents a single (independent) PID loop within a PID controller
      */
     interface Loop extends Instrument {
-        
+
         static void addParameters(Loop inst, Class target, ParameterList parameters) {
 
             if (Loop.class.isAssignableFrom(target)) {
@@ -160,7 +232,7 @@ public interface PID extends Instrument, MultiInstrument {
                 parameters.addChoice("Input", input.getName(), v -> inst.getAvailableInputs().stream().filter(i -> i.getName().equals(v)).findFirst().orElse(null), inst.getAvailableInputs().stream().map(Input::getName).toArray(String[]::new));
                 parameters.addChoice("Output", output.getName(), v -> inst.getAvailableOutputs().stream().filter(i -> i.getName().equals(v)).findFirst().orElse(null), inst.getAvailableOutputs().stream().map(Output::getName).toArray(String[]::new));
 
-                DataTable values = new DataList("Min", "Max", "P", "I", "D", "Output Limit");
+                ResultTable values = new ResultList("Min", "Max", "P", "I", "D", "Output Limit");
 
                 try {
                     inst.getPIDZones().stream().map(pid -> new Object[]{pid.getMin(), pid.getMax(), pid.getP(), pid.getI(), pid.getD(), pid.getOutput()}).forEach(values::addData);
@@ -584,78 +656,6 @@ public interface PID extends Instrument, MultiInstrument {
 
         }
 
-    }
-
-    /**
-     * Returns a list of all input channels connected to this PID controller.
-     *
-     * @return List of input channels
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    List<? extends Input> getInputs();
-
-    /**
-     * Returns the input channel with a given index connected to this PID controller.
-     *
-     * @param index Input index
-     *
-     * @return Input channel with specified index
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default Input getInput(int index) {
-        return getInputs().get(index);
-    }
-
-    /**
-     * Returns a list of all output channels connected to this PID controller.
-     *
-     * @return List of output channels
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    List<? extends Output> getOutputs();
-
-    /**
-     * Returns the output channel with a given index connected to this PID controller.
-     *
-     * @param index Output index
-     *
-     * @return Output channel with specified index
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default Output getOutput(int index) {
-        return getOutputs().get(index);
-    }
-
-    /**
-     * Returns a list of all control loops provided by this PID controller.
-     *
-     * @return List of control loops
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    List<? extends Loop> getLoops();
-
-    /**
-     * Returns the control loop with a given index, provided by this PID controller.
-     *
-     * @param index Control loop index
-     *
-     * @return PID control loop with specified index
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon compatibility error
-     */
-    default Loop getLoop(int index) {
-        return getLoops().get(index);
     }
 
     class Zone {

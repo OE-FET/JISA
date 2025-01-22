@@ -289,7 +289,11 @@ public class GUI {
 
         GUI.runNow(() -> {
 
-            VBox box = new VBox(new Label(e.getMessage()), stackTrace.getBorderedNode());
+            TextArea textArea = new TextArea(e.getMessage());
+            textArea.setEditable(false);
+            textArea.setWrapText(true);
+
+            VBox box = new VBox(textArea, stackTrace.getBorderedNode());
             box.setSpacing(15.0);
 
             Alert alert = new Alert(Alert.AlertType.ERROR);

@@ -352,6 +352,7 @@ public class K2400 extends VISADevice implements SMU {
 
     @Override
     public void setAverageMode(AMode mode) throws DeviceException, IOException {
+
         switch (mode) {
 
             case NONE:

@@ -6,8 +6,7 @@ import javafx.util.converter.DoubleStringConverter;
 
 import java.util.function.UnaryOperator;
 
-public class DoubleField extends TextField
-{
+public class DoubleField extends TextField {
 
     private static final UnaryOperator<TextFormatter.Change> DBL_FILTER = change -> {
         String newText = change.getControlNewText();
@@ -25,7 +24,7 @@ public class DoubleField extends TextField
 
     public double getDoubleValue() {
         try {
-            return Double.valueOf(getText());
+            return Double.parseDouble(getText());
         } catch (Exception e) {
             return 0;
         }

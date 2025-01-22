@@ -2,7 +2,9 @@ package jisa.gui;
 
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Shorts;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.geometry.VPos;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.PixelBuffer;
@@ -21,9 +23,12 @@ import jisa.maths.functions.Function;
 import jisa.maths.functions.XYFunction;
 import jisa.maths.interpolation.Interpolation;
 import jisa.maths.matrices.Matrix;
-import jisa.results.DataTable;
+import jisa.results.ResultTable;
 import jisa.results.RowEvaluable;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Collection;
@@ -232,7 +237,7 @@ public class HeatMap extends JFXElement {
         drawInterpolate(Doubles.asList(xValues), Doubles.asList(yValues), Doubles.asList(values));
     }
 
-    public void watch(DataTable table, RowEvaluable<? extends Number> x, RowEvaluable<? extends Number> y, RowEvaluable<? extends Number> v) {
+    public void watch(ResultTable table, RowEvaluable<? extends Number> x, RowEvaluable<? extends Number> y, RowEvaluable<? extends Number> v) {
         drawMesh(table.get(x), table.get(y), table.get(v));
         table.addRowListener(row -> drawMesh(table.get(x), table.get(y), table.get(v)));
         table.addClearListener(this::clear);
@@ -462,6 +467,7 @@ public class HeatMap extends JFXElement {
             pixels[i] = colourMap.value((data[i] - min) / range);
         }
 
+
         GUI.runNow(() -> {
 
             gc.clearRect(cStartX, cStartY, 25, pHeight);
@@ -542,7 +548,7 @@ public class HeatMap extends JFXElement {
 
         gc.clearRect(0, 0, canvas.getWidth(), 2.0 * TITLE_SIZE);
         gc.setFill(Color.BLACK);
-        gc.setFont(Font.font(Font.getDefault().getFamily(), FontWeight.BOLD, 22));
+        gc.setFont(Font.font(Font.getDefault().getFamily(), FontWeight.NORMAL, 22));
         gc.setTextAlign(TextAlignment.CENTER);
         gc.setTextBaseline(VPos.CENTER);
         gc.fillText(getTitle(), (pStartX + pEndX) / 2.0, TITLE_SIZE);
@@ -656,6 +662,17 @@ public class HeatMap extends JFXElement {
 
     public void clear() {
         draw(new double[0][0]);
+    }
+
+    public void savePNG(String path) throws IOException {
+
+        SnapshotParameters params = new SnapshotParameters();
+        params.setFill(Color.WHITE);
+
+        WritableImage image = canvas.snapshot(params, null);
+
+        ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", new File(path));
+
     }
 
     private static class CanvasPane extends Pane {

@@ -1,10 +1,13 @@
 package jisa.gui;
 
+import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.image.PixelBuffer;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import jisa.devices.camera.frame.Frame;
 import jisa.maths.matrices.Matrix;
 
 import java.nio.IntBuffer;
@@ -33,6 +36,7 @@ public class ImageDisplay extends JFXElement {
 
         canvas.getGraphicsContext2D().setImageSmoothing(false);
 
+        BorderPane.setMargin(centre, Insets.EMPTY);
 
     }
 
@@ -170,6 +174,10 @@ public class ImageDisplay extends JFXElement {
             canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
         });
 
+    }
+
+    public void drawFrame(Frame.UShortFrame frame) {
+        drawMono(frame.image(), Short.MAX_VALUE);
     }
 
     public void drawMono(double[][] data, double max) {

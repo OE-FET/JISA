@@ -12,13 +12,12 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import jisa.Util;
 import jisa.gui.form.Field;
-import jisa.gui.form.Form;
 import jisa.gui.plotting.*;
 import jisa.gui.svg.*;
 import jisa.maths.fits.Fit;
 import jisa.maths.functions.Function;
 import jisa.results.Column;
-import jisa.results.DataTable;
+import jisa.results.ResultTable;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -141,11 +140,11 @@ public class Plot extends JFXElement implements Element, Clearable {
         this("", "", "", "", "");
     }
 
-    public Plot(String title, DataTable table) {
+    public Plot(String title, ResultTable table) {
         this(title, table, null);
     }
 
-    public Plot(String title, DataTable table, Column<? extends Number> xAxis) {
+    public Plot(String title, ResultTable table, Column<? extends Number> xAxis) {
 
         this(title);
 
@@ -169,7 +168,7 @@ public class Plot extends JFXElement implements Element, Clearable {
 
     }
 
-    public Plot(String title, DataTable table, Column<? extends Number> xAxis, Column<? extends Number> yAxis) {
+    public Plot(String title, ResultTable table, Column<? extends Number> xAxis, Column<? extends Number> yAxis) {
         this(title);
         createSeries().watch(table, xAxis, yAxis);
     }

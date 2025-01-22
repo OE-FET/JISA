@@ -1,32 +1,35 @@
 package jisa.devices.camera;
 
-import com.google.common.primitives.Ints;
-import com.google.common.primitives.Longs;
-import com.google.common.primitives.Shorts;
+import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.WString;
+import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.ptr.PointerByReference;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
+import jisa.control.RTask;
 import jisa.devices.DeviceException;
+import jisa.devices.ParameterList;
+import jisa.devices.camera.features.CMOS;
+import jisa.devices.camera.features.MultiTrack;
+import jisa.devices.camera.features.Overlap;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.U16Frame;
 import jisa.devices.camera.nat.ATCoreLibrary;
+import jisa.devices.camera.nat.ATUtilityLibrary;
 import jisa.devices.features.TemperatureControlled;
 import jisa.visa.NativeDevice;
 
 import java.io.IOException;
 import java.nio.*;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16Frame>, TemperatureControlled {
-
-    static {
-        ATCoreLibrary.INSTANCE.AT_InitialiseLibrary();
-    }
+public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<U16Frame>, CMOS, Overlap, MultiTrack, TemperatureControlled {
 
     protected final static int  AT_ERR_STRINGNOTAVAILABLE      = 18;
     protected final static int  AT_ERR_NULL_COUNT_VAR          = 30;
@@ -76,72 +79,81 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
     protected final static int  AT_ERR_NULL_FEATURE            = 20;
     protected final static int  AT_ERR_NULL_ISAVAILABLE_VAR    = 31;
 
-    protected final static Map<Integer, String> ERROR_NAMES = Util.buildMap(map -> {
-
-        map.put(AT_ERR_STRINGNOTAVAILABLE, "ERR_STRINGNOTAVAILABLE");
-        map.put(AT_ERR_NULL_COUNT_VAR, "ERR_NULL_COUNT_VAR");
-        map.put(AT_ERR_INDEXNOTIMPLEMENTED, "ERR_INDEXNOTIMPLEMENTED");
-        map.put(AT_ERR_NULL_READABLE_VAR, "ERR_NULL_READABLE_VAR");
-        map.put(AT_ERR_NULL_WRITABLE_VAR, "ERR_NULL_WRITABLE_VAR");
-        map.put(AT_ERR_NULL_QUEUE_PTR, "ERR_NULL_QUEUE_PTR");
-        map.put(AT_ERR_NOTWRITABLE, "ERR_NOTWRITABLE");
-        map.put(AT_ERR_HARDWARE_OVERFLOW, "ERR_HARDWARE_OVERFLOW");
-        map.put(AT_ERR_BUFFERFULL, "ERR_BUFFERFULL");
-        map.put(AT_ERR_COMM, "ERR_COMM");
-        map.put(AT_ERR_NOTINITIALISED, "ERR_NOTINITIALISED");
-        map.put(AT_ERR_NULL_READONLY_VAR, "ERR_NULL_READONLY_VAR");
-        map.put(AT_ERR_NULL_MINVALUE, "ERR_NULL_MINVALUE");
-        map.put(AT_ERR_NULL_MAXSTRINGLENGTH, "ERR_NULL_MAXSTRINGLENGTH");
-        map.put(AT_ERR_NOTREADABLE, "ERR_NOTREADABLE");
-        map.put(AT_ERR_NULL_WAIT_PTR, "ERR_NULL_WAIT_PTR");
-        map.put(AT_ERR_NULL_EVCALLBACK, "ERR_NULL_EVCALLBACK");
-        map.put(AT_ERR_OUTOFRANGE, "ERR_OUTOFRANGE");
-        map.put(AT_ERR_STRINGNOTIMPLEMENTED, "ERR_STRINGNOTIMPLEMENTED");
-        map.put(AT_ERR_READONLY, "ERR_READONLY");
-        map.put(AT_ERR_EXCEEDEDMAXSTRINGLENGTH, "ERR_EXCEEDEDMAXSTRINGLENGTH");
-        map.put(AT_ERR_INDEXNOTAVAILABLE, "ERR_INDEXNOTAVAILABLE");
-        map.put(AT_ERR_CONNECTION, "ERR_CONNECTION");
-        map.put(AT_ERR_NULL_PTRSIZE, "ERR_NULL_PTRSIZE");
-        map.put(AT_ERR_INVALIDALIGNMENT, "ERR_INVALIDALIGNMENT");
-        map.put(AT_ERR_INVALIDHANDLE, "ERR_INVALIDHANDLE");
-        map.put(AT_ERR_NULL_STRING, "ERR_NULL_STRING");
-        map.put(AT_ERR_NULL_MAXVALUE, "ERR_NULL_MAXVALUE");
-        map.put(AT_ERR_NOTIMPLEMENTED, "ERR_NOTIMPLEMENTED");
-        map.put(AT_ERR_NULL_IMPLEMENTED_VAR, "ERR_NULL_IMPLEMENTED_VAR");
-        map.put(AT_ERR_INVALIDSIZE, "ERR_INVALIDSIZE");
-        map.put(AT_ERR_NULL_HANDLE, "ERR_NULL_HANDLE");
-        map.put(AT_ERR_DEVICEINUSE, "ERR_DEVICEINUSE");
-        map.put(AT_ERR_NULL_VALUE, "ERR_NULL_VALUE");
-        map.put(AT_ERR_NOMEMORY, "ERR_NOMEMORY");
-        map.put(AT_ERR_NODATA, "ERR_NODATA");
-        map.put(AT_ERR_TIMEDOUT, "ERR_TIMEDOUT");
-        map.put(AT_ERR_DEVICENOTFOUND, "ERR_DEVICENOTFOUND");
-        map.put(AT_ERR_NULL_FEATURE, "ERR_NULL_FEATURE");
-        map.put(AT_ERR_NULL_ISAVAILABLE_VAR, "ERR_NULL_ISAVAILABLE_VAR");
-
-    });
+    protected final static Map<Integer, String> ERROR_NAMES =
+            Util.map(AT_ERR_STRINGNOTAVAILABLE, "String Not Available")
+                .map(AT_ERR_NULL_COUNT_VAR, "Null Count Variable")
+                .map(AT_ERR_INDEXNOTIMPLEMENTED, "Index Not Implemented")
+                .map(AT_ERR_NULL_READABLE_VAR, "Null Readable Variable")
+                .map(AT_ERR_NULL_WRITABLE_VAR, "Null Writable Variable")
+                .map(AT_ERR_NULL_QUEUE_PTR, "Null Queue Pointer")
+                .map(AT_ERR_NOTWRITABLE, "Not Writable")
+                .map(AT_ERR_HARDWARE_OVERFLOW, "Hardware Overflow")
+                .map(AT_ERR_BUFFERFULL, "Buffer Full")
+                .map(AT_ERR_COMM, "Communications Error")
+                .map(AT_ERR_NOTINITIALISED, "Not Initialised")
+                .map(AT_ERR_NULL_READONLY_VAR, "Read-Only Variable is Null")
+                .map(AT_ERR_NULL_MINVALUE, "Minimum Value is Null")
+                .map(AT_ERR_NULL_MAXSTRINGLENGTH, "Maximum String Length is Null")
+                .map(AT_ERR_NOTREADABLE, "Not Readable")
+                .map(AT_ERR_NULL_WAIT_PTR, "Wait Pointer is Null")
+                .map(AT_ERR_NULL_EVCALLBACK, "Event Callback is Null")
+                .map(AT_ERR_OUTOFRANGE, "Out of Range")
+                .map(AT_ERR_STRINGNOTIMPLEMENTED, "String Not Implemented")
+                .map(AT_ERR_READONLY, "Read Only")
+                .map(AT_ERR_EXCEEDEDMAXSTRINGLENGTH, "Maximum String Length Exceeded")
+                .map(AT_ERR_INDEXNOTAVAILABLE, "Index Not Available")
+                .map(AT_ERR_CONNECTION, "Connection Error")
+                .map(AT_ERR_NULL_PTRSIZE, "Pointer Size is Null")
+                .map(AT_ERR_INVALIDALIGNMENT, "Invalid Alignment")
+                .map(AT_ERR_INVALIDHANDLE, "Invalid Handle")
+                .map(AT_ERR_NULL_STRING, "String is Null")
+                .map(AT_ERR_NULL_MAXVALUE, "Maximum Value is Null")
+                .map(AT_ERR_NOTIMPLEMENTED, "Not Implemented")
+                .map(AT_ERR_NULL_IMPLEMENTED_VAR, "isImplemented Variable is Null")
+                .map(AT_ERR_INVALIDSIZE, "Invalid Size")
+                .map(AT_ERR_NULL_HANDLE, "Handle is Null")
+                .map(AT_ERR_DEVICEINUSE, "Device in Use")
+                .map(AT_ERR_NULL_VALUE, "Value is Null")
+                .map(AT_ERR_NOMEMORY, "No Memory")
+                .map(AT_ERR_NODATA, "No Data")
+                .map(AT_ERR_TIMEDOUT, "Timed Out")
+                .map(AT_ERR_DEVICENOTFOUND, "Device Not Found")
+                .map(AT_ERR_NULL_FEATURE, "Feature is Null")
+                .map(AT_ERR_NULL_ISAVAILABLE_VAR, "isAvailable Variable is Null");
 
     private final int handle;
 
-    private final LongBuffer   longBuffer   = LongBuffer.allocate(1);
-    private final IntBuffer    intBuffer    = IntBuffer.allocate(1);
-    private final DoubleBuffer doubleBuffer = DoubleBuffer.allocate(1);
-    private final CharBuffer   charBuffer   = CharBuffer.allocate(1024);
-
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<U16Frame>();
 
-    private final Object     queuedLock        = new Object();
-    private       ByteBuffer queued            = null;
-    private       Frame      frameBuffer       = null;
-    private       boolean    centreX           = false;
-    private       int        timeout           = 0;
-    private       boolean    acquiring         = false;
-    private       Thread     acquisitionThread = null;
-    private       Thread     processingThread  = null;
+    private final Object                queuedLock        = new Object();
+    private final BlockingQueue<byte[]> queued            = new LinkedBlockingQueue<>();
+    private       Frame                 frameBuffer       = null;
+    private       boolean               centreX           = false;
+    private       int                   timeout           = 0;
+    private       boolean               acquiring         = false;
+    private       Thread                acquisitionThread = null;
+    private       Thread                processingThread  = null;
+    private       double                acquireFPS        = 0;
+    private       double                processFPS        = 0;
+
+    private final ATUtilityLibrary utilityLibrary;
+
+    @Override
+    public List<Parameter<?>> getInstrumentParameters(Class<?> target) {
+
+        ParameterList parameters = new ParameterList();
+
+        parameters.addValue("Fast AOI Readout mode", this::isFastAOIFrameRateEnabled, false, this::setFastAOIFrameRateEnabled);
+
+        return parameters;
+
+    }
 
     public Andor3(Address address) throws DeviceException {
 
-        super("atcore", ATCoreLibrary.INSTANCE);
+        super("atcore", ATCoreLibrary.getInstance());
+
+        utilityLibrary = ATUtilityLibrary.getInstance();
 
         if (!(address instanceof IDAddress)) {
             throw new DeviceException("Address must be an instance of IDAddress");
@@ -153,66 +165,25 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
             throw new DeviceException("ID must be an integer");
         }
 
-        setBoolean("MetadataEnable", true);
-        setBoolean("MetadataFrameInfo", false);
-        setBoolean("MetadataTimestamp", true);
-        setEnum("PixelEncoding", "Mono16");
+        setEnum("TriggerMode", "Internal");
+        setBoolean("RollingShutterGlobalClear", false);
 
     }
 
     public Andor3(int cameraIndex) throws DeviceException {
-        super("atcore", ATCoreLibrary.INSTANCE);
+
+        super("atcore", ATCoreLibrary.getInstance());
+        utilityLibrary = ATUtilityLibrary.getInstance();
         handle = open(cameraIndex);
-    }
 
-    protected static void fillFrame(byte[] buffer, Frame frameBuffer, int stride, long startClock, long startTime, long frequency) {
-
-        frameBuffer.setTimestamp(System.nanoTime());
-
-        final long    nsPerTick  = (long) (1e9 / frequency);
-        final int     bufferSize = buffer.length;
-        final short[] data       = frameBuffer.array();
-        final int     height     = frameBuffer.getHeight();
-        final int     width      = frameBuffer.getWidth();
-
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                data[y * width + x] = Shorts.fromBytes(buffer[2 * (y * stride + x) + 1], buffer[2 * (y * stride + x)]);
-            }
-        }
-
-        int length;
-        int cid;
-
-        for (int i = bufferSize - 1; i >= data.length; i -= length) {
-
-            length = Ints.fromBytes(buffer[i], buffer[i - 1], buffer[i - 2], buffer[i - 3]);
-            cid    = Ints.fromBytes(buffer[i - 4], buffer[i - 5], buffer[i - 6], buffer[i - 7]);
-
-            if (cid == 1) {
-
-                long ticks = Longs.fromBytes(
-                    buffer[i - 8],
-                    buffer[i - 9],
-                    buffer[i - 10],
-                    buffer[i - 11],
-                    buffer[i - 12],
-                    buffer[i - 13],
-                    buffer[i - 14],
-                    buffer[i - 15]
-                );
-
-                frameBuffer.setTimestamp(startTime + (nsPerTick * (ticks - startClock)));
-
-                break;
-
-            }
-
-        }
+        setEnum("TriggerMode", "Internal");
+        setBoolean("RollingShutterGlobalClear", false);
 
     }
 
     private synchronized int open(int cameraIndex) throws DeviceException {
+        
+        IntBuffer intBuffer = IntBuffer.allocate(1);
 
         int result = nativeLibrary.AT_Open(cameraIndex, intBuffer.clear());
 
@@ -225,6 +196,8 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
     }
 
     protected synchronized String getString(String feature) throws DeviceException {
+
+        CharBuffer charBuffer = CharBuffer.allocate(1024);
 
         int result = nativeLibrary.AT_GetString(handle, new WString(feature), charBuffer.clear(), 1024);
 
@@ -248,6 +221,8 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
 
     protected synchronized double getFloat(String feature) throws DeviceException {
 
+        DoubleBuffer doubleBuffer = DoubleBuffer.allocate(1);
+
         int result = nativeLibrary.AT_GetFloat(handle, new WString(feature), doubleBuffer.clear());
 
         if (result != AT_SUCCESS) {
@@ -269,6 +244,8 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
     }
 
     protected synchronized long getLong(String feature) throws DeviceException {
+
+        LongBuffer longBuffer = LongBuffer.allocate(1);
 
         int result = nativeLibrary.AT_GetInt(handle, new WString(feature), longBuffer.clear());
 
@@ -300,6 +277,8 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
 
     protected synchronized boolean getBoolean(String feature) throws DeviceException {
 
+        IntBuffer intBuffer = IntBuffer.allocate(1);
+
         int result = nativeLibrary.AT_GetBool(handle, new WString(feature), intBuffer.clear());
 
         if (result != AT_SUCCESS) {
@@ -322,6 +301,8 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
 
     protected synchronized Enum getEnum(String feature) throws DeviceException {
 
+        IntBuffer intBuffer = IntBuffer.allocate(1);
+
         WString wFeature = new WString(feature);
         int     result   = nativeLibrary.AT_GetEnumIndex(handle, wFeature, intBuffer.clear());
 
@@ -329,20 +310,23 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
             throw new DeviceException("GetEnumIndex for feature \"%s\" failed: %d (%s)", feature, result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
         }
 
-        result = nativeLibrary.AT_GetEnumStringByIndex(handle, wFeature, intBuffer.get(0), charBuffer.clear(), 1024);
+        CharBuffer buffer = CharBuffer.allocate(1024);
+
+        result = nativeLibrary.AT_GetEnumStringByIndex(handle, wFeature, intBuffer.get(0), buffer, 1024);
 
         if (result != AT_SUCCESS) {
             throw new DeviceException("GetEnumStringByIndex for feature \"%s\" failed: %d (%s)", feature, result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
         }
 
-        return new Enum(intBuffer.get(0), charBuffer.rewind().toString().trim());
+        return new Enum(intBuffer.get(0), buffer.rewind().toString().trim());
 
     }
 
     protected synchronized List<Enum> getEnumOptions(String feature) throws DeviceException {
 
-        WString wFeature = new WString(feature);
-        int     result   = nativeLibrary.AT_GetEnumCount(handle, wFeature, intBuffer.clear());
+        IntBuffer  intBuffer  = IntBuffer.allocate(1);
+        WString    wFeature   = new WString(feature);
+        int        result     = nativeLibrary.AT_GetEnumCount(handle, wFeature, intBuffer.clear());
 
         if (result != AT_SUCCESS) {
             throw new DeviceException("GetEnumCount for feature \"%s\" failed: %d (%s)", feature, result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
@@ -352,6 +336,8 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
         List<Enum> list  = new ArrayList<>(count);
 
         for (int i = 0; i < count; i++) {
+
+            CharBuffer charBuffer = CharBuffer.allocate(1024);
 
             result = nativeLibrary.AT_GetEnumStringByIndex(handle, wFeature, i, charBuffer.clear(), 1024);
 
@@ -401,10 +387,11 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
 
     protected synchronized void setEnum(String feature, String text) throws DeviceException {
 
-        Enum match = getEnumOptions(feature).stream().filter(e -> e.getText().equalsIgnoreCase(text.trim())).findFirst().orElse(null);
+        List<Enum> available = getEnumOptions(feature);
+        Enum       match     = available.stream().filter(e -> e.getText().trim().equalsIgnoreCase(text.trim())).findFirst().orElse(null);
 
         if (match == null) {
-            throw new DeviceException("Invalid enum option \"%s\" for feature \"%s\"", text, feature);
+            throw new DeviceException("Invalid enum option \"%s\" for feature \"%s\" (Available: %s)", text, feature, available.stream().map(Enum::getText).collect(Collectors.joining(", ")));
         }
 
         setEnum(feature, match);
@@ -431,11 +418,11 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
 
     }
 
-    protected void acquisitionStart() throws DeviceException {
+    protected synchronized void acquisitionStart() throws DeviceException {
         command("AcquisitionStart");
     }
 
-    protected void acquisitionStop() throws DeviceException {
+    protected synchronized void acquisitionStop() throws DeviceException {
         command("AcquisitionStop");
     }
 
@@ -463,7 +450,37 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
 
     @Override
     public void setIntegrationTime(double time) throws IOException, DeviceException {
+
+        double maxRate = getFloat("MaxInterfaceTransferRate");
+        double minTime = 1.0 / maxRate;
+
         setFloat("ExposureTime", time);
+    }
+
+    public boolean isFastAOIFrameRateEnabled() throws IOException, DeviceException {
+        return getBoolean("FastAOIFrameRateEnable");
+    }
+
+    public void setFastAOIFrameRateEnabled(boolean enabled) throws IOException, DeviceException {
+        setBoolean("FastAOIFrameRateEnable", enabled);
+    }
+
+    @Override
+    public boolean isRollingElectronicShutterEnabled() throws IOException, DeviceException {
+        return getEnum("ElectronicShutteringMode").getText().toLowerCase().contains("rolling");
+    }
+
+    @Override
+    public void setRollingElectronicShutterEnabled(boolean enabled) throws IOException, DeviceException {
+        setEnum("ElectronicShutteringMode", enabled ? "Rolling" : "Global");
+    }
+
+    public int getFrameBinning() throws IOException, DeviceException {
+        return getInt("AccumulateCount");
+    }
+
+    public void setFrameBinning(int count) throws IOException, DeviceException {
+        setInt("AccumulateCount", count);
     }
 
     @Override
@@ -482,37 +499,41 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
 
         }
 
-        long       tmo         = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
-        int        bufferSize  = getInt("ImageSizeBytes");
+        final long    tmo        = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
+        final int     bufferSize = getInt("ImageSizeBytes");
+        final long    startTime  = System.nanoTime();
+        final long    startClock = getLong("TimestampClock");
+        final long    frequency  = getLong("TimestampClockFrequency");
+        final long    nsPerTick  = (long) (1e9 / frequency);
+        final int     width      = getInt("AOIWidth");
+        final int     height     = getInt("AOIHeight");
+        final int     stride     = getInt("AOIStride");
+        final Enum    encoding   = getEnum("PixelEncoding");
+        final WString mono16     = new WString("Mono16");
+        final WString encText    = new WString(encoding.getText());
+        final int     imageSize  = width * height;
+
+        setEnum("CycleMode", "Fixed");
+        setLong("FrameCount", 1);
+
         ByteBuffer frameBuffer = ByteBuffer.allocateDirect(bufferSize);
-        long       startTime   = System.nanoTime();
-        long       startClock  = getLong("TimestampClock");
-        long       frequency   = getLong("TimestampClockFrequency");
 
         flush();
 
-        int result = nativeLibrary.AT_QueueBuffer(handle, frameBuffer, bufferSize);
+        int result = nativeLibrary.AT_QueueBuffer(handle, frameBuffer.clear().rewind(), bufferSize);
 
         if (result != AT_SUCCESS) {
             throw new DeviceException("QueueBuffer failed: %d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
         }
 
-        int width     = getInt("AOIWidth");
-        int height    = getInt("AOIHeight");
-        int stride    = getInt("AOIStride");
-        int imageSize = width * height;
 
-        setEnum("CycleMode", "Fixed");
-        setLong("FrameCount", 1);
+        PointerByReference reference = new PointerByReference();
+        IntBuffer          intBuffer = IntBuffer.allocate(1);
 
         acquisitionStart();
-
-        PointerByReference pointer = new PointerByReference();
-
-        result      = nativeLibrary.AT_WaitBuffer(handle, pointer, intBuffer.clear(), tmo);
-        frameBuffer = pointer.getValue().getByteBuffer(0, bufferSize);
-
+        result = nativeLibrary.AT_WaitBuffer(handle, reference, intBuffer, tmo);
         acquisitionStop();
+
         flush();
 
         if (result != AT_SUCCESS) {
@@ -525,9 +546,38 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
 
         }
 
-        Frame frame = new Frame(width, height);
+        long returnedSize = Integer.toUnsignedLong(intBuffer.get(0));
 
-        fillFrame(frameBuffer.array(), frame, stride, startClock, startTime, frequency);
+        ByteBuffer returned  = reference.getValue().getByteBuffer(0, returnedSize);
+        ByteBuffer converted = ByteBuffer.allocateDirect(imageSize * 2);
+
+        System.out.println(returned.isDirect());
+        System.out.println(converted.isDirect());
+
+        result = utilityLibrary.AT_ConvertBufferUsingMetadata(returned.rewind(), converted.clear().rewind(), returnedSize, mono16);
+
+        if (result != AT_SUCCESS) {
+
+            result = utilityLibrary.AT_ConvertBuffer(returned.rewind(), converted.clear().rewind(), width, height, stride, encText, mono16);
+
+            if (result != AT_SUCCESS) {
+                throw new DeviceException("ConvertBuffer failed: %d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
+            }
+
+        }
+
+        LongByReference timeStampBuffer = new LongByReference();
+
+        result = utilityLibrary.AT_GetTimeStampFromMetadata(returned.rewind(), returnedSize, timeStampBuffer);
+
+        Frame frame = new Frame(width, height);
+        converted.asShortBuffer().get(frame.array(), 0, imageSize);
+
+        if (result != AT_SUCCESS) {
+            frame.setTimestamp(startTime + (nsPerTick * (timeStampBuffer.getValue() - startClock)));
+        }
+
+        flush();
 
         return frame;
 
@@ -546,16 +596,17 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
                 frames.add(queue.nextFrame(timeout));
             }
 
-            closeFrameQueue(queue);
+            queue.close();
             queue.clear();
 
             return frames;
 
         }
 
+        // Check for values that might indicate no timeout
         long tmo = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
 
-        int  bufferSize = getInt("ImageSizeBytes");
+        long  bufferSize = getLong("ImageSizeBytes");
         int  width      = getInt("AOIWidth");
         int  height     = getInt("AOIHeight");
         int  stride     = getInt("AOIStride");
@@ -563,7 +614,10 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
         long startTime  = System.nanoTime();
         long startClock = getLong("TimestampClock");
         long frequency  = getLong("TimestampClockFrequency");
-
+        long nsPerTick  = (long) (1e9 / frequency);
+        Enum encoding   = getEnum("PixelEncoding");
+        WString mono16  = new WString("Mono16");
+        WString encText = new WString(encoding.getText());
         setEnum("CycleMode", "Fixed");
         setLong("FrameCount", count);
 
@@ -571,8 +625,13 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
 
         for (int i = 0; i < count; i++) {
 
-            ByteBuffer frameBuffer = ByteBuffer.allocateDirect(bufferSize);
-            int        result      = nativeLibrary.AT_QueueBuffer(handle, frameBuffer, bufferSize);
+            ByteBuffer frameBuffer = ByteBuffer.allocateDirect((int) bufferSize);
+
+            int result;
+
+            synchronized (this) {
+                 result = nativeLibrary.AT_QueueBuffer(handle, frameBuffer.clear().rewind(), (int) bufferSize);
+            }
 
             if (result != AT_SUCCESS) {
                 throw new DeviceException("QueueBuffer failed: %d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
@@ -582,13 +641,18 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
 
         acquisitionStart();
 
-        Pointer[] pointers = new Pointer[count];
+        Pointer[] pointers  = new Pointer[count];
+        IntBuffer intBuffer = IntBuffer.allocate(count);
 
         for (int i = 0; i < count; i++) {
 
             PointerByReference pointer = new PointerByReference();
 
-            int result = nativeLibrary.AT_WaitBuffer(handle, pointer, intBuffer.clear(), tmo);
+            int result;
+
+            synchronized (this) {
+                result = nativeLibrary.AT_WaitBuffer(handle, pointer, intBuffer.clear(), tmo);
+            }
 
             if (result != AT_SUCCESS) {
                 throw new DeviceException("WaitBuffer failed: %d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
@@ -609,11 +673,35 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
 
         for (int i = 0; i < count; i++) {
 
-            ByteBuffer frameBuffer = pointers[i].getByteBuffer(0, bufferSize).rewind();
-            short[]    data        = new short[imageSize];
+            ByteBuffer returned  = pointers[i].getByteBuffer(0, bufferSize);
+            ByteBuffer converted = ByteBuffer.allocateDirect(imageSize * 2);
 
-            Frame frame = new Frame(width, height);
-            fillFrame(frameBuffer.array(), frame, stride, startClock, startTime, frequency);
+            int result = utilityLibrary.AT_ConvertBufferUsingMetadata(returned.rewind(), converted.clear().rewind(), bufferSize, mono16);
+
+            if (result != AT_SUCCESS) {
+
+                result = utilityLibrary.AT_ConvertBuffer(returned.rewind(), converted.clear().rewind(), width, height, stride, encText, mono16);
+
+                if (result != AT_SUCCESS) {
+                    throw new DeviceException("ConvertBuffer failed: %d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
+                }
+
+            }
+
+            LongByReference timeStampBuffer = new LongByReference();
+
+
+            result = utilityLibrary.AT_GetTimeStampFromMetadata(returned.rewind(), bufferSize, timeStampBuffer);
+
+            short[] frameData = new short[imageSize];
+            converted.asShortBuffer().get(frameData, 0, imageSize);
+
+            Frame frame = new Frame(frameData, width, height);
+
+            if (result != AT_SUCCESS) {
+                frame.setTimestamp(startTime + (nsPerTick * (timeStampBuffer.getValue() - startClock)));
+            }
+
             frames.add(frame);
 
         }
@@ -622,73 +710,241 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
 
     }
 
+    public double getAcquisitionFPS() {
+
+        synchronized (queuedLock) {
+            return acquireFPS;
+        }
+
+    }
+
+    public double getProcessingFPS() {
+
+        synchronized (queuedLock) {
+            return processFPS;
+        }
+
+    }
+
     @Override
-    public void setAcquisitionTimeOut(int timeout) throws IOException, DeviceException {
+    public void setAcquisitionTimeout(int timeout) throws IOException, DeviceException {
         this.timeout = Math.max(0, timeout);
     }
 
     @Override
-    public int getAcquisitionTimeOut() throws IOException, DeviceException {
+    public int getAcquisitionTimeout() throws IOException, DeviceException {
         return timeout;
     }
 
     private void acquisition(int bufferSize) {
 
-        long tmo = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
+        final long[] stats = {0, 0, System.nanoTime()};
 
-        ByteBuffer         frameBuffer = ByteBuffer.allocateDirect(bufferSize);
-        PointerByReference pointer     = new PointerByReference();
-        IntBuffer          intBuffer   = IntBuffer.allocate(1);
+        RTask task = new RTask(1000, () -> {
 
-        listenerManager.clearListenerBuffers();
+            synchronized (stats) {
 
-        synchronized (queuedLock) {
-            queued = ByteBuffer.allocateDirect(bufferSize);
-        }
+                long frames  = stats[0];
+                long dFrames = frames - stats[1];
+                long time    = System.nanoTime();
+                long dTime   = time - stats[2];
 
-        while (acquiring) {
+                stats[1] = frames;
+                stats[2] = time;
 
-            int result = nativeLibrary.AT_QueueBuffer(handle, frameBuffer, bufferSize);
+                this.acquireFPS = 1e9 * dFrames / dTime;
 
-            if (result != AT_SUCCESS) {
-                continue;
             }
 
-            result = nativeLibrary.AT_WaitBuffer(handle, pointer, intBuffer, tmo);
+        });
 
-            if (result != AT_SUCCESS) {
-                continue;
+        task.start();
+
+        try (Memory memory = new Memory(bufferSize)) {
+
+
+            long tmo = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
+            long ftm = Math.max((long) (2 * getIntegrationTime() * 1e3), 100);
+
+            int result;
+
+            ByteBuffer         frameBuffer = memory.getByteBuffer(0, bufferSize);
+            IntBuffer          intBuffer   = IntBuffer.allocate(1);
+            PointerByReference reference   = new PointerByReference();
+
+            listenerManager.clearListenerBuffers();
+
+            acq:
+            while (acquiring) {
+
+                result = nativeLibrary.AT_QueueBuffer(handle, frameBuffer.clear(), bufferSize);
+
+                if (result != AT_SUCCESS) {
+                    System.err.printf("Error queueing buffer: %d (%s)%n", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
+                    continue;
+                }
+
+                if (tmo == AT_INFINITE) {
+
+                    // Infinite timeout is a problem because we can't interrupt it, so let's do a loooop
+                    do {
+
+                        if (Thread.interrupted()) {
+                            break acq;
+                        }
+
+                        result = nativeLibrary.AT_WaitBuffer(handle, reference, intBuffer.clear(), ftm);
+
+                    } while (result == AT_ERR_TIMEDOUT);
+
+                } else {
+                    result = nativeLibrary.AT_WaitBuffer(handle, reference, intBuffer.clear(), tmo);
+                }
+
+                if (result != AT_SUCCESS) {
+
+                    if (result == AT_ERR_NODATA) {
+                        break;
+                    }
+
+                    System.err.printf("Error waiting for buffer: %d (%s)%n", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
+
+                    flush();
+                    continue;
+
+                }
+
+                queued.offer(reference.getValue().getByteArray(0, intBuffer.get(0)));
+
+
+                synchronized (stats) {
+                    stats[0]++;
+                }
+
+                if (Thread.interrupted()) {
+                    break;
+                }
+
             }
+
+        } catch (Throwable t) {
+
+            System.err.println("Andor3 Acquisition Thread Halted!");
+            t.printStackTrace();
+
+        } finally {
 
             synchronized (queuedLock) {
-                queued.rewind().put(frameBuffer.rewind());
+                acquireFPS = 0.0;
             }
 
-            processingThread.notifyAll();
+            task.stop();
 
         }
-
-        processingThread.notifyAll();
 
     }
 
-    private void processing(int bufferSize, int width, int height, int stride, short[] data, long startClock, long startTime, long frequency) {
+    private void processing(int bufferSize, int width, int height, int stride, short[] data, long startClock, long startTime, long frequency, Enum encoding) {
 
-        while (acquiring) {
+        boolean timestampEnabled;
+        try {
+             timestampEnabled = isTimestampEnabled();
+        } catch (Exception e) {
+            timestampEnabled = false;
+        }
 
-            try {
-                processingThread.wait();
-            } catch (InterruptedException e) {
-                break;
+        final long[] stats = {0, 0, System.nanoTime()};
+
+        RTask task = new RTask(1000, () -> {
+
+            synchronized (stats) {
+
+                long frames  = stats[0];
+                long dFrames = frames - stats[1];
+                long time    = System.nanoTime();
+                long dTime   = time - stats[2];
+
+                stats[1] = frames;
+                stats[2] = time;
+
+                this.processFPS = 1e9 * dFrames / dTime;
+
             }
+
+        });
+
+        task.start();
+
+        try (Memory bufferMemory = new Memory(bufferSize)) {
+
+            // Constants
+            final long    nsPerTick = (long) (1e9 / frequency);
+            final int     imageSize = width * height;
+            final WString mono16    = new WString("Mono16");
+            final WString encText   = new WString(encoding.getText());
+
+            try (Memory convertedMemory = new Memory(imageSize * 2L)) {
+
+                // Buffers for retrieving data
+                final ByteBuffer      buffer    = bufferMemory.getByteBuffer(0, bufferSize);
+                final ByteBuffer      converted = convertedMemory.getByteBuffer(0, imageSize * 2L);
+                final LongByReference timeStamp = new LongByReference();
+
+                int result;
+
+                while (acquiring || !queued.isEmpty()) {
+
+                    try {
+                        buffer.clear().rewind().put(queued.take());
+                    } catch (InterruptedException e) {
+                        continue;
+                    }
+
+                    result = utilityLibrary.AT_ConvertBuffer(buffer.rewind(), converted.clear(), width, height, stride, encText, mono16);
+
+                    if (result != AT_SUCCESS) {
+                        System.err.printf("Error converting buffer: %d (%s)%n", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
+                        continue;
+                    }
+
+                    converted.rewind().asShortBuffer().get(data, 0, imageSize);
+
+                    if (timestampEnabled) {
+
+                        result = utilityLibrary.AT_GetTimeStampFromMetadata(buffer.rewind(), bufferSize, timeStamp);
+
+                        if (result == AT_SUCCESS) {
+                            frameBuffer.setTimestamp(startTime + (nsPerTick * (timeStamp.getValue() - startClock)));
+                        } else {
+                            frameBuffer.setTimestamp(System.nanoTime());
+                        }
+
+                    } else {
+                        frameBuffer.setTimestamp(System.nanoTime());
+                    }
+
+                    listenerManager.trigger(frameBuffer);
+
+                    synchronized (stats) {
+                        stats[0]++;
+                    }
+
+                }
+
+            }
+
+        } catch (Throwable t) {
+
+            System.err.println("Andor3 Processing Thread Halted!");
+            t.printStackTrace();
+
+        } finally {
 
             synchronized (queuedLock) {
-                fillFrame(queued.array(), frameBuffer, stride, startClock, startTime, frequency);
+                processFPS = 0.0;
             }
 
-            frameBuffer.notifyAll();
-            listenerManager.trigger(frameBuffer);
-
+            task.stop();
         }
 
     }
@@ -709,21 +965,23 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
         final long    clock      = getLong("TimestampClock");
         final long    time       = System.nanoTime();
         final long    frequency  = getLong("TimestampClockFrequency");
+        final Enum    encoding   = getEnum("PixelEncoding");
 
         frameBuffer = new Frame(data, width, height);
+        queued.clear();
 
         setEnum("CycleMode", "Continuous");
         flush();
 
         acquisitionThread = new Thread(() -> acquisition(bufferSize));
-        processingThread  = new Thread(() -> processing(bufferSize, width, height, stride, data, clock, time, frequency));
+        processingThread  = new Thread(() -> processing(bufferSize, width, height, stride, data, clock, time, frequency, encoding));
 
         acquiring = true;
 
+        acquisitionStart();
+
         acquisitionThread.start();
         processingThread.start();
-
-        acquisitionStart();
 
     }
 
@@ -736,6 +994,9 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
 
         acquiring = false;
 
+        acquisitionStop();
+        flush();
+
         acquisitionThread.interrupt();
         processingThread.interrupt();
 
@@ -743,8 +1004,6 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
             acquisitionThread.join();
             processingThread.join();
         } catch (InterruptedException ignored) { }
-
-        acquisitionStop();
 
         acquisitionThread = null;
         processingThread  = null;
@@ -846,6 +1105,68 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
     }
 
     @Override
+    public double getPixelReadoutRate() throws IOException, DeviceException {
+        return Integer.parseInt(getEnum("PixelReadoutRate").getText().replace("MHz", "").trim()) * 1e6;
+    }
+
+    @Override
+    public List<Double> getPixelReadoutRates() {
+        try {
+            return getEnumOptions("PixelReadoutRate").stream().filter(Enum::isImplemented).map(e -> Integer.parseInt(e.getText().replace("MHz", "").trim()) * 1e6).collect(Collectors.toList());
+        } catch (DeviceException e) {
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public void setPixelReadoutRate(double rate) throws IOException, DeviceException {
+
+        Enum option = getEnumOptions("PixelReadoutRate")
+                .stream()
+                .min(Comparator.comparingDouble(e -> Math.abs(rate - Integer.parseInt(e.getText().replace("MHz", "").trim()) * 1e6)))
+                .orElseThrow(() -> new DeviceException("Cannot find a readout rate."));
+
+        setEnum("PixelReadoutRate", option);
+
+    }
+
+    @Override
+    public boolean isAlternatingReadoutEnabled() throws IOException, DeviceException {
+        return getBoolean("AlternatingReadoutDirection");
+    }
+
+    @Override
+    public void setAlternatingReadoutEnabled(boolean enabled) throws IOException, DeviceException {
+        setBoolean("AlternatingReadoutDirection", enabled);
+    }
+
+    @Override
+    public boolean isTimestampEnabled() throws IOException, DeviceException {
+        return getBoolean("MetadataTimestamp") && getBoolean("MetadataEnable");
+    }
+
+    @Override
+    public void setTimestampEnabled(boolean timestamping) throws IOException, DeviceException {
+
+        setBoolean("MetadataTimestamp", timestamping);
+
+        if (timestamping) {
+            setBoolean("MetadataEnable", true);
+        }
+
+    }
+
+    @Override
+    public boolean isOverlapEnabled() throws IOException, DeviceException {
+        return getBoolean("Overlap");
+    }
+
+    @Override
+    public void setOverlapEnabled(boolean overlapEnabled) throws IOException, DeviceException {
+        setBoolean("Overlap", overlapEnabled);
+    }
+
+    @Override
     public void setFrameWidth(int width) throws DeviceException {
         setInt("AOIWidth", width);
     }
@@ -874,7 +1195,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
     public void setFrameCentredX(boolean centredX) throws DeviceException {
 
         if (centredX) {
-            setInt("AOILeft", (getSensorWidth() - getPhysicalFrameWidth()) / 2);
+            setInt("AOILeft", (int) Math.floor((getSensorWidth() - getPhysicalFrameWidth()) / 2.0));
         }
 
         centreX = centredX;
@@ -969,10 +1290,17 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements MTCamera<U16F
     @Override
     public void setTemperatureControlTarget(double targetTemperature) throws DeviceException {
 
+        IntBuffer buffer = IntBuffer.allocate(1);
+        nativeLibrary.AT_IsWritable(handle, new WString("TemperatureControl"), buffer);
+
+        if (buffer.get(0) == 0) {
+            return;
+        }
+
         double     degC    = targetTemperature - 273.15;
         List<Enum> options = getEnumOptions("TemperatureControl");
 
-        // Find enum option with value closest to that request, but not larger than it
+        // Find enum option with value closest to that requested, but not larger than it
         Enum value = options.stream()
                             .map(e -> Map.entry(e, Double.parseDouble(e.getText().replaceAll("[A-z]", "").trim())))
                             .filter(v -> v.getValue() <= degC)

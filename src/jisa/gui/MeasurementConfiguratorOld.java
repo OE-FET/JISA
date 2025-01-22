@@ -5,7 +5,6 @@ import jisa.experiment.MeasurementOld;
 import jisa.experiment.MeasurementOld.CustomParameter;
 import jisa.experiment.MeasurementOld.Parameter;
 import jisa.gui.form.Field;
-import jisa.gui.form.Form;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -23,7 +23,8 @@ public abstract class Measurement<R> {
 
     private final List<InstrumentValue> instruments;
     private final List<ParamValue>      parameters;
-    private final List<Listener>        listeners = new LinkedList<>();
+    private final List<Listener>        listeners  = new LinkedList<>();
+    private final List<Throwable>       exceptions = new LinkedList<>();
     private final String                name;
 
     private String  label;
@@ -35,17 +36,17 @@ public abstract class Measurement<R> {
 
     protected Measurement(String name, String label) {
 
-        this.name   = name;
-        this.label  = label;
+        this.name  = name;
+        this.label = label;
 
-        parameters  = Arrays.stream(getClass().getDeclaredFields())
-                            .filter(f -> f.isAnnotationPresent(Parameter.class))
-                            .filter(f -> f.canAccess(this))
-                            .map(f -> {
-                                Parameter annotation = f.getAnnotation(Parameter.class);
-                                return new ParamValue(annotation.section(), annotation.name(), f.getType(), annotation.type(), () -> f.get(this), v -> f.set(this, v), annotation.options());
-                            })
-                            .collect(Collectors.toList());
+        parameters = Arrays.stream(getClass().getDeclaredFields())
+                           .filter(f -> f.isAnnotationPresent(Parameter.class))
+                           .filter(f -> f.canAccess(this))
+                           .map(f -> {
+                               Parameter annotation = f.getAnnotation(Parameter.class);
+                               return new ParamValue(annotation.section(), annotation.name(), f.getType(), annotation.type(), () -> f.get(this), v -> f.set(this, v), annotation.options());
+                           })
+                           .collect(Collectors.toList());
 
         instruments = Arrays.stream(getClass().getDeclaredFields())
                             .filter(f -> f.isAnnotationPresent(Instrument.class))
@@ -124,15 +125,6 @@ public abstract class Measurement<R> {
     }
 
     /**
-     * This method is called before the measurement is run.
-     *
-     * @param data Data structure to use for this run of the measurement.
-     *
-     * @throws Exception This method can throw exceptions, which will be caught by the measurement structure.
-     */
-    protected abstract void before(R data) throws Exception;
-
-    /**
      * This method should contain the main logic of the measurement.
      *
      * @param data The data structure to use for this run of the measurement.
@@ -176,8 +168,7 @@ public abstract class Measurement<R> {
     protected void thread(R data) {
 
         boolean interrupted = false;
-
-        List<Throwable> exceptions = new LinkedList<>();
+        exceptions.clear();
 
         for (InstrumentValue instrument : instruments) {
 
@@ -205,20 +196,16 @@ public abstract class Measurement<R> {
 
         try {
 
-            setStatus(Status.PRE_RUN);
-            before(data);
             setStatus(Status.RUNNING);
             run(data);
 
         } catch (InterruptedException e) {
 
-            setStatus(Status.POST_RUN);
             interrupted = true;
             interrupted(data);
 
         } catch (Throwable e) {
 
-            setStatus(Status.POST_RUN);
             exceptions.add(e);
 
         } finally {
@@ -274,9 +261,21 @@ public abstract class Measurement<R> {
 
     }
 
-    public Result startAndWait() throws InterruptedException {
-        start();
+    public Result run() throws InterruptedException {
+
+        if (running || runThread != null) {
+            throw new IllegalStateException("Measurement already started.");
+        }
+
+        running   = true;
+        interrupt = false;
+
+        R data = getCachedData();
+
+        thread(data);
+
         return awaitResult();
+
     }
 
     public synchronized void stop() {
@@ -316,6 +315,10 @@ public abstract class Measurement<R> {
 
         }
 
+    }
+
+    public List<Throwable> getExceptions() {
+        return List.copyOf(exceptions);
     }
 
     /**
@@ -491,7 +494,6 @@ public abstract class Measurement<R> {
     public enum Status {
 
         STOPPED,
-        PRE_RUN,
         RUNNING,
         POST_RUN,
         INTERRUPTED,
@@ -520,7 +522,6 @@ public abstract class Measurement<R> {
     }
 
     public static class MissingInstrumentException extends Exception {
-
 
         public MissingInstrumentException(String message) {
             super(message);

@@ -1,11 +1,11 @@
 package jisa.gui.form;
 
 import jisa.results.Column;
-import jisa.results.DataTable;
+import jisa.results.ResultTable;
 
 import java.util.List;
 
-public interface TableField extends Field<DataTable> {
+public interface TableField extends Field<ResultTable> {
 
     void setColumns(Column... columns);
 

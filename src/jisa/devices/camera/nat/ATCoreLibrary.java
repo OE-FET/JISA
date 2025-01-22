@@ -3,14 +3,39 @@ package jisa.devices.camera.nat;
 import com.sun.jna.*;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
+import jisa.Util;
+import jisa.devices.DeviceException;
 
 import java.nio.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public interface ATCoreLibrary extends Library {
 
     String        JNA_LIBRARY_NAME = "atcore";
-    NativeLibrary JNA_NATIVE_LIB   = NativeLibrary.getInstance(ATCoreLibrary.JNA_LIBRARY_NAME);
-    ATCoreLibrary INSTANCE         = Native.loadLibrary(ATCoreLibrary.JNA_LIBRARY_NAME, ATCoreLibrary.class);
+    NativeLibrary JNA_NATIVE_LIB   = NativeLibrary.getInstance(JNA_LIBRARY_NAME);
+    ATCoreLibrary INSTANCE         = Native.loadLibrary(JNA_LIBRARY_NAME, ATCoreLibrary.class);
+    AtomicBoolean INITIALISED      = new AtomicBoolean(false);
+
+
+    static ATCoreLibrary getInstance() throws DeviceException {
+
+        if (!INITIALISED.get()) {
+
+            int result = INSTANCE.AT_InitialiseLibrary();
+
+            if (result != 0) {
+                throw new DeviceException("Unable to initialise AndorSDK3 Core Library (atcore).");
+            }
+
+            Util.addShutdownHook(INSTANCE::AT_FinaliseLibrary);
+
+            INITIALISED.set(true);
+
+        }
+
+        return INSTANCE;
+
+    }
 
     interface FeatureCallback extends Callback {
         int apply(int Hndl, WString Feature, Pointer Context);

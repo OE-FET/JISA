@@ -9,7 +9,7 @@ import jisa.maths.fits.Fit;
 import jisa.maths.fits.Fitting;
 import jisa.maths.matrices.Matrix;
 import jisa.results.Column;
-import jisa.results.DataTable;
+import jisa.results.ResultTable;
 import jisa.results.Row;
 import jisa.results.RowEvaluable;
 
@@ -33,9 +33,9 @@ public interface Series {
 
     // == Watch ========================================================================================================
 
-    Series watch(DataTable table, RowEvaluable<? extends Number> xData, RowEvaluable<? extends Number> yData, RowEvaluable<? extends Number> eXData, RowEvaluable<? extends Number> eYData);
+    Series watch(ResultTable table, RowEvaluable<? extends Number> xData, RowEvaluable<? extends Number> yData, RowEvaluable<? extends Number> eXData, RowEvaluable<? extends Number> eYData);
 
-    default Series watch(DataTable table, RowEvaluable<? extends Number> xData, RowEvaluable<? extends Number> yData, RowEvaluable<? extends Number> eYData) {
+    default Series watch(ResultTable table, RowEvaluable<? extends Number> xData, RowEvaluable<? extends Number> yData, RowEvaluable<? extends Number> eYData) {
         return watch(table, xData, yData, r -> 0, eYData);
     }
 
@@ -49,7 +49,7 @@ public interface Series {
      *
      * @return Self-reference
      */
-    default Series watch(DataTable table, RowEvaluable xData, RowEvaluable yData) {
+    default Series watch(ResultTable table, RowEvaluable xData, RowEvaluable yData) {
         return watch(table, xData, yData, r -> 0, r -> 0);
     }
 
@@ -63,11 +63,11 @@ public interface Series {
      *
      * @return Self-reference
      */
-    default Series watch(DataTable table, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> eYData) {
+    default Series watch(ResultTable table, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> eYData) {
         return watch(table, r -> r.get(xData), r -> r.get(yData), r -> r.get(eYData));
     }
 
-    default Series watch(DataTable table, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> eXData, Column<? extends Number> eYData) {
+    default Series watch(ResultTable table, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> eXData, Column<? extends Number> eYData) {
         return watch(table, r -> r.get(xData), r -> r.get(yData), r -> r.get(eXData), r -> r.get(eYData));
     }
 
@@ -80,7 +80,7 @@ public interface Series {
      *
      * @return Self-reference
      */
-    default Series watch(DataTable table, Column<? extends Number> xData, Column<? extends Number> yData) {
+    default Series watch(ResultTable table, Column<? extends Number> xData, Column<? extends Number> yData) {
         return watch(table, r -> r.get(xData), r -> r.get(yData), r -> 0);
     }
 
@@ -137,7 +137,7 @@ public interface Series {
      *
      * @return ResultTable, null if none
      */
-    DataTable getWatched();
+    ResultTable getWatched();
 
 
     /**

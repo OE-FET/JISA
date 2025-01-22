@@ -2,6 +2,7 @@ package jisa.devices.camera.frame;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class U32Frame implements Frame.UIntFrame<U32Frame> {
@@ -76,14 +77,9 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
     @Override
     public void writeToStream(OutputStream stream) throws IOException {
 
-        for (int value : data) {
-
-            stream.write((byte) (value & 0xFF));
-            stream.write((byte) ((value >> 8) & 0xFF));
-            stream.write((byte) ((value >> 16) & 0xFF));
-            stream.write((byte) ((value >> 24) & 0xFF));
-
-        }
+        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES * data.length);
+        buffer.asIntBuffer().rewind().put(data);
+        stream.write(buffer.rewind().array());
 
     }
 

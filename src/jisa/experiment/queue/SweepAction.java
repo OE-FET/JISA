@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
 public class SweepAction<T> extends AbstractAction<Void> {
 
     private       int                lastIndex;
-    private Action         lastAction;
-    private MeasurementOld sweepMeasure = null;
-    private boolean        isRunning    = false;
+    private       Action             lastAction;
+    private       MeasurementOld     sweepMeasure   = null;
+    private       boolean            isRunning      = false;
     private       Formatter<T>       formatter      = String::valueOf;
     private       boolean            isStopped      = false;
     private final List<Listener<T>>  valueListeners = new LinkedList<>();

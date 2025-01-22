@@ -3,6 +3,7 @@ package jisa.devices.camera;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
+import jisa.devices.camera.features.MultiTrack;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.U16Frame;
 
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
-public class FakeCamera implements MTCamera<U16Frame> {
+public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
     private int     width           = 1024;
     private int     height          = 1024;
@@ -73,12 +74,12 @@ public class FakeCamera implements MTCamera<U16Frame> {
     }
 
     @Override
-    public void setAcquisitionTimeOut(int timeout) throws IOException, DeviceException {
+    public void setAcquisitionTimeout(int timeout) throws IOException, DeviceException {
         this.timeout = timeout;
     }
 
     @Override
-    public int getAcquisitionTimeOut() throws IOException, DeviceException {
+    public int getAcquisitionTimeout() throws IOException, DeviceException {
         return timeout;
     }
 
@@ -290,6 +291,26 @@ public class FakeCamera implements MTCamera<U16Frame> {
 
     @Override
     public void setBinning(int x, int y) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public boolean isTimestampEnabled() throws IOException, DeviceException {
+        return false;
+    }
+
+    @Override
+    public void setTimestampEnabled(boolean timestamping) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public int getFrameBinning() throws IOException, DeviceException {
+        return 1;
+    }
+
+    @Override
+    public void setFrameBinning(int binning) throws IOException, DeviceException {
 
     }
 

@@ -4,7 +4,6 @@
     <JAVADOC />
     <NATIVE>
       <root url="file://$PROJECT_DIR$/lib" />
-      <root url="file://$PROJECT_DIR$/native" />
     </NATIVE>
     <SOURCES />
   </library>

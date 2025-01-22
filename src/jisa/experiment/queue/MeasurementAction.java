@@ -2,20 +2,20 @@ package jisa.experiment.queue;
 
 import jisa.experiment.MeasurementOld;
 import jisa.gui.queue.SimpleActionDisplay;
-import jisa.results.DataTable;
+import jisa.results.ResultTable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public class MeasurementAction extends AbstractAction<DataTable> {
+public class MeasurementAction extends AbstractAction<ResultTable> {
 
     private final MeasurementOld measurement;
     private       boolean        skip          = false;
     private       int            retryCount    = 1;
     private       Exception      lastException = null;
-    private       DataTable      data          = null;
+    private       ResultTable    data          = null;
     private       NameGenerator  generator     = (parameters, label) -> null;
 
     public MeasurementAction(String name, MeasurementOld measurement) {
@@ -180,7 +180,7 @@ public class MeasurementAction extends AbstractAction<DataTable> {
     }
 
     @Override
-    public DataTable getData() {
+    public ResultTable getData() {
         return data;
     }
 

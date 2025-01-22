@@ -60,7 +60,7 @@ public class ListenerManager<F extends Frame<?, F>> {
         synchronized (listeners) {
 
             for (Runner<F> runner : listeners) {
-                executor.execute(() -> runner.submitFrame(frame));
+                runner.submitFrame(frame);
             }
 
         }
@@ -75,7 +75,7 @@ public class ListenerManager<F extends Frame<?, F>> {
 
     }
 
-    public static class Runner<F extends Frame<?, F>> {
+    public class Runner<F extends Frame<?, F>> {
 
         private final Camera.Listener<F> listener;
         private final Semaphore          semaphore = new Semaphore(1);
@@ -94,20 +94,22 @@ public class ListenerManager<F extends Frame<?, F>> {
 
             if (semaphore.tryAcquire()) {
 
-                try {
+                if (buffer == null || frame.size() != buffer.size()) {
+                    buffer = frame.copy();
+                } else {
+                    buffer.copyFrom(frame);
+                    buffer.setTimestamp(frame.getTimestamp());
+                }
 
-                    if (buffer == null) {
-                        buffer = frame.copy();
-                    } else {
-                        buffer.copyFrom(frame);
-                        buffer.setTimestamp(frame.getTimestamp());
+                executor.execute(() -> {
+
+                    try {
+                        listener.newFrame(buffer);
+                    } finally {
+                        semaphore.release();
                     }
 
-                    listener.newFrame(buffer);
-
-                } finally {
-                    semaphore.release();
-                }
+                });
 
             }
 

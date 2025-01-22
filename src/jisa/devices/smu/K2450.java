@@ -14,8 +14,8 @@ public class K2450 extends KeithleySCPI {
         return "Keithley 2450 SMU";
     }
 
-    protected static final String C_SET_LIMIT_2450   = ":SOUR:%s:%sLIM %e";
-    protected static final String C_QUERY_LIMIT_2450 = ":SOUR:%s:%sLIM?";
+    protected static final String C_SET_LIMIT_2450       = ":SOUR:%s:%sLIM %e";
+    protected static final String C_QUERY_LIMIT_2450     = ":SOUR:%s:%sLIM?";
     protected static final String C_QUERY_LIMIT_2450_MIN = ":SOUR:%s:%sLIM? MIN";
     protected static final String C_QUERY_LIMIT_2450_MAX = ":SOUR:%s:%sLIM? MAX";
 
@@ -38,8 +38,8 @@ public class K2450 extends KeithleySCPI {
         double val = super.measureVoltage();
 
         if (isLimitTripped() && isAutoRangingVoltage()) {
-            setVoltageLimit(getVoltageLimit()/2);
-            setVoltageLimit(getVoltageLimit()*2);
+            setVoltageLimit(getVoltageLimit() / 2);
+            setVoltageLimit(getVoltageLimit() * 2);
             val = super.measureVoltage();
         }
 
@@ -52,8 +52,8 @@ public class K2450 extends KeithleySCPI {
         double val = super.measureCurrent();
 
         if (isLimitTripped() && isAutoRangingCurrent()) {
-            setCurrentLimit(getCurrentLimit()/2);
-            setCurrentLimit(getCurrentLimit()*2);
+            setCurrentLimit(getCurrentLimit() / 2);
+            setCurrentLimit(getCurrentLimit() * 2);
             val = super.measureCurrent();
         }
 
@@ -62,14 +62,12 @@ public class K2450 extends KeithleySCPI {
     }
 
     @Override
-    public double getSetCurrent() throws DeviceException, IOException
-    {
+    public double getSetCurrent() throws DeviceException, IOException {
         return queryDouble(":SOUR:CURR?");
     }
 
     @Override
-    public double getSetVoltage() throws DeviceException, IOException
-    {
+    public double getSetVoltage() throws DeviceException, IOException {
         return queryDouble(":SOUR:VOLT?");
     }
 
@@ -84,8 +82,7 @@ public class K2450 extends KeithleySCPI {
     }
 
     @Override
-    public void setVoltageLimit(double voltage) throws IOException, DeviceException
-    {
+    public void setVoltageLimit(double voltage) throws IOException, DeviceException {
         double low = queryDouble(C_QUERY_LIMIT_2450_MIN, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol());
         double upp = queryDouble(C_QUERY_LIMIT_2450_MAX, Source.CURRENT.getTag(), Source.VOLTAGE.getSymbol());
         checkLimit("Voltage limit", voltage, low, upp, "V");
@@ -99,10 +96,9 @@ public class K2450 extends KeithleySCPI {
     }
 
     @Override
-    public void setCurrentLimit(double current) throws IOException, DeviceException
-    {
-        double low = queryDouble(C_QUERY_LIMIT_2450_MIN,  Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol());
-        double upp = queryDouble(C_QUERY_LIMIT_2450_MAX,  Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol());
+    public void setCurrentLimit(double current) throws IOException, DeviceException {
+        double low = queryDouble(C_QUERY_LIMIT_2450_MIN, Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol());
+        double upp = queryDouble(C_QUERY_LIMIT_2450_MAX, Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol());
         checkLimit("Current limit", current, low, upp, "A");
         write(C_SET_LIMIT_2450, Source.VOLTAGE.getTag(), Source.CURRENT.getSymbol(), current);
         iLimit = current;
@@ -171,21 +167,19 @@ public class K2450 extends KeithleySCPI {
      * This command determines if the measurement range is set manually or automatically for the
      * selected measure function.
      *
-     * @param funcOpt The measure function:
-     * Current: CURRent[:DC]
-     * Resistance: RESistance
-     * Voltage: VOLTage[:DC]
-     * @param measState
-     * Set the measurement range manually: 0
-     * Set the measurement range automatically: 1
+     * @param funcOpt   The measure function:
+     *                  Current: CURRent[:DC]
+     *                  Resistance: RESistance
+     *                  Voltage: VOLTage[:DC]
+     * @param measState Set the measurement range manually: 0
+     *                  Set the measurement range automatically: 1
      *
-     * @throws IOException Upon communications error
+     * @throws IOException     Upon communications error
      * @throws DeviceException Upon incompatibility with device
      */
-    public void setMeasureRange(Function funcOpt, boolean measState) throws IOException, DeviceException{
-        String cmd = ":SENS:"+funcOpt.toString()+":RANG:AUTO 0";
-        if(measState)
-            cmd = ":SENS:"+ funcOpt +":RANG:AUTO 1";
+    public void setMeasureRange(Function funcOpt, boolean measState) throws IOException, DeviceException {
+        String cmd = ":SENS:" + funcOpt.toString() + ":RANG:AUTO 0";
+        if (measState) { cmd = ":SENS:" + funcOpt + ":RANG:AUTO 1"; }
         write(cmd);
     }
 

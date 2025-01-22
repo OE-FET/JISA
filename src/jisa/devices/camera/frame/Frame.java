@@ -291,6 +291,19 @@ public interface Frame<D, F extends Frame> {
             return Short.toUnsignedInt(signed(x, y));
         }
 
+        default short[][] signedImage() {
+            short[][] signed = new short[getHeight()][getWidth()];
+
+            for (int y = 0; y < getHeight(); y++) {
+                for (int x = 0; x < getWidth(); x++) {
+                    signed[y][x] = signed(x, y);
+                }
+            }
+
+            return signed;
+
+        }
+
         short[] array();
 
         default int[] data() {

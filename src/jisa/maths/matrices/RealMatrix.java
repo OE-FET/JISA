@@ -93,8 +93,13 @@ public class RealMatrix implements Matrix<Double> {
     }
 
     public RealMatrix(int rows, int cols, double... values) {
+
         this(rows, cols);
-        setAll(values);
+
+        if (values.length > 0) {
+            setAll(values);
+        }
+
     }
 
     public RealMatrix(int rows, int cols, MatrixBuilder builder) {

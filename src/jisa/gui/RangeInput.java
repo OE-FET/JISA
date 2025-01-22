@@ -1,7 +1,6 @@
 package jisa.gui;
 
 import jisa.gui.form.Field;
-import jisa.gui.form.Form;
 import jisa.maths.Range;
 
 public class RangeInput extends Form {

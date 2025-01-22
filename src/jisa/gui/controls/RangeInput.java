@@ -7,9 +7,9 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import jisa.Util;
+import jisa.gui.Form;
 import jisa.gui.GUI;
 import jisa.gui.form.Field;
-import jisa.gui.form.Form;
 import jisa.maths.Range;
 
 import java.util.Arrays;

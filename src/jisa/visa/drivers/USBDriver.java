@@ -6,6 +6,9 @@ import jisa.addresses.USBAddress;
 import jisa.addresses.USBRawAddress;
 import jisa.addresses.USBTMCAddress;
 import jisa.visa.connections.Connection;
+import jisa.visa.exceptions.DriverSpecificException;
+import jisa.visa.exceptions.IncompatibleAddressException;
+import jisa.visa.exceptions.NoDeviceException;
 import jisa.visa.exceptions.VISAException;
 import org.usb4java.*;
 
@@ -21,10 +24,10 @@ import java.util.List;
 
 public class USBDriver implements Driver {
 
-    private static final Context context     = new Context();
-    private static       boolean initialised = false;
+    public static final Context context     = new Context();
+    private static      boolean initialised = false;
 
-    private static void initialise() throws VISAException {
+    public static void initialise() throws VISAException {
 
         if (!initialised) {
 
@@ -40,7 +43,7 @@ public class USBDriver implements Driver {
 
     }
 
-    private static boolean matches(DeviceDescriptor descriptor, USBAddress address) {
+    public static boolean matches(DeviceDescriptor descriptor, USBAddress address) {
 
         return ((int) descriptor.idVendor() & 0xffff) == address.getVendorID()
             && ((int) descriptor.idProduct() & 0xffff) == address.getProductID();
@@ -73,7 +76,7 @@ public class USBDriver implements Driver {
     public Connection open(Address address) throws VISAException {
 
         if (!(address instanceof USBAddress)) {
-            throw new VISAException("USB driver can only open USB (Raw or TMC) connections!");
+            throw new IncompatibleAddressException(address, this);
         }
 
         int result;
@@ -86,7 +89,7 @@ public class USBDriver implements Driver {
         result = LibUsb.getDeviceList(context, list);
 
         if (result < 0) {
-            throw new VISAException("Error acquiring USB device list: %s", LibUsb.strError(result));
+            throw new DriverSpecificException(this, String.format("Error acquiring USB device list: %s", LibUsb.strError(result)));
         }
 
         Device           device           = null;
@@ -112,7 +115,7 @@ public class USBDriver implements Driver {
         LibUsb.freeDeviceList(list, false);
 
         if (device == null) {
-            throw new VISAException("Could not find specified USB device.");
+            throw new NoDeviceException(address, this);
         }
 
         byte  nConfigs = deviceDescriptor.bNumConfigurations();
@@ -176,7 +179,7 @@ public class USBDriver implements Driver {
         }
 
         if (configID < 0 || iFaceID < 0 || altID < 0) {
-            throw new VISAException("Unable to find USB interface in specified device.");
+            throw new DriverSpecificException(this, "Unable to find USB interface in specified device.");
         }
 
         DeviceHandle handle = new DeviceHandle();
@@ -184,13 +187,13 @@ public class USBDriver implements Driver {
         result = LibUsb.open(device, handle);
 
         if (result < 0) {
-            throw new VISAException("Error opening USB device: %s", LibUsb.strError(result));
+            throw new DriverSpecificException(this, String.format("Error opening USB device: %s", LibUsb.strError(result)));
         }
 
         result = LibUsb.resetDevice(handle);
 
         if (result < 0) {
-            throw new VISAException("Error resetting USB device: %s", LibUsb.strError(result));
+            throw new DriverSpecificException(this, String.format("Error resetting USB device: %s", LibUsb.strError(result)));
         }
 
         if (LibUsb.kernelDriverActive(handle, iFaceID) == 1) {
@@ -198,7 +201,7 @@ public class USBDriver implements Driver {
             result = LibUsb.detachKernelDriver(handle, iFaceID);
 
             if (result < 0) {
-                throw new VISAException("Error detaching kernel driver: %s", LibUsb.strError(result));
+                throw new DriverSpecificException(this, String.format("Error detaching kernel driver: %s", LibUsb.strError(result)));
             }
 
         }
@@ -206,19 +209,19 @@ public class USBDriver implements Driver {
         result = LibUsb.setConfiguration(handle, configID);
 
         if (result < 0) {
-            throw new VISAException("Error setting USB device configuration: %s", LibUsb.strError(result));
+            throw new DriverSpecificException(this, String.format("Error setting USB device configuration: %s", LibUsb.strError(result)));
         }
 
         result = LibUsb.claimInterface(handle, iFaceID);
 
         if (result < 0) {
-            throw new VISAException("Error claiming USB interface (c: %d, i: %d): %s", configID, iFaceID, LibUsb.strError(result));
+            throw new DriverSpecificException(this, String.format("Error claiming USB interface (c: %d, i: %d): %s", configID, iFaceID, LibUsb.strError(result)));
         }
 
         result = LibUsb.setInterfaceAltSetting(handle, iFaceID, altID);
 
         if (result < 0) {
-            throw new VISAException("Error setting interface alt setting (c: %d, i: %d, a: %d): %s", configID, iFaceID, altID, LibUsb.strError(result));
+            throw new DriverSpecificException(this, String.format("Error setting interface alt setting (c: %d, i: %d, a: %d): %s", configID, iFaceID, altID, LibUsb.strError(result)));
         }
 
         if (address instanceof USBRawAddress) {

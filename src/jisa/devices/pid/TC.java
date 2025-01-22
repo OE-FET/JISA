@@ -18,6 +18,34 @@ public interface TC extends PID, MultiInstrument {
         return "Temperature Controller";
     }
 
+    List<? extends Loop> getLoops();
+
+    default Loop getLoop(int index) {
+        return getLoops().get(index);
+    }
+
+    default List<? extends TMeter> getThermometers() {
+
+        return getInputs().stream()
+                          .filter(i -> i instanceof TMeter)
+                          .map(i -> (TMeter) i)
+                          .collect(Collectors.toList());
+
+    }
+
+    default List<? extends Heater> getHeaters() {
+
+        return getInputs().stream()
+                          .filter(i -> i instanceof Heater)
+                          .map(i -> (Heater) i)
+                          .collect(Collectors.toList());
+
+    }
+
+    default List<Instrument> getSubInstruments() {
+        return Stream.concat(getInputs().stream(), Stream.concat(getOutputs().stream(), getLoops().stream())).collect(Collectors.toUnmodifiableList());
+    }
+
     interface TMeter extends Input, jisa.devices.meter.TMeter {
 
         default double getValue() throws IOException, DeviceException {
@@ -93,44 +121,16 @@ public interface TC extends PID, MultiInstrument {
         default List<Heater> getAvailableHeaters() {
 
             return getAvailableOutputs().stream()
-                                       .filter(i -> i instanceof Heater)
-                                       .map(i -> (Heater) i)
-                                       .collect(Collectors.toUnmodifiableList());
+                                        .filter(i -> i instanceof Heater)
+                                        .map(i -> (Heater) i)
+                                        .collect(Collectors.toUnmodifiableList());
 
         }
 
     }
 
-    List<? extends Loop> getLoops();
-
-    default Loop getLoop(int index) {
-        return getLoops().get(index);
-    }
-
     abstract class ZonedLoop extends PID.ZonedLoop implements Loop {
 
-    }
-
-    default List<? extends TMeter> getThermometers() {
-
-        return getInputs().stream()
-                          .filter(i -> i instanceof TMeter)
-                          .map(i -> (TMeter) i)
-                          .collect(Collectors.toList());
-
-    }
-
-    default List<? extends Heater> getHeaters() {
-
-        return getInputs().stream()
-                          .filter(i -> i instanceof Heater)
-                          .map(i -> (Heater) i)
-                          .collect(Collectors.toList());
-
-    }
-
-    default List<Instrument> getSubInstruments() {
-        return Stream.concat(getInputs().stream(), Stream.concat(getOutputs().stream(), getLoops().stream())).collect(Collectors.toUnmodifiableList());
     }
 
 }

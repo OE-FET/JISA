@@ -6,12 +6,12 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import jisa.gui.Form;
 import jisa.gui.GUI;
 import jisa.gui.form.Field;
-import jisa.gui.form.Form;
 import jisa.results.Column;
-import jisa.results.DataList;
-import jisa.results.DataTable;
+import jisa.results.ResultList;
+import jisa.results.ResultTable;
 import jisa.results.Row;
 
 import java.util.*;
@@ -155,7 +155,7 @@ public class TableInput extends VBox {
 
     }
 
-    public TableInput(DataTable table) {
+    public TableInput(ResultTable table) {
 
         this(table.getColumnsAsArray());
         setContents(table);
@@ -175,15 +175,15 @@ public class TableInput extends VBox {
         return List.copyOf(columns);
     }
 
-    public DataTable getContents() {
+    public ResultTable getContents() {
 
-        DataTable list = new DataList(columns);
+        ResultTable list = new ResultList(columns);
         table.getItems().forEach(list::addRow);
         return list;
 
     }
 
-    public void setContents(DataTable table) {
+    public void setContents(ResultTable table) {
         setColumns(table.getColumnsAsArray());
         GUI.runNow(() -> this.table.getItems().addAll(table.getRows()));
     }

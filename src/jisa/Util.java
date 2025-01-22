@@ -1100,4 +1100,17 @@ public class Util {
 
     }
 
+    public static <K, V> BuildMap<K, V> map(K key, V value) {
+        return new BuildMap<K, V>().map(key, value);
+    }
+
+    public static class BuildMap<K, V> extends LinkedHashMap<K, V> {
+
+        public BuildMap<K, V> map(K key, V value) {
+            super.put(key, value);
+            return this;
+        }
+
+    }
+
 }

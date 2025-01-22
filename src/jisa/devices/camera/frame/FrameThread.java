@@ -46,10 +46,6 @@ public class FrameThread<F extends Frame> {
 
         while (queue.isAlive()) {
 
-            if (Thread.interrupted()) {
-                break;
-            }
-
             try {
 
                 F frame = queue.nextFrame();
@@ -57,7 +53,7 @@ public class FrameThread<F extends Frame> {
                 count++;
 
             } catch (InterruptedException e) {
-                break;
+                continue;
             } catch (Throwable e) {
                 exceptions.add(e);
             }
@@ -105,6 +101,10 @@ public class FrameThread<F extends Frame> {
 
     public List<Throwable> getExceptions() {
         return List.copyOf(exceptions);
+    }
+
+    public FrameQueue<F> getFrameQueue() {
+        return queue;
     }
 
 

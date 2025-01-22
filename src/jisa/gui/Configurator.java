@@ -7,14 +7,14 @@ import javafx.scene.layout.VBox;
 import jisa.Util;
 import jisa.control.ConfigBlock;
 import jisa.control.Connection;
+import jisa.control.SRunnable;
 import jisa.devices.Configuration;
 import jisa.devices.Instrument;
 import jisa.devices.Instrument.AutoQuantity;
 import jisa.devices.Instrument.OptionalQuantity;
 import jisa.gui.form.Field;
-import jisa.gui.form.Form;
 import jisa.gui.form.TableField;
-import jisa.results.DataTable;
+import jisa.results.ResultTable;
 import kotlin.reflect.KClass;
 
 import java.util.LinkedList;
@@ -191,6 +191,147 @@ public class Configurator<I extends Instrument> extends JFXElement {
             }
 
         });
+
+    }
+
+    public static <I extends Instrument> Form createConfigurationForm(String title, I instrument) {
+
+        List<SRunnable> onAccept = new LinkedList<>();
+        List<SRunnable> onReturn = new LinkedList<>();
+
+        Form form = new Form(title);
+
+        boolean sep = false;
+
+        for (Instrument.Parameter parameter : instrument.getAllParameters()) {
+
+            Object value = parameter.getDefaultValue();
+
+            if (value instanceof AutoQuantity) {
+
+                if (!sep) {
+                    form.addSeparator();
+                }
+
+                AutoQuantity   cast  = (AutoQuantity) value;
+                Field<Boolean> check = form.addCheckBox("Auto", cast.isAuto());
+                Field          field = makeBasicField(form, parameter.getName(), cast.getValue());
+
+                if (field == null) {
+                    check.remove();
+                    continue;
+                }
+
+                check.addChangeListener(field::setDisabled);
+                field.setDisabled(cast.isAuto());
+
+                onAccept.add(() -> parameter.set(new AutoQuantity<>(check.get(), field.get())));
+
+                if (parameter.hasGetter()) {
+                    onReturn.add(() -> {
+                        AutoQuantity quantity = (AutoQuantity) parameter.getCurrentValue();
+                        field.set(quantity.getValue());
+                        check.set(quantity.isAuto());
+                    });
+                }
+
+                form.addSeparator();
+                sep = true;
+
+            } else if (value instanceof OptionalQuantity) {
+
+                if (!sep) {
+                    form.addSeparator();
+                }
+
+                OptionalQuantity cast  = (OptionalQuantity) value;
+                Field<Boolean> check   = form.addCheckBox("Use", cast.isUsed());
+                Field          field   = makeBasicField(form, parameter.getName(), cast.getValue());
+
+                if (field == null) {
+                    check.remove();
+                    continue;
+                }
+
+                check.addChangeListener(b -> field.setDisabled(!b));
+                field.setDisabled(!cast.isUsed());
+
+                onAccept.add(() -> parameter.set(new OptionalQuantity<>(check.get(), field.get())));
+
+                if (parameter.hasGetter()) {
+                    onReturn.add(() -> {
+                        OptionalQuantity quantity = (OptionalQuantity) parameter.getCurrentValue();
+                        field.set(quantity.getValue());
+                        check.set(quantity.isUsed());
+                    });
+                }
+
+                form.addSeparator();
+                sep = true;
+
+            } else if (parameter.isChoice()) {
+
+                List choices = parameter.getChoices();
+                Field<Integer> field = form.addChoice(parameter.getName(), choices.indexOf(value), (String[]) choices.stream().map(Object::toString).toArray(String[]::new));
+
+                onAccept.add(() -> parameter.set(choices.get(field.get())));
+
+                if (parameter.hasGetter()) {
+                    onReturn.add(() -> field.set(choices.indexOf(parameter.getCurrentValue())));
+                }
+
+                sep = false;
+
+            } else {
+
+                Field field = makeBasicField(form, parameter.getName(), value);
+
+                if (field == null) {
+                    continue;
+                }
+
+                onAccept.add(() -> parameter.set(field.get()));
+
+                if (parameter.hasGetter()) {
+                    onReturn.add(() -> field.set(parameter.getCurrentValue()));
+                }
+
+                sep = false;
+
+            }
+
+        }
+
+        form.addButton("Apply", () -> {
+
+            onAccept.forEach(Util::runRegardless);
+            onAccept.forEach(Util::runRegardless);
+            onAccept.forEach(Util::runRegardless);
+
+            onReturn.forEach(Util::runRegardless);
+
+        });
+
+        return form;
+
+
+    }
+
+    private static <T> Field<T> makeBasicField(Form form, String name, T defaultValue) {
+
+        if (defaultValue instanceof Double) {
+            return (Field<T>) form.addDoubleField(name, (double) defaultValue);
+        } else if (defaultValue instanceof Integer) {
+            return (Field<T>) form.addIntegerField(name, (int) defaultValue);
+        } else if (defaultValue instanceof Boolean) {
+            return (Field<T>) form.addCheckBox(name, (boolean) defaultValue);
+        } else if (defaultValue instanceof ResultTable) {
+            return (Field<T>) form.addTable(name, (ResultTable) defaultValue);
+        } else if (defaultValue instanceof String) {
+            return (Field<T>) form.addTextField(name, (String) defaultValue);
+        } else {
+            return null;
+        }
 
     }
 
@@ -419,9 +560,9 @@ public class Configurator<I extends Instrument> extends JFXElement {
             field.addChangeListener(parameter::setValue);
             sepLast = false;
             return field;
-        } else if (DataTable.class.isAssignableFrom(parameter.getType())) {
-            TableField field = config.addTable(parameter.getName(), ((DataTable) parameter.getValue()).getColumnsAsArray());
-            field.set((DataTable) parameter.getValue());
+        } else if (ResultTable.class.isAssignableFrom(parameter.getType())) {
+            TableField field = config.addTable(parameter.getName(), ((ResultTable) parameter.getValue()).getColumnsAsArray());
+            field.set((ResultTable) parameter.getValue());
             field.addChangeListener(parameter::setValue);
             sepLast = false;
             return field;

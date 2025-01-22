@@ -107,7 +107,7 @@ public interface TemperatureControlled extends Feature {
      * @throws DeviceException      Upon device compatibility error
      * @throws InterruptedException Upon waiting being interrupted by a thread interrupt
      */
-    default void waitForStableControlledTemperature() throws IOException, DeviceException, InterruptedException {
+    default void waitForTemperatureControlStable() throws IOException, DeviceException, InterruptedException {
         Sync.waitForCondition(i -> isTemperatureControlStable(), 1000);
     }
 

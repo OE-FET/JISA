@@ -7,8 +7,8 @@ import jisa.control.SRunnable;
 import jisa.devices.DeviceException;
 import jisa.enums.OscMode;
 import jisa.enums.WaveForm;
+import jisa.gui.Form;
 import jisa.gui.form.Field;
-import jisa.gui.form.Form;
 import jisa.visa.VISADevice;
 import jisa.visa.drivers.NIGPIBDriver;
 

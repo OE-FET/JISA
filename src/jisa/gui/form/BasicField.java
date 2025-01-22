@@ -3,6 +3,7 @@ package jisa.gui.form;
 import javafx.beans.property.Property;
 import javafx.scene.Node;
 import javafx.scene.control.Labeled;
+import jisa.gui.Form;
 import jisa.gui.GUI;
 
 import java.util.LinkedList;

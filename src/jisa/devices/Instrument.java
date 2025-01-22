@@ -211,11 +211,17 @@ public interface Instrument {
         private final S         defaultValue;
         private final Setter<S> setter;
         private final List<S>   options;
+        private final Getter<S> getter;
 
         public Parameter(String name, S defaultValue, Setter<S> setter, S... options) {
+            this(name, defaultValue, setter, null, options);
+        }
+
+        public Parameter(String name, S defaultValue, Setter<S> setter, Getter<S> getter, S... options) {
             this.name         = name;
             this.defaultValue = defaultValue;
             this.setter       = setter;
+            this.getter       = getter;
             this.options      = options.length > 0 ? List.of(options) : Collections.emptyList();
         }
 
@@ -229,6 +235,19 @@ public interface Instrument {
 
         public S getDefaultValue() {
             return defaultValue;
+        }
+
+        public S getCurrentValue() throws IOException, DeviceException {
+
+            if (getter == null) {
+                return null;
+            }
+
+            return getter.get();
+        }
+
+        public boolean hasGetter() {
+            return getter != null;
         }
 
         public boolean isChoice() {

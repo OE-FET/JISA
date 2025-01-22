@@ -7,7 +7,6 @@ import jisa.control.Connection;
 import jisa.devices.Instrument;
 import jisa.experiment.queue.Action;
 import jisa.gui.form.Field;
-import jisa.gui.form.Form;
 import org.reflections.Reflections;
 
 import java.util.*;

@@ -8,7 +8,7 @@ import jisa.gui.Plot;
 import jisa.gui.Series;
 import jisa.maths.fits.Fit;
 import jisa.results.Column;
-import jisa.results.DataTable;
+import jisa.results.ResultTable;
 import jisa.results.Row;
 import jisa.results.RowEvaluable;
 
@@ -23,11 +23,11 @@ public class JISASeries implements Series {
     private final ObservableList<JISAErrorDataSet> dataSets       = FXCollections.observableArrayList();
     private final Map<Object, JISAErrorDataSet>    mapping        = new TreeMap<>();
     private final Plot                             plot;
-    private int                     limit         = 0;
-    private DataTable               watched       = null;
-    private DataTable.RowListener   rowListener   = null;
-    private DataTable.ClearListener clearListener = null;
-    private DataSetSelector         selector      = r -> dataSets.get(0);
+    private int                       limit         = 0;
+    private ResultTable               watched       = null;
+    private ResultTable.RowListener   rowListener   = null;
+    private ResultTable.ClearListener clearListener = null;
+    private DataSetSelector           selector      = r -> dataSets.get(0);
     private       Predicate<Row>                   filter         = r -> true;
     private       RowEvaluable<? extends Number>   xEval;
     private       RowEvaluable<? extends Number>   yEval;
@@ -60,7 +60,7 @@ public class JISASeries implements Series {
     }
 
     @Override
-    public Series watch(DataTable table, RowEvaluable<? extends Number> x, RowEvaluable<? extends Number> y, RowEvaluable<? extends Number> eX, RowEvaluable<? extends Number> eY) {
+    public Series watch(ResultTable table, RowEvaluable<? extends Number> x, RowEvaluable<? extends Number> y, RowEvaluable<? extends Number> eX, RowEvaluable<? extends Number> eY) {
 
         if (watched != null) {
             throw new IllegalStateException("This Series is already watching another ResultTable.");
@@ -103,7 +103,7 @@ public class JISASeries implements Series {
 
     }
 
-    public Series watch(DataTable table, Column<? extends Number> xData, Column<? extends Number> yData) {
+    public Series watch(ResultTable table, Column<? extends Number> xData, Column<? extends Number> yData) {
 
         watch(table, r -> r.get(xData), r -> r.get(yData), r -> 0.0);
 
@@ -137,7 +137,7 @@ public class JISASeries implements Series {
         return limit;
     }
 
-    public Series watch(DataTable table, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> eData) {
+    public Series watch(ResultTable table, Column<? extends Number> xData, Column<? extends Number> yData, Column<? extends Number> eData) {
 
         watch(table, r -> r.get(xData), r -> r.get(yData), r -> r.get(eData));
 
@@ -228,7 +228,7 @@ public class JISASeries implements Series {
     }
 
     @Override
-    public DataTable getWatched() {
+    public ResultTable getWatched() {
         return watched;
     }
 
