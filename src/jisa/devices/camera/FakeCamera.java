@@ -165,9 +165,9 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     }
 
     @Override
-    public FrameQueue<U16Frame> openFrameQueue() {
+    public FrameQueue<U16Frame> openFrameQueue(int capacity) {
 
-        FrameQueue<U16Frame> queue = new FrameQueue<>(this);
+        FrameQueue<U16Frame> queue = new FrameQueue<>(this, capacity);
         listenerManager.addQueue(queue);
         return queue;
 

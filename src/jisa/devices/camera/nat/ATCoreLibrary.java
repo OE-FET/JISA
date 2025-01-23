@@ -5,19 +5,35 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 import jisa.Util;
 import jisa.devices.DeviceException;
+import jisa.devices.MissingLibraryException;
 
 import java.nio.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * JNA interface for atcore AndorSDK3 library.
+ */
 public interface ATCoreLibrary extends Library {
 
-    String        JNA_LIBRARY_NAME = "atcore";
-    NativeLibrary JNA_NATIVE_LIB   = NativeLibrary.getInstance(JNA_LIBRARY_NAME);
-    ATCoreLibrary INSTANCE         = Native.loadLibrary(JNA_LIBRARY_NAME, ATCoreLibrary.class);
-    AtomicBoolean INITIALISED      = new AtomicBoolean(false);
+    String                         JNA_LIBRARY_NAME = "atcore";
+    AtomicReference<ATCoreLibrary> INSTANCE         = new AtomicReference<>();
+    AtomicBoolean                  INITIALISED      = new AtomicBoolean(false);
 
 
     static ATCoreLibrary getInstance() throws DeviceException {
+
+        if (INSTANCE.get() == null) {
+
+            try {
+                INSTANCE.set(Native.loadLibrary(JNA_LIBRARY_NAME, ATCoreLibrary.class));
+            } catch (UnsatisfiedLinkError e) {
+                throw new MissingLibraryException("atcore", "Andor sCMOS Camera");
+            }
+
+        }
+
+        ATCoreLibrary INSTANCE = ATCoreLibrary.INSTANCE.get();
 
         if (!INITIALISED.get()) {
 

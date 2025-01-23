@@ -133,9 +133,21 @@ public interface Camera<F extends Frame> extends Instrument {
      * Opens a new (blocking) queue into which copies of each newly acquired frame will be placed.
      * This is to allow for asynchronous, lossless processing of frame data.
      *
+     * @param capacity The maximum capacity of the queue (beyond which frames will be rejected).
+     *
      * @return Queue of frames
      */
-    FrameQueue<F> openFrameQueue();
+    FrameQueue<F> openFrameQueue(int capacity);
+
+    /**
+     * Opens a new (blocking) queue into which copies of each newly acquired frame will be placed.
+     * This is to allow for asynchronous, lossless processing of frame data.
+     *
+     * @return Queue of frames
+     */
+    default FrameQueue<F> openFrameQueue() {
+        return openFrameQueue(Integer.MAX_VALUE);
+    }
 
     /**
      * Closes the given queue, preventing the camera from adding any new frames to it.

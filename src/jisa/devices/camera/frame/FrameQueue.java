@@ -16,6 +16,11 @@ public class FrameQueue<F extends Frame> extends LinkedBlockingQueue<F> {
     private final List<Thread> threads = Collections.synchronizedList(new ArrayList<>(1));
 
     public FrameQueue(Camera<F> camera) {
+        this(camera, Integer.MAX_VALUE);
+    }
+
+    public FrameQueue(Camera<F> camera, int capacity) {
+        super(capacity);
         this.camera = camera;
     }
 
