@@ -747,38 +747,35 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<U16Fra
 
         }
 
-        // Check for values that might indicate no timeout
-        long tmo = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
-
-        long    bufferSize = getLong("ImageSizeBytes");
-        int     width      = getInt("AOIWidth");
-        int     height     = getInt("AOIHeight");
-        int     stride     = getInt("AOIStride");
-        int     imageSize  = width * height;
-        long    startTime  = System.nanoTime();
-        long    startClock = getLong("TimestampClock");
-        long    frequency  = getLong("TimestampClockFrequency");
-        long    tick       = (long) (1e9 / frequency);
-        Enum    encoding   = getEnum("PixelEncoding");
-        WString mono16     = new WString("Mono16");
-        WString encText    = new WString(encoding.getText());
         setEnum("CycleMode", "Fixed");
         setLong("FrameCount", count);
 
+        // Check for values that might indicate no timeout
+        long tmo = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
+
+        long         bufferSize = getLong("ImageSizeBytes");
+        int          width      = getInt("AOIWidth");
+        int          height     = getInt("AOIHeight");
+        int          stride     = getInt("AOIStride");
+        int          imageSize  = width * height;
+        long         startTime  = System.nanoTime();
+        long         startClock = getLong("TimestampClock");
+        long         frequency  = getLong("TimestampClockFrequency");
+        long         tick       = (long) (1e9 / frequency);
+        Enum         encoding   = getEnum("PixelEncoding");
+        WString      mono16     = new WString("Mono16");
+        WString      encText    = new WString(encoding.getText());
+        ByteBuffer[] returns    = new ByteBuffer[count];
+
         flush();
 
-        Memory[] buffers = new Memory[count];
-
-        try {
+        try (Memory buffers = new Memory(count * bufferSize)) {
 
             for (int i = 0; i < count; i++) {
-                buffers[i] = queueBuffer(bufferSize);
+                queueBuffer(buffers.getByteBuffer(i * bufferSize, bufferSize));
             }
 
             acquisitionStart();
-
-            ByteBuffer[] returns   = new ByteBuffer[count];
-            IntBuffer    intBuffer = IntBuffer.allocate(count);
 
             for (int i = 0; i < count; i++) {
                 returns[i] = awaitBuffer(timeout);
@@ -790,10 +787,9 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<U16Fra
             List<U16Frame> frames    = new ArrayList<>(count);
             boolean        timestamp = isTimestampEnabled();
 
-            for (int i = 0; i < count; i++) {
+            for (ByteBuffer returned : returns) {
 
-                ByteBuffer returned = returns[i];
-                Frame      frame    = convertBuffer(returned, width, height, stride, encText, mono16);
+                Frame frame = convertBuffer(returned, width, height, stride, encText, mono16);
 
                 if (timestamp) {
 
@@ -812,16 +808,6 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<U16Fra
             }
 
             return frames;
-
-        } finally {
-
-            for (Memory memory : buffers) {
-
-                if (memory != null) {
-                    memory.close();
-                }
-
-            }
 
         }
 
@@ -845,6 +831,9 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<U16Fra
         return timeout;
     }
 
+    /**
+     * Main method of the acquisition thread that runs when continuous acquisition is started.
+     */
     private void acquisition(int bufferSize) {
 
         final long[] stats = {0, 0, System.nanoTime()};
@@ -911,9 +900,13 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<U16Fra
 
     }
 
+    /**
+     * Main method of the processing thread that runs when continuous acquisition is started.
+     */
     private void processing(int bufferSize, int width, int height, int stride, short[] data, long startClock, long startTime, long frequency, Enum encoding) {
 
         boolean timestampEnabled;
+
         try {
             timestampEnabled = isTimestampEnabled();
         } catch (Exception e) {
@@ -941,21 +934,21 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<U16Fra
         try (Memory bufferMemory = new Memory(bufferSize)) {
 
             // Constants
-            final long    tick      = (long) (1e9 / frequency);
-            final int     imageSize = width * height;
-            final WString mono16    = new WString("Mono16");
-            final WString encText   = new WString(encoding.getText());
+            final long    tick       = (long) (1e9 / frequency);
+            final int     imageSize  = width * height;
+            final long    imageBytes = (long) imageSize * Short.BYTES;
+            final WString mono16     = new WString("Mono16");
+            final WString encText    = new WString(encoding.getText());
 
-            try (Memory convertedMemory = new Memory(imageSize * 2L)) {
+            try (Memory convertedMemory = new Memory(imageBytes)) {
 
                 // Buffers for retrieving data
                 final ByteBuffer buffer    = bufferMemory.getByteBuffer(0, bufferSize);
-                final ByteBuffer converted = convertedMemory.getByteBuffer(0, convertedMemory.size());
-
-                int result;
+                final ByteBuffer converted = convertedMemory.getByteBuffer(0, imageBytes);
 
                 while (acquiring || !queued.isEmpty()) {
 
+                    // Try to acquire the next frame from the acquisition thread
                     try {
                         buffer.clear().rewind().put(queued.take());
                     } catch (InterruptedException e) {
@@ -1160,11 +1153,13 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<U16Fra
 
     @Override
     public List<Double> getPixelReadoutRates() {
+
         try {
             return getEnumOptions("PixelReadoutRate").stream().filter(Enum::isImplemented).map(e -> Integer.parseInt(e.getText().replace("MHz", "").trim()) * 1e6).collect(Collectors.toList());
         } catch (DeviceException e) {
             return Collections.emptyList();
         }
+
     }
 
     @Override
