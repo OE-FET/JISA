@@ -24,6 +24,7 @@ import jisa.visa.NativeDevice;
 import java.io.IOException;
 import java.nio.*;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
@@ -126,7 +127,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<U16Fra
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<U16Frame>();
 
     private final Object                queuedLock        = new Object();
-    private final BlockingQueue<byte[]> queued            = new LinkedBlockingQueue<>();
+    private       BlockingQueue<byte[]> queued            = new LinkedBlockingQueue<>();
     private       Frame                 frameBuffer       = null;
     private       boolean               centreX           = false;
     private       int                   timeout           = 0;
@@ -179,6 +180,10 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<U16Fra
         setEnum("TriggerMode", "Internal");
         setBoolean("RollingShutterGlobalClear", false);
 
+    }
+
+    public void setInternalQueueCapacity(int capacity) {
+        this.queued = new ArrayBlockingQueue<byte[]>(capacity);
     }
 
     private synchronized int open(int cameraIndex) throws DeviceException {
