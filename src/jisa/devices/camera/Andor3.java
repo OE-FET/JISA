@@ -530,7 +530,7 @@ public class Andor3 extends NativeDevice<ATCoreLibrary> implements Camera<U16Fra
             throw new DeviceException("ConvertBuffer failed: %d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
         }
 
-        outputBuffer.rewind().asShortBuffer().get(outputFrame.array(), 0, outputBuffer.capacity());
+        outputBuffer.rewind().asShortBuffer().get(outputFrame.array());
 
     }
 
