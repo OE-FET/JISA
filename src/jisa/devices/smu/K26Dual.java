@@ -13,10 +13,13 @@ public abstract class K26Dual<T extends K26Dual> extends KeithleyTSP implements 
     private final List<KSMU<T>> channels;
 
     public K26Dual(Address address, String model) throws IOException, DeviceException {
+
         super(address, model);
+
         SMU_A    = new KSMU<>("smua", (T) this);
         SMU_B    = new KSMU<>("smub", (T) this);
         channels = List.of(SMU_A, SMU_B);
+
     }
 
     @Override

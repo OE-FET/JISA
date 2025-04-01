@@ -75,14 +75,14 @@ public class ListenerManager<F extends Frame<?, F>> {
 
     }
 
-    public class Runner<F extends Frame<?, F>> {
+    public class Runner<I extends Frame<?, I>> {
 
-        private final Camera.Listener<F> listener;
+        private final Camera.Listener<I> listener;
         private final Semaphore          semaphore = new Semaphore(1);
 
-        private F buffer = null;
+        private I buffer = null;
 
-        public Runner(Camera.Listener<F> listener) {
+        public Runner(Camera.Listener<I> listener) {
             this.listener = listener;
         }
 
@@ -90,7 +90,7 @@ public class ListenerManager<F extends Frame<?, F>> {
             this.buffer = null;
         }
 
-        public void submitFrame(F frame) {
+        public void submitFrame(I frame) {
 
             if (semaphore.tryAcquire()) {
 

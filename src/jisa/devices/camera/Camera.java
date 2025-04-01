@@ -71,6 +71,29 @@ public interface Camera<F extends Frame> extends Instrument {
     int getAcquisitionTimeout() throws IOException, DeviceException;
 
     /**
+     * Returns the current rate at which the camera is acquiring frames (if it is continuously acquiring, zero otherwise).
+     *
+     * @return Acquisition frames per second.
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    double getAcquisitionFPS() throws IOException, DeviceException;
+
+    /**
+     * Returns the current rate at which the camera is processing frames (if it is continuously acquiring, zero otherwise).
+     * Unless this has been overridden, this will just return the same value as getAcquisitionFPS() by default.
+     *
+     * @return Processing frames per second.
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    default double getProcessingFPS() throws IOException, DeviceException {
+        return getAcquisitionFPS();
+    }
+
+    /**
      * Initiates continuous acquisition, causing the camera to continuously acquire frames until stopAcquisition() is called.
      *
      * @throws IOException     Upon communications error
@@ -168,14 +191,36 @@ public interface Camera<F extends Frame> extends Instrument {
         return new FrameThread<>(this, listener);
     }
 
+    /**
+     * Opens a new frame queue and launches a new thread to handle it, giving each item in the queue to the
+     * provided lambda sequentially. In effect, this is like adding a frame listener, except it is lossless.
+     *
+     * @param listener Action to perform with each frame that comes through the queue.
+     *
+     * @return FrameThread object representing the new thread and queue.
+     */
     default FrameThread<F> startFrameThread(Streamer<F> listener) {
         return new FrameThread<>(this, listener);
     }
 
+    /**
+     * Stream binary frame data losslessly to the given output stream.
+     *
+     * @param stream The output stream to stream to.
+     *
+     * @return FrameThread object representing the worker thread running the stream.
+     */
     default FrameThread<F> stream(OutputStream stream) {
         return startFrameThread(f -> f.writeToStream(stream));
     }
 
+    /**
+     * Stream binary frame data losslessly to the given file.
+     *
+     * @param path The file to stream to.
+     *
+     * @return FrameThread object representing the worker thread running the stream.
+     */
     default FrameThread<F> streamToFile(String path) throws IOException {
         FileOutputStream fos = new FileOutputStream(path);
         return new FrameThread<>(this, f -> f.writeToStream(fos), fos::close);
@@ -452,7 +497,7 @@ public interface Camera<F extends Frame> extends Instrument {
     /**
      * Sets the number of sequential frames captured by the camera to bin into each returned frame.
      *
-     * @param binning  Temporal binning count
+     * @param binning Temporal binning count
      *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error

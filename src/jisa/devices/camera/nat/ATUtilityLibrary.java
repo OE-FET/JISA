@@ -1,12 +1,9 @@
 package jisa.devices.camera.nat;
 
-import com.sun.jna.Library;
-import com.sun.jna.Native;
 import com.sun.jna.WString;
 import com.sun.jna.ptr.LongByReference;
-import jisa.Util;
 import jisa.devices.DeviceException;
-import jisa.devices.MissingLibraryException;
+import jisa.visa.NativeLibrary;
 
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
@@ -15,44 +12,25 @@ import java.nio.LongBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static jisa.devices.camera.Andor3.AT_SUCCESS;
+import static jisa.devices.camera.Andor3.ERROR_NAMES;
+
 /**
  * JNA interface for atutility AndorSDK3 library.
  */
-public interface ATUtilityLibrary extends Library {
+public interface ATUtilityLibrary extends NativeLibrary {
 
     String                            JNA_LIBRARY_NAME = "atutility";
     AtomicReference<ATUtilityLibrary> INSTANCE         = new AtomicReference<>();
     AtomicBoolean                     INITIALISED      = new AtomicBoolean(false);
 
-    static ATUtilityLibrary getInstance() throws DeviceException {
+    default void initialise() throws Exception {
 
-        if (INSTANCE.get() == null) {
+        int result = AT_InitialiseUtilityLibrary();
 
-            try {
-                INSTANCE.set(Native.loadLibrary(JNA_LIBRARY_NAME, ATUtilityLibrary.class));
-            } catch (UnsatisfiedLinkError e) {
-                throw new MissingLibraryException("atutility", "Andor sCMOS Camera");
-            }
-
+        if (result != AT_SUCCESS) {
+            throw new DeviceException("%d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
         }
-
-        ATUtilityLibrary INSTANCE = ATUtilityLibrary.INSTANCE.get();
-
-        if (!INITIALISED.get()) {
-
-            int result = INSTANCE.AT_InitialiseUtilityLibrary();
-
-            if (result != 0) {
-                throw new DeviceException("Unable to initialise AndorSDK3 Utility Library (atutility).");
-            }
-
-            Util.addShutdownHook(INSTANCE::AT_FinaliseUtilityLibrary);
-
-            INITIALISED.set(true);
-
-        }
-
-        return INSTANCE;
 
     }
 

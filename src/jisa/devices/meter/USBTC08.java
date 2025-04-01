@@ -1,6 +1,5 @@
 package jisa.devices.meter;
 
-import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.ptr.ShortByReference;
@@ -8,6 +7,7 @@ import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.visa.NativeDevice;
+import jisa.visa.NativeLibrary;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 /**
  * Driver class for Picotech USB-TC08 thermocouple data loggers. Requires proprietary usbtc08 library to be installed.
  */
-public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MSTMeter<USBTC08.TC08TMeter> {
+public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter> {
 
     public static String getDescription() {
         return "PicoTech USB-TC08";
@@ -52,16 +52,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      * Static instance of loaded library
      */
     private static USBTC08.NativeInterface INSTANCE;
-
-    static {
-
-        try {
-            INSTANCE = Native.loadLibrary(LIBRARY_NAME, LIBRARY_CLASS);
-        } catch (Throwable e) {
-            INSTANCE = null;
-        }
-
-    }
+    private static Throwable               EXCEPTION;
 
     private final short handle;
 
@@ -82,6 +73,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     private long      interval      = 0;
     private Frequency lineFrequency = Frequency.FIFTY_HERTZ;
 
+    private final USBTC08.NativeInterface usbtc08;
+
     /**
      * Connects to the first USB-TC08 unit found connected to the system.
      *
@@ -90,14 +83,11 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      */
     public USBTC08() throws IOException, DeviceException {
 
-        // Load native library
-        super(LIBRARY_NAME, INSTANCE);
+        super("USB-TC08 Temperature Data Logger");
 
-        if (INSTANCE == null) {
-            throw new IOException("Error loading usbtc08 library!");
-        }
+        usbtc08 = findLibrary(LIBRARY_CLASS, LIBRARY_NAME);
 
-        short handle = nativeLibrary.usb_tc08_open_unit();
+        short handle = usbtc08.usb_tc08_open_unit();
 
         if (handle > 0) {
             this.handle = handle;
@@ -107,28 +97,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             throw new DeviceException(getLastError((short) 0));
         }
 
-        interval = nativeLibrary.usb_tc08_get_minimum_interval_ms(handle);
-
-    }
-
-    @Override
-    public List<TC08TMeter> getThermometers() {
-        return channels;
-    }
-
-    @Override
-    public Map<TC08TMeter, Double> getTemperatures(TC08TMeter... channels) throws IOException, DeviceException {
-
-        if (channels.length == 0) {
-            channels = this.channels.toArray(TC08TMeter[]::new);
-        }
-
-        // If it's been long enough, update the readings buffer
-        if ((System.currentTimeMillis() - lastTime) > interval) {
-            updateReadings();
-        }
-
-        return Arrays.stream(channels).collect(Collectors.toMap(c -> c, c -> (double) lastValues[c.channel]));
+        interval = usbtc08.usb_tc08_get_minimum_interval_ms(handle);
 
     }
 
@@ -142,8 +111,9 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      */
     public USBTC08(Address address) throws IOException, DeviceException {
 
-        // Load native library
-        super(LIBRARY_NAME, INSTANCE);
+        super("USB-TC08 Temperature Data Logger");
+
+        usbtc08 = findLibrary(LIBRARY_CLASS, LIBRARY_NAME);
 
         if (!(address instanceof IDAddress)) {
             throw new DeviceException("This driver requires an ID or serial number address.");
@@ -180,7 +150,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
             throw new IOException(String.format("No USB TC-08 unit with serial number \"%s\" was found.", serial));
         }
 
-        handle = value;
+        handle   = value;
+        interval = usbtc08.usb_tc08_get_minimum_interval_ms(handle);
 
     }
 
@@ -194,6 +165,27 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
      */
     public USBTC08(String serial) throws IOException, DeviceException {
         this(new IDAddress(serial));
+    }
+
+    @Override
+    public List<TC08TMeter> getThermometers() {
+        return channels;
+    }
+
+    @Override
+    public Map<TC08TMeter, Double> getTemperatures(TC08TMeter... channels) throws IOException, DeviceException {
+
+        if (channels.length == 0) {
+            channels = this.channels.toArray(TC08TMeter[]::new);
+        }
+
+        // If it's been long enough, update the readings buffer
+        if ((System.currentTimeMillis() - lastTime) > interval) {
+            updateReadings();
+        }
+
+        return Arrays.stream(channels).collect(Collectors.toMap(c -> c, c -> (double) lastValues[c.channel]));
+
     }
 
     /**
@@ -229,7 +221,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     public String getSerial() throws DeviceException {
 
         byte[] read   = new byte[256];
-        short  result = nativeLibrary.usb_tc08_get_unit_info2(handle, read, (short) 256, NativeInterface.USBTC08LINE_BATCH_AND_SERIAL);
+        short  result = usbtc08.usb_tc08_get_unit_info2(handle, read, (short) 256, NativeInterface.USBTC08LINE_BATCH_AND_SERIAL);
 
         if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
@@ -248,12 +240,12 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     private synchronized void updateReadings() throws DeviceException {
 
         lastTime = System.currentTimeMillis();
-        interval = nativeLibrary.usb_tc08_get_minimum_interval_ms(handle);
+        interval = usbtc08.usb_tc08_get_minimum_interval_ms(handle);
 
         // Need a pointer to some memory to store our returned values
         Memory tempPointer = new Memory(9L * Native.getNativeSize(Float.TYPE));
 
-        int result = nativeLibrary.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), UNITS_KELVIN);
+        int result = usbtc08.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), UNITS_KELVIN);
 
         // If zero, then something's gone wrong.
         if (result == ACTION_FAILED) {
@@ -262,6 +254,8 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
         lastValues = tempPointer.getFloatArray(0, SENSORS_PER_UNIT);
         lastTime   = System.currentTimeMillis();
+
+        tempPointer.close();
 
     }
 
@@ -288,7 +282,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     public void setLineFrequency(Frequency frequency) throws DeviceException {
 
 
-        int result = nativeLibrary.usb_tc08_set_mains(handle, (short) frequency.ordinal());
+        int result = usbtc08.usb_tc08_set_mains(handle, (short) frequency.ordinal());
 
         if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
@@ -312,7 +306,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     @Override
     public void close() throws DeviceException {
 
-        int result = nativeLibrary.usb_tc08_close_unit(handle);
+        int result = usbtc08.usb_tc08_close_unit(handle);
 
         if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
@@ -333,7 +327,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
 
     private String getLastError(short handle) {
 
-        int error = nativeLibrary.usb_tc08_get_last_error(handle);
+        int error = usbtc08.usb_tc08_get_last_error(handle);
 
         switch (error) {
 
@@ -447,7 +441,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
         @Override
         public void setSensorType(Type type) throws IOException, DeviceException {
 
-            int result = nativeLibrary.usb_tc08_set_channel(
+            int result = usbtc08.usb_tc08_set_channel(
                 handle,
                 channel,
                 NativeInterface.TYPE_MAP.getOrDefault(type, NativeInterface.USB_TC08_DISABLE_CHANNEL)
@@ -478,7 +472,7 @@ public class USBTC08 extends NativeDevice<USBTC08.NativeInterface> implements MS
     /**
      * Interface corresponding to native usbtc08 library methods.
      */
-    protected interface NativeInterface extends Library {
+    protected interface NativeInterface extends NativeLibrary {
 
         int   USBTC08_MAX_CHANNELS         = 8;
         short USBTC08LINE_BATCH_AND_SERIAL = 4;

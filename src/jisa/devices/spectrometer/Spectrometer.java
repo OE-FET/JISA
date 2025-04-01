@@ -13,7 +13,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
 
-public interface Spectrometer<C extends Spectrometer.Channel> extends Instrument, MultiInstrument {
+/**
+ * Interface for representing spectrometer instruments (i.e., a spectrograph plus some sort of sensor)
+ *
+ * @param <C> The class representing the individual channels of this spectrometer.
+ */
+public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrograph, MultiInstrument {
 
     /**
      * Returns a list of all channels this spectrometer has.
@@ -21,38 +26,6 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Instrument
      * @return Spectrometer channels.
      */
     List<C> getChannels();
-
-    /**
-     * Returns the nth channel of this spectrometer.
-     *
-     * @param index n.
-     *
-     * @return Spectrometer channel n.
-     */
-    default C getChannel(int index) {
-        return getChannels().get(index);
-    }
-
-    default List<? extends Instrument> getSubInstruments() {
-        return getChannels();
-    }
-
-    /**
-     * Tells all channels to take a spectrum and returns a map of channel to spectrum.
-     *
-     * @return Map of spectra
-     */
-    default Map<C, Spectrum> getSpectra() {
-
-        Map<C, Spectrum> spectra = new LinkedHashMap<>();
-
-        for (C channel : getChannels()) {
-            Util.runRegardless(() -> spectra.put(channel, channel.getSpectrum()));
-        }
-
-        return spectra;
-
-    }
 
     /**
      * Returns the integration time currently being used by the spectrometer, in seconds.
@@ -64,10 +37,6 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Instrument
      */
     double getIntegrationTime() throws IOException, DeviceException;
 
-    double getMaxIntegrationTime() throws IOException, DeviceException;
-
-    double getMinIntegrationTime() throws IOException, DeviceException;
-
     /**
      * Sets the integration time, in seconds, for the spectrometer to use.
      *
@@ -78,6 +47,35 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Instrument
      */
     void setIntegrationTime(double time) throws IOException, DeviceException;
 
+    /**
+     * Instructs the spectrometer to start acquiring continuously (if it isn't already).
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    void startAcquisition() throws IOException, DeviceException;
+
+    /**
+     * Instructs the spectrometer to stop acquiring continuously (if it hasn't already).
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    void stopAcquisition() throws IOException, DeviceException;
+
+    /**
+     * Returns whether the spectrometer is current acquiring continuously.
+     *
+     * @return Is acquiring continuously?
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    boolean isAcquiring() throws IOException, DeviceException;
+
+    /**
+     * Interface for classes representing individual spectrometer channels.
+     */
     interface Channel extends Instrument {
 
         /**
@@ -122,11 +120,20 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Instrument
         void removeSpectrumListener(Listener listener);
 
         /**
+         * Opens a (blocking) queue into which copies of newly acquired spectra will be placed, with an upper limit on capacity. This is to allow for asynchronous, lossless processing of spectral data.
+         *
+         * @return Queue of spectra.
+         */
+        SpectrumQueue openSpectrumQueue(int limit);
+
+        /**
          * Opens a (blocking) queue into which copies of newly acquired spectra will be placed. This is to allow for asynchronous, lossless processing of spectral data.
          *
          * @return Queue of spectra.
          */
-        SpectrumQueue openSpectrumQueue();
+        default SpectrumQueue openSpectrumQueue() {
+            return openSpectrumQueue(Integer.MAX_VALUE);
+        }
 
         /**
          * Closes the given queue, preventing the spectrometer channel from adding any new frames to it.
@@ -135,28 +142,50 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Instrument
          */
         void closeSpectrumQueue(SpectrumQueue queue);
 
-        /**
-         * Instructs the spectrometer channel to start acquiring continuously (if it isn't already).
-         *
-         * @throws IOException     Upon communications error
-         * @throws DeviceException Upon device compatibility error
-         */
-        void startAcquisition() throws IOException, DeviceException;
+    }
 
-        /**
-         * Instructs the spectrometer channel to stop acquiring continuously (if it hasn't already).
-         *
-         * @throws IOException     Upon communications error
-         * @throws DeviceException Upon device compatibility error
-         */
-        void stopAcquisition() throws IOException, DeviceException;
+    /**
+     * Returns the nth channel of this spectrometer.
+     *
+     * @param index n.
+     *
+     * @return Spectrometer channel n.
+     */
+    default C getChannel(int index) {
+        return getChannels().get(index);
+    }
 
-        boolean isAcquiring() throws IOException, DeviceException;
+    default List<? extends Instrument> getSubInstruments() {
+        return getChannels();
+    }
+
+    /**
+     * Tells all channels to take a spectrum and returns a map of channel to spectrum.
+     *
+     * @return Map of spectra
+     */
+    default Map<C, Spectrum> getSpectra() {
+
+        Map<C, Spectrum> spectra = new LinkedHashMap<>();
+
+        for (C channel : getChannels()) {
+            Util.runRegardless(() -> spectra.put(channel, channel.getSpectrum()));
+        }
+
+        return spectra;
 
     }
 
     interface Listener {
+
+        /**
+         * Called when a new spectrum is available and this listener is ready to accept a new spectrum. The spectrum
+         * object provided is liable to be recycled and should therefore be copied if needed to be stored.
+         *
+         * @param spectrum The spectrum in question.
+         */
         void newSpectrum(Spectrum spectrum);
+
     }
 
     class SpectrumListener {

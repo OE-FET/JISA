@@ -2,16 +2,13 @@ package jisa.gui;
 
 import com.sun.glass.ui.GlassRobot;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.geometry.Rectangle2D;
+import javafx.geometry.*;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
 import javafx.scene.control.*;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.Button;
+import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
@@ -289,17 +286,43 @@ public class GUI {
 
         GUI.runNow(() -> {
 
+            GridPane grid = new GridPane();
+            Font     bold = Font.font(Font.getDefault().getFamily(), FontWeight.BOLD, Font.getDefault().getSize());
+
+            grid.setHgap(15);
+            grid.setVgap(15);
+
+            Label typeLabel = new Label("Type:");
+            typeLabel.setFont(bold);
+            TextField type = new TextField(e.getClass().getSimpleName());
+            type.setEditable(false);
+
+            Label messageLabel = new Label("Message:");
+            messageLabel.setFont(bold);
+
             TextArea textArea = new TextArea(e.getMessage());
             textArea.setEditable(false);
             textArea.setWrapText(true);
 
-            VBox box = new VBox(textArea, stackTrace.getBorderedNode());
-            box.setSpacing(15.0);
+            Label stackLabel = new Label("Stack Trace:");
+            stackLabel.setFont(bold);
+
+            grid.addRow(0, typeLabel, type);
+            grid.addRow(1, messageLabel, textArea);
+            grid.addRow(2, stackLabel, stackTrace.getNode().getCenter());
+
+            GridPane.setHalignment(typeLabel, HPos.RIGHT);
+            GridPane.setHalignment(messageLabel, HPos.RIGHT);
+            GridPane.setHalignment(stackLabel, HPos.RIGHT);
+
+            GridPane.setValignment(typeLabel, VPos.CENTER);
+            GridPane.setValignment(messageLabel, VPos.TOP);
+            GridPane.setValignment(stackLabel, VPos.TOP);
 
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Exception Encountered");
-            alert.setHeaderText(e.getClass().getSimpleName());
-            alert.getDialogPane().setContent(box);
+            alert.setHeaderText("Exception Encountered");
+            alert.getDialogPane().setContent(grid);
             alert.getDialogPane().setMinWidth(600.0);
             alert.getDialogPane().setMinHeight(400.0);
             alert.setResizable(true);

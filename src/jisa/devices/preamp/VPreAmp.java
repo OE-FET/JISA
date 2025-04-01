@@ -1,5 +1,6 @@
 package jisa.devices.preamp;
 
+import jisa.Util;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.ParameterList;
@@ -254,7 +255,7 @@ public interface VPreAmp extends Instrument {
         }
 
         public String toString() {
-            return getName();
+            return String.format("%s (%s, %s)", getName(), Util.toSIUnits(getInputImpedance(), "Ω"), isDifferential() ? "Differential" : "Single");
         }
 
     }

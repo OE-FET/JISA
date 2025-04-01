@@ -3,8 +3,8 @@ package jisa.gui;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
@@ -49,6 +49,7 @@ public class Connector<T extends Instrument> extends JFXElement {
     protected Connection<T>       connection;
     protected Map<String, Object> addressParams = null;
     protected boolean             connecting    = false;
+    protected Throwable           exception     = null;
 
 
     public Connector(Connection<T> connection) {
@@ -139,6 +140,7 @@ public class Connector<T extends Instrument> extends JFXElement {
         errorText.setOnMouseClicked(event -> GUI.runNow(() -> {
             errorText.setVisible(false);
             errorText.setManaged(false);
+            GUI.showException(exception);
         }));
 
         connection.addChangeListener(() -> GUI.runNow(this::update));
@@ -315,6 +317,7 @@ public class Connector<T extends Instrument> extends JFXElement {
         } catch (Exception e) {
 
             GUI.runNow(() -> {
+                exception = e;
                 errorText.setText("Error: " + e.getMessage());
                 errorText.setVisible(true);
                 errorText.setManaged(true);
@@ -389,7 +392,7 @@ public class Connector<T extends Instrument> extends JFXElement {
             connection.setAttempts(Math.max(1, retries.getValue()));
             connecting = false;
 
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) { }
 
 
     }

@@ -5,31 +5,35 @@ import com.sun.jna.Native;
 import jisa.Util;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
+import jisa.devices.LibraryInitialisationException;
+import jisa.devices.LibraryNotFoundException;
 import org.reflections.Reflections;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public abstract class NativeDevice<I extends Library> implements Instrument {
+/**
+ * Abstract base class for instruments that use native libraries for communications.
+ */
+public abstract class NativeDevice implements Instrument {
 
-    private final static List<WeakReference<NativeDevice<?>>> opened = new LinkedList<>();
+    private final static List<WeakReference<NativeDevice>> opened    = new LinkedList<>();
+    private final static Map<Class, Library>               libraries = new HashMap<>();
 
     static {
 
         Util.addShutdownHook(() -> {
 
-            for (WeakReference<NativeDevice<?>> reference : opened) {
+            for (WeakReference<NativeDevice> reference : opened) {
 
-                NativeDevice<?> device = reference.get();
+                NativeDevice device = reference.get();
 
                 try {
                     if (device != null) { device.close(); }
-                } catch (Exception ignored) {
+                } catch (Throwable ignored) {
                     // Ignored
                 }
 
@@ -39,38 +43,79 @@ public abstract class NativeDevice<I extends Library> implements Instrument {
 
     }
 
-    protected final I      nativeLibrary;
-    protected final String name;
+    private final String name;
 
-    public NativeDevice(String libraryName, Class<I> libraryInterface) throws IOException {
+    public NativeDevice(String name) {
+        this.name = name;
+        opened.add(new WeakReference<>(this));
+    }
 
-        name = libraryName;
+    /**
+     * Returns an instance of the specified native library. If it has already been loaded via this method,
+     * then a cached instance will be returned to prevent multiple instances of the library being
+     * linked.
+     *
+     * @param libraryInterface Class of the interface used to represent the library.
+     * @param libraryName      Name of the library (i.e., X means X.dll or libX.so etc).
+     * @param <I>              The interface used to represent the library.
+     *
+     * @return Object representing the library.
+     *
+     * @throws DeviceException If the library cannot be found or fails to initialise.
+     */
+    public <I extends NativeLibrary> I findLibrary(Class<I> libraryInterface, String libraryName) throws DeviceException {
 
-        try {
-            nativeLibrary = Native.loadLibrary(libraryName, libraryInterface);
-        } catch (Throwable e) {
-            throw new IOException(String.format("Unable to load library \"%s\":\n\n%s", name, e.getMessage()));
+        // If it's already been loaded, return cached instance.
+        if (libraries.containsKey(libraryInterface)) {
+            return (I) libraries.get(libraryInterface);
         }
 
-        opened.add(new WeakReference<>(this));
+        I loaded = getNewLibraryInstance(libraryInterface, libraryName);
+
+        libraries.put(libraryInterface, loaded);
+
+        return loaded;
 
     }
 
-    public NativeDevice(String libraryName, I library) {
+    /**
+     * Returns a new instance of the specified native library. Does not use any caching --- a new instance will be
+     * returned each time this is called. You probably want to use findLibrary(...) instead.
+     *
+     * @param libraryInterface Class of the interface used to represent the library.
+     * @param libraryName      Name of the library (i.e., X means X.dll or libX.so etc).
+     * @param <I>              The interface used to represent the library.
+     *
+     * @return Object representing the library.
+     *
+     * @throws DeviceException If the library cannot be found or fails to initialise.
+     */
+    public <I extends NativeLibrary> I getNewLibraryInstance(Class<I> libraryInterface, String libraryName) throws DeviceException {
 
-        name          = libraryName;
-        nativeLibrary = library;
+        try {
 
-        opened.add(new WeakReference<>(this));
+            I loaded = Native.load(libraryName, libraryInterface);
+
+            try {
+                loaded.initialise();
+            } catch (Throwable e) {
+                throw new LibraryInitialisationException(libraryName, name, e.getMessage());
+            }
+
+            return loaded;
+
+        } catch (Throwable e) {
+            throw new LibraryNotFoundException(libraryName, name);
+        }
 
     }
 
-    public static List<NativeDevice<?>> search() {
+    public static List<NativeDevice> search() {
 
         Reflections                        reflection = new Reflections("jisa");
         Set<Class<? extends NativeDevice>> classes    = reflection.getSubTypesOf(NativeDevice.class);
 
-        List<NativeDevice<?>> found = new LinkedList<>();
+        List<NativeDevice> found = new LinkedList<>();
 
         for (Class<? extends NativeDevice> c : classes) {
 
@@ -78,7 +123,7 @@ public abstract class NativeDevice<I extends Library> implements Instrument {
 
                 try {
                     Method search = c.getMethod("find");
-                    found.addAll((List<NativeDevice<?>>) search.invoke(null));
+                    found.addAll((List<NativeDevice>) search.invoke(null));
                 } catch (Throwable ignored) { }
 
             }
@@ -94,5 +139,8 @@ public abstract class NativeDevice<I extends Library> implements Instrument {
     @Override
     public abstract void close() throws IOException, DeviceException;
 
+    public interface Initialiser<T extends Library> {
+        void initialise(T library) throws Exception;
+    }
 
 }

@@ -1,60 +1,41 @@
 package jisa.devices.camera.nat;
 
-import com.sun.jna.*;
+import com.sun.jna.Callback;
+import com.sun.jna.Pointer;
+import com.sun.jna.WString;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
-import jisa.Util;
 import jisa.devices.DeviceException;
-import jisa.devices.MissingLibraryException;
+import jisa.visa.NativeLibrary;
 
 import java.nio.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static jisa.devices.camera.Andor3.AT_SUCCESS;
+import static jisa.devices.camera.Andor3.ERROR_NAMES;
+
 /**
  * JNA interface for atcore AndorSDK3 library.
  */
-public interface ATCoreLibrary extends Library {
+public interface ATCoreLibrary extends NativeLibrary {
 
     String                         JNA_LIBRARY_NAME = "atcore";
     AtomicReference<ATCoreLibrary> INSTANCE         = new AtomicReference<>();
     AtomicBoolean                  INITIALISED      = new AtomicBoolean(false);
 
-
-    static ATCoreLibrary getInstance() throws DeviceException {
-
-        if (INSTANCE.get() == null) {
-
-            try {
-                INSTANCE.set(Native.loadLibrary(JNA_LIBRARY_NAME, ATCoreLibrary.class));
-            } catch (UnsatisfiedLinkError e) {
-                throw new MissingLibraryException("atcore", "Andor sCMOS Camera");
-            }
-
-        }
-
-        ATCoreLibrary INSTANCE = ATCoreLibrary.INSTANCE.get();
-
-        if (!INITIALISED.get()) {
-
-            int result = INSTANCE.AT_InitialiseLibrary();
-
-            if (result != 0) {
-                throw new DeviceException("Unable to initialise AndorSDK3 Core Library (atcore).");
-            }
-
-            Util.addShutdownHook(INSTANCE::AT_FinaliseLibrary);
-
-            INITIALISED.set(true);
-
-        }
-
-        return INSTANCE;
-
-    }
-
     interface FeatureCallback extends Callback {
         int apply(int Hndl, WString Feature, Pointer Context);
+    }
+
+    default void initialise() throws Exception {
+
+        int result = AT_InitialiseLibrary();
+
+        if (result != AT_SUCCESS) {
+            throw new DeviceException("%d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
+        }
+
     }
 
     int AT_InitialiseLibrary();

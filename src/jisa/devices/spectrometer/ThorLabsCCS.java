@@ -25,16 +25,6 @@ public class ThorLabsCCS extends USBDevice implements Spectrometer {
     }
 
     @Override
-    public double getMaxIntegrationTime() throws IOException, DeviceException {
-        return 0;
-    }
-
-    @Override
-    public double getMinIntegrationTime() throws IOException, DeviceException {
-        return 0;
-    }
-
-    @Override
     public void setIntegrationTime(double time) throws IOException, DeviceException {
 
         if (!Util.isBetween(time, 1e-5, 6e+1)) {
@@ -54,6 +44,30 @@ public class ThorLabsCCS extends USBDevice implements Spectrometer {
 
         long diff = 0;
 
+    }
 
+    @Override
+    public void startAcquisition() throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public void stopAcquisition() throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public boolean isAcquiring() throws IOException, DeviceException {
+        return false;
+    }
+
+    @Override
+    public double getSlitWidth() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public double getGratingDensity() throws IOException, DeviceException {
+        return 0;
     }
 }

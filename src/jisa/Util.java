@@ -75,6 +75,17 @@ public class Util {
         }
     }
 
+    public static String toSIUnits(double value, String unit) {
+
+        List<String> units   = List.of("a", "f", "n", "u", "m", "", "K", "M", "G", "T", "P", "E");
+        int          power   = (int) Math.log10(value);
+        int          rounded = power / 3;
+        int          index   = rounded + 5;
+
+        return String.format("%.02f %s%s", value / Math.pow(10, power), units.get(index), unit);
+
+    }
+
     /**
      * Sleep function that doesn't throw interrupted exceptions. Upon an interrupt it will simply stop sleeping.
      *
@@ -655,7 +666,7 @@ public class Util {
     public static int HSBtoARGB(double hue, double saturation, double brightness) {
 
         double normalizedHue = ((hue % 360) + 360) % 360;
-        hue = normalizedHue/360;
+        hue = normalizedHue / 360;
 
         double r = 0, g = 0, b = 0;
         if (saturation == 0) {
@@ -700,7 +711,7 @@ public class Util {
             }
         }
 
-        return (255 << 24) | ((int) (r * 255) << 16) | ((int)(g * 255) << 8) | ((int) (b * 255));
+        return (255 << 24) | ((int) (r * 255) << 16) | ((int) (g * 255) << 8) | ((int) (b * 255));
 
     }
 

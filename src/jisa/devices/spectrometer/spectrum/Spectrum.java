@@ -197,6 +197,11 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         return counts.clone();
     }
 
+    /**
+     * Returns a copy of the values in this spectrum, as a List,
+     *
+     * @return List of values.
+     */
     public List<Long> getCountList() {
         return Longs.asList(getCounts());
     }
@@ -215,6 +220,35 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
     public long getCount(int index) {
         return counts[index];
+    }
+
+    public int indexByWavelength(double wavelength) {
+
+        int    minIndex    = 0;
+        double minDistance = Double.MAX_VALUE;
+
+        for (int i = 0; i < wavelengths.length; i++) {
+
+            double wl       = wavelengths[i];
+            double distance = Math.abs(wl - wavelength);
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                minIndex    = i;
+            }
+
+        }
+
+        return minIndex;
+
+    }
+
+    public long getCountByWavelength(double wavelength) {
+        return counts[indexByWavelength(wavelength)];
+    }
+
+    public Point get(double wavelength) {
+        return get(indexByWavelength(wavelength));
     }
 
     /**
