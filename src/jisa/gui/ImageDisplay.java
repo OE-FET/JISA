@@ -8,6 +8,7 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import jisa.devices.camera.frame.Frame;
+import jisa.devices.camera.frame.RGBFrame;
 import jisa.maths.matrices.Matrix;
 
 import java.nio.IntBuffer;
@@ -178,6 +179,10 @@ public class ImageDisplay extends JFXElement {
 
     public void drawFrame(Frame.UShortFrame frame) {
         drawMono(frame.image(), Short.MAX_VALUE);
+    }
+
+    public void drawFrame(RGBFrame frame) {
+        drawARGBInt(frame.getARGBImage());
     }
 
     public void drawMono(double[][] data, double max) {

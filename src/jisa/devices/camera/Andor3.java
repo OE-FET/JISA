@@ -1213,6 +1213,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, CMOS, Over
     @Override
     public void setFrameWidth(int width) throws DeviceException, IOException {
         setInt("AOIWidth", width);
+        setFrameCentredX(centreX);
     }
 
     @Override

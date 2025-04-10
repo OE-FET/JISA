@@ -83,6 +83,33 @@ public class ResultList extends ResultTable {
 
     }
 
+    public static ResultList loadFromCSVStream(InputStream stream) throws IOException {
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
+        String         header = reader.readLine();
+
+        JSONObject attributes = null;
+
+        if (header.startsWith("% ATTRIBUTES: ")) {
+            attributes = new JSONObject(header.replaceFirst("% ATTRIBUTES: ", ""));
+            header     = reader.readLine();
+        }
+
+        ResultList list = new ResultList(ResultTable.parseColumnHeaderLine(header));
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            list.addRow(list.parseCSVLine(line));
+        }
+
+        if (attributes != null) {
+            attributes.toMap().forEach((k, v) -> list.setAttribute(k, v.toString()));
+        }
+
+        return list;
+
+    }
+
     public static ResultList loadBinaryFile(String filePath) throws IOException {
 
         try {

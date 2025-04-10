@@ -64,6 +64,20 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
         System.arraycopy(otherFrame.blue, 0, this.blue, 0, this.blue.length);
     }
 
+    public int[][] getARGBImage() {
+
+        int[][] raw = new int[width][height];
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                raw[x][y] = (255 << 24) | (red[width * y + x] << 16) | (green[width * y + x] << 8) | blue[width * y + x];
+            }
+        }
+
+        return raw;
+
+    }
+
     @Override
     public long getTimestamp() {
         return timestamp;

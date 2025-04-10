@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.*;
 
 /**
@@ -63,7 +64,7 @@ public abstract class NativeDevice implements Instrument {
      *
      * @throws DeviceException If the library cannot be found or fails to initialise.
      */
-    public <I extends NativeLibrary> I findLibrary(Class<I> libraryInterface, String libraryName) throws DeviceException {
+    public <I extends Library> I findLibrary(Class<I> libraryInterface, String libraryName) throws DeviceException {
 
         // If it's already been loaded, return cached instance.
         if (libraries.containsKey(libraryInterface)) {
@@ -90,16 +91,22 @@ public abstract class NativeDevice implements Instrument {
      *
      * @throws DeviceException If the library cannot be found or fails to initialise.
      */
-    public <I extends NativeLibrary> I getNewLibraryInstance(Class<I> libraryInterface, String libraryName) throws DeviceException {
+    public <I extends Library> I getNewLibraryInstance(Class<I> libraryInterface, String libraryName) throws DeviceException {
 
         try {
 
             I loaded = Native.load(libraryName, libraryInterface);
 
-            try {
-                loaded.initialise();
-            } catch (Throwable e) {
-                throw new LibraryInitialisationException(libraryName, name, e.getMessage());
+            if (loaded instanceof NativeLibrary) {
+
+                try {
+                    ((NativeLibrary) loaded).initialise();
+                } catch (UndeclaredThrowableException e) {
+                    throw new LibraryInitialisationException(libraryName, name, e.getUndeclaredThrowable().getMessage());
+                } catch (Throwable e) {
+                    throw new LibraryInitialisationException(libraryName, name, e.getMessage());
+                }
+
             }
 
             return loaded;
