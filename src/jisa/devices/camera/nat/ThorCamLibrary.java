@@ -162,7 +162,7 @@ public interface ThorCamLibrary extends NativeLibrary {
 
     int tl_camera_get_sensor_width(Pointer tl_camera_handle, IntBuffer width_pixels);
 
-    int tl_camera_get_serial_number(Pointer tl_camera_handle, String serial_number, int str_length);
+    int tl_camera_get_serial_number(Pointer tl_camera_handle, ByteBuffer serial_number, int str_length);
 
     int tl_camera_get_serial_number_string_length_range(Pointer tl_camera_handle, IntBuffer serial_number_min, IntBuffer serial_number_max);
 

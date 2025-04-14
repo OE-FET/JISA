@@ -360,16 +360,6 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     }
 
     @Override
-    public int getFrameBinning() throws IOException, DeviceException {
-        return 1;
-    }
-
-    @Override
-    public void setFrameBinning(int binning) throws IOException, DeviceException {
-
-    }
-
-    @Override
     public String getIDN() throws IOException, DeviceException {
         return "Fake Camera";
     }

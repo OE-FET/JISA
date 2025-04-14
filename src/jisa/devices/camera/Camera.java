@@ -484,31 +484,10 @@ public interface Camera<F extends Frame> extends Instrument {
      */
     void setTimestampEnabled(boolean timestamping) throws IOException, DeviceException;
 
-    /**
-     * Returns the number of sequential frames captured by the camera to bin into each returned frame.
-     *
-     * @return Temporal binning count
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon device compatibility error
-     */
-    int getFrameBinning() throws IOException, DeviceException;
-
-    /**
-     * Sets the number of sequential frames captured by the camera to bin into each returned frame.
-     *
-     * @param binning Temporal binning count
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon device compatibility error
-     */
-    void setFrameBinning(int binning) throws IOException, DeviceException;
-
     static void addParameters(Camera<?> inst, Class<?> target, ParameterList parameters) {
 
         parameters.addValue("Integration Time [s]", inst::getIntegrationTime, 20e-3, inst::setIntegrationTime);
         parameters.addValue("Acquisition Timeout [ms]", inst::getAcquisitionTimeout, 1000, inst::setAcquisitionTimeout);
-        parameters.addValue("Frame Binning", inst::getFrameBinning, 1, inst::setFrameBinning);
         parameters.addValue("X Binning", inst::getBinningX, 1, inst::setBinningX);
         parameters.addValue("Y Binning", inst::getBinningY, 1, inst::setBinningY);
         parameters.addValue("Frame Width", inst::getFrameWidth, 1024, inst::setFrameWidth);

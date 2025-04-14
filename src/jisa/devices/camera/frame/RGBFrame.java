@@ -3,14 +3,13 @@ package jisa.devices.camera.frame;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class RGBFrame implements Frame<RGB, RGBFrame> {
 
-    private final short[] red;
-    private final short[] green;
-    private final short[] blue;
-    private final int     width;
-    private final int     height;
+    private final int[] argb;
+    private final int   width;
+    private final int   height;
 
     private long timestamp;
 
@@ -19,17 +18,7 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
         this.width     = width;
         this.height    = height;
         this.timestamp = timestamp;
-        this.red       = new short[data.length];
-        this.green     = new short[data.length];
-        this.blue      = new short[data.length];
-
-        for (int i = 0; i < data.length; i++) {
-
-            this.red[i]   = data[i].getRed();
-            this.green[i] = data[i].getGreen();
-            this.blue[i]  = data[i].getBlue();
-
-        }
+        this.argb      = Stream.of(data).mapToInt(RGB::getARGB).toArray();
 
     }
 
@@ -41,9 +30,7 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
 
         this.width     = width;
         this.height    = height;
-        this.red       = red;
-        this.green     = green;
-        this.blue      = blue;
+        this.argb      = IntStream.range(0, red.length).map(i -> (255 << 24) | (red[i] << 16) | (green[i] << 8) | (blue[i])).toArray();
         this.timestamp = timestamp;
 
     }
@@ -52,30 +39,21 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
         this(red, green, blue, width, height, System.nanoTime());
     }
 
+    public RGBFrame(int[] argb, int width, int height, long timestamp) {
+        this.width     = width;
+        this.height    = height;
+        this.timestamp = timestamp;
+        this.argb      = argb;
+    }
+
     @Override
     public RGBFrame copy() {
-        return new RGBFrame(red.clone(), green.clone(), blue.clone(), width, height, timestamp);
+        return new RGBFrame(argb.clone(), width, height, timestamp);
     }
 
     @Override
     public void copyFrom(RGBFrame otherFrame) {
-        System.arraycopy(otherFrame.red, 0, this.red, 0, this.red.length);
-        System.arraycopy(otherFrame.green, 0, this.green, 0, this.green.length);
-        System.arraycopy(otherFrame.blue, 0, this.blue, 0, this.blue.length);
-    }
-
-    public int[][] getARGBImage() {
-
-        int[][] raw = new int[width][height];
-
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                raw[x][y] = (255 << 24) | (red[width * y + x] << 16) | (green[width * y + x] << 8) | blue[width * y + x];
-            }
-        }
-
-        return raw;
-
+        System.arraycopy(otherFrame.argb, 0, this.argb, 0, this.argb.length);
     }
 
     @Override
@@ -90,20 +68,19 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
 
     @Override
     public RGB get(int x, int y) {
-        int i = y * width + x;
-        return new RGB(red[i], green[i], blue[i]);
+        return new RGB(getRed(x, y), getGreen(x, y), getBlue(x, y));
     }
 
     public short getRed(int x, int y) {
-        return red[y * width + x];
+        return (short) ((argb[y * width + x] >> 16) & 0xFF);
     }
 
     public short getGreen(int x, int y) {
-        return green[y * width + x];
+        return (short) ((argb[y * width + x] >> 8) & 0xFF);
     }
 
     public short getBlue(int x, int y) {
-        return blue[y * width + x];
+        return (short) ((argb[y * width + x]) & 0xFF);
     }
 
     @Override
@@ -121,9 +98,27 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
 
     }
 
+    public int[][] getARGBImage() {
+
+        int[][] raw = new int[width][height];
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                raw[x][y] = argb[width * y + x];
+            }
+        }
+
+        return raw;
+
+    }
+
     @Override
     public RGB[] getData() {
-        return IntStream.range(0, red.length).mapToObj(i -> new RGB(red[i], green[i], blue[i])).toArray(RGB[]::new);
+        return IntStream.of(argb).mapToObj(RGB::new).toArray(RGB[]::new);
+    }
+
+    public int[] getARGBData() {
+        return argb.clone();
     }
 
     @Override
@@ -138,22 +133,17 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
 
     @Override
     public int size() {
-        return red.length;
+        return argb.length;
     }
 
     @Override
     public void writeToStream(OutputStream stream) throws IOException {
 
-        for (int i = 0; i < red.length; i++) {
+        for (int i = 0; i < argb.length; i++) {
 
-            stream.write((byte) (red[i] & 0xFF));
-            stream.write((byte) ((red[i] >> 8) & 0xFF));
-
-            stream.write((byte) (green[i] & 0xFF));
-            stream.write((byte) ((green[i] >> 8) & 0xFF));
-
-            stream.write((byte) (blue[i] & 0xFF));
-            stream.write((byte) ((blue[i] >> 8) & 0xFF));
+            stream.write((byte) ((argb[i] >> 16) & 0xFF));
+            stream.write((byte) ((argb[i] >> 8) & 0xFF));
+            stream.write((byte) ((argb[i]) & 0xFF));
 
         }
 
@@ -162,23 +152,15 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
     @Override
     public RGBFrame subFrame(int x, int y, int width, int height) {
 
-        short[] subRed   = new short[width * height];
-        short[] subGreen = new short[width * height];
-        short[] subBlue  = new short[width * height];
+        int[] sub = new int[width * height];
 
-        for (int i = x; i < x + width; i++) {
-
-            for (int j = y; j < y + height; j++) {
-
-                subRed[j * width + i]   = getRed(i, j);
-                subGreen[j * width + i] = getGreen(i, j);
-                subBlue[j * width + i]  = getBlue(i, j);
-
+        for (int xi = 0; xi < width; xi++) {
+            for (int yi = 0; yi < height; yi++) {
+                sub[yi * width + xi] = argb[width * (yi + y) + (xi + x)];
             }
-
         }
 
-        return new RGBFrame(subRed, subGreen, subBlue, width, height, timestamp);
+        return new RGBFrame(sub, width, height, timestamp);
 
     }
 

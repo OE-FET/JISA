@@ -8,23 +8,22 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
+import jisa.devices.ParameterList;
+import jisa.devices.camera.feature.Amplified;
 import jisa.devices.camera.frame.FrameQueue;
-import jisa.devices.camera.frame.RGBFrame;
+import jisa.devices.camera.frame.U16RGBFrame;
 import jisa.devices.camera.nat.ThorCamLibrary;
 import jisa.visa.NativeDevice;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.ShortBuffer;
+import java.nio.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
+public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplified {
 
     // CONSTANTS
     public static final int ERROR_NONE                    = 0;
@@ -51,6 +50,9 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
     public static final int META_TAG_PCKH = Ints.fromByteArray("PCKH".getBytes(StandardCharsets.US_ASCII));
     public static final int META_TAG_PCKL = Ints.fromByteArray("PCKL".getBytes(StandardCharsets.US_ASCII));
 
+    public static final int BYTES_PER_MONO_PIXEL   = 2;
+    public static final int BYTES_PER_COLOUR_PIXEL = 6;
+
     public static final Map<Integer, String> ERROR_NAMES =
         Util.map(ERROR_NONE, "No Error")
             .map(ERROR_COMMAND_NOT_FOUND, "Unknown Command")
@@ -73,7 +75,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
             .map(ERROR_MAX_ERRORS, "END OF ENUMERATION")
             .map(ERROR_NO_CAMERA_FOUND, "Camera Not Found");
 
-    private final ListenerManager<RGBFrame> listenerManager = new ListenerManager<>();
+    private final ListenerManager<U16RGBFrame> listenerManager = new ListenerManager<>();
 
     private final ThorCamLibrary sdk;
     private final Pointer        handle;
@@ -96,7 +98,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
         String[] serialNumbers = new String(serials.array(), StandardCharsets.US_ASCII).trim().split(" ");
 
-        handle = processPointer(ref -> sdk.tl_camera_open_camera(serialNumbers[0], ref), "tl_camera_open_camera");
+        handle = getPointer(ref -> sdk.tl_camera_open_camera(serialNumbers[0], ref), "tl_camera_open_camera");
 
     }
 
@@ -112,7 +114,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
         String[] serialNumbers = new String(serials.array(), StandardCharsets.US_ASCII).trim().split(" ");
 
-        handle = processPointer(ref -> sdk.tl_camera_open_camera(serial, ref), "tl_camera_open_camera");
+        handle = getPointer(ref -> sdk.tl_camera_open_camera(serial, ref), "tl_camera_open_camera");
 
     }
 
@@ -129,10 +131,43 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
         String[] serialNumbers = new String(serials.array(), StandardCharsets.US_ASCII).trim().split(" ");
 
         if (address instanceof IDAddress) {
-            handle = processPointer(ref -> sdk.tl_camera_open_camera(((IDAddress) address).getID(), ref), "tl_camera_open_camera");
+            handle = getPointer(ref -> sdk.tl_camera_open_camera(((IDAddress) address).getID(), ref), "tl_camera_open_camera");
         } else {
             throw new DeviceException("Only IDAddress objects are supported.");
         }
+
+    }
+
+    @Override
+    public List<Parameter<?>> getInstrumentParameters(Class<?> target) {
+
+        ParameterList parameters = new ParameterList();
+
+        parameters.addOptional("Hot Pixel Correction", this::isHotPixelCorrectionEnabled, false, this::getHotPixelCorrectionThreshold, 1, q -> this.setHotPixelCorrectionEnabled(false), q -> {
+            this.setHotPixelCorrectionThreshold(q);
+            this.setHotPixelCorrectionEnabled(true);
+        });
+
+        return parameters;
+
+    }
+
+    @Override
+    public void setGain(double gain) throws DeviceException, IOException {
+
+        int index = getInt((h, b) -> sdk.tl_camera_convert_decibels_to_gain(h, gain, b), "tl_camera_convert_decibels_to_gain");
+        process(sdk.tl_camera_set_gain(handle, index), "tl_camera_set_gain");
+
+    }
+
+    @Override
+    public double getGain() throws DeviceException, IOException {
+
+        int index = getInt(sdk::tl_camera_get_gain, "tl_camera_get_gain");
+
+        DoubleBuffer buffer = DoubleBuffer.allocate(1);
+        process(sdk.tl_camera_convert_gain_to_decibels(handle, index, buffer), "tl_camera_convert_gain_to_decibels");
+        return buffer.get(0);
 
     }
 
@@ -148,7 +183,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
         int get(Pointer handle, T buffer1, T buffer2, T buffer3, T buffer4);
     }
 
-    protected int processInt(BufferConverter<IntBuffer> converter, String name) throws DeviceException, IOException {
+    protected int getInt(BufferConverter<IntBuffer> converter, String name) throws DeviceException, IOException {
 
         try (Memory memory = new Memory(Integer.BYTES)) {
             process(converter.get(memory.getByteBuffer(0, Integer.BYTES).asIntBuffer()), name);
@@ -157,7 +192,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     }
 
-    protected int processInt(HandledBufferConverter<IntBuffer> converter, String name) throws DeviceException, IOException {
+    protected int getInt(HandledBufferConverter<IntBuffer> converter, String name) throws DeviceException, IOException {
 
         try (Memory memory = new Memory(Integer.BYTES)) {
             process(converter.get(handle, memory.getByteBuffer(0, Integer.BYTES).asIntBuffer()), name);
@@ -166,7 +201,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     }
 
-    protected long processLong(HandledBufferConverter<LongBuffer> converter, String name) throws DeviceException, IOException {
+    protected long getLong(HandledBufferConverter<LongBuffer> converter, String name) throws DeviceException, IOException {
 
         try (Memory memory = new Memory(Long.BYTES)) {
             process(converter.get(handle, memory.getByteBuffer(0, Long.BYTES).asLongBuffer()), name);
@@ -175,15 +210,15 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     }
 
-    protected int processInt(HandledBufferConverter<IntBuffer> converter) throws DeviceException, IOException {
-        return processInt(converter, "not specified");
+    protected int getInt(HandledBufferConverter<IntBuffer> converter) throws DeviceException, IOException {
+        return getInt(converter, "not specified");
     }
 
-    protected int processInt(BufferConverter<IntBuffer> converter) throws DeviceException, IOException {
-        return processInt(converter, "not specified");
+    protected int getInt(BufferConverter<IntBuffer> converter) throws DeviceException, IOException {
+        return getInt(converter, "not specified");
     }
 
-    protected Pointer processPointer(BufferConverter<PointerByReference> converter, String name) throws DeviceException, IOException {
+    protected Pointer getPointer(BufferConverter<PointerByReference> converter, String name) throws DeviceException, IOException {
 
         PointerByReference reference = new PointerByReference();
         process(converter.get(reference), name);
@@ -191,7 +226,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     }
 
-    protected int[] processInts(HandledQuadBufferConverter<IntBuffer> converter, String name) throws DeviceException, IOException {
+    protected int[] getInts(HandledQuadBufferConverter<IntBuffer> converter, String name) throws DeviceException, IOException {
 
         try (Memory memory = new Memory(4 * Integer.BYTES)) {
 
@@ -228,7 +263,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     @Override
     public double getIntegrationTime() throws IOException, DeviceException {
-        return processLong(sdk::tl_camera_get_exposure_time, "tl_camera_get_exposure_time") * 1e-6;
+        return getLong(sdk::tl_camera_get_exposure_time, "tl_camera_get_exposure_time") * 1e-6;
     }
 
     @Override
@@ -237,12 +272,12 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
     }
 
     @Override
-    public RGBFrame getFrame() throws IOException, DeviceException, InterruptedException, TimeoutException {
+    public U16RGBFrame getFrame() throws IOException, DeviceException, InterruptedException, TimeoutException {
 
         if (isAcquiring()) {
 
-            FrameQueue<RGBFrame> queue = openFrameQueue(1);
-            RGBFrame             frame = queue.nextFrame(getAcquisitionTimeout());
+            FrameQueue<U16RGBFrame> queue = openFrameQueue(1);
+            U16RGBFrame             frame = queue.nextFrame(getAcquisitionTimeout());
 
             queue.clear();
             queue.close();
@@ -251,13 +286,13 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
         } else {
 
-            int frequency = processInt(sdk::tl_camera_get_timestamp_clock_frequency, "tl_camera_get_timestamp_clock_frequency");
+            int frequency = getInt(sdk::tl_camera_get_timestamp_clock_frequency, "tl_camera_get_timestamp_clock_frequency");
 
             process(sdk.tl_camera_set_frames_per_trigger_zero_for_unlimited(handle, 1), "tl_camera_set_frames_per_trigger_zero");
             process(sdk.tl_camera_arm(handle, 2), "tl_camera_arm");
             process(sdk.tl_camera_issue_software_trigger(handle), "tl_camera_issue_software_trigger");
 
-            final int pixel          = processInt(sdk::tl_camera_get_sensor_pixel_size_bytes, "tl_camera_get_sensor_pixel_size_bytes");
+            final int pixel          = getInt(sdk::tl_camera_get_sensor_pixel_size_bytes, "tl_camera_get_sensor_pixel_size_bytes");
             final int width          = getFrameWidth();
             final int height         = getFrameHeight();
             final int count          = width * height;
@@ -280,35 +315,35 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
                 throw new TimeoutException("Timed out waiting for frame from ThorCam camera.");
             }
 
-            ByteBuffer  frameBuffer = framePointer.getByteBuffer(0, imageSizeBytes);
-            ShortBuffer pixelBuffer = frameBuffer.asShortBuffer();
+            ByteBuffer frameBuffer = framePointer.getByteBuffer(0, imageSizeBytes);
+            CharBuffer pixelBuffer = frameBuffer.asCharBuffer();
+            long[]     argb        = new long[count];
 
-            if (pixel == 2) { // Mono
+            switch (pixel) {
 
-                short[] data = new short[imageSizeBytes / 2];
-                pixelBuffer.get(data);
+                case BYTES_PER_MONO_PIXEL:
 
-                return new RGBFrame(data, data, data, width, height, timestamp);
+                    for (int i = 0; i < count; i++) {
+                        char value = pixelBuffer.get();
+                        argb[i] = ((long) 255 << 48) | ((long) value << 32) | ((long) value << 16) | ((long) value);
+                    }
 
-            } else if (pixel == 6) { // BGR
+                    break;
 
-                short[] red   = new short[imageSizeBytes / 6];
-                short[] green = new short[imageSizeBytes / 6];
-                short[] blue  = new short[imageSizeBytes / 6];
+                case BYTES_PER_COLOUR_PIXEL:
 
-                for (int i = 0; pixelBuffer.hasRemaining(); i++) {
+                    for (int i = 0; i < count; i++) {
+                        argb[i] = ((long) 255 << 48) | ((long) pixelBuffer.get() << 32) | ((long) pixelBuffer.get() << 16) | ((long) pixelBuffer.get());
+                    }
 
-                    blue[i]  = pixelBuffer.get();
-                    green[i] = pixelBuffer.get();
-                    red[i]   = pixelBuffer.get();
+                    break;
 
-                }
+                default:
+                    throw new IOException("Unsupported frame type returned by camera.");
 
-                return new RGBFrame(red, green, blue, width, height, timestamp);
-
-            } else {
-                throw new IOException("Unsupported frame type returned by camera.");
             }
+
+            return new U16RGBFrame(argb, width, height, timestamp);
 
         }
 
@@ -321,7 +356,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     @Override
     public int getAcquisitionTimeout() throws IOException, DeviceException {
-        return processInt(sdk::tl_camera_get_image_poll_timeout, "tl_camera_get_image_poll_timeout");
+        return getInt(sdk::tl_camera_get_image_poll_timeout, "tl_camera_get_image_poll_timeout");
     }
 
     @Override
@@ -336,15 +371,13 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
         int frequency;
 
         try {
-            frequency = processInt(sdk::tl_camera_get_timestamp_clock_frequency, "tl_camera_get_timestamp_clock_frequency");
+            frequency = getInt(sdk::tl_camera_get_timestamp_clock_frequency, "tl_camera_get_timestamp_clock_frequency");
         } catch (Exception e) {
             frequency = 0;
         }
 
-        final short[]  red   = new short[imageSizeBytes / 6];
-        final short[]  green = new short[imageSizeBytes / 6];
-        final short[]  blue  = new short[imageSizeBytes / 6];
-        final RGBFrame frame = new RGBFrame(red, green, blue, width, height);
+        final long[]      argb  = new long[pCount];
+        final U16RGBFrame frame = new U16RGBFrame(argb, width, height, System.nanoTime());
 
         while (acquiring) {
 
@@ -365,40 +398,37 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
                     throw new TimeoutException("Timed out waiting for frame from ThorCam camera.");
                 }
 
-                ByteBuffer  frameBuffer = framePointer.getByteBuffer(0, imageSizeBytes);
-                ShortBuffer pixelBuffer = frameBuffer.asShortBuffer();
+                ByteBuffer frameBuffer = framePointer.getByteBuffer(0, imageSizeBytes);
+                CharBuffer pixelBuffer = frameBuffer.asCharBuffer();
 
-                if (pixel == 2) {
+                switch (pixel) {
 
-                    short[] data = new short[imageSizeBytes / 2];
-                    pixelBuffer.get(data);
+                    case BYTES_PER_MONO_PIXEL:
 
-                    System.arraycopy(data, 0, red, 0, red.length);
-                    System.arraycopy(data, 0, green, 0, green.length);
-                    System.arraycopy(data, 0, blue, 0, blue.length);
+                        for (int i = 0; i < pCount; i++) {
+                            char value = pixelBuffer.get();
+                            argb[i] = ((long) 255 << 48) | ((long) value << 32) | ((long) value << 16) | ((long) value);
+                        }
 
-                    listenerManager.trigger(frame);
+                        break;
 
-                } else if (pixel == 6) {
+                    case BYTES_PER_COLOUR_PIXEL:
 
-                    for (int j = 0; pixelBuffer.hasRemaining(); j++) {
+                        for (int i = 0; i < pCount; i++) {
+                            argb[i] = ((long) 255 << 48) | ((long) pixelBuffer.get() << 32) | ((long) pixelBuffer.get() << 16) | ((long) pixelBuffer.get());
+                        }
 
-                        blue[j]  = pixelBuffer.get();
-                        green[j] = pixelBuffer.get();
-                        red[j]   = pixelBuffer.get();
+                        break;
 
-                    }
+                    default:
+                        throw new IOException("Unsupported frame type returned by camera.");
 
-                    listenerManager.trigger(frame);
-
-                } else {
-                    throw new IOException("Unsupported frame type returned by camera.");
                 }
 
+                listenerManager.trigger(frame);
 
             } catch (Exception e) {
-                System.err.println("Error acquiring frame from ThorCam camera.");
-                e.printStackTrace();
+                System.err.printf("Error acquiring frame from ThorCam camera: %s%n.", e.getMessage());
             }
 
         }
@@ -412,7 +442,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
             return;
         }
 
-        final int pixel  = processInt(sdk::tl_camera_get_sensor_pixel_size_bytes, "tl_camera_get_pixel_size");
+        final int pixel  = getInt(sdk::tl_camera_get_sensor_pixel_size_bytes, "tl_camera_get_pixel_size");
         final int width  = getFrameWidth();
         final int height = getFrameHeight();
         final int count  = width * height;
@@ -451,13 +481,13 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
     }
 
     @Override
-    public List<RGBFrame> getFrameSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
+    public List<U16RGBFrame> getFrameSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
 
-        List<RGBFrame> captured = new ArrayList<>(count);
+        List<U16RGBFrame> captured = new ArrayList<>(count);
 
         if (isAcquiring()) {
 
-            FrameQueue<RGBFrame> queue = openFrameQueue(count);
+            FrameQueue<U16RGBFrame> queue = openFrameQueue(count);
 
             for (int i = 0; i < count; i++) {
                 captured.add(queue.nextFrame(getAcquisitionTimeout()));
@@ -468,20 +498,20 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
         } else {
 
-            int frequency = processInt(sdk::tl_camera_get_timestamp_clock_frequency, "tl_camera_get_timestamp_clock_frequency");
+            int frequency = getInt(sdk::tl_camera_get_timestamp_clock_frequency, "tl_camera_get_timestamp_clock_frequency");
 
             process(sdk.tl_camera_set_operation_mode(handle, 0), "tl_camera_set_operation_mode");
             process(sdk.tl_camera_set_frames_per_trigger_zero_for_unlimited(handle, count), "tl_camera_set_frames_per_trigger_zero_for_unlimited");
             process(sdk.tl_camera_arm(handle, count + 1), "tl_camera_arm");
             process(sdk.tl_camera_issue_software_trigger(handle), "tl_camera_issue_software_trigger");
 
-            final int pixel          = processInt(sdk::tl_camera_get_sensor_pixel_size_bytes, "tl_camera_get_sensor_pixel_size_bytes");
+            final int pixel          = getInt(sdk::tl_camera_get_sensor_pixel_size_bytes, "tl_camera_get_sensor_pixel_size_bytes");
             final int width          = getFrameWidth();
             final int height         = getFrameHeight();
             final int pCount         = width * height;
             final int imageSizeBytes = pixel * pCount;
 
-            for (int i = 0; i < count; i++) {
+            for (int k = 0; k < count; k++) {
 
                 PointerByReference frameReference = new PointerByReference();
                 PointerByReference metaReference  = new PointerByReference();
@@ -500,35 +530,35 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
                 long timestamp = determineTimestamp(metaPointer, metaSize.get(0), frequency, System.nanoTime());
 
-                ByteBuffer  frameBuffer = framePointer.getByteBuffer(0, imageSizeBytes);
-                ShortBuffer pixelBuffer = frameBuffer.asShortBuffer();
+                ByteBuffer frameBuffer = framePointer.getByteBuffer(0, imageSizeBytes);
+                CharBuffer pixelBuffer = frameBuffer.asCharBuffer();
+                long[]     argb        = new long[pCount];
 
-                if (pixel == 2) {
+                switch (pixel) {
 
-                    short[] data = new short[imageSizeBytes / 2];
-                    pixelBuffer.get(data);
+                    case BYTES_PER_MONO_PIXEL:
 
-                    captured.add(new RGBFrame(data, data, data, width, height, timestamp));
+                        for (int i = 0; i < pCount; i++) {
+                            char value = pixelBuffer.get();
+                            argb[i] = ((long) 255 << 48) | ((long) value << 32) | ((long) value << 16) | ((long) value);
+                        }
 
-                } else if (pixel == 6) {
+                        break;
 
-                    short[] red   = new short[imageSizeBytes / 6];
-                    short[] green = new short[imageSizeBytes / 6];
-                    short[] blue  = new short[imageSizeBytes / 6];
+                    case BYTES_PER_COLOUR_PIXEL:
 
-                    for (int j = 0; pixelBuffer.hasRemaining(); j++) {
+                        for (int i = 0; i < pCount; i++) {
+                            argb[i] = ((long) 255 << 48) | ((long) pixelBuffer.get() << 32) | ((long) pixelBuffer.get() << 16) | ((long) pixelBuffer.get());
+                        }
 
-                        blue[j]  = pixelBuffer.get();
-                        green[j] = pixelBuffer.get();
-                        red[j]   = pixelBuffer.get();
+                        break;
 
-                    }
+                    default:
+                        throw new IOException("Unsupported frame type returned by camera.");
 
-                    captured.add(new RGBFrame(red, green, blue, width, height, timestamp));
-
-                } else {
-                    throw new IOException("Unsupported frame type returned by camera.");
                 }
+
+                captured.add(new U16RGBFrame(argb, width, height, timestamp));
 
             }
 
@@ -540,7 +570,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     protected long determineTimestamp(Pointer metaPointer, int size, long frequency, long fallback) {
 
-        if (metaPointer == null || !timestamping) {
+        if (metaPointer == null || !timestamping || frequency < 1) {
             return fallback;
         }
 
@@ -576,21 +606,37 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     }
 
+    public void setHotPixelCorrectionEnabled(boolean enabled) throws IOException, DeviceException {
+        process(sdk.tl_camera_set_is_hot_pixel_correction_enabled(handle, enabled ? 1 : 0), "tl_camera_set_is_hot_pixel_correction_enabled");
+    }
+
+    public boolean isHotPixelCorrectionEnabled() throws IOException, DeviceException {
+        return getInt(sdk::tl_camera_get_is_hot_pixel_correction_enabled, "tl_camera_get_is_hot_pixel_correction_enabled") != 0;
+    }
+
+    public void setHotPixelCorrectionThreshold(int threshold) throws IOException, DeviceException {
+        process(sdk.tl_camera_set_hot_pixel_correction_threshold(handle, threshold), "tl_camera_set_hot_pixel_correction_threshold");
+    }
+
+    public int getHotPixelCorrectionThreshold() throws IOException, DeviceException {
+        return getInt(sdk::tl_camera_get_hot_pixel_correction_threshold, "tl_camera_get_hot_pixel_correction_threshold");
+    }
+
     @Override
-    public Listener<RGBFrame> addFrameListener(Listener<RGBFrame> listener) {
+    public Listener<U16RGBFrame> addFrameListener(Listener<U16RGBFrame> listener) {
         listenerManager.addListener(listener);
         return listener;
     }
 
     @Override
-    public void removeFrameListener(Listener<RGBFrame> listener) {
+    public void removeFrameListener(Listener<U16RGBFrame> listener) {
         listenerManager.removeListener(listener);
     }
 
     @Override
-    public FrameQueue<RGBFrame> openFrameQueue(int capacity) {
+    public FrameQueue<U16RGBFrame> openFrameQueue(int capacity) {
 
-        FrameQueue<RGBFrame> queue = new FrameQueue<>(this, capacity);
+        FrameQueue<U16RGBFrame> queue = new FrameQueue<>(this, capacity);
         listenerManager.addQueue(queue);
 
         return queue;
@@ -598,7 +644,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
     }
 
     @Override
-    public void closeFrameQueue(FrameQueue<RGBFrame> queue) {
+    public void closeFrameQueue(FrameQueue<U16RGBFrame> queue) {
 
         listenerManager.removeQueue(queue);
         queue.close();
@@ -607,14 +653,14 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     @Override
     public int getFrameWidth() throws IOException, DeviceException {
-        return processInt(sdk::tl_camera_get_image_width, "tl_camera_get_image_width");
+        return getInt(sdk::tl_camera_get_image_width, "tl_camera_get_image_width");
     }
 
     @Override
     public void setFrameWidth(int width) throws IOException, DeviceException {
 
 
-        int[] points          = processInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
+        int[] points          = getInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
         int   newBottomRightX = points[0] + width;
 
         process(sdk.tl_camera_set_roi(handle, points[0], points[1], points[0] + width, points[3]), "tl_camera_set_roi");
@@ -630,13 +676,13 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     @Override
     public int getFrameHeight() throws IOException, DeviceException {
-        return processInt(sdk::tl_camera_get_image_height, "tl_camera_get_image_height");
+        return getInt(sdk::tl_camera_get_image_height, "tl_camera_get_image_height");
     }
 
     @Override
     public void setFrameHeight(int height) throws IOException, DeviceException {
 
-        int[] points          = processInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
+        int[] points          = getInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
         int   newBottomRightY = points[1] + height;
 
         process(sdk.tl_camera_set_roi(handle, points[0], points[1], points[2], newBottomRightY), "tl_camera_set_roi");
@@ -652,7 +698,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     @Override
     public int getFrameOffsetX() throws IOException, DeviceException {
-        return processInts(sdk::tl_camera_get_roi, "tl_camera_get_roi")[0];
+        return getInts(sdk::tl_camera_get_roi, "tl_camera_get_roi")[0];
     }
 
     @Override
@@ -662,7 +708,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
             throw new DeviceException("Cannot change frame x offset when x-centring is enabled.");
         }
 
-        int[] points          = processInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
+        int[] points          = getInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
         int   newBottomRightX = offsetX + (points[2] - points[0]);
 
         process(sdk.tl_camera_set_roi(handle, offsetX, points[1], newBottomRightX, points[3]), "tl_camera_set_roi");
@@ -674,7 +720,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
         if (centredX) {
 
-            int[] points = processInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
+            int[] points = getInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
 
             int width  = points[2] - points[0];
             int border = (getSensorWidth() - width) / 2;
@@ -694,7 +740,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     @Override
     public int getFrameOffsetY() throws IOException, DeviceException {
-        return processInts(sdk::tl_camera_get_roi, "tl_camera_get_roi")[1];
+        return getInts(sdk::tl_camera_get_roi, "tl_camera_get_roi")[1];
     }
 
     @Override
@@ -704,7 +750,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
             throw new DeviceException("Cannot change frame y offset when y-centring is enabled.");
         }
 
-        int[] points          = processInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
+        int[] points          = getInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
         int   newBottomRightY = offsetY + (points[3] - points[1]);
 
         process(sdk.tl_camera_set_roi(handle, points[0], offsetY, points[2], newBottomRightY), "tl_camera_set_roi");
@@ -716,7 +762,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
         if (centredY) {
 
-            int[] points = processInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
+            int[] points = getInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
 
             int height = points[3] - points[1];
             int border = (getSensorHeight() - height) / 2;
@@ -746,17 +792,17 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     @Override
     public int getSensorWidth() throws IOException, DeviceException {
-        return processInt(sdk::tl_camera_get_sensor_width, "tl_camera_get_sensor_width");
+        return getInt(sdk::tl_camera_get_sensor_width, "tl_camera_get_sensor_width");
     }
 
     @Override
     public int getSensorHeight() throws IOException, DeviceException {
-        return processInt(sdk::tl_camera_get_sensor_height, "tl_camera_get_sensor_height");
+        return getInt(sdk::tl_camera_get_sensor_height, "tl_camera_get_sensor_height");
     }
 
     @Override
     public int getBinningX() throws IOException, DeviceException {
-        return processInt(sdk::tl_camera_get_binx, "tl_camera_get_binx");
+        return getInt(sdk::tl_camera_get_binx, "tl_camera_get_binx");
     }
 
     @Override
@@ -766,7 +812,7 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     @Override
     public int getBinningY() throws IOException, DeviceException {
-        return processInt(sdk::tl_camera_get_biny, "tl_camera_get_biny");
+        return getInt(sdk::tl_camera_get_biny, "tl_camera_get_biny");
     }
 
     @Override
@@ -791,16 +837,6 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
     }
 
     @Override
-    public int getFrameBinning() throws IOException, DeviceException {
-        return 1;
-    }
-
-    @Override
-    public void setFrameBinning(int binning) throws IOException, DeviceException {
-
-    }
-
-    @Override
     public String getIDN() throws IOException, DeviceException {
         return "ThorLabs Camera";
     }
@@ -817,6 +853,18 @@ public class ThorCam extends NativeDevice implements Camera<RGBFrame> {
 
     @Override
     public Address getAddress() {
-        return null;
+
+        ByteBuffer serial = ByteBuffer.allocate(1024);
+
+        try {
+            process(sdk.tl_camera_get_serial_number(handle, serial, 1024), "tl_camera_get_serial_number");
+        } catch (Exception e) {
+            return new IDAddress("SERIAL_NUMBER");
+        }
+
+        String serialNumber = new String(serial.array(), StandardCharsets.US_ASCII).trim();
+
+        return new IDAddress(serialNumber);
+
     }
 }

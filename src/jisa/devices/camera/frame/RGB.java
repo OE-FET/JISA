@@ -1,33 +1,39 @@
 package jisa.devices.camera.frame;
 
-import javafx.scene.paint.Color;
-
 public class RGB {
 
-    private final short red;
-    private final short green;
-    private final short blue;
+    private final int argb;
+
+    public RGB(byte red, byte green, byte blue) {
+        this.argb = (255 << 24) | (red << 16) | (green << 8) | blue;
+    }
 
     public RGB(short red, short green, short blue) {
-        this.red   = red;
-        this.green = green;
-        this.blue  = blue;
+        this.argb = (255 << 24) | (red << 16) | (green << 8) | blue;
+    }
+
+    public RGB(int red, int green, int blue) {
+        this((short) red, (short) green, (short) blue);
+    }
+
+    public RGB(int argb) {
+        this.argb = argb;
     }
 
     public short getRed() {
-        return red;
+        return (short) ((argb >> 16) & 0xFF);
     }
 
     public short getGreen() {
-        return green;
+        return (short) ((argb >> 8) & 0xFF);
     }
 
     public short getBlue() {
-        return blue;
+        return (short) (argb & 0xFF);
     }
 
-    public Color toColour() {
-        return new Color((red & 0xFF) / 255.0, (green & 0xFF) / 255.0, (blue & 0xFF) / 255.0, 1.0);
+    public int getARGB() {
+        return argb;
     }
 
 }

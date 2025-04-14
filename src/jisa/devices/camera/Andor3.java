@@ -12,6 +12,7 @@ import jisa.control.RTask;
 import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
 import jisa.devices.camera.feature.CMOS;
+import jisa.devices.camera.feature.FrameBinning;
 import jisa.devices.camera.feature.MultiTrack;
 import jisa.devices.camera.feature.Overlap;
 import jisa.devices.camera.frame.FrameQueue;
@@ -29,7 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-public class Andor3 extends NativeDevice implements Camera<U16Frame>, CMOS, Overlap, MultiTrack, TemperatureControlled {
+public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinning, CMOS, Overlap, MultiTrack, TemperatureControlled {
 
     public final static int  AT_ERR_STRINGNOTAVAILABLE      = 18;
     public final static int  AT_ERR_NULL_COUNT_VAR          = 30;
@@ -442,10 +443,12 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, CMOS, Over
         setEnum("ElectronicShutteringMode", enabled ? "Rolling" : "Global");
     }
 
+    @Override
     public int getFrameBinning() throws IOException, DeviceException {
         return getInt("AccumulateCount");
     }
 
+    @Override
     public void setFrameBinning(int count) throws IOException, DeviceException {
         setInt("AccumulateCount", count);
     }
