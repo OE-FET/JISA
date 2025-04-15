@@ -2,9 +2,9 @@ package jisa.results;
 
 import com.google.common.primitives.Longs;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 public class LongColumn extends Column<Long> {
 
@@ -35,8 +35,8 @@ public class LongColumn extends Column<Long> {
     }
 
     @Override
-    public void writeToStream(OutputStream stream, Long value) throws IOException {
-        stream.write(Longs.toByteArray(value));
+    public void writeToStream(DataOutputStream stream, Long value) throws IOException {
+        stream.writeLong(value);
     }
 
     @Override

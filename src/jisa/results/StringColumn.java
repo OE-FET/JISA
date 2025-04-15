@@ -2,9 +2,9 @@ package jisa.results;
 
 import com.google.common.primitives.Ints;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 public class StringColumn extends Column<String> {
@@ -36,9 +36,9 @@ public class StringColumn extends Column<String> {
     }
 
     @Override
-    public void writeToStream(OutputStream stream, String value) throws IOException {
+    public void writeToStream(DataOutputStream stream, String value) throws IOException {
         byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
-        stream.write(Ints.toByteArray(bytes.length));
+        stream.writeInt(bytes.length);
         stream.write(bytes);
     }
 

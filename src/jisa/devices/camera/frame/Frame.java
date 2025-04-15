@@ -1,9 +1,7 @@
 package jisa.devices.camera.frame;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
@@ -36,11 +34,6 @@ public interface Frame<D, F extends Frame> {
      * @param timestamp Timestamp, in nanoseconds.
      */
     void setTimestamp(long timestamp);
-
-    default LocalDateTime getTime() {
-        long stamp = getTimestamp();
-        return LocalDateTime.ofEpochSecond(stamp / 1000000, (int) (stamp % 1000000), ZoneOffset.UTC);
-    }
 
     /**
      * Returns the pixel value at the given x and y co-ordinates/indices.
@@ -92,7 +85,7 @@ public interface Frame<D, F extends Frame> {
      *
      * @param stream Stream to write to.
      */
-    void writeToStream(OutputStream stream) throws IOException;
+    void writeToStream(DataOutputStream stream) throws IOException;
 
     /**
      * Returns an image containing a rectangular subsection of this image.

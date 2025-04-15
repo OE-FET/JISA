@@ -7,9 +7,9 @@ import jisa.devices.camera.frame.Frame;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameThread;
 
+import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -210,7 +210,7 @@ public interface Camera<F extends Frame> extends Instrument {
      *
      * @return FrameThread object representing the worker thread running the stream.
      */
-    default FrameThread<F> stream(OutputStream stream) {
+    default FrameThread<F> stream(DataOutputStream stream) {
         return startFrameThread(f -> f.writeToStream(stream));
     }
 
@@ -222,8 +222,8 @@ public interface Camera<F extends Frame> extends Instrument {
      * @return FrameThread object representing the worker thread running the stream.
      */
     default FrameThread<F> streamToFile(String path) throws IOException {
-        FileOutputStream fos = new FileOutputStream(path);
-        return new FrameThread<>(this, f -> f.writeToStream(fos), fos::close);
+        DataOutputStream dos = new DataOutputStream(new FileOutputStream(path));
+        return new FrameThread<>(this, f -> f.writeToStream(dos), dos::close);
     }
 
     /**

@@ -115,20 +115,20 @@ public class ResultList extends ResultTable {
         try {
 
             try (InputStream stream = new InflaterInputStream(new FileInputStream(filePath))) {
-                return loadFromStream(stream);
+                return loadFromBinaryStream(stream);
             }
 
         } catch (IOException e) {
 
             try (InputStream stream = new FileInputStream(filePath)) {
-                return loadFromStream(stream);
+                return loadFromBinaryStream(stream);
             }
 
         }
 
     }
 
-    protected static ResultList loadFromStream(InputStream file) throws IOException {
+    protected static ResultList loadFromBinaryStream(InputStream file) throws IOException {
 
         Map<String, Object> attributes = null;
         List<Column>        columns    = new LinkedList<>();

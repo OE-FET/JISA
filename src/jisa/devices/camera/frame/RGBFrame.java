@@ -1,7 +1,8 @@
 package jisa.devices.camera.frame;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -137,15 +138,16 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
     }
 
     @Override
-    public void writeToStream(OutputStream stream) throws IOException {
+    public void writeToStream(DataOutputStream stream) throws IOException {
 
-        for (int i = 0; i < argb.length; i++) {
+        stream.writeInt(width);
+        stream.writeInt(height);
+        stream.writeLong(timestamp);
 
-            stream.write((byte) ((argb[i] >> 16) & 0xFF));
-            stream.write((byte) ((argb[i] >> 8) & 0xFF));
-            stream.write((byte) ((argb[i]) & 0xFF));
+        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES * argb.length);
+        buffer.asIntBuffer().put(argb);
 
-        }
+        stream.write(buffer.rewind().array());
 
     }
 

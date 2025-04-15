@@ -2,9 +2,9 @@ package jisa.results;
 
 import com.google.common.primitives.Ints;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 public class IntColumn extends Column<Integer> {
 
@@ -35,8 +35,8 @@ public class IntColumn extends Column<Integer> {
     }
 
     @Override
-    public void writeToStream(OutputStream stream, Integer value) throws IOException {
-        stream.write(Ints.toByteArray(value));
+    public void writeToStream(DataOutputStream stream, Integer value) throws IOException {
+        stream.writeInt(value);
     }
 
     @Override

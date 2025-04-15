@@ -1,7 +1,7 @@
 package jisa.devices.camera.frame;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -75,7 +75,7 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
     }
 
     @Override
-    public void writeToStream(OutputStream stream) throws IOException {
+    public void writeToStream(DataOutputStream stream) throws IOException {
 
         ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES * data.length);
         buffer.asIntBuffer().rewind().put(data);

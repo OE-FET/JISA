@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * Driver class for ThorLabs cameras.
+ */
 public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplified {
 
     // CONSTANTS

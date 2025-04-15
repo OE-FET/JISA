@@ -1,8 +1,8 @@
 package jisa.results;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 public class BooleanColumn extends Column<Boolean> {
 
@@ -33,7 +33,7 @@ public class BooleanColumn extends Column<Boolean> {
     }
 
     @Override
-    public void writeToStream(OutputStream stream, Boolean value) throws IOException {
+    public void writeToStream(DataOutputStream stream, Boolean value) throws IOException {
         stream.write(value ? 1 : 0);
     }
 

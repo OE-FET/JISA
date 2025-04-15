@@ -1,7 +1,7 @@
 package jisa.devices.camera.frame;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.stream.IntStream;
 
@@ -92,7 +92,7 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
     }
 
     @Override
-    public void writeToStream(OutputStream stream) throws IOException {
+    public void writeToStream(DataOutputStream stream) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(Short.BYTES * data.length);
         buffer.asShortBuffer().rewind().put(data);
         stream.write(buffer.rewind().array());

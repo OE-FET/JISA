@@ -1,7 +1,7 @@
 package jisa.devices.camera.frame;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -140,7 +140,7 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
     }
 
     @Override
-    public void writeToStream(OutputStream stream) throws IOException {
+    public void writeToStream(DataOutputStream stream) throws IOException {
 
         for (long pixel : argb) {
 

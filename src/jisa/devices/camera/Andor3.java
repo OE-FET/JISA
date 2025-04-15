@@ -472,8 +472,6 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         final long    tmo        = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
         final long    ftm        = Math.max((long) (2 * getIntegrationTime() * 1e3), 100);
         final int     bufferSize = getInt("ImageSizeBytes");
-        final long    startTime  = System.nanoTime();
-        final long    startClock = getLong("TimestampClock");
         final long    frequency  = getLong("TimestampClockFrequency");
         final long    nsPerTick  = (long) (1e9 / frequency);
         final int     width      = getInt("AOIWidth");
@@ -570,7 +568,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             converted.asShortBuffer().get(frame.array(), 0, imageSize);
 
             if (result != AT_SUCCESS) {
-                frame.setTimestamp(startTime + (nsPerTick * (timeStampBuffer.getValue() - startClock)));
+                frame.setTimestamp(nsPerTick * timeStampBuffer.getValue());
             }
 
             flush();
@@ -610,8 +608,6 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         int     height           = getInt("AOIHeight");
         int     stride           = getInt("AOIStride");
         int     imageSize        = width * height;
-        long    startTime        = System.nanoTime();
-        long    startClock       = getLong("TimestampClock");
         long    frequency        = getLong("TimestampClockFrequency");
         long    nsPerTick        = (long) (1e9 / frequency);
         Enum    encoding         = getEnum("PixelEncoding");
@@ -724,7 +720,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
                         result = util.AT_GetTimeStampFromMetadata(returned.rewind(), bufferSize, timeStampBuffer);
 
                         if (result != AT_SUCCESS) {
-                            frame.setTimestamp(startTime + (nsPerTick * (timeStampBuffer.getValue() - startClock)));
+                            frame.setTimestamp(nsPerTick * timeStampBuffer.getValue());
                         }
 
                     } else {
@@ -886,12 +882,10 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
      * @param height     The height of each image (after processing), in pixels
      * @param stride     The stride of images returned by the acquisition thread (i.e., width including padding), in pixels
      * @param data       The data array of the internal Frame object holding the current frame
-     * @param startClock The value of the camera's internal clock when acquisition was started
-     * @param startTime  The value of System.nanoTime() at the start of acquisition
      * @param frequency  The frequency of the camera's internal clock
      * @param encoding   The encoding used by the camera for each frame
      */
-    private void processing(int bufferSize, int width, int height, int stride, short[] data, long startClock, long startTime, long frequency, Enum encoding) {
+    private void processing(int bufferSize, int width, int height, int stride, short[] data, long frequency, Enum encoding) {
 
         boolean timestampEnabled;
         try {
@@ -961,7 +955,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
                         result = util.AT_GetTimeStampFromMetadata(buffer.rewind(), bufferSize, timeStamp);
 
                         if (result == AT_SUCCESS) {
-                            frameBuffer.setTimestamp(startTime + (nsPerTick * (timeStamp.getValue() - startClock)));
+                            frameBuffer.setTimestamp(nsPerTick * timeStamp.getValue());
                         } else {
                             frameBuffer.setTimestamp(System.nanoTime());
                         }
@@ -1007,8 +1001,6 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         final int     size       = getFrameSize();
         final int     bufferSize = getInt("ImageSizeBytes");
         final short[] data       = new short[size];
-        final long    clock      = getLong("TimestampClock");
-        final long    time       = System.nanoTime();
         final long    frequency  = getLong("TimestampClockFrequency");
         final Enum    encoding   = getEnum("PixelEncoding");
 
@@ -1019,7 +1011,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         flush();
 
         acquisitionThread = new Thread(() -> acquisition(bufferSize));
-        processingThread  = new Thread(() -> processing(bufferSize, width, height, stride, data, clock, time, frequency, encoding));
+        processingThread  = new Thread(() -> processing(bufferSize, width, height, stride, data, frequency, encoding));
 
         acquiring = true;
 

@@ -1,7 +1,6 @@
 package jisa.results;
 
 import com.google.common.collect.Lists;
-import com.google.common.primitives.Ints;
 import jisa.Util;
 import jisa.maths.matrices.RealMatrix;
 import kotlin.Pair;
@@ -1401,12 +1400,20 @@ public abstract class ResultTable implements Iterable<Row> {
         return new RowBuilder();
     }
 
+    public void outputBinary() throws IOException {
+        outputBinary(System.out);
+    }
+
     public void outputBinary(OutputStream stream) throws IOException {
+        outputBinary(new DataOutputStream(stream));
+    }
+
+    public void outputBinary(DataOutputStream stream) throws IOException {
 
         byte[] attributes = new JSONObject(getAttributes()).toString().getBytes(StandardCharsets.UTF_8);
 
         stream.write(1);
-        stream.write(Ints.toByteArray(attributes.length));
+        stream.writeInt(attributes.length);
         stream.write(attributes);
 
         for (Column<?> column : columns) {
@@ -1416,11 +1423,11 @@ public abstract class ResultTable implements Iterable<Row> {
             byte[] type  = column.getType().getSimpleName().getBytes(StandardCharsets.UTF_8);
 
             stream.write(2);
-            stream.write(Ints.toByteArray(name.length));
+            stream.writeInt(name.length);
             stream.write(name);
-            stream.write(Ints.toByteArray(units.length));
+            stream.writeInt(units.length);
             stream.write(units);
-            stream.write(Ints.toByteArray(type.length));
+            stream.writeInt(type.length);
             stream.write(type);
 
         }

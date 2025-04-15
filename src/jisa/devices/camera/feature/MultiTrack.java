@@ -157,7 +157,7 @@ public interface MultiTrack extends Feature {
 
         parameters.addOptional("Multi-Track", inst::isMultiTrackEnabled, false, () -> {
 
-            ResultTable tab  = new ResultList(start, end, binned);
+            ResultTable tab = new ResultList(start, end, binned);
 
             for (Track track : inst.getMultiTracks()) {
                 tab.addData(track.getStartRow(), track.getEndRow(), track.isBinned());

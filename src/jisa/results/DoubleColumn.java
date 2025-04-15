@@ -2,9 +2,9 @@ package jisa.results;
 
 import com.google.common.primitives.Longs;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 public class DoubleColumn extends Column<Double> implements DoubleRowEvaluable {
 
@@ -35,8 +35,8 @@ public class DoubleColumn extends Column<Double> implements DoubleRowEvaluable {
     }
 
     @Override
-    public void writeToStream(OutputStream stream, Double value) throws IOException {
-        stream.write(Longs.toByteArray(Double.doubleToLongBits(value)));
+    public void writeToStream(DataOutputStream stream, Double value) throws IOException {
+        stream.writeDouble(value);
     }
 
     @Override
