@@ -47,6 +47,16 @@ public class ThorLabsCCS extends USBDevice implements Spectrometer {
     }
 
     @Override
+    public int getAcquisitionTimeout() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public void setAcquisitionTimeout(int timeout) throws IOException, DeviceException {
+
+    }
+
+    @Override
     public void startAcquisition() throws IOException, DeviceException {
 
     }

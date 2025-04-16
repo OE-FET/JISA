@@ -6,6 +6,14 @@ import java.util.concurrent.TimeoutException;
 
 public class SpectrumQueue extends LinkedBlockingQueue<Spectrum> {
 
+    public SpectrumQueue(int limit) {
+        super(limit);
+    }
+
+    public SpectrumQueue() {
+        this(Integer.MAX_VALUE);
+    }
+
     /**
      * Takes the spectrum at the head of the queue and returns it, removing it from the queue. If no spectrum is available, this method
      * will block (i.e., wait) until one is available to return. If no spectrum ever becomes available, this method will never return.

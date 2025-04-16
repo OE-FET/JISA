@@ -30,6 +30,10 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
     }
 
+    public Spectrum(double[] wavelengths, int[] counts) {
+        this(wavelengths, IntStream.of(counts).mapToLong(i -> (long) i).toArray());
+    }
+
     /**
      * Returns a new Spectrum object whose points are the result of adding the provided spectrum from this one.
      *

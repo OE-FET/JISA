@@ -92,7 +92,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     }
 
     @Override
-    public double getAcquisitionFPS() throws IOException, DeviceException {
+    public double getAcquisitionFPS() {
         return fps;
     }
 

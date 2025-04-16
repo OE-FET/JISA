@@ -166,6 +166,22 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         core = findLibrary(ATCoreLibrary.class, "atcore");
         util = findLibrary(ATUtilityLibrary.class, "atutility");
 
+        // Extract camera index from provided object
+        int cameraIndex = extractIndex(idObject);
+
+        // Open the connection and store the returned handle
+        IntBuffer intBuffer = IntBuffer.allocate(1);
+        handleResult("Open", "N/A", core.AT_Open(cameraIndex, intBuffer.clear()));
+
+        handle = intBuffer.get(0);
+
+        setEnum("TriggerMode", "Internal");
+        setBoolean("RollingShutterGlobalClear", false);
+
+    }
+
+    private static int extractIndex(Object idObject) throws DeviceException {
+
         int cameraIndex;
 
         // Determine how the camera index is encoded in the address object
@@ -185,14 +201,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             throw new DeviceException("Invalid ID Object.");
         }
 
-        // Open the connection and store the returned handle
-        IntBuffer intBuffer = IntBuffer.allocate(1);
-        handleResult("Open", "N/A", core.AT_Open(cameraIndex, intBuffer.clear()));
-
-        handle = intBuffer.get(0);
-
-        setEnum("TriggerMode", "Internal");
-        setBoolean("RollingShutterGlobalClear", false);
+        return cameraIndex;
 
     }
 
@@ -218,6 +227,19 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
     }
 
+    /**
+     * Sets whether the frame buffer between the frame acquisition and processing threads can hold more than one frame or not.
+     * <p>
+     * <hr/>
+     * <p><i>Some Andor3 cameras, under certain conditions, can provide raw frames faster than we can realistically process them into useable images (particularly on slower computers).
+     * If this backlog is disabled, then frames acquired while a previous frame is still being processed are rejected by the processing thread (i.e., they are dropped), effectively clamping the acquisition rate to the processing rate. If it is
+     * enabled, they are instead queued. This is often undesirable as it means by the time a frame reaches any FrameListeners or is added to a FrameQueue, it is significantly old,
+     * leading to an immediate and ever-increasing latency to any live display/processing.</i></p>
+     * <p><i>Really then, you only want to enable this if your intention is simply to stream as many frames as possible to disk without any on-line processing.</i></p>
+     * <hr/>
+     *
+     * @param enabled Whether the enable the backlog or not. Default is false.     *
+     */
     public void setInternalBacklogEnabled(boolean enabled) {
 
         if (enabled) {
@@ -374,15 +396,11 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     }
 
     protected synchronized void command(String feature) throws DeviceException, IOException {
-
         handleResult("Command", feature, core.AT_Command(handle, new WString(feature)));
-
     }
 
     protected void flush() throws DeviceException, IOException {
-
         handleResult("Flush", "N/A", core.AT_Flush(handle));
-
     }
 
     protected synchronized void acquisitionStart() throws DeviceException, IOException {
@@ -542,38 +560,40 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
             long returnedSize = Integer.toUnsignedLong(intBuffer.get(0));
 
-            ByteBuffer returned  = reference.getValue().getByteBuffer(0, returnedSize);
-            ByteBuffer converted = ByteBuffer.allocateDirect(imageSize * 2);
+            ByteBuffer returned = reference.getValue().getByteBuffer(0, returnedSize);
 
-            System.out.println(returned.isDirect());
-            System.out.println(converted.isDirect());
+            try (Memory convertedMemory = new Memory(imageSize * 2L)) {
 
-            result = util.AT_ConvertBufferUsingMetadata(returned.rewind(), converted.clear().rewind(), returnedSize, mono16);
+                ByteBuffer converted = convertedMemory.getByteBuffer(0, imageSize * 2L);
 
-            if (result != AT_SUCCESS) {
-
-                result = util.AT_ConvertBuffer(returned.rewind(), converted.clear().rewind(), width, height, stride, encText, mono16);
+                result = util.AT_ConvertBufferUsingMetadata(returned.rewind(), converted.clear().rewind(), returnedSize, mono16);
 
                 if (result != AT_SUCCESS) {
-                    throw new DeviceException("ConvertBuffer failed: %d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
+
+                    result = util.AT_ConvertBuffer(returned.rewind(), converted.clear().rewind(), width, height, stride, encText, mono16);
+
+                    if (result != AT_SUCCESS) {
+                        throw new DeviceException("ConvertBuffer failed: %d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
+                    }
+
                 }
 
+                LongByReference timeStampBuffer = new LongByReference();
+
+                result = util.AT_GetTimeStampFromMetadata(returned.rewind(), returnedSize, timeStampBuffer);
+
+                Frame frame = new Frame(width, height);
+                converted.asShortBuffer().get(frame.array(), 0, imageSize);
+
+                if (result != AT_SUCCESS) {
+                    frame.setTimestamp(nsPerTick * timeStampBuffer.getValue());
+                }
+
+                flush();
+
+                return frame;
+
             }
-
-            LongByReference timeStampBuffer = new LongByReference();
-
-            result = util.AT_GetTimeStampFromMetadata(returned.rewind(), returnedSize, timeStampBuffer);
-
-            Frame frame = new Frame(width, height);
-            converted.asShortBuffer().get(frame.array(), 0, imageSize);
-
-            if (result != AT_SUCCESS) {
-                frame.setTimestamp(nsPerTick * timeStampBuffer.getValue());
-            }
-
-            flush();
-
-            return frame;
 
         }
 
@@ -896,6 +916,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
         final long[] stats = {0, 0, System.nanoTime()};
 
+        // Set up repeating task to calculate FPS each second on a separate thread
         RTask task = new RTask(1000, () -> {
 
             synchronized (stats) {
@@ -924,6 +945,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             final WString mono16    = new WString("Mono16");
             final WString encText   = new WString(encoding.getText());
 
+            //
             try (Memory convertedMemory = new Memory(imageSize * 2L)) {
 
                 // Buffers for retrieving data
@@ -975,10 +997,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             }
 
         } catch (Throwable t) {
-
-            System.err.println("Andor3 Processing Thread Halted!");
-            t.printStackTrace();
-
+            System.err.printf("Andor3 Processing Thread Halted: %s%n", t.getMessage());
         } finally {
 
             processFPS = 0.0;
@@ -995,6 +1014,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             return;
         }
 
+        // Get info about the frames the camera is going to spitting back to us
         final int     width      = getFrameWidth();
         final int     height     = getFrameHeight();
         final int     stride     = getInt("AOIStride");
@@ -1004,19 +1024,26 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         final long    frequency  = getLong("TimestampClockFrequency");
         final Enum    encoding   = getEnum("PixelEncoding");
 
+        // Create a frame to hold the latest frame data
         frameBuffer = new Frame(data, width, height);
+
+        // Clear the queue between the acquisition and processing threads
         queued.clear();
 
+        // Set the camera up to acquire continuously and flush out its memory
         setEnum("CycleMode", "Continuous");
         flush();
 
+        // Set up acquisition and processing threads
         acquisitionThread = new Thread(() -> acquisition(bufferSize));
         processingThread  = new Thread(() -> processing(bufferSize, width, height, stride, data, frequency, encoding));
 
         acquiring = true;
 
+        // Set the camera rolling
         acquisitionStart();
 
+        // Start the acquisition and processing threads
         acquisitionThread.start();
         processingThread.start();
 
@@ -1029,22 +1056,26 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             return;
         }
 
+        // Break the while loop conditions in both threads
         acquiring = false;
 
+        // Stop the camera rolling and flush out its memory
         acquisitionStop();
         flush();
 
+        // Send interrupt signals to both threads to break any blocking methods
         acquisitionThread.interrupt();
         processingThread.interrupt();
 
+        // Wait for both threads to die
         try {
             acquisitionThread.join();
             processingThread.join();
         } catch (InterruptedException ignored) { }
 
+        // Cleanup
         acquisitionThread = null;
         processingThread  = null;
-
         flush();
 
     }

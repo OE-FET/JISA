@@ -17,6 +17,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 public interface Series {
 
@@ -162,7 +164,7 @@ public interface Series {
     }
 
     default Series setXPoints(double[] x) {
-        return setPoints(x, null);
+        return setPoints(x, (double[]) null);
     }
 
     default Series setYPoints(double[] y){
@@ -550,6 +552,14 @@ public interface Series {
      * @return JavaFx XYChart.Series object
      */
     ObservableList<? extends DataSet> getDatasets();
+
+    default void setPoints(double[] wavelengths, long[] counts) {
+        setPoints(wavelengths, LongStream.of(counts).mapToDouble(v -> (double) v).toArray());
+    }
+
+    default void setPoints(double[] wavelengths, int[] counts) {
+        setPoints(wavelengths, IntStream.of(counts).mapToDouble(v -> (double) v).toArray());
+    }
 
     interface SeriesFitter {
 

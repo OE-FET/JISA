@@ -4,6 +4,7 @@ import jisa.Util;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.MultiInstrument;
+import jisa.devices.SubInstrument;
 import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 
@@ -12,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Interface for representing spectrometer instruments (i.e., a spectrograph plus some sort of sensor)
@@ -48,6 +50,26 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrogra
     void setIntegrationTime(double time) throws IOException, DeviceException;
 
     /**
+     * Returns how long, in milliseconds, the spectrometer will wait for new data to arrive after being requested before timing out.
+     *
+     * @return Timeout, in milliseconds.
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    int getAcquisitionTimeout() throws IOException, DeviceException;
+
+    /**
+     * Sets how long, in milliseconds, the spectrometer will wait for new data to arrive after being requested before timing out.
+     *
+     * @param timeout Timeout, in milliseconds.
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    void setAcquisitionTimeout(int timeout) throws IOException, DeviceException;
+
+    /**
      * Instructs the spectrometer to start acquiring continuously (if it isn't already).
      *
      * @throws IOException     Upon communications error
@@ -76,7 +98,7 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrogra
     /**
      * Interface for classes representing individual spectrometer channels.
      */
-    interface Channel extends Instrument {
+    interface Channel extends Instrument, SubInstrument {
 
         /**
          * Acquires and returns a single spectrum.
@@ -86,7 +108,7 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrogra
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon device compatibility error
          */
-        Spectrum getSpectrum() throws IOException, DeviceException;
+        Spectrum getSpectrum() throws IOException, DeviceException, InterruptedException, TimeoutException;
 
         /**
          * Acquires and returns a set number of spectra, and returns them in a list.
@@ -98,7 +120,7 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrogra
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon device compatibility error
          */
-        List<Spectrum> getSpectrumSeries(int count) throws IOException, DeviceException;
+        List<Spectrum> getSpectrumSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException;
 
         /**
          * Adds a listener to this spectrometer channel that is called for each new spectrum that is acquired. Any spectra
