@@ -33,10 +33,7 @@ import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
+import java.util.stream.*;
 
 public class HeatMap extends JFXElement {
 
@@ -292,6 +289,10 @@ public class HeatMap extends JFXElement {
 
     public void draw(int[][] data) {
         draw(Stream.of(data).map(r -> IntStream.of(r).boxed().map(Integer::doubleValue).toArray(Double[]::new)).toArray(Double[][]::new));
+    }
+
+    public void draw(long[][] data) {
+        draw(Stream.of(data).map(r -> LongStream.of(r).boxed().map(Long::doubleValue).toArray(Double[]::new)).toArray(Double[][]::new));
     }
 
     public synchronized void draw(double[][] data) {

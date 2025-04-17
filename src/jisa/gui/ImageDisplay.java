@@ -274,9 +274,9 @@ public class ImageDisplay extends JFXElement {
 
             for (int x = 0; x < width; x++) {
 
-                char red    = (char) ((data[x][y] >> 32) & 0xFFFF);
-                char green  = (char) ((data[x][y] >> 16) & 0xFFFF);
-                char blue   = (char) ((data[x][y]) & 0xFFFF);
+                char red    = (char) ((data[y][x] >> 32) & 0xFFFF);
+                char green  = (char) ((data[y][x] >> 16) & 0xFFFF);
+                char blue   = (char) ((data[y][x]) & 0xFFFF);
                 char redI   = (char) (red * factor);
                 char greenI = (char) (green * factor);
                 char blueI  = (char) (blue * factor);

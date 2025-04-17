@@ -1,5 +1,6 @@
 package jisa.devices.meter;
 
+import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.ptr.ShortByReference;
@@ -7,7 +8,6 @@ import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.visa.NativeDevice;
-import jisa.visa.NativeLibrary;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -472,7 +472,7 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
     /**
      * Interface corresponding to native usbtc08 library methods.
      */
-    protected interface NativeInterface extends NativeLibrary {
+    protected interface NativeInterface extends Library {
 
         int   USBTC08_MAX_CHANNELS         = 8;
         short USBTC08LINE_BATCH_AND_SERIAL = 4;

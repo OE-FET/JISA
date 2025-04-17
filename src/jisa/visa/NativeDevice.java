@@ -97,10 +97,10 @@ public abstract class NativeDevice implements Instrument {
 
             I loaded = Native.load(libraryName, libraryInterface);
 
-            if (loaded instanceof NativeLibrary) {
+            if (loaded instanceof InitialisableLibrary) {
 
                 try {
-                    ((NativeLibrary) loaded).initialise();
+                    ((InitialisableLibrary) loaded).initialise();
                 } catch (UndeclaredThrowableException e) {
                     throw new LibraryInitialisationException(libraryName, name, e.getUndeclaredThrowable().getMessage());
                 } catch (Throwable e) {

@@ -160,7 +160,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame, S extends 
         @Override
         public SpectrumQueue openSpectrumQueue(int limit) {
 
-            SpectrumQueue  spectrumQueue = new SpectrumQueue(limit);
+            SpectrumQueue  spectrumQueue = new SpectrumQueue(this, limit);
             FrameThread<F> thread        = camera.startFrameThread(f -> spectrumQueue.offer(converter.convert(f)));
 
             threads.put(spectrumQueue, thread);

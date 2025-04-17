@@ -5,11 +5,11 @@ import com.sun.jna.PointerType;
 import com.sun.jna.ptr.PointerByReference;
 import jisa.Util;
 import jisa.devices.camera.ThorCam;
-import jisa.visa.NativeLibrary;
+import jisa.visa.InitialisableLibrary;
 
 import java.nio.*;
 
-public interface ThorCamLibrary extends NativeLibrary {
+public interface ThorCamLibrary extends InitialisableLibrary {
 
     default void initialise() throws Exception {
 
