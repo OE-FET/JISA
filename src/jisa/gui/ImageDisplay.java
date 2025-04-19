@@ -8,8 +8,6 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import jisa.devices.camera.frame.Frame;
-import jisa.devices.camera.frame.RGBFrame;
-import jisa.devices.camera.frame.U16RGBFrame;
 import jisa.maths.matrices.Matrix;
 
 import java.nio.IntBuffer;
@@ -178,16 +176,8 @@ public class ImageDisplay extends JFXElement {
 
     }
 
-    public void drawFrame(Frame.UShortFrame frame) {
-        drawMono(frame.image(), Short.MAX_VALUE);
-    }
-
-    public void drawFrame(RGBFrame frame) {
-        drawARGBInt(frame.getARGBImage());
-    }
-
-    public void drawFrame(U16RGBFrame frame) {
-        drawARGBLong(frame.getARGBImage());
+    public void drawFrame(Frame frame) {
+        drawARGB(frame.getARGBData(), frame.getWidth(), frame.getHeight());
     }
 
     public void drawMono(double[][] data, double max) {
@@ -223,7 +213,27 @@ public class ImageDisplay extends JFXElement {
 
     }
 
-    public void drawARGBInt(int[][] data) {
+    public void drawARGB(int[] data, int width, int height) {
+
+        double cHeight = canvas.getHeight();
+        double cWidth  = canvas.getWidth();
+
+        if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
+            pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());
+            image  = new WritableImage(pixels);
+        }
+
+        int[] raw = pixels.getBuffer().array();
+        System.arraycopy(data, 0, raw, 0, width * height);
+
+        GUI.runNow(() -> {
+            pixels.updateBuffer(b -> null);
+            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
+        });
+
+    }
+
+    public void drawARGB(int[][] data) {
 
         int height = data.length;
         int width  = height > 0 ? data[0].length : 0;
@@ -246,52 +256,6 @@ public class ImageDisplay extends JFXElement {
             pixels.updateBuffer(b -> null);
             canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
         });
-
-    }
-
-    public void drawARGBLong(long[][] data) {
-
-        final double factor = 255.0 / Character.MAX_VALUE;
-
-        int height = data.length;
-        int width  = height > 0 ? data[0].length : 0;
-
-        if (height == 0 || width == 0) {
-            return;
-        }
-
-        double cHeight = canvas.getHeight();
-        double cWidth  = canvas.getWidth();
-
-        if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
-            pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());
-            image  = new WritableImage(pixels);
-        }
-
-        int[] raw = pixels.getBuffer().array();
-
-        for (int y = 0; y < height; y++) {
-
-            for (int x = 0; x < width; x++) {
-
-                char red    = (char) ((data[y][x] >> 32) & 0xFFFF);
-                char green  = (char) ((data[y][x] >> 16) & 0xFFFF);
-                char blue   = (char) ((data[y][x]) & 0xFFFF);
-                char redI   = (char) (red * factor);
-                char greenI = (char) (green * factor);
-                char blueI  = (char) (blue * factor);
-
-                raw[width * y + x] = (255 << 24 | redI << 16 | greenI << 8 | blueI);
-
-            }
-
-        }
-
-        GUI.runNow(() -> {
-            pixels.updateBuffer(b -> null);
-            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
-        });
-
 
     }
 

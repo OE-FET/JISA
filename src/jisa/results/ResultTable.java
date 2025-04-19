@@ -1066,7 +1066,7 @@ public abstract class ResultTable implements Iterable<Row> {
      */
     public void outputCSV(String file) throws IOException {
 
-        try (PrintStream writer = new PrintStream(new FileOutputStream(file))) {
+        try (PrintStream writer = new PrintStream(new BufferedOutputStream(new FileOutputStream(file)))) {
             outputCSV(writer);
         }
 

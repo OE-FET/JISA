@@ -6,7 +6,7 @@ public class U16RGB {
     private final long argb;
 
     public U16RGB(char red, char green, char blue) {
-        argb = ((long) Short.MAX_VALUE << 48 | (long) red << 32 | (long) green << 16 | blue);
+        argb = ((long) Character.MAX_VALUE << 48 | (long) red << 32 | (long) green << 16 | blue);
     }
 
     public U16RGB(long argb) {

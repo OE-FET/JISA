@@ -4,7 +4,6 @@ import jisa.Util;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.MultiInstrument;
-import jisa.devices.SubInstrument;
 import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 
@@ -98,7 +97,7 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrogra
     /**
      * Interface for classes representing individual spectrometer channels.
      */
-    interface Channel extends Instrument, SubInstrument {
+    interface Channel<S extends Spectrometer> extends Instrument {
 
         /**
          * Acquires and returns a single spectrum.

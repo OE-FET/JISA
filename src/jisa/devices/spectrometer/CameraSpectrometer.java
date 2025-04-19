@@ -2,6 +2,7 @@ package jisa.devices.spectrometer;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
+import jisa.devices.SubInstrument;
 import jisa.devices.camera.Camera;
 import jisa.devices.camera.frame.Frame;
 import jisa.devices.camera.frame.FrameThread;
@@ -118,7 +119,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame, S extends 
         Spectrum convert(F frame);
     }
 
-    public class Channel implements Spectrometer.Channel {
+    public class Channel implements Spectrometer.Channel, SubInstrument<CameraSpectrometer<C, F, S>> {
 
         private final String       name;
         private final Converter<F> converter;

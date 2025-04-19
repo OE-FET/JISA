@@ -454,7 +454,7 @@ public class HeatMap extends JFXElement {
         min = IntStream.of(data).min().orElse(-1);
         max = IntStream.of(data).max().orElse(+1);
 
-        double range = max - min;
+        double range = (min == max) ? 1.0 : (max - min);
 
         if (image == null || image.getWidth() != nx || image.getHeight() != ny) {
             buffer = new PixelBuffer<>(nx, ny, IntBuffer.allocate(nx * ny), PixelFormat.getIntArgbPreInstance());

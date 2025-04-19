@@ -2,7 +2,6 @@ package jisa.devices.camera;
 
 import jisa.Util;
 import jisa.addresses.Address;
-import jisa.control.RTask;
 import jisa.devices.DeviceException;
 import jisa.devices.camera.feature.MultiTrack;
 import jisa.devices.camera.frame.FrameQueue;
@@ -17,13 +16,14 @@ import java.util.concurrent.TimeoutException;
 
 public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
-    private int     width           = 1024;
-    private int     height          = 1024;
-    private int     integrationTime = 5;
-    private int     timeout;
-    private boolean running         = false;
-    private Thread  acquireThread;
-    private double  fps             = 0.0;
+    private       int     width           = 1024;
+    private       int     height          = 1024;
+    private       int     integrationTime = 5;
+    private       int     timeout;
+    private       boolean running         = false;
+    private       Thread  acquireThread;
+    private       double  fps             = 0.0;
+    private final long[]  stats           = {0, 0, System.nanoTime()};
 
     private final Random                    random          = new Random();
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
@@ -37,7 +37,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     protected void generate(short[] data) {
 
         for (int i = 0; i < data.length; i++) {
-            data[i] = (short) (0.3 * random.nextInt(Short.MAX_VALUE) + 0.7 * Short.MAX_VALUE * ((double) i / data.length));
+            data[i] = (short) random.nextInt(Character.MAX_VALUE);
         }
 
     }
@@ -93,38 +93,36 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
     @Override
     public double getAcquisitionFPS() {
+
+        synchronized (stats) {
+
+            long frames  = stats[0];
+            long dFrames = frames - stats[1];
+            long time    = System.nanoTime();
+            long dTime   = time - stats[2];
+
+            stats[1] = frames;
+            stats[2] = time;
+
+            fps = 1e9 * dFrames / dTime;
+
+        }
+
         return fps;
+
     }
 
     @Override
     public void startAcquisition() throws IOException, DeviceException {
 
-        final long[] stats = {0, 0, System.nanoTime()};
-
-        RTask task = new RTask(1000, () -> {
-
-            synchronized (stats) {
-
-                long frames  = stats[0];
-                long dFrames = frames - stats[1];
-                long time    = System.nanoTime();
-                long dTime   = time - stats[2];
-
-                stats[1] = frames;
-                stats[2] = time;
-
-                fps = 1e9 * dFrames / dTime;
-
-            }
-
-        });
+        stats[0] = 0;
+        stats[1] = 0;
+        stats[2] = System.nanoTime();
 
         acquireThread = new Thread(() -> {
 
             short[]  data  = new short[width * height];
             U16Frame frame = new U16Frame(data, width, height);
-
-            task.start();
 
             while (running) {
 
@@ -138,8 +136,6 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
                 }
 
             }
-
-            task.stop();
 
             synchronized (stats) {
                 fps = 0.0;

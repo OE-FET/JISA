@@ -7,10 +7,10 @@ import java.util.stream.LongStream;
 
 public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
 
-    private final long[] argb;
-    private final int    width;
-    private final int    height;
-    private       long   timestamp;
+    protected final long[] argb;
+    protected final int    width;
+    protected final int    height;
+    protected       long   timestamp;
 
     public U16RGBFrame(char[] red, char[] green, char[] blue, int width, int height, long timestamp) {
 
@@ -58,6 +58,11 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
         return new U16RGB(argb[y * width + x]);
     }
 
+    @Override
+    public U16RGB getMax() {
+        return new U16RGB(Character.MAX_VALUE, Character.MAX_VALUE, Character.MAX_VALUE);
+    }
+
     public char getRedChar(int x, int y) {
         return (char) ((argb[y * width + x] >> 32) & 0xFFFF);
     }
@@ -70,7 +75,7 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
         return (char) ((argb[y * width + x]) & 0xFF);
     }
 
-    public long getARGB(int x, int y) {
+    public long getLongARGB(int x, int y) {
         return argb[y * width + x];
     }
 
@@ -101,7 +106,7 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
 
     }
 
-    public long[][] getARGBImage() {
+    public long[][] getLongARGBImage() {
 
         long[][] image = new long[width][height];
 
@@ -120,7 +125,42 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
         return LongStream.of(argb).mapToObj(U16RGB::new).toArray(U16RGB[]::new);
     }
 
-    public long[] getARGBData() {
+    @Override
+    public int getARGB(int x, int y) {
+        return (255 << 24) | (getR(x, y) << 16) | (getG(x, y) << 8) | getB(x, y);
+    }
+
+    @Override
+    public int[] getARGBData() {
+
+        return LongStream.of(argb)
+                         .mapToInt(v ->
+                             (int) (((0xFF << 24)
+                                 | (((v >> 32) & 0xFFFF) >> 8) << 16)
+                                 | (((v >> 16) & 0xFFFF) >> 8) << 8
+                                 | ((v & 0xFFFF) >> 8))
+                         )
+                         .toArray();
+
+    }
+
+    @Override
+    public int[][] getARGBImage() {
+
+        int[]   argbData = getARGBData();
+        int[][] image    = new int[width][height];
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                image[x][y] = argbData[y * width + x];
+            }
+        }
+
+        return image;
+
+    }
+
+    public long[] getLongARGBData() {
         return argb.clone();
     }
 
@@ -142,12 +182,13 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
     @Override
     public void writeToStream(DataOutputStream stream) throws IOException {
 
+        stream.writeInt(width);
+        stream.writeInt(height);
+        stream.writeLong(timestamp);
+
         for (long pixel : argb) {
 
-            for(int i = 7; i >= 0; --i) {
-                stream.write((byte)((int)(pixel & 255L)));
-                pixel >>= 8;
-            }
+            stream.writeLong(pixel);
 
         }
 

@@ -58,6 +58,48 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
     }
 
     @Override
+    public Integer getMax() {
+        return Short.toUnsignedInt((short) 0xFFFF);
+    }
+
+    @Override
+    public int getARGB(int x, int y) {
+        int value = signed(x, y) >> 8;
+        return (255 << 24) | value << 16 | value << 8 | value;
+    }
+
+    @Override
+    public int[] getARGBData() {
+
+        int[] argb = new int[width * height];
+
+        for (int i = 0; i < data.length; i++) {
+            byte value = (byte) ((data[i] >> 8) & 0xFF);
+            argb[i] = (255 << 24) | value << 16 | value << 8 | value;
+        }
+
+        return argb;
+
+    }
+
+    @Override
+    public int[][] getARGBImage() {
+
+        int[]   argb  = getARGBData();
+        int[][] image = new int[width][height];
+
+        for (int j = 0; j < height; j++) {
+            for (int i = 0; i < width; i++) {
+                char value = (char) (data[j * width + i] >> 8);
+                image[i][j] = (255 << 24) | value << 16 | value << 8 | value;
+            }
+        }
+
+        return image;
+
+    }
+
+    @Override
     public long getTimestamp() {
         return timestamp;
     }
@@ -93,9 +135,16 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
 
     @Override
     public void writeToStream(DataOutputStream stream) throws IOException {
+
         ByteBuffer buffer = ByteBuffer.allocate(Short.BYTES * data.length);
         buffer.asShortBuffer().rewind().put(data);
+
+        stream.writeInt(width);
+        stream.writeInt(height);
+        stream.writeLong(timestamp);
+
         stream.write(buffer.rewind().array());
+
     }
 
     @Override

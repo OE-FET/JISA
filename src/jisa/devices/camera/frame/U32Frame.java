@@ -4,6 +4,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class U32Frame implements Frame.UIntFrame<U32Frame> {
 
@@ -57,6 +58,44 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
     @Override
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    @Override
+    public Long getMax() {
+        return Integer.toUnsignedLong(0xFFFFFFFF);
+    }
+
+    @Override
+    public int getARGB(int x, int y) {
+        int value = signed(x, y) >> 24;
+        return (255 << 24) | (value << 16) | (value << 8) | value;
+    }
+
+    @Override
+    public int[] getARGBData() {
+
+        return IntStream.of(data).map(v -> {
+            int value = v >> 24;
+            return (255 << 24) | (value << 16) | (value << 8) | value;
+        }).toArray();
+
+    }
+
+    @Override
+    public int[][] getARGBImage() {
+
+        int[]   argb  = getARGBData();
+        int[][] image = new int[width][height];
+
+        for (int j = 0; j < height; j++) {
+            for (int i = 0; i < width; i++) {
+                char value = (char) (data[j * width + i] >> 8);
+                image[i][j] = (255 << 24) | value << 16 | value << 8 | value;
+            }
+        }
+
+        return image;
+
     }
 
     @Override

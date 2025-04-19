@@ -4,7 +4,6 @@ import com.sun.jna.Pointer;
 import com.sun.jna.PointerType;
 import com.sun.jna.ptr.PointerByReference;
 import jisa.Util;
-import jisa.devices.camera.ThorCam;
 import jisa.visa.InitialisableLibrary;
 
 import java.nio.*;
@@ -13,7 +12,7 @@ public interface ThorCamLibrary extends InitialisableLibrary {
 
     default void initialise() throws Exception {
 
-        ThorCam.process(tl_camera_open_sdk(), "tl_camera_open_sdk");
+        tl_camera_open_sdk();
         Util.addShutdownHook(this::tl_camera_close_sdk);
 
     }
@@ -231,6 +230,8 @@ public interface ThorCamLibrary extends InitialisableLibrary {
     int tl_camera_set_trigger_polarity(Pointer tl_camera_handle, int trigger_polarity_enum);
 
     int tl_camera_set_user_memory(Pointer tl_camera_handle, ByteBuffer source_data_buffer, long number_of_bytes_to_write, long camera_user_memory_offset_bytes);
+
+    Pointer tl_camera_get_last_error();
 
     /**
      * Pointer to unknown (opaque) type

@@ -10,9 +10,9 @@ import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
 import jisa.devices.camera.feature.Amplified;
-import jisa.devices.camera.frame.FrameQueue;
-import jisa.devices.camera.frame.U16RGBFrame;
+import jisa.devices.camera.frame.*;
 import jisa.devices.camera.nat.ThorCamLibrary;
+import jisa.devices.camera.nat.ThorCamMosaicLibrary;
 import jisa.visa.NativeDevice;
 
 import java.io.IOException;
@@ -22,33 +22,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.LongStream;
 
 /**
  * Driver class for ThorLabs cameras.
  */
-public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplified {
+public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice implements Camera<F>, Amplified {
 
     // CONSTANTS
     public static final int ERROR_NONE                    = 0;
-    public static final int ERROR_COMMAND_NOT_FOUND       = 1;
-    public static final int ERROR_TOO_MANY_ARGUMENTS      = 2;
-    public static final int ERROR_NOT_ENOUGH_ARGUMENTS    = 3;
-    public static final int ERROR_INVALID_COMMAND         = 4;
-    public static final int ERROR_DUPLICATE_COMMAND       = 5;
-    public static final int ERROR_MISSING_JSON_COMMAND    = 6;
-    public static final int ERROR_INITIALIZING            = 7;
-    public static final int ERROR_NOTSUPPORTED            = 8;
-    public static final int ERROR_FPGA_NOT_PROGRAMMED     = 9;
-    public static final int ERROR_ROI_WIDTH_ERROR         = 10;
-    public static final int ERROR_ROI_RANGE_ERROR         = 11;
-    public static final int ERROR_RANGE_ERROR             = 12;
-    public static final int ERROR_COMMAND_LOCKED          = 13;
-    public static final int ERROR_CAMERA_MUST_BE_STOPPED  = 14;
-    public static final int ERROR_ROI_BIN_COMBO_ERROR     = 15;
-    public static final int ERROR_IMAGE_DATA_SYNC_ERROR   = 16;
-    public static final int ERROR_CAMERA_MUST_BE_DISARMED = 17;
-    public static final int ERROR_MAX_ERRORS              = 18;
-    public static final int ERROR_NO_CAMERA_FOUND         = 1004;
+    public static final int ERROR_COMMAND_NOT_FOUND       = 1001;
+    public static final int ERROR_TOO_MANY_ARGUMENTS      = 1002;
+    public static final int ERROR_NOT_ENOUGH_ARGUMENTS    = 1003;
+    public static final int ERROR_INVALID_COMMAND         = 1004;
+    public static final int ERROR_DUPLICATE_COMMAND       = 1005;
+    public static final int ERROR_MISSING_JSON_COMMAND    = 1006;
+    public static final int ERROR_INITIALIZING            = 1007;
+    public static final int ERROR_NOTSUPPORTED            = 1008;
+    public static final int ERROR_FPGA_NOT_PROGRAMMED     = 1009;
+    public static final int ERROR_ROI_WIDTH_ERROR         = 1010;
+    public static final int ERROR_ROI_RANGE_ERROR         = 1011;
+    public static final int ERROR_RANGE_ERROR             = 1012;
+    public static final int ERROR_COMMAND_LOCKED          = 1013;
+    public static final int ERROR_CAMERA_MUST_BE_STOPPED  = 1014;
+    public static final int ERROR_ROI_BIN_COMBO_ERROR     = 1015;
+    public static final int ERROR_IMAGE_DATA_SYNC_ERROR   = 1016;
+    public static final int ERROR_CAMERA_MUST_BE_DISARMED = 1017;
+    public static final int ERROR_MAX_ERRORS              = 1018;
 
     public static final int META_TAG_PCKH = Ints.fromByteArray("PCKH".getBytes(StandardCharsets.US_ASCII));
     public static final int META_TAG_PCKL = Ints.fromByteArray("PCKL".getBytes(StandardCharsets.US_ASCII));
@@ -75,13 +75,14 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
             .map(ERROR_ROI_BIN_COMBO_ERROR, "ROI/Binning Error")
             .map(ERROR_IMAGE_DATA_SYNC_ERROR, "Data Sync Error")
             .map(ERROR_CAMERA_MUST_BE_DISARMED, "Command Requires Camera to be Disarmed")
-            .map(ERROR_MAX_ERRORS, "END OF ENUMERATION")
-            .map(ERROR_NO_CAMERA_FOUND, "Camera Not Found");
+            .map(ERROR_MAX_ERRORS, "END OF ENUMERATION");
 
-    private final ListenerManager<U16RGBFrame> listenerManager = new ListenerManager<>();
+    private final ListenerManager<F> listenerManager = new ListenerManager<>();
 
-    private final ThorCamLibrary sdk;
-    private final Pointer        handle;
+    protected final ThorCamLibrary sdk;
+    protected final Pointer        handle;
+    protected final long[]         stats   = {0, 0, System.nanoTime()};
+    private         double         lastFPS = 0;
 
     private boolean acquiring         = false;
     private Thread  acquisitionThread = null;
@@ -250,11 +251,15 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
 
     }
 
-    public static void process(int result, String method) throws IOException, DeviceException {
+    public void process(int result, String method) throws IOException, DeviceException {
+
+        if (method.equals("tl_camera_open_camera") && result == ERROR_INVALID_COMMAND) {
+            throw new IOException("ThorCam SDK function \"tl_camera_open_camera\" returned an error: Camera Not Found (1004).");
+        }
 
         if (result != ERROR_NONE) {
 
-            if (result == ERROR_NO_CAMERA_FOUND || result == ERROR_IMAGE_DATA_SYNC_ERROR) {
+            if (result == ERROR_IMAGE_DATA_SYNC_ERROR) {
                 throw new IOException(String.format("ThorCam SDK function \"%s\" returned an I/O error: %s (%d)", method, ERROR_NAMES.getOrDefault(result, "UNKNOWN"), result));
             } else {
                 throw new DeviceException("ThorCam SDK function \"%s\" returned an error: %s (%d)", method, ERROR_NAMES.getOrDefault(result, "UNKNOWN"), result);
@@ -274,13 +279,19 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
         process(sdk.tl_camera_set_exposure_time(handle, (long) (time * 1e6)), "tl_camera_set_exposure_time");
     }
 
+    protected abstract D createBuffer(int length);
+
+    protected abstract F createFrame(int width, int height, D array, long timestamp);
+
+    protected abstract void populateBuffer(D array, ByteBuffer data, int width, int height);
+
     @Override
-    public U16RGBFrame getFrame() throws IOException, DeviceException, InterruptedException, TimeoutException {
+    public F getFrame() throws IOException, DeviceException, InterruptedException, TimeoutException {
 
         if (isAcquiring()) {
 
-            FrameQueue<U16RGBFrame> queue = openFrameQueue(1);
-            U16RGBFrame             frame = queue.nextFrame(getAcquisitionTimeout());
+            FrameQueue<F> queue = openFrameQueue(1);
+            F             frame = queue.nextFrame(getAcquisitionTimeout());
 
             queue.clear();
             queue.close();
@@ -318,35 +329,12 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
                 throw new TimeoutException("Timed out waiting for frame from ThorCam camera.");
             }
 
-            ByteBuffer frameBuffer = framePointer.getByteBuffer(0, imageSizeBytes);
-            CharBuffer pixelBuffer = frameBuffer.asCharBuffer();
-            long[]     argb        = new long[count];
+            ByteBuffer frameBuffer = ByteBuffer.wrap(framePointer.getByteArray(0, imageSizeBytes));
+            D          argb        = createBuffer(count);
 
-            switch (pixel) {
+            populateBuffer(argb, frameBuffer, width, height);
 
-                case BYTES_PER_MONO_PIXEL:
-
-                    for (int i = 0; i < count; i++) {
-                        char value = pixelBuffer.get();
-                        argb[i] = ((long) 255 << 48) | ((long) value << 32) | ((long) value << 16) | ((long) value);
-                    }
-
-                    break;
-
-                case BYTES_PER_COLOUR_PIXEL:
-
-                    for (int i = 0; i < count; i++) {
-                        argb[i] = ((long) 255 << 48) | ((long) pixelBuffer.get() << 32) | ((long) pixelBuffer.get() << 16) | ((long) pixelBuffer.get());
-                    }
-
-                    break;
-
-                default:
-                    throw new IOException("Unsupported frame type returned by camera.");
-
-            }
-
-            return new U16RGBFrame(argb, width, height, timestamp);
+            return createFrame(width, height, argb, timestamp);
 
         }
 
@@ -364,7 +352,28 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
 
     @Override
     public double getAcquisitionFPS() throws IOException, DeviceException {
-        return 0;
+
+        // Update if new frames have come in since last time
+        if (stats[0] != stats[1]) {
+
+            synchronized (stats) {
+
+                long frames  = stats[0];
+                long time    = System.nanoTime();
+                long dFrames = frames - stats[1];
+                long dTime   = time - stats[2];
+
+                stats[1] = frames;
+                stats[2] = time;
+
+                lastFPS = 1e9 * (double) dFrames / (double) dTime;
+
+            }
+
+        }
+
+        return lastFPS;
+
     }
 
     protected void acquisition(int pixel, int width, int height, int pCount) {
@@ -379,8 +388,16 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
             frequency = 0;
         }
 
-        final long[]      argb  = new long[pCount];
-        final U16RGBFrame frame = new U16RGBFrame(argb, width, height, System.nanoTime());
+        final D    argb        = createBuffer(pCount);
+        final F    frame       = createFrame(width, height, argb, System.nanoTime());
+        byte[]     buffer      = new byte[imageSizeBytes];
+        ByteBuffer frameBuffer = ByteBuffer.wrap(buffer);
+
+        synchronized (stats) {
+            stats[0] = 0;
+            stats[1] = 0;
+            stats[2] = System.nanoTime();
+        }
 
         while (acquiring) {
 
@@ -395,45 +412,31 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
 
                 frame.setTimestamp(determineTimestamp(metaReference.getValue(), metaSize.get(0), frequency, System.nanoTime()));
 
+                if (Thread.interrupted()) {
+                    break;
+                }
+
                 Pointer framePointer = frameReference.getValue();
 
                 if (framePointer == null) {
                     throw new TimeoutException("Timed out waiting for frame from ThorCam camera.");
                 }
 
-                ByteBuffer frameBuffer = framePointer.getByteBuffer(0, imageSizeBytes);
-                CharBuffer pixelBuffer = frameBuffer.asCharBuffer();
+                framePointer.read(0, buffer, 0, imageSizeBytes);
 
-                switch (pixel) {
-
-                    case BYTES_PER_MONO_PIXEL:
-
-                        for (int i = 0; i < pCount; i++) {
-                            char value = pixelBuffer.get();
-                            argb[i] = ((long) 255 << 48) | ((long) value << 32) | ((long) value << 16) | ((long) value);
-                        }
-
-                        break;
-
-                    case BYTES_PER_COLOUR_PIXEL:
-
-                        for (int i = 0; i < pCount; i++) {
-                            argb[i] = ((long) 255 << 48) | ((long) pixelBuffer.get() << 32) | ((long) pixelBuffer.get() << 16) | ((long) pixelBuffer.get());
-                        }
-
-                        break;
-
-                    default:
-                        throw new IOException("Unsupported frame type returned by camera.");
-
-                }
+                populateBuffer(argb, frameBuffer.rewind(), width, height);
 
                 listenerManager.trigger(frame);
+                stats[0]++;
 
             } catch (Exception e) {
                 System.err.printf("Error acquiring frame from ThorCam camera: %s%n.", e.getMessage());
             }
 
+        }
+
+        synchronized (stats) {
+            lastFPS = 0;
         }
 
     }
@@ -445,6 +448,8 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
             return;
         }
 
+        acquiring = true;
+
         final int pixel  = getInt(sdk::tl_camera_get_sensor_pixel_size_bytes, "tl_camera_get_pixel_size");
         final int width  = getFrameWidth();
         final int height = getFrameHeight();
@@ -452,6 +457,7 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
 
         acquisitionThread = new Thread(() -> acquisition(pixel, width, height, count));
 
+        process(sdk.tl_camera_set_operation_mode(handle, 0), "tl_camera_set_operation_mode");
         process(sdk.tl_camera_set_frames_per_trigger_zero_for_unlimited(handle, 0), "tl_camera_set_frames_per_trigger_zero_for_unlimited");
         process(sdk.tl_camera_arm(handle, 2), "tl_camera_arm");
         process(sdk.tl_camera_issue_software_trigger(handle), "tl_camera_issue_software_trigger");
@@ -484,13 +490,13 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
     }
 
     @Override
-    public List<U16RGBFrame> getFrameSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
+    public List<F> getFrameSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
 
-        List<U16RGBFrame> captured = new ArrayList<>(count);
+        List<F> captured = new ArrayList<>(count);
 
         if (isAcquiring()) {
 
-            FrameQueue<U16RGBFrame> queue = openFrameQueue(count);
+            FrameQueue<F> queue = openFrameQueue(count);
 
             for (int i = 0; i < count; i++) {
                 captured.add(queue.nextFrame(getAcquisitionTimeout()));
@@ -533,35 +539,12 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
 
                 long timestamp = determineTimestamp(metaPointer, metaSize.get(0), frequency, System.nanoTime());
 
-                ByteBuffer frameBuffer = framePointer.getByteBuffer(0, imageSizeBytes);
-                CharBuffer pixelBuffer = frameBuffer.asCharBuffer();
-                long[]     argb        = new long[pCount];
+                ByteBuffer frameBuffer = ByteBuffer.wrap(framePointer.getByteArray(0, imageSizeBytes));
+                D          argb        = createBuffer(pCount);
 
-                switch (pixel) {
+                populateBuffer(argb, frameBuffer, width, height);
 
-                    case BYTES_PER_MONO_PIXEL:
-
-                        for (int i = 0; i < pCount; i++) {
-                            char value = pixelBuffer.get();
-                            argb[i] = ((long) 255 << 48) | ((long) value << 32) | ((long) value << 16) | ((long) value);
-                        }
-
-                        break;
-
-                    case BYTES_PER_COLOUR_PIXEL:
-
-                        for (int i = 0; i < pCount; i++) {
-                            argb[i] = ((long) 255 << 48) | ((long) pixelBuffer.get() << 32) | ((long) pixelBuffer.get() << 16) | ((long) pixelBuffer.get());
-                        }
-
-                        break;
-
-                    default:
-                        throw new IOException("Unsupported frame type returned by camera.");
-
-                }
-
-                captured.add(new U16RGBFrame(argb, width, height, timestamp));
+                captured.add(createFrame(width, height, argb, timestamp));
 
             }
 
@@ -626,20 +609,20 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
     }
 
     @Override
-    public Listener<U16RGBFrame> addFrameListener(Listener<U16RGBFrame> listener) {
+    public Listener<F> addFrameListener(Listener<F> listener) {
         listenerManager.addListener(listener);
         return listener;
     }
 
     @Override
-    public void removeFrameListener(Listener<U16RGBFrame> listener) {
+    public void removeFrameListener(Listener<F> listener) {
         listenerManager.removeListener(listener);
     }
 
     @Override
-    public FrameQueue<U16RGBFrame> openFrameQueue(int capacity) {
+    public FrameQueue<F> openFrameQueue(int capacity) {
 
-        FrameQueue<U16RGBFrame> queue = new FrameQueue<>(this, capacity);
+        FrameQueue<F> queue = new FrameQueue<>(this, capacity);
         listenerManager.addQueue(queue);
 
         return queue;
@@ -647,7 +630,7 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
     }
 
     @Override
-    public void closeFrameQueue(FrameQueue<U16RGBFrame> queue) {
+    public void closeFrameQueue(FrameQueue<F> queue) {
 
         listenerManager.removeQueue(queue);
         queue.close();
@@ -870,4 +853,179 @@ public class ThorCam extends NativeDevice implements Camera<U16RGBFrame>, Amplif
         return new IDAddress(serialNumber);
 
     }
+
+    public static class Colour extends ThorCam<U16RGBFrame, long[]> {
+
+        private final ThorCamMosaicLibrary mosaic       = findLibrary(ThorCamMosaicLibrary.class, "thorlabs_tsi_mono_to_color_processing");
+        private final Pointer              mosaicHandle = getHandle();
+
+        public Colour() throws DeviceException, IOException {
+            super();
+        }
+
+        public Colour(String serial) throws DeviceException, IOException {
+            super(serial);
+        }
+
+        public Colour(Address address) throws DeviceException, IOException {
+            super(address);
+        }
+
+        protected Pointer getHandle() throws IOException, DeviceException {
+
+            PointerByReference ref = new PointerByReference();
+
+            int sensorType = getInt(sdk::tl_camera_get_camera_sensor_type);
+            int phaseArray = getInt(sdk::tl_camera_get_color_filter_array_phase);
+            int bitDepth   = getInt(sdk::tl_camera_get_bit_depth);
+
+            FloatBuffer ccMatrix = FloatBuffer.allocate(9);
+            FloatBuffer wbMatrix = FloatBuffer.allocate(9);
+            sdk.tl_camera_get_color_correction_matrix(handle, ccMatrix);
+            sdk.tl_camera_get_default_white_balance_matrix(handle, wbMatrix);
+
+            int result = mosaic.tl_mono_to_color_create_mono_to_color_processor(sensorType, phaseArray, ccMatrix, wbMatrix, bitDepth, ref);
+
+            if (result != 0) {
+                throw new DeviceException("Mosaic colour processor could not be created: %d", result);
+            }
+
+            return ref.getValue();
+
+        }
+
+        @Override
+        protected long[] createBuffer(int length) {
+            return new long[length];
+        }
+
+        @Override
+        protected U16RGBFrame createFrame(int width, int height, long[] array, long timestamp) {
+            return new ColourFrame(array, width, height, timestamp);
+        }
+
+        @Override
+        protected void populateBuffer(long[] array, ByteBuffer input, int width, int height) {
+
+            try (Memory memory = new Memory(array.length * 6L)) {
+
+                ByteBuffer output = memory.getByteBuffer(0, array.length * 6L);
+                int        result = mosaic.tl_mono_to_color_transform_to_48(mosaicHandle, input, width, height, output);
+
+                ShortBuffer shorts = output.rewind().asShortBuffer();
+
+                for (int i = 0; i < array.length; i++) {
+                    array[i] = ((long) Character.MAX_VALUE << 48) | ((long) shorts.get()) | ((long) shorts.get() << 16) | ((long) shorts.get() << 32);
+                }
+
+            }
+        }
+
+        public void close() throws IOException, DeviceException {
+            mosaic.tl_mono_to_color_destroy_mono_to_color_processor(mosaicHandle);
+            super.close();
+        }
+
+    }
+
+    public static class Mono extends ThorCam<U16Frame, short[]> {
+
+        public Mono() throws DeviceException, IOException {
+            super();
+        }
+
+        public Mono(String serial) throws DeviceException, IOException {
+            super(serial);
+        }
+
+        public Mono(Address address) throws DeviceException, IOException {
+            super(address);
+        }
+
+        @Override
+        protected short[] createBuffer(int length) {
+            return new short[length];
+        }
+
+        @Override
+        protected U16Frame createFrame(int width, int height, short[] array, long timestamp) {
+            return new MonoFrame(array, width, height, timestamp);
+        }
+
+        @Override
+        protected void populateBuffer(short[] array, ByteBuffer data, int width, int height) {
+            data.asShortBuffer().get(array);
+        }
+
+    }
+
+    protected static class ColourFrame extends U16RGBFrame {
+
+        private final static U16RGB MAX = new U16RGB(((long) Character.MAX_VALUE << 48 | (long) 4096 << 32 | (long) 4096 << 16 | 4096));
+
+        public ColourFrame(char[] red, char[] green, char[] blue, int width, int height, long timestamp) {
+            super(red, green, blue, width, height, timestamp);
+        }
+
+        public ColourFrame(long[] argb, int width, int height, long timestamp) {
+            super(argb, width, height, timestamp);
+        }
+
+        public U16RGB getMax() {
+            return MAX;
+        }
+
+
+        public int[] getARGBData() {
+
+            return LongStream.of(argb)
+                             .mapToInt(v ->
+                                 (int) (((0xFF << 24)
+                                     | (((v >> 32) & 0xFFFF) >> 6) << 16)
+                                     | (((v >> 16) & 0xFFFF) >> 6) << 8
+                                     | ((v & 0xFFFF) >> 6))
+                             )
+                             .toArray();
+
+        }
+
+    }
+
+    protected static class MonoFrame extends U16Frame {
+
+        public MonoFrame(short[] data, int width, int height, long timestamp) {
+            super(data, width, height, timestamp);
+        }
+
+        public MonoFrame(short[] data, int width, int height) {
+            super(data, width, height);
+        }
+
+        public MonoFrame(Short[] data, int width, int height, long timestamp) {
+            super(data, width, height, timestamp);
+        }
+
+        public MonoFrame(Short[] data, int width, int height) {
+            super(data, width, height);
+        }
+
+        public Integer getMax() {
+            return 4096;
+        }
+
+        public int[] getARGBData() {
+
+            int[] argb = new int[width * height];
+
+            for (int i = 0; i < data.length; i++) {
+                char value = (char) (data[i] >> 6);
+                argb[i] = (255 << 24) | value << 16 | value << 8 | value;
+            }
+
+            return argb;
+
+        }
+
+    }
+
 }
