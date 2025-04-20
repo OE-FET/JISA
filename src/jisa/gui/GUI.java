@@ -27,9 +27,7 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -634,6 +632,98 @@ public class GUI {
             });
 
             Optional<String[]> values = dialog.showAndWait();
+            toReturn.set(values.orElse(null));
+
+        });
+
+        // Return whatever value has been set in the reference
+        return toReturn.get();
+
+    }
+
+    public static Map<String, String> userInput(String title, String... fields) {
+
+        // Reference to take in returned value from the dialog.
+        AtomicReference<Map<String, String>> toReturn = new AtomicReference<>();
+
+        // All GUI stuff must be done on the GUI thread.
+        GUI.runNow(() -> {
+
+            Dialog<Map<String, String>> dialog = new Dialog<>();
+            Label                       img    = new Label();
+            img.getStyleClass().addAll("choice-dialog", "dialog-pane");
+            dialog.setGraphic(img);
+            dialog.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+            dialog.getDialogPane().setMinWidth(400);
+            dialog.setTitle(title);
+            dialog.setHeaderText(title);
+            dialog.setResizable(true);
+
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+            VBox list = new VBox();
+            list.setSpacing(15);
+            list.setPadding(new Insets(15, 15, 15, 15));
+
+            ArrayList<TextField> tFields = new ArrayList<>(fields.length);
+
+            for (String field : fields) {
+
+                HBox box = new HBox();
+                box.setAlignment(Pos.CENTER_LEFT);
+                box.setSpacing(15);
+
+                Label fieldName = new Label(field.concat(":"));
+                fieldName.setAlignment(Pos.CENTER_RIGHT);
+                fieldName.setMinWidth(75);
+                HBox.setHgrow(fieldName, Priority.NEVER);
+
+                TextField fieldInput = new TextField();
+                fieldInput.setMaxWidth(Double.MAX_VALUE);
+                HBox.setHgrow(fieldInput, Priority.ALWAYS);
+
+                tFields.add(fieldInput);
+
+                box.getChildren().addAll(fieldName, fieldInput);
+                list.getChildren().add(box);
+
+
+            }
+
+            dialog.getDialogPane().setContent(list);
+
+            dialog.setResultConverter((b) -> {
+
+                if (b != ButtonType.OK) {
+                    return null;
+                }
+
+                Map<String, String> results = new LinkedHashMap<>();
+
+                for (int i = 0; i < fields.length; i++) {
+                    results.put(fields[i], tFields.get(i).getText());
+                }
+
+                return results;
+
+            });
+
+            Util.runAsync(() -> GUI.runNow(() -> tFields.stream().findFirst().ifPresent(Node::requestFocus)));
+
+            Screen      screen = getCurrentScreen();
+            Rectangle2D bounds = screen.getVisualBounds();
+
+            dialog.getDialogPane().getScene().getWindow().setOnShown(e -> {
+
+                double w = dialog.getDialogPane().getScene().getWindow().getWidth();
+                double h = dialog.getDialogPane().getScene().getWindow().getHeight();
+
+                dialog.setX(((bounds.getMinX() + bounds.getMaxX()) / 2) - (w / 2));
+                dialog.setY(((bounds.getMinY() + bounds.getMaxY()) / 2) - (h / 2));
+
+            });
+
+            Optional<Map<String, String>> values = dialog.showAndWait();
             toReturn.set(values.orElse(null));
 
         });

@@ -94,17 +94,21 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     @Override
     public double getAcquisitionFPS() {
 
-        synchronized (stats) {
+        if (stats[0] != stats[1]) {
 
-            long frames  = stats[0];
-            long dFrames = frames - stats[1];
-            long time    = System.nanoTime();
-            long dTime   = time - stats[2];
+            synchronized (stats) {
 
-            stats[1] = frames;
-            stats[2] = time;
+                long frames  = stats[0];
+                long dFrames = frames - stats[1];
+                long time    = System.nanoTime();
+                long dTime   = time - stats[2];
 
-            fps = 1e9 * dFrames / dTime;
+                stats[1] = frames;
+                stats[2] = time;
+
+                fps = 1e9 * dFrames / dTime;
+
+            }
 
         }
 
@@ -138,6 +142,9 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
             }
 
             synchronized (stats) {
+                stats[0] = 0;
+                stats[1] = 0;
+                stats[2] = System.nanoTime();
                 fps = 0.0;
             }
 

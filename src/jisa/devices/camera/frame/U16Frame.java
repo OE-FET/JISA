@@ -58,27 +58,20 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
     }
 
     @Override
-    public Integer getMax() {
-        return Short.toUnsignedInt((short) 0xFFFF);
-    }
-
-    @Override
     public int getARGB(int x, int y) {
         int value = signed(x, y) >> 8;
         return (255 << 24) | value << 16 | value << 8 | value;
     }
 
     @Override
-    public int[] getARGBData() {
+    public void readARGBData(int[] argb) {
 
-        int[] argb = new int[width * height];
+        int value;
 
         for (int i = 0; i < data.length; i++) {
-            byte value = (byte) ((data[i] >> 8) & 0xFF);
-            argb[i] = (255 << 24) | value << 16 | value << 8 | value;
+            value   = ((data[i] >> 8) & 0xFF);
+            argb[i] = (255 << 24) | (value << 16) | (value << 8) | value;
         }
-
-        return argb;
 
     }
 

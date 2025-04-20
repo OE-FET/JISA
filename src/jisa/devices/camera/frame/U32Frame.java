@@ -61,11 +61,6 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
     }
 
     @Override
-    public Long getMax() {
-        return Integer.toUnsignedLong(0xFFFFFFFF);
-    }
-
-    @Override
     public int getARGB(int x, int y) {
         int value = signed(x, y) >> 24;
         return (255 << 24) | (value << 16) | (value << 8) | value;
@@ -78,6 +73,18 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
             int value = v >> 24;
             return (255 << 24) | (value << 16) | (value << 8) | value;
         }).toArray();
+
+    }
+
+    @Override
+    public void readARGBData(int[] destination) {
+
+        byte value;
+
+        for (int i = 0; i < data.length; i++) {
+            value = (byte) (data[i] >> 24);
+            destination[i] = (255 << 24) | (value << 16) | (value << 8) | value;
+        }
 
     }
 

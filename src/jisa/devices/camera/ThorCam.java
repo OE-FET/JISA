@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.LongStream;
 
 /**
  * Driver class for ThorLabs cameras.
@@ -976,16 +975,21 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         }
 
 
-        public int[] getARGBData() {
+        @Override
+        public void readARGBData(int[] destination) {
 
-            return LongStream.of(argb)
-                             .mapToInt(v ->
-                                 (int) (((0xFF << 24)
-                                     | (((v >> 32) & 0xFFFF) >> 6) << 16)
-                                     | (((v >> 16) & 0xFFFF) >> 6) << 8
-                                     | ((v & 0xFFFF) >> 6))
-                             )
-                             .toArray();
+            long v;
+
+            for (int i = 0; i < argb.length; i++) {
+
+                v = argb[i];
+
+                destination[i] = (int) (((0xFF << 24)
+                    | (((v >> 32) & 0xFFFF) >> 6) << 16)
+                    | (((v >> 16) & 0xFFFF) >> 6) << 8
+                    | ((v & 0xFFFF) >> 6));
+
+            }
 
         }
 
@@ -1013,19 +1017,17 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             return 4096;
         }
 
-        public int[] getARGBData() {
+        @Override
+        public void readARGBData(int[] argb) {
 
-            int[] argb = new int[width * height];
+            byte value;
 
             for (int i = 0; i < data.length; i++) {
-                char value = (char) (data[i] >> 6);
+                value = (byte) ((data[i] >> 6) & 0xFF);
                 argb[i] = (255 << 24) | value << 16 | value << 8 | value;
             }
 
-            return argb;
-
         }
-
     }
 
 }

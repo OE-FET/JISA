@@ -176,10 +176,6 @@ public class ImageDisplay extends JFXElement {
 
     }
 
-    public void drawFrame(Frame frame) {
-        drawARGB(frame.getARGBData(), frame.getWidth(), frame.getHeight());
-    }
-
     public void drawMono(double[][] data, double max) {
 
         int height = data.length;
@@ -225,6 +221,27 @@ public class ImageDisplay extends JFXElement {
 
         int[] raw = pixels.getBuffer().array();
         System.arraycopy(data, 0, raw, 0, width * height);
+
+        GUI.runNow(() -> {
+            pixels.updateBuffer(b -> null);
+            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
+        });
+
+    }
+
+    public void drawFrame(Frame data) {
+
+        int    width   = data.getWidth();
+        int    height  = data.getHeight();
+        double cHeight = canvas.getHeight();
+        double cWidth  = canvas.getWidth();
+
+        if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
+            pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());
+            image  = new WritableImage(pixels);
+        }
+
+        data.readARGBData(pixels.getBuffer().array());
 
         GUI.runNow(() -> {
             pixels.updateBuffer(b -> null);

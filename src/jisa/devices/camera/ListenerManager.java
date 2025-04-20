@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 
 public class ListenerManager<F extends Frame<?, F>> {
 
@@ -26,7 +27,8 @@ public class ListenerManager<F extends Frame<?, F>> {
     public void removeListener(Camera.Listener<F> listener) {
 
         synchronized (listeners) {
-            listeners.stream().filter(f -> f.listener == listener).findAny().ifPresent(listeners::remove);
+            List<Runner<F>> runners = listeners.stream().filter(f -> f.listener == listener).collect(Collectors.toList());
+            listeners.removeAll(runners);
         }
 
     }

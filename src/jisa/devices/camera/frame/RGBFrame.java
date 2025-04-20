@@ -72,11 +72,6 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
         return new RGB(getRed(x, y), getGreen(x, y), getBlue(x, y));
     }
 
-    @Override
-    public RGB getMax() {
-        return new RGB(255, 255, 255);
-    }
-
     public short getRed(int x, int y) {
         return (short) ((argb[y * width + x] >> 16) & 0xFF);
     }
@@ -129,7 +124,11 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
     }
 
     public int[] getARGBData() {
-        return argb;
+        return argb.clone();
+    }
+
+    public void readARGBData(int[] destination) {
+        System.arraycopy(argb, 0, destination, 0, argb.length);
     }
 
     @Override

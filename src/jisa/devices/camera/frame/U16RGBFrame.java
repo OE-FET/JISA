@@ -58,11 +58,6 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
         return new U16RGB(argb[y * width + x]);
     }
 
-    @Override
-    public U16RGB getMax() {
-        return new U16RGB(Character.MAX_VALUE, Character.MAX_VALUE, Character.MAX_VALUE);
-    }
-
     public char getRedChar(int x, int y) {
         return (char) ((argb[y * width + x] >> 32) & 0xFFFF);
     }
@@ -131,16 +126,16 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
     }
 
     @Override
-    public int[] getARGBData() {
+    public void readARGBData(int[] destination) {
 
-        return LongStream.of(argb)
-                         .mapToInt(v ->
-                             (int) (((0xFF << 24)
-                                 | (((v >> 32) & 0xFFFF) >> 8) << 16)
-                                 | (((v >> 16) & 0xFFFF) >> 8) << 8
-                                 | ((v & 0xFFFF) >> 8))
-                         )
-                         .toArray();
+        long v;
+
+        for (int i = 0; i < argb.length; i++) {
+
+            v = argb[i];
+            destination[i] = (int) (0xFF << 24| (v >> 32 & 0xFF00) << 8 | (v >> 16 & 0xFF00) | (v & 0xFF00) >> 8);
+
+        }
 
     }
 

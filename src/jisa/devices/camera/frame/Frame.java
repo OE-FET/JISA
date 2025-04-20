@@ -46,13 +46,6 @@ public interface Frame<D, F extends Frame> {
     D get(int x, int y);
 
     /**
-     * Returns the maximum value a single pixel can have.
-     *
-     * @return Max pixel value.
-     */
-    D getMax();
-
-    /**
      * Returns all the pixels of this image in a 2D array.
      *
      * @return 2D array image
@@ -68,7 +61,15 @@ public interface Frame<D, F extends Frame> {
 
     int getARGB(int x, int y);
 
-    int[] getARGBData();
+    default int[] getARGBData() {
+
+        int[] data = new int[size()];
+        readARGBData(data);
+        return data;
+
+    }
+
+    void readARGBData(int[] destination);
 
     int[][] getARGBImage();
 
