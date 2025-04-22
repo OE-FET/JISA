@@ -30,9 +30,7 @@ public interface Amplified extends Feature {
     double getGain() throws DeviceException, IOException;
 
     static void addParameters(Amplified inst, Class<?> target, ParameterList params) {
-
         params.addValue("Gain", inst::getGain, 1.0, inst::setGain);
-
     }
 
 }

@@ -478,12 +478,17 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         if (isAcquiring()) {
 
             FrameQueue<U16Frame> queue = openFrameQueue(1);
-            U16Frame             frame = queue.nextFrame(timeout);
 
-            queue.close();
-            queue.clear();
+            try {
 
-            return frame;
+                return queue.nextFrame(timeout);
+
+            } finally {
+
+                queue.close();
+                queue.clear();
+
+            }
 
         }
 
@@ -608,14 +613,20 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             List<U16Frame>       frames = new ArrayList<>(count);
             FrameQueue<U16Frame> queue  = openFrameQueue();
 
-            for (int i = 0; i < count; i++) {
-                frames.add(queue.nextFrame(timeout));
+            try {
+
+                for (int i = 0; i < count; i++) {
+                    frames.add(queue.nextFrame(timeout));
+                }
+
+                return frames;
+
+            } finally {
+
+                queue.close();
+                queue.clear();
+
             }
-
-            queue.close();
-            queue.clear();
-
-            return frames;
 
         }
 

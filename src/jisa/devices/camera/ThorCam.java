@@ -151,6 +151,8 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             this.setHotPixelCorrectionEnabled(true);
         });
 
+        parameters.addValue("LED Enabled", this::isLEDEnabled, true, this::setLEDEnabled);
+
         return parameters;
 
     }
@@ -502,12 +504,18 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
             FrameQueue<F> queue = openFrameQueue(count);
 
-            for (int i = 0; i < count; i++) {
-                captured.add(queue.nextFrame(getAcquisitionTimeout()));
-            }
+            try {
 
-            queue.clear();
-            queue.close();
+                for (int i = 0; i < count; i++) {
+                    captured.add(queue.nextFrame(getAcquisitionTimeout()));
+                }
+
+            } finally {
+
+                queue.clear();
+                queue.close();
+
+            }
 
         } else {
 
@@ -858,6 +866,30 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
     }
 
+    /**
+     * Sets whether the LED on the camera is turned on or not.
+     *
+     * @param enabled Turned on?
+     *
+     * @throws IOException     Upon communications error.
+     * @throws DeviceException Upon device compatibility error.
+     */
+    public void setLEDEnabled(boolean enabled) throws IOException, DeviceException {
+        process(sdk.tl_camera_set_is_led_on(handle, enabled ? 1 : 0), "tl_camera_set_is_led_on");
+    }
+
+    /**
+     * Returns whether the LED on the camera is turned on or not.
+     *
+     * @return Turned on?
+     *
+     * @throws IOException     Upon communications error.
+     * @throws DeviceException Upon device compatibility error.
+     */
+    public boolean isLEDEnabled() throws IOException, DeviceException {
+        return getInt(sdk::tl_camera_get_is_led_on, "tl_camera_get_is_led_on") != 0;
+    }
+
     public static class Colour extends ThorCam<U16RGBFrame, long[]> {
 
         private final ThorCamMosaicLibrary mosaic       = findLibrary(ThorCamMosaicLibrary.class, "thorlabs_tsi_mono_to_color_processing");
@@ -1028,7 +1060,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             byte value;
 
             for (int i = 0; i < data.length; i++) {
-                value = (byte) ((data[i] >> 6) & 0xFF);
+                value   = (byte) ((data[i] >> 6) & 0xFF);
                 argb[i] = (255 << 24) | value << 16 | value << 8 | value;
             }
 
