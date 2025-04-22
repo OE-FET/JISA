@@ -290,12 +290,17 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         if (isAcquiring()) {
 
             FrameQueue<F> queue = openFrameQueue(1);
-            F             frame = queue.nextFrame(getAcquisitionTimeout());
 
-            queue.clear();
-            queue.close();
+            try {
 
-            return frame;
+                return queue.nextFrame(getAcquisitionTimeout());
+
+            } finally {
+
+                queue.clear();
+                queue.close();
+
+            }
 
         } else {
 
@@ -311,10 +316,10 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             final int count          = width * height;
             final int imageSizeBytes = pixel * count;
 
-            PointerByReference frameReference = new PointerByReference();
-            PointerByReference metaReference  = new PointerByReference();
-            IntBuffer          frameCount     = IntBuffer.allocate(1);
-            IntBuffer          metaSize       = IntBuffer.allocate(1);
+            final PointerByReference frameReference = new PointerByReference();
+            final PointerByReference metaReference  = new PointerByReference();
+            final IntBuffer          frameCount     = IntBuffer.allocate(1);
+            final IntBuffer          metaSize       = IntBuffer.allocate(1);
 
             process(sdk.tl_camera_get_pending_frame_or_null(handle, frameReference, frameCount, metaReference, metaSize), "tl_camera_get_pending_frame_or_null");
 
