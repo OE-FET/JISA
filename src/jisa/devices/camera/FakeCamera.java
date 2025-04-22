@@ -58,17 +58,23 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
         if (isAcquiring()) {
 
             FrameQueue<U16Frame> frameQueue = openFrameQueue();
-            U16Frame             frame;
 
-            if (timeout == 0 || timeout == Integer.MAX_VALUE) {
-                frame = frameQueue.nextFrame();
-            } else {
-                frame = frameQueue.nextFrame(timeout);
+            try {
+
+                U16Frame frame;
+
+                if (timeout == 0 || timeout == Integer.MAX_VALUE) {
+                    return frameQueue.nextFrame();
+                } else {
+                    return frameQueue.nextFrame(timeout);
+                }
+
+            } finally {
+
+                frameQueue.close();
+                frameQueue.clear();
+
             }
-
-            frameQueue.close();
-
-            return frame;
 
         }
 
@@ -181,23 +187,31 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
             List<U16Frame>       frames     = new ArrayList<>(count);
             FrameQueue<U16Frame> frameQueue = openFrameQueue();
 
-            if (timeout == 0 || timeout == Integer.MAX_VALUE) {
+            try {
 
-                for (int i = 0; i < count; i++) {
-                    frames.add(frameQueue.nextFrame());
+                if (timeout == 0 || timeout == Integer.MAX_VALUE) {
+
+                    for (int i = 0; i < count; i++) {
+                        frames.add(frameQueue.nextFrame());
+                    }
+
+                } else {
+
+                    for (int i = 0; i < count; i++) {
+                        frames.add(frameQueue.nextFrame(timeout));
+                    }
+
                 }
 
-            } else {
 
-                for (int i = 0; i < count; i++) {
-                    frames.add(frameQueue.nextFrame(timeout));
-                }
+                return frames;
+
+            } finally {
+
+                frameQueue.close();
+                frameQueue.clear();
 
             }
-
-            frameQueue.close();
-
-            return frames;
 
         }
 

@@ -167,6 +167,7 @@ public interface MultiTrack extends Feature {
 
         }, table, t -> inst.setMultiTrackEnabled(false), t -> {
 
+            inst.setMultiTrackEnabled(true);
             inst.setMultiTracks(t.stream().map(r -> new Track(r.get(start), r.get(end), r.get(binned))).collect(Collectors.toList()));
             inst.setMultiTrackEnabled(true);
 
