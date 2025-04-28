@@ -4,11 +4,11 @@ import com.sun.jna.Pointer;
 import com.sun.jna.PointerType;
 import com.sun.jna.ptr.PointerByReference;
 import jisa.Util;
-import jisa.visa.InitialisableLibrary;
+import jisa.visa.Library;
 
 import java.nio.*;
 
-public interface ThorCamLibrary extends InitialisableLibrary {
+public interface ThorCamLibrary extends Library {
 
     default void initialise() throws Exception {
 

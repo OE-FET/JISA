@@ -3,12 +3,12 @@ package jisa.devices.camera.nat;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 import jisa.Util;
-import jisa.visa.InitialisableLibrary;
+import jisa.visa.Library;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 
-public interface ThorCamMosaicLibrary extends InitialisableLibrary {
+public interface ThorCamMosaicLibrary extends Library {
 
     @Override
     default void initialise() throws Exception {

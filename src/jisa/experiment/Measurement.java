@@ -53,8 +53,8 @@ public abstract class Measurement<R> {
                             .filter(f -> jisa.devices.Instrument.class.isAssignableFrom(f.getType()))
                             .filter(f -> f.canAccess(this))
                             .map(f -> {
-                                Instrument annotation = f.getAnnotation(Instrument.class);
-                                return new InstrumentValue(annotation.name() + (annotation.required() ? " (Required)" : " (Optional)"), f.getType(), () -> f.get(this), v -> f.set(this, v), annotation.required());
+                                Instrument a = f.getAnnotation(Instrument.class);
+                                return new InstrumentValue(a.name() + (a.required() ? " (Required)" : " (Optional)"), f.getType(), () -> f.get(this), v -> f.set(this, v), a.required());
                             })
                             .collect(Collectors.toList());
 

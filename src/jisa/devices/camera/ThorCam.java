@@ -158,7 +158,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     @Override
-    public void setGain(double gain) throws DeviceException, IOException {
+    public void setAmplifierGain(double gain) throws DeviceException, IOException {
 
         int index = getInt((h, b) -> sdk.tl_camera_convert_decibels_to_gain(h, gain, b), "tl_camera_convert_decibels_to_gain");
         process(sdk.tl_camera_set_gain(handle, index), "tl_camera_set_gain");
@@ -166,7 +166,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     @Override
-    public double getGain() throws DeviceException, IOException {
+    public double getAmplifierGain() throws DeviceException, IOException {
 
         int index = getInt(sdk::tl_camera_get_gain, "tl_camera_get_gain");
 
@@ -359,20 +359,20 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     @Override
     public double getAcquisitionFPS() throws IOException, DeviceException {
 
-        // Update if new frames have come in since last time
-        if (stats[0] != stats[1]) {
+        // Update if new frames have come in since last time, and it's been at least 10us since last call
+        if ((stats[0] != stats[1]) && ((System.nanoTime() - stats[2]) >= 10000)) {
 
             synchronized (stats) {
 
                 long frames  = stats[0];
-                long time    = System.nanoTime();
                 long dFrames = frames - stats[1];
+                long time    = System.nanoTime();
                 long dTime   = time - stats[2];
 
                 stats[1] = frames;
                 stats[2] = time;
 
-                lastFPS = 1e9 * (double) dFrames / (double) dTime;
+                lastFPS = 1e9 * dFrames / dTime;
 
             }
 
@@ -391,7 +391,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         try {
             frequency = getInt(sdk::tl_camera_get_timestamp_clock_frequency, "tl_camera_get_timestamp_clock_frequency");
         } catch (Exception e) {
-            frequency = 0;
+            frequency = 1000000000;
         }
 
         final D    argb        = createBuffer(pCount);
@@ -948,7 +948,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
                 ByteBuffer output = memory.getByteBuffer(0, array.length * 6L);
                 int        result = mosaic.tl_mono_to_color_transform_to_48(mosaicHandle, input, width, height, output);
 
-                ShortBuffer shorts = output.rewind().asShortBuffer();
+                CharBuffer shorts = output.rewind().asCharBuffer();
 
                 for (int i = 0; i < array.length; i++) {
                     array[i] = ((long) Character.MAX_VALUE << 48) | ((long) shorts.get()) | ((long) shorts.get() << 16) | ((long) shorts.get() << 32);

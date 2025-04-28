@@ -1,6 +1,5 @@
 package jisa.visa;
 
-import com.sun.jna.Library;
 import com.sun.jna.Native;
 import jisa.Util;
 import jisa.devices.DeviceException;
@@ -22,7 +21,7 @@ import java.util.*;
 public abstract class NativeDevice implements Instrument {
 
     private final static List<WeakReference<NativeDevice>> opened    = new LinkedList<>();
-    private final static Map<Class, Library>               libraries = new HashMap<>();
+    private final static Map<Class, com.sun.jna.Library>   libraries = new HashMap<>();
 
     static {
 
@@ -64,7 +63,7 @@ public abstract class NativeDevice implements Instrument {
      *
      * @throws DeviceException If the library cannot be found or fails to initialise.
      */
-    public <I extends Library> I findLibrary(Class<I> libraryInterface, String libraryName) throws DeviceException {
+    public <I extends com.sun.jna.Library> I findLibrary(Class<I> libraryInterface, String libraryName) throws DeviceException {
 
         // If it's already been loaded, return cached instance.
         if (libraries.containsKey(libraryInterface)) {
@@ -91,16 +90,16 @@ public abstract class NativeDevice implements Instrument {
      *
      * @throws DeviceException If the library cannot be found or fails to initialise.
      */
-    public <I extends Library> I getNewLibraryInstance(Class<I> libraryInterface, String libraryName) throws DeviceException {
+    public <I extends com.sun.jna.Library> I getNewLibraryInstance(Class<I> libraryInterface, String libraryName) throws DeviceException {
 
         try {
 
             I loaded = Native.load(libraryName, libraryInterface);
 
-            if (loaded instanceof InitialisableLibrary) {
+            if (loaded instanceof Library) {
 
                 try {
-                    ((InitialisableLibrary) loaded).initialise();
+                    ((Library) loaded).initialise();
                 } catch (UndeclaredThrowableException e) {
                     throw new LibraryInitialisationException(libraryName, name, e.getUndeclaredThrowable().getMessage());
                 } catch (Throwable e) {
@@ -146,7 +145,7 @@ public abstract class NativeDevice implements Instrument {
     @Override
     public abstract void close() throws IOException, DeviceException;
 
-    public interface Initialiser<T extends Library> {
+    public interface Initialiser<T extends com.sun.jna.Library> {
         void initialise(T library) throws Exception;
     }
 

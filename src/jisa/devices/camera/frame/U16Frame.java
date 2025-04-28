@@ -78,7 +78,6 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
     @Override
     public int[][] getARGBImage() {
 
-        int[]   argb  = getARGBData();
         int[][] image = new int[width][height];
 
         for (int j = 0; j < height; j++) {

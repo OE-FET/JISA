@@ -3,7 +3,7 @@ package jisa.devices.camera.nat;
 import com.sun.jna.WString;
 import com.sun.jna.ptr.LongByReference;
 import jisa.devices.DeviceException;
-import jisa.visa.InitialisableLibrary;
+import jisa.visa.Library;
 
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
@@ -18,7 +18,7 @@ import static jisa.devices.camera.Andor3.ERROR_NAMES;
 /**
  * JNA interface for atutility AndorSDK3 library.
  */
-public interface ATUtilityLibrary extends InitialisableLibrary {
+public interface ATUtilityLibrary extends Library {
 
     String                            JNA_LIBRARY_NAME = "atutility";
     AtomicReference<ATUtilityLibrary> INSTANCE         = new AtomicReference<>();

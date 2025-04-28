@@ -100,7 +100,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     @Override
     public double getAcquisitionFPS() {
 
-        if (stats[0] != stats[1]) {
+        if ((stats[0] != stats[1]) && ((System.nanoTime() - stats[2]) >= 10000)) {
 
             synchronized (stats) {
 

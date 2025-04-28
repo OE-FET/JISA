@@ -6,7 +6,7 @@ import com.sun.jna.WString;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 import jisa.devices.DeviceException;
-import jisa.visa.InitialisableLibrary;
+import jisa.visa.Library;
 
 import java.nio.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,7 +18,7 @@ import static jisa.devices.camera.Andor3.ERROR_NAMES;
 /**
  * JNA interface for atcore AndorSDK3 library.
  */
-public interface ATCoreLibrary extends InitialisableLibrary {
+public interface ATCoreLibrary extends Library {
 
     String                         JNA_LIBRARY_NAME = "atcore";
     AtomicReference<ATCoreLibrary> INSTANCE         = new AtomicReference<>();

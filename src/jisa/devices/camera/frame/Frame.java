@@ -61,6 +61,11 @@ public interface Frame<D, F extends Frame> {
 
     int getARGB(int x, int y);
 
+    /**
+     * Returns this frame's ARGB data as an array of integers.
+     *
+     * @return ARGB data.
+     */
     default int[] getARGBData() {
 
         int[] data = new int[size()];
@@ -69,9 +74,35 @@ public interface Frame<D, F extends Frame> {
 
     }
 
+    /**
+     * Reads the frame's ARGB data into a given linear/1D array. This is for fast data transfer operations (such as populating
+     * a PixelBuffer).
+     *
+     * @param destination Destination array to fill.
+     */
     void readARGBData(int[] destination);
 
-    int[][] getARGBImage();
+    /**
+     * Returns the frame's ARGB values in the form of a 2D array corresponding to pixels.
+     *
+     * @return
+     */
+    default int[][] getARGBImage() {
+
+        int     width  = getWidth();
+        int     height = getHeight();
+        int[]   data   = getARGBData();
+        int[][] image  = new int[width][height];
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                image[x][y] = data[y * width + x];
+            }
+        }
+
+        return image;
+
+    }
 
     /**
      * Returns the width of this image, in number of pixels.

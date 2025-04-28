@@ -25,34 +25,30 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
         return "PicoTech USB-TC08";
     }
 
-    // Constants
-    private static final String                         LIBRARY_NAME                 = "usbtc08";
-    private static final Class<USBTC08.NativeInterface> LIBRARY_CLASS                = USBTC08.NativeInterface.class;
-    private static final int                            SENSORS_PER_UNIT             = 9;
-    private static final short                          ACTION_FAILED                = 0;
-    private static final short                          ERROR_NONE                   = 0;
-    private static final short                          ERROR_OS_NOT_SUPPORTED       = 1;
-    private static final short                          ERROR_NO_CHANNELS_SET        = 2;
-    private static final short                          ERROR_INVALID_PARAMETER      = 3;
-    private static final short                          ERROR_VARIANT_NOT_SUPPORTED  = 4;
-    private static final short                          ERROR_INCORRECT_MODE         = 5;
-    private static final short                          ERROR_ENUMERATION_INCOMPLETE = 6;
-    private static final short                          ERROR_NOT_RESPONDING         = 7;
-    private static final short                          ERROR_FW_FAIL                = 8;
-    private static final short                          ERROR_CONFIG_FAIL            = 9;
-    private static final short                          ERROR_NOT_FOUND              = 10;
-    private static final short                          ERROR_THREAD_FAIL            = 11;
-    private static final short                          ERROR_PIPE_INFO_FAIL         = 12;
-    private static final short                          ERROR_NOT_CALIBRATED         = 13;
-    private static final short                          ERROR_PICOPP_TOO_OLD         = 14;
-    private static final short                          ERROR_COMMUNICATION          = 15;
-    private static final short                          UNITS_KELVIN                 = 2;
+    // Native Library Constants
+    private static final String                         LIBRARY_NAME  = "usbtc08";
+    private static final Class<USBTC08.NativeInterface> LIBRARY_CLASS = USBTC08.NativeInterface.class;
 
-    /**
-     * Static instance of loaded library
-     */
-    private static USBTC08.NativeInterface INSTANCE;
-    private static Throwable               EXCEPTION;
+    // Device Constants
+    private static final int   SENSORS_PER_UNIT             = 9;
+    private static final short ACTION_FAILED                = 0;
+    private static final short ERROR_NONE                   = 0;
+    private static final short ERROR_OS_NOT_SUPPORTED       = 1;
+    private static final short ERROR_NO_CHANNELS_SET        = 2;
+    private static final short ERROR_INVALID_PARAMETER      = 3;
+    private static final short ERROR_VARIANT_NOT_SUPPORTED  = 4;
+    private static final short ERROR_INCORRECT_MODE         = 5;
+    private static final short ERROR_ENUMERATION_INCOMPLETE = 6;
+    private static final short ERROR_NOT_RESPONDING         = 7;
+    private static final short ERROR_FW_FAIL                = 8;
+    private static final short ERROR_CONFIG_FAIL            = 9;
+    private static final short ERROR_NOT_FOUND              = 10;
+    private static final short ERROR_THREAD_FAIL            = 11;
+    private static final short ERROR_PIPE_INFO_FAIL         = 12;
+    private static final short ERROR_NOT_CALIBRATED         = 13;
+    private static final short ERROR_PICOPP_TOO_OLD         = 14;
+    private static final short ERROR_COMMUNICATION          = 15;
+    private static final short UNITS_KELVIN                 = 2;
 
     private final short handle;
 
@@ -120,10 +116,6 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
         }
 
         String serial = ((IDAddress) address).getID();
-
-        if (INSTANCE == null) {
-            throw new IOException("Error loading usbtc08 library!");
-        }
 
         // Search for all connected units
         List<USBTC08> found = findUnits();
@@ -243,19 +235,19 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
         interval = usbtc08.usb_tc08_get_minimum_interval_ms(handle);
 
         // Need a pointer to some memory to store our returned values
-        Memory tempPointer = new Memory(9L * Native.getNativeSize(Float.TYPE));
+        try (Memory tempPointer = new Memory(9L * Native.getNativeSize(Float.TYPE))) {
 
-        int result = usbtc08.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), UNITS_KELVIN);
+            int result = usbtc08.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), UNITS_KELVIN);
 
-        // If zero, then something's gone wrong.
-        if (result == ACTION_FAILED) {
-            throw new DeviceException(getLastError(handle));
+            // If zero, then something's gone wrong.
+            if (result == ACTION_FAILED) {
+                throw new DeviceException(getLastError(handle));
+            }
+
+            lastValues = tempPointer.getFloatArray(0, SENSORS_PER_UNIT);
+            lastTime   = System.currentTimeMillis();
+
         }
-
-        lastValues = tempPointer.getFloatArray(0, SENSORS_PER_UNIT);
-        lastTime   = System.currentTimeMillis();
-
-        tempPointer.close();
 
     }
 

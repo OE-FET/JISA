@@ -17,7 +17,7 @@ public interface Amplified extends Feature {
      * @throws DeviceException Upon device incompatibility error.
      * @throws IOException     Upon communications error.
      */
-    void setGain(double gain) throws DeviceException, IOException;
+    void setAmplifierGain(double gain) throws DeviceException, IOException;
 
     /**
      * Returns the gain used when amplifying the readout of frames from this camera.
@@ -27,10 +27,10 @@ public interface Amplified extends Feature {
      * @throws DeviceException Upon device incompatibility error.
      * @throws IOException     Upon communications error.
      */
-    double getGain() throws DeviceException, IOException;
+    double getAmplifierGain() throws DeviceException, IOException;
 
     static void addParameters(Amplified inst, Class<?> target, ParameterList params) {
-        params.addValue("Gain", inst::getGain, 1.0, inst::setGain);
+        params.addValue("Gain", inst::getAmplifierGain, 1.0, inst::setAmplifierGain);
     }
 
 }
