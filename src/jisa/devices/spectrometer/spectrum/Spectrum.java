@@ -1,25 +1,21 @@
 package jisa.devices.spectrometer.spectrum;
 
 import com.google.common.primitives.Doubles;
-import com.google.common.primitives.Longs;
 import jisa.Util;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
+import java.util.stream.*;
 
 
 public class Spectrum implements Iterable<Spectrum.Point> {
 
     protected final double[] wavelengths;
-    protected final long[]   counts;
+    protected final double[] counts;
 
-    public Spectrum(double[] wavelengths, long[] counts) {
+    public Spectrum(double[] wavelengths, double[] counts) {
 
         if (wavelengths.length != counts.length) {
             throw new IllegalArgumentException("Wavelength and Value arrays must have the same length.");
@@ -30,8 +26,16 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
     }
 
+    public Spectrum(double[] wavelengths, float[] counts) {
+        this(wavelengths, IntStream.range(0, counts.length).mapToDouble(i -> counts[i]).toArray());
+    }
+
     public Spectrum(double[] wavelengths, int[] counts) {
-        this(wavelengths, IntStream.of(counts).mapToLong(i -> (long) i).toArray());
+        this(wavelengths, IntStream.of(counts).mapToDouble(i -> (double) i).toArray());
+    }
+
+    public Spectrum(double[] wavelengths, long[] counts) {
+        this(wavelengths, LongStream.of(counts).mapToDouble(i -> (double) i).toArray());
     }
 
     /**
@@ -51,8 +55,8 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         // Otherwise, we need to subtract matching points only
         List<Double> wl1  = Doubles.asList(wavelengths);
         List<Double> wl2  = Doubles.asList(other.wavelengths);
-        double[]     wls  = wl1.stream().filter(wl2::contains).mapToDouble(Double::doubleValue).toArray();
-        long[]       vals = DoubleStream.of(wls).mapToLong(wl -> counts[wl1.indexOf(wl)] + other.counts[wl2.indexOf(wl)]).toArray();
+        double[]     wls  = wl1.stream().filter(wl2::contains).mapToDouble(v -> v).toArray();
+        double[]     vals = DoubleStream.of(wls).map(wl -> counts[wl1.indexOf(wl)] + other.counts[wl2.indexOf(wl)]).toArray();
 
         return new Spectrum(wls, vals);
 
@@ -76,7 +80,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         List<Double> wl1  = Doubles.asList(wavelengths);
         List<Double> wl2  = Doubles.asList(other.wavelengths);
         double[]     wls  = wl1.stream().filter(wl2::contains).mapToDouble(Double::doubleValue).toArray();
-        long[]       vals = DoubleStream.of(wls).mapToLong(wl -> counts[wl1.indexOf(wl)] - other.counts[wl2.indexOf(wl)]).toArray();
+        double[]     vals = DoubleStream.of(wls).map(wl -> counts[wl1.indexOf(wl)] - other.counts[wl2.indexOf(wl)]).toArray();
 
         return new Spectrum(wls, vals);
 
@@ -89,6 +93,14 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      */
     public Spectrum copy() {
         return new Spectrum(getWavelengths(), getCounts());
+    }
+
+    public void copyFrom(Spectrum other) {
+        System.arraycopy(other.counts, 0, counts, 0, counts.length);
+    }
+
+    public void copyFrom(double[] counts) {
+        System.arraycopy(counts, 0, this.counts, 0, this.counts.length);
     }
 
     /**
@@ -197,7 +209,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      *
      * @return Array of values.
      */
-    public long[] getCounts() {
+    public double[] getCounts() {
         return counts.clone();
     }
 
@@ -206,8 +218,8 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      *
      * @return List of values.
      */
-    public List<Long> getCountList() {
-        return Longs.asList(getCounts());
+    public List<Double> getCountList() {
+        return Doubles.asList(getCounts());
     }
 
     public double getWavelength(int index) {
@@ -222,7 +234,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         return 2.0 * Math.PI / getWavelength(index);
     }
 
-    public long getCount(int index) {
+    public double getCount(int index) {
         return counts[index];
     }
 
@@ -247,7 +259,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
     }
 
-    public long getCountByWavelength(double wavelength) {
+    public double getCountByWavelength(double wavelength) {
         return counts[indexByWavelength(wavelength)];
     }
 
@@ -290,9 +302,9 @@ public class Spectrum implements Iterable<Spectrum.Point> {
     public static class Point {
 
         private final double wavelength;
-        private final long   counts;
+        private final double counts;
 
-        public Point(double wavelength, long value) {
+        public Point(double wavelength, double value) {
             this.wavelength = wavelength;
             this.counts     = value;
         }
@@ -309,7 +321,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
             return 2.0 * Math.PI / wavelength;
         }
 
-        public long getCounts() {
+        public double getCounts() {
             return counts;
         }
 

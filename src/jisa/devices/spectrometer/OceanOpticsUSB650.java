@@ -11,16 +11,18 @@ import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 import jisa.visa.NativeDevice;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
 
 public class OceanOpticsUSB650 extends NativeDevice implements Spectrometer<OceanOpticsUSB650.Channel> {
 
     private final USB650        usb650;
     private final List<Channel> channels;
+    private       boolean       acquiring         = false;
+    private       Thread        acquisitionThread = null;
 
     public OceanOpticsUSB650() throws IOException {
 
@@ -65,42 +67,96 @@ public class OceanOpticsUSB650 extends NativeDevice implements Spectrometer<Ocea
 
     @Override
     public void setIntegrationTime(double time) throws IOException, DeviceException {
-        int microseconds = (int) (time * 1e6);
-        usb650.setIntegrationTime(microseconds);
+        usb650.setIntegrationTime((int) (time * 1e6));
     }
 
     @Override
-    public int getAcquisitionTimeout() throws IOException, DeviceException {
+    public int getAcquisitionTimeout() {
         return Integer.MAX_VALUE;
     }
 
     @Override
-    public void setAcquisitionTimeout(int timeout) throws IOException, DeviceException {
+    public void setAcquisitionTimeout(int timeout) {
+
+    }
+
+    private void acquisition() {
+
+        for (Channel channel : channels) {
+
+            try {
+                channel.buffer = channel.channel.getSpectrum();
+            } catch (Exception e) {
+                stopAcquisition();
+                return;
+            }
+
+        }
+
+        loop:
+        while (acquiring) {
+
+            for (Channel channel : channels) {
+
+                try {
+                    channel.channel.getSpectrum(channel.buffer);
+                    channel.spectrum.copyFrom(channel.buffer.getSpectrum());
+                    channel.manager.trigger(channel.spectrum);
+                } catch (Exception e) {
+                    System.err.println("Error acquiring spectrum: " + e.getMessage());
+                }
+
+                if (Thread.interrupted() || !acquiring) {
+                    break loop;
+                }
+
+            }
+
+        }
 
     }
 
     @Override
-    public void startAcquisition() throws IOException, DeviceException {
+    public synchronized void startAcquisition() throws IOException, DeviceException {
+
+        if (acquiring) {
+            return;
+        }
+
+        acquisitionThread = new Thread(this::acquisition);
+        acquiring         = true;
+        acquisitionThread.start();
 
     }
 
     @Override
-    public void stopAcquisition() throws IOException, DeviceException {
+    public synchronized void stopAcquisition() {
+
+        if (!acquiring) {
+            return;
+        }
+
+        acquiring = false;
+        acquisitionThread.interrupt();
+
+        try {
+            acquisitionThread.join();
+        } catch (InterruptedException ignored) { }
 
     }
 
     @Override
-    public boolean isAcquiring() throws IOException, DeviceException {
+    public boolean isAcquiring() {
         return false;
     }
 
     @Override
-    public double getSlitWidth() throws IOException, DeviceException {
+    public double getSlitWidth() {
         return 0;
     }
 
     @Override
-    public double getGratingDensity() throws IOException, DeviceException {
+    public double getGratingDensity() {
         return 0;
     }
 
@@ -126,39 +182,59 @@ public class OceanOpticsUSB650 extends NativeDevice implements Spectrometer<Ocea
 
     public class Channel implements Spectrometer.Channel, SubInstrument<OceanOpticsUSB650> {
 
-        private final SpectrometerChannel channel;
+        private final SpectrometerChannel                         channel;
+        private final ListenerManager                             manager  = new ListenerManager();
+        private       com.oceanoptics.omnidriver.spectra.Spectrum buffer   = null;
+        private       Spectrum                                    spectrum = null;
 
         public Channel(SpectrometerChannel channel) {
             this.channel = channel;
         }
 
         @Override
-        public Spectrum getSpectrum() throws IOException, DeviceException, InterruptedException, TimeoutException {
-            return new Spectrum(channel.getAllWavelengths(), DoubleStream.of(channel.getSpectrum().getSpectrum()).mapToLong(i -> (long) i).toArray());
+        public Spectrum getSpectrum() throws IOException {
+            return new Spectrum(channel.getAllWavelengths(), channel.getSpectrum().getSpectrum());
         }
 
         @Override
         public List<Spectrum> getSpectrumSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
-            return null;
+
+            List<Spectrum> spectrumSeries = new ArrayList<>(count);
+
+            for (int i = 0; i < count; i++) {
+                spectrumSeries.add(getSpectrum());
+            }
+
+            return spectrumSeries;
+
         }
 
         @Override
         public Listener addSpectrumListener(Listener listener) {
-            return null;
+            manager.addListener(listener);
+            return listener;
         }
 
         @Override
         public void removeSpectrumListener(Listener listener) {
-
+            manager.removeListener(listener);
         }
 
         @Override
         public SpectrumQueue openSpectrumQueue(int limit) {
-            return null;
+            SpectrumQueue queue = new SpectrumQueue(this, limit);
+            manager.addQueue(queue);
+            return queue;
         }
 
         @Override
         public void closeSpectrumQueue(SpectrumQueue queue) {
+
+            manager.removeQueue(queue);
+
+            if (queue.isOpen()) {
+                queue.close();
+            }
 
         }
 
@@ -169,7 +245,7 @@ public class OceanOpticsUSB650 extends NativeDevice implements Spectrometer<Ocea
 
         @Override
         public String getName() {
-            return "";
+            return usb650.getName();
         }
 
     }
