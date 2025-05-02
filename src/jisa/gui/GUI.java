@@ -6,6 +6,7 @@ import javafx.geometry.*;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
+import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -249,6 +250,13 @@ public class GUI {
         GUI.runNow(() -> {
 
             Alert alert = new Alert(type);
+
+            try {
+                ((Stage) alert.getDialogPane().getScene().getWindow()).getIcons().setAll((new Image(GUI.class.getResource("images/logo-no-text.png").openStream())));
+            } catch (Throwable e) {
+                ((Stage) alert.getDialogPane().getScene().getWindow()).getIcons().clear();
+            }
+
             alert.setTitle(title);
             alert.setHeaderText(header);
             alert.setContentText(text);
@@ -325,6 +333,12 @@ public class GUI {
             alert.getDialogPane().setMinHeight(400.0);
             alert.setResizable(true);
 
+            try {
+                ((Stage) alert.getDialogPane().getScene().getWindow()).getIcons().setAll((new Image(GUI.class.getResource("images/logo-no-text.png").openStream())));
+            } catch (Throwable ignored) {
+                ((Stage) alert.getDialogPane().getScene().getWindow()).getIcons().clear();
+            }
+
             Screen      screen = getCurrentScreen();
             Rectangle2D bounds = screen.getVisualBounds();
 
@@ -363,8 +377,31 @@ public class GUI {
 
         }
 
+        if (FILE_CHOOSER.getInitialDirectory() == null) {
+            FILE_CHOOSER.setInitialDirectory(new File(System.getProperty("user.home")));
+        }
 
-        Rectangle2D screen = getCurrentScreen().getVisualBounds();
+        String session = System.getenv("XDG_SESSION_DESKTOP");
+
+        if (session != null && session.equalsIgnoreCase("KDE")) {
+
+            try {
+
+                Process process = Runtime.getRuntime().exec(String.format("kdialog --getsavefilename \"%s\"", FILE_CHOOSER.getInitialDirectory().getAbsolutePath()));
+                Scanner scanner = new Scanner(process.getInputStream());
+                String  path    = scanner.nextLine();
+
+                if (path.isBlank()) {
+                    return null;
+                } else {
+                    DIRECTORY_CHOOSER.setInitialDirectory(new File(path));
+                    FILE_CHOOSER.setInitialDirectory(new File(path));
+                    return path;
+                }
+
+            } catch (Throwable ignored) { }
+
+        }
 
         GUI.runNow(() -> file.set(FILE_CHOOSER.showSaveDialog(new Stage())));
 
@@ -400,6 +437,40 @@ public class GUI {
             if (start.exists()) {
                 DIRECTORY_CHOOSER.setInitialDirectory(start);
             }
+
+        }
+
+        if (DIRECTORY_CHOOSER.getInitialDirectory() == null) {
+            DIRECTORY_CHOOSER.setInitialDirectory(new File(System.getProperty("user.home")));
+        }
+
+        String session = System.getenv("XDG_SESSION_DESKTOP");
+
+        if (session != null && session.equalsIgnoreCase("KDE")) {
+
+            try {
+
+                Process process = Runtime.getRuntime().exec(String.format("kdialog --getexistingdirectory \"%s\"", DIRECTORY_CHOOSER.getInitialDirectory().getAbsolutePath()));
+                Scanner scanner = new Scanner(process.getInputStream());
+
+                process.waitFor();
+
+                if (scanner.hasNextLine()) {
+                    String path = scanner.nextLine().trim();
+
+                    if (path.isBlank()) {
+                        return null;
+                    } else {
+                        DIRECTORY_CHOOSER.setInitialDirectory(new File(path));
+                        FILE_CHOOSER.setInitialDirectory(new File(path));
+                        return path;
+                    }
+
+                } else {
+                    return null;
+                }
+
+            } catch (Throwable ignored) { }
 
         }
 
@@ -440,6 +511,41 @@ public class GUI {
 
         }
 
+        if (FILE_CHOOSER.getInitialDirectory() == null) {
+            FILE_CHOOSER.setInitialDirectory(new File(System.getProperty("user.home")));
+        }
+
+        String session = System.getenv("XDG_SESSION_DESKTOP");
+
+        if (session != null && session.equalsIgnoreCase("KDE")) {
+
+            try {
+
+                Process process = Runtime.getRuntime().exec(String.format("kdialog --getopenfilename \"%s\"", FILE_CHOOSER.getInitialDirectory().getAbsolutePath()));
+                Scanner scanner = new Scanner(process.getInputStream());
+
+                process.waitFor();
+
+                if (scanner.hasNextLine()) {
+
+                    String path = scanner.nextLine().trim();
+
+                    if (path.isBlank()) {
+                        return null;
+                    } else {
+                        DIRECTORY_CHOOSER.setInitialDirectory(new File(path));
+                        FILE_CHOOSER.setInitialDirectory(new File(path));
+                        return path;
+                    }
+
+                } else {
+                    return null;
+                }
+
+            } catch (Throwable ignored) { }
+
+        }
+
         GUI.runNow(() -> file.set(FILE_CHOOSER.showOpenDialog(new Stage())));
 
         File chosen = file.get();
@@ -451,6 +557,7 @@ public class GUI {
             DIRECTORY_CHOOSER.setInitialDirectory(chosen.getParentFile());
             return chosen.getAbsolutePath();
         }
+
 
     }
 
@@ -474,6 +581,47 @@ public class GUI {
             if (start.exists()) {
                 FILE_CHOOSER.setInitialDirectory(start.isDirectory() ? start : start.getParentFile());
             }
+
+        }
+
+        if (FILE_CHOOSER.getInitialDirectory() == null) {
+            FILE_CHOOSER.setInitialDirectory(new File(System.getProperty("user.home")));
+        }
+
+        String session = System.getenv("XDG_SESSION_DESKTOP");
+
+        if (session != null && session.equalsIgnoreCase("KDE")) {
+
+            try {
+
+                Process process = Runtime.getRuntime().exec(String.format("kdialog --getopenfilename \"%s\" --multiple --separate-output", FILE_CHOOSER.getInitialDirectory().getAbsolutePath()));
+                Scanner scanner = new Scanner(process.getInputStream());
+
+                List<String> paths = new ArrayList<>();
+
+                process.waitFor();
+
+                while (scanner.hasNextLine()) {
+
+                    String path = scanner.nextLine().trim();
+
+                    if (path.isBlank()) {
+                        break;
+                    }
+
+                    paths.add(path);
+
+                }
+
+                if (paths.isEmpty()) {
+                    return null;
+                } else {
+                    FILE_CHOOSER.setInitialDirectory(new File(paths.get(0)));
+                    DIRECTORY_CHOOSER.setInitialDirectory(new File(paths.get(0)));
+                    return paths;
+                }
+
+            } catch (Throwable ignored) { }
 
         }
 
@@ -516,6 +664,12 @@ public class GUI {
             alert.setHeaderText(header);
             alert.setContentText(text);
             alert.setResizable(true);
+
+            try {
+                ((Stage) alert.getDialogPane().getScene().getWindow()).getIcons().setAll((new Image(GUI.class.getResource("images/logo-no-text.png").openStream())));
+            } catch (Throwable ignored) {
+                ((Stage) alert.getDialogPane().getScene().getWindow()).getIcons().clear();
+            }
 
             Screen      screen = getCurrentScreen();
             Rectangle2D bounds = screen.getVisualBounds();
@@ -565,6 +719,12 @@ public class GUI {
             dialog.setTitle(title);
             dialog.setHeaderText(header);
             dialog.setResizable(true);
+
+            try {
+                ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().setAll((new Image(GUI.class.getResource("images/logo-no-text.png").openStream())));
+            } catch (Throwable ignored) {
+                ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().clear();
+            }
 
             dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
@@ -659,6 +819,12 @@ public class GUI {
             dialog.setHeaderText(title);
             dialog.setResizable(true);
 
+            try {
+                ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().setAll((new Image(GUI.class.getResource("images/logo-no-text.png").openStream())));
+            } catch (Throwable ignored) {
+                ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().clear();
+            }
+
             dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
             VBox list = new VBox();
@@ -750,6 +916,12 @@ public class GUI {
             dialog.setTitle(title);
             dialog.setHeaderText(header);
             dialog.setResizable(true);
+
+            try {
+                ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().setAll((new Image(GUI.class.getResource("images/logo-no-text.png").openStream())));
+            } catch (Throwable ignored) {
+                ((Stage) dialog.getDialogPane().getScene().getWindow()).getIcons().clear();
+            }
 
             VBox list = new VBox();
             list.setSpacing(10);

@@ -45,6 +45,17 @@ public class Grid extends JFXElement implements Element, Container {
 
     }
 
+    public void autoArrange() {
+
+        setNumColumns(100);
+
+        double maxWidth   = added.stream().mapToDouble(a -> ((Region) a.getNode()).getWidth() + 2 * GUI.SPACING).max().getAsDouble();
+        double totalWidth = pane.getWidth();
+
+        setNumColumns((int) Math.floor(totalWidth / maxWidth));
+
+    }
+
     /**
      * Creates a Grid element with the given title and the default number (3) of columns.
      *

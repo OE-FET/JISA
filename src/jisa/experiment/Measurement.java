@@ -9,6 +9,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,8 +42,8 @@ public abstract class Measurement<R> {
 
         parameters = Arrays.stream(getClass().getDeclaredFields())
                            .filter(f -> f.isAnnotationPresent(Parameter.class))
-                           .filter(f -> f.canAccess(this))
                            .map(f -> {
+                               f.setAccessible(true);
                                Parameter annotation = f.getAnnotation(Parameter.class);
                                return new ParamValue(annotation.section(), annotation.name(), f.getType(), annotation.type(), () -> f.get(this), v -> f.set(this, v), annotation.options());
                            })
@@ -51,8 +52,8 @@ public abstract class Measurement<R> {
         instruments = Arrays.stream(getClass().getDeclaredFields())
                             .filter(f -> f.isAnnotationPresent(Instrument.class))
                             .filter(f -> jisa.devices.Instrument.class.isAssignableFrom(f.getType()))
-                            .filter(f -> f.canAccess(this))
                             .map(f -> {
+                                f.setAccessible(true);
                                 Instrument a = f.getAnnotation(Instrument.class);
                                 return new InstrumentValue(a.name() + (a.required() ? " (Required)" : " (Optional)"), f.getType(), () -> f.get(this), v -> f.set(this, v), a.required());
                             })
@@ -131,7 +132,7 @@ public abstract class Measurement<R> {
      *
      * @throws Exception This method can throw exceptions, which will be caught by the measurement structure.
      */
-    protected abstract void run(R data) throws Exception;
+    protected abstract void main(R data) throws Exception;
 
     /**
      * This method is always called after a measurement has finished --- regardless of how it finished. That is, it will
@@ -197,7 +198,7 @@ public abstract class Measurement<R> {
         try {
 
             setStatus(Status.RUNNING);
-            run(data);
+            main(data);
 
         } catch (InterruptedException e) {
 
@@ -261,7 +262,7 @@ public abstract class Measurement<R> {
 
     }
 
-    public Result run() throws InterruptedException {
+    public Result run() {
 
         if (running || runThread != null) {
             throw new IllegalStateException("Measurement already started.");
@@ -293,25 +294,27 @@ public abstract class Measurement<R> {
         return running;
     }
 
-    public synchronized Result awaitResult() throws InterruptedException {
+    public synchronized Result awaitResult() {
 
         if (running && runThread != null) {
-            runThread.join();
+            try {
+                runThread.join();
+            } catch (InterruptedException ignored) { }
         }
 
         switch (status) {
 
             case ERROR:
-                return Result.ERROR;
+                return new Result(ResultType.ERROR, getExceptions(), getData());
 
             case INTERRUPTED:
-                return Result.INTERRUPTED;
+                return new Result(ResultType.INTERRUPTED, getExceptions(), getData());
 
             case COMPLETE:
-                return Result.SUCCESS;
+                return new Result(ResultType.SUCCESS, Collections.emptyList(), getData());
 
             default:
-                return Result.DID_NOT_RUN;
+                return new Result(ResultType.DID_NOT_RUN, Collections.emptyList(), getData());
 
         }
 
@@ -502,11 +505,37 @@ public abstract class Measurement<R> {
 
     }
 
-    public enum Result {
+    public enum ResultType {
         SUCCESS,
         ERROR,
         INTERRUPTED,
         DID_NOT_RUN
+    }
+
+    public class Result {
+
+        private final ResultType      resultType;
+        private final List<Throwable> exceptions;
+        private final R               data;
+
+        public Result(ResultType resultType, List<Throwable> exceptions, R data) {
+            this.resultType = resultType;
+            this.exceptions = exceptions;
+            this.data       = data;
+        }
+
+        public ResultType getType() {
+            return resultType;
+        }
+
+        public List<Throwable> getExceptions() {
+            return exceptions;
+        }
+
+        public R getData() {
+            return data;
+        }
+
     }
 
     public interface Listener {

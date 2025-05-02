@@ -892,6 +892,10 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
     public static class Colour extends ThorCam<U16RGBFrame, long[]> {
 
+        public static String getDescription() {
+            return "ThorLabs Colour Camera";
+        }
+
         private final ThorCamMosaicLibrary mosaic       = findLibrary(ThorCamMosaicLibrary.class, "thorlabs_tsi_mono_to_color_processing");
         private final Pointer              mosaicHandle = getHandle();
 
@@ -965,6 +969,10 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     public static class Mono extends ThorCam<U16Frame, short[]> {
+
+        public static String getDescription() {
+            return "ThorLabs Mono Camera";
+        }
 
         public Mono() throws DeviceException, IOException {
             super();

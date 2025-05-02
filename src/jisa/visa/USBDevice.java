@@ -15,7 +15,6 @@ public class USBDevice implements Instrument {
     private final Context      context;
     private final DeviceHandle handle = new DeviceHandle();
 
-
     public USBDevice(int vendor, int product, String serial, int conf, int iface, int alt) throws IOException, DeviceException {
 
         int result;

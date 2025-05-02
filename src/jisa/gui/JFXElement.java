@@ -30,8 +30,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class JFXElement implements Element {
 
@@ -71,6 +69,12 @@ public class JFXElement implements Element {
         buttonBar = new ButtonBar();
 
         setUpBars();
+
+        try {
+            icon.set(new Image(GUI.class.getResource("images/logo-no-text.png").openStream()));
+        } catch (Throwable e) {
+            icon.set(null);
+        }
 
 
     }
@@ -119,6 +123,12 @@ public class JFXElement implements Element {
 
         setUpBars();
 
+        try {
+            icon.set(new Image(GUI.class.getResource("images/logo-no-text.png").openStream()));
+        } catch (Throwable e) {
+            icon.set(null);
+        }
+
     }
 
     public JFXElement(String title, URL resource) {
@@ -158,6 +168,12 @@ public class JFXElement implements Element {
         } catch (Throwable e) {
             e.printStackTrace();
             throw e;
+        }
+
+        try {
+            this.icon.set(new Image(GUI.class.getResource("images/logo-no-text.png").openStream()));
+        } catch (Throwable e) {
+            this.icon.set(null);
         }
 
     }

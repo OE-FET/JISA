@@ -4,6 +4,7 @@ import de.gsi.dataset.DataSet;
 import javafx.collections.ObservableList;
 import javafx.scene.paint.Color;
 import jisa.Util;
+import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.gui.plotting.JISAMarker;
 import jisa.maths.fits.Fit;
 import jisa.maths.fits.Fitting;
@@ -169,6 +170,14 @@ public interface Series {
 
     default Series setYPoints(double[] y){
         return setPoints(null, y);
+    }
+
+    default Series plotSpectrum(Spectrum spectrum) {
+        return setPoints(spectrum.getWavelengths(), spectrum.getCounts());
+    }
+
+    default Series updateSpectrum(Spectrum spectrum) {
+        return setYPoints(spectrum.getCounts());
     }
 
     Series removePoint(int index);

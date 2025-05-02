@@ -13,7 +13,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SRLockIn<L extends SRLockIn> extends VISADevice implements DPLockIn, CurrentPreAmpInput, SyncFilter, LineFilter, LineFilter2X, InternalFrequencyReference<SRLockIn<L>.Oscillator> {
+public abstract class SRLockIn<L extends SRLockIn> extends VISADevice implements DPLockIn, CurrentPreAmpInput, SyncFilter, LineFilter, LineFilter2X, InternalFrequencyReference<SRLockIn<L>.Oscillator> {
 
     private static final String C_QUERY_FREQ         = "FREQ?";
     private static final String C_SET_FREQ           = "FREQ %f";

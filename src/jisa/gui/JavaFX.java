@@ -16,7 +16,7 @@ public class JavaFX {
         Logging.getJavaFXLogger().disableLogging();
         Platform.startup(() -> {});
         Platform.setImplicitExit(false);
-        Logging.getJavaFXLogger().enableLogging();
+        Logging.getJavaFXLogger().disableLogging();
 
         Semaphore latch = new Semaphore(0);
 

@@ -322,7 +322,7 @@ public class TestFET implements MCSMU<SMU> {
 
         @Override
         public TType getTerminalType(Terminals terminals) throws DeviceException, IOException {
-            return null;
+            return TType.BNC;
         }
 
         @Override
@@ -332,7 +332,7 @@ public class TestFET implements MCSMU<SMU> {
 
         @Override
         public Terminals getTerminals() throws DeviceException, IOException {
-            return null;
+            return Terminals.REAR;
         }
 
         @Override

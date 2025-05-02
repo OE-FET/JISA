@@ -2,29 +2,33 @@ package jisa.gui;
 
 import javafx.scene.image.Image;
 import jisa.Util;
+import jisa.addresses.Address;
 import jisa.control.ConfigBlock;
 import jisa.control.Connection;
 import jisa.devices.Instrument;
+import jisa.devices.SubInstrument;
 import jisa.experiment.queue.Action;
 import jisa.gui.form.Field;
 import org.reflections.Reflections;
 
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class ConnectorGrid extends Grid {
 
-    private final List<Class<? extends Instrument>>        interfaces;
+    private final List<Class<? extends Instrument>>        instruments;
     private final List<Connector<?>>                       connectors       = new LinkedList<>();
     private final ListDisplay<Class<? extends Instrument>> typeSelector     = new ListDisplay<>("Instrument Types");
-    private final Form          searchBox        = new Form("Search");
-    private final Field<String> search           = searchBox.addTextField("Search", "");
-    private final Grid          typeSelectorGrid = new Grid("Add Connection", 1, searchBox, typeSelector);
+    private final Form                                     searchBox        = new Form("Search");
+    private final Field<String>                            search           = searchBox.addTextField("Search", "");
+    private final Grid                                     typeSelectorGrid = new Grid("Add Connection", 1, searchBox, typeSelector);
 
     public ConnectorGrid(String title, int numCols) {
 
         super(title, numCols);
         setGrowth(true, false);
+        setWindowSize(800, 600);
 
         search.addChangeListener(this::updateList);
 
@@ -46,9 +50,19 @@ public class ConnectorGrid extends Grid {
 
         });
 
-        interfaces = (new Reflections("jisa.devices"))
+        instruments = (new Reflections("jisa.devices"))
             .getSubTypesOf(Instrument.class).stream()
-            .filter(Class::isInterface)
+            .filter(c -> !c.isInterface() && !c.isAnonymousClass() && !Modifier.isAbstract(c.getModifiers()) && !SubInstrument.class.isAssignableFrom(c))
+            .filter(c -> {
+
+                try {
+                    c.getConstructor(Address.class);
+                    return true;
+                } catch (Exception e) {
+                    return false;
+                }
+
+            })
             .sorted(Comparator.comparing(Class::getSimpleName))
             .collect(Collectors.toUnmodifiableList());
 
@@ -71,7 +85,7 @@ public class ConnectorGrid extends Grid {
 
         typeSelector.clear();
 
-        interfaces.forEach(c -> {
+        instruments.forEach(c -> {
 
             String name;
             String subtitle;
@@ -185,7 +199,15 @@ public class ConnectorGrid extends Grid {
 
 
     public <T extends Instrument> Connector<T> addConnector(String name, Class<T> target) {
-        return addConnector(new Connection<>(name, target));
+
+        Connection<T> connection = new Connection<>(name, target);
+
+        if (!target.isInterface() && !Modifier.isAbstract(target.getModifiers())) {
+            connection.setDriver(target);
+        }
+
+        return addConnector(connection);
+
     }
 
     public List<Connector<?>> getConnectors() {

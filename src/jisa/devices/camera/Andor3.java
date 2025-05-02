@@ -32,6 +32,10 @@ import java.util.stream.Collectors;
 
 public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinning, CMOS, Overlap, MultiTrack, TemperatureControlled {
 
+    public static String getDescription() {
+        return "Andor sCMOS Camera (Andor SDK3)";
+    }
+
     public final static int  AT_ERR_STRINGNOTAVAILABLE      = 18;
     public final static int  AT_ERR_NULL_COUNT_VAR          = 30;
     public final static int  AT_HANDLE_SYSTEM               = 1;

@@ -7,6 +7,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 import javafx.scene.text.TextAlignment;
@@ -32,7 +33,13 @@ public class Connector<T extends Instrument> extends JFXElement {
 
 
     @FXML
+    protected HBox                                      errorBox;
+    @FXML
     protected Label                                     errorText;
+    @FXML
+    protected Button                                    errorButton;
+    @FXML
+    protected Button                                    errorClose;
     @FXML
     protected ChoiceBox<Class<? extends T>>             driverChoice;
     @FXML
@@ -49,7 +56,7 @@ public class Connector<T extends Instrument> extends JFXElement {
     protected Connection<T>       connection;
     protected Map<String, Object> addressParams = null;
     protected boolean             connecting    = false;
-    protected Throwable           exception     = null;
+    protected Throwable[]         exception     = new Throwable[1];
 
 
     public Connector(Connection<T> connection) {
@@ -137,11 +144,12 @@ public class Connector<T extends Instrument> extends JFXElement {
 
         protocolChoice.valueProperty().addListener(o -> changeProtocol());
 
-        errorText.setOnMouseClicked(event -> GUI.runNow(() -> {
-            errorText.setVisible(false);
-            errorText.setManaged(false);
-            GUI.showException(exception);
+        errorClose.setOnMouseClicked(event -> GUI.runNow(() -> {
+            errorBox.setVisible(false);
+            errorBox.setManaged(false);
         }));
+
+        errorButton.setOnMouseClicked(event -> GUI.showException(exception[0]));
 
         connection.addChangeListener(() -> GUI.runNow(this::update));
 
@@ -299,8 +307,8 @@ public class Connector<T extends Instrument> extends JFXElement {
         connection.disconnect();
 
         GUI.runNow(() -> {
-            errorText.setVisible(false);
-            errorText.setManaged(false);
+            errorBox.setVisible(false);
+            errorBox.setManaged(false);
         });
 
         try {
@@ -317,10 +325,10 @@ public class Connector<T extends Instrument> extends JFXElement {
         } catch (Exception e) {
 
             GUI.runNow(() -> {
-                exception = e;
+                exception[0] = e;
                 errorText.setText("Error: " + e.getMessage());
-                errorText.setVisible(true);
-                errorText.setManaged(true);
+                errorBox.setVisible(true);
+                errorBox.setManaged(true);
             });
 
         } finally {
@@ -336,8 +344,8 @@ public class Connector<T extends Instrument> extends JFXElement {
         }
 
         GUI.runNow(() -> {
-            errorText.setVisible(false);
-            errorText.setManaged(false);
+            errorBox.setVisible(false);
+            errorBox.setManaged(false);
         });
 
         Util.runAsync(() -> {
@@ -361,9 +369,10 @@ public class Connector<T extends Instrument> extends JFXElement {
             } catch (Exception e) {
 
                 GUI.runNow(() -> {
+                    exception[0] = e;
                     errorText.setText("Error: " + e.getMessage());
-                    errorText.setVisible(true);
-                    errorText.setManaged(true);
+                    errorBox.setVisible(true);
+                    errorBox.setManaged(true);
                 });
 
             } finally {

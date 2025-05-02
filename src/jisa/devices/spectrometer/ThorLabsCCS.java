@@ -1,21 +1,25 @@
 package jisa.devices.spectrometer;
 
 import jisa.Util;
+import jisa.addresses.Address;
 import jisa.addresses.USBAddress;
 import jisa.devices.DeviceException;
+import jisa.devices.spectrometer.spectrum.Spectrum;
+import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 import jisa.visa.USBDevice;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
-public class ThorLabsCCS extends USBDevice implements Spectrometer {
+public class ThorLabsCCS extends USBDevice implements Spectrometer<ThorLabsCCS.Channel> {
 
     public ThorLabsCCS(USBAddress address) throws IOException, DeviceException {
         super(address.getVendorID(), address.getProductID(), address.getSerialNumber(), -1, address.getInterfaceNumber(), -1);
     }
 
     @Override
-    public List getChannels() {
+    public List<Channel> getChannels() {
         return List.of();
     }
 
@@ -80,4 +84,59 @@ public class ThorLabsCCS extends USBDevice implements Spectrometer {
     public double getGratingDensity() throws IOException, DeviceException {
         return 0;
     }
+
+    public class Channel implements Spectrometer.Channel<ThorLabsCCS> {
+
+        @Override
+        public Spectrum getSpectrum() throws IOException, DeviceException, InterruptedException, TimeoutException {
+            return null;
+        }
+
+        @Override
+        public List<Spectrum> getSpectrumSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
+            return List.of();
+        }
+
+        @Override
+        public Listener addSpectrumListener(Listener listener) {
+            return null;
+        }
+
+        @Override
+        public void removeSpectrumListener(Listener listener) {
+
+        }
+
+        @Override
+        public SpectrumQueue openSpectrumQueue(int limit) {
+            return null;
+        }
+
+        @Override
+        public void closeSpectrumQueue(SpectrumQueue queue) {
+
+        }
+
+        @Override
+        public String getIDN() throws IOException, DeviceException {
+            return "";
+        }
+
+        @Override
+        public String getName() {
+            return "";
+        }
+
+        @Override
+        public void close() throws IOException, DeviceException {
+
+        }
+
+        @Override
+        public Address getAddress() {
+            return null;
+        }
+
+    }
+
 }
