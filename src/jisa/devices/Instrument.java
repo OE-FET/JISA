@@ -25,7 +25,19 @@ public interface Instrument {
         try {
             return clazz.getDeclaredMethod("getDescription").invoke(null).toString();
         } catch (Exception e) {
+            return getName(clazz);
+        }
+
+    }
+
+    static String getName(Class<? extends Instrument> clazz) {
+
+        Class<?> enclosingClass = clazz.getEnclosingClass();
+
+        if (enclosingClass == null) {
             return clazz.getSimpleName();
+        } else {
+            return String.format("%s.%s", enclosingClass.getSimpleName(), clazz.getSimpleName());
         }
 
     }

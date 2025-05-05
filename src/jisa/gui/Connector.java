@@ -108,13 +108,16 @@ public class Connector<T extends Instrument> extends JFXElement {
         if (driverChoice.getItems().size() == 1) {
 
             Class<? extends T> driver = driverChoice.getItems().get(0);
-            connection.setDriver(driver);
-            Label title = new Label(Instrument.getDescription(driver));
-            Label sub   = new Label(driver.getSimpleName());
 
-            title.setFont(Font.font(title.getFont().getFamily(), FontWeight.BOLD, title.getFont().getSize() * 1.2));
-            VBox box = new VBox(title, new Separator(), sub);
+            connection.setDriver(driver);
+
+            Label title = new Label(Instrument.getName(driver));
+            Label sub   = new Label(Instrument.getDescription(driver));
+            VBox  box   = new VBox(title, new Separator(), sub);
+
             box.setSpacing(5);
+            title.setFont(Font.font(title.getFont().getFamily(), FontWeight.BOLD, title.getFont().getSize() * 1.2));
+
             ((HBox) driverChoice.getParent()).getChildren().set(1, box);
             HBox.setHgrow(box, Priority.ALWAYS);
 

@@ -34,6 +34,8 @@ public class ConnectorGrid extends Grid {
 
         Button button = addToolbarButton("Add...", () -> {
 
+            search.setText("");
+
             if (typeSelectorGrid.showAsConfirmation()) {
 
                 String[] input = GUI.inputWindow("Add Connection", "Add Connection", "Please enter a name for the new connection.", "Name");
@@ -81,21 +83,14 @@ public class ConnectorGrid extends Grid {
 
         String term = search.get().toUpperCase().trim();
 
-        Image image = Util.invertImage(new Image(GUI.class.getResource("images/connection.png").toString()));
+        Image image = Util.invertImage(new Image(GUI.class.getResource("images/devices.png").toString()));
 
         typeSelector.clear();
 
         instruments.forEach(c -> {
 
-            String name;
-            String subtitle;
-            try {
-                name     = (String) c.getMethod("getDescription").invoke(null);
-                subtitle = c.getSimpleName();
-            } catch (Exception e) {
-                name     = c.getSimpleName();
-                subtitle = "No description found";
-            }
+            String name     = Instrument.getName(c);
+            String subtitle = Instrument.getDescription(c);
 
             if (name.toUpperCase().contains(term) || subtitle.toUpperCase().contains(term)) {
                 typeSelector.add(c, name, subtitle, image);
