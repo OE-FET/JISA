@@ -5,11 +5,11 @@ import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
+import javafx.scene.control.Separator;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.*;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 import javafx.util.StringConverter;
 import jisa.Util;
@@ -23,6 +23,7 @@ import jisa.gui.controls.IntegerField;
 import kotlin.reflect.KClass;
 import org.reflections.Reflections;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.Comparator;
 import java.util.Map;
@@ -103,6 +104,21 @@ public class Connector<T extends Instrument> extends JFXElement {
                     || driver.getSimpleName().trim().equals("")
             )
         ).sorted(Comparator.comparing(Class::getSimpleName)).collect(Collectors.toList())));
+
+        if (driverChoice.getItems().size() == 1) {
+
+            Class<? extends T> driver = driverChoice.getItems().get(0);
+            connection.setDriver(driver);
+            Label title = new Label(Instrument.getDescription(driver));
+            Label sub   = new Label(driver.getSimpleName());
+
+            title.setFont(Font.font(title.getFont().getFamily(), FontWeight.BOLD, title.getFont().getSize() * 1.2));
+            VBox box = new VBox(title, new Separator(), sub);
+            box.setSpacing(5);
+            ((HBox) driverChoice.getParent()).getChildren().set(1, box);
+            HBox.setHgrow(box, Priority.ALWAYS);
+
+        }
 
         retries.setValue(connection.getAttempts());
 

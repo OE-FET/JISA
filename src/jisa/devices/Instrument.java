@@ -20,6 +20,16 @@ import java.util.stream.Collectors;
  */
 public interface Instrument {
 
+    static String getDescription(Class<? extends Instrument> clazz) {
+
+        try {
+            return clazz.getDeclaredMethod("getDescription").invoke(null).toString();
+        } catch (Exception e) {
+            return clazz.getSimpleName();
+        }
+
+    }
+
     /**
      * Returns an identifying String of the instrument.
      *
