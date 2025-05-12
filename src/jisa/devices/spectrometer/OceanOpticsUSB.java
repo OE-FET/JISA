@@ -25,34 +25,57 @@ public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<
     private       boolean       acquiring         = false;
     private       Thread        acquisitionThread = null;
 
-    public OceanOpticsUSB(Class<T> type) throws ReflectiveOperationException {
+    public OceanOpticsUSB(String name, Class<T> type) throws IOException, DeviceException {
 
-        super("Ocean Optics RedTide USB650 Spectrometer");
-
-        usb      = type.getConstructor().newInstance();
-        channels = Arrays.stream(usb.getChannels()).map(Channel::new).collect(Collectors.toList());
-
-    }
-
-    public OceanOpticsUSB(Class<T> type, int index) throws ReflectiveOperationException {
-
-        super("Ocean Optics RedTide USB650 Spectrometer");
-
-        usb      = type.getConstructor(Integer.TYPE).newInstance(index);
-        channels = Arrays.stream(usb.getChannels()).map(Channel::new).collect(Collectors.toList());
-
-    }
-
-    public OceanOpticsUSB(Class<T> type, IDAddress address) throws DeviceException, ReflectiveOperationException {
-
-        super("Ocean Optics RedTide Spectrometer");
+        super(name);
 
         try {
-            usb      = type.getConstructor(Integer.TYPE).newInstance(Integer.parseInt(address.getID()));
-            channels = Arrays.stream(usb.getChannels()).map(Channel::new).collect(Collectors.toList());
-        } catch (NumberFormatException e) {
-            throw new DeviceException("ID in address object must be an integer.");
+            usb = type.getConstructor().newInstance();
+        } catch (Exception e) {
+            throw new DeviceException(e.getMessage());
         }
+
+        if (usb.getChannels() == null) {
+            throw new IOException(String.format("Connection to %s failed.", usb.getName()));
+        }
+
+        channels = Arrays.stream(usb.getChannels()).map(Channel::new).collect(Collectors.toList());
+
+    }
+
+    public OceanOpticsUSB(String name, Class<T> type, int index) throws IOException, DeviceException {
+
+        super(name);
+
+        try {
+            usb = type.getConstructor(Integer.TYPE).newInstance(index);
+        } catch (Exception e) {
+            throw new DeviceException(e.getMessage());
+        }
+
+        if (usb.getChannels() == null) {
+            throw new IOException(String.format("Connection to %s failed.", usb.getName()));
+        }
+
+        channels = Arrays.stream(usb.getChannels()).map(Channel::new).collect(Collectors.toList());
+
+    }
+
+    public OceanOpticsUSB(String name, Class<T> type, IDAddress address) throws DeviceException, IOException {
+
+        super(name);
+
+        try {
+            usb = type.getConstructor(Integer.TYPE).newInstance(Integer.parseInt(address.getID()));
+        } catch (Exception e) {
+            throw new DeviceException(e.getMessage());
+        }
+
+        if (usb.getChannels() == null) {
+            throw new IOException(String.format("Connection to %s failed.", usb.getName()));
+        }
+
+        channels = Arrays.stream(usb.getChannels()).map(Channel::new).collect(Collectors.toList());
 
     }
 
@@ -163,12 +186,12 @@ public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<
 
     @Override
     public String getIDN() throws IOException, DeviceException {
-        return "Ocean Optics RedTide USB650 Spectrometer";
+        return getName();
     }
 
     @Override
     public String getName() {
-        return "Ocean Optics RedTide USB650 Spectrometer";
+        return String.format("Ocean Optics %s Spectrometer", usb.getName());
     }
 
     @Override
@@ -289,16 +312,16 @@ public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<
 
         public static final Class<USB650> CLASS = USB650.class;
 
-        public Model650() throws ReflectiveOperationException {
-            super(CLASS);
+        public Model650() throws IOException, DeviceException {
+            super("Ocean Optics USB650 Spectrometer", CLASS);
         }
 
-        public Model650(int index) throws ReflectiveOperationException {
-            super(CLASS, index);
+        public Model650(int index) throws IOException, DeviceException {
+            super("Ocean Optics USB650 Spectrometer", CLASS, index);
         }
 
-        public Model650(IDAddress address) throws DeviceException, ReflectiveOperationException {
-            super(CLASS, address);
+        public Model650(IDAddress address) throws DeviceException, IOException {
+            super("Ocean Optics USB650 Spectrometer", CLASS, address);
         }
     }
 
@@ -306,16 +329,16 @@ public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<
 
         public static final Class<USB2000> CLASS = USB2000.class;
 
-        public Model2000() throws ReflectiveOperationException {
-            super(CLASS);
+        public Model2000() throws IOException, DeviceException {
+            super("Ocean Optics USB2000 Spectrometer", CLASS);
         }
 
-        public Model2000(int index) throws ReflectiveOperationException {
-            super(CLASS, index);
+        public Model2000(int index) throws IOException, DeviceException {
+            super("Ocean Optics USB2000 Spectrometer", CLASS, index);
         }
 
-        public Model2000(IDAddress address) throws DeviceException, ReflectiveOperationException {
-            super(CLASS, address);
+        public Model2000(IDAddress address) throws DeviceException, IOException {
+            super("Ocean Optics USB2000 Spectrometer", CLASS, address);
         }
 
     }
