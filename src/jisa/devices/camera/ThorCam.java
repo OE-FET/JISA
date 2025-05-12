@@ -1025,6 +1025,9 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             return MAX;
         }
 
+        public ColourFrame copy() {
+            return new ColourFrame(argb.clone(), width, height, timestamp);
+        }
 
         @Override
         public void readARGBData(int[] destination) {
@@ -1066,6 +1069,10 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         public Integer getMax() {
             return 4096;
+        }
+
+        public MonoFrame copy() {
+            return new MonoFrame(data.clone(), width, height, timestamp);
         }
 
         @Override
