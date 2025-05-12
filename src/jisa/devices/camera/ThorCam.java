@@ -930,7 +930,12 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
                 throw new DeviceException("Mosaic colour processor could not be created: %d", result);
             }
 
-            return ref.getValue();
+            Pointer mHandle = ref.getValue();
+
+            mosaic.tl_mono_to_color_set_color_space(mHandle, 1);
+            mosaic.tl_mono_to_color_set_output_format(mHandle, 1);
+
+            return mHandle;
 
         }
 
@@ -959,6 +964,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
                 }
 
             }
+
         }
 
         public void close() throws IOException, DeviceException {

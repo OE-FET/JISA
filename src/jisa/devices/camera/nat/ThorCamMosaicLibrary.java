@@ -25,6 +25,10 @@ public interface ThorCamMosaicLibrary extends Library {
 
     int tl_mono_to_color_transform_to_48(Pointer handle, ByteBuffer input, int width, int height, ByteBuffer output);
 
+    int tl_mono_to_color_set_output_format(Pointer handle, int format);
+
+    int tl_mono_to_color_set_color_space(Pointer handle, int colorSpace);
+
     int tl_mono_to_color_processing_module_terminate();
 
 }
