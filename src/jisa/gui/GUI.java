@@ -389,14 +389,23 @@ public class GUI {
 
                 Process process = Runtime.getRuntime().exec(String.format("kdialog --getsavefilename \"%s\"", FILE_CHOOSER.getInitialDirectory().getAbsolutePath()));
                 Scanner scanner = new Scanner(process.getInputStream());
-                String  path    = scanner.nextLine();
 
-                if (path.isBlank()) {
-                    return null;
+                process.waitFor();
+
+                if (process.exitValue() == 0 && scanner.hasNextLine()) {
+
+                    String path = scanner.nextLine().trim();
+
+                    if (path.isBlank()) {
+                        return null;
+                    } else {
+                        DIRECTORY_CHOOSER.setInitialDirectory(new File(path).getParentFile());
+                        FILE_CHOOSER.setInitialDirectory(new File(path).getParentFile());
+                        return path;
+                    }
+
                 } else {
-                    DIRECTORY_CHOOSER.setInitialDirectory(new File(path));
-                    FILE_CHOOSER.setInitialDirectory(new File(path));
-                    return path;
+                    return null;
                 }
 
             } catch (Throwable ignored) { }
@@ -455,7 +464,7 @@ public class GUI {
 
                 process.waitFor();
 
-                if (scanner.hasNextLine()) {
+                if (process.exitValue() == 0 && scanner.hasNextLine()) {
                     String path = scanner.nextLine().trim();
 
                     if (path.isBlank()) {
@@ -526,7 +535,7 @@ public class GUI {
 
                 process.waitFor();
 
-                if (scanner.hasNextLine()) {
+                if (process.exitValue() == 0 && scanner.hasNextLine()) {
 
                     String path = scanner.nextLine().trim();
 
@@ -600,6 +609,10 @@ public class GUI {
                 List<String> paths = new ArrayList<>();
 
                 process.waitFor();
+
+                if (process.exitValue() != 0) {
+                    return null;
+                }
 
                 while (scanner.hasNextLine()) {
 

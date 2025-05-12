@@ -1030,9 +1030,9 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
                 v = argb[i];
 
                 destination[i] = (int) (((0xFF << 24)
-                    | (((v >> 32) & 0xFFFF) >> 6) << 16)
-                    | (((v >> 16) & 0xFFFF) >> 6) << 8
-                    | ((v & 0xFFFF) >> 6));
+                    | (((v >> 32) & 0xFFFF) >> 4) << 16)
+                    | (((v >> 16) & 0xFFFF) >> 4) << 8
+                    | ((v & 0xFFFF) >> 4));
 
             }
 
@@ -1068,7 +1068,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             byte value;
 
             for (int i = 0; i < data.length; i++) {
-                value   = (byte) ((data[i] >> 6) & 0xFF);
+                value   = (byte) ((data[i] >> 4) & 0xFF);
                 argb[i] = (255 << 24) | value << 16 | value << 8 | value;
             }
 
