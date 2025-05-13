@@ -896,8 +896,8 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             return "ThorLabs Colour Camera";
         }
 
-        private final ThorCamMosaicLibrary mosaic       = findLibrary(ThorCamMosaicLibrary.class, "thorlabs_tsi_mono_to_color_processing");
-        private final Pointer              mosaicHandle = getHandle();
+        private final ThorCamMosaicLibrary mosaic = findLibrary(ThorCamMosaicLibrary.class, "thorlabs_tsi_mono_to_color_processing");
+        private       Pointer              mosaicHandle = null;
 
         public Colour() throws DeviceException, IOException {
             super();
@@ -911,7 +911,12 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             super(address);
         }
 
-        protected Pointer getHandle() throws IOException, DeviceException {
+        protected void refreshProcessor() throws IOException, DeviceException {
+
+            if (mosaicHandle != null) {
+                mosaic.tl_mono_to_color_destroy_mono_to_color_processor(mosaicHandle);
+                mosaicHandle = null;
+            }
 
             PointerByReference ref = new PointerByReference();
 
@@ -935,7 +940,36 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             mosaic.tl_mono_to_color_set_color_space(mHandle, 1);
             mosaic.tl_mono_to_color_set_output_format(mHandle, 1);
 
-            return mHandle;
+            mosaicHandle = mHandle;
+
+        }
+
+        public U16RGBFrame getFrame() throws IOException, DeviceException, InterruptedException, TimeoutException {
+
+            if (!isAcquiring()) {
+                refreshProcessor();
+            }
+
+            return super.getFrame();
+
+        }
+
+        public List<U16RGBFrame> getFrameSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
+
+            if (!isAcquiring()) {
+                refreshProcessor();
+            }
+
+            return super.getFrameSeries(count);
+
+        }
+
+        public void startAcquisition() throws IOException, DeviceException {
+
+            if (!isAcquiring()) {
+                refreshProcessor();
+                super.startAcquisition();
+            }
 
         }
 
