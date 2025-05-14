@@ -897,7 +897,8 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         }
 
         private final ThorCamMosaicLibrary mosaic = findLibrary(ThorCamMosaicLibrary.class, "thorlabs_tsi_mono_to_color_processing");
-        private       Pointer              mosaicHandle = null;
+
+        private Pointer mosaicHandle = null;
 
         public Colour() throws DeviceException, IOException {
             super();
