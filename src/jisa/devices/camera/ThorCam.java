@@ -1044,7 +1044,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
     }
 
-    protected static class ColourFrame extends U16RGBFrame {
+    public static class ColourFrame extends U16RGBFrame {
 
         private final static U16RGB MAX = new U16RGB(((long) Character.MAX_VALUE << 48 | (long) 4096 << 32 | (long) 4096 << 16 | 4096));
 
