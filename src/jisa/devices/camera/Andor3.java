@@ -16,6 +16,7 @@ import jisa.devices.camera.feature.FrameBinning;
 import jisa.devices.camera.feature.MultiTrack;
 import jisa.devices.camera.feature.Overlap;
 import jisa.devices.camera.frame.FrameQueue;
+import jisa.devices.camera.frame.FrameReader;
 import jisa.devices.camera.frame.U16Frame;
 import jisa.devices.camera.nat.ATCoreLibrary;
 import jisa.devices.camera.nat.ATUtilityLibrary;
@@ -34,6 +35,27 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
     public static String getDescription() {
         return "Andor sCMOS Camera (Andor SDK3)";
+    }
+
+    public static FrameReader<U16Frame> readFromFile(String path) throws IOException {
+
+        Frame[]   buffer  = new Frame[1];
+        short[][] dBuffer = new short[1][];
+
+        return new FrameReader<>(path, 2, (width, height, timestamp, data) -> {
+
+            if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
+                dBuffer[0] = new short[width * height];
+                buffer[0]  = new Frame(dBuffer[0], width, height);
+            }
+
+            ByteBuffer.wrap(data).asShortBuffer().rewind().get(dBuffer[0]);
+            buffer[0].setTimestamp(timestamp);
+
+            return buffer[0];
+
+        });
+
     }
 
     public final static int  AT_ERR_STRINGNOTAVAILABLE      = 18;

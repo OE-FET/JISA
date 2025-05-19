@@ -38,9 +38,7 @@ public class FrameReader<F extends Frame> {
     }
 
     public interface FrameCreator<F extends Frame> {
-
         F createFrame(int width, int height, long timestamp, byte[] data);
-
     }
 
 }

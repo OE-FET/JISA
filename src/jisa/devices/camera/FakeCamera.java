@@ -5,9 +5,11 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.camera.feature.MultiTrack;
 import jisa.devices.camera.frame.FrameQueue;
+import jisa.devices.camera.frame.FrameReader;
 import jisa.devices.camera.frame.U16Frame;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,6 +29,27 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
     private final Random                    random          = new Random();
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
+
+    public static FrameReader<U16Frame> readFromFile(String path) throws IOException {
+
+        Andor3.Frame[] buffer  = new Andor3.Frame[1];
+        short[][]      dBuffer = new short[1][];
+
+        return new FrameReader<>(path, 2, (width, height, timestamp, data) -> {
+
+            if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
+                dBuffer[0] = new short[width * height];
+                buffer[0]  = new Andor3.Frame(dBuffer[0], width, height);
+            }
+
+            ByteBuffer.wrap(data).asShortBuffer().rewind().get(dBuffer[0]);
+            buffer[0].setTimestamp(timestamp);
+
+            return buffer[0];
+
+        });
+
+    }
 
     public FakeCamera() {
     }

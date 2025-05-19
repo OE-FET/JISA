@@ -41,6 +41,7 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/compress-lzf-1.1.2.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/lz4-java-1.8.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/org.apache.commons.compress-1.9.2.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/OO.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>

@@ -892,6 +892,27 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
     public static class Colour extends ThorCam<U16RGBFrame, long[]> {
 
+        public static FrameReader<U16RGBFrame> readFromFile(String path) throws IOException {
+
+            ColourFrame[] buffer  = new ColourFrame[1];
+            long[][]      dBuffer = new long[1][];
+
+            return new FrameReader<>(path, 8, (width, height, timestamp, data) -> {
+
+                if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
+                    dBuffer[0] = new long[width * height];
+                    buffer[0]  = new ColourFrame(dBuffer[0], width, height, timestamp);
+                }
+
+                ByteBuffer.wrap(data).asLongBuffer().rewind().get(dBuffer[0]);
+                buffer[0].setTimestamp(timestamp);
+
+                return buffer[0];
+
+            });
+
+        }
+
         public static String getDescription() {
             return "ThorLabs Colour Camera";
         }
@@ -1011,6 +1032,26 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
     public static class Mono extends ThorCam<U16Frame, short[]> {
 
+        public static FrameReader<U16Frame> readFromFile(String path) throws IOException {
+
+            MonoFrame[] buffer  = new MonoFrame[1];
+            short[][]   dBuffer = new short[1][];
+
+            return new FrameReader<>(path, 2, (width, height, timestamp, data) -> {
+
+                if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
+                    dBuffer[0] = new short[width * height];
+                    buffer[0]  = new MonoFrame(dBuffer[0], width, height, timestamp);
+                }
+                ByteBuffer.wrap(data).asShortBuffer().rewind().get(dBuffer[0]);
+                buffer[0].setTimestamp(timestamp);
+
+                return buffer[0];
+
+            });
+
+        }
+
         public static String getDescription() {
             return "ThorLabs Mono Camera";
         }
@@ -1044,7 +1085,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
     }
 
-    public static class ColourFrame extends U16RGBFrame {
+    protected static class ColourFrame extends U16RGBFrame {
 
         private final static U16RGB MAX = new U16RGB(((long) Character.MAX_VALUE << 48 | (long) 4096 << 32 | (long) 4096 << 16 | 4096));
 
