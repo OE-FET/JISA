@@ -1,6 +1,14 @@
 package jisa.results;
 
 import com.google.common.collect.Lists;
+import com.google.common.primitives.Booleans;
+import com.google.common.primitives.Doubles;
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Longs;
+import io.jhdf.HdfFile;
+import io.jhdf.WritableHdfFile;
+import io.jhdf.api.WritableDataset;
+import io.jhdf.api.WritableGroup;
 import jisa.Util;
 import jisa.maths.matrices.RealMatrix;
 import kotlin.Pair;
@@ -10,6 +18,7 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
@@ -515,6 +524,64 @@ public abstract class ResultTable implements Iterable<Row> {
      */
     public ResultList sorted(Column<?> byColumn) {
         return sorted(r -> r.get(byColumn));
+    }
+
+    public Object[][] asArray() {
+        return stream().map(r -> r.getValues().values().toArray()).toArray(Object[][]::new);
+    }
+
+    public String[][] asStringArray() {
+        return stream().map(r -> columns.stream().map(c -> c.stringify(r.get(c))).toArray(String[]::new)).toArray(String[][]::new);
+    }
+
+    public Map<String, List> asMap() {
+
+        Map<String, List> map = new LinkedHashMap<>();
+
+        for (Column<?> column : getColumns()) {
+            map.put(column.getTitle(), get(column));
+        }
+
+        return map;
+
+    }
+
+    public void outputHDF5(String path, String name) throws IOException {
+
+        Path file = Path.of(path);
+        try (WritableHdfFile hdf = HdfFile.write(file)) {
+
+            WritableGroup mainGroup = hdf.putGroup(name);
+            WritableGroup group     = mainGroup.putGroup("RAW");
+
+            WritableDataset dataset = mainGroup.putDataset("TABLE", asStringArray());
+            dataset.putAttribute("Columns", columns.stream().map(Column::getTitle).toArray(String[]::new));
+
+            for (Column<?> column : getColumns()) {
+
+                if (column.getType() == String.class) {
+                    Column<String> c = (Column<String>) column;
+                    group.putDataset(column.getTitle(), get(c).toArray(String[]::new));
+                } else if (column.getType() == Double.class) {
+                    Column<Double> c = (Column<Double>) column;
+                    group.putDataset(column.getTitle(), Doubles.toArray(get(c)));
+                } else if (column.getType() == Integer.class) {
+                    Column<Integer> c = (Column<Integer>) column;
+                    group.putDataset(column.getTitle(), Ints.toArray(get(c)));
+                } else if (column.getType() == Long.class) {
+                    Column<Long> c = (Column<Long>) column;
+                    group.putDataset(column.getTitle(), Longs.toArray(get(c)));
+                } else if (column.getType() == Boolean.class) {
+                    Column<Boolean> c = (Column<Boolean>) column;
+                    group.putDataset(column.getTitle(), Booleans.toArray(get(c)));
+                } else {
+                    group.putDataset(column.getTitle(), get(column).stream().map(Object::toString).toArray(String[]::new));
+                }
+
+            }
+
+        }
+
     }
 
     /**

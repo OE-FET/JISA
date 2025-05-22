@@ -15,7 +15,7 @@ import jisa.devices.camera.nat.ThorCamLibrary;
 import jisa.devices.camera.nat.ThorCamMosaicLibrary;
 import jisa.visa.NativeDevice;
 
-import java.io.IOException;
+import java.io.*;
 import java.nio.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -893,11 +893,15 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     public static class Colour extends ThorCam<U16RGBFrame, long[]> {
 
         public static FrameReader<U16RGBFrame> readFromFile(String path) throws IOException {
+            return readFromFile(path, false);
+        }
+
+        public static FrameReader<U16RGBFrame> readFromFile(String path, boolean compressed) throws IOException {
 
             ColourFrame[] buffer  = new ColourFrame[1];
             long[][]      dBuffer = new long[1][];
 
-            return new FrameReader<>(path, 8, (width, height, timestamp, data) -> {
+            return new FrameReader<>(path, compressed,(width, height, bpp, timestamp, data) -> {
 
                 if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
                     dBuffer[0] = new long[width * height];
@@ -910,6 +914,36 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
                 return buffer[0];
 
             });
+
+        }
+
+        public static void convertOldFile(String oldFile, String newFile) throws IOException {
+
+            FileInputStream      fis = new FileInputStream(oldFile);
+            BufferedInputStream  bis = new BufferedInputStream(fis);
+            DataInputStream      dis = new DataInputStream(bis);
+            FileOutputStream     fos = new FileOutputStream(newFile);
+            BufferedOutputStream bos = new BufferedOutputStream(fos);
+            DataOutputStream     dos = new DataOutputStream(bos);
+
+            while (dis.available() > 0) {
+
+                int  width     = dis.readInt();
+                int  height    = dis.readInt();
+                long timestamp = dis.readLong();
+                int  length    = width * height * Long.BYTES;
+
+                dos.writeInt(width);
+                dos.writeInt(height);
+                dos.writeInt(Long.BYTES);
+                dos.writeLong(timestamp);
+
+                dos.write(dis.readNBytes(length));
+
+            }
+
+            dis.close();
+            dos.close();
 
         }
 
@@ -1032,12 +1066,12 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
     public static class Mono extends ThorCam<U16Frame, short[]> {
 
-        public static FrameReader<U16Frame> readFromFile(String path) throws IOException {
+        public static FrameReader<U16Frame> readFromFile(String path, boolean compressed) throws IOException {
 
             MonoFrame[] buffer  = new MonoFrame[1];
             short[][]   dBuffer = new short[1][];
 
-            return new FrameReader<>(path, 2, (width, height, timestamp, data) -> {
+            return new FrameReader<>(path, compressed, (width, height, bpp, timestamp, data) -> {
 
                 if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
                     dBuffer[0] = new short[width * height];

@@ -1,5 +1,8 @@
 package jisa.devices.camera.frame;
 
+import io.jhdf.api.WritableDataset;
+import io.jhdf.api.WritableGroup;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -113,6 +116,26 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
 
     }
 
+    public short[][][] getRGBImage() {
+
+        short[][][] output = new short[width][height][3];
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                output[x][y][0] = getRed(x, y);
+                output[x][y][1] = getGreen(x, y);
+                output[x][y][2] = getBlue(x, y);
+            }
+        }
+
+        return output;
+
+    }
+
+    public WritableDataset writeToHDF(WritableGroup group, String name) {
+        return group.putDataset(name, getRGBImage());
+    }
+
     @Override
     public RGB[] getData() {
         return IntStream.of(argb).mapToObj(RGB::new).toArray(RGB[]::new);
@@ -151,6 +174,7 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
 
         stream.writeInt(width);
         stream.writeInt(height);
+        stream.writeInt(Integer.BYTES);
         stream.writeLong(timestamp);
 
         ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES * argb.length);

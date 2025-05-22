@@ -1,5 +1,8 @@
 package jisa.devices.camera.frame;
 
+import io.jhdf.api.WritableDataset;
+import io.jhdf.api.WritableGroup;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -159,6 +162,10 @@ public interface Frame<D, F extends Frame> {
 
     }
 
+    default WritableDataset writeToHDF(WritableGroup group, String name) {
+        return group.putDataset(name, getARGBImage());
+    }
+
     interface ShortFrame<F extends ShortFrame> extends Frame<Short, F> {
 
         /**
@@ -201,6 +208,10 @@ public interface Frame<D, F extends Frame> {
 
             return image;
 
+        }
+
+        default WritableDataset writeToHDF(WritableGroup group, String name) {
+            return group.putDataset(name, image());
         }
 
         /**
@@ -291,6 +302,10 @@ public interface Frame<D, F extends Frame> {
 
         }
 
+        default WritableDataset writeToHDF(WritableGroup group, String name) {
+            return group.putDataset(name, image());
+        }
+
         int[] data();
 
         /**
@@ -372,6 +387,10 @@ public interface Frame<D, F extends Frame> {
 
             return image;
 
+        }
+
+        default WritableDataset writeToHDF(WritableGroup group, String name) {
+            return group.putDataset(name, image());
         }
 
         @Deprecated

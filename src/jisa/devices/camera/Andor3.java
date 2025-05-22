@@ -37,12 +37,12 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         return "Andor sCMOS Camera (Andor SDK3)";
     }
 
-    public static FrameReader<U16Frame> readFromFile(String path) throws IOException {
+    public static FrameReader<U16Frame> readFromFile(String path, boolean compressed) throws IOException {
 
         Frame[]   buffer  = new Frame[1];
         short[][] dBuffer = new short[1][];
 
-        return new FrameReader<>(path, 2, (width, height, timestamp, data) -> {
+        return new FrameReader<>(path, compressed, (width, height, bpp, timestamp, data) -> {
 
             if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
                 dBuffer[0] = new short[width * height];

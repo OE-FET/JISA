@@ -123,6 +123,11 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
     @Override
     public void writeToStream(DataOutputStream stream) throws IOException {
 
+        stream.writeInt(width);
+        stream.writeInt(height);
+        stream.writeInt(Integer.BYTES);
+        stream.writeLong(timestamp);
+
         ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES * data.length);
         buffer.asIntBuffer().rewind().put(data);
         stream.write(buffer.rewind().array());

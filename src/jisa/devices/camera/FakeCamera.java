@@ -30,12 +30,12 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     private final Random                    random          = new Random();
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
 
-    public static FrameReader<U16Frame> readFromFile(String path) throws IOException {
+    public static FrameReader<U16Frame> readFromFile(String path, boolean compressed) throws IOException {
 
         Andor3.Frame[] buffer  = new Andor3.Frame[1];
         short[][]      dBuffer = new short[1][];
 
-        return new FrameReader<>(path, 2, (width, height, timestamp, data) -> {
+        return new FrameReader<>(path, compressed, (width, height, bpp, timestamp, data) -> {
 
             if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
                 dBuffer[0] = new short[width * height];
@@ -123,7 +123,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     @Override
     public double getAcquisitionFPS() {
 
-        if ((stats[0] != stats[1]) && ((System.nanoTime() - stats[2]) >= 10000)) {
+        if ((stats[0] != stats[1]) && ((System.nanoTime() - stats[2]) >= 100000)) {
 
             synchronized (stats) {
 
@@ -170,13 +170,6 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
             }
 
-            synchronized (stats) {
-                stats[0] = 0;
-                stats[1] = 0;
-                stats[2] = System.nanoTime();
-                fps = 0.0;
-            }
-
         });
 
         running = true;
@@ -194,6 +187,13 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
         try {
             acquireThread.join();
         } catch (InterruptedException ignored) { }
+
+        synchronized (stats) {
+            stats[0] = 0;
+            stats[1] = 0;
+            stats[2] = System.nanoTime();
+            fps = 0.0;
+        }
 
     }
 

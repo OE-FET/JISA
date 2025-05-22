@@ -1,7 +1,11 @@
 package jisa.devices.camera.frame;
 
+import io.jhdf.api.WritableDataset;
+import io.jhdf.api.WritableGroup;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -115,6 +119,10 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
 
     }
 
+    public WritableDataset writeToHDF(WritableGroup group, String name) {
+        return group.putDataset(name, getLongARGBImage());
+    }
+
     @Override
     public U16RGB[] getData() {
         return LongStream.of(argb).mapToObj(U16RGB::new).toArray(U16RGB[]::new);
@@ -155,6 +163,38 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
 
     }
 
+    public short[][][] getRGBImage() {
+
+        short[][][] output = new short[width][height][3];
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                output[x][y][0] = getR(x, y);
+                output[x][y][1] = getG(x, y);
+                output[x][y][2] = getB(x, y);
+            }
+        }
+
+        return output;
+
+    }
+
+    public int[][][] getLongRGBImage() {
+
+        int[][][] output = new int[width][height][3];
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                output[x][y][0] = getRedChar(x, y);
+                output[x][y][1] = getGreenChar(x, y);
+                output[x][y][2] = getBlueChar(x, y);
+            }
+        }
+
+        return output;
+
+    }
+
     public long[] getLongARGBData() {
         return argb.clone();
     }
@@ -179,13 +219,13 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
 
         stream.writeInt(width);
         stream.writeInt(height);
+        stream.writeInt(Long.BYTES);
         stream.writeLong(timestamp);
 
-        for (long pixel : argb) {
+        ByteBuffer buffer = ByteBuffer.allocate(argb.length * Long.BYTES);
+        buffer.asLongBuffer().put(argb);
 
-            stream.writeLong(pixel);
-
-        }
+        stream.write(buffer.array());
 
     }
 
