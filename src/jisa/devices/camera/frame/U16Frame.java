@@ -133,7 +133,7 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
 
         stream.writeInt(width);
         stream.writeInt(height);
-        stream.writeInt(Short.BYTES * data.length);
+        stream.writeInt(Short.BYTES);
         stream.writeLong(timestamp);
 
         stream.write(buffer.rewind().array());

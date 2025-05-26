@@ -391,7 +391,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         try {
             frequency = getInt(sdk::tl_camera_get_timestamp_clock_frequency, "tl_camera_get_timestamp_clock_frequency");
         } catch (Exception e) {
-            frequency = 1000000000;
+            frequency = -1;
         }
 
         final D    argb        = createBuffer(pCount);
@@ -908,7 +908,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
                     buffer[0]  = new ColourFrame(dBuffer[0], width, height, timestamp);
                 }
 
-                ByteBuffer.wrap(data).asLongBuffer().rewind().get(dBuffer[0]);
+                ByteBuffer.wrap(data).asLongBuffer().rewind().get(dBuffer[0], 0, data.length / bpp);
                 buffer[0].setTimestamp(timestamp);
 
                 return buffer[0];

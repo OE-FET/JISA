@@ -554,6 +554,8 @@ public class HeatMap extends JFXElement {
         gc.setTextBaseline(VPos.CENTER);
         gc.fillText(getTitle(), (pStartX + pEndX) / 2.0, TITLE_SIZE);
 
+        drawColourBar();
+
     }
 
     private void drawColourBar() {

@@ -5,8 +5,6 @@ import io.jhdf.WritableHdfFile;
 import io.jhdf.api.WritableDataset;
 
 import java.io.*;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.DeflaterOutputStream;
@@ -71,6 +69,7 @@ public class FrameReader<F extends Frame> {
                 cache = frameCreator.createFrame(width, height, bytesPerPixel, timestamp, data);
 
             } catch (Throwable e) {
+                e.printStackTrace();
                 return false;
             }
 
@@ -112,10 +111,10 @@ public class FrameReader<F extends Frame> {
 
     public synchronized void compress() throws IOException {
 
-        File                temp    = new File(path + ".temp");
-        WritableByteChannel tempOut = Channels.newChannel(new DeflaterOutputStream(new BufferedOutputStream(new FileOutputStream(temp)), false));
+        File                 temp    = new File(path + ".temp");
+        DeflaterOutputStream os   = new DeflaterOutputStream(new BufferedOutputStream(new FileOutputStream(temp)));
 
-        fis.getChannel().transferTo(0, fis.available(), tempOut);
+        fis.transferTo(os);
 
         close();
 
@@ -123,17 +122,22 @@ public class FrameReader<F extends Frame> {
         f.delete();
 
         Files.move(temp.toPath(), f.toPath());
-        tempOut.close();
+        os.flush();
+        os.close();
 
     }
 
     public synchronized void compress(String newPath) throws IOException {
 
-        File                temp    = new File(newPath);
-        WritableByteChannel tempOut = Channels.newChannel(new DeflaterOutputStream(new BufferedOutputStream(new FileOutputStream(temp)), false));
-        fis.getChannel().transferTo(0, fis.available(), tempOut);
+        File                 temp = new File(newPath);
+        DeflaterOutputStream os   = new DeflaterOutputStream(new BufferedOutputStream(new FileOutputStream(temp)));
+
+        fis.transferTo(os);
+
+        os.flush();
+        os.close();
+
         close();
-        tempOut.close();
 
     }
 
