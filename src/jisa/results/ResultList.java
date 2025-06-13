@@ -40,19 +40,13 @@ public class ResultList extends ResultTable {
 
         ResultList list;
 
-        String type = Files.probeContentType(Paths.get(filePath));
-
-        if (type == null) {
-            return loadBinaryFile(filePath);
+        try {
+            list = loadBinaryFile(filePath);
+        } catch (Throwable e) {
+            list = loadCSVFile(filePath);
         }
 
-        type = type.toLowerCase();
-
-        if ((type.contains("text") || type.contains("csv"))) {
-            return loadCSVFile(filePath);
-        } else {
-            return loadBinaryFile(filePath);
-        }
+        return list;
 
     }
 
