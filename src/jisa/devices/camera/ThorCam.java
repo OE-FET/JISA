@@ -892,23 +892,19 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
     public static class Colour extends ThorCam<U16RGBFrame, long[]> {
 
-        public static FrameReader<U16RGBFrame> readFromFile(String path) throws IOException {
-            return readFromFile(path, false);
-        }
-
-        public static FrameReader<U16RGBFrame> readFromFile(String path, boolean compressed) throws IOException {
+        public static FrameReader<U16RGBFrame> openFrameReader(String path) throws IOException {
 
             ColourFrame[] buffer  = new ColourFrame[1];
             long[][]      dBuffer = new long[1][];
 
-            return new FrameReader<>(path, compressed,(width, height, bpp, timestamp, data) -> {
+            return new FrameReader<>(path, (width, height, bpp, timestamp, data) -> {
 
                 if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
                     dBuffer[0] = new long[width * height];
                     buffer[0]  = new ColourFrame(dBuffer[0], width, height, timestamp);
                 }
 
-                ByteBuffer.wrap(data).asLongBuffer().rewind().get(dBuffer[0], 0, data.length / bpp);
+                ByteBuffer.wrap(data).asLongBuffer().rewind().get(dBuffer[0]);
                 buffer[0].setTimestamp(timestamp);
 
                 return buffer[0];
@@ -1066,12 +1062,12 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
     public static class Mono extends ThorCam<U16Frame, short[]> {
 
-        public static FrameReader<U16Frame> readFromFile(String path, boolean compressed) throws IOException {
+        public static FrameReader<U16Frame> openFrameReader(String path) throws IOException {
 
             MonoFrame[] buffer  = new MonoFrame[1];
             short[][]   dBuffer = new short[1][];
 
-            return new FrameReader<>(path, compressed, (width, height, bpp, timestamp, data) -> {
+            return new FrameReader<>(path, (width, height, bpp, timestamp, data) -> {
 
                 if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
                     dBuffer[0] = new short[width * height];

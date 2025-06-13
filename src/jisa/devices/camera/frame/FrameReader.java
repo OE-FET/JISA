@@ -3,8 +3,10 @@ package jisa.devices.camera.frame;
 import io.jhdf.HdfFile;
 import io.jhdf.WritableHdfFile;
 import io.jhdf.api.WritableDataset;
+import jisa.devices.camera.Camera;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.DeflaterOutputStream;
@@ -14,31 +16,54 @@ public class FrameReader<F extends Frame> {
 
     private final String          path;
     private final FrameCreator<F> frameCreator;
-    private final FileInputStream fis;
     private final DataInputStream dis;
-    private       F               cache = null;
 
-    public FrameReader(String path, boolean compressed, FrameCreator<F> frameCreator) throws IOException {
+    public FrameReader(String path, FrameCreator<F> frameCreator) throws IOException {
 
         this.path         = path;
         this.frameCreator = frameCreator;
-        this.fis          = new FileInputStream(path);
 
-        if (compressed) {
-            this.dis = new DataInputStream(new InflaterInputStream(new BufferedInputStream(fis)));
+        FileInputStream fis = new FileInputStream(path);
+        DataInputStream dis = new DataInputStream(new BufferedInputStream(fis));
+
+        String header = new String(dis.readNBytes(Camera.IMAGE_STREAM_HEADER.length()), StandardCharsets.US_ASCII);
+
+        if (header.startsWith("JISA IMAGE STREAM")) {
+            this.dis = dis;
         } else {
-            this.dis = new DataInputStream(new BufferedInputStream(fis));
+
+            dis.close();
+            fis    = new FileInputStream(path);
+            dis    = new DataInputStream(new InflaterInputStream(new BufferedInputStream(fis)));
+            header = new String(dis.readNBytes(Camera.IMAGE_STREAM_HEADER.length()), StandardCharsets.US_ASCII);
+
+            if (header.startsWith("JISA IMAGE STREAM")) {
+                this.dis = dis;
+            } else {
+                throw new IOException(String.format("\"%s\" is not a valid image stream file", path));
+            }
+
         }
 
     }
 
-    public synchronized F readFrame() throws IOException {
+    public static void upgrade(String oldFile, String newFile) throws IOException {
 
-        if (cache != null) {
-            F frame = cache;
-            cache = null;
-            return frame;
-        }
+
+        FileInputStream  fis = new FileInputStream(oldFile);
+        DataInputStream  dis = new DataInputStream(new BufferedInputStream(fis));
+        FileOutputStream fos = new FileOutputStream(newFile);
+        DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(fos));
+
+        dos.writeBytes(Camera.IMAGE_STREAM_HEADER);
+        dis.transferTo(dos);
+
+        dis.close();
+        dos.close();
+
+    }
+
+    public synchronized F readFrame() throws IOException {
 
         int    width         = dis.readInt();
         int    height        = dis.readInt();
@@ -51,32 +76,7 @@ public class FrameReader<F extends Frame> {
     }
 
     public synchronized boolean hasFrame() throws IOException {
-
-        if (dis.available() == 0) {
-            return false;
-        }
-
-        if (cache == null) {
-
-            try {
-
-                int    width         = dis.readInt();
-                int    height        = dis.readInt();
-                int    bytesPerPixel = dis.readInt();
-                long   timestamp     = dis.readLong();
-                byte[] data          = dis.readNBytes(width * height * bytesPerPixel);
-
-                cache = frameCreator.createFrame(width, height, bytesPerPixel, timestamp, data);
-
-            } catch (Throwable e) {
-                e.printStackTrace();
-                return false;
-            }
-
-        }
-
-        return true;
-
+        return dis.available() > 0;
     }
 
     public void close() throws IOException {
@@ -111,10 +111,11 @@ public class FrameReader<F extends Frame> {
 
     public synchronized void compress() throws IOException {
 
-        File                 temp    = new File(path + ".temp");
+        File                 temp = new File(path + ".temp");
         DeflaterOutputStream os   = new DeflaterOutputStream(new BufferedOutputStream(new FileOutputStream(temp)));
 
-        fis.transferTo(os);
+        os.write(Camera.IMAGE_STREAM_HEADER.getBytes(StandardCharsets.US_ASCII));
+        dis.transferTo(os);
 
         close();
 
@@ -132,7 +133,8 @@ public class FrameReader<F extends Frame> {
         File                 temp = new File(newPath);
         DeflaterOutputStream os   = new DeflaterOutputStream(new BufferedOutputStream(new FileOutputStream(temp)));
 
-        fis.transferTo(os);
+        os.write(Camera.IMAGE_STREAM_HEADER.getBytes(StandardCharsets.US_ASCII));
+        dis.transferTo(os);
 
         os.flush();
         os.close();

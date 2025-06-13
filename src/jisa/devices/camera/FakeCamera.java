@@ -30,12 +30,12 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     private final Random                    random          = new Random();
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
 
-    public static FrameReader<U16Frame> readFromFile(String path, boolean compressed) throws IOException {
+    public static FrameReader<U16Frame> openFrameReader(String path) throws IOException {
 
         Andor3.Frame[] buffer  = new Andor3.Frame[1];
         short[][]      dBuffer = new short[1][];
 
-        return new FrameReader<>(path, compressed, (width, height, bpp, timestamp, data) -> {
+        return new FrameReader<>(path, (width, height, bpp, timestamp, data) -> {
 
             if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
                 dBuffer[0] = new short[width * height];

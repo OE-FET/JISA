@@ -4,6 +4,9 @@ import com.google.common.primitives.Doubles;
 import jisa.Util;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
@@ -14,8 +17,9 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
     protected final double[] wavelengths;
     protected final double[] counts;
+    protected       long     timestamp;
 
-    public Spectrum(double[] wavelengths, double[] counts) {
+    public Spectrum(double[] wavelengths, double[] counts, long timestamp) {
 
         if (wavelengths.length != counts.length) {
             throw new IllegalArgumentException("Wavelength and Value arrays must have the same length.");
@@ -23,7 +27,16 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
         this.wavelengths = wavelengths;
         this.counts      = counts;
+        this.timestamp   = timestamp;
 
+    }
+
+    public Spectrum(double[] wavelengths, double[] counts) {
+        this(wavelengths, counts, System.nanoTime());
+    }
+
+    public Spectrum(double[] wavelengths, float[] counts, long timestamp) {
+        this(wavelengths, IntStream.range(0, counts.length).mapToDouble(i -> counts[i]).toArray(), timestamp);
     }
 
     public Spectrum(double[] wavelengths, float[] counts) {
@@ -34,8 +47,16 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         this(wavelengths, IntStream.of(counts).mapToDouble(i -> (double) i).toArray());
     }
 
+    public Spectrum(double[] wavelengths, int[] counts, long timestamp) {
+        this(wavelengths, IntStream.of(counts).mapToDouble(i -> (double) i).toArray(), timestamp);
+    }
+
     public Spectrum(double[] wavelengths, long[] counts) {
         this(wavelengths, LongStream.of(counts).mapToDouble(i -> (double) i).toArray());
+    }
+
+    public Spectrum(double[] wavelengths, long[] counts, long timestamp) {
+        this(wavelengths, LongStream.of(counts).mapToDouble(i -> (double) i).toArray(), timestamp);
     }
 
     /**
@@ -86,17 +107,26 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
     }
 
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
     /**
      * Returns a deep copy of this Spectrum object.
      *
      * @return Deep copy.
      */
     public Spectrum copy() {
-        return new Spectrum(getWavelengths(), getCounts());
+        return new Spectrum(getWavelengths(), getCounts(), getTimestamp());
     }
 
     public void copyFrom(Spectrum other) {
         System.arraycopy(other.counts, 0, counts, 0, counts.length);
+        this.timestamp = other.timestamp;
     }
 
     public void copyFrom(double[] counts) {
@@ -281,6 +311,22 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         }
 
         return new Point(getWavelength(index), getCount(index));
+
+    }
+
+    public void writeToStream(DataOutputStream out) throws IOException {
+
+        out.writeInt(wavelengths.length);
+        out.writeLong(timestamp);
+
+        ByteBuffer wl = ByteBuffer.allocate(wavelengths.length * Double.BYTES);
+        ByteBuffer ct = ByteBuffer.allocate(counts.length * Double.BYTES);
+
+        wl.asDoubleBuffer().put(wavelengths);
+        ct.asDoubleBuffer().put(counts);
+
+        out.write(wl.array());
+        out.write(ct.array());
 
     }
 

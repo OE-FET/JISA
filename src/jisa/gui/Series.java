@@ -173,7 +173,7 @@ public interface Series {
     }
 
     default Series plotSpectrum(Spectrum spectrum) {
-        return setPoints(spectrum.getWavelengths(), spectrum.getCounts());
+        return addPoints(spectrum.getWavelengths(), spectrum.getCounts());
     }
 
     default Series updateSpectrum(Spectrum spectrum) {

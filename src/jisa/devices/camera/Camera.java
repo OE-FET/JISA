@@ -11,6 +11,7 @@ import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
@@ -20,6 +21,8 @@ import java.util.concurrent.TimeoutException;
  * @param <F> The class used to represent each frame returned by this camera, must extend Frame.
  */
 public interface Camera<F extends Frame> extends Instrument {
+
+    String IMAGE_STREAM_HEADER = "JISA IMAGE STREAM: width (int, 4 bytes), height (int, 4 bytes), bytes per pixel (int, 4 bytes), timestamp (long, 8 bytes), image data (byte array, w*h*bpp bytes)";
 
     /**
      * Returns the integration/exposure time being used by this camera.
@@ -224,6 +227,7 @@ public interface Camera<F extends Frame> extends Instrument {
      */
     default FrameThread<F> streamToFile(String path) throws IOException {
         DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path)));
+        dos.write(IMAGE_STREAM_HEADER.getBytes(StandardCharsets.US_ASCII));
         return new FrameThread<>(this, f -> f.writeToStream(dos), dos::close);
     }
 

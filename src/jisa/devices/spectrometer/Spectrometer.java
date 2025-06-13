@@ -6,8 +6,11 @@ import jisa.devices.Instrument;
 import jisa.devices.MultiInstrument;
 import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.devices.spectrometer.spectrum.SpectrumQueue;
+import jisa.devices.spectrometer.spectrum.SpectrumReader;
+import jisa.devices.spectrometer.spectrum.SpectrumThread;
 
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +23,12 @@ import java.util.concurrent.TimeoutException;
  * @param <C> The class representing the individual channels of this spectrometer.
  */
 public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrograph, MultiInstrument {
+
+    String SPECTRUM_STREAM_HEADER = "JISA SPECTRUM STREAM: length (int, 4 bytes), timestamp (long, 8 bytes), wavelengths (double array, 8*length bytes), counts (double array, 8*length bytes)";
+
+    static SpectrumReader openSpectrumReader(String path) throws IOException {
+        return new SpectrumReader(path);
+    }
 
     /**
      * Returns a list of all channels this spectrometer has.
@@ -163,6 +172,25 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrogra
          */
         void closeSpectrumQueue(SpectrumQueue queue);
 
+        default SpectrumThread startSpectrumThread(CountStreamer streamer) {
+            return new SpectrumThread(this, streamer);
+        }
+
+        default SpectrumThread startSpectrumThread(Streamer streamer) {
+            return new SpectrumThread(this, streamer);
+        }
+
+        default SpectrumThread stream(OutputStream stream) {
+            DataOutputStream out = new DataOutputStream(stream);
+            return startSpectrumThread(s -> s.writeToStream(out));
+        }
+
+        default SpectrumThread streamToFile(String path) throws IOException {
+            DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path)));
+            out.write(SPECTRUM_STREAM_HEADER.getBytes(StandardCharsets.US_ASCII));
+            return new SpectrumThread(this, f -> f.writeToStream(out), out::close);
+        }
+
     }
 
     /**
@@ -206,6 +234,18 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrogra
          * @param spectrum The spectrum in question.
          */
         void newSpectrum(Spectrum spectrum);
+
+    }
+
+    interface Streamer {
+
+        void newSpectrum(Spectrum spectrum) throws Exception;
+
+    }
+
+    interface CountStreamer {
+
+        void newSpectrum(long count, Spectrum spectrum) throws Exception;
 
     }
 

@@ -300,6 +300,16 @@ public interface Instrument {
             return otherwise;
         }
 
+        public boolean equals(Object o) {
+
+            if (this == o) {
+                return true;
+            }
+
+            return o instanceof AutoQuantity && ((AutoQuantity<?>) o).isAuto() == isAuto() && ((AutoQuantity<?>) o).getValue() == getValue();
+
+        }
+
     }
 
     class OptionalQuantity<S> {
@@ -318,6 +328,16 @@ public interface Instrument {
 
         public S getValue() {
             return otherwise;
+        }
+
+        public boolean equals(Object o) {
+
+            if (this == o) {
+                return true;
+            }
+
+            return o instanceof OptionalQuantity && ((OptionalQuantity<?>) o).isUsed() == isUsed() && ((OptionalQuantity<?>) o).getValue() == getValue();
+
         }
 
     }

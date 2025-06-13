@@ -6,8 +6,7 @@ import javafx.util.converter.IntegerStringConverter;
 
 import java.util.function.UnaryOperator;
 
-public class IntegerField extends TextField
-{
+public class IntegerField extends TextField {
 
     private static final UnaryOperator<TextFormatter.Change> INT_FILTER = change -> {
         String newText = change.getControlNewText();
@@ -24,11 +23,13 @@ public class IntegerField extends TextField
 
 
     public int getIntValue() {
+
         try {
             return Integer.valueOf(getText());
         } catch (Exception e) {
             return 0;
         }
+
     }
 
 }
