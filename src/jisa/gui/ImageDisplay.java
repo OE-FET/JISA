@@ -7,6 +7,7 @@ import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import jisa.devices.camera.frame.Frame;
 import jisa.maths.matrices.Matrix;
 
@@ -44,13 +45,31 @@ public class ImageDisplay extends JFXElement {
         this(title, new CanvasPane(500, 500));
     }
 
+    public void render() {
+
+        double width   = image.getWidth();
+        double height  = image.getHeight();
+        double cWidth  = canvas.getWidth();
+        double cHeight = canvas.getHeight();
+        double ratio   = width / height;
+        double rWidth  = Math.min(cWidth, cHeight * ratio);
+        double rHeight = Math.min(cHeight, cWidth / ratio);
+        double x       = (cWidth - rWidth) / 2;
+        double y       = (cHeight - rHeight) / 2;
+
+        GUI.runNow(() -> {
+            pixels.updateBuffer(b -> null);
+            canvas.getGraphicsContext2D().setFill(Color.BLACK);
+            canvas.getGraphicsContext2D().fillRect(0, 0, cWidth, cHeight);
+            canvas.getGraphicsContext2D().drawImage(image, x, y, rWidth, rHeight);
+        });
+
+    }
+
     public void drawMono(short[][] data, short max) {
 
         int height = data.length;
         int width  = height > 0 ? data[0].length : 0;
-
-        double cHeight = canvas.getHeight();
-        double cWidth  = canvas.getWidth();
 
         if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
             pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());
@@ -70,10 +89,7 @@ public class ImageDisplay extends JFXElement {
 
         }
 
-        GUI.runNow(() -> {
-            pixels.updateBuffer(b -> null);
-            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
-        });
+        render();
 
     }
 
@@ -81,9 +97,6 @@ public class ImageDisplay extends JFXElement {
 
         int height = data.rows();
         int width  = data.cols();
-
-        double cHeight = canvas.getHeight();
-        double cWidth  = canvas.getWidth();
 
         if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
             pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());
@@ -103,10 +116,7 @@ public class ImageDisplay extends JFXElement {
 
         }
 
-        GUI.runNow(() -> {
-            pixels.updateBuffer(b -> null);
-            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
-        });
+        render();
 
     }
 
@@ -114,8 +124,6 @@ public class ImageDisplay extends JFXElement {
 
         int    height  = (int) StreamSupport.stream(data.spliterator(), false).count();
         int    width   = height > 0 ? (int) StreamSupport.stream(data.iterator().next().spliterator(), false).count() : 0;
-        double cHeight = canvas.getHeight();
-        double cWidth  = canvas.getWidth();
 
         if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
             pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());
@@ -136,10 +144,7 @@ public class ImageDisplay extends JFXElement {
 
         }
 
-        GUI.runNow(() -> {
-            pixels.updateBuffer(b -> null);
-            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
-        });
+        render();
 
     }
 
@@ -148,9 +153,6 @@ public class ImageDisplay extends JFXElement {
         int height = data.length;
         int width  = height > 0 ? data[0].length : 0;
 
-        double cHeight = canvas.getHeight();
-        double cWidth  = canvas.getWidth();
-
         if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
             pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());
             image  = new WritableImage(pixels);
@@ -169,10 +171,7 @@ public class ImageDisplay extends JFXElement {
 
         }
 
-        GUI.runNow(() -> {
-            pixels.updateBuffer(b -> null);
-            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
-        });
+        render();
 
     }
 
@@ -181,9 +180,6 @@ public class ImageDisplay extends JFXElement {
         int height = data.length;
         int width  = height > 0 ? data[0].length : 0;
 
-        double cHeight = canvas.getHeight();
-        double cWidth  = canvas.getWidth();
-
         if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
             pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());
             image  = new WritableImage(pixels);
@@ -202,17 +198,11 @@ public class ImageDisplay extends JFXElement {
 
         }
 
-        GUI.runNow(() -> {
-            pixels.updateBuffer(b -> null);
-            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
-        });
+        render();
 
     }
 
     public void drawARGB(int[] data, int width, int height) {
-
-        double cHeight = canvas.getHeight();
-        double cWidth  = canvas.getWidth();
 
         if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
             pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());
@@ -222,10 +212,7 @@ public class ImageDisplay extends JFXElement {
         int[] raw = pixels.getBuffer().array();
         System.arraycopy(data, 0, raw, 0, width * height);
 
-        GUI.runNow(() -> {
-            pixels.updateBuffer(b -> null);
-            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
-        });
+        render();
 
     }
 
@@ -233,8 +220,6 @@ public class ImageDisplay extends JFXElement {
 
         int    width   = data.getWidth();
         int    height  = data.getHeight();
-        double cHeight = canvas.getHeight();
-        double cWidth  = canvas.getWidth();
 
         if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
             pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());
@@ -243,10 +228,7 @@ public class ImageDisplay extends JFXElement {
 
         data.readARGBData(pixels.getBuffer().array());
 
-        GUI.runNow(() -> {
-            pixels.updateBuffer(b -> null);
-            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
-        });
+        render();
 
     }
 
@@ -254,9 +236,6 @@ public class ImageDisplay extends JFXElement {
 
         int height = data.length;
         int width  = height > 0 ? data[0].length : 0;
-
-        double cHeight = canvas.getHeight();
-        double cWidth  = canvas.getWidth();
 
         if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
             pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());
@@ -269,10 +248,7 @@ public class ImageDisplay extends JFXElement {
             System.arraycopy(data[y], 0, raw, width * y, width);
         }
 
-        GUI.runNow(() -> {
-            pixels.updateBuffer(b -> null);
-            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
-        });
+        render();
 
     }
 
@@ -288,9 +264,6 @@ public class ImageDisplay extends JFXElement {
         if (data[0][0].length != 3) {
             throw new IllegalArgumentException("Data must have three colour components!");
         }
-
-        double cHeight = canvas.getHeight();
-        double cWidth  = canvas.getWidth();
 
         if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
             pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());
@@ -309,10 +282,7 @@ public class ImageDisplay extends JFXElement {
 
         }
 
-        GUI.runNow(() -> {
-            pixels.updateBuffer(b -> null);
-            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
-        });
+        render();
 
     }
 
@@ -328,9 +298,6 @@ public class ImageDisplay extends JFXElement {
         if (redHeight != greenHeight || redHeight != blueHeight || redWidth != greenWidth || redWidth != blueWidth) {
             throw new IllegalArgumentException("Sizes of red, green, and blue arrays do not match.");
         }
-
-        double cHeight = canvas.getHeight();
-        double cWidth  = canvas.getWidth();
 
         if (pixels == null || pixels.getHeight() != redHeight || pixels.getWidth() != redWidth) {
             pixels = new PixelBuffer<>(redWidth, redHeight, IntBuffer.allocate(redWidth * redHeight), PixelFormat.getIntArgbPreInstance());
@@ -349,24 +316,14 @@ public class ImageDisplay extends JFXElement {
 
         }
 
-        GUI.runNow(() -> {
-            pixels.updateBuffer(b -> null);
-            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
-        });
+        render();
 
 
     }
 
 
     public void resized() {
-
-        double cHeight = canvas.getHeight();
-        double cWidth  = canvas.getWidth();
-
-        GUI.runNow(() -> {
-            canvas.getGraphicsContext2D().drawImage(image, 0, 0, cWidth, cHeight);
-        });
-
+        render();
     }
 
     private static class CanvasPane extends Pane {

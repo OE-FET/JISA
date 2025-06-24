@@ -58,6 +58,42 @@ public abstract class ResultTable implements Iterable<Row> {
         return ResultList.loadFile(path);
     }
 
+    public boolean equals(Object o) {
+
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        ResultTable that = (ResultTable) o;
+
+        if (that.getRowCount() != getRowCount()) {
+            return false;
+        }
+
+        if (that.getColumnCount() != getColumnCount()) {
+            return false;
+        }
+
+        for (int i = 0; i < that.getRowCount(); i++) {
+
+            for (int j = 0; j < that.getColumnCount(); j++) {
+
+                if (!that.get(i, getColumn(j)).equals(get(i, getColumn(j)))) {
+                    return false;
+                }
+
+            }
+
+        }
+
+        return true;
+
+    }
+
     public static Column[] parseColumnHeaderLine(String header) {
 
         header = header.replace("\\\"", "&quot;").replace("\\,", "&comma;");

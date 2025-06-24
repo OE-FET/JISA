@@ -3,6 +3,7 @@ package jisa.devices.camera;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
+import jisa.devices.camera.feature.AutoIntegration;
 import jisa.devices.camera.feature.MultiTrack;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameReader;
@@ -16,7 +17,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
-public class FakeCamera implements Camera<U16Frame>, MultiTrack {
+public class FakeCamera implements Camera<U16Frame>, MultiTrack, AutoIntegration {
 
     private       int     width           = 1024;
     private       int     height          = 1024;
@@ -437,5 +438,15 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     @Override
     public List<Track> getMultiTracks() throws IOException, DeviceException {
         return List.of();
+    }
+
+    @Override
+    public boolean isAutoIntegrationEnabled() throws IOException, DeviceException {
+        return false;
+    }
+
+    @Override
+    public void setAutoIntegrationEnabled(boolean enabled) throws IOException, DeviceException {
+
     }
 }

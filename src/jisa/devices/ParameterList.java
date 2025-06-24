@@ -6,6 +6,10 @@ import java.util.LinkedList;
 
 public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
 
+    public void remove(String name) {
+        removeIf(p -> p.getName().trim().equalsIgnoreCase(name.trim()));
+    }
+
     public <T> void addValue(String name, T defValue, Instrument.Setter<T> setter) {
         add(new Parameter<>(name, defValue, setter));
     }

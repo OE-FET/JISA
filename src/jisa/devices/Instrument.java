@@ -9,6 +9,7 @@ import org.apache.commons.lang3.ClassUtils;
 import org.reflections.Reflections;
 
 import java.io.IOException;
+import java.lang.annotation.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -123,8 +124,7 @@ public interface Instrument {
 
         });
 
-        Set<String> seen = ConcurrentHashMap.newKeySet();
-        return parameters.stream().filter(v -> seen.add(v.getName())).collect(Collectors.toList());
+        return parameters;
 
     }
 
@@ -166,7 +166,13 @@ public interface Instrument {
         parameters.addAll(getFeatureParameters(target));
         parameters.addAll(getInstrumentParameters(target));
 
-        return parameters;
+        Set<String> seen = ConcurrentHashMap.newKeySet();
+
+        Collections.reverse(parameters);
+        List<Parameter<?>> distinct = parameters.stream().filter(v -> seen.add(v.getName())).collect(Collectors.toList());
+        Collections.reverse(distinct);
+
+        return distinct;
 
     }
 
@@ -306,7 +312,7 @@ public interface Instrument {
                 return true;
             }
 
-            return o instanceof AutoQuantity && ((AutoQuantity<?>) o).isAuto() == isAuto() && ((AutoQuantity<?>) o).getValue() == getValue();
+            return (o instanceof AutoQuantity) && (((AutoQuantity<?>) o).isAuto() == isAuto()) && ((AutoQuantity<?>) o).getValue().equals(getValue());
 
         }
 
@@ -336,7 +342,7 @@ public interface Instrument {
                 return true;
             }
 
-            return o instanceof OptionalQuantity && ((OptionalQuantity<?>) o).isUsed() == isUsed() && ((OptionalQuantity<?>) o).getValue() == getValue();
+            return (o instanceof OptionalQuantity) && (((OptionalQuantity<?>) o).isUsed() == isUsed()) && (((OptionalQuantity<?>) o).getValue().equals(getValue()));
 
         }
 
@@ -360,6 +366,77 @@ public interface Instrument {
             return value;
         }
 
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Inherited
+    @interface QuantityGetter {
+        String name();
+
+        String units() default "";
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Inherited
+    @interface QuantitySetter {
+        String name();
+
+        String units() default "";
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Inherited
+    @interface Command {
+        String name();
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Inherited
+    @interface ParameterGetter {
+        String name();
+
+        String units() default "";
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Inherited
+    @interface ParameterSetter {
+        String name();
+
+        String units() default "";
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Inherited
+    @interface AutoParameterGetter {
+        String name();
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Inherited
+    @interface AutoParameterSetter {
+        String name();
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Inherited
+    @interface OptionalParameterGetter {
+        String name();
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    @Inherited
+    @interface OptionalParameterSetter {
+        String name();
     }
 
 }

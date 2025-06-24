@@ -24,6 +24,29 @@ public interface Camera<F extends Frame> extends Instrument {
 
     String IMAGE_STREAM_HEADER = "JISA IMAGE STREAM: width (int, 4 bytes), height (int, 4 bytes), bytes per pixel (int, 4 bytes), timestamp (long, 8 bytes), image data (byte array, w*h*bpp bytes)";
 
+    static void addParameters(Camera<?> inst, Class<?> target, ParameterList parameters) {
+
+        parameters.addValue("Integration Time [s]", inst::getIntegrationTime, 20e-3, inst::setIntegrationTime);
+        parameters.addValue("Acquisition Timeout [ms]", inst::getAcquisitionTimeout, 1000, inst::setAcquisitionTimeout);
+        parameters.addValue("X Binning", inst::getBinningX, 1, inst::setBinningX);
+        parameters.addValue("Y Binning", inst::getBinningY, 1, inst::setBinningY);
+        parameters.addValue("Frame Width", inst::getFrameWidth, 1024, inst::setFrameWidth);
+        parameters.addValue("Frame Height", inst::getFrameHeight, 1024, inst::setFrameHeight);
+
+        parameters.addAuto("Frame X Offset", inst::isFrameCentredX, false, inst::getFrameOffsetX, 1, o -> inst.setFrameCentredX(true), o -> {
+            inst.setFrameCentredX(false);
+            inst.setFrameOffsetX(o);
+        });
+
+        parameters.addAuto("Frame Y Offset", inst::isFrameCentredY, false, inst::getFrameOffsetY, 1, o -> inst.setFrameCentredY(true), o -> {
+            inst.setFrameCentredY(false);
+            inst.setFrameOffsetY(o);
+        });
+
+        parameters.addValue("Hardware Timestamping", inst::isTimestampEnabled, false, inst::setTimestampEnabled);
+
+    }
+
     /**
      * Returns the integration/exposure time being used by this camera.
      *
@@ -488,29 +511,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * @throws DeviceException Upon device compatibility error
      */
     void setTimestampEnabled(boolean timestamping) throws IOException, DeviceException;
-
-    static void addParameters(Camera<?> inst, Class<?> target, ParameterList parameters) {
-
-        parameters.addValue("Integration Time [s]", inst::getIntegrationTime, 20e-3, inst::setIntegrationTime);
-        parameters.addValue("Acquisition Timeout [ms]", inst::getAcquisitionTimeout, 1000, inst::setAcquisitionTimeout);
-        parameters.addValue("X Binning", inst::getBinningX, 1, inst::setBinningX);
-        parameters.addValue("Y Binning", inst::getBinningY, 1, inst::setBinningY);
-        parameters.addValue("Frame Width", inst::getFrameWidth, 1024, inst::setFrameWidth);
-        parameters.addValue("Frame Height", inst::getFrameHeight, 1024, inst::setFrameHeight);
-
-        parameters.addAuto("Frame X Offset", inst::isFrameCentredX, false, inst::getFrameOffsetX, 1, o -> inst.setFrameCentredX(true), o -> {
-            inst.setFrameCentredX(false);
-            inst.setFrameOffsetX(o);
-        });
-
-        parameters.addAuto("Frame Y Offset", inst::isFrameCentredY, false, inst::getFrameOffsetY, 1, o -> inst.setFrameCentredY(true), o -> {
-            inst.setFrameCentredY(false);
-            inst.setFrameOffsetY(o);
-        });
-
-        parameters.addValue("Hardware Timestamping", inst::isTimestampEnabled, false, inst::setTimestampEnabled);
-
-    }
 
     interface Listener<F extends Frame> {
         void newFrame(F frame);

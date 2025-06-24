@@ -348,12 +348,22 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
     @Override
     public void setAcquisitionTimeout(int timeout) throws IOException, DeviceException {
+
+        if (timeout == 0) {
+            timeout = Integer.MAX_VALUE;
+        }
+
         process(sdk.tl_camera_set_image_poll_timeout(handle, timeout), "tl_camera_set_image_poll_timeout");
+
     }
 
     @Override
     public int getAcquisitionTimeout() throws IOException, DeviceException {
-        return getInt(sdk::tl_camera_get_image_poll_timeout, "tl_camera_get_image_poll_timeout");
+
+        int value = getInt(sdk::tl_camera_get_image_poll_timeout, "tl_camera_get_image_poll_timeout");
+
+        return value == Integer.MAX_VALUE ? 0 : value;
+
     }
 
     @Override

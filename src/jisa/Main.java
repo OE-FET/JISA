@@ -1,7 +1,6 @@
 package jisa;
 
 import jisa.addresses.Address;
-import jisa.gui.ConnectorGrid;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;

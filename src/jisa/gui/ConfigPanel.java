@@ -1,6 +1,7 @@
 package jisa.gui;
 
 import javafx.beans.InvalidationListener;
+import javafx.beans.property.Property;
 import javafx.collections.FXCollections;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
@@ -18,7 +19,12 @@ import jisa.results.ResultTable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
+/**
+ * GUI element for configuring instrument parameters.
+ * @param <I>
+ */
 public class ConfigPanel<I extends Instrument> extends JFXElement {
 
     private final I                                   instrument;
@@ -39,10 +45,38 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
         BorderPane.setMargin(getNode().getCenter(), new Insets(15.0));
 
-        setCentreNode(grid);
+        ScrollPane scrollPane = new ScrollPane(grid);
+        scrollPane.setFitToHeight(false);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setBorder(Border.EMPTY);
+        scrollPane.setBackground(Background.EMPTY);
+        scrollPane.setStyle("-fx-background: rgba(255,255,255,0); -fx-background-color: rgba(255,255,255,0);");
+        grid.setPadding(new Insets(GUI.SPACING));
+        setCentreNode(scrollPane);
+        BorderPane.setMargin(scrollPane, Insets.EMPTY);
 
         generateForm();
 
+        addToolbarButton("Apply All", () -> {
+
+            parameters.forEach((p, i) -> {
+
+                try {
+                    p.set(i.getValue());
+                    i.updateLastValue();
+                    i.setValue(p.getCurrentValue());
+                } catch (Throwable e) {
+                    GUI.showException(e);
+                }
+
+            });
+
+        });
+
+    }
+
+    public ConfigPanel(I instrument) {
+        this(instrument.getName(), instrument);
     }
 
     protected void generateForm() {
@@ -62,8 +96,13 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
             Node node = item.getNode();
 
-            Button update = new Button("Apply");
-            update.visibleProperty().addListener(i -> update.setManaged(update.isVisible()));
+            Button update = new Button("✓");
+
+            update.disabledProperty().addListener(i -> {
+                update.setVisible(!update.isDisabled());
+                update.setManaged(!update.isDisabled());
+            });
+
             update.setMinWidth(Region.USE_PREF_SIZE);
             update.setMaxWidth(Region.USE_PREF_SIZE);
             update.setDisable(true);
@@ -82,10 +121,13 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
                 parameters.forEach((p, i) -> {
 
                     try {
-                        i.setValue(p.getCurrentValue());
-                    } catch (Throwable ignored) { }
 
-                    i.updateLastValue();
+                        if (Objects.equals(i.getValue(), i.getLastValue()) || i == item) {
+                            i.setValue(p.getCurrentValue());
+                            i.updateLastValue();
+                        }
+
+                    } catch (Throwable ignored) { }
 
                 });
 
@@ -138,6 +180,9 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             checkBox.setSelected(((Instrument.AutoQuantity<?>) defaultValue).isAuto());
             checkBox.setAlignment(Pos.CENTER_LEFT);
 
+            HBox.setHgrow(checkBox, Priority.NEVER);
+            HBox.setHgrow(quantity.getNode(), Priority.ALWAYS);
+
             return (NodeItem<Q>) new NodeItem<Instrument.AutoQuantity>(
                 quantity.getNode() instanceof TableInput ? new VBox(15.0, checkBox, quantity.getNode()) : new HBox(5, quantity.getNode(), checkBox)
             ) {
@@ -180,6 +225,11 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             checkBox.setSelected(((Instrument.OptionalQuantity<?>) defaultValue).isUsed());
             checkBox.setAlignment(Pos.CENTER_LEFT);
 
+            quantity.setDisabled(!checkBox.isSelected());
+
+            HBox.setHgrow(checkBox, Priority.NEVER);
+            HBox.setHgrow(quantity.getNode(), Priority.ALWAYS);
+
             return (NodeItem<Q>) new NodeItem<Instrument.OptionalQuantity>(
                 quantity.getNode() instanceof TableInput ? new VBox(15.0, checkBox, quantity.getNode()) : new HBox(5, quantity.getNode(), checkBox)
             ) {
@@ -212,59 +262,16 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
         } else if (choices.length > 0) {
 
             ChoiceBox<Q> choiceBox = new ChoiceBox<>(FXCollections.observableArrayList(choices));
+            choiceBox.setValue(defaultValue);
 
-            return new NodeItem<>(choiceBox) {
-
-                @Override
-                public Q getValue() {
-                    return choiceBox.getValue();
-                }
-
-                @Override
-                public void setValue(Q value) {
-                    choiceBox.setValue(value);
-                }
-
-                @Override
-                public void setDisabled(boolean disabled) {
-                    choiceBox.setDisable(disabled);
-                }
-
-                @Override
-                public void addListener(InvalidationListener listener) {
-                    choiceBox.valueProperty().addListener(listener);
-                }
-
-            };
+            return new BasicNodeItem<>(choiceBox, choiceBox.valueProperty());
 
         } else if (defaultValue instanceof Double) {
 
             DoubleInput doubleField = new DoubleInput();
             doubleField.setValue((Double) defaultValue);
 
-            return (NodeItem<Q>) new NodeItem<Double>(doubleField) {
-
-                @Override
-                public Double getValue() {
-                    return doubleField.getValue();
-                }
-
-                @Override
-                public void setValue(Double value) {
-                    doubleField.setValue(value);
-                }
-
-                @Override
-                public void setDisabled(boolean disabled) {
-                    doubleField.setDisable(disabled);
-                }
-
-                @Override
-                public void addListener(InvalidationListener listener) {
-                    doubleField.valueProperty().addListener(listener);
-                }
-
-            };
+            return (NodeItem<Q>) new BasicNodeItem<>(doubleField, doubleField.valueProperty());
 
         } else if (defaultValue instanceof Integer) {
 
@@ -301,29 +308,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             CheckBox checkBox = new CheckBox();
             checkBox.setSelected((Boolean) defaultValue);
 
-            return (NodeItem<Q>) new NodeItem<Boolean>(checkBox) {
-
-                @Override
-                public Boolean getValue() {
-                    return checkBox.isSelected();
-                }
-
-                @Override
-                public void setValue(Boolean value) {
-                    checkBox.setSelected(value);
-                }
-
-                @Override
-                public void setDisabled(boolean disabled) {
-                    checkBox.setDisable(disabled);
-                }
-
-                @Override
-                public void addListener(InvalidationListener listener) {
-                    checkBox.selectedProperty().addListener(listener);
-                }
-
-            };
+            return (NodeItem<Q>) new BasicNodeItem<>(checkBox, checkBox.selectedProperty());
 
         } else if (defaultValue instanceof ResultTable) {
 
@@ -358,29 +343,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             TextField textField = new TextField();
             textField.setText((String) defaultValue);
 
-            return (NodeItem<Q>) new NodeItem<String>(textField) {
-
-                @Override
-                public String getValue() {
-                    return textField.getText();
-                }
-
-                @Override
-                public void setValue(String value) {
-                    textField.setText(value);
-                }
-
-                @Override
-                public void setDisabled(boolean disabled) {
-                    textField.setDisable(disabled);
-                }
-
-                @Override
-                public void addListener(InvalidationListener listener) {
-                    textField.textProperty().addListener(listener);
-                }
-
-            };
+            return (NodeItem<Q>) new BasicNodeItem<>(textField, textField.textProperty());
 
         } else {
             return null;
@@ -388,13 +351,23 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
     }
 
+    public I getInstrument() {
+        return instrument;
+    }
+
     protected static abstract class NodeItem<Q> {
 
         private final Node item;
-        private       Q    lastValue = getValue();
+        private       Q    lastValue;
 
         protected NodeItem(Node item) {
-            this.item = item;
+            this.item      = item;
+            this.lastValue = getValue();
+        }
+
+        protected NodeItem(Node item, Q lastValue) {
+            this.item      = item;
+            this.lastValue = lastValue;
         }
 
         public Node getNode() {
@@ -416,6 +389,37 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
         public abstract void setDisabled(boolean disabled);
 
         public abstract void addListener(InvalidationListener listener);
+
+    }
+
+    protected static class BasicNodeItem<Q> extends NodeItem<Q> {
+
+        private final Property<Q> property;
+
+        protected BasicNodeItem(Node item, Property<Q> property) {
+            super(item, property.getValue());
+            this.property = property;
+        }
+
+        @Override
+        public Q getValue() {
+            return property.getValue();
+        }
+
+        @Override
+        public void setValue(Q value) {
+            property.setValue(value);
+        }
+
+        @Override
+        public void setDisabled(boolean disabled) {
+            getNode().setDisable(disabled);
+        }
+
+        @Override
+        public void addListener(InvalidationListener listener) {
+            property.addListener(listener);
+        }
 
     }
 

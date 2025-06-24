@@ -47,6 +47,7 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @QuantityGetter(name="Voltage", units="V")
     double getVoltage() throws IOException, DeviceException;
 
     /**
@@ -81,6 +82,7 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @ParameterGetter(name="Integration Time", units="s")
     double getIntegrationTime() throws IOException, DeviceException;
 
     /**
@@ -91,6 +93,7 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @ParameterSetter(name="Integration Time", units="s")
     void setIntegrationTime(double time) throws IOException, DeviceException;
 
     /**
@@ -101,6 +104,7 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @ParameterGetter(name="Voltage Range", units="V")
     double getVoltageRange() throws IOException, DeviceException;
 
     /**
@@ -112,6 +116,7 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @ParameterSetter(name="Voltage Range", units="V")
     void setVoltageRange(double range) throws IOException, DeviceException;
 
     /**
@@ -120,6 +125,7 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @AutoParameterSetter(name="Voltage Range")
     void useAutoVoltageRange() throws IOException, DeviceException;
 
     /**
@@ -130,6 +136,7 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @AutoParameterGetter(name="Voltage Range")
     boolean isAutoRangingVoltage() throws IOException, DeviceException;
 
     /**
@@ -140,6 +147,7 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @ParameterGetter(name="Averaging Mode")
     AMode getAverageMode() throws IOException, DeviceException;
 
     /**
@@ -150,6 +158,7 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @ParameterSetter(name="Averaging Mode")
     void setAverageMode(AMode mode) throws IOException, DeviceException;
 
     /**
@@ -160,6 +169,7 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @ParameterGetter(name="Averaging Count")
     int getAverageCount() throws IOException, DeviceException;
 
     /**
@@ -170,6 +180,7 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @ParameterSetter(name="Averaging Count")
     void setAverageCount(int count) throws IOException, DeviceException;
 
     /**
@@ -196,7 +207,19 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @QuantityGetter(name="Output Enabled")
     boolean isOn() throws IOException, DeviceException;
+
+    @QuantitySetter(name="Output Enabled")
+    default void setOn(boolean on) throws IOException, DeviceException {
+
+        if (on) {
+            turnOn();
+        } else {
+            turnOff();
+        }
+
+    }
 
     /**
      * Returns what type of connector is used for the given terminal.
@@ -218,6 +241,7 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @ParameterGetter(name="Terminals")
     Terminals getTerminals() throws DeviceException, IOException;
 
     /**
@@ -228,6 +252,7 @@ public interface VMeter extends Meter, Instrument {
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
+    @ParameterSetter(name="Terminals")
     void setTerminals(Terminals terminals) throws DeviceException, IOException;
 
     default void waitForStableVoltage(double pctMargin, int duration) throws IOException, DeviceException, InterruptedException {
