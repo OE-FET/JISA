@@ -422,12 +422,8 @@ public class ITC503 extends VISADevice implements TC {
         }
 
         @Override
-        public List<Parameter<?>> getInstrumentParameters(Class<?> target) {
-
-            List<Parameter<?>> list = super.getBaseParameters(target);
-            list.add(new Parameter<>("Use Internal PID Table", true, v -> query(C_SET_AUTO_PID, v ? 1 : 0)));
-            return list;
-
+        public void addInstrumentParameters(Class<?> target, ParameterList parameters) {
+            parameters.addValue("Use Internal PID Table", () -> getStatus().L == 1, true, v -> query(C_SET_AUTO_PID, v ? 1 : 0));
         }
 
     };
@@ -544,7 +540,7 @@ public class ITC503 extends VISADevice implements TC {
         query(C_SET_MODE, mode.toInt());
     }
 
-    public List<Parameter<?>> getInstrumentParameters(Class<?> target) {
+    public List<Parameter<?>> addInstrumentParameters(Class<?> target) {
 
         ParameterList parameters = new ParameterList();
         parameters.addValue("Use Internal PID Table", false, v -> query(C_SET_AUTO_PID, v ? 1 : 0));

@@ -173,14 +173,10 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     private double                processFPS        = 0;
 
     @Override
-    public List<Parameter<?>> getInstrumentParameters(Class<?> target) {
-
-        ParameterList parameters = new ParameterList();
+    public void addInstrumentParameters(Class<?> target, ParameterList parameters) {
 
         parameters.addValue("Fast AOI Readout Mode", this::isFastAOIFrameRateEnabled, false, this::setFastAOIFrameRateEnabled);
         parameters.addValue("Internal Backlog Enabled", this::isInternalBacklogEnabled, false, this::setInternalBacklogEnabled);
-
-        return parameters;
 
     }
 
@@ -776,8 +772,10 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
                         result = util.AT_GetTimeStampFromMetadata(returned.rewind(), bufferSize, timeStampBuffer);
 
-                        if (result != AT_SUCCESS) {
+                        if (result == AT_SUCCESS) {
                             frame.setTimestamp(nsPerTick * timeStampBuffer.getValue());
+                        } else {
+                            frame.setTimestamp(System.nanoTime());
                         }
 
                     } else {

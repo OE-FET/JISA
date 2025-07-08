@@ -2,6 +2,7 @@ package jisa.devices.pid;
 
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
+import jisa.devices.ParameterList;
 import jisa.visa.VISADevice;
 
 import java.io.IOException;
@@ -298,11 +299,9 @@ public class ArroyoTEC extends VISADevice implements TC {
             return SensorType.values()[ordinal];
         }
 
-        public List<Parameter<?>> getInstrumentParameters(Class<?> target) {
+        public void addInstrumentParameters(Class<?> target, ParameterList parameters) {
 
-            List<Parameter<?>> defaultList = super.getBaseParameters(target);
-            defaultList.add(new Parameter<>("Sensor Type", SensorType.DISABLED, this::setSensorType, SensorType.values()));
-            return defaultList;
+            parameters.addChoice("Sensor Type", this::getSensorType, SensorType.DISABLED, this::setSensorType, SensorType.values());
 
         }
 

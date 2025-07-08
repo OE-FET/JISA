@@ -142,9 +142,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     @Override
-    public List<Parameter<?>> getInstrumentParameters(Class<?> target) {
-
-        ParameterList parameters = new ParameterList();
+    public void addInstrumentParameters(Class<?> target, ParameterList parameters) {
 
         parameters.addOptional("Hot Pixel Correction", this::isHotPixelCorrectionEnabled, false, this::getHotPixelCorrectionThreshold, 1, q -> this.setHotPixelCorrectionEnabled(false), q -> {
             this.setHotPixelCorrectionThreshold(q);
@@ -152,8 +150,6 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         });
 
         parameters.addValue("LED Enabled", this::isLEDEnabled, true, this::setLEDEnabled);
-
-        return parameters;
 
     }
 
@@ -1042,7 +1038,19 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         @Override
         protected U16RGBFrame createFrame(int width, int height, long[] array, long timestamp) {
-            return new ColourFrame(array, width, height, timestamp);
+
+            try {
+
+                if (getBinningX() > 1 || getBinningY() > 1) {
+                    return new U16RGBFrame(array, width, height, timestamp);
+                } else {
+                    return new ColourFrame(array, width, height, timestamp);
+                }
+
+            } catch (Throwable ignored) {
+                return new U16RGBFrame(array, width, height, timestamp);
+            }
+
         }
 
         @Override

@@ -4,20 +4,15 @@ import jisa.devices.Instrument;
 import jisa.devices.ParameterList;
 import org.apache.commons.lang3.ClassUtils;
 
-import java.util.Collections;
 import java.util.List;
 
 public interface Feature {
 
-    static ParameterList getFeatureParameters(Instrument instrument, Class<?> target) {
-
-        ParameterList parameters = new ParameterList();
+    static void addFeatureParameters(Instrument instrument, Class<?> target, ParameterList parameters) {
 
         if (instrument instanceof Feature) {
 
             List<Class<?>> interfaces = ClassUtils.getAllInterfaces(instrument.getClass());
-
-            Collections.reverse(interfaces);
 
             interfaces.stream()
                       .filter(Feature.class::isAssignableFrom)
@@ -37,8 +32,6 @@ public interface Feature {
                       });
 
         }
-
-        return parameters;
 
     }
 

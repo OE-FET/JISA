@@ -2,6 +2,7 @@ package jisa.devices;
 
 import jisa.devices.Instrument.Parameter;
 
+import java.util.Collection;
 import java.util.LinkedList;
 
 public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
@@ -12,6 +13,32 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
 
     public <T> void addValue(String name, T defValue, Instrument.Setter<T> setter) {
         add(new Parameter<>(name, defValue, setter));
+    }
+
+    public boolean add(Instrument.Parameter<?> e) {
+
+        Parameter<?> found = stream().filter(q -> q.getName().equalsIgnoreCase(e.getName())).findFirst().orElse(null);
+
+        if (found == null) {
+            return super.add(e);
+        } else {
+            int index = indexOf(found);
+            remove(index);
+            add(index, e);
+            return true;
+        }
+
+    }
+
+    @Override
+    public boolean addAll(Collection<? extends Parameter<?>> c) {
+
+        for (Parameter p : c) {
+            add(p);
+        }
+
+        return true;
+
     }
 
     public <T> void addValue(String name, Instrument.Getter<T> defValue, T elseValue, Instrument.Setter<T> setter) {

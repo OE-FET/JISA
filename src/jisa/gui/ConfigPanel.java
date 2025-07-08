@@ -179,6 +179,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             checkBox.selectedProperty().addListener(i -> quantity.setDisabled(checkBox.isSelected()));
             checkBox.setSelected(((Instrument.AutoQuantity<?>) defaultValue).isAuto());
             checkBox.setAlignment(Pos.CENTER_LEFT);
+            checkBox.setMinWidth(Region.USE_PREF_SIZE);
 
             HBox.setHgrow(checkBox, Priority.NEVER);
             HBox.setHgrow(quantity.getNode(), Priority.ALWAYS);
@@ -224,6 +225,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             checkBox.selectedProperty().addListener(i -> quantity.setDisabled(!checkBox.isSelected()));
             checkBox.setSelected(((Instrument.OptionalQuantity<?>) defaultValue).isUsed());
             checkBox.setAlignment(Pos.CENTER_LEFT);
+            checkBox.setMinWidth(Region.USE_PREF_SIZE);
 
             quantity.setDisabled(!checkBox.isSelected());
 

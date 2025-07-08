@@ -12,9 +12,6 @@ import java.io.IOException;
 import java.lang.annotation.*;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 /**
  * Interface for defining the base functionality of all instruments.
@@ -99,9 +96,8 @@ public interface Instrument {
      *
      * @return List of base instrument parameters.
      */
-    default List<Parameter<?>> getBaseParameters(Class<?> target) {
+    default void addBaseParameters(Class<?> target, ParameterList parameters) {
 
-        ParameterList               parameters  = new ParameterList();
         Reflections                 reflections = new Reflections("jisa.devices");
         Class<? extends Instrument> thisClass   = getClass();
 
@@ -124,8 +120,6 @@ public interface Instrument {
 
         });
 
-        return parameters;
-
     }
 
     /**
@@ -136,8 +130,8 @@ public interface Instrument {
      *
      * @return List of instrument-specific configuration parameters.
      */
-    default List<Parameter<?>> getInstrumentParameters(Class<?> target) {
-        return Collections.emptyList();
+    default void addInstrumentParameters(Class<?> target, ParameterList parameters) {
+
     }
 
     /**
@@ -147,8 +141,8 @@ public interface Instrument {
      *
      * @return List of feature configuration parameters.
      */
-    default List<Parameter<?>> getFeatureParameters(Class<?> target) {
-        return Feature.getFeatureParameters(this, target);
+    default void addFeatureParameters(Class<?> target, ParameterList parameters) {
+        Feature.addFeatureParameters(this, target, parameters);
     }
 
     /**
@@ -162,17 +156,13 @@ public interface Instrument {
      */
     default List<Parameter<?>> getAllParameters(Class<?> target) {
 
-        List<Parameter<?>> parameters = getBaseParameters(target);
-        parameters.addAll(getFeatureParameters(target));
-        parameters.addAll(getInstrumentParameters(target));
+        ParameterList parameters = new ParameterList();
 
-        Set<String> seen = ConcurrentHashMap.newKeySet();
+        addBaseParameters(target, parameters);
+        addFeatureParameters(target, parameters);
+        addInstrumentParameters(target, parameters);
 
-        Collections.reverse(parameters);
-        List<Parameter<?>> distinct = parameters.stream().filter(v -> seen.add(v.getName())).collect(Collectors.toList());
-        Collections.reverse(distinct);
-
-        return distinct;
+        return parameters;
 
     }
 

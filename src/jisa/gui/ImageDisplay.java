@@ -47,22 +47,26 @@ public class ImageDisplay extends JFXElement {
 
     public void render() {
 
-        double width   = image.getWidth();
-        double height  = image.getHeight();
-        double cWidth  = canvas.getWidth();
-        double cHeight = canvas.getHeight();
-        double ratio   = width / height;
-        double rWidth  = Math.min(cWidth, cHeight * ratio);
-        double rHeight = Math.min(cHeight, cWidth / ratio);
-        double x       = (cWidth - rWidth) / 2;
-        double y       = (cHeight - rHeight) / 2;
+        if (image != null) {
 
-        GUI.runNow(() -> {
-            pixels.updateBuffer(b -> null);
-            canvas.getGraphicsContext2D().setFill(Color.BLACK);
-            canvas.getGraphicsContext2D().fillRect(0, 0, cWidth, cHeight);
-            canvas.getGraphicsContext2D().drawImage(image, x, y, rWidth, rHeight);
-        });
+            double width   = image.getWidth();
+            double height  = image.getHeight();
+            double cWidth  = canvas.getWidth();
+            double cHeight = canvas.getHeight();
+            double ratio   = width / height;
+            double rWidth  = Math.min(cWidth, cHeight * ratio);
+            double rHeight = Math.min(cHeight, cWidth / ratio);
+            double x       = (cWidth - rWidth) / 2;
+            double y       = (cHeight - rHeight) / 2;
+
+            GUI.runNow(() -> {
+                pixels.updateBuffer(b -> null);
+                canvas.getGraphicsContext2D().setFill(Color.BLACK);
+                canvas.getGraphicsContext2D().fillRect(0, 0, cWidth, cHeight);
+                canvas.getGraphicsContext2D().drawImage(image, x, y, rWidth, rHeight);
+            });
+
+        }
 
     }
 
