@@ -325,11 +325,13 @@ public class Doc extends JFXElement {
     }
 
     public Image addImage(URL url) {
+
         try {
             return addImage(new javafx.scene.image.Image(url.openStream()));
         } catch (Exception e) {
             return addImage(Doc.class.getResource("images/jisa.png"));
         }
+
     }
 
     public Image addImage(String url) {

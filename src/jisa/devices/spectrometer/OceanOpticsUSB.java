@@ -75,7 +75,7 @@ public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<
             throw new IOException(String.format("Connection to %s failed.", usb.getName()));
         }
 
-        channels = Arrays.stream(usb.getChannels()).map(Channel::new).collect(Collectors.toList());
+        channels = Arrays.stream(usb.getChannels()).map(Channel::new).collect(Collectors.toUnmodifiableList());
 
     }
 

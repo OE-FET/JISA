@@ -9,6 +9,7 @@ public class BorderDisplay extends JFXElement {
 
     @FXML
     protected BorderPane pane;
+
     private Element left   = null;
     private Element right  = null;
     private Element centre = null;

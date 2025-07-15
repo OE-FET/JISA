@@ -335,4 +335,30 @@ public class Grid extends JFXElement implements Element, Container {
 
     }
 
+    public void setVerticalGrowth(Element element, boolean grow) {
+
+        GUI.runNow(() -> {
+
+            int index = added.indexOf(element);
+            if (index != -1) {
+                GridPane.setVgrow(pane.getChildren().get(index), grow ? Priority.ALWAYS : Priority.NEVER);
+            }
+
+        });
+
+    }
+
+    public void setHorizontalGrowth(Element element, boolean grow) {
+
+        GUI.runNow(() -> {
+
+            int index = added.indexOf(element);
+            if (index != -1) {
+                GridPane.setHgrow(pane.getChildren().get(index), grow ? Priority.ALWAYS : Priority.NEVER);
+            }
+
+        });
+
+    }
+
 }

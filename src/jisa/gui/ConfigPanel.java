@@ -9,8 +9,8 @@ import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.control.Button;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import jisa.devices.Instrument;
 import jisa.gui.controls.DoubleInput;
 import jisa.gui.controls.IntegerField;
@@ -19,7 +19,6 @@ import jisa.results.ResultTable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * GUI element for configuring instrument parameters.
@@ -53,16 +52,18 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
         scrollPane.setStyle("-fx-background: rgba(255,255,255,0); -fx-background-color: rgba(255,255,255,0);");
         grid.setPadding(new Insets(GUI.SPACING));
         setCentreNode(scrollPane);
+
         BorderPane.setMargin(scrollPane, Insets.EMPTY);
 
         generateForm();
 
-        addToolbarButton("Apply All", () -> {
+        addToolbarButton("Apply", () -> {
 
             parameters.forEach((p, i) -> {
 
                 try {
                     p.set(i.getValue());
+                    i.setValue(p.getCurrentValue());
                     i.updateLastValue();
                     i.setValue(p.getCurrentValue());
                 } catch (Throwable e) {
@@ -96,64 +97,21 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
             Node node = item.getNode();
 
-            Button update = new Button("✓");
-
-            update.disabledProperty().addListener(i -> {
-                update.setVisible(!update.isDisabled());
-                update.setManaged(!update.isDisabled());
-            });
-
-            update.setMinWidth(Region.USE_PREF_SIZE);
-            update.setMaxWidth(Region.USE_PREF_SIZE);
-            update.setDisable(true);
-
-            update.setOnAction(event -> {
-
-                update.setDisable(true);
-                item.setDisabled(true);
-
-                try {
-                    parameter.set(item.getValue());
-                } catch (Exception e) {
-                    GUI.showException(e);
-                }
-
-                parameters.forEach((p, i) -> {
-
-                    try {
-
-                        if (Objects.equals(i.getValue(), i.getLastValue()) || i == item) {
-                            i.setValue(p.getCurrentValue());
-                            i.updateLastValue();
-                        }
-
-                    } catch (Throwable ignored) { }
-
-                });
-
-                update.setDisable(true);
-                item.setDisabled(false);
-
-            });
-
-            item.addListener(i -> update.setDisable(item.getValue().equals(item.getLastValue())));
+            item.addListener(i -> label.setTextFill(item.getValue().equals(item.getLastValue()) ? Color.BLACK : Color.BROWN));
 
             label.setMinWidth(Region.USE_PREF_SIZE);
 
             GridPane.setVgrow(label, Priority.NEVER);
             GridPane.setVgrow(node, Priority.NEVER);
-            GridPane.setVgrow(update, Priority.NEVER);
             GridPane.setHgrow(label, Priority.NEVER);
             GridPane.setHgrow(node, Priority.ALWAYS);
-            GridPane.setHgrow(update, Priority.NEVER);
             GridPane.setHalignment(label, HPos.RIGHT);
             GridPane.setValignment(label, parameter.getDefaultValue() instanceof ResultTable || node instanceof VBox ? VPos.TOP : VPos.CENTER);
-            GridPane.setValignment(update, VPos.TOP);
             GridPane.setMargin(label, new Insets(5, 0, 0, 0));
             GridPane.setMargin(label, new Insets(0, 15, 0, 0));
             GridPane.setMargin(node, new Insets(0, 5, 0, 0));
 
-            addRow(label, node, update);
+            addRow(label, node);
 
             parameters.put(parameter, item);
 
@@ -357,7 +315,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
         return instrument;
     }
 
-    protected static abstract class NodeItem<Q> {
+    public static abstract class NodeItem<Q> {
 
         private final Node item;
         private       Q    lastValue;
@@ -394,7 +352,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
     }
 
-    protected static class BasicNodeItem<Q> extends NodeItem<Q> {
+    public static class BasicNodeItem<Q> extends NodeItem<Q> {
 
         private final Property<Q> property;
 

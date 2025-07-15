@@ -515,7 +515,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         }
 
         final long    tmo        = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
-        final long    ftm        = Math.max((long) (2 * getIntegrationTime() * 1e3), 100);
+        final long    safeTMO    = Math.max((long) (2 * getIntegrationTime() * 1e3), 100);
         final int     bufferSize = getInt("ImageSizeBytes");
         final long    frequency  = getLong("TimestampClockFrequency");
         final long    nsPerTick  = (long) (1e9 / frequency);
@@ -530,12 +530,14 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         setEnum("CycleMode", "Fixed");
         setLong("FrameCount", 1);
 
+        // Allocate memory for frame buffer
         try (Memory memory = new Memory(bufferSize)) {
 
             ByteBuffer frameBuffer = memory.getByteBuffer(0, bufferSize);
 
             flush();
 
+            // Queue the buffer up to be populated by camera
             int result = core.AT_QueueBuffer(handle, frameBuffer.clear().rewind(), bufferSize);
 
             if (result != AT_SUCCESS) {
@@ -562,9 +564,9 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
                     }
 
-                    result = core.AT_WaitBuffer(handle, reference, intBuffer.clear(), ftm);
+                    result = core.AT_WaitBuffer(handle, reference, intBuffer.clear(), safeTMO);
 
-                } while (result == AT_ERR_TIMEDOUT);
+                } while (result == AT_ERR_TIMEDOUT); // Keep going until we get something other than a timeout
 
             } else {
 
@@ -585,10 +587,10 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
                 throw new DeviceException("WaitBuffer failed: %d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
             }
 
-            long returnedSize = Integer.toUnsignedLong(intBuffer.get(0));
+            long       returnedSize = Integer.toUnsignedLong(intBuffer.get(0));
+            ByteBuffer returned     = reference.getValue().getByteBuffer(0, returnedSize);
 
-            ByteBuffer returned = reference.getValue().getByteBuffer(0, returnedSize);
-
+            // Allocate memory to hold converted
             try (Memory convertedMemory = new Memory(imageSize * 2L)) {
 
                 ByteBuffer converted = convertedMemory.getByteBuffer(0, imageSize * 2L);
@@ -980,7 +982,6 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             final WString mono16    = new WString("Mono16");
             final WString encText   = new WString(encoding.getText());
 
-            //
             try (Memory convertedMemory = new Memory(imageSize * 2L)) {
 
                 // Buffers for retrieving data
@@ -1035,8 +1036,8 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             System.err.printf("Andor3 Processing Thread Halted: %s%n", t.getMessage());
         } finally {
 
-            processFPS = 0.0;
             task.stop();
+            processFPS = 0.0;
 
         }
 
