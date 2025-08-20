@@ -9,7 +9,6 @@ import org.apache.commons.lang3.ClassUtils;
 import org.reflections.Reflections;
 
 import java.io.IOException;
-import java.lang.annotation.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -356,77 +355,6 @@ public interface Instrument {
             return value;
         }
 
-    }
-
-    @Target(ElementType.METHOD)
-    @Retention(RetentionPolicy.RUNTIME)
-    @Inherited
-    @interface QuantityGetter {
-        String name();
-
-        String units() default "";
-    }
-
-    @Target(ElementType.METHOD)
-    @Retention(RetentionPolicy.RUNTIME)
-    @Inherited
-    @interface QuantitySetter {
-        String name();
-
-        String units() default "";
-    }
-
-    @Target(ElementType.METHOD)
-    @Retention(RetentionPolicy.RUNTIME)
-    @Inherited
-    @interface Command {
-        String name();
-    }
-
-    @Target(ElementType.METHOD)
-    @Retention(RetentionPolicy.RUNTIME)
-    @Inherited
-    @interface ParameterGetter {
-        String name();
-
-        String units() default "";
-    }
-
-    @Target(ElementType.METHOD)
-    @Retention(RetentionPolicy.RUNTIME)
-    @Inherited
-    @interface ParameterSetter {
-        String name();
-
-        String units() default "";
-    }
-
-    @Target(ElementType.METHOD)
-    @Retention(RetentionPolicy.RUNTIME)
-    @Inherited
-    @interface AutoParameterGetter {
-        String name();
-    }
-
-    @Target(ElementType.METHOD)
-    @Retention(RetentionPolicy.RUNTIME)
-    @Inherited
-    @interface AutoParameterSetter {
-        String name();
-    }
-
-    @Target(ElementType.METHOD)
-    @Retention(RetentionPolicy.RUNTIME)
-    @Inherited
-    @interface OptionalParameterGetter {
-        String name();
-    }
-
-    @Target(ElementType.METHOD)
-    @Retention(RetentionPolicy.RUNTIME)
-    @Inherited
-    @interface OptionalParameterSetter {
-        String name();
     }
 
 }

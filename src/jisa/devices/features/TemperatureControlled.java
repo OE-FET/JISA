@@ -7,37 +7,23 @@ import jisa.devices.ParameterList;
 import java.io.IOException;
 
 public interface TemperatureControlled extends Feature {
-    
+
     static void addParameters(TemperatureControlled instrument, Class<?> target, ParameterList parameters) {
 
-        try {
 
-            parameters.addOptional(
-                "Temperature Control [K]",
-                instrument.isTemperatureControlEnabled(),
-                instrument.getTemperatureControlTarget(),
-                T -> instrument.setTemperatureControlEnabled(false),
-                T -> {
-                    instrument.setTemperatureControlEnabled(true);
-                    instrument.setTemperatureControlTarget(T);
-                }
-            );
+        parameters.addOptional(
+            "Temperature Control [K]",
+            instrument::isTemperatureControlEnabled,
+            false,
+            instrument::getTemperatureControlTarget,
+            300.0,
+            T -> instrument.setTemperatureControlEnabled(false),
+            T -> {
+                instrument.setTemperatureControlEnabled(true);
+                instrument.setTemperatureControlTarget(T);
+            }
+        );
 
-        } catch (Exception e) {
-
-            parameters.addOptional(
-                "Temperature Control [K]",
-                false,
-                298.0,
-                T -> instrument.setTemperatureControlEnabled(false),
-                T -> {
-                    instrument.setTemperatureControlEnabled(true);
-                    instrument.setTemperatureControlTarget(T);
-                }
-            );
-
-        }
-        
     }
 
     /**

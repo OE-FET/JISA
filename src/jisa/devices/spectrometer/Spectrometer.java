@@ -1,12 +1,9 @@
 package jisa.devices.spectrometer;
 
 import jisa.Util;
-import jisa.devices.DeviceException;
-import jisa.devices.Instrument;
-import jisa.devices.MultiInstrument;
+import jisa.devices.*;
 import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.devices.spectrometer.spectrum.SpectrumQueue;
-import jisa.devices.spectrometer.spectrum.SpectrumReader;
 import jisa.devices.spectrometer.spectrum.SpectrumThread;
 
 import java.io.*;
@@ -26,8 +23,11 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrogra
 
     String SPECTRUM_STREAM_HEADER = "JISA SPECTRUM STREAM: length (int, 4 bytes), timestamp (long, 8 bytes), wavelengths (double array, 8*length bytes), counts (double array, 8*length bytes)";
 
-    static SpectrumReader openSpectrumReader(String path) throws IOException {
-        return new SpectrumReader(path);
+    static void addParameters(Spectrometer inst, Class target, ParameterList parameters) {
+
+        parameters.addValue("Integration Time [s]", inst::getIntegrationTime, 100e-6, inst::setIntegrationTime);
+        parameters.addValue("Acquisition Timeout [ms]", inst::getAcquisitionTimeout, 1000, inst::setAcquisitionTimeout);
+
     }
 
     /**
@@ -106,7 +106,11 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrogra
     /**
      * Interface for classes representing individual spectrometer channels.
      */
-    interface Channel<S extends Spectrometer> extends Instrument {
+    interface Channel<S extends Spectrometer> extends Instrument, SubInstrument<S> {
+
+        static void addParameters(Channel inst, Class target, ParameterList parameters) {
+            inst.getParentInstrument().addBaseParameters(target, parameters);
+        }
 
         /**
          * Acquires and returns a single spectrum.

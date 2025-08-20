@@ -48,6 +48,8 @@ public interface TC extends PID, MultiInstrument {
 
     interface TMeter extends Input, jisa.devices.meter.TMeter {
 
+        
+
         default double getValue() throws IOException, DeviceException {
             return getTemperature();
         }
@@ -88,6 +90,10 @@ public interface TC extends PID, MultiInstrument {
         default double getPower() throws IOException, DeviceException {
             return getValue();
         }
+
+        
+
+        double getValue() throws IOException, DeviceException;
 
     }
 

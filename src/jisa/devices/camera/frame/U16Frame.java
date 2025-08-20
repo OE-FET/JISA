@@ -147,7 +147,7 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
 
         for (int j = y; j < y + height; j++) {
             for (int i = x; i < x + width; i++) {
-                subData[j * width + i] = signed(i, j);
+                subData[(j - y) * width + i - x] = signed(i, j);
             }
         }
 

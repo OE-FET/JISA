@@ -7,7 +7,6 @@ import com.oceanoptics.omnidriver.spectrometer.usb650.USB650;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
-import jisa.devices.SubInstrument;
 import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 import jisa.visa.NativeDevice;
@@ -204,7 +203,7 @@ public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<
         return new IDAddress(String.format("%d", usb.getDeviceIndex()));
     }
 
-    public class Channel implements Spectrometer.Channel, SubInstrument<OceanOpticsUSB> {
+    public class Channel implements Spectrometer.Channel<OceanOpticsUSB> {
 
         private final SpectrometerChannel                         channel;
         private final ListenerManager                             manager  = new ListenerManager();

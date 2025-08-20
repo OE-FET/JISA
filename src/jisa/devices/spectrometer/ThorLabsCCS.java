@@ -123,6 +123,11 @@ public class ThorLabsCCS extends USBDevice implements Spectrometer<ThorLabsCCS.C
         }
 
         @Override
+        public ThorLabsCCS getParentInstrument() {
+            return ThorLabsCCS.this;
+        }
+
+        @Override
         public String getName() {
             return "";
         }

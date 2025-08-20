@@ -143,21 +143,6 @@ public class K2182 extends VISADevice implements VMeter, LineFilter {
     }
 
     @Override
-    public void turnOn() {
-
-    }
-
-    @Override
-    public void turnOff() {
-
-    }
-
-    @Override
-    public boolean isOn() {
-        return true;
-    }
-
-    @Override
     public TType getTerminalType(Terminals terminals) {
 
         if (terminals == Terminals.FRONT) {

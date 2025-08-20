@@ -800,7 +800,7 @@ public abstract class AgilentSPA<T extends AgilentSPA> extends VISADevice implem
 
     }
 
-    public class AVMU implements VMeter, SubInstrument<T> {
+    public class AVMU implements VMeter, Switch, SubInstrument<T> {
 
         private final String     name;
         private final int        channel;

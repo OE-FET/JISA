@@ -12,11 +12,12 @@ public interface LineFilter extends Feature {
 
     static void addParameters(LineFilter instrument, Class<?> target, ParameterList parameters) {
 
-        try {
-            parameters.addValue("Line Filter", instrument.isLineFilterEnabled(), instrument::setLineFilterEnabled);
-        } catch (Exception e) {
-            parameters.addValue("Line Filter", false, instrument::setLineFilterEnabled);
-        }
+        parameters.addValue(
+            "Line Filter",
+            instrument::isLineFilterEnabled,
+            false,
+            instrument::setLineFilterEnabled
+        );
 
     }
 

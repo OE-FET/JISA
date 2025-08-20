@@ -21,9 +21,14 @@ public class JavaFX {
         Semaphore latch = new Semaphore(0);
 
         Platform.runLater(() -> {
-            Application.setUserAgentStylesheet(Application.STYLESHEET_MODENA);
-            StyleManager.getInstance().addUserAgentStylesheet(Objects.requireNonNull(GUI.class.getResource("style/breeze.css")).toString());
-            latch.release();
+
+            try {
+                Application.setUserAgentStylesheet(Application.STYLESHEET_MODENA);
+                StyleManager.getInstance().addUserAgentStylesheet(Objects.requireNonNull(GUI.class.getResource("style/breeze.css")).toString());
+            } finally {
+                latch.release();
+            }
+
         });
 
         latch.acquireUninterruptibly();

@@ -14,21 +14,6 @@ public interface IVMeter extends VMeter, IMeter {
         return "Multimeter";
     }
 
-    @Override
-    default double getValue() throws IOException, DeviceException {
-        return getVoltage();
-    }
-
-    @Override
-    default String getMeasuredQuantity() {
-        return "Voltage";
-    }
-
-    @Override
-    default String getMeasuredUnits() {
-        return "V";
-    }
-
     /**
      * Returns a combined current and voltage measurement as an IVPoint object.
      *

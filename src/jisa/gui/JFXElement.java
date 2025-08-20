@@ -148,7 +148,7 @@ public class JFXElement implements Element {
 
             // Tell the loader to link the FXML file to this object
             loader.setController(this);
-
+            
             borderPane = new BorderPane();
             scene      = new Scene(borderPane);
             scene.setFill(Colour.string("#f4f4f4"));

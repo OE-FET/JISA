@@ -16,21 +16,6 @@ public interface FMeter extends Meter {
 
     }
 
-    @Override
-    default double getValue() throws IOException, DeviceException {
-        return getFrequency();
-    }
-
-    @Override
-    default String getMeasuredQuantity() throws IOException, DeviceException {
-        return "Frequency";
-    }
-
-    @Override
-    default String getMeasuredUnits() throws IOException, DeviceException {
-        return "Hz";
-    }
-
     /**
      * Returns the frequency value currently being reported by the instrument, in Hz.
      *

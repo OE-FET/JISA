@@ -11,7 +11,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Unified interface for thermometers
  */
-public interface TMeter extends Instrument {
+public interface TMeter extends Instrument, Meter {
 
     static String getDescription() {
         return "Thermometer";
@@ -113,6 +113,16 @@ public interface TMeter extends Instrument {
      */
     default void waitForStableTemperature(double temperature, double pctMargin, long duration, long timeOut) throws IOException, DeviceException, InterruptedException, TimeoutException {
         Sync.waitForStableTarget(this::getTemperature, temperature, pctMargin, 1000, duration, timeOut);
+    }
+
+    @Override
+    default double getIntegrationTime() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    default void setIntegrationTime(double intTime) throws IOException, DeviceException {
+
     }
 
 }

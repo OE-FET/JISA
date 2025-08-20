@@ -28,14 +28,13 @@ public interface EMController extends Instrument {
         Column<Double> MIN_I = Column.ofDoubles("Min I", "A");
         Column<Double> MAX_I = Column.ofDoubles("Max I", "A");
         Column<Double> RATE  = Column.ofDoubles("Rate", "A/min");
+        ResultList     table = new ResultList(MIN_I, MAX_I, RATE);
 
-        ResultList table = inst.getRampRates()
-                               .stream()
-                               .map(r -> Map.of(MIN_I, r.getMinI(), MAX_I, r.getMaxI(), RATE, r.getRate()))
-                               .collect(ResultList.mapCollector());
-
-        list.addValue(
-            "Ramp Zones",
+        list.addValue("Ramp Zones",
+            () -> inst.getRampRates()
+                      .stream()
+                      .map(r -> Map.of(MIN_I, r.getMinI(), MAX_I, r.getMaxI(), RATE, r.getRate()))
+                      .collect(ResultList.mapCollector()),
             table,
             v -> inst.setRampRates(v.stream().map(r -> new Ramp(r.get(MIN_I), r.get(MAX_I), r.get(RATE))).toArray(Ramp[]::new))
         );

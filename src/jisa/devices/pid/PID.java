@@ -100,6 +100,8 @@ public interface PID extends Instrument, MultiInstrument {
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
+        
+
         double getValue() throws IOException, DeviceException;
 
         /**
@@ -166,6 +168,8 @@ public interface PID extends Instrument, MultiInstrument {
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
+        
+
         double getValue() throws IOException, DeviceException;
 
         /**

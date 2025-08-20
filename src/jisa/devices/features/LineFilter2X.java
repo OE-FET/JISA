@@ -12,11 +12,12 @@ public interface LineFilter2X extends Feature {
 
     static void addParameters(LineFilter2X instrument, Class<?> target, ParameterList parameters) {
 
-        try {
-            parameters.addValue("2x Line Filter", instrument.is2xLineFilterEnabled(), instrument::set2xLineFilterEnabled);
-        } catch (Exception e) {
-            parameters.addValue("2x Line Filter", false, instrument::set2xLineFilterEnabled);
-        }
+        parameters.addValue(
+            "2x Line Filter",
+            instrument::is2xLineFilterEnabled,
+            false,
+            instrument::set2xLineFilterEnabled
+        );
 
     }
 

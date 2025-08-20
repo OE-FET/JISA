@@ -244,8 +244,8 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
                 throw new DeviceException(getLastError(handle));
             }
 
-            lastValues = tempPointer.getFloatArray(0, SENSORS_PER_UNIT);
-            lastTime   = System.currentTimeMillis();
+            tempPointer.read(0, lastValues, 0, SENSORS_PER_UNIT);
+            lastTime = System.currentTimeMillis();
 
         }
 
@@ -273,7 +273,6 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
      */
     public void setLineFrequency(Frequency frequency) throws DeviceException {
 
-
         int result = usbtc08.usb_tc08_set_mains(handle, (short) frequency.ordinal());
 
         if (result == ACTION_FAILED) {
@@ -281,7 +280,6 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
         } else {
             lineFrequency = frequency;
         }
-
 
     }
 
@@ -451,6 +449,17 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
         public Type getSensorType() throws IOException, DeviceException {
             return type;
         }
+
+        @Override
+        public void setIntegrationTime(double intTime) throws IOException, DeviceException {
+
+        }
+
+        @Override
+        public double getIntegrationTime() throws IOException, DeviceException {
+            return 0;
+        }
+
     }
 
     /**

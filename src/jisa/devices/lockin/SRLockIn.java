@@ -233,21 +233,6 @@ public abstract class SRLockIn<L extends SRLockIn> extends VISADevice implements
     }
 
     @Override
-    public void turnOn() throws IOException, DeviceException {
-        /* Nothing to do */
-    }
-
-    @Override
-    public void turnOff() throws IOException, DeviceException {
-        /* Nothing to do */
-    }
-
-    @Override
-    public boolean isOn() throws IOException, DeviceException {
-        return true;
-    }
-
-    @Override
     public double getFrequency() throws IOException {
         return queryDouble(C_QUERY_FREQ);
     }

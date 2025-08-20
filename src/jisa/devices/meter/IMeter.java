@@ -2,30 +2,14 @@ package jisa.devices.meter;
 
 import jisa.control.Sync;
 import jisa.devices.DeviceException;
-import jisa.devices.Instrument;
 import jisa.enums.AMode;
 
 import java.io.IOException;
 
-public interface IMeter extends Meter, Instrument {
+public interface IMeter extends Meter {
 
     static String getDescription() {
         return "Ammeter";
-    }
-
-    @Override
-    default double getValue() throws IOException, DeviceException {
-        return getCurrent();
-    }
-
-    @Override
-    default String getMeasuredQuantity() {
-        return "Current";
-    }
-
-    @Override
-    default String getMeasuredUnits() {
-        return "A";
     }
 
     /**
@@ -160,32 +144,6 @@ public interface IMeter extends Meter, Instrument {
      * @throws IOException     Upon communications error
      */
     int getAverageCount() throws IOException, DeviceException;
-
-    /**
-     * Turns the ammeter measurement channel on.
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void turnOn() throws IOException, DeviceException;
-
-    /**
-     * Turns the ammeter measurement channel off.
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    void turnOff() throws IOException, DeviceException;
-
-    /**
-     * Returns whether the ammeter measurement channel is on or off.
-     *
-     * @return Is it on?
-     *
-     * @throws DeviceException Upon incompatibility with device
-     * @throws IOException     Upon communications error
-     */
-    boolean isOn() throws IOException, DeviceException;
 
     /**
      * Returns whether the voltmeter is using any line-frequency filtering

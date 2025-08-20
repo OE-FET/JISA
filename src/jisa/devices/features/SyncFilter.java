@@ -9,11 +9,12 @@ public interface SyncFilter extends Feature {
 
     static void addParameters(SyncFilter instrument, Class<?> target, ParameterList parameters) {
 
-        try {
-            parameters.addValue("Sync Filter", instrument.isSyncFilterEnabled(), instrument::setSyncFilterEnabled);
-        } catch (Exception e) {
-            parameters.addValue("Sync Filter", false, instrument::setSyncFilterEnabled);
-        }
+        parameters.addValue(
+            "Sync Filter",
+            instrument::isSyncFilterEnabled,
+            false,
+            instrument::setSyncFilterEnabled
+        );
 
     }
 

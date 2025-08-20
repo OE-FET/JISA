@@ -67,7 +67,8 @@ public class AMux2x24 extends VISADevice implements MultiMultiplexer<AMux2x24.Ba
                          .map(s -> s.split("="))
                          .filter(s -> s[0].equalsIgnoreCase(channel))
                          .map(s -> Integer.parseInt(s[1]))
-                         .findAny().orElse(0);
+                         .findAny()
+                         .orElseThrow(() -> new IOException("Error reading route from MUX."));
 
         }
 
