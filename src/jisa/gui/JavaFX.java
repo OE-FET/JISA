@@ -1,7 +1,6 @@
 package jisa.gui;
 
 import com.sun.javafx.css.StyleManager;
-import com.sun.javafx.util.Logging;
 import javafx.application.Application;
 import javafx.application.Platform;
 
@@ -18,12 +17,10 @@ public class JavaFX {
             System.out.println("Launching JavaFX...");
 
             // Start-up the JavaFx GUI thread
-            Logging.getJavaFXLogger().disableLogging();
             Platform.startup(() -> { });
 
             System.out.println("Setting implicit exit...");
             Platform.setImplicitExit(false);
-            Logging.getJavaFXLogger().disableLogging();
 
             System.out.println("Starting platform...");
             Semaphore latch = new Semaphore(0);
