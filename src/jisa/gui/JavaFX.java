@@ -14,15 +14,10 @@ public class JavaFX {
 
         try {
 
-            System.out.println("Launching JavaFX...");
-
             // Start-up the JavaFx GUI thread
             Platform.startup(() -> { });
-
-            System.out.println("Setting implicit exit...");
             Platform.setImplicitExit(false);
 
-            System.out.println("Starting platform...");
             Semaphore latch = new Semaphore(0);
 
             Platform.runLater(() -> {
@@ -31,18 +26,10 @@ public class JavaFX {
                 latch.release();
             });
 
-            System.out.println("Waiting for JavaFX thread...");
-
-            try {
-                latch.tryAcquire(10, TimeUnit.SECONDS);
-                System.out.println("Java FX Loaded!");
-            } catch (InterruptedException e) {
-                System.err.println("Error initialising JavaFX platform!");
-                e.printStackTrace();
-                throw new RuntimeException(e);
-            }
+            latch.tryAcquire(10, TimeUnit.SECONDS);
 
         } catch (Throwable e) {
+            System.err.println("Error initialising JavaFX platform!");
             e.printStackTrace();
         }
 
