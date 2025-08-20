@@ -7,6 +7,7 @@ import javafx.application.Platform;
 
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 public class JavaFX {
 
@@ -21,17 +22,18 @@ public class JavaFX {
         Semaphore latch = new Semaphore(0);
 
         Platform.runLater(() -> {
-
-            try {
-                Application.setUserAgentStylesheet(Application.STYLESHEET_MODENA);
-                StyleManager.getInstance().addUserAgentStylesheet(Objects.requireNonNull(GUI.class.getResource("style/breeze.css")).toString());
-            } finally {
-                latch.release();
-            }
-
+            Application.setUserAgentStylesheet(Application.STYLESHEET_MODENA);
+            StyleManager.getInstance().addUserAgentStylesheet(Objects.requireNonNull(GUI.class.getResource("style/breeze.css")).toString());
+            latch.release();
         });
 
-        latch.acquireUninterruptibly();
+        try {
+            latch.tryAcquire(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            System.err.println("Error initialising JavaFX platform!");
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
 
     }
 
