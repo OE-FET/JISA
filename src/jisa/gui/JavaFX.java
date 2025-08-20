@@ -13,34 +13,40 @@ public class JavaFX {
 
     public static void launch() {
 
-        System.out.println("Launching JavaFX...");
-
-        // Start-up the JavaFx GUI thread
-        Logging.getJavaFXLogger().disableLogging();
-        Platform.startup(() -> {});
-
-        System.out.println("Setting implicit exit...");
-        Platform.setImplicitExit(false);
-        Logging.getJavaFXLogger().disableLogging();
-
-        System.out.println("Starting platform...");
-        Semaphore latch = new Semaphore(0);
-
-        Platform.runLater(() -> {
-            Application.setUserAgentStylesheet(Application.STYLESHEET_MODENA);
-            StyleManager.getInstance().addUserAgentStylesheet(Objects.requireNonNull(GUI.class.getResource("style/breeze.css")).toString());
-            latch.release();
-        });
-
-        System.out.println("Waiting for JavaFX thread...");
-
         try {
-            latch.tryAcquire(10, TimeUnit.SECONDS);
-            System.out.println("Java FX Loaded!");
-        } catch (InterruptedException e) {
-            System.err.println("Error initialising JavaFX platform!");
+
+            System.out.println("Launching JavaFX...");
+
+            // Start-up the JavaFx GUI thread
+            Logging.getJavaFXLogger().disableLogging();
+            Platform.startup(() -> { });
+
+            System.out.println("Setting implicit exit...");
+            Platform.setImplicitExit(false);
+            Logging.getJavaFXLogger().disableLogging();
+
+            System.out.println("Starting platform...");
+            Semaphore latch = new Semaphore(0);
+
+            Platform.runLater(() -> {
+                Application.setUserAgentStylesheet(Application.STYLESHEET_MODENA);
+                StyleManager.getInstance().addUserAgentStylesheet(Objects.requireNonNull(GUI.class.getResource("style/breeze.css")).toString());
+                latch.release();
+            });
+
+            System.out.println("Waiting for JavaFX thread...");
+
+            try {
+                latch.tryAcquire(10, TimeUnit.SECONDS);
+                System.out.println("Java FX Loaded!");
+            } catch (InterruptedException e) {
+                System.err.println("Error initialising JavaFX platform!");
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+
+        } catch (Throwable e) {
             e.printStackTrace();
-            throw new RuntimeException(e);
         }
 
     }
