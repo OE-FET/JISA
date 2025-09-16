@@ -5,7 +5,6 @@ import javafx.application.Platform;
 import javafx.geometry.*;
 import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
@@ -966,18 +965,23 @@ public class GUI {
 
             dialog.getDialogPane().setContent(list);
 
-            Screen      screen = getCurrentScreen();
-            Rectangle2D bounds = screen.getVisualBounds();
+            Screen screen = getCurrentScreen();
 
-            dialog.getDialogPane().getScene().getWindow().setOnShown(e -> {
+            if (screen != null) {
 
-                double w = dialog.getDialogPane().getScene().getWindow().getWidth();
-                double h = dialog.getDialogPane().getScene().getWindow().getHeight();
+                Rectangle2D bounds = screen.getVisualBounds();
 
-                dialog.setX(((bounds.getMinX() + bounds.getMaxX()) / 2) - (w / 2));
-                dialog.setY(((bounds.getMinY() + bounds.getMaxY()) / 2) - (h / 2));
+                dialog.getDialogPane().getScene().getWindow().setOnShown(e -> {
 
-            });
+                    double w = dialog.getDialogPane().getScene().getWindow().getWidth();
+                    double h = dialog.getDialogPane().getScene().getWindow().getHeight();
+
+                    dialog.setX(((bounds.getMinX() + bounds.getMaxX()) / 2) - (w / 2));
+                    dialog.setY(((bounds.getMinY() + bounds.getMaxY()) / 2) - (h / 2));
+
+                });
+
+            }
 
             toReturn.set(dialog.showAndWait().orElse(-1));
 

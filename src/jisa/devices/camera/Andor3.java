@@ -180,6 +180,14 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
     }
 
+    public Andor3(Address address) throws DeviceException, IOException {
+        this((Object) address);
+    }
+
+    public Andor3(int cameraIndex) throws DeviceException, IOException {
+        this((Object) cameraIndex);
+    }
+
     private Andor3(Object idObject) throws DeviceException, IOException {
 
         super("Andor 3 Camera");
@@ -225,14 +233,6 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
         return cameraIndex;
 
-    }
-
-    public Andor3(Address address) throws DeviceException, IOException {
-        this((Object) address);
-    }
-
-    public Andor3(int cameraIndex) throws DeviceException, IOException {
-        this((Object) cameraIndex);
     }
 
     protected void handleResult(String method, String feature, int result) throws IOException, DeviceException {
@@ -514,6 +514,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
         }
 
+        // Get important values that we will need
         final long    tmo        = (timeout == Integer.MAX_VALUE || timeout < 1) ? AT_INFINITE : timeout;
         final long    safeTMO    = Math.max((long) (2 * getIntegrationTime() * 1e3), 100);
         final int     bufferSize = getInt("ImageSizeBytes");
@@ -902,8 +903,8 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
                 }
 
+                // Whatever we received, offer it to the queue for the processing thread
                 queued.offer(reference.getValue().getByteArray(0, intBuffer.get(0)));
-
 
                 synchronized (stats) {
                     stats[0]++;

@@ -18,20 +18,27 @@ public class AMux2x24 extends VISADevice implements MultiMultiplexer<AMux2x24.Ba
 
     public AMux2x24(Address address) throws IOException, DeviceException {
 
+        // Connect to the instrument at the given address
         super(address);
 
+        // If we are connected over serial, then use 9600 baud and 8 data bits
         configSerial(serial -> serial.setSerialParameters(9600, 8));
 
+        // All messages terminate with \n (line-feed character)
         setReadTerminator("\n");
         setWriteTerminator("\n");
+
+        // Automatically remove any line terminators from instrument responses
         addAutoRemove("\r", "\n");
 
+        // When initialised, the first thing the mux does is send a message saying "READY", check this
         String ready = read();
 
         if (!ready.startsWith("READY")) {
             throw new DeviceException("Expected ready signal, but got: " + ready);
         }
 
+        // Now we're ready, check that it's the instrument we expect it to be
         String idn = getIDN();
 
         if (!idn.contains("ARDUINO-CONTROLLED ELECTROMECHANICAL MULTIPLEXER")) {

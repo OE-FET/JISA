@@ -72,8 +72,10 @@ public interface Camera<F extends Frame> extends Instrument {
      *
      * @return Single acquisition frame, represented as a Frame object
      *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon device compatibility error
+     * @throws IOException          Upon communications error
+     * @throws DeviceException      Upon device compatibility error
+     * @throws InterruptedException If the thread is interrupted while waiting for frame from camera
+     * @throws TimeoutException     If the acquisition timeout expires before the camera returns a frame
      */
     F getFrame() throws IOException, DeviceException, InterruptedException, TimeoutException;
 
