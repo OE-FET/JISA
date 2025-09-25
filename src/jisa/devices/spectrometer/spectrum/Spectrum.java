@@ -113,7 +113,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
             try {
                 return counts[i] / other.counts[i];
             } catch (Throwable e) {
-                return 0.0;
+                return Double.NaN;
             }
         }).toArray(), timestamp);
 
