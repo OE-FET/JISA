@@ -164,6 +164,8 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
         String args = IntStream.range(0, coordinates.length).mapToObj(i -> String.format("%d", (int) Math.round(coordinates[i] / laxes[i].resolution))).limit(3).collect(Collectors.joining(","));
         String response = query("G,%s", args);
 
+        System.out.printf("G,%s -> %s%n", args, response);
+
         if (coordinates.length > 3) {
 
             List<Translator> axes = getAllAxes();
