@@ -277,7 +277,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public double getPosition() throws IOException, DeviceException {
-            return queryDouble("P%s", identifier);
+            return queryDouble("P%s", identifier) * resolution;
         }
 
         @Override

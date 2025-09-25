@@ -166,6 +166,16 @@ public interface Stage<T extends Translator> extends Instrument, MultiInstrument
         waitUntilStationary();
     }
 
+    default double[] getPosition() throws IOException, DeviceException {
+        return getAllAxes().stream().mapToDouble(a -> {
+            try {
+                return a.getPosition();
+            } catch (Exception e) {
+                return Double.NaN;
+            }
+        }).toArray();
+    }
+
     default void moveBy(double... coordinates) throws IOException, DeviceException {
 
         List<T> axes = getAllAxes();
