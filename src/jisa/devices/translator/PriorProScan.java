@@ -1,6 +1,5 @@
 package jisa.devices.translator;
 
-import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.SubInstrument;
@@ -16,6 +15,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 
 public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan.Linear, PriorProScan.Rotational, PriorProScan.Translator> {
 
@@ -55,7 +55,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         addAutoRemove("\r", "\n");
 
-        write("COMP O");
+        query("COMP 0");
 
         List<Linear>     linearAxes     = new LinkedList<>();
         List<Rotational> rotationalAxes = new LinkedList<>();
@@ -101,10 +101,10 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
         FILTER_2 = rotationalAxes.stream().filter(a -> a.getName().equals("FILTER 2")).findFirst().orElse(null);
 
         if (Z_AXIS != null) {
-            write("UPR,z,100");
+            query("UPR,z,100");
         }
 
-        write("BLSH,0");
+        query("BLSH,0");
 
         for (String part : queryLines("STAGE")) {
 
@@ -161,7 +161,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         // First three will be X,Y,Z
         String args = DoubleStream.of(coordinates).mapToObj(v -> String.format("%d", (int) Math.round(v))).limit(3).collect(Collectors.joining(","));
-        write("G,%s", args);
+        query("G,%s", args);
 
         if (coordinates.length > 3) {
 
@@ -179,9 +179,13 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
     @Override
     public void moveBy(double... coordinates) throws IOException, DeviceException {
 
+        Linear[] laxes = new Linear[]{X_AXIS, Y_AXIS, Z_AXIS};
+
         // First three will be X,Y,Z
-        String args = DoubleStream.of(coordinates).mapToObj(v -> String.format("%d", (int) Math.round(v))).limit(3).collect(Collectors.joining(","));
-        write("GR,%s", args);
+        String args = IntStream.range(0, coordinates.length).mapToObj(i -> String.format("%d", (int) Math.round(coordinates[i] / laxes[i].resolution))).limit(3).collect(Collectors.joining(","));
+        String response = query("GR,%s", args);
+
+        System.out.println(String.format("GR,%s -> %s", args, response));
 
         if (coordinates.length > 3) {
 
@@ -198,12 +202,12 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
     @Override
     public void moveToHome() throws IOException, DeviceException {
-        write("Z");
+        query("Z");
     }
 
     @Override
     public void stop() throws IOException, DeviceException {
-        write("K");
+        query("K");
     }
 
     @Override
@@ -240,7 +244,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         public Linear(String identifier) throws IOException, DeviceException {
             this.identifier = identifier;
-            this.resolution = queryDouble("RES,%s", identifier) * 1e-6;
+            this.resolution = queryDouble("RES,%s", identifier.equals("Z") ? "Z" : "s") * 1e-6;
         }
 
         @Override
@@ -254,9 +258,8 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         public void setResolution(double resolution) throws IOException, DeviceException {
 
-            write("RES,%s,%e", identifier, resolution * 1e6);
-
-            this.resolution = queryDouble("RES,%s", identifier) * 1e-6;
+            query("RES,%s,%f", identifier.equals("Z") ? "z" : "s", resolution * 1e6);
+            this.resolution = queryDouble("RES,%s", identifier.equals("Z") ? "z" : "s") * 1e-6;
 
         }
 
@@ -267,11 +270,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
                 throw new DeviceException("Cannot move translation axis \"%s\" because it is locked.", identifier);
             }
 
-            if (!Util.isBetween(position, getMinPosition(), getMaxPosition())) {
-                throw new DeviceException("The specified position for axis \"%s\" of %e m is out of range.", identifier, position);
-            }
-
-            write("G%s %d", identifier, (int) Math.round(position / resolution));
+            query("G%s %d", identifier, (int) Math.round(position / resolution));
 
         }
 
@@ -292,7 +291,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public void setMaxSpeed(double speed) throws IOException, DeviceException {
-            write("SMX,%.02f", speed);
+            query("SMX,%.02f", speed);
         }
 
         @Override
@@ -303,11 +302,21 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
         @Override
         public void moveBy(double distance) throws IOException, DeviceException {
 
-            if (locked) {
-                throw new DeviceException("Cannot move translation axis \"%s\" because it is locked.", identifier);
+            double position = getPosition();
+
+            String command;
+
+            if (identifier.equals("X")) {
+                command = "GR %d,0,0";
+            } else if (identifier.equals("Y")) {
+                command = "GR 0,%d,0";
+            } else if (identifier.equals("Z")) {
+                command = "GR 0,0,%d";
+            } else {
+                command = "GR 0,0,0";
             }
 
-            write("GR%s %d", identifier, (int) Math.round(distance / resolution));
+            query(command, (int) Math.round(distance / resolution));
 
         }
 
@@ -339,7 +348,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public void stop() throws IOException, DeviceException {
-            write("K");
+            query("K");
         }
 
         @Override
@@ -349,7 +358,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public void setEncoderEnabled(boolean enabled) throws IOException, DeviceException {
-            write("ENCODER,%s,%d", identifier, enabled ? 1 : 0);
+            query("ENCODER,%s,%d", identifier, enabled ? 1 : 0);
         }
 
         @Override
@@ -372,7 +381,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public void setBacklashEnabled(boolean enabled) throws IOException, DeviceException {
-            write("BLSH,%d", enabled ? 1 : 0);
+            query("BLSH,%d", enabled ? 1 : 0);
         }
 
         @Override
@@ -382,7 +391,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public void setBacklashSteps(int steps) throws IOException, DeviceException {
-            write("BLSH,%d,%d", isBacklashEnabled() ? 1 : 0, steps);
+            query("BLSH,%d,%d", isBacklashEnabled() ? 1 : 0, steps);
         }
 
         @Override
@@ -392,7 +401,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public void setDriftCorrectionEnabled(boolean enabled) throws IOException, DeviceException {
-            write("SERVO,%s,%d", identifier, enabled ? 1 : 0);
+            query("SERVO,%s,%d", identifier, enabled ? 1 : 0);
         }
 
         @Override
@@ -402,7 +411,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public void setDistancePerRevolution(double distancePerRevolution) throws IOException, DeviceException {
-            write("UPR%s,%f", identifier, distancePerRevolution * 1e6);
+            query("UPR%s,%f", identifier, distancePerRevolution * 1e6);
         }
 
         @Override
@@ -434,7 +443,8 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
         }
 
         public void setResolution(double resolution) throws IOException, DeviceException {
-            write("RES,%s,%e", identifier, resolution * 1e6);
+            query("RES,%s,%f", identifier, resolution * 1e6);
+            this.resolution = resolution;
         }
 
         @Override
@@ -444,7 +454,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
                 throw new DeviceException("Cannot move translation axis \"%s\" because it is locked.", identifier);
             }
 
-            write("G%s %d", identifier, (int) Math.round(position / resolution));
+            query("G%s %d", identifier, (int) Math.round(position / resolution));
 
         }
 
@@ -465,7 +475,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public void setMaxSpeed(double speed) throws IOException, DeviceException {
-            write("SMX,%.02f", speed);
+            query("SMX,%.02f", speed);
         }
 
         @Override
@@ -480,7 +490,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
                 throw new DeviceException("Cannot move translation axis \"%s\" because it is locked.", identifier);
             }
 
-            write("GR%s %d", identifier, (int) Math.round(distance / resolution));
+            query("GR%s %d", identifier, (int) Math.round(distance / resolution));
 
         }
 
@@ -512,7 +522,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public void stop() throws IOException, DeviceException {
-            write("K");
+            query("K");
         }
 
         @Override
@@ -522,7 +532,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public void setEncoderEnabled(boolean enabled) throws IOException, DeviceException {
-            write("ENCODER,%s,%d", identifier, enabled ? 1 : 0);
+            query("ENCODER,%s,%d", identifier, enabled ? 1 : 0);
         }
 
         @Override
@@ -545,7 +555,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public void setBacklashEnabled(boolean enabled) throws IOException, DeviceException {
-            write("BLSH,%d", enabled ? 1 : 0);
+            query("BLSH,%d", enabled ? 1 : 0);
         }
 
         @Override
@@ -555,7 +565,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public void setBacklashSteps(int steps) throws IOException, DeviceException {
-            write("BLSH,%d,%d", isBacklashEnabled() ? 1 : 0, steps);
+            query("BLSH,%d,%d", isBacklashEnabled() ? 1 : 0, steps);
         }
 
         @Override
