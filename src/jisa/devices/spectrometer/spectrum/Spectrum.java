@@ -163,6 +163,22 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         return add(other);
     }
 
+    public Spectrum subSpectrum(int start, int end) {
+
+        double[] newWl = new double[end - start + 1];
+        double[] newCt = new double[end - start + 1];
+
+        System.arraycopy(wavelengths, start, newWl, 0, newWl.length);
+        System.arraycopy(counts, start, newCt, 0, newCt.length);
+
+        return new Spectrum(newWl, newCt, timestamp);
+
+    }
+
+    public Spectrum subSpectrumByWavelength(double startWL, double endWL) {
+        return subSpectrum(indexByWavelength(startWL), indexByWavelength(endWL));
+    }
+
     /**
      * Returns a Stream of each Point object in this Spectrum.
      *
