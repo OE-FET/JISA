@@ -18,7 +18,7 @@ public interface Multiplexer extends Instrument {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device incompatibility error
      */
-    int getNumRoutes() throws IOException, DeviceException;
+    int getRouteCount() throws IOException, DeviceException;
 
     /**
      * Returns the index of the current selected route/channel.

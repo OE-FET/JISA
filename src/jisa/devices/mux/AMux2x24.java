@@ -61,7 +61,7 @@ public class AMux2x24 extends VISADevice implements MultiMultiplexer<AMux2x24.Ba
         }
 
         @Override
-        public int getNumRoutes() {
+        public int getRouteCount() {
             return 24;
         }
 

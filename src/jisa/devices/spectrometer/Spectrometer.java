@@ -1,25 +1,21 @@
 package jisa.devices.spectrometer;
 
-import jisa.Util;
-import jisa.devices.*;
+import jisa.devices.DeviceException;
+import jisa.devices.ParameterList;
 import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 import jisa.devices.spectrometer.spectrum.SpectrumThread;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeoutException;
 
 /**
  * Interface for representing spectrometer instruments (i.e., a spectrograph plus some sort of sensor)
- *
- * @param <C> The class representing the individual channels of this spectrometer.
  */
-public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrograph, MultiInstrument {
+public interface Spectrometer extends Spectrograph {
 
     String SPECTRUM_STREAM_HEADER = "JISA SPECTRUM STREAM: length (int, 4 bytes), timestamp (long, 8 bytes), wavelengths (double array, 8*length bytes), counts (double array, 8*length bytes)";
 
@@ -29,13 +25,6 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrogra
         parameters.addValue("Acquisition Timeout [ms]", inst::getAcquisitionTimeout, 1000, inst::setAcquisitionTimeout);
 
     }
-
-    /**
-     * Returns a list of all channels this spectrometer has.
-     *
-     * @return Spectrometer channels.
-     */
-    List<C> getChannels();
 
     /**
      * Returns the integration time currently being used by the spectrometer, in seconds.
@@ -104,129 +93,86 @@ public interface Spectrometer<C extends Spectrometer.Channel> extends Spectrogra
     boolean isAcquiring() throws IOException, DeviceException;
 
     /**
-     * Interface for classes representing individual spectrometer channels.
+     * Acquires and returns a single spectrum.
+     *
+     * @return Resulting spectrum, as a Spectrum object.
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
      */
-    interface Channel<S extends Spectrometer> extends Instrument, SubInstrument<S> {
+    Spectrum getSpectrum() throws IOException, DeviceException, InterruptedException, TimeoutException;
 
-        static void addParameters(Channel inst, Class target, ParameterList parameters) {
-            inst.getParentInstrument().addBaseParameters(target, parameters);
-        }
+    /**
+     * Acquires and returns a set number of spectra, and returns them in a list.
+     *
+     * @param count Number of spectra to take.
+     *
+     * @return List of acquired spectra, as Spectrum objects.
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    List<Spectrum> getSpectrumSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException;
 
-        /**
-         * Acquires and returns a single spectrum.
-         *
-         * @return Resulting spectrum, as a Spectrum object.
-         *
-         * @throws IOException     Upon communications error
-         * @throws DeviceException Upon device compatibility error
-         */
-        Spectrum getSpectrum() throws IOException, DeviceException, InterruptedException, TimeoutException;
+    /**
+     * Adds a listener to this spectrometer channel that is called for each new spectrum that is acquired. Any spectra
+     * that are acquired while this listener is still running from a previous spectrum will be skipped by this listener.
+     * The spectrum object passed to this listener is liable to be recycled for future callbacks, so use copy() if your
+     * intention is to store it, or consider opening a queue with openSpectrumQueue() instead.
+     *
+     * @param listener Listener for new spectra.
+     *
+     * @return Reference to listener.
+     */
+    Listener addSpectrumListener(Listener listener);
 
-        /**
-         * Acquires and returns a set number of spectra, and returns them in a list.
-         *
-         * @param count Number of spectra to take.
-         *
-         * @return List of acquired spectra, as Spectrum objects.
-         *
-         * @throws IOException     Upon communications error
-         * @throws DeviceException Upon device compatibility error
-         */
-        List<Spectrum> getSpectrumSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException;
+    /**
+     * Removes the given listener from this channel, stopping it from being called when new spectra are taken.
+     *
+     * @param listener Listener to remove.
+     */
+    void removeSpectrumListener(Listener listener);
 
-        /**
-         * Adds a listener to this spectrometer channel that is called for each new spectrum that is acquired. Any spectra
-         * that are acquired while this listener is still running from a previous spectrum will be skipped by this listener.
-         * The spectrum object passed to this listener is liable to be recycled for future callbacks, so use copy() if your
-         * intention is to store it, or consider opening a queue with openSpectrumQueue() instead.
-         *
-         * @param listener Listener for new spectra.
-         *
-         * @return Reference to listener.
-         */
-        Listener addSpectrumListener(Listener listener);
+    /**
+     * Opens a (blocking) queue into which copies of newly acquired spectra will be placed, with an upper limit on capacity. This is to allow for asynchronous, lossless processing of spectral data.
+     *
+     * @return Queue of spectra.
+     */
+    SpectrumQueue openSpectrumQueue(int limit);
 
-        /**
-         * Removes the given listener from this channel, stopping it from being called when new spectra are taken.
-         *
-         * @param listener Listener to remove.
-         */
-        void removeSpectrumListener(Listener listener);
-
-        /**
-         * Opens a (blocking) queue into which copies of newly acquired spectra will be placed, with an upper limit on capacity. This is to allow for asynchronous, lossless processing of spectral data.
-         *
-         * @return Queue of spectra.
-         */
-        SpectrumQueue openSpectrumQueue(int limit);
-
-        /**
-         * Opens a (blocking) queue into which copies of newly acquired spectra will be placed. This is to allow for asynchronous, lossless processing of spectral data.
-         *
-         * @return Queue of spectra.
-         */
-        default SpectrumQueue openSpectrumQueue() {
-            return openSpectrumQueue(Integer.MAX_VALUE);
-        }
-
-        /**
-         * Closes the given queue, preventing the spectrometer channel from adding any new frames to it.
-         *
-         * @param queue Queue to close
-         */
-        void closeSpectrumQueue(SpectrumQueue queue);
-
-        default SpectrumThread startSpectrumThread(CountStreamer streamer) {
-            return new SpectrumThread(this, streamer);
-        }
-
-        default SpectrumThread startSpectrumThread(Streamer streamer) {
-            return new SpectrumThread(this, streamer);
-        }
-
-        default SpectrumThread stream(OutputStream stream) {
-            DataOutputStream out = new DataOutputStream(stream);
-            return startSpectrumThread(s -> s.writeToStream(out));
-        }
-
-        default SpectrumThread streamToFile(String path) throws IOException {
-            DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path)));
-            out.write(SPECTRUM_STREAM_HEADER.getBytes(StandardCharsets.US_ASCII));
-            return new SpectrumThread(this, f -> f.writeToStream(out), out::close);
-        }
-
+    /**
+     * Opens a (blocking) queue into which copies of newly acquired spectra will be placed. This is to allow for asynchronous, lossless processing of spectral data.
+     *
+     * @return Queue of spectra.
+     */
+    default SpectrumQueue openSpectrumQueue() {
+        return openSpectrumQueue(Integer.MAX_VALUE);
     }
 
     /**
-     * Returns the nth channel of this spectrometer.
+     * Closes the given queue, preventing the spectrometer channel from adding any new frames to it.
      *
-     * @param index n.
-     *
-     * @return Spectrometer channel n.
+     * @param queue Queue to close
      */
-    default C getChannel(int index) {
-        return getChannels().get(index);
+    void closeSpectrumQueue(SpectrumQueue queue);
+
+    default SpectrumThread startSpectrumThread(CountStreamer streamer) {
+        return new SpectrumThread(this, streamer);
     }
 
-    default List<? extends Instrument> getSubInstruments() {
-        return getChannels();
+    default SpectrumThread startSpectrumThread(Streamer streamer) {
+        return new SpectrumThread(this, streamer);
     }
 
-    /**
-     * Tells all channels to take a spectrum and returns a map of channel to spectrum.
-     *
-     * @return Map of spectra
-     */
-    default Map<C, Spectrum> getSpectra() {
+    default SpectrumThread stream(OutputStream stream) {
+        DataOutputStream out = new DataOutputStream(stream);
+        return startSpectrumThread(s -> s.writeToStream(out));
+    }
 
-        Map<C, Spectrum> spectra = new LinkedHashMap<>();
-
-        for (C channel : getChannels()) {
-            Util.runRegardless(() -> spectra.put(channel, channel.getSpectrum()));
-        }
-
-        return spectra;
-
+    default SpectrumThread streamToFile(String path) throws IOException {
+        DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path)));
+        out.write(SPECTRUM_STREAM_HEADER.getBytes(StandardCharsets.US_ASCII));
+        return new SpectrumThread(this, f -> f.writeToStream(out), out::close);
     }
 
     interface Listener {

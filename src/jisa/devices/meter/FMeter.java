@@ -16,6 +16,21 @@ public interface FMeter extends Meter {
 
     }
 
+    @Override
+    default void turnOn() throws IOException, DeviceException {
+
+    }
+
+    @Override
+    default void turnOff() throws IOException, DeviceException {
+
+    }
+
+    @Override
+    default boolean isOn() throws IOException, DeviceException {
+        return true;
+    }
+
     /**
      * Returns the frequency value currently being reported by the instrument, in Hz.
      *

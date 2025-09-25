@@ -945,7 +945,7 @@ public class GUI {
 
                 final int index = i;
 
-                Button button = new Button(option);
+                javafx.scene.control.Button button = new javafx.scene.control.Button(option);
                 button.setPadding(new Insets(7.5));
                 button.setMaxWidth(Integer.MAX_VALUE);
                 button.setAlignment(Pos.CENTER_LEFT);
@@ -967,21 +967,17 @@ public class GUI {
 
             Screen screen = getCurrentScreen();
 
-            if (screen != null) {
+            Rectangle2D bounds = screen.getVisualBounds();
 
-                Rectangle2D bounds = screen.getVisualBounds();
+            dialog.getDialogPane().getScene().getWindow().setOnShown(e -> {
 
-                dialog.getDialogPane().getScene().getWindow().setOnShown(e -> {
+                double w = dialog.getDialogPane().getScene().getWindow().getWidth();
+                double h = dialog.getDialogPane().getScene().getWindow().getHeight();
 
-                    double w = dialog.getDialogPane().getScene().getWindow().getWidth();
-                    double h = dialog.getDialogPane().getScene().getWindow().getHeight();
+                dialog.setX(((bounds.getMinX() + bounds.getMaxX()) / 2) - (w / 2));
+                dialog.setY(((bounds.getMinY() + bounds.getMaxY()) / 2) - (h / 2));
 
-                    dialog.setX(((bounds.getMinX() + bounds.getMaxX()) / 2) - (w / 2));
-                    dialog.setY(((bounds.getMinY() + bounds.getMaxY()) / 2) - (h / 2));
-
-                });
-
-            }
+            });
 
             toReturn.set(dialog.showAndWait().orElse(-1));
 
@@ -1055,7 +1051,7 @@ public class GUI {
 
         GUI.runNow(() -> {
             GlassRobot robot = com.sun.glass.ui.Application.GetApplication().createRobot();
-            screen.set(Screen.getScreensForRectangle(robot.getMouseX(), robot.getMouseY(), 1, 1).stream().findFirst().orElse(null));
+            screen.set(Screen.getScreensForRectangle(robot.getMouseX(), robot.getMouseY(), 1, 1).stream().findFirst().orElse(Screen.getPrimary()));
         });
 
         return screen.get();

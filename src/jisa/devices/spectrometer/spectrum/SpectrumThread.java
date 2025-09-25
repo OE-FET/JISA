@@ -9,7 +9,7 @@ import java.util.List;
 
 public class SpectrumThread {
 
-    private final Spectrometer.Channel       channel;
+    private final Spectrometer               spectrometer;
     private final Spectrometer.CountStreamer streamer;
     private final SRunnable                  closer;
     private final SpectrumQueue              queue;
@@ -18,28 +18,28 @@ public class SpectrumThread {
 
     private long count = 0;
 
-    public SpectrumThread(Spectrometer.Channel channel, Spectrometer.CountStreamer streamer, SRunnable closer) {
+    public SpectrumThread(Spectrometer channel, Spectrometer.CountStreamer streamer, SRunnable closer) {
 
-        this.channel    = channel;
-        this.streamer   = streamer;
-        this.closer     = closer;
-        this.queue      = channel.openSpectrumQueue();
-        this.thread     = new Thread(this::run);
-        this.exceptions = new LinkedList<>();
+        this.spectrometer = channel;
+        this.streamer     = streamer;
+        this.closer       = closer;
+        this.queue        = channel.openSpectrumQueue();
+        this.thread       = new Thread(this::run);
+        this.exceptions   = new LinkedList<>();
 
         this.thread.start();
 
     }
 
-    public SpectrumThread(Spectrometer.Channel channel, Spectrometer.Streamer streamer, SRunnable closer) {
+    public SpectrumThread(Spectrometer channel, Spectrometer.Streamer streamer, SRunnable closer) {
         this(channel, (i, s) -> streamer.newSpectrum(s), closer);
     }
 
-    public SpectrumThread(Spectrometer.Channel channel, Spectrometer.CountStreamer streamer) {
+    public SpectrumThread(Spectrometer channel, Spectrometer.CountStreamer streamer) {
         this(channel, streamer, () -> { });
     }
 
-    public SpectrumThread(Spectrometer.Channel channel, Spectrometer.Streamer streamer) {
+    public SpectrumThread(Spectrometer channel, Spectrometer.Streamer streamer) {
         this(channel, streamer, () -> { });
     }
 

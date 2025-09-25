@@ -7,32 +7,59 @@ import jisa.devices.camera.frame.Frame;
 import jisa.devices.camera.frame.FrameThread;
 import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.devices.spectrometer.spectrum.SpectrumQueue;
+import jisa.maths.Range;
+import jisa.maths.fits.Fitting;
+import jisa.maths.fits.LinearFit;
+import jisa.maths.functions.Function;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-public class CameraSpectrometer<C extends Camera<F>, F extends Frame, S extends Spectrograph> implements Spectrometer<CameraSpectrometer.Channel> {
+public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends Number, ? extends F>, S extends Spectrograph> implements Spectrometer {
 
     private final C                               camera;
     private final S                               spectrograph;
     private final Map<Listener, Camera.Listener>  listeners = new HashMap<>();
     private final Map<SpectrumQueue, FrameThread> threads   = new HashMap<>();
-    private final List<Channel>                   channels  = new LinkedList<>();
+    private       Converter<F>                    converter;
 
     public CameraSpectrometer(C camera, S spectrograph) {
         this.camera       = camera;
         this.spectrograph = spectrograph;
     }
 
-    public CameraSpectrometer.Channel addChannel(String name, Converter<F> converter) {
-        Channel channel = new Channel(name, converter);
-        channels.add(channel);
-        return channel;
+    public void setConverter(Converter<F> converter) {
+        this.converter = converter;
+    }
+
+    public void setConverter(int startX, int startY, int endX, int endY, double startWL, double endWL) throws DeviceException {
+
+        int       count       = endX - startX + 1;
+        double[]  wavelengths = Range.linear(startWL, endWL, count).doubleArray();
+        double[]  counts      = new double[count];
+        LinearFit fit         = Fitting.linearFit(List.of((double) startX, (double) endX), List.of((double) startY, (double) endY));
+        Spectrum  buffer      = new Spectrum(wavelengths, counts);
+
+        if (fit == null) {
+            throw new DeviceException("Cannot fit line to specified points.");
+        }
+
+        Function fitFunc = fit.getFunction();
+
+        converter = frame -> {
+
+            for (int x = startX; x <= endX; x++) {
+                counts[x - startX] = frame.get(x, (int) fitFunc.value(x)).doubleValue();
+            }
+
+            return buffer;
+
+        };
+
     }
 
     public C getCamera() {
@@ -41,11 +68,6 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame, S extends 
 
     public S getSpectrograph() {
         return spectrograph;
-    }
-
-    @Override
-    public List<CameraSpectrometer.Channel> getChannels() {
-        return List.copyOf(channels);
     }
 
     @Override
@@ -118,76 +140,55 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame, S extends 
         Spectrum convert(F frame);
     }
 
-    public class Channel implements Spectrometer.Channel<CameraSpectrometer<C, F, S>> {
+    @Override
+    public Spectrum getSpectrum() throws IOException, DeviceException, InterruptedException, TimeoutException {
+        return converter.convert(camera.getFrame());
+    }
 
-        private final String       name;
-        private final Converter<F> converter;
+    @Override
+    public List<Spectrum> getSpectrumSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
+        return camera.getFrameSeries(count).stream().map(converter::convert).collect(Collectors.toList());
+    }
 
-        protected Channel(String name, Converter<F> converter) {
-            this.name      = name;
-            this.converter = converter;
+    @Override
+    public Listener addSpectrumListener(Listener listener) {
+
+        Camera.Listener<F> cameraListener = camera.addFrameListener(f -> listener.newSpectrum(converter.convert(f)));
+        listeners.put(listener, cameraListener);
+        return listener;
+
+    }
+
+    @Override
+    public void removeSpectrumListener(Listener listener) {
+
+        if (listeners.containsKey(listener)) {
+            camera.removeFrameListener(listeners.get(listener));
+            listeners.remove(listener);
         }
 
-        @Override
-        public Spectrum getSpectrum() throws IOException, DeviceException, InterruptedException, TimeoutException {
-            return converter.convert(camera.getFrame());
+    }
+
+    @Override
+    public SpectrumQueue openSpectrumQueue(int limit) {
+
+        SpectrumQueue  spectrumQueue = new SpectrumQueue(this, limit);
+        FrameThread<F> thread        = camera.startFrameThread(f -> spectrumQueue.offer(converter.convert(f)));
+
+        threads.put(spectrumQueue, thread);
+
+        return spectrumQueue;
+
+    }
+
+    @Override
+    public void closeSpectrumQueue(SpectrumQueue queue) {
+
+        if (threads.containsKey(queue)) {
+            threads.get(queue).stop();
+            threads.remove(queue);
         }
 
-        @Override
-        public List<Spectrum> getSpectrumSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
-            return camera.getFrameSeries(count).stream().map(converter::convert).collect(Collectors.toList());
-        }
-
-        @Override
-        public Listener addSpectrumListener(Listener listener) {
-
-            Camera.Listener<F> cameraListener = camera.addFrameListener(f -> listener.newSpectrum(converter.convert(f)));
-            listeners.put(listener, cameraListener);
-            return listener;
-
-        }
-
-        @Override
-        public void removeSpectrumListener(Listener listener) {
-
-            if (listeners.containsKey(listener)) {
-                camera.removeFrameListener(listeners.get(listener));
-                listeners.remove(listener);
-            }
-
-        }
-
-        @Override
-        public SpectrumQueue openSpectrumQueue(int limit) {
-
-            SpectrumQueue  spectrumQueue = new SpectrumQueue(this, limit);
-            FrameThread<F> thread        = camera.startFrameThread(f -> spectrumQueue.offer(converter.convert(f)));
-
-            threads.put(spectrumQueue, thread);
-
-            return spectrumQueue;
-
-        }
-
-        @Override
-        public void closeSpectrumQueue(SpectrumQueue queue) {
-
-            if (threads.containsKey(queue)) {
-                threads.get(queue).stop();
-                threads.remove(queue);
-            }
-
-        }
-
-        @Override
-        public CameraSpectrometer<C, F, S> getParentInstrument() {
-            return CameraSpectrometer.this;
-        }
-
-        @Override
-        public String getName() {
-            return "Camera-Based Spectrometer Channel";
-        }
     }
 
 }

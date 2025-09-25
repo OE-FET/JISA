@@ -11,16 +11,16 @@ import java.util.concurrent.TimeoutException;
 
 public class SpectrumQueue extends LinkedBlockingQueue<Spectrum> {
 
-    private       boolean              open    = true;
-    private final Spectrometer.Channel spectrometer;
-    private final List<Thread>         threads = Collections.synchronizedList(new ArrayList<>(1));
+    private       boolean      open    = true;
+    private final Spectrometer spectrometer;
+    private final List<Thread> threads = Collections.synchronizedList(new ArrayList<>(1));
 
-    public SpectrumQueue(Spectrometer.Channel spectrometer, int limit) {
+    public SpectrumQueue(Spectrometer spectrometer, int limit) {
         super(limit);
         this.spectrometer = spectrometer;
     }
 
-    public SpectrumQueue(Spectrometer.Channel spectrometer) {
+    public SpectrumQueue(Spectrometer spectrometer) {
         this(spectrometer, Integer.MAX_VALUE);
     }
 

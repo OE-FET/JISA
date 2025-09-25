@@ -1,11 +1,21 @@
 package jisa.devices.translator;
 
+import jisa.control.Sync;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
+import jisa.devices.ParameterList;
 
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 public interface Translator extends Instrument {
+
+    static void addParameters(Translator inst, Class<?> target, ParameterList params) {
+
+        params.addValue("Max Speed [%]", inst::getMaxSpeed, 100.0, inst::setMaxSpeed);
+        params.addValue("Locked", inst::isLocked, false, inst::setLocked);
+
+    }
 
     /**
      * Set the absolute position of this translation axis.
@@ -16,6 +26,24 @@ public interface Translator extends Instrument {
      * @throws DeviceException Upon device compatability error
      */
     void setPosition(double position) throws IOException, DeviceException;
+
+    default void setPositionAndWait(double position) throws IOException, DeviceException, InterruptedException {
+        setPosition(position);
+        waitUntilStationary();
+    }
+
+    default void setPositionAndWait(double position, long timeout) throws IOException, DeviceException, InterruptedException, TimeoutException {
+        setPosition(position);
+        waitUntilStationary(timeout);
+    }
+
+    default void waitUntilStationary() throws IOException, DeviceException, InterruptedException {
+        Sync.waitForCondition((i) -> !isMoving(), 250);
+    }
+
+    default void waitUntilStationary(long timeout) throws IOException, DeviceException, InterruptedException, TimeoutException {
+        Sync.waitForCondition((i) -> !isMoving(), 250, timeout);
+    }
 
     /**
      * Return the absolute position of this translator.
@@ -50,37 +78,17 @@ public interface Translator extends Instrument {
     /**
      * Sets the speed of this translation axis.
      *
-     * @param speed Speed, in metres per second (linear) or degrees per second (rotational).
+     * @param speed Speed, as a percentage of the max possible value.
      *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatability error
      */
-    void setSpeed(double speed) throws IOException, DeviceException;
+    void setMaxSpeed(double speed) throws IOException, DeviceException;
 
     /**
      * Returns the speed of this translation axis.
      *
-     * @return Speed, in metres per second (linear) or degrees per second (rotational).
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon device compatability error
-     */
-    double getSpeed() throws IOException, DeviceException;
-
-    /**
-     * Returns the minimum value that can be set for the speed of this translator.
-     *
-     * @return Minimum speed, in metres per second (linear) or degrees per second (rotational)
-     *
-     * @throws IOException     Upon communications error
-     * @throws DeviceException Upon device compatability error
-     */
-    double getMinSpeed() throws IOException, DeviceException;
-
-    /**
-     * Returns the maximum value that can be set for the speed of this translator.
-     *
-     * @return Maximum speed, in metres per second (linear) or degrees per second (rotational)
+     * @return Speed, as a percentage of the max possible value.
      *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatability error
@@ -97,6 +105,16 @@ public interface Translator extends Instrument {
      */
     void moveBy(double distance) throws IOException, DeviceException;
 
+    default void moveByAndWait(double distance) throws IOException, DeviceException, InterruptedException {
+        moveBy(distance);
+        waitUntilStationary();
+    }
+
+    default void moveByAndWait(double distance, long timeout) throws IOException, DeviceException, InterruptedException, TimeoutException {
+        moveBy(distance);
+        waitUntilStationary(timeout);
+    }
+
     /**
      * Returns this axis to its home position.
      *
@@ -104,6 +122,16 @@ public interface Translator extends Instrument {
      * @throws DeviceException Upon device compatability error
      */
     void moveToHome() throws IOException, DeviceException;
+
+    default void moveToHomeAndWait() throws IOException, DeviceException, InterruptedException {
+        moveToHome();
+        waitUntilStationary();
+    }
+
+    default void moveToHomeAndWait(long timeout) throws IOException, DeviceException, InterruptedException, TimeoutException {
+        moveToHome();
+        waitUntilStationary(timeout);
+    }
 
     /**
      * Sets whether this axis is locked or not. When locked, it shall not respond to movement commands.
@@ -189,49 +217,6 @@ public interface Translator extends Instrument {
         @Override
         double getPosition() throws IOException, DeviceException;
 
-        /**
-         * Sets the speed of this translation axis.
-         *
-         * @param metresPerSec Speed, in metres per second.
-         *
-         * @throws IOException     Upon communications error
-         * @throws DeviceException Upon device compatability error
-         */
-        @Override
-        void setSpeed(double metresPerSec) throws IOException, DeviceException;
-
-        /**
-         * Returns the minimum value that can be set for the speed of this translation axis.
-         *
-         * @return Minimum speed, in metres per second.
-         *
-         * @throws IOException     Upon communications error
-         * @throws DeviceException Upon device compatability error
-         */
-        @Override
-        double getMinSpeed() throws IOException, DeviceException;
-
-        /**
-         * Returns the maximum value that can be set for the speed of this translation axis.
-         *
-         * @return Maximum speed, in metres per second.
-         *
-         * @throws IOException     Upon communications error
-         * @throws DeviceException Upon device compatability error
-         */
-        @Override
-        double getMaxSpeed() throws IOException, DeviceException;
-
-        /**
-         * Returns the speed of this translation axis.
-         *
-         * @return Speed, in metres per second.
-         *
-         * @throws IOException     Upon communications error
-         * @throws DeviceException Upon device compatability error
-         */
-        @Override
-        double getSpeed() throws IOException, DeviceException;
 
         /**
          * Moves this translation axis by the specific amount.
@@ -291,50 +276,6 @@ public interface Translator extends Instrument {
          */
         @Override
         double getPosition() throws IOException, DeviceException;
-
-        /**
-         * Sets the speed of this rotation axis.
-         *
-         * @param degreesPerSec Speed, in degrees per second.
-         *
-         * @throws IOException     Upon communications error
-         * @throws DeviceException Upon device compatability error
-         */
-        @Override
-        void setSpeed(double degreesPerSec) throws IOException, DeviceException;
-
-        /**
-         * Returns the minimum value that can be set for the speed of this rotational axis.
-         *
-         * @return Minimum speed, in degrees per second.
-         *
-         * @throws IOException     Upon communications error
-         * @throws DeviceException Upon device compatability error
-         */
-        @Override
-        double getMinSpeed() throws IOException, DeviceException;
-
-        /**
-         * Returns the maximum value that can be set for the speed of this rotational axis.
-         *
-         * @return Maximum speed, in degrees per second.
-         *
-         * @throws IOException     Upon communications error
-         * @throws DeviceException Upon device compatability error
-         */
-        @Override
-        double getMaxSpeed() throws IOException, DeviceException;
-
-        /**
-         * Returns the speed of this rotation axis.
-         *
-         * @return Speed, in degrees per second.
-         *
-         * @throws IOException     Upon communications error
-         * @throws DeviceException Upon device compatability error
-         */
-        @Override
-        double getSpeed() throws IOException, DeviceException;
 
         /**
          * Moves this rotation axis by the specific amount.

@@ -42,6 +42,21 @@ public class K2182 extends VISADevice implements VMeter, LineFilter {
 
     }
 
+    @Override
+    public void turnOn() throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public void turnOff() throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public boolean isOn() throws IOException, DeviceException {
+        return true;
+    }
+
     private void disableAveraging() throws IOException {
         write(":SENSE:VOLT:DFILTER OFF");
     }

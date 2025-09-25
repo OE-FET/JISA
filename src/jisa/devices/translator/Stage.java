@@ -1,16 +1,40 @@
 package jisa.devices.translator;
 
+import jisa.control.Sync;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.MultiInstrument;
+import jisa.devices.ParameterList;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public interface Stage<T extends Translator> extends Instrument, MultiInstrument {
+
+    static void addParameters(Stage<?> inst, Class<?> target, ParameterList params) {
+
+        String[]                 names = inst.getAllAxes().stream().map(Translator::getName).toArray(String[]::new);
+        List<List<Parameter<?>>> lists = inst.getAllAxes().stream().map(a -> a.getAllParameters(target)).collect(Collectors.toList());
+
+        int length = lists.stream().mapToInt(List::size).max().orElse(0);
+
+        for (int i = 0; i < length; i++) {
+
+            for (List<Parameter<?>> list : lists) {
+
+                if (i < list.size()) {
+                    params.add(list.get(i).copy(String.format("%s %s", names[i], list.get(i).getName())));
+                }
+
+            }
+
+        }
+
+    }
 
     /**
      * Returns a list of all axes controlled by this stage, represented as Translator objects.
@@ -98,6 +122,19 @@ public interface Stage<T extends Translator> extends Instrument, MultiInstrument
 
     }
 
+    default void moveToHomeAndWait() throws IOException, DeviceException, InterruptedException {
+        moveToHome();
+        waitUntilStationary();
+    }
+
+    default void waitUntilStationary() throws IOException, DeviceException, InterruptedException {
+        Sync.waitForCondition((i) -> !isMoving(), 250);
+    }
+
+    default void waitUntilStationary(long timeout) throws IOException, DeviceException, InterruptedException, TimeoutException {
+        Sync.waitForCondition((i) -> !isMoving(), 250, timeout);
+    }
+
     default boolean isMoving() throws IOException, DeviceException {
 
         for (Translator translator : getAllAxes()) {
@@ -110,6 +147,40 @@ public interface Stage<T extends Translator> extends Instrument, MultiInstrument
 
         return false;
 
+    }
+
+    default void setPosition(double... coordinates) throws IOException, DeviceException {
+
+        List<T> axes = getAllAxes();
+
+        int count = Math.min(coordinates.length, getAllAxes().size());
+
+        for (int i = 0; i < count; i++) {
+            axes.get(i).setPosition(coordinates[i]);
+        }
+
+    }
+
+    default void setPositionAndWait(double... coordinates) throws IOException, DeviceException, InterruptedException {
+        setPosition(coordinates);
+        waitUntilStationary();
+    }
+
+    default void moveBy(double... coordinates) throws IOException, DeviceException {
+
+        List<T> axes = getAllAxes();
+
+        int count = Math.min(coordinates.length, getAllAxes().size());
+
+        for (int i = 0; i < count; i++) {
+            axes.get(i).moveBy(coordinates[i]);
+        }
+
+    }
+
+    default void moveByAndWait(double... coordinates) throws IOException, DeviceException, InterruptedException {
+        moveBy(coordinates);
+        waitUntilStationary();
     }
 
     interface Linear<L extends Translator.Linear, T extends Translator> extends Stage<T> {
@@ -144,7 +215,7 @@ public interface Stage<T extends Translator> extends Instrument, MultiInstrument
 
     }
 
-    interface Mixed<L extends Translator.Linear, R extends Translator.Rotational, T extends Translator> extends Linear<L,T>, Rotational<R,T> {
+    interface Mixed<L extends Translator.Linear, R extends Translator.Rotational, T extends Translator> extends Linear<L, T>, Rotational<R, T> {
 
         @Override
         default List<T> getAllAxes() {

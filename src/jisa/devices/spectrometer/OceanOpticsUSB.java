@@ -13,16 +13,17 @@ import jisa.visa.NativeDevice;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<T, S>> extends NativeDevice implements Spectrometer<OceanOpticsUSB<T, S>.Channel> {
+public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<T, S>> extends NativeDevice implements Spectrometer {
 
-    private final T             usb;
-    private final List<Channel> channels;
-    private       boolean       acquiring         = false;
-    private       Thread        acquisitionThread = null;
+    private final T                                           usb;
+    private final SpectrometerChannel                         channel;
+    private final ListenerManager                             manager           = new ListenerManager();
+    private       boolean                                     acquiring         = false;
+    private       Thread                                      acquisitionThread = null;
+    private       com.oceanoptics.omnidriver.spectra.Spectrum buffer            = null;
+    private       Spectrum                                    spectrum          = null;
 
     public OceanOpticsUSB(String name, Class<T> type) throws IOException, DeviceException {
 
@@ -38,7 +39,7 @@ public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<
             throw new IOException(String.format("Connection to %s failed.", usb.getName()));
         }
 
-        channels = Arrays.stream(usb.getChannels()).map(Channel::new).collect(Collectors.toList());
+        channel = usb.channels[0];
 
     }
 
@@ -56,7 +57,7 @@ public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<
             throw new IOException(String.format("Connection to %s failed.", usb.getName()));
         }
 
-        channels = Arrays.stream(usb.getChannels()).map(Channel::new).collect(Collectors.toList());
+        channel = usb.channels[0];
 
     }
 
@@ -74,13 +75,8 @@ public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<
             throw new IOException(String.format("Connection to %s failed.", usb.getName()));
         }
 
-        channels = Arrays.stream(usb.getChannels()).map(Channel::new).collect(Collectors.toUnmodifiableList());
+        channel = usb.channels[0];
 
-    }
-
-    @Override
-    public List<Channel> getChannels() {
-        return channels;
     }
 
     @Override
@@ -105,34 +101,25 @@ public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<
 
     private void acquisition() {
 
-        for (Channel channel : channels) {
-
-            try {
-                channel.buffer = channel.channel.getSpectrum();
-            } catch (Exception e) {
-                stopAcquisition();
-                return;
-            }
-
+        try {
+            buffer = channel.getSpectrum();
+        } catch (Exception e) {
+            stopAcquisition();
+            return;
         }
 
-        loop:
         while (acquiring) {
 
-            for (Channel channel : channels) {
+            try {
+                channel.getSpectrum(buffer);
+                spectrum.copyFrom(buffer.getSpectrum());
+                manager.trigger(spectrum);
+            } catch (Exception e) {
+                System.err.println("Error acquiring spectrum: " + e.getMessage());
+            }
 
-                try {
-                    channel.channel.getSpectrum(channel.buffer);
-                    channel.spectrum.copyFrom(channel.buffer.getSpectrum());
-                    channel.manager.trigger(channel.spectrum);
-                } catch (Exception e) {
-                    System.err.println("Error acquiring spectrum: " + e.getMessage());
-                }
-
-                if (Thread.interrupted() || !acquiring) {
-                    break loop;
-                }
-
+            if (Thread.interrupted() || !acquiring) {
+                break;
             }
 
         }
@@ -203,109 +190,87 @@ public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<
         return new IDAddress(String.format("%d", usb.getDeviceIndex()));
     }
 
-    public class Channel implements Spectrometer.Channel<OceanOpticsUSB> {
+    @Override
+    public Spectrum getSpectrum() throws IOException, InterruptedException {
 
-        private final SpectrometerChannel                         channel;
-        private final ListenerManager                             manager  = new ListenerManager();
-        private       com.oceanoptics.omnidriver.spectra.Spectrum buffer   = null;
-        private       Spectrum                                    spectrum = null;
+        if (isAcquiring()) {
 
-        public Channel(SpectrometerChannel channel) {
-            this.channel = channel;
-        }
+            SpectrumQueue queue = openSpectrumQueue(1);
 
-        @Override
-        public Spectrum getSpectrum() throws IOException, InterruptedException {
-
-            if (isAcquiring()) {
-
-                SpectrumQueue queue = openSpectrumQueue(1);
-
-                try {
-                    return queue.nextSpectrum();
-                } finally {
-                    queue.close();
-                    queue.clear();
-                }
-
-            } else {
-                return new Spectrum(channel.getAllWavelengths(), channel.getSpectrum().getSpectrum());
-            }
-
-        }
-
-        @Override
-        public List<Spectrum> getSpectrumSeries(int count) throws IOException, InterruptedException {
-
-            List<Spectrum> spectrumSeries = new ArrayList<>(count);
-
-            if (isAcquiring()) {
-
-                SpectrumQueue queue = openSpectrumQueue(count);
-
-                try {
-
-                    for (int i = 0; i < count; i++) {
-                        spectrumSeries.add(queue.nextSpectrum());
-                    }
-
-                } finally {
-                    queue.close();
-                    queue.clear();
-                }
-
-            } else {
-
-                for (int i = 0; i < count; i++) {
-                    spectrumSeries.add(getSpectrum());
-                }
-
-            }
-
-            return spectrumSeries;
-
-        }
-
-        @Override
-        public Listener addSpectrumListener(Listener listener) {
-            manager.addListener(listener);
-            return listener;
-        }
-
-        @Override
-        public void removeSpectrumListener(Listener listener) {
-            manager.removeListener(listener);
-        }
-
-        @Override
-        public SpectrumQueue openSpectrumQueue(int limit) {
-            SpectrumQueue queue = new SpectrumQueue(this, limit);
-            manager.addQueue(queue);
-            return queue;
-        }
-
-        @Override
-        public void closeSpectrumQueue(SpectrumQueue queue) {
-
-            manager.removeQueue(queue);
-
-            if (queue.isOpen()) {
+            try {
+                return queue.nextSpectrum();
+            } finally {
                 queue.close();
+                queue.clear();
             }
 
-        }
-
-        @Override
-        public S getParentInstrument() {
-            return (S) OceanOpticsUSB.this;
-        }
-
-        @Override
-        public String getName() {
-            return usb.getName();
+        } else {
+            return new Spectrum(channel.getAllWavelengths(), channel.getSpectrum().getSpectrum());
         }
 
     }
+
+    @Override
+    public List<Spectrum> getSpectrumSeries(int count) throws IOException, InterruptedException {
+
+        List<Spectrum> spectrumSeries = new ArrayList<>(count);
+
+        if (isAcquiring()) {
+
+            SpectrumQueue queue = openSpectrumQueue(count);
+
+            try {
+
+                for (int i = 0; i < count; i++) {
+                    spectrumSeries.add(queue.nextSpectrum());
+                }
+
+            } finally {
+                queue.close();
+                queue.clear();
+            }
+
+        } else {
+
+            for (int i = 0; i < count; i++) {
+                spectrumSeries.add(getSpectrum());
+            }
+
+        }
+
+        return spectrumSeries;
+
+    }
+
+    @Override
+    public Listener addSpectrumListener(Listener listener) {
+        manager.addListener(listener);
+        return listener;
+    }
+
+    @Override
+    public void removeSpectrumListener(Listener listener) {
+        manager.removeListener(listener);
+    }
+
+    @Override
+    public SpectrumQueue openSpectrumQueue(int limit) {
+        SpectrumQueue queue = new SpectrumQueue(this, limit);
+        manager.addQueue(queue);
+        return queue;
+    }
+
+    @Override
+    public void closeSpectrumQueue(SpectrumQueue queue) {
+
+        manager.removeQueue(queue);
+
+        if (queue.isOpen()) {
+            queue.close();
+        }
+
+    }
+
 
     public static class Model650 extends OceanOpticsUSB<USB650, Model650> {
 
@@ -322,6 +287,7 @@ public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<
         public Model650(IDAddress address) throws DeviceException, IOException {
             super("Ocean Optics USB650 Spectrometer", CLASS, address);
         }
+
     }
 
     public static class Model2000 extends OceanOpticsUSB<USB2000, Model2000> {
@@ -341,4 +307,5 @@ public class OceanOpticsUSB<T extends USBSpectrometer, S extends OceanOpticsUSB<
         }
 
     }
+
 }

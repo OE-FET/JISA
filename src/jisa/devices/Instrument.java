@@ -246,6 +246,10 @@ public interface Instrument {
             return name;
         }
 
+        public Parameter<S> copy(String newName) {
+            return new Parameter<>(newName, defaultValue, setter, getter, (S[]) options.toArray());
+        }
+
         public void set(S value) throws IOException, DeviceException {
             setter.set(value);
         }

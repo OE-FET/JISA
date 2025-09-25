@@ -125,4 +125,18 @@ public interface TMeter extends Instrument, Meter {
 
     }
 
+    @Override
+    default boolean isOn() throws IOException, DeviceException {
+        return true;
+    }
+
+    @Override
+    default void turnOff() throws IOException, DeviceException {
+
+    }
+
+    @Override
+    default void turnOn() throws IOException, DeviceException {
+
+    }
 }

@@ -136,7 +136,7 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
 
     }
 
-    public <T> void addOptional(String name, Instrument.Getter<Boolean> usedGet, boolean usedDef, Instrument.Getter<T> valueGet, T defValue, Instrument.Setter<T> autoSetter, Instrument.Setter<T> valueSetter) {
+    public <T> void addOptional(String name, Instrument.Getter<Boolean> usedGet, boolean usedDef, Instrument.Getter<T> valueGet, T defValue, Instrument.Setter<T> unusedSetter, Instrument.Setter<T> usedSetter) {
 
         boolean used;
 
@@ -157,9 +157,9 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
         add(new Parameter<Instrument.OptionalQuantity<T>>(name, new Instrument.OptionalQuantity<>(used, defValue), q -> {
 
             if (!q.isUsed()) {
-                autoSetter.set(q.getValue());
+                unusedSetter.set(q.getValue());
             } else {
-                valueSetter.set(q.getValue());
+                usedSetter.set(q.getValue());
             }
 
         }, () -> new Instrument.OptionalQuantity<>(usedGet.get(), valueGet.get())));
