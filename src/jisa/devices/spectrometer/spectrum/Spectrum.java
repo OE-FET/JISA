@@ -111,7 +111,8 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
         return new Spectrum(wavelengths, IntStream.range(0, counts.length).mapToDouble(i -> {
             try {
-                return counts[i] / other.counts[i];
+                double val = counts[i] / other.counts[i];
+                return Double.isFinite(val) ? val : Double.NaN;
             } catch (Throwable e) {
                 return Double.NaN;
             }
