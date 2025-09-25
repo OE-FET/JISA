@@ -28,16 +28,34 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
     private final List<Linear>     linearAxes;
     private final List<Rotational> rotationalAxes;
 
-    public PriorProScan(Address address) throws IOException, DeviceException {
+    public static class II extends PriorProScan {
+
+        public II(Address address) throws IOException, DeviceException {
+            super(address, 1);
+        }
+
+    }
+
+    public static class III extends PriorProScan {
+
+        public III(Address address) throws IOException, DeviceException {
+            super(address, 2);
+        }
+
+    }
+
+    protected PriorProScan(Address address, int stopBits) throws IOException, DeviceException {
 
         super(address);
 
-        configSerial(serial -> serial.setSerialParameters(9600, 8, SerialConnection.Parity.NONE, 2));
+        configSerial(serial -> serial.setSerialParameters(9600, 8, SerialConnection.Parity.NONE, stopBits));
 
         setWriteTerminator("\r");
         setReadTerminator("\r");
 
         addAutoRemove("\r", "\n");
+
+        write("COMP O");
 
         List<Linear>     linearAxes     = new LinkedList<>();
         List<Rotational> rotationalAxes = new LinkedList<>();
