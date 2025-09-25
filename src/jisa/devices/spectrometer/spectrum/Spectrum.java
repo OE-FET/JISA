@@ -107,6 +107,12 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
     }
 
+    public Spectrum divide(Spectrum other) {
+
+        return new Spectrum(wavelengths, IntStream.range(0, counts.length).mapToDouble(i -> counts[i]/other.counts[i]).toArray(), timestamp);
+
+    }
+
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
