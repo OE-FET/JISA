@@ -162,7 +162,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         // First three will be X,Y,Z
         String args = IntStream.range(0, coordinates.length).mapToObj(i -> String.format("%d", (int) Math.round(coordinates[i] / laxes[i].resolution))).limit(3).collect(Collectors.joining(","));
-        String response = query("GR,%s", args);
+        String response = query("G,%s", args);
 
         if (coordinates.length > 3) {
 
