@@ -172,12 +172,25 @@ public interface Series {
         return setPoints(null, y);
     }
 
-    default Series plotSpectrum(Spectrum spectrum) {
+    default Series addSpectrim(Spectrum spectrum) {
         return addPoints(spectrum.getWavelengths(), spectrum.getCounts());
     }
 
     default Series updateSpectrum(Spectrum spectrum) {
         return setYPoints(spectrum.getCounts());
+    }
+
+    default Series plotSpectrum(Spectrum spectrum) {
+
+        try {
+            updateSpectrum(spectrum);
+        } catch (Throwable ignored) {
+            clear();
+            addSpectrim(spectrum);
+        }
+
+        return this;
+
     }
 
     Series removePoint(int index);

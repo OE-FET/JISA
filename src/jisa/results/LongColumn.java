@@ -36,7 +36,7 @@ public class LongColumn extends Column<Long> {
 
     @Override
     public void writeToStream(DataOutputStream stream, Long value) throws IOException {
-        stream.writeLong(value);
+        stream.writeLong(value != null ? value : Long.MIN_VALUE);
     }
 
     @Override

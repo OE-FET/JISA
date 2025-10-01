@@ -1,5 +1,6 @@
 package jisa.results;
 
+import com.google.common.primitives.Ints;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -7,10 +8,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import java.util.zip.DeflaterOutputStream;
@@ -24,12 +22,75 @@ public class ResultStreamBinary extends ResultTable {
     private long             dataStart   = 0;
     private int              currentLine = 0;
 
-    private ResultStreamBinary(RandomAccessFile file, String path, Column<?>... columns) {
+    public static ResultStreamBinary loadFile(String path) throws IOException {
+
+        RandomAccessFile file = new RandomAccessFile(path, "rw");
+        file.seek(0);
+
+        Map<String, Object> attributes = null;
+        List<Column>        columns    = new LinkedList<>();
+
+        int code = file.read();
+
+        while (code != 3) {
+
+            switch (code) {
+
+                case 1:
+
+                    int length = file.readInt();
+                    byte[] buffer = new byte[length];
+                    file.readFully(buffer);
+                    attributes = new JSONObject(new String(buffer, StandardCharsets.UTF_8)).toMap();
+                    break;
+
+                case 2:
+
+                    int nameLength = file.readInt();
+                    byte[] nameBuffer = new byte[nameLength];
+                    file.readFully(nameBuffer);
+                    String name = new String(nameBuffer, StandardCharsets.UTF_8);
+
+                    int unitsLength = file.readInt();
+                    byte[] unitBuffer = new byte[unitsLength];
+                    file.readFully(unitBuffer);
+                    String units = new String(unitBuffer, StandardCharsets.UTF_8);
+
+                    int typeLength = file.readInt();
+                    byte[] typeBuffer = new byte[typeLength];
+                    file.readFully(typeBuffer);
+                    String type = new String(typeBuffer, StandardCharsets.UTF_8);
+
+                    columns.add(STANDARD_TYPES.get(type).create(name, units));
+
+                    break;
+
+                default:
+                    throw new IOException("Not a valid binary ResultTable file!");
+
+            }
+
+            code = file.read();
+
+        }
+
+        ResultStreamBinary stream = new ResultStreamBinary(file, path, columns.toArray(Column[]::new));
+
+        if (attributes != null) {
+            attributes.forEach((k, v) -> stream.setAttributeQuiet(k, v.toString()));
+        }
+
+        return stream;
+
+    }
+
+    private ResultStreamBinary(RandomAccessFile file, String path, Column<?>... columns) throws IOException {
         super(columns);
-        this.file = file;
-        this.path = path;
-        input     = Channels.newInputStream(file.getChannel());
-        output    = new DataOutputStream(new BufferedOutputStream(Channels.newOutputStream(file.getChannel())));
+        this.file      = file;
+        this.path      = path;
+        this.dataStart = file.getFilePointer();
+        input          = Channels.newInputStream(file.getChannel());
+        output         = new DataOutputStream(new BufferedOutputStream(Channels.newOutputStream(file.getChannel())));
     }
 
     public ResultStreamBinary(Column<?>... columns) throws IOException {
@@ -195,22 +256,76 @@ public class ResultStreamBinary extends ResultTable {
     @Override
     public Iterator<Row> iterator() {
 
-        return new Iterator<Row>() {
+        try {
 
-            private final int rows = getRowCount();
-            private       int row  = 0;
+            DataInputStream file = new DataInputStream(new BufferedInputStream(new FileInputStream(path)));
+            file.skip(dataStart);
 
-            @Override
-            public boolean hasNext() {
-                return row < rows;
-            }
+            return new Iterator<Row>() {
 
-            @Override
-            public Row next() {
-                return getRow(row++);
-            }
+                Row nextRow = read();
 
-        };
+                @Override
+                public boolean hasNext() {
+                    return nextRow != null;
+                }
+
+                private Row read() {
+
+                    try {
+                        Map<Column<?>, Object> result = new LinkedHashMap<>();
+
+                        for (Column column : columns) {
+                            result.put(column, column.readFromStream(file));
+                        }
+
+                        return new Row(result);
+
+                    } catch (Throwable e) {
+                        return null;
+                    }
+
+                }
+
+                @Override
+                public Row next() {
+
+                    try {
+                        return nextRow;
+                    } finally {
+                        nextRow = read();
+                    }
+
+                }
+
+            };
+
+        } catch (IOException e) {
+
+            return new Iterator<Row>() {
+
+                int row = 0;
+                private Row nextRow = getRow(row++);
+
+                @Override
+                public boolean hasNext() {
+                    return nextRow != null;
+                }
+
+                @Override
+                public Row next() {
+
+                    try {
+                        return nextRow;
+                    } finally {
+                        nextRow = getRow(row++);
+                    }
+
+                }
+
+            };
+
+        }
 
     }
 

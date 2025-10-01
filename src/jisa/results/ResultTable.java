@@ -953,6 +953,18 @@ public abstract class ResultTable implements Iterable<Row> {
         return stream().noneMatch(test);
     }
 
+    public double[] asDoubleArray(RowEvaluable<? extends Number> expression) {
+        return stream().mapToDouble(r -> expression.evaluate(r).doubleValue()).toArray();
+    }
+
+    public int[] asIntArray(RowEvaluable<? extends Number> expression) {
+        return stream().mapToInt(r -> expression.evaluate(r).intValue()).toArray();
+    }
+
+    public long[] asLongArray(RowEvaluable<? extends Number> expression) {
+        return stream().mapToLong(r -> expression.evaluate(r).longValue()).toArray();
+    }
+
     /**
      * Returns a Matrix of the given expressions.
      *
@@ -1552,13 +1564,13 @@ public abstract class ResultTable implements Iterable<Row> {
 
         if (compressed) {
 
-            try (DeflaterOutputStream stream = new DeflaterOutputStream(new FileOutputStream(path))) {
+            try (DeflaterOutputStream stream = new DeflaterOutputStream(new BufferedOutputStream(new FileOutputStream(path)))) {
                 outputBinary(stream);
             }
 
         } else {
 
-            try (FileOutputStream stream = new FileOutputStream(path)) {
+            try (BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(path))) {
                 outputBinary(stream);
             }
 

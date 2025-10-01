@@ -69,8 +69,8 @@ public class ResultStream extends ResultTable {
             // Make sure the directory we're wanting to write into exists.
             try {
                 new File(path).getParentFile().mkdirs();
-            } catch (Throwable ignored) {}
-            
+            } catch (Throwable ignored) { }
+
             this.path = path;
 
             file = new RandomAccessFile(path, "rw");
@@ -191,12 +191,15 @@ public class ResultStream extends ResultTable {
 
             return new Iterator<Row>() {
 
-                private final int rows = getRowCount();
-                private int row = 0;
-
                 @Override
                 public boolean hasNext() {
-                    return row < rows;
+
+                    try {
+                        return file.getFilePointer() < file.length() -1;
+                    } catch (IOException e) {
+                        return false;
+                    }
+
                 }
 
                 @Override
@@ -210,8 +213,6 @@ public class ResultStream extends ResultTable {
                         e.printStackTrace();
                         return null;
                     } finally {
-
-                        row++;
 
                         if (!hasNext()) {
                             try {
@@ -234,7 +235,7 @@ public class ResultStream extends ResultTable {
             return new Iterator<Row>() {
 
                 private final int rows = getRowCount();
-                private int row = 0;
+                private       int row  = 0;
 
                 @Override
                 public boolean hasNext() {

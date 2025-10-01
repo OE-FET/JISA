@@ -1,13 +1,11 @@
 package jisa.devices.spectrometer.spectrum;
 
 import com.google.common.primitives.Doubles;
-import jisa.Util;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.*;
@@ -68,18 +66,15 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      */
     public Spectrum add(Spectrum other) {
 
-        // If they match, then this is easy
-        if (Arrays.equals(wavelengths, other.wavelengths)) {
-            return new Spectrum(wavelengths, Util.arrayAdd(counts, other.counts));
+        if (size() != other.size()) {
+            throw new IllegalArgumentException(String.format("Spectrum sizes are not equal (trying to add %d points to %d).", other.size(), size()));
         }
 
-        // Otherwise, we need to subtract matching points only
-        List<Double> wl1  = Doubles.asList(wavelengths);
-        List<Double> wl2  = Doubles.asList(other.wavelengths);
-        double[]     wls  = wl1.stream().filter(wl2::contains).mapToDouble(v -> v).toArray();
-        double[]     vals = DoubleStream.of(wls).map(wl -> counts[wl1.indexOf(wl)] + other.counts[wl2.indexOf(wl)]).toArray();
-
-        return new Spectrum(wls, vals);
+        return new Spectrum(
+            wavelengths.clone(),
+            IntStream.range(0, size()).mapToDouble(i -> counts[i] + other.counts[i]).toArray(),
+            Math.max(timestamp, other.timestamp)
+        );
 
     }
 
@@ -92,31 +87,49 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      */
     public Spectrum subtract(Spectrum other) {
 
-        // If they match, then this is easy
-        if (Arrays.equals(wavelengths, other.wavelengths)) {
-            return new Spectrum(wavelengths, Util.arrayDiff(counts, other.counts));
+        if (size() != other.size()) {
+            throw new IllegalArgumentException("Spectrum sizes are not equal.");
         }
 
-        // Otherwise, we need to subtract matching points only
-        List<Double> wl1  = Doubles.asList(wavelengths);
-        List<Double> wl2  = Doubles.asList(other.wavelengths);
-        double[]     wls  = wl1.stream().filter(wl2::contains).mapToDouble(Double::doubleValue).toArray();
-        double[]     vals = DoubleStream.of(wls).map(wl -> counts[wl1.indexOf(wl)] - other.counts[wl2.indexOf(wl)]).toArray();
-
-        return new Spectrum(wls, vals);
+        return new Spectrum(
+            wavelengths.clone(),
+            IntStream.range(0, size()).mapToDouble(i -> counts[i] - other.counts[i]).toArray(),
+            Math.max(timestamp, other.timestamp)
+        );
 
     }
 
     public Spectrum divide(Spectrum other) {
 
-        return new Spectrum(wavelengths, IntStream.range(0, counts.length).mapToDouble(i -> {
-            try {
-                double val = counts[i] / other.counts[i];
-                return Double.isFinite(val) ? val : Double.NaN;
-            } catch (Throwable e) {
-                return Double.NaN;
-            }
-        }).toArray(), timestamp);
+        if (size() != other.size()) {
+            throw new IllegalArgumentException("Spectrum sizes are not equal.");
+        }
+
+        return new Spectrum(
+            wavelengths.clone(),
+            IntStream.range(0, counts.length).mapToDouble(i -> {
+                try {
+                    return counts[i] / other.counts[i];
+                } catch (Throwable e) {
+                    return Double.NaN;
+                }
+            }).toArray(),
+            Math.max(timestamp, other.timestamp)
+        );
+
+    }
+
+    public Spectrum multiply(Spectrum other) {
+
+        if (size() != other.size()) {
+            throw new IllegalArgumentException("Spectrum sizes are not equal.");
+        }
+
+        return new Spectrum(
+            wavelengths.clone(),
+            IntStream.range(0, size()).mapToDouble(i -> counts[i] * other.counts[i]).toArray(),
+            Math.max(timestamp, other.timestamp)
+        );
 
     }
 
@@ -154,7 +167,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      *
      * @return Subtracted spectrum.
      */
-    public Spectrum sub(Spectrum other) {
+    public Spectrum minus(Spectrum other) {
         return subtract(other);
     }
 
@@ -168,6 +181,14 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      */
     public Spectrum plus(Spectrum other) {
         return add(other);
+    }
+
+    public Spectrum times(Spectrum other) {
+        return multiply(other);
+    }
+
+    public Spectrum div(Spectrum other) {
+        return divide(other);
     }
 
     public Spectrum subSpectrum(int start, int end) {
@@ -243,7 +264,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      * @return Array of wavenumbers.
      */
     public double[] getWavenumbers() {
-        return Arrays.stream(wavelengths).map(v -> 1.0 / v).toArray();
+        return DoubleStream.of(wavelengths).map(v -> 1.0 / v).toArray();
     }
 
     public List<Double> getWavenumberList() {
@@ -256,7 +277,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      * @return Array of angular wavenumbers.
      */
     public double[] getAngularWavenumbers() {
-        return Arrays.stream(wavelengths).map(v -> 2.0 * Math.PI / v).toArray();
+        return DoubleStream.of(wavelengths).map(v -> 2.0 * Math.PI / v).toArray();
     }
 
     public List<Double> getAngularWavelenumberList() {

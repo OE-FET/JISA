@@ -18,7 +18,7 @@ public class FakeSpectrometer implements Spectrometer {
         return "Fake Spectrometer";
     }
 
-    private long    delay             = 0;
+    private long    delay             = 50;
     private Thread  acquisitionThread = null;
     private boolean acquiring         = false;
 
@@ -132,7 +132,7 @@ public class FakeSpectrometer implements Spectrometer {
         return null;
     }
 
-    private final double[]        wavelengths = Range.linear(200, 800, 101).doubleArray();
+    private final double[]        wavelengths = Range.linear(200e-9, 800e-9, 101).doubleArray();
     private final double[]        buffer      = new double[wavelengths.length];
     private final Random          random      = new Random();
     private final ListenerManager manager     = new ListenerManager();

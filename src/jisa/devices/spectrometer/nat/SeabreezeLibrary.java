@@ -38,7 +38,7 @@ public interface SeabreezeLibrary extends Library {
 
     int seabreeze_get_error_string(int error_code, CharBuffer buffer, int buffer_length);
 
-    int seabreeze_get_model(int index, IntBuffer error_code, String buffer, int buffer_length);
+    int seabreeze_get_model(int index, IntBuffer error_code, CharBuffer buffer, int buffer_length);
 
     void seabreeze_set_trigger_mode(int index, IntBuffer error_code, int mode);
 

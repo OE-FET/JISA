@@ -36,7 +36,7 @@ public class IntColumn extends Column<Integer> {
 
     @Override
     public void writeToStream(DataOutputStream stream, Integer value) throws IOException {
-        stream.writeInt(value);
+        stream.writeInt(value != null ? value : Integer.MIN_VALUE);
     }
 
     @Override

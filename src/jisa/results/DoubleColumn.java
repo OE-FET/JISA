@@ -36,7 +36,7 @@ public class DoubleColumn extends Column<Double> implements DoubleRowEvaluable {
 
     @Override
     public void writeToStream(DataOutputStream stream, Double value) throws IOException {
-        stream.writeDouble(value);
+        stream.writeDouble(value != null ? value : Double.NaN);
     }
 
     @Override

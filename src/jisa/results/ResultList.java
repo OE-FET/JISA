@@ -108,13 +108,13 @@ public class ResultList extends ResultTable {
 
         try {
 
-            try (InputStream stream = new InflaterInputStream(new FileInputStream(filePath))) {
+            try (InputStream stream = new InflaterInputStream(new BufferedInputStream(new FileInputStream(filePath)))) {
                 return loadFromBinaryStream(stream);
             }
 
         } catch (IOException e) {
 
-            try (InputStream stream = new FileInputStream(filePath)) {
+            try (InputStream stream = new BufferedInputStream(new FileInputStream(filePath))) {
                 return loadFromBinaryStream(stream);
             }
 
