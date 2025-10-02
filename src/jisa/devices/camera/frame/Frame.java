@@ -46,6 +46,7 @@ public interface Frame<D, F extends Frame> {
      *
      * @param x X co-ordinate
      * @param y Y co-ordinate
+     *
      * @return Pixel value
      */
     D get(int x, int y);
@@ -141,9 +142,9 @@ public interface Frame<D, F extends Frame> {
 
         int[] argb = getARGBData();
 
-        DataBuffer     rgbData = new DataBufferInt(argb, argb.length);
-        WritableRaster raster  = Raster.createPackedRaster(rgbData, getWidth(), getHeight(), getWidth(), new int[]{0xff0000, 0xff00, 0xff}, null);
-        ColorModel colorModel  = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
+        DataBuffer     rgbData    = new DataBufferInt(argb, argb.length);
+        WritableRaster raster     = Raster.createPackedRaster(rgbData, getWidth(), getHeight(), getWidth(), new int[]{0xff0000, 0xff00, 0xff}, null);
+        ColorModel     colorModel = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
 
         BufferedImage img = new BufferedImage(colorModel, raster, false, null);
 
@@ -158,6 +159,7 @@ public interface Frame<D, F extends Frame> {
      * @param y      Starting y co-ordinate
      * @param width  Number of pixels wide
      * @param height Number of pixels tall
+     *
      * @return Sub-image
      */
     F subFrame(int x, int y, int width, int height);
@@ -188,6 +190,7 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate.
          * @param y Y co-ordinate.
+         *
          * @return Boxed pixel value (memory inefficient).
          */
         @Deprecated
@@ -200,6 +203,7 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
+         *
          * @return Unboxed value.
          */
         short value(int x, int y);
@@ -273,6 +277,7 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate.
          * @param y Y co-ordinate.
+         *
          * @return Boxed pixel value (memory inefficient).
          */
         @Deprecated
@@ -339,6 +344,7 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
+         *
          * @return Signed value
          */
         short signed(int x, int y);
@@ -348,6 +354,7 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
+         *
          * @return Unboxed value.
          */
         default int value(int x, int y) {
@@ -434,6 +441,7 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
+         *
          * @return Signed value
          */
         int signed(int x, int y);
@@ -443,6 +451,7 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
+         *
          * @return Unboxed value.
          */
         default long value(int x, int y) {

@@ -21,8 +21,6 @@ public class Main {
 
         try {
 
-            var spec = new OceanOptics(0);
-
             var disp = new ImageDisplay("Image");
             var cam  = new Lumenera(1);
 

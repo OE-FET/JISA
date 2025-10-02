@@ -8,25 +8,25 @@ import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.camera.feature.Amplified;
 import jisa.devices.camera.frame.U16RGBFrame;
-import jisa.devices.camera.nat.LuCamAPI;
+import jisa.devices.camera.nat.LucamAPI;
+import jisa.devices.camera.nat.LucamError;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.FloatBuffer;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
 
-    private final LuCamAPI                        api;
+    private final LucamAPI                        api;
     private final Pointer                         handle;
     private final LinkedBlockingQueue<ByteBuffer> returned    = new LinkedBlockingQueue<>(1);
     private       float                           timeout     = 0;
     private       long[]                          data        = null;
-    private final LuCamAPI.LUCAM_FRAME_FORMAT     frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-    private final LuCamAPI.LUCAM_CONVERSION       conversion  = new LuCamAPI.LUCAM_CONVERSION();
+    private final LucamAPI.LUCAM_FRAME_FORMAT     frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+    private final LucamAPI.LUCAM_CONVERSION       conversion  = new LucamAPI.LUCAM_CONVERSION();
     private       int                             imageWidth  = 0;
     private       int                             imageHeight = 0;
     private       int                             pixelSize   = 0;
@@ -43,26 +43,27 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
 
         super("Lumenera Camera");
 
-        api    = findLibrary(LuCamAPI.class, "lucamapi");
+        api    = findLibrary(LucamAPI.class, "lucamapi");
         handle = api.LucamCameraOpen(new NativeLong(index, true));
 
         if (handle == null) {
             throw new IOException(String.format("Unable to open connection to camera index %d. Error code: %d.", index, api.LucamGetLastError().longValue()));
         }
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
-        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting frame format data. Error code %d.", getLastError());
-        }
+        setAcquisitionTimeout(10000);
 
-        frameFormat.pixelFormat.setValue(1);
+    }
 
-        if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
-            throw new DeviceException("Error setting frame bit depth. Error code %d.", getLastError());
-        }
+    protected void throwError(String activity, Object... format) throws DeviceException {
+
+        long   error = getLastError();
+        String name  = LucamError.NAMES.getOrDefault(error, "Unknown Error");
+
+        throw new DeviceException("Error encountered with %s: %s (%d)", String.format(activity, format), name, error);
 
     }
 
@@ -96,8 +97,8 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
         NativeLongByReference flags    = new NativeLongByReference();
 
 
-        if (!api.LucamGetProperty(handle, LuCamAPI.LUCAM_PROP_EXPOSURE, exposure, flags)) {
-            throw new DeviceException("Unable to read property LUCAM_PROP_EXPOSURE. Error code: %d", getLastError());
+        if (!api.LucamGetProperty(handle, LucamAPI.LUCAM_PROP_EXPOSURE, exposure, flags)) {
+            throwError("LucamGetProperty(LUCAM_PROP_EXPOSURE)");
         }
 
         return exposure.get(0) / 1e3;
@@ -108,20 +109,20 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public void setIntegrationTime(double time) throws IOException, DeviceException {
 
-        if (!api.LucamSetProperty(handle, LuCamAPI.LUCAM_PROP_EXPOSURE, (float) (time * 1e3), new NativeLong(0))) {
-            throw new DeviceException("Unable to set property LUCAM_PROP_EXPOSURE to %f. Error code: %d.", time, getLastError());
+        if (!api.LucamSetProperty(handle, LucamAPI.LUCAM_PROP_EXPOSURE, (float) (time * 1e3), new NativeLong(0))) {
+            throwError("LucamSetProperty(LUCAM_PROP_EXPOSURE, %e)", time);
         }
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting frame format. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         if (!api.LucamSetFormat(handle, frameFormat, (float) (1.0f / getIntegrationTime()))) {
-            throw new DeviceException("Error setting framerate. Error code %d.", getLastError());
+            throwError("LucamSetFormat");
         }
 
     }
@@ -129,8 +130,8 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public synchronized void setAcquisitionTimeout(int timeout) throws IOException, DeviceException {
 
-        if (!api.LucamSetTimeout(handle, timeout / 1e3f)) {
-            throw new DeviceException("Error setting acquisition timeout. Error code: %d.", getLastError());
+        if (!api.LucamSetTimeout(handle, timeout)) {
+            throwError("LucamSetTimeout(%d)", timeout);
         }
 
         this.timeout = timeout;
@@ -139,7 +140,7 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
 
     @Override
     public synchronized int getAcquisitionTimeout() throws IOException, DeviceException {
-        return (int) (timeout * 1e3);
+        return (int) timeout;
     }
 
     @Override
@@ -147,11 +148,11 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
 
         FloatBuffer frameRate = FloatBuffer.allocate(1);
 
-        conversion.CorrectionMatrix = LuCamAPI.LUCAM_CM_NONE;
-        conversion.DemosaicMethod   = LuCamAPI.LUCAM_DM_FAST;
+        conversion.CorrectionMatrix = LucamAPI.LUCAM_CM_NONE;
+        conversion.DemosaicMethod   = LucamAPI.LUCAM_DM_FAST;
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting frame format info. Error code: %d", getLastError());
+            throwError("LucamGetFormat");
         }
 
         imageWidth  = frameFormat.width.intValue() / frameFormat.binX.binningX;
@@ -165,7 +166,7 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
         conBuffer   = conMemory.getByteBuffer(0, conSize);
         data        = new long[imageWidth * imageHeight];
 
-        api.LucamStreamVideoControl(handle, LuCamAPI.START_STREAMING, null);
+        api.LucamStreamVideoControl(handle, LucamAPI.START_STREAMING, null);
 
     }
 
@@ -185,12 +186,12 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
                 throw new TimeoutException();
             }
 
-            throw new DeviceException("Error acquiring frame. Error code: %d", getLastError());
+            throw new DeviceException("Error encountered with %s: %s (%d)", "LucanTakeVideo", LucamError.NAMES.getOrDefault(error, "Unkown Error"), error);
 
         }
 
         if (!api.LucamConvertFrameToRgb48(handle, conBuffer.rewind().asShortBuffer(), rawBuffer.rewind().asShortBuffer(), imageWidth, imageHeight, frameFormat.pixelFormat.longValue(), conversion)) {
-            throw new DeviceException("Error converting frame data. Error code: %d", getLastError());
+            throwError("LucamConvertFrameToRgb48");
         }
 
         CharBuffer shorts = conBuffer.rewind().asCharBuffer();
@@ -205,20 +206,23 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
 
     @Override
     protected void cleanupAcquisition() throws IOException, DeviceException {
-        api.LucamStreamVideoControl(handle, LuCamAPI.STOP_STREAMING, null);
+
+        api.LucamStreamVideoControl(handle, LucamAPI.STOP_STREAMING, null);
+
         rawMemory.close();
         conMemory.close();
+
     }
 
     @Override
     public int getFrameWidth() throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting frame width. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         return frameFormat.width.intValue() / frameFormat.binX.binningX;
@@ -228,18 +232,18 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public void setFrameWidth(int width) throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting frame format data. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         frameFormat.width.setValue((long) width * frameFormat.binX.binningX);
 
         if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
-            throw new DeviceException("Error setting frame width. Error code %d.", getLastError());
+            throwError("LucamSetFormat");
         }
 
     }
@@ -247,12 +251,12 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public int getPhysicalFrameWidth() throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting physical frame width. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         return frameFormat.width.intValue();
@@ -262,12 +266,12 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public int getFrameHeight() throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting frame height. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         return frameFormat.height.intValue() / frameFormat.binY.binningY;
@@ -277,18 +281,18 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public void setFrameHeight(int height) throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting frame format data. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         frameFormat.height.setValue((long) height * frameFormat.binY.binningY);
 
         if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
-            throw new DeviceException("Error setting frame height. Error code %d.", getLastError());
+            throwError("LucamSetFormat");
         }
 
     }
@@ -296,12 +300,12 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public int getPhysicalFrameHeight() throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting physical frame height. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         return frameFormat.height.intValue();
@@ -311,12 +315,12 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public int getFrameOffsetX() throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting frame x-offset. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         return frameFormat.xOffset.intValue() / frameFormat.binX.binningX;
@@ -330,18 +334,18 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
             return;
         }
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting frame format data. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         frameFormat.xOffset.setValue((long) offsetX * frameFormat.binX.binningX);
 
         if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
-            throw new DeviceException("Error setting frame x-offset. Error code %d.", getLastError());
+            throwError("LucamSetFormat");
         }
 
     }
@@ -353,18 +357,18 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
 
         if (centredX) {
 
-            LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-            LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+            LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+            LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
             FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
             if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-                throw new DeviceException("Error getting frame format data. Error code %d.", getLastError());
+                throwError("LucamGetFormat");
             }
 
             frameFormat.xOffset.setValue((getSensorWidth() - frameFormat.width.intValue()) / 2);
 
             if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
-                throw new DeviceException("Error auto centering frame in x. Error code %d.", getLastError());
+                throwError("LucamSetFormat");
             }
 
         }
@@ -379,12 +383,12 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public int getFrameOffsetY() throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting frame y-offset. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         return frameFormat.yOffset.intValue() / frameFormat.binY.binningY;
@@ -397,18 +401,18 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
             return;
         }
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting frame format data. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         frameFormat.yOffset.setValue((long) offsetY * frameFormat.binY.binningY);
 
         if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
-            throw new DeviceException("Error setting frame y-offset. Error code %d.", getLastError());
+            throwError("LucamSetFormat");
         }
 
     }
@@ -420,14 +424,18 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
 
         if (centredY) {
 
-            LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-            LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+            LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+            LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
             FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+            if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+                throwError("LucamGetFormat");
+            }
 
             frameFormat.yOffset.setValue((getSensorHeight() - frameFormat.height.intValue()) / 2);
 
             if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
-                throw new DeviceException("Error auto centering frame in y. Error code %d.", getLastError());
+                throwError("LucamSetFormat");
             }
 
         }
@@ -442,12 +450,12 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public int getFrameSize() throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting frame size. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         return (frameFormat.width.intValue() / frameFormat.binX.binningX) * (frameFormat.height.intValue() / frameFormat.binY.binningY);
@@ -457,12 +465,12 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public int getPhysicalFrameSize() throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting physical frame size. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         return frameFormat.width.intValue() * frameFormat.height.intValue();
@@ -482,12 +490,12 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public int getBinningX() throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting x binning. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         return frameFormat.binX.binningX;
@@ -497,18 +505,18 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public void setBinningX(int x) throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting x binning. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         frameFormat.binX.binningX = (short) x;
 
         if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
-            throw new DeviceException("Error setting x binning. Error code %d.", getLastError());
+            throwError("LucamSetFormat");
         }
 
     }
@@ -516,12 +524,12 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public int getBinningY() throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting y binning. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         return frameFormat.binY.binningY;
@@ -531,18 +539,18 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public void setBinningY(int y) throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting x binning. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         frameFormat.binY.binningY = (short) y;
 
         if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
-            throw new DeviceException("Error setting y binning. Error code %d.", getLastError());
+            throwError("LucamSetFormat");
         }
 
     }
@@ -550,19 +558,19 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public void setBinning(int x, int y) throws IOException, DeviceException {
 
-        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
-        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
+        LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
         if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
-            throw new DeviceException("Error getting x binning. Error code %d.", getLastError());
+            throwError("LucamGetFormat");
         }
 
         frameFormat.binX.binningX = (short) x;
         frameFormat.binY.binningY = (short) y;
 
         if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
-            throw new DeviceException("Error setting x-y binning. Error code %d.", getLastError());
+            throwError("LucamSetFormat");
         }
 
     }
@@ -591,7 +599,7 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     public void close() throws IOException, DeviceException {
 
         if (!api.LucamCameraClose(handle)) {
-            throw new DeviceException("Error closing Lumenera camera. Error code: %d.", getLastError());
+            throwError("LucamCameraClose");
         }
 
     }
@@ -604,8 +612,8 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     public void setAmplifierGain(double gain) throws DeviceException, IOException {
 
-        if (!api.LucamSetProperty(handle, LuCamAPI.LUCAM_PROP_GAIN, (float) gain, new NativeLong(0))) {
-            throw new DeviceException("Error setting gain. Error code: %d", getLastError());
+        if (!api.LucamSetProperty(handle, LucamAPI.LUCAM_PROP_GAIN, (float) gain, new NativeLong(0))) {
+            throwError("LucamSetProperty(LUCAM_PROP_GAIN, %e)", gain);
         }
 
     }
@@ -616,8 +624,8 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
         FloatBuffer           buffer = FloatBuffer.allocate(1);
         NativeLongByReference ref    = new NativeLongByReference();
 
-        if (!api.LucamGetProperty(handle, LuCamAPI.LUCAM_PROP_GAIN, buffer, ref)) {
-            throw new DeviceException("Error getting gain. Error code: %d", getLastError());
+        if (!api.LucamGetProperty(handle, LucamAPI.LUCAM_PROP_GAIN, buffer, ref)) {
+            throwError("LucamGetProperty(LUCAM_PROP_GAIN)");
         }
 
         return buffer.get(0);
