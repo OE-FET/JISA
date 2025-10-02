@@ -425,7 +425,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
                 frame.setTimestamp(determineTimestamp(metaReference.getValue(), metaSize.get(0), frequency, System.nanoTime()));
 
                 if (Thread.interrupted()) {
-                    break;
+                    throw new InterruptedException("Thread interrupted.");
                 }
 
                 Pointer framePointer = frameReference.getValue();

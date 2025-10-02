@@ -133,6 +133,26 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
     }
 
+    public Spectrum multiply(Number scalar) {
+        double factor = scalar.doubleValue();
+        return new Spectrum(wavelengths.clone(), DoubleStream.of(wavelengths).map(v -> v * factor).toArray(), timestamp);
+    }
+
+    public Spectrum divide(Number scalar) {
+        double factor = scalar.doubleValue();
+        return new Spectrum(wavelengths.clone(), DoubleStream.of(wavelengths).map(v -> v / factor).toArray(), timestamp);
+    }
+
+    public Spectrum add(Number scalar) {
+        double factor = scalar.doubleValue();
+        return new Spectrum(wavelengths.clone(),  DoubleStream.of(wavelengths).map(v -> v + factor).toArray(), timestamp);
+    }
+
+    public Spectrum subtract(Number scalar) {
+        double factor = scalar.doubleValue();
+        return new Spectrum(wavelengths.clone(),  DoubleStream.of(wavelengths).map(v -> v - factor).toArray(), timestamp);
+    }
+
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
@@ -190,6 +210,23 @@ public class Spectrum implements Iterable<Spectrum.Point> {
     public Spectrum div(Spectrum other) {
         return divide(other);
     }
+
+    public Spectrum minus(Number scalar) {
+        return subtract(scalar);
+    }
+
+    public Spectrum plus(Number scalar) {
+        return add(scalar);
+    }
+
+    public Spectrum times(Number scalar) {
+        return multiply(scalar);
+    }
+
+    public Spectrum div(Number scalar) {
+        return divide(scalar);
+    }
+
 
     public Spectrum subSpectrum(int start, int end) {
 

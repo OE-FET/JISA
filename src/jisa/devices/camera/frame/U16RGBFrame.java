@@ -47,6 +47,10 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
 
     }
 
+    public void copyFrom(long[] argb) {
+        System.arraycopy(argb, 0, this.argb, 0, argb.length);
+    }
+
     @Override
     public long getTimestamp() {
         return timestamp;

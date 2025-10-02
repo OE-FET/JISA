@@ -14,6 +14,7 @@ import jisa.maths.matrices.RealMatrix;
 import kotlin.Pair;
 import kotlin.jvm.JvmClassMappingKt;
 import kotlin.reflect.KClass;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -762,6 +763,57 @@ public abstract class ResultTable implements Iterable<Row> {
      */
     public Row findRow(Predicate<Row> test) {
         return stream().filter(test).findFirst().orElse(null);
+    }
+
+    public Iterable<Row> findRowCluster(Predicate<Row> test) {
+
+        return new Iterable<Row>() {
+
+            @NotNull
+            @Override
+            public Iterator<Row> iterator() {
+
+                Iterator<Row> iterator = iterator();
+                Row           first    = null;
+                do {
+                    first = iterator.next();
+                } while (iterator.hasNext() && !test.test(first));
+
+                final Row start = first;
+
+                return new Iterator<Row>() {
+
+                    private Row row = start;
+
+                    @Override
+                    public boolean hasNext() {
+                        return row != null && test.test(row);
+                    }
+
+                    @Override
+                    public Row next() {
+
+                        try {
+
+                            return row;
+
+                        } finally {
+
+                            if (iterator.hasNext()) {
+                                row = iterator.next();
+                            } else {
+                                row = null;
+                            }
+
+                        }
+                    }
+
+                };
+
+            }
+
+        };
+
     }
 
     /**

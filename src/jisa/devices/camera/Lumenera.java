@@ -9,19 +9,33 @@ import jisa.devices.DeviceException;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.U16RGBFrame;
 import jisa.devices.camera.nat.LuCamAPI;
-import jisa.visa.NativeDevice;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.FloatBuffer;
+import java.nio.ShortBuffer;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class Lumenera extends NativeDevice implements Camera<U16RGBFrame> {
+public class Lumenera extends ManagedCamera<U16RGBFrame> {
 
-    private final LuCamAPI api;
-    private final Pointer  handle;
+    private final LuCamAPI                        api;
+    private final Pointer                         handle;
+    private       float                           timeout     = 0;
+    private       long[]                          data        = null;
+    private       int                             width       = 0;
+    private       int                             height      = 0;
+    private       int                             pixelSize   = 0;
+    private       long                            rawSize     = 0;
+    private       long                            convertSize = 0;
+    private       LuCamAPI.LUCAM_CONVERSION       conversion;
+    private       boolean                         centredX;
+    private       boolean                         centredY;
+    private       LinkedBlockingQueue<ByteBuffer> returned    = new LinkedBlockingQueue<>(1);
+    private       NativeLong                      callbackID  = null;
 
     public Lumenera(int index) throws IOException, DeviceException {
 
@@ -66,7 +80,23 @@ public class Lumenera extends NativeDevice implements Camera<U16RGBFrame> {
     }
 
     @Override
-    public U16RGBFrame getFrame() throws IOException, DeviceException, InterruptedException, TimeoutException {
+    public synchronized void setAcquisitionTimeout(int timeout) throws IOException, DeviceException {
+
+        if (!api.LucamSetTimeout(handle, timeout / 1e3f)) {
+            throw new DeviceException("Error setting acquisition timeout. Error code: %d.", getLastError());
+        }
+
+        this.timeout = timeout;
+
+    }
+
+    @Override
+    public synchronized int getAcquisitionTimeout() throws IOException, DeviceException {
+        return (int) (timeout * 1e3);
+    }
+
+    @Override
+    protected void setupAcquisition(int limit) throws IOException, DeviceException {
 
         LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
         LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
@@ -77,214 +107,409 @@ public class Lumenera extends NativeDevice implements Camera<U16RGBFrame> {
 
         api.LucamGetFormat(handle, frameFormat, frameRate);
 
-        int width     = frameFormat.width.intValue() / frameFormat.binX.subSampleX;
-        int height    = frameFormat.height.intValue() / frameFormat.binY.subSampleY;
-        int pixelSize = frameFormat.pixelFormat.intValue();
-        int size      = width * height * pixelSize;
+        this.width       = frameFormat.width.intValue() / frameFormat.binX.binningX;
+        this.height      = frameFormat.height.intValue() / frameFormat.binY.binningY;
+        this.pixelSize   = frameFormat.pixelFormat.intValue();
+        this.rawSize     = width * height * pixelSize;
+        this.convertSize = width * height * 6;
+        this.conversion  = conversion;
+        this.data        = new long[width * height];
 
-        try (Memory memory = new Memory(size)) {
+        callbackID = api.LucamAddStreamingCallback(handle, this::callback, null);
 
-            ByteBuffer buffer = memory.getByteBuffer(0, size);
+        api.LucamStreamVideoControl(handle, LuCamAPI.START_STREAMING, null);
 
-            if (!api.LucamTakeVideo(handle, new NativeLong(1, true), buffer)) {
-                throw new DeviceException("Error taking frame. Error code %d.", getLastError());
-            }
+    }
 
-            try (Memory convertedMemory = new Memory(width * height * 6L)) {
+    protected void callback(Pointer context, Pointer data, NativeLong length) {
+        returned.offer(data.getByteBuffer(0, rawSize));
+    }
 
-                ByteBuffer converted = convertedMemory.getByteBuffer(0, size);
+    @Override
+    protected U16RGBFrame createEmptyFrame() {
+        return new U16RGBFrame(data, width, height, System.nanoTime());
+    }
 
-                if (!api.LucamConvertFrameToRgb48(handle, converted.asShortBuffer(), buffer.asShortBuffer(), frameFormat.width, frameFormat.height, frameFormat.pixelFormat, conversion)) {
+    @Override
+    protected void acquisitionLoop(U16RGBFrame frameBuffer) throws IOException, DeviceException, InterruptedException, TimeoutException {
 
-                    long lastError = getLastError();
+        ByteBuffer frameData = returned.poll((int) (timeout * 1e3), TimeUnit.MILLISECONDS);
 
-                    throw new DeviceException("Error converting frame from camera. Error code: %d", getLastError());
-                }
-
-                long[] data = new long[width * height];
-
-                CharBuffer shorts = converted.rewind().asCharBuffer();
-
-                for (int i = 0; i < data.length; i++) {
-                    data[i] = ((long) Character.MAX_VALUE << 48) | ((long) shorts.get()) | ((((long) shorts.get()) << 8) & 0xFF) | ((((long) shorts.get()) << 16) & 0xFF);
-                }
-
-                return new U16RGBFrame(data, width, height, System.nanoTime());
-
-            }
-
+        if (frameData == null) {
+            throw new TimeoutException("Timed out waiting for frame.");
         }
 
+        ShortBuffer shorts = frameData.asShortBuffer();
+
+        for (int i = 0; i < data.length; i++) {
+            data[i] = ((long) Character.MAX_VALUE << 48) | ((long) shorts.get()) | ((((long) shorts.get()) << 8) & 0xFF) | ((((long) shorts.get()) << 16) & 0xFF);
+        }
+
+        frameBuffer.setTimestamp(System.nanoTime());
 
     }
 
     @Override
-    public void setAcquisitionTimeout(int timeout) throws IOException, DeviceException {
-
-    }
-
-    @Override
-    public int getAcquisitionTimeout() throws IOException, DeviceException {
-        return 0;
-    }
-
-    @Override
-    public double getAcquisitionFPS() throws IOException, DeviceException {
-        return 0;
-    }
-
-    @Override
-    public void startAcquisition() throws IOException, DeviceException {
-
-    }
-
-    @Override
-    public void stopAcquisition() throws IOException, DeviceException {
-
-    }
-
-    @Override
-    public boolean isAcquiring() throws IOException, DeviceException {
-        return false;
-    }
-
-    @Override
-    public List<U16RGBFrame> getFrameSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
-        return List.of();
-    }
-
-    @Override
-    public Listener<U16RGBFrame> addFrameListener(Listener<U16RGBFrame> listener) {
-        return null;
-    }
-
-    @Override
-    public void removeFrameListener(Listener<U16RGBFrame> listener) {
-
-    }
-
-    @Override
-    public FrameQueue<U16RGBFrame> openFrameQueue(int capacity) {
-        return null;
-    }
-
-    @Override
-    public void closeFrameQueue(FrameQueue<U16RGBFrame> queue) {
-
+    protected void cleanupAcquisition() throws IOException, DeviceException {
+        api.LucamStreamVideoControl(handle, LuCamAPI.STOP_STREAMING, null);
+        api.LucamRemoveStreamingCallback(handle, callbackID);
+        returned.clear();
     }
 
     @Override
     public int getFrameWidth() throws IOException, DeviceException {
-        return 0;
+
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting frame width. Error code %d.", getLastError());
+        }
+
+        return frameFormat.width.intValue() / frameFormat.binX.binningX;
+
     }
 
     @Override
     public void setFrameWidth(int width) throws IOException, DeviceException {
 
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting frame format data. Error code %d.", getLastError());
+        }
+
+        frameFormat.width.setValue(width * frameFormat.binX.binningX);
+
+        if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
+            throw new DeviceException("Error setting frame width. Error code %d.", getLastError());
+        }
+
     }
 
     @Override
     public int getPhysicalFrameWidth() throws IOException, DeviceException {
-        return 0;
+
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting physical frame width. Error code %d.", getLastError());
+        }
+
+        return frameFormat.width.intValue();
+
     }
 
     @Override
     public int getFrameHeight() throws IOException, DeviceException {
-        return 0;
+
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting frame height. Error code %d.", getLastError());
+        }
+
+        return frameFormat.height.intValue() / frameFormat.binY.binningY;
+
     }
 
     @Override
     public void setFrameHeight(int height) throws IOException, DeviceException {
 
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting frame format data. Error code %d.", getLastError());
+        }
+
+        frameFormat.height.setValue(height * frameFormat.binY.binningY);
+
+        if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
+            throw new DeviceException("Error setting frame height. Error code %d.", getLastError());
+        }
+
     }
 
     @Override
     public int getPhysicalFrameHeight() throws IOException, DeviceException {
-        return 0;
+
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting physical frame height. Error code %d.", getLastError());
+        }
+
+        return frameFormat.height.intValue();
+
     }
 
     @Override
     public int getFrameOffsetX() throws IOException, DeviceException {
-        return 0;
+
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting frame x-offset. Error code %d.", getLastError());
+        }
+
+        return frameFormat.xOffset.intValue() / frameFormat.binX.binningX;
+
     }
 
     @Override
     public void setFrameOffsetX(int offsetX) throws IOException, DeviceException {
 
+        if (isFrameCentredX()) {
+            return;
+        }
+
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting frame format data. Error code %d.", getLastError());
+        }
+
+        frameFormat.xOffset.setValue(offsetX * frameFormat.binX.binningX);
+
+        if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
+            throw new DeviceException("Error setting frame x-offset. Error code %d.", getLastError());
+        }
+
     }
 
     @Override
-    public void setFrameCentredX(boolean centredX) throws IOException, DeviceException {
+    public synchronized void setFrameCentredX(boolean centredX) throws IOException, DeviceException {
+
+        this.centredX = centredX;
+
+        if (centredX) {
+
+            LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+            LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+            FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+            if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+                throw new DeviceException("Error getting frame format data. Error code %d.", getLastError());
+            }
+
+            frameFormat.xOffset.setValue((getSensorWidth() - frameFormat.width.intValue()) / 2);
+
+            if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
+                throw new DeviceException("Error auto centering frame in x. Error code %d.", getLastError());
+            }
+
+        }
 
     }
 
     @Override
-    public boolean isFrameCentredX() throws IOException, DeviceException {
-        return false;
+    public synchronized boolean isFrameCentredX() throws IOException, DeviceException {
+        return centredX;
     }
 
     @Override
     public int getFrameOffsetY() throws IOException, DeviceException {
-        return 0;
+
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting frame y-offset. Error code %d.", getLastError());
+        }
+
+        return frameFormat.yOffset.intValue() / frameFormat.binY.binningY;
     }
 
     @Override
     public void setFrameOffsetY(int offsetY) throws IOException, DeviceException {
 
+        if (isFrameCentredY()) {
+            return;
+        }
+
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting frame format data. Error code %d.", getLastError());
+        }
+
+        frameFormat.yOffset.setValue(offsetY * frameFormat.binY.binningY);
+
+        if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
+            throw new DeviceException("Error setting frame y-offset. Error code %d.", getLastError());
+        }
+
     }
 
     @Override
-    public void setFrameCentredY(boolean centredY) throws IOException, DeviceException {
+    public synchronized void setFrameCentredY(boolean centredY) throws IOException, DeviceException {
+
+        this.centredY = centredX;
+
+        if (centredY) {
+
+            LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+            LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+            FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+            frameFormat.yOffset.setValue((getSensorHeight() - frameFormat.height.intValue()) / 2);
+
+            if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
+                throw new DeviceException("Error auto centering frame in y. Error code %d.", getLastError());
+            }
+
+        }
 
     }
 
     @Override
-    public boolean isFrameCentredY() throws IOException, DeviceException {
-        return false;
+    public synchronized boolean isFrameCentredY() throws IOException, DeviceException {
+        return centredY;
     }
 
     @Override
     public int getFrameSize() throws IOException, DeviceException {
-        return 0;
+
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting frame size. Error code %d.", getLastError());
+        }
+
+        return (frameFormat.width.intValue() / frameFormat.binX.binningX) * (frameFormat.height.intValue() / frameFormat.binY.binningY);
+
     }
 
     @Override
     public int getPhysicalFrameSize() throws IOException, DeviceException {
-        return 0;
+
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting physical frame size. Error code %d.", getLastError());
+        }
+
+        return frameFormat.width.intValue() * frameFormat.height.intValue();
+
     }
 
     @Override
     public int getSensorWidth() throws IOException, DeviceException {
-        return 0;
+        return 1616;
     }
 
     @Override
     public int getSensorHeight() throws IOException, DeviceException {
-        return 0;
+        return 1216;
     }
 
     @Override
     public int getBinningX() throws IOException, DeviceException {
-        return 0;
+
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting x binning. Error code %d.", getLastError());
+        }
+
+        return frameFormat.binX.binningX;
+
     }
 
     @Override
     public void setBinningX(int x) throws IOException, DeviceException {
 
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting x binning. Error code %d.", getLastError());
+        }
+
+        frameFormat.binX.binningX = (short) x;
+
+        if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
+            throw new DeviceException("Error setting x binning. Error code %d.", getLastError());
+        }
+
     }
 
     @Override
     public int getBinningY() throws IOException, DeviceException {
-        return 0;
+
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting y binning. Error code %d.", getLastError());
+        }
+
+        return frameFormat.binY.binningY;
+
     }
 
     @Override
     public void setBinningY(int y) throws IOException, DeviceException {
 
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting x binning. Error code %d.", getLastError());
+        }
+
+        frameFormat.binY.binningY = (short) y;
+
+        if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
+            throw new DeviceException("Error setting y binning. Error code %d.", getLastError());
+        }
+
     }
 
     @Override
     public void setBinning(int x, int y) throws IOException, DeviceException {
+
+        LuCamAPI.LUCAM_FRAME_FORMAT frameFormat = new LuCamAPI.LUCAM_FRAME_FORMAT();
+        LuCamAPI.LUCAM_CONVERSION   conversion  = new LuCamAPI.LUCAM_CONVERSION();
+        FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
+
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throw new DeviceException("Error getting x binning. Error code %d.", getLastError());
+        }
+
+        frameFormat.binX.binningX = (short) x;
+        frameFormat.binY.binningY = (short) y;
+
+        if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
+            throw new DeviceException("Error setting x-y binning. Error code %d.", getLastError());
+        }
 
     }
 
@@ -305,7 +530,7 @@ public class Lumenera extends NativeDevice implements Camera<U16RGBFrame> {
 
     @Override
     public String getName() {
-        return "";
+        return "Lumenera Lucam SDK Camera";
     }
 
     @Override

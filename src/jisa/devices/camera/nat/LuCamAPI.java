@@ -299,44 +299,33 @@ public interface LuCamAPI extends Library {
 
     boolean LucamRemoveSnapshotCallback(Pointer hCamera, NativeLong callbackId);
 
-
     boolean LucamConvertFrameToGreyscale8Ex(Pointer hCamera, ByteBuffer pDest, byte[] pSrc, LuCamAPI.LUCAM_IMAGE_FORMAT pImageFormat, LuCamAPI.LUCAM_CONVERSION_PARAMS pParams);
-
 
     boolean LucamConvertFrameToGreyscale16Ex(Pointer hCamera, ShortBuffer pDest, short[] pSrc, LuCamAPI.LUCAM_IMAGE_FORMAT pImageFormat, LuCamAPI.LUCAM_CONVERSION_PARAMS pParams);
 
-
     boolean LucamConvertFrameToRgb24(Pointer hCamera, ByteBuffer pDest, ByteBuffer pSrc, NativeLong width, NativeLong height, NativeLong pixelFormat, LuCamAPI.LUCAM_CONVERSION pParams);
-
 
     boolean LucamConvertFrameToRgb32(Pointer hCamera, ByteBuffer pDest, ByteBuffer pSrc, NativeLong width, NativeLong height, NativeLong pixelFormat, LuCamAPI.LUCAM_CONVERSION pParams);
 
-
     boolean LucamConvertFrameToRgb48(Pointer hCamera, ShortBuffer pDest, ShortBuffer pSrc, NativeLong width, NativeLong height, NativeLong pixelFormat, LuCamAPI.LUCAM_CONVERSION pParams);
 
+    boolean LucamConvertFrameToRgb48(Pointer hCamera, ShortBuffer pDest, ShortBuffer pSrc, long width, long height, long pixelFormat, LuCamAPI.LUCAM_CONVERSION pParams);
 
     boolean LucamConvertFrameToRgb24Ex(Pointer hCamera, ByteBuffer pDest, byte[] pSrc, LuCamAPI.LUCAM_IMAGE_FORMAT pImageFormat, LuCamAPI.LUCAM_CONVERSION_PARAMS pParams);
 
-
     boolean LucamConvertFrameToRgb32Ex(Pointer hCamera, ByteBuffer pDest, byte[] pSrc, LuCamAPI.LUCAM_IMAGE_FORMAT pImageFormat, LuCamAPI.LUCAM_CONVERSION_PARAMS pParams);
-
 
     boolean LucamConvertFrameToRgb48Ex(Pointer hCamera, ShortBuffer pDest, short[] pSrc, LuCamAPI.LUCAM_IMAGE_FORMAT pImageFormat, LuCamAPI.LUCAM_CONVERSION_PARAMS pParams);
 
-
     boolean LucamSetupCustomMatrix(Pointer hCamera, FloatBuffer pMatrix);
-
 
     boolean LucamGetCurrentMatrix(Pointer hCamera, FloatBuffer pMatrix);
 
     boolean LucamEnableFastFrames(Pointer hCamera, LuCamAPI.LUCAM_SNAPSHOT pSettings);
 
-
     boolean LucamTakeFastFrame(Pointer hCamera, ByteBuffer pData);
 
-
     boolean LucamForceTakeFastFrame(Pointer hCamera, ByteBuffer pData);
-
 
     boolean LucamTakeFastFrameNoTrigger(Pointer hCamera, ByteBuffer pData);
 
@@ -349,7 +338,6 @@ public interface LuCamAPI extends Library {
     boolean LucamCancelTakeFastFrame(Pointer hCamera);
 
     boolean LucamGetTruePixelDepth(Pointer hCamera, NativeLongByReference pCount);
-
 
     boolean LucamGpioRead(Pointer hCamera, ByteBuffer pGpoValues, ByteBuffer pGpiValues);
 
@@ -371,23 +359,17 @@ public interface LuCamAPI extends Library {
 
     boolean LucamGetStillImageFormat(Pointer hCamera, LuCamAPI.LUCAM_IMAGE_FORMAT pImageFormat);
 
-
     boolean LucamPerformDualTapCorrection(Pointer hCamera, ByteBuffer pFrame, LuCamAPI.LUCAM_IMAGE_FORMAT pImageFormat);
-
 
     boolean LucamPerformMultiTapCorrection(Pointer hCamera, ByteBuffer pFrame, LuCamAPI.LUCAM_IMAGE_FORMAT pImageFormat);
 
-
     boolean LucamSaveImageEx(Pointer hCamera, NativeLong width, NativeLong height, NativeLong pixelFormat, ByteBuffer pData, byte[] pFilename);
-
 
     boolean LucamSaveImageWEx(Pointer hCamera, NativeLong width, NativeLong height, NativeLong pixelFormat, ByteBuffer pData, short[] pFilename);
 
     boolean LucamGetSubsampleBinDescription(Pointer hCamera, LuCamAPI.LUCAM_SS_BIN_DESC pDesc);
 
-
     boolean LucamSaveImage(NativeLong width, NativeLong height, NativeLong pixelFormat, ByteBuffer pData, byte[] pFilename);
-
 
     boolean LucamSaveImageW(NativeLong width, NativeLong height, NativeLong pixelFormat, ByteBuffer pData, short[] pFilename);
 
@@ -397,12 +379,9 @@ public interface LuCamAPI extends Library {
 
     boolean LucamDisplayVideoFormatPage(Pointer hCamera, Pointer hParentWnd);
 
-
     boolean LucamQueryDisplayFrameRate(Pointer hCamera, FloatBuffer pValue);
 
-
     boolean LucamCreateDisplayWindow(Pointer hCamera, String lpTitle, int dwStyle, int x, int y, int width, int height, Pointer hParent, Pointer childId);
-
 
     boolean LucamAdjustDisplayWindow(Pointer hCamera, String lpTitle, int x, int y, int width, int height);
 
@@ -412,20 +391,15 @@ public interface LuCamAPI extends Library {
 
     boolean LucamWriteRegister(Pointer hCamera, NativeLong address, NativeLong numReg, NativeLongByReference pValue);
 
-
     boolean LucamConvertFrameToGreyscale8(Pointer hCamera, ByteBuffer pDest, ByteBuffer pSrc, NativeLong width, NativeLong height, NativeLong pixelFormat, LuCamAPI.LUCAM_CONVERSION pParams);
 
-
     boolean LucamConvertFrameToGreyscale16(Pointer hCamera, ShortBuffer pDest, ShortBuffer pSrc, NativeLong width, NativeLong height, NativeLong pixelFormat, LuCamAPI.LUCAM_CONVERSION pParams);
-
 
     void LucamConvertBmp24ToRgb24(ByteBuffer pFrame, NativeLong width, NativeLong height);
 
     boolean LucamStreamVideoControlAVI(Pointer hCamera, NativeLong controlType, WString pFileName, Pointer hWnd);
 
-
     boolean LucamConvertRawAVIToStdVideo(Pointer hCamera, short[] pOutputFileName, short[] pInputFileName, NativeLong outputType);
-
 
     Pointer LucamPreviewAVIOpen(short[] pFileName);
 
@@ -433,27 +407,21 @@ public interface LuCamAPI extends Library {
 
     boolean LucamPreviewAVIControl(Pointer hAVI, NativeLong previewControlType, Pointer previewWindow);
 
-
     boolean LucamPreviewAVIGetDuration(Pointer hAVI, LongBuffer pDurationMinutes, LongBuffer pDurationSeconds, LongBuffer pDurationMilliseconds, LongBuffer pDurationMicroSeconds);
 
-
     boolean LucamPreviewAVIGetFrameCount(Pointer hAVI, LongBuffer pFrameCount);
-
 
     boolean LucamPreviewAVIGetFrameRate(Pointer hAVI, FloatBuffer pFrameRate);
 
     boolean LucamPreviewAVISetPositionFrame(Pointer hAVI, long pPositionFrame);
 
-
     boolean LucamPreviewAVIGetPositionFrame(Pointer hAVI, LongBuffer pPositionFrame);
 
     boolean LucamPreviewAVISetPositionTime(Pointer hAVI, long positionMinutes, long positionSeconds, long positionMilliSeconds, long positionMicroSeconds);
 
-
     boolean LucamPreviewAVIGetPositionTime(Pointer hAVI, LongBuffer pPositionMinutes, LongBuffer pPositionSeconds, LongBuffer pPositionMilliSeconds, LongBuffer pPositionMicroSeconds);
 
     boolean LucamPreviewAVIGetFormat(Pointer hAVI, NativeLongByReference width, NativeLongByReference height, NativeLongByReference fileType, NativeLongByReference bitDepth);
-
 
     Pointer LucamEnableSynchronousSnapshots(NativeLong numberOfCameras, PointerByReference phCameras, LuCamAPI.LUCAM_SNAPSHOT.ByReference[] ppSettings);
 
@@ -469,7 +437,6 @@ public interface LuCamAPI extends Library {
 
     boolean LucamDigitalWhiteBalanceEx(Pointer hCamera, float redOverGreen, float blueOverGreen, NativeLong startX, NativeLong startY, NativeLong width, NativeLong height);
 
-
     boolean LucamAdjustWhiteBalanceFromSnapshot(Pointer hCamera, LuCamAPI.LUCAM_SNAPSHOT pSettings, ByteBuffer pData, float redOverGreen, float blueOverGreen, NativeLong startX, NativeLong startY, NativeLong width, NativeLong height);
 
     boolean LucamOneShotAutoIris(Pointer hCamera, byte target, NativeLong startX, NativeLong startY, NativeLong width, NativeLong height);
@@ -484,20 +451,15 @@ public interface LuCamAPI extends Library {
 
     boolean LucamAutoFocusStop(Pointer hCamera);
 
-
     boolean LucamAutoFocusQueryProgress(Pointer hCamera, FloatBuffer pPercentageCompleted);
 
     boolean LucamInitAutoLens(Pointer hCamera);
 
-
     boolean LucamSetup8bitsLUT(Pointer hCamera, ByteBuffer pLut, NativeLong length);
-
 
     boolean LucamSetup8bitsColorLUT(Pointer hCamera, ByteBuffer pLut, NativeLong length);
 
-
     int LucamRs232Transmit(Pointer hCamera, ByteBuffer pData, int length);
-
 
     int LucamRs232Receive(Pointer hCamera, ByteBuffer pData, int maxLength);
 
@@ -505,17 +467,13 @@ public interface LuCamAPI extends Library {
 
     void LucamRemoveRs232Callback(Pointer hCamera);
 
-
     boolean LucamPermanentBufferRead(Pointer hCamera, ByteBuffer pBuf, NativeLong offset, NativeLong length);
-
 
     boolean LucamPermanentBufferWrite(Pointer hCamera, ByteBuffer pBuf, NativeLong offset, NativeLong length);
 
     boolean LucamSetTimeout(Pointer hCamera, float timeout);
 
-
     boolean LucamGetTimestampFrequency(Pointer hCamera, LongBuffer pTimestampTickFrequency);
-
 
     boolean LucamGetTimestamp(Pointer hCamera, LongBuffer pTimestamp);
 
@@ -525,19 +483,15 @@ public interface LuCamAPI extends Library {
 
     boolean LucamIsTimestampEnabled(Pointer hCamera, boolean pIsEnabled);
 
-
     boolean LucamGetMetadata(Pointer hCamera, ByteBuffer pImageBuffer, LuCamAPI.LUCAM_IMAGE_FORMAT pFormat, NativeLong metaDataIndex, LongBuffer pMetaData);
-
 
     boolean LucamGetDualGainFactor(Pointer hCamera, ByteBuffer pValue);
 
     boolean LucamSetDualGainFactor(Pointer hCamera, byte value);
 
-
     boolean LucamGetPiecewiseLinearResponseParameters(Pointer hCamera, ByteBuffer pKneepoint, NativeLongByReference pGainDivider);
 
     boolean LucamSetPiecewiseLinearResponseParameters(Pointer hCamera, byte kneepoint, NativeLong gainDivider);
-
 
     boolean LucamGetHdrMode(Pointer hCamera, ByteBuffer pValue);
 
@@ -547,16 +501,13 @@ public interface LuCamAPI extends Library {
 
     boolean LucamUnregisterEventNotification(Pointer hCamera, Pointer pEventInformation);
 
-
     boolean LucamPerformMonoGridCorrection(Pointer hCamera, ByteBuffer pFrame, LuCamAPI.LUCAM_IMAGE_FORMAT pImageFormat);
-
 
     boolean LucamGetImageIntensity(Pointer hCamera, ByteBuffer pFrame, LuCamAPI.LUCAM_IMAGE_FORMAT pImageFormat, NativeLong startX, NativeLong startY, NativeLong width, NativeLong height, FloatBuffer pIntensity, FloatBuffer pRedIntensity, FloatBuffer pGreen1Intensity, FloatBuffer pGreen2Intensity, FloatBuffer pBlueIntensity);
 
     boolean LucamAutoRoiGet(Pointer hCamera, NativeLongByReference pStartX, NativeLongByReference pStartY, NativeLongByReference pWidth, NativeLongByReference pHeight);
 
     boolean LucamAutoRoiSet(Pointer hCamera, NativeLong startX, NativeLong startY, NativeLong width, NativeLong height);
-
 
     boolean LucamDataLsbAlign(Pointer hCamera, LuCamAPI.LUCAM_IMAGE_FORMAT pLif, ByteBuffer pData);
 
@@ -565,7 +516,6 @@ public interface LuCamAPI extends Library {
     boolean LucamIsInterfacePowerSpecViolationEnabled(Pointer hCamera, boolean pIsEnabled);
 
     boolean LucamSelectExternInterface(NativeLong externInterface);
-
 
     byte LgcamGetIPConfiguration(NativeLong index, ByteBuffer cameraMac, LuCamAPI.LGCAM_IP_CONFIGURATION pCameraConfiguration, ByteBuffer hostMac, LuCamAPI.LGCAM_IP_CONFIGURATION pHostConfiguration);
 
