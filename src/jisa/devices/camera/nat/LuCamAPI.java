@@ -645,7 +645,7 @@ public interface LuCamAPI extends Library {
         }
 
         protected List<String> getFieldOrder() {
-            return Arrays.asList("xOffset", "yOffset", "width", "height", "pixelFormat", "field1", "flagsX", "field2", "flagsY");
+            return Arrays.asList("xOffset", "yOffset", "width", "height", "pixelFormat", "binX", "flagsX", "binY", "flagsY");
         }
 
         public static class binX_union extends Union {
