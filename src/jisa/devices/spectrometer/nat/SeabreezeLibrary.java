@@ -36,7 +36,7 @@ public interface SeabreezeLibrary extends Library {
 
     int seabreeze_close_spectrometer(int index, IntBuffer error_code);
 
-    int seabreeze_get_error_string(int error_code, CharBuffer buffer, int buffer_length);
+    int seabreeze_get_error_string(int error_code, ByteBuffer buffer, int buffer_length);
 
     int seabreeze_get_model(int index, IntBuffer error_code, CharBuffer buffer, int buffer_length);
 

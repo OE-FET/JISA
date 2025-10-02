@@ -13,6 +13,7 @@ import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 import jisa.visa.NativeDevice;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
@@ -26,13 +27,13 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
     private final int              index;
     private final int              specSize;
     private final double[]         wavelengths;
-    private final String           model;
+    private final String           model = "UNKNOWN";
     private final ListenerManager  manager = new ListenerManager();
 
     private long    intTime           = 20000;
     private boolean acquiring         = false;
     private Thread  acquisitionThread = null;
-    private boolean tec               = false;
+    private boolean tec               = true;
     private boolean fan               = false;
     private double  tecTarget         = 273.15;
     private int     timeout           = 10000;
@@ -78,17 +79,10 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
         wavelengths = new double[specSize];
         wlBuffer.rewind().get(wavelengths);
 
-        CharBuffer modelBuffer = CharBuffer.allocate(1024);
-        lib.seabreeze_get_model(index, error.rewind(), modelBuffer, 1024);
-        checkForError(error);
-
-        model = modelBuffer.rewind().toString();
-
         // Make sure the spectrometer state matches what we have recorded
         setIntegrationTime(((double) intTime) / 1e6);
         setTemperatureControlEnabled(tec);
         setTemperatureControlTarget(tecTarget);
-        setFanEnabled(fan);
 
     }
 
@@ -106,9 +100,9 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
 
         if (code != 0) {
 
-            CharBuffer charBuffer = CharBuffer.allocate(1024);
+            ByteBuffer charBuffer = ByteBuffer.allocate(1024);
             lib.seabreeze_get_error_string(code, charBuffer, 1024);
-            throw new DeviceException("Error encountered with Seabreeze device: %s (%d)", buffer.toString(), 1024);
+            throw new DeviceException("Error encountered with Seabreeze device: %s (%d)", new String(charBuffer.array()), code);
 
         }
 

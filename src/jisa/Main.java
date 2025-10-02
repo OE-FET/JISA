@@ -2,6 +2,7 @@ package jisa;
 
 import jisa.addresses.Address;
 import jisa.devices.camera.Lumenera;
+import jisa.devices.spectrometer.OceanOptics;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
@@ -20,6 +21,8 @@ public class Main {
     public static void main(String[] args) {
 
         try {
+
+            var spec = new OceanOptics(0);
 
             var disp = new ImageDisplay("Image");
             var cam  = new Lumenera(1);
