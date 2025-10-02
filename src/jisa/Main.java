@@ -1,11 +1,14 @@
 package jisa;
 
 import jisa.addresses.Address;
+import jisa.devices.camera.Lumenera;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
+import jisa.gui.ImageDisplay;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 
 public class Main {
 
@@ -17,6 +20,20 @@ public class Main {
     public static void main(String[] args) {
 
         try {
+
+            var disp = new ImageDisplay("Image");
+            var cam  = new Lumenera(1);
+
+            cam.setAcquisitionTimeout(10000);
+            cam.setIntegrationTime(1e-3);
+            cam.setAmplifierGain(2.0);
+
+            cam.addFrameListener(disp::drawFrame);
+
+            disp.addToolbarButton("Start", cam::startAcquisition);
+            disp.addToolbarButton("Stop", cam::stopAcquisition);
+
+            disp.showAndWait();
 
             Doc doc = new Doc("Help");
 

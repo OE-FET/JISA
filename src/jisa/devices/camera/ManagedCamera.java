@@ -209,16 +209,17 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
 
         }
 
-        F frame = createEmptyFrame();
-
         try {
+
             setupAcquisition(1);
+            F frame = createEmptyFrame();
             acquisitionLoop(frame);
+
+            return frame;
+
         } finally {
             cleanupAcquisition();
         }
-
-        return frame;
 
     }
 

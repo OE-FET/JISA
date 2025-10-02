@@ -275,7 +275,7 @@ public interface LuCamAPI extends Library {
     boolean LucamStreamVideoControl(Pointer hCamera, NativeLong controlType, Pointer hWnd);
 
 
-    boolean LucamTakeVideo(Pointer hCamera, NativeLong numFrames, ByteBuffer pData);
+    boolean LucamTakeVideo(Pointer hCamera, long numFrames, ByteBuffer pData);
 
 
     boolean LucamTakeVideoEx(Pointer hCamera, ByteBuffer pData, NativeLongByReference pLength, NativeLong timeout);
