@@ -54,6 +54,16 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
         LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
         FloatBuffer                 frameRate   = FloatBuffer.allocate(1);
 
+        if (!api.LucamGetFormat(handle, frameFormat, frameRate)) {
+            throwError("LucamGetFormat");
+        }
+
+        frameFormat.pixelFormat.setValue(1);
+
+        if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
+            throwError("LucamSetFormat");
+        }
+
         setAcquisitionTimeout(10000);
 
     }
