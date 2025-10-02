@@ -122,7 +122,18 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> {
     }
 
     protected void callback(Pointer context, Pointer data, NativeLong length) {
-        returned.offer(data.getByteBuffer(0, length.longValue()));
+
+        if (length.longValue() != width * height) {
+            System.err.println("Frame size does not match!");
+        }
+
+        try (Memory con = new Memory(convertSize)) {
+            ByteBuffer conBuffer = con.getByteBuffer(0, convertSize);
+            ByteBuffer rawBuffer = data.getByteBuffer(0, rawSize);
+            api.LucamConvertFrameToRgb48(handle, conBuffer.asShortBuffer(), rawBuffer.asShortBuffer(), width, height, pixelSize, conversion);
+            returned.offer(conBuffer.rewind().duplicate());
+        }
+
     }
 
     @Override
