@@ -3,7 +3,10 @@ package jisa.devices.camera.frame;
 import io.jhdf.api.WritableDataset;
 import io.jhdf.api.WritableGroup;
 
+import javax.imageio.ImageIO;
+import java.awt.image.*;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -43,7 +46,6 @@ public interface Frame<D, F extends Frame> {
      *
      * @param x X co-ordinate
      * @param y Y co-ordinate
-     *
      * @return Pixel value
      */
     D get(int x, int y);
@@ -135,6 +137,20 @@ public interface Frame<D, F extends Frame> {
      */
     void writeToStream(DataOutputStream stream) throws IOException;
 
+    default void savePNG(String path) throws IOException {
+
+        int[] argb = getARGBData();
+
+        DataBuffer     rgbData = new DataBufferInt(argb, argb.length);
+        WritableRaster raster  = Raster.createPackedRaster(rgbData, getWidth(), getHeight(), getWidth(), new int[]{0xff0000, 0xff00, 0xff}, null);
+        ColorModel colorModel  = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
+
+        BufferedImage img = new BufferedImage(colorModel, raster, false, null);
+
+        ImageIO.write(img, "png", new File(path));
+
+    }
+
     /**
      * Returns an image containing a rectangular subsection of this image.
      *
@@ -142,7 +158,6 @@ public interface Frame<D, F extends Frame> {
      * @param y      Starting y co-ordinate
      * @param width  Number of pixels wide
      * @param height Number of pixels tall
-     *
      * @return Sub-image
      */
     F subFrame(int x, int y, int width, int height);
@@ -173,7 +188,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate.
          * @param y Y co-ordinate.
-         *
          * @return Boxed pixel value (memory inefficient).
          */
         @Deprecated
@@ -186,7 +200,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
-         *
          * @return Unboxed value.
          */
         short value(int x, int y);
@@ -260,7 +273,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate.
          * @param y Y co-ordinate.
-         *
          * @return Boxed pixel value (memory inefficient).
          */
         @Deprecated
@@ -327,7 +339,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
-         *
          * @return Signed value
          */
         short signed(int x, int y);
@@ -337,7 +348,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
-         *
          * @return Unboxed value.
          */
         default int value(int x, int y) {
@@ -424,7 +434,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
-         *
          * @return Signed value
          */
         int signed(int x, int y);
@@ -434,7 +443,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
-         *
          * @return Unboxed value.
          */
         default long value(int x, int y) {

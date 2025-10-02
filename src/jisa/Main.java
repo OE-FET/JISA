@@ -9,7 +9,6 @@ import jisa.gui.GUI;
 import jisa.gui.ImageDisplay;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 
 public class Main {
 
@@ -30,6 +29,8 @@ public class Main {
             cam.setAcquisitionTimeout(10000);
             cam.setIntegrationTime(1e-3);
             cam.setAmplifierGain(2.0);
+
+            cam.getFrame().savePNG("test.png");
 
             cam.addFrameListener(disp::drawFrame);
 
