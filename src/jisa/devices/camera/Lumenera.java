@@ -122,7 +122,7 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> {
     }
 
     protected void callback(Pointer context, Pointer data, NativeLong length) {
-        returned.offer(data.getByteBuffer(0, rawSize));
+        returned.offer(data.getByteBuffer(0, length.longValue()));
     }
 
     @Override
