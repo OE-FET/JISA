@@ -298,8 +298,6 @@ public class VISADevice implements Instrument {
 
         }
 
-        System.out.println(getClass().getSimpleName() + " < " + String.format(command, args));
-
     }
 
     public synchronized void writeBytes(byte[] bytes) throws IOException {
@@ -372,8 +370,6 @@ public class VISADevice implements Instrument {
             }
 
         }
-
-        System.out.println(getClass().getSimpleName() + " > " + lastRead);
 
         return lastRead;
 
