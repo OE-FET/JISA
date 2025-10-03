@@ -22,12 +22,17 @@ public interface Stage<T extends Translator> extends Instrument, MultiInstrument
 
         int length = lists.stream().mapToInt(List::size).max().orElse(0);
 
+        System.out.printf("Max Size: %d%n", length);
+
         for (int i = 0; i < length; i++) {
 
-            for (List<Parameter<?>> list : lists) {
+            for (int j = 0; j < lists.size(); j++) {
+
+                List<Parameter<?>> list = lists.get(j);
 
                 if (i < list.size()) {
-                    params.add(list.get(i).copy(String.format("%s %s", names[i], list.get(i).getName())));
+                    System.out.printf("%s %s%n", names[j], list.get(i).getName());
+                    params.add(list.get(i).copy(String.format("%s %s", names[j], list.get(i).getName())));
                 }
 
             }

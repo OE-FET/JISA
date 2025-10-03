@@ -99,10 +99,6 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
         FILTER_1 = rotationalAxes.stream().filter(a -> a.getName().equals("F1")).findFirst().orElse(null);
         FILTER_2 = rotationalAxes.stream().filter(a -> a.getName().equals("F2")).findFirst().orElse(null);
 
-        if (Z_AXIS != null) {
-            query("UPR,z,100");
-        }
-
         query("BLSH,0");
 
         for (String part : queryLines("STAGE")) {
@@ -132,6 +128,10 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
             }
 
+        }
+
+        if (Z_AXIS != null) {
+            Z_AXIS.setDistancePerRevolution(100e-6);
         }
 
     }
@@ -412,12 +412,12 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
 
         @Override
         public void setDistancePerRevolution(double distancePerRevolution) throws IOException, DeviceException {
-            query("UPR%s,%f", identifier, distancePerRevolution * 1e6);
+            query("UPR,%s,%f", identifier, distancePerRevolution * 1e6);
         }
 
         @Override
         public double getDistancePerRevolution() throws IOException, DeviceException {
-            return queryDouble("UPR%s", identifier) * 1e-6;
+            return queryDouble("UPR,%s", identifier) * 1e-6;
         }
     }
 

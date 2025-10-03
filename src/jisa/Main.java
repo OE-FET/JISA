@@ -1,12 +1,13 @@
 package jisa;
 
-import javafx.scene.image.Image;
 import jisa.addresses.Address;
-import jisa.devices.camera.FakeCamera;
-import jisa.gui.*;
+import jisa.addresses.SerialAddress;
+import jisa.devices.translator.PriorProScan;
+import jisa.gui.ConfigPanel;
+import jisa.gui.DeviceShell;
+import jisa.gui.Doc;
+import jisa.gui.GUI;
 
-import javax.imageio.ImageIO;
-import java.io.File;
 import java.time.LocalDateTime;
 
 public class Main {
@@ -20,18 +21,10 @@ public class Main {
 
         try {
 
-            var disp = new ImageDisplay("Image");
-            var cam  = new FakeCamera();
+            var stage = new PriorProScan.II(new SerialAddress("COM4"));
+            var cnft  = new ConfigPanel<>("Config", stage);
 
-            cam.setAcquisitionTimeout(10000);
-            cam.setIntegrationTime(1e-3);
-
-            cam.addFrameListener(disp::drawFrame);
-
-            disp.addToolbarButton("Start", cam::startAcquisition);
-            disp.addToolbarButton("Stop", cam::stopAcquisition);
-
-            disp.showAndWait();
+            cnft.showAndWait();
 
             Doc doc = new Doc("Help");
 
