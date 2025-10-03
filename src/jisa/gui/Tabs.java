@@ -40,6 +40,10 @@ public class Tabs extends JFXElement implements Container {
         addAll(elements);
     }
 
+    public Tabs(Element... elements) {
+        this("", elements);
+    }
+
     public Pane getTabPane() {
         return new Pane(tabPane);
     }

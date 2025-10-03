@@ -96,8 +96,8 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
         X_AXIS   = linearAxes.stream().filter(a -> a.getName().equals("X Axis")).findFirst().orElse(null);
         Y_AXIS   = linearAxes.stream().filter(a -> a.getName().equals("Y Axis")).findFirst().orElse(null);
         Z_AXIS   = linearAxes.stream().filter(a -> a.getName().equals("Z Axis")).findFirst().orElse(null);
-        FILTER_1 = rotationalAxes.stream().filter(a -> a.getName().equals("FILTER 1")).findFirst().orElse(null);
-        FILTER_2 = rotationalAxes.stream().filter(a -> a.getName().equals("FILTER 2")).findFirst().orElse(null);
+        FILTER_1 = rotationalAxes.stream().filter(a -> a.getName().equals("F1")).findFirst().orElse(null);
+        FILTER_2 = rotationalAxes.stream().filter(a -> a.getName().equals("F2")).findFirst().orElse(null);
 
         if (Z_AXIS != null) {
             query("UPR,z,100");
@@ -161,7 +161,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
         Linear[] laxes = new Linear[]{X_AXIS, Y_AXIS, Z_AXIS};
 
         // First three will be X,Y,Z
-        String args = IntStream.range(0, coordinates.length).mapToObj(i -> String.format("%d", (int) Math.round(coordinates[i] / laxes[i].resolution))).limit(3).collect(Collectors.joining(","));
+        String args     = IntStream.range(0, coordinates.length).mapToObj(i -> String.format("%d", (int) Math.round(coordinates[i] / laxes[i].resolution))).limit(3).collect(Collectors.joining(","));
         String response = query("G,%s", args);
 
         System.out.printf("G,%s -> %s%n", args, response);
@@ -185,7 +185,7 @@ public class PriorProScan extends VISADevice implements Stage.Mixed<PriorProScan
         Linear[] laxes = new Linear[]{X_AXIS, Y_AXIS, Z_AXIS};
 
         // First three will be X,Y,Z
-        String args = IntStream.range(0, coordinates.length).mapToObj(i -> String.format("%d", (int) Math.round(coordinates[i] / laxes[i].resolution))).limit(3).collect(Collectors.joining(","));
+        String args     = IntStream.range(0, coordinates.length).mapToObj(i -> String.format("%d", (int) Math.round(coordinates[i] / laxes[i].resolution))).limit(3).collect(Collectors.joining(","));
         String response = query("GR,%s", args);
 
         if (coordinates.length > 3) {

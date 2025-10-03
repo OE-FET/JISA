@@ -2,9 +2,7 @@ package jisa.gui;
 
 import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
-import javafx.scene.image.PixelBuffer;
-import javafx.scene.image.PixelFormat;
-import javafx.scene.image.WritableImage;
+import javafx.scene.image.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -12,6 +10,8 @@ import jisa.devices.camera.frame.Frame;
 import jisa.maths.matrices.Matrix;
 
 import java.nio.IntBuffer;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.StreamSupport;
 
 public class ImageDisplay extends JFXElement {
@@ -20,6 +20,7 @@ public class ImageDisplay extends JFXElement {
     private final Canvas                 canvas;
     private       PixelBuffer<IntBuffer> pixels;
     private       WritableImage          image;
+    private final List<OverlayGenerator> overlays = new LinkedList<>();
 
     private ImageDisplay(String title, CanvasPane centre) {
 
@@ -41,6 +42,10 @@ public class ImageDisplay extends JFXElement {
 
     }
 
+    public interface OverlayGenerator {
+        Image getOverlay(int width, int height);
+    }
+
     public ImageDisplay(String title) {
         this(title, new CanvasPane(500, 500));
     }
@@ -60,14 +65,74 @@ public class ImageDisplay extends JFXElement {
             double y       = (cHeight - rHeight) / 2;
 
             GUI.runNow(() -> {
+
                 pixels.updateBuffer(b -> null);
+
                 canvas.getGraphicsContext2D().setFill(Color.BLACK);
                 canvas.getGraphicsContext2D().fillRect(0, 0, cWidth, cHeight);
                 canvas.getGraphicsContext2D().drawImage(image, x, y, rWidth, rHeight);
+
+                for (OverlayGenerator overlay : overlays) {
+                    canvas.getGraphicsContext2D().drawImage(overlay.getOverlay((int) width, (int) height), x, y, rWidth, rHeight);
+                }
+
             });
 
         }
 
+    }
+
+    public OverlayGenerator addOverlay(OverlayGenerator overlay) {
+        overlays.add(overlay);
+        return overlay;
+    }
+
+    public OverlayGenerator addOverlay(Image overlay) {
+        return addOverlay((w, h) -> overlay);
+    }
+
+    public OverlayGenerator addCrosshairs(int thickness, Color color) {
+
+        OverlayGenerator generator = (width, height) -> {
+
+            WritableImage image       = new WritableImage(width, height);
+            PixelWriter   pixelWriter = image.getPixelWriter();
+
+            int startX = (width / 2) - (thickness / 2);
+            int startY = (height / 2) - (thickness / 2);
+
+            for (int y = startY; y < startY + thickness; y++) {
+
+                for (int x = 0; x < width; x++) {
+                    pixelWriter.setColor(x, y, color);
+                }
+
+            }
+
+            for (int x = startX; x < startX + thickness; x++) {
+
+                for (int y = 0; y < height; y++) {
+                    pixelWriter.setColor(x, y, color);
+                }
+
+            }
+
+            return image;
+
+        };
+
+        overlays.add(generator);
+
+        return generator;
+
+    }
+
+    public void removeOverlay(OverlayGenerator generator) {
+        overlays.remove(generator);
+    }
+
+    public void clearOverlays() {
+        overlays.clear();
     }
 
     public void drawMono(short[][] data, short max) {
@@ -126,8 +191,8 @@ public class ImageDisplay extends JFXElement {
 
     public <N extends Number> void drawMono(Iterable<Iterable<N>> data, N max) {
 
-        int    height  = (int) StreamSupport.stream(data.spliterator(), false).count();
-        int    width   = height > 0 ? (int) StreamSupport.stream(data.iterator().next().spliterator(), false).count() : 0;
+        int height = (int) StreamSupport.stream(data.spliterator(), false).count();
+        int width  = height > 0 ? (int) StreamSupport.stream(data.iterator().next().spliterator(), false).count() : 0;
 
         if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
             pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());
@@ -222,8 +287,8 @@ public class ImageDisplay extends JFXElement {
 
     public void drawFrame(Frame data) {
 
-        int    width   = data.getWidth();
-        int    height  = data.getHeight();
+        int width  = data.getWidth();
+        int height = data.getHeight();
 
         if (pixels == null || pixels.getHeight() != height || pixels.getWidth() != width) {
             pixels = new PixelBuffer<>(width, height, IntBuffer.allocate(width * height), PixelFormat.getIntArgbPreInstance());

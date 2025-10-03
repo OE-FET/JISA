@@ -27,13 +27,13 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
     private final int              index;
     private final int              specSize;
     private final double[]         wavelengths;
-    private final String           model = "UNKNOWN";
+    private final String           model   = "UNKNOWN";
     private final ListenerManager  manager = new ListenerManager();
 
     private long    intTime           = 20000;
     private boolean acquiring         = false;
     private Thread  acquisitionThread = null;
-    private boolean tec               = true;
+    private boolean tec               = false;
     private boolean fan               = false;
     private double  tecTarget         = 273.15;
     private int     timeout           = 10000;
@@ -79,11 +79,23 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
         wavelengths = new double[specSize];
         wlBuffer.rewind().get(wavelengths);
 
+        for (int i = 0; i < wavelengths.length; i++) {
+            wavelengths[i] = wavelengths[i] * 1e-9; // Convert to SI units
+        }
+
         // Make sure the spectrometer state matches what we have recorded
         setIntegrationTime(((double) intTime) / 1e6);
-        setTemperatureControlEnabled(tec);
-        setTemperatureControlTarget(tecTarget);
 
+    }
+
+    protected interface ErrorHandler {
+        void handle(IntBuffer error);
+    }
+
+    protected void withErrorHandling(ErrorHandler errorHandler) throws DeviceException {
+        IntBuffer error = IntBuffer.allocate(1);
+        errorHandler.handle(error);
+        checkForError(error);
     }
 
     public OceanOptics(Address address) throws DeviceException, IOException {
@@ -157,10 +169,6 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
                 buffer.setTimestamp(System.nanoTime());
                 manager.trigger(buffer);
 
-                if (Thread.interrupted()) {
-                    break;
-                }
-
             }
 
         });
@@ -181,8 +189,14 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
         acquisitionThread.interrupt();
 
         try {
-            acquisitionThread.join();
-        } catch (InterruptedException ignored) { }
+            acquisitionThread.join(10000);
+        } catch (InterruptedException ignored) {
+            acquisitionThread.stop();
+        }
+
+        IntBuffer error = IntBuffer.allocate(1);
+        lib.seabreeze_clear_buffer(index, error);
+        checkForError(error);
 
     }
 

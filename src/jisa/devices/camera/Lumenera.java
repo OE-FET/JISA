@@ -176,12 +176,14 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
         conBuffer   = conMemory.getByteBuffer(0, conSize);
         data        = new long[imageWidth * imageHeight];
 
-        api.LucamStreamVideoControl(handle, LucamAPI.START_STREAMING, null);
+        if (!api.LucamStreamVideoControl(handle, LucamAPI.START_STREAMING, null)) {
+            throwError("LucamStreamVideoControl(START_STREAMING)");
+        }
 
     }
 
     @Override
-    protected U16RGBFrame createEmptyFrame() {
+    protected U16RGBFrame createFrameBuffer() {
         return new U16RGBFrame(data, imageWidth, imageHeight, System.nanoTime());
     }
 
@@ -217,11 +219,18 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     @Override
     protected void cleanupAcquisition() throws IOException, DeviceException {
 
-        api.LucamStreamVideoControl(handle, LucamAPI.STOP_STREAMING, null);
+        if (!api.LucamStreamVideoControl(handle, LucamAPI.STOP_STREAMING, null)) {
+            throwError("LucamStreamVideoControl(STOP_STREAMING)");
+        }
 
         rawMemory.close();
         conMemory.close();
 
+    }
+
+    @Override
+    protected void cancelAcquisition() {
+        api.LucamCancelTakeVideo(handle); // If this fails, just ignore it
     }
 
     @Override

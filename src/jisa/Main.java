@@ -1,13 +1,12 @@
 package jisa;
 
+import javafx.scene.image.Image;
 import jisa.addresses.Address;
-import jisa.devices.camera.Lumenera;
-import jisa.devices.spectrometer.OceanOptics;
-import jisa.gui.DeviceShell;
-import jisa.gui.Doc;
-import jisa.gui.GUI;
-import jisa.gui.ImageDisplay;
+import jisa.devices.camera.FakeCamera;
+import jisa.gui.*;
 
+import javax.imageio.ImageIO;
+import java.io.File;
 import java.time.LocalDateTime;
 
 public class Main {
@@ -22,13 +21,10 @@ public class Main {
         try {
 
             var disp = new ImageDisplay("Image");
-            var cam  = new Lumenera(1);
+            var cam  = new FakeCamera();
 
             cam.setAcquisitionTimeout(10000);
             cam.setIntegrationTime(1e-3);
-            cam.setAmplifierGain(2.0);
-
-            cam.getFrame().savePNG("test.png");
 
             cam.addFrameListener(disp::drawFrame);
 

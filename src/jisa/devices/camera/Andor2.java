@@ -21,7 +21,7 @@ import java.util.concurrent.TimeoutException;
 
 import static jisa.devices.camera.nat.ATMCD32D.DRV_SUCCESS;
 
-public class Andor2 extends NativeDevice implements Camera<U16Frame>, TemperatureControlled, MultiTrack {
+public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureControlled, MultiTrack {
 
     private final ATMCD32D                  sdk;
     private final int                       index;
@@ -246,54 +246,28 @@ public class Andor2 extends NativeDevice implements Camera<U16Frame>, Temperatur
     }
 
     @Override
-    public double getAcquisitionFPS() throws IOException, DeviceException {
-        return 0;
-    }
-
-    @Override
-    public void startAcquisition() throws IOException, DeviceException {
+    protected void setupAcquisition(int limit) throws IOException, DeviceException {
 
     }
 
     @Override
-    public void stopAcquisition() throws IOException, DeviceException {
+    protected U16Frame createFrameBuffer() {
+        return null;
+    }
+
+    @Override
+    protected void acquisitionLoop(U16Frame frameBuffer) throws IOException, DeviceException, InterruptedException, TimeoutException {
 
     }
 
     @Override
-    public boolean isAcquiring() throws IOException, DeviceException {
-        return false;
-    }
-
-    @Override
-    public List<U16Frame> getFrameSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
-        return List.of();
-    }
-
-    @Override
-    public Listener<U16Frame> addFrameListener(Listener<U16Frame> listener) {
-        listenerManager.addListener(listener);
-        return listener;
-    }
-
-    @Override
-    public void removeFrameListener(Listener<U16Frame> listener) {
-        listenerManager.removeListener(listener);
-    }
-
-    @Override
-    public FrameQueue<U16Frame> openFrameQueue(int capacity) {
-
-        FrameQueue<U16Frame> queue = new FrameQueue<>(this, capacity);
-        listenerManager.addQueue(queue);
-
-        return queue;
+    protected void cleanupAcquisition() throws IOException, DeviceException {
 
     }
 
     @Override
-    public void closeFrameQueue(FrameQueue<U16Frame> queue) {
-        listenerManager.removeQueue(queue);
+    protected void cancelAcquisition() {
+
     }
 
     @Override

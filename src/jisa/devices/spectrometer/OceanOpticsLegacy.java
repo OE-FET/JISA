@@ -38,7 +38,9 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
             throw new IOException(String.format("Connection to %s failed.", usb.getName()));
         }
 
-        channel = usb.channels[0];
+        channel  = usb.channels[0];
+        buffer   = channel.getUnfilledSpectrum();
+        spectrum = new Spectrum(channel.getAllWavelengths(), new double[channel.getNumberOfPixels()]);
 
     }
 
@@ -101,7 +103,7 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
     private void acquisition() {
 
         try {
-            buffer = channel.getSpectrum();
+            buffer = channel.getUnfilledSpectrum();
         } catch (Exception e) {
             stopAcquisition();
             return;
