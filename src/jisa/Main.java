@@ -21,11 +21,6 @@ public class Main {
 
         try {
 
-            var stage = new PriorProScan.II(new SerialAddress("COM4"));
-            var cnft  = new ConfigPanel<>("Config", stage);
-
-            cnft.showAndWait();
-
             Doc doc = new Doc("Help");
 
             doc.addImage(Main.class.getResource("gui/images/jisa.png"))
