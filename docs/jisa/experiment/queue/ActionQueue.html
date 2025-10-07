@@ -241,9 +241,9 @@ implements java.io.Serializable</pre>
 </tr>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="ActionQueue.ListListener.html" title="interface in jisa.experiment.queue">ActionQueue.ListListener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;?&gt;&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addListener(jisa.experiment.queue.ActionQueue.ListListener)">addListener</a></span>&#8203;(<a href="ActionQueue.ListListener.html" title="interface in jisa.experiment.queue">ActionQueue.ListListener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;?&gt;&gt;&nbsp;listener)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addListener(jisa.experiment.queue.ActionQueue.ListListener)">addListener</a></span>&#8203;(<a href="ActionQueue.ListListener.html" title="interface in jisa.experiment.queue">ActionQueue.ListListener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;?&gt;&gt;&nbsp;statusListener)</code></th>
 <td class="colLast">
-<div class="block">Adds a listener to be triggered every time the queue is changed (actions added, removed or changed order).</div>
+<div class="block">Adds a statusListener to be triggered every time the queue is changed (actions added, removed or changed order).</div>
 </td>
 </tr>
 <tr id="i4" class="altColor">
@@ -327,9 +327,9 @@ implements java.io.Serializable</pre>
 </tr>
 <tr id="i17" class="rowColor">
 <td class="colFirst"><code>void</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#removeListener(jisa.experiment.queue.ActionQueue.ListListener)">removeListener</a></span>&#8203;(<a href="ActionQueue.ListListener.html" title="interface in jisa.experiment.queue">ActionQueue.ListListener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&gt;&nbsp;listener)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#removeListener(jisa.experiment.queue.ActionQueue.ListListener)">removeListener</a></span>&#8203;(<a href="ActionQueue.ListListener.html" title="interface in jisa.experiment.queue">ActionQueue.ListListener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&gt;&nbsp;statusListener)</code></th>
 <td class="colLast">
-<div class="block">Removes a listener from the queue.</div>
+<div class="block">Removes a statusListener from the queue.</div>
 </td>
 </tr>
 <tr id="i18" class="altColor">
@@ -643,13 +643,13 @@ implements java.io.Serializable</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>addListener</h4>
-<pre class="methodSignature">public&nbsp;<a href="ActionQueue.ListListener.html" title="interface in jisa.experiment.queue">ActionQueue.ListListener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;?&gt;&gt;&nbsp;addListener&#8203;(<a href="ActionQueue.ListListener.html" title="interface in jisa.experiment.queue">ActionQueue.ListListener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;?&gt;&gt;&nbsp;listener)</pre>
-<div class="block">Adds a listener to be triggered every time the queue is changed (actions added, removed or changed order).</div>
+<pre class="methodSignature">public&nbsp;<a href="ActionQueue.ListListener.html" title="interface in jisa.experiment.queue">ActionQueue.ListListener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;?&gt;&gt;&nbsp;addListener&#8203;(<a href="ActionQueue.ListListener.html" title="interface in jisa.experiment.queue">ActionQueue.ListListener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;?&gt;&gt;&nbsp;statusListener)</pre>
+<div class="block">Adds a statusListener to be triggered every time the queue is changed (actions added, removed or changed order).</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>listener</code> - Listener to add</dd>
+<dd><code>statusListener</code> - Listener to add</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>The listener that was added</dd>
+<dd>The statusListener that was added</dd>
 </dl>
 </li>
 </ul>
@@ -659,11 +659,11 @@ implements java.io.Serializable</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>removeListener</h4>
-<pre class="methodSignature">public&nbsp;void&nbsp;removeListener&#8203;(<a href="ActionQueue.ListListener.html" title="interface in jisa.experiment.queue">ActionQueue.ListListener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&gt;&nbsp;listener)</pre>
-<div class="block">Removes a listener from the queue.</div>
+<pre class="methodSignature">public&nbsp;void&nbsp;removeListener&#8203;(<a href="ActionQueue.ListListener.html" title="interface in jisa.experiment.queue">ActionQueue.ListListener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&gt;&nbsp;statusListener)</pre>
+<div class="block">Removes a statusListener from the queue.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>listener</code> - The listener to be removed</dd>
+<dd><code>statusListener</code> - The statusListener to be removed</dd>
 </dl>
 </li>
 </ul>

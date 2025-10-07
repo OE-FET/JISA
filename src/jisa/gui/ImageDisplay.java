@@ -84,6 +84,7 @@ public class ImageDisplay extends JFXElement {
 
     public OverlayGenerator addOverlay(OverlayGenerator overlay) {
         overlays.add(overlay);
+        render();
         return overlay;
     }
 
@@ -121,18 +122,18 @@ public class ImageDisplay extends JFXElement {
 
         };
 
-        overlays.add(generator);
-
-        return generator;
+        return addOverlay(generator);
 
     }
 
     public void removeOverlay(OverlayGenerator generator) {
         overlays.remove(generator);
+        render();
     }
 
     public void clearOverlays() {
         overlays.clear();
+        render();
     }
 
     public void drawMono(short[][] data, short max) {

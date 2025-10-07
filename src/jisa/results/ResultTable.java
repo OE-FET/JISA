@@ -442,6 +442,58 @@ public abstract class ResultTable implements Iterable<Row> {
 
     }
 
+    public ResultTable findFirstGroup(Predicate<Row> matching) {
+        return stream().dropWhile(r -> !matching.test(r)).takeWhile(matching::test).collect(collector());
+    }
+
+    public <T> Iterable<Map.Entry<T, ResultTable>> findGroups(RowEvaluable<T> value) {
+
+        return new Iterable<Map.Entry<T, ResultTable>>() {
+
+            @NotNull
+            @Override
+            public Iterator<Map.Entry<T, ResultTable>> iterator() {
+
+                return new Iterator<Map.Entry<T, ResultTable>>() {
+
+                    private Iterator<Row> rowIterator = ResultTable.this.iterator();
+
+                    @Override
+                    public boolean hasNext() {
+                        return rowIterator.hasNext();
+                    }
+
+                    @Override
+                    public Map.Entry<T, ResultTable> next() {
+
+                        ResultTable table   = ResultList.emptyCopyOf(ResultTable.this);
+                        Row         row     = rowIterator.next();
+                        T           initial = value.evaluate(row);
+
+                        do {
+
+                            table.addRow(row);
+
+                            if (rowIterator.hasNext()) {
+                                row = rowIterator.next();
+                            } else {
+                                break;
+                            }
+
+                        } while (value.evaluate(row).equals(initial));
+
+                        return Map.entry(initial, table);
+
+                    }
+                };
+
+            }
+
+
+        };
+
+    }
+
     /**
      * Splits this ResultTable into separate tables based on the value of the specified column for each row.
      *

@@ -251,9 +251,9 @@ extends <a href="AbstractAction.html" title="class in jisa.experiment.queue">Abs
 </tr>
 <tr id="i4" class="altColor">
 <td class="colFirst"><code><a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="SweepAction.html" title="type parameter in SweepAction">T</a>&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addSweepValueListener(jisa.experiment.queue.Listener)">addSweepValueListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="SweepAction.html" title="type parameter in SweepAction">T</a>&gt;&nbsp;listener)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addSweepValueListener(jisa.experiment.queue.Listener)">addSweepValueListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="SweepAction.html" title="type parameter in SweepAction">T</a>&gt;&nbsp;statusListener)</code></th>
 <td class="colLast">
-<div class="block">Adds a listener that is triggered every time the current sweep value is changed.</div>
+<div class="block">Adds a statusListener that is triggered every time the current sweep value is changed.</div>
 </td>
 </tr>
 <tr id="i5" class="rowColor">
@@ -404,9 +404,9 @@ extends <a href="AbstractAction.html" title="class in jisa.experiment.queue">Abs
 </tr>
 <tr id="i29" class="rowColor">
 <td class="colFirst"><code>void</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#removeSweepValueListener(jisa.experiment.queue.Listener)">removeSweepValueListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&nbsp;listener)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#removeSweepValueListener(jisa.experiment.queue.Listener)">removeSweepValueListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&nbsp;statusListener)</code></th>
 <td class="colLast">
-<div class="block">Removes the specified listener from this action - if it was added to begin with.</div>
+<div class="block">Removes the specified statusListener from this action - if it was added to begin with.</div>
 </td>
 </tr>
 <tr id="i30" class="altColor">
@@ -558,13 +558,13 @@ extends <a href="AbstractAction.html" title="class in jisa.experiment.queue">Abs
 <ul class="blockList">
 <li class="blockList">
 <h4>addSweepValueListener</h4>
-<pre class="methodSignature">public&nbsp;<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="SweepAction.html" title="type parameter in SweepAction">T</a>&gt;&nbsp;addSweepValueListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="SweepAction.html" title="type parameter in SweepAction">T</a>&gt;&nbsp;listener)</pre>
-<div class="block">Adds a listener that is triggered every time the current sweep value is changed.</div>
+<pre class="methodSignature">public&nbsp;<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="SweepAction.html" title="type parameter in SweepAction">T</a>&gt;&nbsp;addSweepValueListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="SweepAction.html" title="type parameter in SweepAction">T</a>&gt;&nbsp;statusListener)</pre>
+<div class="block">Adds a statusListener that is triggered every time the current sweep value is changed.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>listener</code> - Listener to add</dd>
+<dd><code>statusListener</code> - Listener to add</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>The listener that was added</dd>
+<dd>The statusListener that was added</dd>
 </dl>
 </li>
 </ul>
@@ -574,11 +574,11 @@ extends <a href="AbstractAction.html" title="class in jisa.experiment.queue">Abs
 <ul class="blockList">
 <li class="blockList">
 <h4>removeSweepValueListener</h4>
-<pre class="methodSignature">public&nbsp;void&nbsp;removeSweepValueListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&nbsp;listener)</pre>
-<div class="block">Removes the specified listener from this action - if it was added to begin with.</div>
+<pre class="methodSignature">public&nbsp;void&nbsp;removeSweepValueListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&nbsp;statusListener)</pre>
+<div class="block">Removes the specified statusListener from this action - if it was added to begin with.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>listener</code> - The listener to remove</dd>
+<dd><code>statusListener</code> - The statusListener to remove</dd>
 </dl>
 </li>
 </ul>

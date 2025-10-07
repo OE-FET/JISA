@@ -178,37 +178,37 @@ extends java.io.Serializable</pre>
 </tr>
 <tr id="i0" class="altColor">
 <td class="colFirst"><code><a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addAttributeListener(jisa.experiment.queue.Listener)">addAttributeListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;listener)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addAttributeListener(jisa.experiment.queue.Listener)">addAttributeListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;statusListener)</code></th>
 <td class="colLast">
-<div class="block">Adds a listener that is triggered any time the attributes of the action are updated.</div>
+<div class="block">Adds a statusListener that is triggered any time the attributes of the action are updated.</div>
 </td>
 </tr>
 <tr id="i1" class="rowColor">
 <td class="colFirst"><code><a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addChildrenListener(jisa.experiment.queue.Listener)">addChildrenListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;listener)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addChildrenListener(jisa.experiment.queue.Listener)">addChildrenListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;statusListener)</code></th>
 <td class="colLast">
-<div class="block">Adds a listener that is triggered any time child actions are added/removed.</div>
+<div class="block">Adds a statusListener that is triggered any time child actions are added/removed.</div>
 </td>
 </tr>
 <tr id="i2" class="altColor">
 <td class="colFirst"><code>default <a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addListener(jisa.experiment.queue.Listener)">addListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;listener)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addListener(jisa.experiment.queue.Listener)">addListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;statusListener)</code></th>
 <td class="colLast">
-<div class="block">Adds a listener that is triggered any time the name, status or attributes of the action are changed.</div>
+<div class="block">Adds a statusListener that is triggered any time the name, status or attributes of the action are changed.</div>
 </td>
 </tr>
 <tr id="i3" class="rowColor">
 <td class="colFirst"><code><a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addNameListener(jisa.experiment.queue.Listener)">addNameListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;listener)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addNameListener(jisa.experiment.queue.Listener)">addNameListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;statusListener)</code></th>
 <td class="colLast">
-<div class="block">Adds a listener to this action that is triggered any time its name is changed.</div>
+<div class="block">Adds a statusListener to this action that is triggered any time its name is changed.</div>
 </td>
 </tr>
 <tr id="i4" class="altColor">
 <td class="colFirst"><code><a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addStatusListener(jisa.experiment.queue.Listener)">addStatusListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;listener)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#addStatusListener(jisa.experiment.queue.Listener)">addStatusListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;statusListener)</code></th>
 <td class="colLast">
-<div class="block">Adds a listener that is triggered any time the status of the action is changed.</div>
+<div class="block">Adds a statusListener that is triggered any time the status of the action is changed.</div>
 </td>
 </tr>
 <tr id="i5" class="rowColor">
@@ -335,9 +335,9 @@ extends java.io.Serializable</pre>
 </tr>
 <tr id="i24" class="altColor">
 <td class="colFirst"><code>void</code></td>
-<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#removeListener(jisa.experiment.queue.Listener)">removeListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;listener)</code></th>
+<th class="colSecond" scope="row"><code><span class="memberNameLink"><a href="#removeListener(jisa.experiment.queue.Listener)">removeListener</a></span>&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;statusListener)</code></th>
 <td class="colLast">
-<div class="block">Removes the specified listener for the action - if it has it.</div>
+<div class="block">Removes the specified statusListener for the action - if it has it.</div>
 </td>
 </tr>
 <tr id="i25" class="rowColor">
@@ -477,13 +477,13 @@ extends java.io.Serializable</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>addNameListener</h4>
-<pre class="methodSignature"><a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;addNameListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;listener)</pre>
-<div class="block">Adds a listener to this action that is triggered any time its name is changed.</div>
+<pre class="methodSignature"><a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;addNameListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;statusListener)</pre>
+<div class="block">Adds a statusListener to this action that is triggered any time its name is changed.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>listener</code> - Listener to add</dd>
+<dd><code>statusListener</code> - Listener to add</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>The added listener</dd>
+<dd>The added statusListener</dd>
 </dl>
 </li>
 </ul>
@@ -588,13 +588,13 @@ extends java.io.Serializable</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>addAttributeListener</h4>
-<pre class="methodSignature"><a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;addAttributeListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;listener)</pre>
-<div class="block">Adds a listener that is triggered any time the attributes of the action are updated.</div>
+<pre class="methodSignature"><a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;addAttributeListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;statusListener)</pre>
+<div class="block">Adds a statusListener that is triggered any time the attributes of the action are updated.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>listener</code> - Listener to add</dd>
+<dd><code>statusListener</code> - Listener to add</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>The added listener</dd>
+<dd>The added statusListener</dd>
 </dl>
 </li>
 </ul>
@@ -750,13 +750,13 @@ extends java.io.Serializable</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>addStatusListener</h4>
-<pre class="methodSignature"><a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;addStatusListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;listener)</pre>
-<div class="block">Adds a listener that is triggered any time the status of the action is changed.</div>
+<pre class="methodSignature"><a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;addStatusListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;statusListener)</pre>
+<div class="block">Adds a statusListener that is triggered any time the status of the action is changed.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>listener</code> - Listener to add</dd>
+<dd><code>statusListener</code> - Listener to add</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>The added listener</dd>
+<dd>The added statusListener</dd>
 </dl>
 </li>
 </ul>
@@ -766,13 +766,13 @@ extends java.io.Serializable</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>addListener</h4>
-<pre class="methodSignature">default&nbsp;<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;addListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;listener)</pre>
-<div class="block">Adds a listener that is triggered any time the name, status or attributes of the action are changed.</div>
+<pre class="methodSignature">default&nbsp;<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;addListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;statusListener)</pre>
+<div class="block">Adds a statusListener that is triggered any time the name, status or attributes of the action are changed.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>listener</code> - Listener to add</dd>
+<dd><code>statusListener</code> - Listener to add</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>The added listener</dd>
+<dd>The added statusListener</dd>
 </dl>
 </li>
 </ul>
@@ -791,11 +791,11 @@ extends java.io.Serializable</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>removeListener</h4>
-<pre class="methodSignature">void&nbsp;removeListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;listener)</pre>
-<div class="block">Removes the specified listener for the action - if it has it.</div>
+<pre class="methodSignature">void&nbsp;removeListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;statusListener)</pre>
+<div class="block">Removes the specified statusListener for the action - if it has it.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>listener</code> - The listener to remove</dd>
+<dd><code>statusListener</code> - The statusListener to remove</dd>
 </dl>
 </li>
 </ul>
@@ -876,13 +876,13 @@ extends java.io.Serializable</pre>
 <ul class="blockList">
 <li class="blockList">
 <h4>addChildrenListener</h4>
-<pre class="methodSignature"><a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;addChildrenListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;listener)</pre>
-<div class="block">Adds a listener that is triggered any time child actions are added/removed.</div>
+<pre class="methodSignature"><a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;addChildrenListener&#8203;(<a href="Listener.html" title="interface in jisa.experiment.queue">Listener</a>&lt;<a href="Action.html" title="interface in jisa.experiment.queue">Action</a>&lt;<a href="Action.html" title="type parameter in Action">T</a>&gt;&gt;&nbsp;statusListener)</pre>
+<div class="block">Adds a statusListener that is triggered any time child actions are added/removed.</div>
 <dl>
 <dt><span class="paramLabel">Parameters:</span></dt>
-<dd><code>listener</code> - Listener to add</dd>
+<dd><code>statusListener</code> - Listener to add</dd>
 <dt><span class="returnLabel">Returns:</span></dt>
-<dd>The added listener</dd>
+<dd>The added statusListener</dd>
 </dl>
 </li>
 </ul>

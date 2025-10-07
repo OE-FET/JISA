@@ -24,16 +24,17 @@ public abstract class Measurement<R> {
 
     private final List<InstrumentValue> instruments;
     private final List<ParamValue>      parameters;
-    private final List<Listener>        listeners  = new LinkedList<>();
-    private final List<Throwable>       exceptions = new LinkedList<>();
+    private final List<StatusListener>  statusListeners  = new LinkedList<>();
+    private final List<MessageListener> messageListeners = new LinkedList<>();
+    private final List<Throwable>       exceptions       = new LinkedList<>();
     private final String                name;
 
     private String  label;
-    private boolean running    = false;
-    private boolean interrupt  = false;
-    private Thread  runThread  = null;
-    private Status  status     = Status.STOPPED;
-    private R       cachedData = null;
+    private boolean running     = false;
+    private boolean interrupt   = false;
+    private Thread  runThread   = null;
+    private Status  status      = Status.STOPPED;
+    private R       currentData = null;
 
     protected Measurement(String name, String label) {
 
@@ -83,21 +84,21 @@ public abstract class Measurement<R> {
 
             this.status = status;
 
-            for (Listener listener : listeners) {
-                listener.update(status);
+            for (StatusListener statusListener : statusListeners) {
+                statusListener.update(status);
             }
 
         }
 
     }
 
-    public synchronized Listener addListener(Listener listener) {
-        listeners.add(listener);
-        return listener;
+    public synchronized StatusListener addStatusListener(StatusListener statusListener) {
+        statusListeners.add(statusListener);
+        return statusListener;
     }
 
-    public synchronized void removeListener(Listener listener) {
-        listeners.remove(listener);
+    public synchronized void removeStatusListener(StatusListener statusListener) {
+        statusListeners.remove(statusListener);
     }
 
     /**
@@ -110,19 +111,19 @@ public abstract class Measurement<R> {
      */
     protected abstract R createData();
 
-    protected R getCachedData() {
+    public R getData() {
 
-        R toReturn;
-
-        if (cachedData == null) {
-            toReturn = createData();
-        } else {
-            toReturn   = cachedData;
-            cachedData = null;
+        if (currentData == null) {
+            currentData = createData();
         }
 
-        return toReturn;
+        return currentData;
 
+    }
+
+    public R newData() {
+        currentData = createData();
+        return currentData;
     }
 
     /**
@@ -175,11 +176,11 @@ public abstract class Measurement<R> {
 
             try {
 
-                instrument.set(instrument.getConfiguration().getInstrument());
-
                 if (instrument.isRequired() && instrument.get() == null) {
                     throw new MissingInstrumentException("Required instrument \"" + instrument.name + "\" is not configured.");
                 }
+
+                instrument.applyConfiguration();
 
             } catch (Throwable e) {
                 exceptions.add(e);
@@ -234,16 +235,6 @@ public abstract class Measurement<R> {
 
     }
 
-    public synchronized R getData() {
-
-        if (cachedData == null) {
-            cachedData = createData();
-        }
-
-        return cachedData;
-
-    }
-
     public synchronized R start() {
 
         if (running || runThread != null) {
@@ -253,7 +244,7 @@ public abstract class Measurement<R> {
         running   = true;
         interrupt = false;
 
-        R data = getCachedData();
+        R data = getData();
 
         runThread = new Thread(() -> thread(data));
         runThread.start();
@@ -271,7 +262,7 @@ public abstract class Measurement<R> {
         running   = true;
         interrupt = false;
 
-        R data = getCachedData();
+        R data = getData();
 
         thread(data);
 
@@ -372,6 +363,35 @@ public abstract class Measurement<R> {
 
     }
 
+    protected void message(MessageType type, String message) {
+
+        for (MessageListener messageListener : messageListeners) {
+            messageListener.message(type, message);
+        }
+
+    }
+
+    protected void infoMessage(String message) {
+        message(MessageType.INFO, message);
+    }
+
+    protected void warningMessage(String message) {
+        message(MessageType.WARNING, message);
+    }
+
+    protected void errorMessage(String message) {
+        message(MessageType.ERROR, message);
+    }
+
+    public MessageListener addMessageListener(MessageListener messageListener) {
+        messageListeners.add(messageListener);
+        return messageListener;
+    }
+
+    public void removeMessageListener(MessageListener messageListener) {
+        messageListeners.remove(messageListener);
+    }
+
     public static class ParamValue<T> {
 
         private final String    section;
@@ -444,17 +464,18 @@ public abstract class Measurement<R> {
     public static class InstrumentValue<I extends jisa.devices.Instrument> {
 
         private final String           name;
-        private final Configuration<I> configuration;
         private final Getter<I>        getter;
         private final Setter<I>        setter;
+        private final Class<I>         type;
         private final boolean          isRequired;
+        private       Configuration<I> configuration = null;
 
         public InstrumentValue(String name, Class<I> type, Getter<I> getter, Setter<I> setter, boolean isRequired) {
-            this.name          = name;
-            this.getter        = getter;
-            this.setter        = setter;
-            this.isRequired    = isRequired;
-            this.configuration = new Configuration<>(name, type);
+            this.name       = name;
+            this.getter     = getter;
+            this.setter     = setter;
+            this.type       = type;
+            this.isRequired = isRequired;
         }
 
         public String getName() {
@@ -476,10 +497,6 @@ public abstract class Measurement<R> {
             }
         }
 
-        public Configuration<I> getConfiguration() {
-            return configuration;
-        }
-
         public boolean isRequired() {
             return isRequired;
         }
@@ -490,6 +507,30 @@ public abstract class Measurement<R> {
 
         public interface Setter<T> {
             void set(T value) throws IllegalAccessException;
+        }
+
+        public Class<I> getType() {
+            return type;
+        }
+
+        public void setConfiguration(Configuration<I> configuration) {
+            this.configuration = configuration;
+        }
+
+        public void clearConfiguration() {
+            this.configuration = null;
+        }
+
+        public Configuration<I> getConfiguration() {
+            return configuration;
+        }
+
+        public void applyConfiguration() throws IOException, DeviceException {
+
+            if (configuration != null) {
+                configuration.configure();
+            }
+
         }
 
     }
@@ -538,7 +579,7 @@ public abstract class Measurement<R> {
 
     }
 
-    public interface Listener {
+    public interface StatusListener {
         void update(Status status);
     }
 
@@ -587,7 +628,17 @@ public abstract class Measurement<R> {
         TIME,
         FILE_OPEN,
         FILE_SAVE,
-        DIRECTORY
+        DIRECTORY_SELECT
+    }
+
+    public enum MessageType {
+        INFO,
+        WARNING,
+        ERROR
+    }
+
+    public interface MessageListener {
+        void message(MessageType type, String message);
     }
 
 }

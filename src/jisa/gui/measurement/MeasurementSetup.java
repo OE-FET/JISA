@@ -1,6 +1,7 @@
 package jisa.gui.measurement;
 
 import jisa.Util;
+import jisa.control.SRunnable;
 import jisa.experiment.Measurement;
 import jisa.gui.Configurator;
 import jisa.gui.Form;
@@ -13,9 +14,7 @@ import jisa.results.ResultList;
 import jisa.results.ResultStream;
 import jisa.results.ResultTable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MeasurementSetup<R extends Measurement<?>> extends Tabs {
 
@@ -30,16 +29,27 @@ public class MeasurementSetup<R extends Measurement<?>> extends Tabs {
         map.put(ResultStream.class, (FieldCreator<ResultTable>) Form::addTable);
     });
 
-    private final R    measurement;
-    private final Grid parameters  = new Grid("Parameters", 2);
-    private final Grid instruments = new Grid("Instruments", 1);
+    private final R               measurement;
+    private final Grid            parameters  = new Grid("Parameters", 2);
+    private final Grid            instruments = new Grid("Instruments", 1);
+    private final List<SRunnable> setters     = new LinkedList<>();
+
+    public MeasurementSetup(R measurement) {
+        this(String.format("%s: %s", measurement.getName(), measurement.getLabel()), measurement);
+    }
 
     public MeasurementSetup(String title, R measurement) {
 
         super(title);
         this.measurement = measurement;
 
-        measurement.getInstruments().stream().map(i -> new Configurator(i.getConfiguration())).forEach(instruments::add);
+        measurement.getInstruments().stream().map(i -> new Util.Pair<Measurement.InstrumentValue, Configurator>(i, new Configurator(i.getName(), i.getType()))).forEach(p -> {
+
+            p.b().getConfiguration().setInputInstrument(p.a().get());
+            instruments.add(p.b());
+            setters.add(() -> p.a().set(p.b().getConfiguration().getInstrument()));
+
+        });
 
         Map<String, Form> sections = new HashMap<>();
 
@@ -61,10 +71,10 @@ public class MeasurementSetup<R extends Measurement<?>> extends Tabs {
 
                 if (dataType == Integer.TYPE || dataType == Integer.class) {
                     Field field = form.addChoice(p.getName(), (Integer) p.get(), options.toArray(String[]::new));
-                    field.addChangeListener(p::set);
+                    setters.add(() -> p.set(field.get()));
                 } else if (dataType == String.class) {
                     Field field = form.addTextChoice(p.getName(), (String) p.get(), options.toArray(String[]::new));
-                    field.addChangeListener(p::set);
+                    setters.add(() -> p.set(field.get()));
                 }
 
             } else if (p.getType() == Measurement.Type.AUTO) {
@@ -72,36 +82,36 @@ public class MeasurementSetup<R extends Measurement<?>> extends Tabs {
                 if (DEFAULT_TYPES.containsKey(dataType)) {
 
                     Field field = DEFAULT_TYPES.get(dataType).create(form, p.getName(), p.get());
-                    field.addChangeListener(p::set);
+                    setters.add(() -> p.set(field.get()));
 
                 } else if (dataType.isEnum()) {
 
                     List<Object>         enums = List.of(dataType.getEnumConstants());
                     ChoiceField<Integer> field = form.addChoice(p.getName(), enums.indexOf(p.get()), enums.stream().map(Object::toString).toArray(String[]::new));
 
-                    field.addChangeListener(i -> p.set(enums.get(i)));
+                    setters.add(() -> p.set(enums.get(field.get())));
 
                 }
 
             } else if (p.getType() == Measurement.Type.TIME && (dataType == Integer.TYPE || dataType == Integer.class)) {
 
                 Field<Integer> field = form.addTimeField(p.getName(), (Integer) p.get());
-                field.addChangeListener(p::set);
+                setters.add(() -> p.set(field.get()));
 
             } else if (p.getType() == Measurement.Type.FILE_OPEN && dataType == String.class) {
 
                 Field<String> field = form.addFileOpen(p.getName(), (String) p.get());
-                field.addChangeListener(p::set);
+                setters.add(() -> p.set(field.get()));
 
             } else if (p.getType() == Measurement.Type.FILE_SAVE && dataType == String.class) {
 
                 Field<String> field = form.addFileSave(p.getName(), (String) p.get());
-                field.addChangeListener(p::set);
+                setters.add(() -> p.set(field.get()));
 
-            } else if (p.getType() == Measurement.Type.DIRECTORY && dataType == String.class) {
+            } else if (p.getType() == Measurement.Type.DIRECTORY_SELECT && dataType == String.class) {
 
                 Field<String> field = form.addDirectorySelect(p.getName(), (String) p.get());
-                field.addChangeListener(p::set);
+                setters.add(() -> p.set(field.get()));
 
             }
 
@@ -120,8 +130,21 @@ public class MeasurementSetup<R extends Measurement<?>> extends Tabs {
     }
 
     public interface FieldCreator<T> {
-
         Field<T> create(Form form, String name, T def);
+    }
+
+    public void apply() {
+        setters.forEach(Util::runRegardless);
+    }
+
+    public boolean showAndApply() {
+
+        if (showAsConfirmation()) {
+            apply();
+            return true;
+        }
+
+        return false;
 
     }
 
