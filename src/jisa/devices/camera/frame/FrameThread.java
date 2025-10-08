@@ -35,7 +35,7 @@ public class FrameThread<F extends Frame> {
     }
 
     public FrameThread(Camera<F> camera, Camera.Streamer<F> listener, SRunnable closer) {
-        this(camera, (i,f) -> listener.newFrame(f), closer);
+        this(camera, (i, f) -> listener.newFrame(f), closer);
     }
 
     public FrameThread(Camera<F> camera, Camera.Streamer<F> listener) {
@@ -68,29 +68,56 @@ public class FrameThread<F extends Frame> {
         return thread.isAlive();
     }
 
+    /**
+     * Closes the queue and waits for the thread to finish processing any frames left in the queue (i.e., any backlog), up until the specified timeout, before shutting
+     * down and returning.
+     *
+     * @param timeout The maximum amount of time to wait for the thread to finish gracefully before timing out (in milliseconds).
+     */
+    public synchronized void stop(int timeout) {
+
+        queue.close();
+
+        try {
+            thread.join(timeout);
+        } catch (InterruptedException ignored) { }
+
+    }
+
+    /**
+     * Closes the queue and waits for the thread to finish processing any frames left in the queue (i.e., any backlog) before shutting
+     * down and returning.
+     */
     public synchronized void stop() {
-
-        queue.close();
-
-        try {
-            thread.join();
-        } catch (InterruptedException ignored) { }
-
+        stop(0);
     }
 
-    public synchronized void forceStop() {
+    /**
+     * Attempts to make the thread shut down now --- clearing out any remaining backlog of frames without processing them.
+     * If it is not able to make this happen gracefully within 10 seconds, it will forcibly shut down the thread.
+     */
+    public synchronized void stopNow() {
 
+        // Close and clear out whatever's left
+        queue.close();
+        queue.clear();
+
+        // If the thread is waiting on something, make it give up
         thread.interrupt();
-        queue.clear();
-        queue.close();
-        queue.clear();
 
         try {
-            thread.join();
-        } catch (InterruptedException ignored) { }
+            thread.join(10000); // Give it 10 seconds to shutdown gracefully
+        } catch (InterruptedException ignored) {
+            thread.stop();      // The time for grace is over
+        }
 
     }
 
+    /**
+     * Returns the number of frames that have been processed by the thread so far.
+     *
+     * @return Number of frames processed so far.
+     */
     public synchronized long getFrameCount() {
         return count;
     }

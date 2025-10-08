@@ -745,15 +745,7 @@ public abstract class ResultTable implements Iterable<Row> {
      * @return Copied sub-table
      */
     public ResultList subTable(int start, int to) {
-
-        ResultList list = ResultList.emptyCopyOf(this);
-
-        for (int i = start; i <= to; i++) {
-            list.addRow(get(i));
-        }
-
-        return list;
-
+        return stream().skip(start).limit(to - start).collect(collector());
     }
 
     /**
@@ -1058,15 +1050,30 @@ public abstract class ResultTable implements Iterable<Row> {
     }
 
     public double[] asDoubleArray(RowEvaluable<? extends Number> expression) {
-        return stream().mapToDouble(r -> expression.evaluate(r).doubleValue()).toArray();
+
+        return stream().mapToDouble(r -> {
+            Number value = expression.evaluate(r);
+            return value == null ? Double.NaN : value.doubleValue();
+        }).toArray();
+
     }
 
     public int[] asIntArray(RowEvaluable<? extends Number> expression) {
-        return stream().mapToInt(r -> expression.evaluate(r).intValue()).toArray();
+
+        return stream().mapToInt(r -> {
+            Number value = expression.evaluate(r);
+            return value == null ? Integer.MIN_VALUE : value.intValue();
+        }).toArray();
+
     }
 
     public long[] asLongArray(RowEvaluable<? extends Number> expression) {
-        return stream().mapToLong(r -> expression.evaluate(r).longValue()).toArray();
+
+        return stream().mapToLong(r -> {
+            Number value = expression.evaluate(r);
+            return value == null ? Long.MIN_VALUE : value.longValue();
+        }).toArray();
+
     }
 
     /**

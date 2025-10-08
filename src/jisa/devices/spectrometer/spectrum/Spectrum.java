@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.DoubleBuffer;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.*;
@@ -26,6 +28,25 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         this.wavelengths = wavelengths;
         this.counts      = counts;
         this.timestamp   = timestamp;
+
+    }
+
+    public Spectrum(Iterable<? extends Number> wavelengths, Iterable<? extends Number> counts, long timestamp) {
+
+        this(
+            StreamSupport.stream(wavelengths.spliterator(), false).mapToDouble(Number::doubleValue).toArray(),
+            StreamSupport.stream(counts.spliterator(), false).mapToDouble(Number::doubleValue).toArray(),
+            timestamp
+        );
+
+    }
+
+    public Spectrum(Iterable<? extends Number> wavelengths, Iterable<? extends Number> counts) {
+
+        this(
+            StreamSupport.stream(wavelengths.spliterator(), false).mapToDouble(Number::doubleValue).toArray(),
+            StreamSupport.stream(counts.spliterator(), false).mapToDouble(Number::doubleValue).toArray()
+        );
 
     }
 
@@ -57,12 +78,19 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         this(wavelengths, LongStream.of(counts).mapToDouble(i -> (double) i).toArray(), timestamp);
     }
 
+    public boolean isCompatibleWith(Spectrum other) {
+        return Arrays.equals(wavelengths, other.wavelengths);
+    }
+
     /**
-     * Returns a new Spectrum object whose points are the result of adding the provided spectrum from this one.
+     * Returns a new Spectrum object whose points are the result of adding the counts of each point in the supplied spectrum
+     * to those of this spectrum.
      *
-     * @param other The spectrum to add.
+     * @param other The spectrum to add to this one.
      *
-     * @return Summed spectrum.
+     * @return Added spectrum.
+     *
+     * @throws IllegalArgumentException If the spectra have different sizes.
      */
     public Spectrum add(Spectrum other) {
 
@@ -79,11 +107,14 @@ public class Spectrum implements Iterable<Spectrum.Point> {
     }
 
     /**
-     * Returns a new Spectrum object whose points are the result of subtracting the provided spectrum from this one.
+     * Returns a new Spectrum object whose points are the result of subtracting the counts of each point in the supplied spectrum
+     * from those of this spectrum.
      *
-     * @param other The spectrum to subtract.
+     * @param other The spectrum to subtract from this one.
      *
      * @return Subtracted spectrum.
+     *
+     * @throws IllegalArgumentException If the spectra have different sizes.
      */
     public Spectrum subtract(Spectrum other) {
 
@@ -99,6 +130,16 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
     }
 
+    /**
+     * Returns a new Spectrum object whose points are the result of dividing the counts of each point in this spectrum
+     * by those of the supplied spectrum.
+     *
+     * @param other The spectrum to divide this one by.
+     *
+     * @return Divided spectrum.
+     *
+     * @throws IllegalArgumentException If the spectra have different sizes.
+     */
     public Spectrum divide(Spectrum other) {
 
         if (size() != other.size()) {
@@ -119,6 +160,16 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
     }
 
+    /**
+     * Returns a new Spectrum object whose points are the result of multiplying the counts of each point in this spectrum
+     * by those of the supplied spectrum.
+     *
+     * @param other The spectrum to multiply this one by.
+     *
+     * @return Multiplied spectrum.
+     *
+     * @throws IllegalArgumentException If the spectra have different sizes.
+     */
     public Spectrum multiply(Spectrum other) {
 
         if (size() != other.size()) {
@@ -133,30 +184,71 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
     }
 
+    /**
+     * Returns a new Spectrum object whose points are the result of multiplying the counts of each point in this spectrum
+     * by the supplied scalar value.
+     *
+     * @param other The scalar to multiply this spectrum by.
+     *
+     * @return Multiplied spectrum.
+     */
     public Spectrum multiply(Number scalar) {
         double factor = scalar.doubleValue();
         return new Spectrum(wavelengths.clone(), DoubleStream.of(wavelengths).map(v -> v * factor).toArray(), timestamp);
     }
 
+    /**
+     * Returns a new Spectrum object whose points are the result of dividing the counts of each point in this spectrum
+     * by the supplied scalar value.
+     *
+     * @param other The scalar to divide this spectrum by.
+     *
+     * @return Divided spectrum.
+     */
     public Spectrum divide(Number scalar) {
         double factor = scalar.doubleValue();
         return new Spectrum(wavelengths.clone(), DoubleStream.of(wavelengths).map(v -> v / factor).toArray(), timestamp);
     }
 
+    /**
+     * Returns a new Spectrum object whose points are the result of adding the supplied scalar value to the counts of each point in this spectrum.
+     *
+     * @param other The scalar to add to this spectrum.
+     *
+     * @return Added spectrum.
+     */
     public Spectrum add(Number scalar) {
         double factor = scalar.doubleValue();
-        return new Spectrum(wavelengths.clone(),  DoubleStream.of(wavelengths).map(v -> v + factor).toArray(), timestamp);
+        return new Spectrum(wavelengths.clone(), DoubleStream.of(wavelengths).map(v -> v + factor).toArray(), timestamp);
     }
 
+    /**
+     * Returns a new Spectrum object whose points are the result of subtracting the supplied scalar value from the counts of each point in this spectrum.
+     *
+     * @param other The scalar to subtract from this spectrum.
+     *
+     * @return Subtracted spectrum.
+     */
     public Spectrum subtract(Number scalar) {
         double factor = scalar.doubleValue();
-        return new Spectrum(wavelengths.clone(),  DoubleStream.of(wavelengths).map(v -> v - factor).toArray(), timestamp);
+        return new Spectrum(wavelengths.clone(), DoubleStream.of(wavelengths).map(v -> v - factor).toArray(), timestamp);
     }
 
+    /**
+     * Sets the timestamp of this frame.
+     *
+     * @param timestamp Timestep to set.
+     */
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
 
+    /**
+     * Returns the timestamp stored with this frame. This value may not necessarily refer to specific date/time, but should
+     * at least be comparable with timestamps of other frames that came from the same series of frames from the same camera.
+     *
+     * @return Timestamp.
+     */
     public long getTimestamp() {
         return timestamp;
     }
@@ -170,11 +262,21 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         return new Spectrum(getWavelengths(), getCounts(), getTimestamp());
     }
 
+    /**
+     * Copies the counts from the supplied spectrum to this one in a memory-efficient way.
+     *
+     * @param other The spectrum from which to copy.
+     */
     public void copyFrom(Spectrum other) {
         System.arraycopy(other.counts, 0, counts, 0, counts.length);
         this.timestamp = other.timestamp;
     }
 
+    /**
+     * Copies the counts in the supplied array, overriding those stored in this frame in a memory-efficient way.
+     *
+     * @param counts The array to copy from.
+     */
     public void copyFrom(double[] counts) {
         System.arraycopy(counts, 0, this.counts, 0, this.counts.length);
     }
@@ -192,12 +294,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
     }
 
     /**
-     * Returns a new Spectrum object whose points are the result of adding the provided spectrum from this one.
-     * (Alias for add(...) to enable Kotlin operator overloading).
-     *
-     * @param other The spectrum to add.
-     *
-     * @return Summed spectrum.
+     * Kotlin operator overloads
      */
     public Spectrum plus(Spectrum other) {
         return add(other);
@@ -228,7 +325,15 @@ public class Spectrum implements Iterable<Spectrum.Point> {
     }
 
 
-    public Spectrum subSpectrum(int start, int end) {
+    /**
+     * Returns a new spectrum only containing the points within the specified index range.
+     *
+     * @param start First index to include.
+     * @param end   Last index to include.
+     *
+     * @return Spectrum only containing specified subset of points.
+     */
+    public Spectrum subSpectrumByIndex(int start, int end) {
 
         double[] newWl = new double[end - start + 1];
         double[] newCt = new double[end - start + 1];
@@ -240,8 +345,58 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
     }
 
-    public Spectrum subSpectrumByWavelength(double startWL, double endWL) {
-        return subSpectrum(indexByWavelength(startWL), indexByWavelength(endWL));
+    /**
+     * Returns a new spectrum only containing the points within the specified wavelength range.
+     *
+     * @param startWL First wavelength to include.
+     * @param endWL   Last wavelength to include.
+     *
+     * @return Spectrum only containing specified subset of points.
+     */
+    public Spectrum subSpectrum(double startWL, double endWL) {
+        return subSpectrumByIndex(indexByWavelength(startWL), indexByWavelength(endWL));
+    }
+
+    /**
+     * Removes the specified wavelength range from this spectrum, returning a spectrum without it.
+     *
+     * @param startWL The first wavelength in the region to remove.
+     * @param endWL   The last wavelength in the region to remove.
+     *
+     * @return Cropped spectrum.
+     */
+    public Spectrum cropOutRange(double startWL, double endWL) {
+
+        Spectrum first  = subSpectrum(Arrays.stream(wavelengths).min().orElse(Double.NEGATIVE_INFINITY), startWL);
+        Spectrum second = subSpectrum(endWL, Arrays.stream(wavelengths).max().orElse(Double.POSITIVE_INFINITY));
+
+        return first.concatonate(second);
+
+    }
+
+    /**
+     * Concatonate other spectra objects onto the end of this one to make a new spectum object.
+     *
+     * @param spectra The spectra to concatonate to this one.
+     *
+     * @return Concatonated spectrum.
+     */
+    public Spectrum concatonate(Spectrum... spectra) {
+
+        int          newSize  = wavelengths.length + Arrays.stream(spectra).mapToInt(Spectrum::size).sum();
+        DoubleBuffer wlBuffer = DoubleBuffer.wrap(new double[newSize]);
+        DoubleBuffer ctBuffer = DoubleBuffer.wrap(new double[newSize]);
+
+        wlBuffer.put(wavelengths);
+        ctBuffer.put(counts);
+
+        for (Spectrum spectrum : spectra) {
+            wlBuffer.put(spectrum.wavelengths);
+            ctBuffer.put(spectrum.counts);
+        }
+
+        return new Spectrum(wlBuffer.array(), ctBuffer.array(), Arrays.stream(spectra).mapToLong(Spectrum::getTimestamp).max().orElse(0L));
+
     }
 
     /**
@@ -291,7 +446,12 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         return wavelengths.clone();
     }
 
-    public List<Double> getWavelengthList() {
+    /**
+     * Returns a copy of the wavelengths in this spectrum, as a List object.
+     *
+     * @return List of wavelengths.
+     */
+    public List<Double> listWavelengths() {
         return Doubles.asList(getWavelengths());
     }
 
@@ -301,10 +461,15 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      * @return Array of wavenumbers.
      */
     public double[] getWavenumbers() {
-        return DoubleStream.of(wavelengths).map(v -> 1.0 / v).toArray();
+        return DoubleStream.of(wavelengths).map(l -> 1.0 / l).toArray();
     }
 
-    public List<Double> getWavenumberList() {
+    /**
+     * Returns a copy of the inverse wavelengths in this spectrum, as a List object.
+     *
+     * @return List of wavenumbers.
+     */
+    public List<Double> listWavenumbers() {
         return Doubles.asList(getWavenumbers());
     }
 
@@ -314,10 +479,15 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      * @return Array of angular wavenumbers.
      */
     public double[] getAngularWavenumbers() {
-        return DoubleStream.of(wavelengths).map(v -> 2.0 * Math.PI / v).toArray();
+        return DoubleStream.of(wavelengths).map(l -> 2.0 * Math.PI / l).toArray();
     }
 
-    public List<Double> getAngularWavelenumberList() {
+    /**
+     * Returns a copy of the inverse wavelengths multiplied by 2 PI in this spectrum, as a List object.
+     *
+     * @return List of angular wavenumbers.
+     */
+    public List<Double> listAngularWavenumbers() {
         return Doubles.asList(getAngularWavenumbers());
     }
 
@@ -331,14 +501,21 @@ public class Spectrum implements Iterable<Spectrum.Point> {
     }
 
     /**
-     * Returns a copy of the values in this spectrum, as a List,
+     * Returns a copy of the count values in this spectrum, as a List,
      *
-     * @return List of values.
+     * @return List of count values.
      */
-    public List<Double> getCountList() {
+    public List<Double> listCounts() {
         return Doubles.asList(getCounts());
     }
 
+    /**
+     * Returns the wavelength of the data point with a given index.
+     *
+     * @param index The index.
+     *
+     * @return Wavelength value.
+     */
     public double getWavelength(int index) {
         return wavelengths[index];
     }
@@ -355,6 +532,13 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         return counts[index];
     }
 
+    /**
+     * Finds the index of the data point within this spectrum with a wavelength as close to the specified value as possible.
+     *
+     * @param wavelength Wavelength to find, in metres.
+     *
+     * @return Index of data point as close to specified wavelength as possible.
+     */
     public int indexByWavelength(double wavelength) {
 
         int    minIndex    = 0;
@@ -364,6 +548,10 @@ public class Spectrum implements Iterable<Spectrum.Point> {
 
             double wl       = wavelengths[i];
             double distance = Math.abs(wl - wavelength);
+
+            if (wl == wavelength) {
+                return i;
+            }
 
             if (distance < minDistance) {
                 minDistance = distance;

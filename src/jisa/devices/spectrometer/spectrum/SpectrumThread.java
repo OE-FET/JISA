@@ -43,68 +43,120 @@ public class SpectrumThread {
         this(channel, streamer, () -> { });
     }
 
-
     private void run() {
 
-        while (queue.isAlive()) {
+        try {
 
-            try {
+            while (queue.isAlive()) {
 
-                Spectrum frame = queue.nextSpectrum();
-                streamer.newSpectrum(count, frame);
-                count++;
+                if (Thread.interrupted()) {
+                    break;
+                }
 
-            } catch (InterruptedException e) {
-                continue;
-            } catch (Throwable e) {
-                exceptions.add(e);
+                try {
+
+                    Spectrum frame = queue.nextSpectrum();
+                    streamer.newSpectrum(count, frame);
+                    count++;
+
+                } catch (InterruptedException e) {
+                    continue;
+                } catch (Throwable e) {
+                    exceptions.add(e);
+                }
+
             }
 
+        } finally {
+            Util.runRegardless(closer);
         }
-
-        Util.runRegardless(closer);
 
     }
 
+    /**
+     * Returns whether the thread is currently running or not.
+     *
+     * @return Is it running?
+     */
     public boolean isRunning() {
         return thread.isAlive();
     }
 
+    /**
+     * Closes the queue and waits for the thread to finish processing any spectra left in the queue (i.e., any backlog) before shutting
+     * down and returning.
+     */
+    public synchronized void stop(int timeout) {
+
+        queue.close();
+
+        try {
+            thread.join(timeout);
+        } catch (InterruptedException ignored) { }
+
+    }
+
+    /**
+     * Closes the queue and waits for the thread to finish processing any spectra left in the queue (i.e., any backlog) before shutting
+     * down and returning.
+     */
     public synchronized void stop() {
-
-        queue.close();
-
-        try {
-            thread.join();
-        } catch (InterruptedException ignored) { }
-
+        stop(0);
     }
 
-    public synchronized void forceStop() {
+    /**
+     * Attempts to make the thread shut down now --- clearing out any remaining backlog of spectra without processing them.
+     * If it is not able to make this happen gracefully within 10 seconds, it will forcibly shut down the thread.
+     */
+    public synchronized void stopNow() {
 
+        // Close and clear out whatever's left
+        queue.close();
+        queue.clear();
+
+        // If the thread is waiting on something, make it give up
         thread.interrupt();
-        queue.clear();
-        queue.close();
-        queue.clear();
 
         try {
-            thread.join();
-        } catch (InterruptedException ignored) { }
+            thread.join(10000); // Give it 10 seconds to shutdown gracefully
+        } catch (InterruptedException ignored) {
+            thread.stop();      // The time for grace is over
+        }
 
     }
 
+    /**
+     * Returns the number of spectra that this thread has processed so far.
+     *
+     * @return Number of spectra processed.
+     */
     public synchronized long getSpectrumCount() {
         return count;
     }
 
+    /**
+     * Returns whether any exceptions (errors) have occured while processing spectra so far.
+     *
+     * @return Any exceptions?
+     */
     public boolean hasExceptions() {
         return !exceptions.isEmpty();
     }
 
+    /**
+     * Returns a list of all exceptions (errors) that have occured while processing spectra so far.
+     *
+     * @return List of exceptions.
+     */
     public List<Throwable> getExceptions() {
         return List.copyOf(exceptions);
     }
 
+    /**
+     * Returns the spectrum queue that this thread is using to retrieve spectra from the spectrometer.
+     *
+     * @return Spectrum queue.
+     */
     public SpectrumQueue getSpectrumQueue() {
         return queue;
     }
