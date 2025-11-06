@@ -4,6 +4,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
@@ -18,15 +19,26 @@ public class Grid extends JFXElement implements Element, Container {
 
     private static final int DEFAULT_NUM_COLS = 3;
 
-    public        GridPane           pane;
-    public        ScrollPane         scroll;
-    private       Stage              stage;
-    private       int                nCols;
-    private       int                r     = 0;
-    private       int                c     = 0;
-    private       boolean            hGrow = true;
-    private       boolean            vGrow = true;
-    private final ArrayList<Element> added = new ArrayList<>();
+    public        GridPane               pane;
+    public        ScrollPane             scroll;
+    private       Stage                  stage;
+    private       int                    nCols;
+    private       int                    r              = 0;
+    private       int                    c              = 0;
+    private       boolean                hGrow          = true;
+    private       boolean                vGrow          = true;
+    private       double                 minColumnWidth = -1.0;
+    private final ArrayList<Element>     added          = new ArrayList<>();
+    private final ChangeListener<Number> widthListener  = (observable, oldValue, newValue) -> {
+
+        int nCols = (int) Math.floor(newValue.doubleValue() / minColumnWidth);
+
+        if (nCols != this.nCols) {
+            this.nCols = nCols;
+            updateGridding();
+        }
+
+    };
 
     /**
      * Creates a Grid element with the given title and number of columns.
@@ -93,6 +105,7 @@ public class Grid extends JFXElement implements Element, Container {
     public Grid(String title, Element... children) {
 
         this(title, DEFAULT_NUM_COLS, children);
+        setMinColumnWidth(500.0);
 
     }
 
@@ -297,10 +310,24 @@ public class Grid extends JFXElement implements Element, Container {
         return nCols;
     }
 
-    public void setNumColumns(int columns) {
+    public synchronized void setNumColumns(int columns) {
 
-        nCols = columns;
+        nCols          = columns;
+        minColumnWidth = -1.0;
+        pane.widthProperty().removeListener(widthListener);
         updateGridding();
+
+    }
+
+    public synchronized void setMinColumnWidth(double minColumnWidth) {
+
+        if (this.minColumnWidth < 0.0) {
+            pane.widthProperty().addListener(widthListener);
+        }
+
+        this.minColumnWidth = minColumnWidth;
+        widthListener.changed(pane.widthProperty(), pane.getWidth(), pane.getWidth());
+
     }
 
     public void setGrowth(boolean horizontal, boolean vertical) {

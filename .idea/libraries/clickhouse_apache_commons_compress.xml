@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="clickhouse.apache.commons.compress" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.clickhouse:org.apache.commons.compress:1.9.2" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/org.apache.commons.compress-1.9.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
