@@ -228,6 +228,16 @@ public abstract class SRLockIn<L extends SRLockIn> extends VISADevice implements
 
     }
 
+    @Override
+    public double getHarmonic() throws IOException, DeviceException {
+        return queryDouble("HARM?");
+    }
+
+    @Override
+    public void setHarmonic(double harmonic) throws IOException, DeviceException {
+        write("HARM %d", Math.round(harmonic));
+    }
+
     public static String getDescription() {
         return "Stanford Research Systems SR830";
     }

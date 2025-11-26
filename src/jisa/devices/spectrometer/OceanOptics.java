@@ -14,7 +14,6 @@ import jisa.visa.NativeDevice;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
@@ -310,18 +309,15 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
 
         }
 
+
+        int          capacity    = wavelengths.length;
         IntBuffer    error       = IntBuffer.allocate(1);
-        int          capacity    = lib.seabreeze_get_formatted_spectrum_length(index, error.rewind());
         DoubleBuffer buffer      = DoubleBuffer.allocate(capacity);
-        DoubleBuffer wavelengths = DoubleBuffer.allocate(capacity);
 
         lib.seabreeze_get_formatted_spectrum(index, error.rewind(), buffer, capacity);
         checkForError(error);
 
-        lib.seabreeze_get_wavelengths(index, error.rewind(), wavelengths, capacity);
-        checkForError(error);
-
-        return new Spectrum(wavelengths.array(), buffer.array(), System.nanoTime());
+        return new Spectrum(wavelengths.clone(), buffer.array(), System.nanoTime());
 
     }
 
@@ -349,23 +345,15 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
 
         }
 
-        IntBuffer error    = IntBuffer.allocate(1);
-        int       capacity = lib.seabreeze_get_formatted_spectrum_length(index, error.rewind());
-        checkForError(error);
-
-        DoubleBuffer buffer      = DoubleBuffer.allocate(capacity);
-        DoubleBuffer wavelengths = DoubleBuffer.allocate(capacity);
-
-        lib.seabreeze_get_wavelengths(index, error.rewind(), wavelengths, capacity);
-        checkForError(error);
-
-        double[] wl = wavelengths.array();
+        int          capacity = wavelengths.length;
+        IntBuffer    error    = IntBuffer.allocate(1);
+        DoubleBuffer buffer   = DoubleBuffer.allocate(capacity);
 
         for (int i = 0; i < count; i++) {
 
             lib.seabreeze_get_formatted_spectrum(index, error.rewind(), buffer.rewind().clear(), capacity);
             checkForError(error);
-            series.add(new Spectrum(wl.clone(), buffer.array().clone(), System.nanoTime()));
+            series.add(new Spectrum(wavelengths.clone(), buffer.array().clone(), System.nanoTime()));
 
         }
 

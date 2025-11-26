@@ -1,6 +1,5 @@
 package jisa.results;
 
-import com.google.common.primitives.Ints;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -77,7 +76,7 @@ public class ResultStreamBinary extends ResultTable {
         ResultStreamBinary stream = new ResultStreamBinary(file, path, columns.toArray(Column[]::new));
 
         if (attributes != null) {
-            attributes.forEach((k, v) -> stream.setAttributeQuiet(k, v.toString()));
+            attributes.forEach(stream::setAttributeQuiet);
         }
 
         return stream;
@@ -169,12 +168,12 @@ public class ResultStreamBinary extends ResultTable {
 
     }
 
-    public synchronized void setAttribute(String key, String value) {
+    public synchronized void setAttribute(String key, Object value) {
         super.setAttribute(key, value);
         try { updateHeader(); } catch (Exception ignored) { }
     }
 
-    protected void setAttributeQuiet(String key, String value) {
+    protected void setAttributeQuiet(String key, Object value) {
         super.setAttribute(key, value);
     }
 

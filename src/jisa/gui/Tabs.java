@@ -30,7 +30,7 @@ public class Tabs extends JFXElement implements Container {
     public Tabs(String title) {
 
         super(title, Tabs.class.getResource("fxml/TabGroup.fxml"));
-        GUI.runNow(() -> tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE));
+        GUI.runNow(() -> tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.ALL_TABS));
         BorderPane.setMargin(getNode().getCenter(), new Insets(0));
 
     }
@@ -53,8 +53,24 @@ public class Tabs extends JFXElement implements Container {
 
         GUI.runNow(() -> {
             Tab tab = new Tab(element.getTitle(), element.getNode());
+            tab.setClosable(false);
             tabPane.getTabs().add(tab);
             elements.add(element);
+        });
+
+    }
+
+    public synchronized void addCloseable(Element element) {
+
+        GUI.runNow(() -> {
+
+            Tab tab = new Tab(element.getTitle(), element.getNode());
+            tab.setClosable(true);
+            tabPane.getTabs().add(tab);
+            elements.add(element);
+
+            tab.setOnClosed(e -> elements.remove(element));
+
         });
 
     }

@@ -198,7 +198,7 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
                 throw new TimeoutException();
             }
 
-            throw new DeviceException("Error encountered with %s: %s (%d)", "LucanTakeVideo", LucamError.NAMES.getOrDefault(error, "Unkown Error"), error);
+            throw new DeviceException("Error encountered with %s: %s (%d)", "LucamTakeVideo", LucamError.NAMES.getOrDefault(error, "Unkown Error"), error);
 
         }
 

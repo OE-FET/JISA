@@ -12,7 +12,7 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * Abstract class for NativeDevice cameras (i.e., those that need to use a system library/so/dylib/dll) that provides
- * a standard framwork for handling frame acquisition and queue/listener management.
+ * a standard framework for handling frame acquisition and queue/listener management.
  *
  * @param <F> The Frame class returned by this camera
  */
@@ -141,7 +141,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
             return;
         }
 
-        // Set loop flag to false, so it should break at the next interation
+        // Set loop flag to false, so it should break at the next iteration
         acquiring = false;
 
         try {
@@ -163,6 +163,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
 
         } catch (Throwable e) {
 
+            // If all else fails, commit more war crimes, but then complain about it
             acquisitionThread.stop();
             throw e;
 

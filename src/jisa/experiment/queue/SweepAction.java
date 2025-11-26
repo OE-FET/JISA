@@ -176,7 +176,7 @@ public class SweepAction<T> extends AbstractAction<Void> {
     /**
      * Regenerates all the sub-actions for this sweep.
      */
-    protected synchronized void regenerateActions() {
+    public synchronized void regenerateActions() {
 
         children.clear();
         lastIndex = 0;

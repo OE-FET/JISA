@@ -27,9 +27,10 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
     private final Map<SpectrumQueue, FrameThread> threads   = new HashMap<>();
     private       Converter<F>                    converter;
 
-    public CameraSpectrometer(C camera, S spectrograph) {
+    public CameraSpectrometer(C camera, S spectrograph) throws IOException, DeviceException {
         this.camera       = camera;
         this.spectrograph = spectrograph;
+        setConverter(0, getCamera().getFrameHeight()/2, camera.getFrameWidth() - 1, getCamera().getFrameHeight()/2, 200.0, 800.0);
     }
 
     public void setConverter(Converter<F> converter) {

@@ -43,7 +43,7 @@ public abstract class ResultTable implements Iterable<Row> {
 
     protected final List<Column<?>> columns;
 
-    private final Map<String, String> attributes     = new LinkedHashMap<>();
+    private final Map<String, Object> attributes     = new LinkedHashMap<>();
     private final List<RowListener>   rowListeners   = new LinkedList<>();
     private final List<ClearListener> clearListeners = new LinkedList<>();
 
@@ -457,6 +457,7 @@ public abstract class ResultTable implements Iterable<Row> {
                 return new Iterator<Map.Entry<T, ResultTable>>() {
 
                     private Iterator<Row> rowIterator = ResultTable.this.iterator();
+                    private Row           row         = null;
 
                     @Override
                     public boolean hasNext() {
@@ -466,8 +467,11 @@ public abstract class ResultTable implements Iterable<Row> {
                     @Override
                     public Map.Entry<T, ResultTable> next() {
 
+                        if (row == null && rowIterator.hasNext()) {
+                            row = rowIterator.next();
+                        }
+
                         ResultTable table   = ResultList.emptyCopyOf(ResultTable.this);
-                        Row         row     = rowIterator.next();
                         T           initial = value.evaluate(row);
 
                         do {
@@ -1111,16 +1115,6 @@ public abstract class ResultTable implements Iterable<Row> {
      * @param value Attribute value
      */
     public void setAttribute(String key, Object value) {
-        setAttribute(key, value.toString());
-    }
-
-    /**
-     * Stores the given value in this table's header, using the specified key to identify it.
-     *
-     * @param key   Key (unique identifier of attribute)
-     * @param value Attribute value
-     */
-    public void setAttribute(String key, String value) {
         attributes.put(key, value);
     }
 
@@ -1132,7 +1126,13 @@ public abstract class ResultTable implements Iterable<Row> {
      * @return Attribute value
      */
     public String getAttribute(String key) {
-        return attributes.get(key);
+        Object item = attributes.getOrDefault(key, null);
+        return item != null ? item.toString() : null;
+    }
+
+    public <T> T getAttribute(String key, Class<T> type) {
+        Object item = attributes.getOrDefault(key, null);
+        return item != null && type.isAssignableFrom(item.getClass()) ? (T) item : null;
     }
 
     /**
@@ -1140,7 +1140,7 @@ public abstract class ResultTable implements Iterable<Row> {
      *
      * @return Map of all attributes
      */
-    public Map<String, String> getAttributes() {
+    public Map<String, Object> getAttributes() {
         return Map.copyOf(attributes);
     }
 
@@ -1303,8 +1303,8 @@ public abstract class ResultTable implements Iterable<Row> {
      *
      * @return Attribute header line
      */
-    protected String getAttributeLine() {
-        return String.format("%% ATTRIBUTES: %s", new JSONObject(getAttributes()));
+    public String getAttributeLine() {
+        return String.format("%% ATTRIBUTES: %s", JSONObject.wrap(attributes));
     }
 
     /**

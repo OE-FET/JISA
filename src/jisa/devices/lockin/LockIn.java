@@ -217,6 +217,27 @@ public interface LockIn extends Instrument, FMeter {
     void autoOffsetAmplitude() throws IOException, DeviceException;
 
     /**
+     * Returns which harmonic of the reference signal the amplifier is locking in on.
+     *
+     * @return Harmonic
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    double getHarmonic() throws IOException, DeviceException;
+
+    /**
+     * Sets which harmonic of the reference signal the amplifier should be locking in on. If only discrete options
+     * are available, the closest value will be chosen.
+     *
+     * @param harmonic Harmonic
+     *
+     * @throws IOException     Upon communication error
+     * @throws DeviceException Upon compatibility error
+     */
+    void setHarmonic(double harmonic) throws IOException, DeviceException;
+
+    /**
      * Instruct the lock-in to automatically determine the measurement range to use for the currently measured input.
      * This is done by picking the smallest range (multiplied by the supplied factor) within which the current value
      * fits within after any offsetting. Does not return until completed.

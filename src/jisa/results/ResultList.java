@@ -5,8 +5,6 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
@@ -70,7 +68,7 @@ public class ResultList extends ResultTable {
         }
 
         if (attributes != null) {
-            attributes.toMap().forEach((k, v) -> list.setAttribute(k, v.toString()));
+            attributes.toMap().forEach(list::setAttribute);
         }
 
         return list;
@@ -97,7 +95,7 @@ public class ResultList extends ResultTable {
         }
 
         if (attributes != null) {
-            attributes.toMap().forEach((k, v) -> list.setAttribute(k, v.toString()));
+            attributes.toMap().forEach(list::setAttribute);
         }
 
         return list;
@@ -164,7 +162,7 @@ public class ResultList extends ResultTable {
         ResultList list = new ResultList(columns);
 
         if (attributes != null) {
-            attributes.forEach((k, v) -> list.setAttribute(k, v.toString()));
+            attributes.forEach(list::setAttribute);
         }
 
         while (file.available() > 0) {
@@ -203,7 +201,7 @@ public class ResultList extends ResultTable {
         }
 
         if (attributes != null) {
-            attributes.toMap().forEach((k, v) -> list.setAttribute(k, v.toString()));
+            attributes.toMap().forEach(list::setAttribute);
         }
 
         return list;

@@ -35,7 +35,7 @@ public class ResultStream extends ResultTable {
         if (attributes == null) {
             stream.addBefore(0, "% ATTRIBUTES: {}");
         } else {
-            attributes.toMap().forEach((k, v) -> stream.setAttributeQuiet(k, v.toString()));
+            attributes.toMap().forEach(stream::setAttributeQuiet);
         }
 
         return stream;
@@ -93,12 +93,12 @@ public class ResultStream extends ResultTable {
 
     }
 
-    public synchronized void setAttribute(String key, String value) {
+    public synchronized void setAttribute(String key, Object value) {
         super.setAttribute(key, value);
         replaceLine(0, getAttributeLine());
     }
 
-    protected void setAttributeQuiet(String key, String value) {
+    protected void setAttributeQuiet(String key, Object value) {
         super.setAttribute(key, value);
     }
 

@@ -3,128 +3,230 @@ package jisa.devices.camera;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
+import jisa.devices.camera.frame.RGBFrame;
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeoutException;
 
-public class Webcam implements OldCamera {
+import static com.github.sarxos.webcam.Webcam.getWebcams;
+
+public class Webcam extends ManagedCamera<RGBFrame> {
 
     private final com.github.sarxos.webcam.Webcam webcam;
-    private final List<Mode>                      modes;
 
-    public Webcam() throws IOException, DeviceException {
-        this("");
-    }
+    public Webcam(Address address) throws DeviceException {
 
-    public Webcam(String name) throws IOException, DeviceException {
-        this(new IDAddress(name));
-    }
-
-    public Webcam(Address address) throws IOException, DeviceException {
+        super("Webcam Driver");
 
         if (!(address instanceof IDAddress)) {
-            throw new DeviceException("Webcam driver requires the name of the webcam to be given as an IDAddress object.");
+            throw new DeviceException("Address must be of type IDAddress, %s was given.", address.getClass().getSimpleName());
         }
 
-        IDAddress id = (IDAddress) address;
+        webcam = getWebcams().stream().filter(w -> w.getName().equalsIgnoreCase(((IDAddress) address).getID())).findFirst().orElseThrow(() -> new DeviceException("No webcam with name \"%s\" found", ((IDAddress) address).getID()));
 
-        if (id.getID().trim().isBlank()) {
+    }
 
-            webcam = com.github.sarxos.webcam.Webcam.getDefault();
+    @Override
+    protected void setupAcquisition(int limit) throws IOException, DeviceException {
 
+        if (limit > 0) {
+            webcam.open(false);
         } else {
-
-            webcam = com.github.sarxos.webcam.Webcam.getWebcams()
-                                                    .stream()
-                                                    .filter(w -> w.getName().toLowerCase().trim().equals(id.getID().toLowerCase().trim()))
-                                                    .findFirst()
-                                                    .orElse(null);
-
+            webcam.open(true);
         }
 
-        if (webcam == null) {
-            throw new IOException("No webcam found with that identifier.");
+    }
+
+    @Override
+    protected RGBFrame createFrameBuffer() {
+
+        try {
+            return new RGBFrame(new int[getFrameSize()], getFrameWidth(), getFrameHeight(), System.nanoTime());
+        } catch (Exception e) {
+            return new RGBFrame(new int[0], 0, 0, System.nanoTime());
         }
 
-        webcam.setViewSize(Arrays.stream(webcam.getViewSizes()).max(Comparator.comparingInt(v -> v.width * v.height)).orElse(webcam.getViewSize()));
-        modes = Arrays.stream(webcam.getViewSizes()).map(v -> new OldCamera.Mode(v.width, v.height)).collect(Collectors.toUnmodifiableList());
+    }
+
+    @Override
+    protected void acquisitionLoop(RGBFrame frameBuffer) throws IOException, DeviceException, InterruptedException, TimeoutException {
+
+
 
     }
 
     @Override
-    public void turnOn() throws IOException, DeviceException {
-        webcam.open();
-    }
-
-    @Override
-    public void turnOff() throws IOException, DeviceException {
-        webcam.close();
-    }
-
-    @Override
-    public boolean isOn() throws IOException, DeviceException {
-        return webcam.isOpen();
-    }
-
-    @Override
-    public Mode getMode() throws IOException, DeviceException {
-
-        Dimension dimension = webcam.getViewSize();
-
-        return modes.stream()
-                    .filter(m -> m.getXResolution() == dimension.width && m.getYResolution() == dimension.height)
-                    .findFirst()
-                    .orElse(null);
+    protected void cleanupAcquisition() throws IOException, DeviceException {
 
     }
 
     @Override
-    public void setMode(Mode mode) throws IOException, DeviceException {
-
-        webcam.setViewSize(Arrays.stream(webcam.getViewSizes()).filter(dimension -> mode.getXResolution() == dimension.width && mode.getYResolution() == dimension.height)
-                                 .findFirst()
-                                 .orElse(webcam.getViewSize()));
+    protected void cancelAcquisition() {
 
     }
 
     @Override
-    public double getFrameRate() {
-        return webcam.getFPS();
+    public double getIntegrationTime() throws IOException, DeviceException {
+        return 0;
     }
 
     @Override
-    public BufferedImage getBufferedImage() {
-        return webcam.getImage();
+    public void setIntegrationTime(double time) throws IOException, DeviceException {
+
     }
 
     @Override
-    public List<Mode> getModes() throws IOException, DeviceException {
-        return modes;
+    public void setAcquisitionTimeout(int timeout) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public int getAcquisitionTimeout() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public int getFrameWidth() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public void setFrameWidth(int width) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public int getPhysicalFrameWidth() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public int getFrameHeight() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public void setFrameHeight(int height) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public int getPhysicalFrameHeight() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public int getFrameOffsetX() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public void setFrameOffsetX(int offsetX) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public void setFrameCentredX(boolean centredX) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public boolean isFrameCentredX() throws IOException, DeviceException {
+        return false;
+    }
+
+    @Override
+    public int getFrameOffsetY() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public void setFrameOffsetY(int offsetY) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public void setFrameCentredY(boolean centredY) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public boolean isFrameCentredY() throws IOException, DeviceException {
+        return false;
+    }
+
+    @Override
+    public int getFrameSize() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public int getPhysicalFrameSize() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public int getSensorWidth() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public int getSensorHeight() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public int getBinningX() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public void setBinningX(int x) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public int getBinningY() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public void setBinningY(int y) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public void setBinning(int x, int y) throws IOException, DeviceException {
+
+    }
+
+    @Override
+    public boolean isTimestampEnabled() throws IOException, DeviceException {
+        return false;
+    }
+
+    @Override
+    public void setTimestampEnabled(boolean timestamping) throws IOException, DeviceException {
+
     }
 
     @Override
     public String getIDN() throws IOException, DeviceException {
-        return "Webcam: " + webcam.getName();
+        return "";
     }
 
     @Override
     public String getName() {
-        return "Webcam";
+        return "";
     }
 
     @Override
     public void close() throws IOException, DeviceException {
-        turnOff();
+
     }
 
     @Override
     public Address getAddress() {
-        return new IDAddress(webcam.getName());
+        return null;
     }
-
 }

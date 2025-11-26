@@ -107,20 +107,8 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
 
     public ThorCam(String serial) throws DeviceException, IOException {
-
-        super("ThorCam SDK Camera");
-
-        sdk = findLibrary(ThorCamLibrary.class, "thorlabs_tsi_camera_sdk");
-
-        ByteBuffer serials = ByteBuffer.allocate(1024);
-        sdk.tl_camera_discover_available_cameras(serials, 1024);
-
-        String[] serialNumbers = new String(serials.array(), StandardCharsets.US_ASCII).trim().split(" ");
-
-        handle = getPointer(ref -> sdk.tl_camera_open_camera(serial, ref), "tl_camera_open_camera");
-
+        this(new IDAddress(serial));
     }
-
 
     public ThorCam(Address address) throws DeviceException, IOException {
 
@@ -242,7 +230,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
                 name
             );
 
-            return new int[]{memory.getInt(0), memory.getInt(Integer.BYTES), memory.getInt(2 * Integer.BYTES), memory.getInt(3 * Integer.BYTES)};
+            return memory.getIntArray(0, 4);
 
         }
 

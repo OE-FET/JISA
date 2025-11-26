@@ -204,6 +204,10 @@ public class MeasurementAction extends AbstractAction<ResultTable> {
 
     }
 
+    public NameGenerator getFileNameGenerator() {
+        return generator;
+    }
+
     public void setFileNameGenerator(NameGenerator generator) {
         this.generator = generator;
     }
