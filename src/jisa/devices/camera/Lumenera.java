@@ -7,6 +7,7 @@ import com.sun.jna.ptr.NativeLongByReference;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.camera.feature.Amplified;
+import jisa.devices.camera.frame.FrameReader;
 import jisa.devices.camera.frame.U16RGBFrame;
 import jisa.devices.camera.nat.LucamAPI;
 import jisa.devices.camera.nat.LucamError;
@@ -65,6 +66,27 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
         }
 
         setAcquisitionTimeout(10000);
+
+    }
+
+    public static FrameReader<U16RGBFrame> openFrameReader(String path) throws IOException {
+
+        U16RGBFrame[] buffer  = new U16RGBFrame[1];
+        long[][]      dBuffer = new long[1][];
+
+        return new FrameReader<>(path, (width, height, bpp, timestamp, data) -> {
+
+            if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
+                dBuffer[0] = new long[width * height];
+                buffer[0]  = new U16RGBFrame(dBuffer[0], width, height, timestamp);
+            }
+
+            ByteBuffer.wrap(data).asLongBuffer().rewind().get(dBuffer[0]);
+            buffer[0].setTimestamp(timestamp);
+
+            return buffer[0];
+
+        });
 
     }
 
@@ -587,6 +609,7 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
 
         frameFormat.binX.binningX = (short) x;
         frameFormat.binY.binningY = (short) y;
+
 
         if (!api.LucamSetFormat(handle, frameFormat, frameRate.get(0))) {
             throwError("LucamSetFormat");
