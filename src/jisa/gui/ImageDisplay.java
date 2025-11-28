@@ -14,7 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-public class ImageDisplay extends JFXElement {
+public class ImageDisplay extends JFXElement implements FrameAcceptor {
 
     private final CanvasPane             canvasPane;
     private final Canvas                 canvas;
@@ -284,6 +284,10 @@ public class ImageDisplay extends JFXElement {
 
         render();
 
+    }
+
+    public void acceptFrame(Frame frame) {
+        drawFrame(frame);
     }
 
     public void drawFrame(Frame data) {

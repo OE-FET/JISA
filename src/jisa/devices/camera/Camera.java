@@ -6,6 +6,8 @@ import jisa.devices.ParameterList;
 import jisa.devices.camera.frame.Frame;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameThread;
+import jisa.gui.FrameAcceptor;
+import jisa.gui.ImageDisplay;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -513,6 +515,14 @@ public interface Camera<F extends Frame> extends Instrument {
      * @throws DeviceException Upon device compatibility error
      */
     void setTimestampEnabled(boolean timestamping) throws IOException, DeviceException;
+
+    default Listener<F> sendFramesTo(FrameAcceptor drawer) {
+        return addFrameListener(drawer::acceptFrame);
+    }
+
+    default Listener<F> sendFramesTo(ImageDisplay drawer) {
+        return addFrameListener(drawer::drawFrame);
+    }
 
     interface Listener<F extends Frame> {
         void newFrame(F frame);
