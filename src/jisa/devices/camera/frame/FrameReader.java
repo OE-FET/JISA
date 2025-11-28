@@ -4,6 +4,11 @@ import io.jhdf.HdfFile;
 import io.jhdf.WritableHdfFile;
 import io.jhdf.api.WritableDataset;
 import jisa.devices.camera.Camera;
+import org.jcodec.api.SequenceEncoder;
+import org.jcodec.common.io.NIOUtils;
+import org.jcodec.common.model.ColorSpace;
+import org.jcodec.common.model.Picture;
+import org.jcodec.common.model.Rational;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -106,6 +111,28 @@ public class FrameReader<F extends Frame> {
         } finally {
             close();
         }
+
+    }
+
+    public synchronized void convertToMP4(String path) throws IOException {
+
+        Frame  frame1 = readFrame().copy();
+        Frame  frame2 = readFrame().copy();
+        double diff   = (frame2.getTimestamp() - frame1.getTimestamp()) / 1e9;
+        int    fps    = (int) (2.0 / diff);
+
+        Path            file = Path.of(path);
+        SequenceEncoder enc  = SequenceEncoder.createWithFps(NIOUtils.writableChannel(file.toFile()), new Rational(fps, 1));
+
+        enc.encodeNativeFrame(Picture.createPicture(frame1.getWidth(), frame1.getHeight(), new byte[][]{frame1.getRGBBytes()}, ColorSpace.RGB));
+        enc.encodeNativeFrame(Picture.createPicture(frame2.getWidth(), frame2.getHeight(), new byte[][]{frame2.getRGBBytes()}, ColorSpace.RGB));
+
+        while (hasFrame()) {
+            F frame = readFrame();
+            enc.encodeNativeFrame(Picture.createPicture(frame.getWidth(), frame.getHeight(), new byte[][]{frame.getRGBBytes()}, ColorSpace.RGB));
+        }
+
+        enc.finish();
 
     }
 

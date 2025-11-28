@@ -28,5 +28,7 @@
     <orderEntry type="library" name="org.apache.commons.compress-1.9.2" level="project" />
     <orderEntry type="library" name="OO" level="project" />
     <orderEntry type="library" name="jhdf-0.9.4" level="project" />
+    <orderEntry type="library" name="jcodec-0.2.5" level="project" />
+    <orderEntry type="library" name="jcodec-streaming-0.2.3" level="project" />
   </component>
 </module>

@@ -110,6 +110,21 @@ public interface Frame<D, F extends Frame> {
 
     }
 
+    default byte[] getRGBBytes() {
+
+        int[]  data   = getARGBData();
+        byte[] bytes  = new byte[data.length * 3];
+
+        for (int i = 0; i < data.length; i++) {
+            bytes[i * 3 + 0] = (byte) ((data[i] >> 16) & 0xFF);
+            bytes[i * 3 + 1] = (byte) ((data[i] >> 8) & 0xFF);
+            bytes[i * 3 + 2] = (byte) (data[i] & 0xFF);
+        }
+
+        return bytes;
+
+    }
+
     /**
      * Returns the width of this image, in number of pixels.
      *
