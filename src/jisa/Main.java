@@ -1,7 +1,6 @@
 package jisa;
 
 import jisa.addresses.Address;
-import jisa.devices.camera.FakeCamera;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
@@ -18,8 +17,6 @@ public class Main {
     public static void main(String[] args) {
 
         try {
-
-            FakeCamera.openFrameReader("/home/william/Desktop/blob.bin").convertToMP4("/home/william/Desktop/blob.mp4");
 
             Doc doc = new Doc("Help");
 
