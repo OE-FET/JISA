@@ -1515,16 +1515,16 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     }
 
     public List<String> getPreAmpGainModes() throws IOException, DeviceException {
-        return getEnumOptions("PreAmpGainControl").stream().map(Enum::getText).collect(Collectors.toList());
+        return getEnumOptions("SimplePreAmpGainControl").stream().map(Enum::getText).collect(Collectors.toList());
     }
 
     public void setPreAmpGainMode(String mode) throws DeviceException, IOException {
-        setEnum("PreAmpGainControl", mode);
+        setEnum("SimplePreAmpGainControl", mode);
 
     }
 
     public String getPreAmpGainMode() throws IOException, DeviceException {
-        return getEnum("PreAmpGainControl").getText();
+        return getEnum("SimplePreAmpGainControl").getText();
     }
 
     protected static class Frame extends U16Frame {
