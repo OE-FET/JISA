@@ -11,16 +11,14 @@ import jisa.addresses.IDAddress;
 import jisa.control.RTask;
 import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
-import jisa.devices.camera.feature.CMOS;
-import jisa.devices.camera.feature.FrameBinning;
-import jisa.devices.camera.feature.MultiTrack;
-import jisa.devices.camera.feature.Overlap;
+import jisa.devices.camera.feature.*;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameReader;
 import jisa.devices.camera.frame.U16Frame;
 import jisa.devices.camera.nat.ATCoreLibrary;
 import jisa.devices.camera.nat.ATUtilityLibrary;
 import jisa.devices.features.TemperatureControlled;
+import jisa.gui.HeatMap;
 import jisa.visa.NativeDevice;
 
 import java.io.IOException;
@@ -31,7 +29,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinning, CMOS, Overlap, MultiTrack, TemperatureControlled {
+public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinning, CMOS, Overlap, MultiTrack, TemperatureControlled, Shuttered {
 
     public static String getDescription() {
         return "Andor sCMOS Camera (Andor SDK3)";
@@ -1238,16 +1236,6 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     }
 
     @Override
-    public boolean isAlternatingReadoutEnabled() throws IOException, DeviceException {
-        return getBoolean("AlternatingReadoutDirection");
-    }
-
-    @Override
-    public void setAlternatingReadoutEnabled(boolean enabled) throws IOException, DeviceException {
-        setBoolean("AlternatingReadoutDirection", enabled);
-    }
-
-    @Override
     public boolean isTimestampEnabled() throws IOException, DeviceException {
         return getBoolean("MetadataTimestamp") && getBoolean("MetadataEnable");
     }
@@ -1500,6 +1488,26 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
     }
 
+    @Override
+    public void setShutterOpen(boolean open) throws IOException, DeviceException {
+        setEnum("ShutterMode", open ? "Open" : "Closed");
+    }
+
+    @Override
+    public boolean isShutterOpen() throws IOException, DeviceException {
+        return getBoolean("ShutterState");
+    }
+
+    @Override
+    public void setShutterAuto(boolean auto) throws IOException, DeviceException {
+        setEnum("ShutterMode", auto ? "Auto" : "Closed");
+    }
+
+    @Override
+    public boolean isShutterAuto() throws IOException, DeviceException {
+        return getEnum("ShutterMode").getText().trim().equalsIgnoreCase("Auto");
+    }
+
     protected static class Frame extends U16Frame {
 
         public Frame(short[] data, int width, int height) {
@@ -1523,6 +1531,10 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             update(data, System.nanoTime());
         }
 
+    }
+
+    public Listener<U16Frame> sendFramesTo(HeatMap drawer) {
+        return addFrameListener(drawer::drawIntFrame);
     }
 
     public static class Enum {

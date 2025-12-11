@@ -13,17 +13,6 @@ import java.util.List;
 
 public interface ATMCD32D extends Library {
 
-    interface AT_VersionInfoId {
-        int AT_SDKVersion          = 0x40000000;
-        int AT_DeviceDriverVersion = 0x40000001;
-    }
-
-    interface AT_DDGLiteChannelId {
-        int AT_DDGLite_ChannelA = 0x40000000;
-        int AT_DDGLite_ChannelB = 0x40000001;
-        int AT_DDGLite_ChannelC = 0x40000002;
-    }
-
     int DRV_ERROR_ACK                              = 20013;
     int AC_GETFUNCTION_GATEMODE                    = 0x80;
     int AT_DDG_TERMINATION_HIGHZ                   = 1;
@@ -333,116 +322,6 @@ public interface ATMCD32D extends Library {
     int AC_PIXELMODE_RGB                           = 0x010000;
     int DRV_OW_NOT_INITIALIZED                     = 20154;
 
-    class ANDORCAPS extends Structure {
-        public NativeLong ulSize;
-        public NativeLong ulAcqModes;
-        public NativeLong ulReadModes;
-        public NativeLong ulTriggerModes;
-        public NativeLong ulCameraType;
-        public NativeLong ulPixelMode;
-        public NativeLong ulSetFunctions;
-        public NativeLong ulGetFunctions;
-        public NativeLong ulFeatures;
-        public NativeLong ulPCICard;
-        public NativeLong ulEMGainCapability;
-        public NativeLong ulFTReadModes;
-        public NativeLong ulFeatures2;
-
-        public ANDORCAPS() {
-            super();
-        }
-
-        protected List<String> getFieldOrder() {
-            return Arrays.asList("ulSize", "ulAcqModes", "ulReadModes", "ulTriggerModes", "ulCameraType", "ulPixelMode", "ulSetFunctions", "ulGetFunctions", "ulFeatures", "ulPCICard", "ulEMGainCapability", "ulFTReadModes", "ulFeatures2");
-        }
-
-        public static class ByReference extends ANDORCAPS implements Structure.ByReference {
-
-        }
-
-        public static class ByValue extends ANDORCAPS implements Structure.ByValue {
-
-        }
-    }
-
-    class COLORDEMOSAICINFO extends Structure {
-        public int iX;
-        public int iY;
-        public int iAlgorithm;
-        public int iXPhase;
-        public int iYPhase;
-        public int iBackground;
-
-        public COLORDEMOSAICINFO() {
-            super();
-        }
-
-        protected List<String> getFieldOrder() {
-            return Arrays.asList("iX", "iY", "iAlgorithm", "iXPhase", "iYPhase", "iBackground");
-        }
-
-        public COLORDEMOSAICINFO(int iX, int iY, int iAlgorithm, int iXPhase, int iYPhase, int iBackground) {
-            super();
-            this.iX          = iX;
-            this.iY          = iY;
-            this.iAlgorithm  = iAlgorithm;
-            this.iXPhase     = iXPhase;
-            this.iYPhase     = iYPhase;
-            this.iBackground = iBackground;
-        }
-
-        public static class ByReference extends COLORDEMOSAICINFO implements Structure.ByReference {
-
-        }
-
-        public static class ByValue extends COLORDEMOSAICINFO implements Structure.ByValue {
-
-        }
-
-    }
-
-    class WHITEBALANCEINFO extends Structure {
-        public int iSize;
-        public int iX;
-        public int iY;
-        public int iAlgorithm;
-        public int iROI_left;
-        public int iROI_right;
-        public int iROI_top;
-        public int iROI_bottom;
-        public int iOperation;
-
-        public WHITEBALANCEINFO() {
-            super();
-        }
-
-        protected List<String> getFieldOrder() {
-            return Arrays.asList("iSize", "iX", "iY", "iAlgorithm", "iROI_left", "iROI_right", "iROI_top", "iROI_bottom", "iOperation");
-        }
-
-        public WHITEBALANCEINFO(int iSize, int iX, int iY, int iAlgorithm, int iROI_left, int iROI_right, int iROI_top, int iROI_bottom, int iOperation) {
-            super();
-            this.iSize       = iSize;
-            this.iX          = iX;
-            this.iY          = iY;
-            this.iAlgorithm  = iAlgorithm;
-            this.iROI_left   = iROI_left;
-            this.iROI_right  = iROI_right;
-            this.iROI_top    = iROI_top;
-            this.iROI_bottom = iROI_bottom;
-            this.iOperation  = iOperation;
-        }
-
-        public static class ByReference extends WHITEBALANCEINFO implements Structure.ByReference {
-
-        }
-
-        public static class ByValue extends WHITEBALANCEINFO implements Structure.ByValue {
-
-        }
-
-    }
-
     int AbortAcquisition();
 
     int CancelWait();
@@ -450,7 +329,7 @@ public interface ATMCD32D extends Library {
     int CoolerOFF();
 
     int CoolerON();
-    
+
     int DemosaicImage(ShortBuffer grey, ShortBuffer red, ShortBuffer green, ShortBuffer blue, COLORDEMOSAICINFO info);
 
     int EnableKeepCleans(int iMode);
@@ -462,47 +341,47 @@ public interface ATMCD32D extends Library {
     int FreeInternalMemory();
 
     int GetAcquiredData(NativeLongByReference arr, NativeLong size);
-    
+
     int GetAcquiredData16(ShortBuffer arr, NativeLong size);
-    
+
     int GetAcquiredFloatData(FloatBuffer arr, NativeLong size);
 
     int GetAcquisitionProgress(NativeLongByReference acc, NativeLongByReference series);
-    
+
     int GetAcquisitionTimings(FloatBuffer exposure, FloatBuffer accumulate, FloatBuffer kinetic);
-    
+
     int GetAdjustedRingExposureTimes(int inumTimes, FloatBuffer fptimes);
 
     int GetAllDMAData(NativeLongByReference arr, NativeLong size);
-    
+
     int GetAmpDesc(int index, String name, int length);
-    
+
     int GetAmpMaxSpeed(int index, FloatBuffer speed);
 
     int GetAvailableCameras(NativeLongByReference totalCameras);
 
     int GetBackground(NativeLongByReference arr, NativeLong size);
-    
+
     int GetBaselineClamp(IntBuffer state);
-    
+
     int GetBitDepth(int channel, IntBuffer depth);
-    
+
     int GetCameraEventStatus(IntBuffer camStatus);
 
     int GetCameraPointer(NativeLong cameraIndex, NativeLongByReference cameraPointer);
 
     int GetCameraInformation(int index, NativeLongByReference information);
-    
+
     int GetCameraSerialNumber(IntBuffer number);
 
     int GetCapabilities(ANDORCAPS caps);
-    
+
     int GetControllerCardModel(String controllerCardModel);
-    
+
     int GetCountConvertWavelengthRange(FloatBuffer minval, FloatBuffer maxval);
 
     int GetCurrentCamera(NativeLongByReference cameraPointer);
-    
+
     int GetCYMGShift(IntBuffer iXshift, IntBuffer iYShift);
 
     int GetDDGExternalOutputEnabled(NativeLong uiIndex, NativeLongByReference puiEnabled);
@@ -510,67 +389,67 @@ public interface ATMCD32D extends Library {
     int GetDDGExternalOutputPolarity(NativeLong uiIndex, NativeLongByReference puiPolarity);
 
     int GetDDGExternalOutputStepEnabled(NativeLong uiIndex, NativeLongByReference puiEnabled);
-    
+
     int GetDDGExternalOutputTime(NativeLong uiIndex, LongBuffer puiDelay, LongBuffer puiWidth);
-    
+
     int GetDDGTTLGateWidth(long opticalWidth, LongBuffer ttlWidth);
-    
+
     int GetDDGGateTime(LongBuffer puiDelay, LongBuffer puiWidth);
-    
+
     int GetDDGInsertionDelay(IntBuffer piState);
-    
+
     int GetDDGIntelligate(IntBuffer piState);
-    
+
     int GetDDGIOC(IntBuffer state);
-    
+
     int GetDDGIOCFrequency(DoubleBuffer frequency);
 
     int GetDDGIOCNumber(NativeLongByReference numberPulses);
 
     int GetDDGIOCNumberRequested(NativeLongByReference pulses);
-    
+
     int GetDDGIOCPeriod(LongBuffer period);
-    
+
     int GetDDGIOCPulses(IntBuffer pulses);
 
     int GetDDGIOCTrigger(NativeLongByReference trigger);
 
     int GetDDGOpticalWidthEnabled(NativeLongByReference puiEnabled);
-    
+
     int GetDDGLiteGlobalControlByte(ByteBuffer control);
-    
+
     int GetDDGLiteControlByte(int channel, ByteBuffer control);
-    
+
     int GetDDGLiteInitialDelay(int channel, FloatBuffer fDelay);
-    
+
     int GetDDGLitePulseWidth(int channel, FloatBuffer fWidth);
-    
+
     int GetDDGLiteInterPulseDelay(int channel, FloatBuffer fDelay);
 
     int GetDDGLitePulsesPerExposure(int channel, NativeLongByReference ui32Pulses);
-    
+
     int GetDDGPulse(double wid, double resolution, DoubleBuffer Delay, DoubleBuffer Width);
-    
+
     int GetDDGStepCoefficients(NativeLong mode, DoubleBuffer p1, DoubleBuffer p2);
-    
+
     int GetDDGWidthStepCoefficients(NativeLong mode, DoubleBuffer p1, DoubleBuffer p2);
 
     int GetDDGStepMode(NativeLongByReference mode);
 
     int GetDDGWidthStepMode(NativeLongByReference mode);
-    
+
     int GetDetector(IntBuffer xpixels, IntBuffer ypixels);
 
     int GetDICameraInfo(Pointer info);
-    
+
     int GetEMAdvanced(IntBuffer state);
-    
+
     int GetEMCCDGain(IntBuffer gain);
-    
+
     int GetEMGainRange(IntBuffer low, IntBuffer high);
 
     int GetExternalTriggerTermination(NativeLongByReference puiTermination);
-    
+
     int GetFastestRecommendedVSSpeed(IntBuffer index, FloatBuffer speed);
 
     int GetFIFOUsage(IntBuffer FIFOusage);
@@ -633,7 +512,7 @@ public interface ATMCD32D extends Library {
 
     int GetMostRecentColorImage16(NativeLong size, int algorithm, ShortBuffer red, ShortBuffer green, ShortBuffer blue);
 
-    int GetMostRecentImage(NativeLongByReference arr, NativeLong size);
+    int GetMostRecentImage(LongBuffer arr, NativeLong size);
 
     int GetMostRecentImage16(ShortBuffer arr, NativeLong size);
 
@@ -797,7 +676,7 @@ public interface ATMCD32D extends Library {
 
     int IsTriggerModeAvailable(int iTriggerMode);
 
-    int Merge(NativeLong arr[], NativeLong nOrder, NativeLong nPoint, NativeLong nPixel, FloatBuffer coeff, NativeLong fit, NativeLong hbin, NativeLongByReference output, FloatBuffer start, FloatBuffer step_Renamed);
+    int Merge(NativeLong[] arr, NativeLong nOrder, NativeLong nPoint, NativeLong nPixel, FloatBuffer coeff, NativeLong fit, NativeLong hbin, NativeLongByReference output, FloatBuffer start, FloatBuffer step_Renamed);
 
     int OutAuxPort(int port, int state);
 
@@ -1137,39 +1016,39 @@ public interface ATMCD32D extends Library {
 
     int WhiteBalance(ShortBuffer wRed, ShortBuffer wGreen, ShortBuffer wBlue, FloatBuffer fRelR, FloatBuffer fRelB, WHITEBALANCEINFO info);
 
-    int OA_Initialize(byte pcFilename[], int uiFileNameLen);
+    int OA_Initialize(byte[] pcFilename, int uiFileNameLen);
 
-    int OA_EnableMode(byte pcModeName[]);
+    int OA_EnableMode(byte[] pcModeName);
 
-    int OA_GetModeAcqParams(byte pcModeName[], String pcListOfParams);
+    int OA_GetModeAcqParams(byte[] pcModeName, String pcListOfParams);
 
     int OA_GetUserModeNames(String pcListOfModes);
 
     int OA_GetPreSetModeNames(String pcListOfModes);
 
-    int OA_GetNumberOfUserModes(int puiNumberOfModes[]);
+    int OA_GetNumberOfUserModes(int[] puiNumberOfModes);
 
-    int OA_GetNumberOfPreSetModes(int puiNumberOfModes[]);
+    int OA_GetNumberOfPreSetModes(int[] puiNumberOfModes);
 
-    int OA_GetNumberOfAcqParams(byte pcModeName[], int puiNumberOfParams[]);
+    int OA_GetNumberOfAcqParams(byte[] pcModeName, int[] puiNumberOfParams);
 
     int OA_AddMode(String pcModeName, int uiModeNameLen, String pcModeDescription, int uiModeDescriptionLen);
 
-    int OA_WriteToFile(byte pcFileName[], int uiFileNameLen);
+    int OA_WriteToFile(byte[] pcFileName, int uiFileNameLen);
 
-    int OA_DeleteMode(byte pcModeName[], int uiModeNameLen);
+    int OA_DeleteMode(byte[] pcModeName, int uiModeNameLen);
 
-    int OA_SetInt(byte pcModeName[], String pcModeParam, int iIntValue);
+    int OA_SetInt(byte[] pcModeName, String pcModeParam, int iIntValue);
 
-    int OA_SetFloat(byte pcModeName[], String pcModeParam, float fFloatValue);
+    int OA_SetFloat(byte[] pcModeName, String pcModeParam, float fFloatValue);
 
-    int OA_SetString(byte pcModeName[], String pcModeParam, String pcStringValue, int uiStringLen);
+    int OA_SetString(byte[] pcModeName, String pcModeParam, String pcStringValue, int uiStringLen);
 
-    int OA_GetInt(byte pcModeName[], byte pcModeParam[], IntBuffer iIntValue);
+    int OA_GetInt(byte[] pcModeName, byte[] pcModeParam, IntBuffer iIntValue);
 
-    int OA_GetFloat(byte pcModeName[], byte pcModeParam[], FloatBuffer fFloatValue);
+    int OA_GetFloat(byte[] pcModeName, byte[] pcModeParam, FloatBuffer fFloatValue);
 
-    int OA_GetString(byte pcModeName[], byte pcModeParam[], String pcStringValue, int uiStringLen);
+    int OA_GetString(byte[] pcModeName, byte[] pcModeParam, String pcStringValue, int uiStringLen);
 
     int Filter_SetMode(int mode);
 
@@ -1198,5 +1077,126 @@ public interface ATMCD32D extends Library {
     int PostProcessPhotonCounting(NativeLongByReference pInputImage, NativeLongByReference pOutputImage, int iOutputBufferSize, int iNumImages, int iNumframes, int iNumberOfThresholds, FloatBuffer pfThreshold, int iHeight, int iWidth);
 
     int PostProcessDataAveraging(NativeLongByReference pInputImage, NativeLongByReference pOutputImage, int iOutputBufferSize, int iNumImages, int iAveragingFilterMode, int iHeight, int iWidth, int iFrameCount, int iAveragingFactor);
+
+    interface AT_VersionInfoId {
+        int AT_SDKVersion          = 0x40000000;
+        int AT_DeviceDriverVersion = 0x40000001;
+    }
+
+    interface AT_DDGLiteChannelId {
+        int AT_DDGLite_ChannelA = 0x40000000;
+        int AT_DDGLite_ChannelB = 0x40000001;
+        int AT_DDGLite_ChannelC = 0x40000002;
+    }
+
+    class ANDORCAPS extends Structure {
+        public NativeLong ulSize;
+        public NativeLong ulAcqModes;
+        public NativeLong ulReadModes;
+        public NativeLong ulTriggerModes;
+        public NativeLong ulCameraType;
+        public NativeLong ulPixelMode;
+        public NativeLong ulSetFunctions;
+        public NativeLong ulGetFunctions;
+        public NativeLong ulFeatures;
+        public NativeLong ulPCICard;
+        public NativeLong ulEMGainCapability;
+        public NativeLong ulFTReadModes;
+        public NativeLong ulFeatures2;
+
+        public ANDORCAPS() {
+            super();
+        }
+
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("ulSize", "ulAcqModes", "ulReadModes", "ulTriggerModes", "ulCameraType", "ulPixelMode", "ulSetFunctions", "ulGetFunctions", "ulFeatures", "ulPCICard", "ulEMGainCapability", "ulFTReadModes", "ulFeatures2");
+        }
+
+        public static class ByReference extends ANDORCAPS implements Structure.ByReference {
+
+        }
+
+        public static class ByValue extends ANDORCAPS implements Structure.ByValue {
+
+        }
+    }
+
+    class COLORDEMOSAICINFO extends Structure {
+        public int iX;
+        public int iY;
+        public int iAlgorithm;
+        public int iXPhase;
+        public int iYPhase;
+        public int iBackground;
+
+        public COLORDEMOSAICINFO() {
+            super();
+        }
+
+        public COLORDEMOSAICINFO(int iX, int iY, int iAlgorithm, int iXPhase, int iYPhase, int iBackground) {
+            super();
+            this.iX          = iX;
+            this.iY          = iY;
+            this.iAlgorithm  = iAlgorithm;
+            this.iXPhase     = iXPhase;
+            this.iYPhase     = iYPhase;
+            this.iBackground = iBackground;
+        }
+
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("iX", "iY", "iAlgorithm", "iXPhase", "iYPhase", "iBackground");
+        }
+
+        public static class ByReference extends COLORDEMOSAICINFO implements Structure.ByReference {
+
+        }
+
+        public static class ByValue extends COLORDEMOSAICINFO implements Structure.ByValue {
+
+        }
+
+    }
+
+    class WHITEBALANCEINFO extends Structure {
+        public int iSize;
+        public int iX;
+        public int iY;
+        public int iAlgorithm;
+        public int iROI_left;
+        public int iROI_right;
+        public int iROI_top;
+        public int iROI_bottom;
+        public int iOperation;
+
+        public WHITEBALANCEINFO() {
+            super();
+        }
+
+        public WHITEBALANCEINFO(int iSize, int iX, int iY, int iAlgorithm, int iROI_left, int iROI_right, int iROI_top, int iROI_bottom, int iOperation) {
+            super();
+            this.iSize       = iSize;
+            this.iX          = iX;
+            this.iY          = iY;
+            this.iAlgorithm  = iAlgorithm;
+            this.iROI_left   = iROI_left;
+            this.iROI_right  = iROI_right;
+            this.iROI_top    = iROI_top;
+            this.iROI_bottom = iROI_bottom;
+            this.iOperation  = iOperation;
+        }
+
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("iSize", "iX", "iY", "iAlgorithm", "iROI_left", "iROI_right", "iROI_top", "iROI_bottom", "iOperation");
+        }
+
+        public static class ByReference extends WHITEBALANCEINFO implements Structure.ByReference {
+
+        }
+
+        public static class ByValue extends WHITEBALANCEINFO implements Structure.ByValue {
+
+        }
+
+    }
 
 }

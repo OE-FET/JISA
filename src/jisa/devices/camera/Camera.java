@@ -7,6 +7,7 @@ import jisa.devices.camera.frame.Frame;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameThread;
 import jisa.gui.FrameAcceptor;
+import jisa.gui.HeatMap;
 import jisa.gui.ImageDisplay;
 
 import java.io.BufferedOutputStream;
@@ -521,6 +522,10 @@ public interface Camera<F extends Frame> extends Instrument {
     }
 
     default Listener<F> sendFramesTo(ImageDisplay drawer) {
+        return addFrameListener(drawer::drawFrame);
+    }
+
+    default Listener<F> sendFramesTo(HeatMap drawer) {
         return addFrameListener(drawer::drawFrame);
     }
 

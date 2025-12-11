@@ -10,16 +10,16 @@ import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.U16Frame;
 import jisa.devices.camera.nat.ATMCD32D;
 import jisa.devices.features.TemperatureControlled;
-import jisa.visa.NativeDevice;
 
 import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-import static jisa.devices.camera.nat.ATMCD32D.DRV_SUCCESS;
+import static jisa.devices.camera.nat.ATMCD32D.*;
 
 public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureControlled, MultiTrack {
 
@@ -29,6 +29,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
 
     private int timeout = 10000;
+    private int target  = 290;
 
     private static void handle(int result, String method) throws DeviceException {
 
@@ -72,35 +73,78 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     @Override
     public void setTemperatureControlEnabled(boolean enabled) throws IOException, DeviceException {
 
+        withCameraSelected(sdk -> {
+
+            if (enabled) {
+                handle(sdk.CoolerON(), "CoolerON");
+            } else {
+                handle(sdk.CoolerOFF(), "CoolerOFF");
+            }
+
+        });
+
     }
 
     @Override
     public boolean isTemperatureControlEnabled() throws IOException, DeviceException {
-        return false;
+
+        IntBuffer buffer = IntBuffer.allocate(1);
+
+        withCameraSelected(sdk -> {
+            handle(sdk.IsCoolerOn(buffer), "IsCoolerOn");
+        });
+
+        return buffer.get(0) == 1;
+
     }
 
     @Override
-    public void setTemperatureControlTarget(double targetTemperature) throws IOException, DeviceException {
+    public synchronized void setTemperatureControlTarget(double targetTemperature) throws IOException, DeviceException {
+
+        withCameraSelected(sdk -> {
+            handle(sdk.SetTemperature((int) Math.round(targetTemperature + 273.15)), "SetTemperature");
+        });
+
+        target = (int) Math.round(targetTemperature + 273.15);
 
     }
 
     @Override
-    public double getTemperatureControlTarget() throws IOException, DeviceException {
-        return 0;
+    public synchronized double getTemperatureControlTarget() throws IOException, DeviceException {
+        return 0.0;
     }
 
     @Override
     public double getControlledTemperature() throws IOException, DeviceException {
-        return 0;
+
+        FloatBuffer buffer = FloatBuffer.allocate(1);
+
+        withCameraSelected(sdk -> {
+            sdk.GetTemperatureF(buffer); // This returns many different codes, not just DRV_SUCCESS
+        });
+
+        return buffer.get(0);
+
     }
 
     @Override
     public boolean isTemperatureControlStable() throws IOException, DeviceException {
-        return false;
+
+        int[]     buffer    = new int[1];
+        IntBuffer intBuffer = IntBuffer.allocate(1);
+
+        withCameraSelected(sdk -> {
+            buffer[0] = sdk.GetTemperature(intBuffer);
+        });
+
+        return buffer[0] == DRV_TEMP_STABILIZED;
+
     }
 
     @Override
     public void setMultiTrackEnabled(boolean enabled) throws IOException, DeviceException {
+
+
 
     }
 
@@ -205,7 +249,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
             int result;
 
-            result = sdk.SetAcquisitionMode(ATMCD32D.AC_ACQMODE_SINGLE);
+            result = sdk.SetAcquisitionMode(AC_ACQMODE_SINGLE);
 
             if (result != DRV_SUCCESS) {
                 throw new DeviceException("Error setting acquisition mode to single: %d", result);
@@ -223,13 +267,21 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         if (result != DRV_SUCCESS) {
 
-            if (result == ATMCD32D.DRV_NO_NEW_DATA) {
+            if (result == DRV_NO_NEW_DATA) {
                 throw new InterruptedException("Acquisition of image was interrupted/cancelled.");
             } else {
                 throw new DeviceException("Error waiting for image acquisition: %d", result);
             }
 
         }
+
+        LongBuffer image = LongBuffer.allocate(getFrameSize());
+
+        withCameraSelected(sdk -> {
+            sdk.GetMostRecentImage(image, new NativeLong(image.capacity(), true));
+        });
+
+
 
         return null;
 

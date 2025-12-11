@@ -56,10 +56,6 @@ public interface CMOS extends Feature {
      */
     void setPixelReadoutRate(double rate) throws IOException, DeviceException;
 
-    boolean isAlternatingReadoutEnabled() throws IOException, DeviceException;
-
-    void setAlternatingReadoutEnabled(boolean enabled) throws IOException, DeviceException;
-
     static void addParameters(CMOS inst, Class<?> target, ParameterList parameters) {
 
         List<Double> rates = inst.getPixelReadoutRates();
@@ -72,7 +68,6 @@ public interface CMOS extends Feature {
         parameters.addChoice("Pixel Readout Rate", () -> names.get(rates.indexOf(inst.getPixelReadoutRate())), names.get(0), v -> inst.setPixelReadoutRate(rates.get(names.indexOf(v))), names.toArray(String[]::new));
 
         parameters.addValue("Rolling Electronic Shutter", inst::isRollingElectronicShutterEnabled, false, inst::setRollingElectronicShutterEnabled);
-        parameters.addValue("Alternating Readout", inst::isAlternatingReadoutEnabled, false, inst::setAlternatingReadoutEnabled);
 
 
     }

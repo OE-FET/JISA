@@ -35,7 +35,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.*;
 
-public class HeatMap extends JFXElement {
+public class HeatMap extends JFXElement implements FrameAcceptor {
 
     private static final double AXIS_SIZE  = 50;
     private static final double TITLE_SIZE = 33;
@@ -389,7 +389,7 @@ public class HeatMap extends JFXElement {
 
     }
 
-    public synchronized void draw(Frame<? extends Number, ?> frame) {
+    public synchronized void drawFrame(Frame<? extends Number, ?> frame) {
 
         if (frame instanceof Frame.IntFrame) {
             drawIntFrame((Frame.IntFrame) frame);
@@ -676,6 +676,11 @@ public class HeatMap extends JFXElement {
 
         ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", new File(path));
 
+    }
+
+    @Override
+    public void acceptFrame(Frame frame) {
+        drawFrame(frame);
     }
 
     private static class CanvasPane extends Pane {

@@ -392,7 +392,6 @@ public class ImageDisplay extends JFXElement implements FrameAcceptor {
 
         render();
 
-
     }
 
 

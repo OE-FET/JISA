@@ -163,7 +163,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
 
         } catch (Throwable e) {
 
-            // If all else fails, commit more war crimes, but then complain about it
+            // If all else fails, commit more war crimes, but then blame it on someone else
             acquisitionThread.stop();
             throw e;
 
@@ -185,7 +185,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
 
             long   time = System.nanoTime();
             long   cnt  = count;
-            double rate = (cnt - lastCount) / (time - lastTimestamp);
+            double rate = 1e9 * (cnt - lastCount) / (time - lastTimestamp);
 
             lastCount     = cnt;
             lastTimestamp = time;

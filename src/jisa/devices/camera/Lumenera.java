@@ -135,7 +135,6 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
 
         return exposure.get(0) / 1e3;
 
-
     }
 
     @Override
