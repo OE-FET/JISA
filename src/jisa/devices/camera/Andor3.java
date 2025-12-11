@@ -176,6 +176,12 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         parameters.addValue("Fast AOI Readout Mode", this::isFastAOIFrameRateEnabled, false, this::setFastAOIFrameRateEnabled);
         parameters.addValue("Internal Backlog Enabled", this::isInternalBacklogEnabled, false, this::setInternalBacklogEnabled);
 
+        try {
+            parameters.addChoice("Pre-Amp Gain Mode", this::getPreAmpGainMode, "UNKNOWN", this::setPreAmpGainMode, this.getPreAmpGainModes().toArray(String[]::new));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
     }
 
     public Andor3(Address address) throws DeviceException, IOException {
@@ -1506,6 +1512,19 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     @Override
     public boolean isShutterAuto() throws IOException, DeviceException {
         return getEnum("ShutterMode").getText().trim().equalsIgnoreCase("Auto");
+    }
+
+    public List<String> getPreAmpGainModes() throws IOException, DeviceException {
+        return getEnumOptions("PreAmpGainControl").stream().map(Enum::getText).collect(Collectors.toList());
+    }
+
+    public void setPreAmpGainMode(String mode) throws DeviceException, IOException {
+        setEnum("PreAmpGainControl", mode);
+
+    }
+
+    public String getPreAmpGainMode() throws IOException, DeviceException {
+        return getEnum("PreAmpGainControl").getText();
     }
 
     protected static class Frame extends U16Frame {

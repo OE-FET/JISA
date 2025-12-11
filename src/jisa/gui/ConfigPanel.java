@@ -63,11 +63,20 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
                 try {
                     p.set(i.getValue());
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+
+            });
+
+            parameters.forEach((p, i) -> {
+
+                try {
                     i.setValue(p.getCurrentValue());
                     i.updateLastValue();
                     i.setValue(p.getCurrentValue());
                 } catch (Throwable e) {
-                    GUI.showException(e);
+                    e.printStackTrace();
                 }
 
             });
