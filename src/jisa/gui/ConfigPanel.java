@@ -9,6 +9,7 @@ import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import jisa.devices.Instrument;
@@ -99,6 +100,32 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
             Label    label = new Label(parameter.getName());
             NodeItem item  = createNode(parameter.getDefaultValue(), parameter.getChoices().toArray());
+            Button   set   = new Button("Set");
+
+            set.setMinWidth(Button.USE_PREF_SIZE);
+
+            set.setOnAction(event -> {
+
+                try {
+                    parameter.set(item.getValue());
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+
+                parameters.forEach((p,i) -> {
+
+                    try {
+                        i.setValue(p.getCurrentValue());
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+
+                    i.updateLastValue();
+                    label.setTextFill(item.getValue().equals(item.getLastValue()) ? Color.BLACK : Color.BROWN);
+
+                });
+
+            });
 
             if (item == null) {
                 continue;
@@ -120,7 +147,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             GridPane.setMargin(label, new Insets(0, 15, 0, 0));
             GridPane.setMargin(node, new Insets(0, 5, 0, 0));
 
-            addRow(label, node);
+            addRow(label, node, set);
 
             parameters.put(parameter, item);
 
