@@ -29,7 +29,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinning, CMOS, Overlap, MultiTrack, TemperatureControlled, Shuttered {
+public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinning, CMOS, Overlap, MultiTrack, TemperatureControlled, Shuttered, Timestamping {
 
     public static String getDescription() {
         return "Andor sCMOS Camera (Andor SDK3)";
@@ -177,7 +177,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         parameters.addValue("Internal Backlog Enabled", this::isInternalBacklogEnabled, false, this::setInternalBacklogEnabled);
 
         try {
-            parameters.addChoice("Pre-Amp Gain Mode", this::getPreAmpGainMode, "UNKNOWN", this::setPreAmpGainMode, this.getPreAmpGainModes().toArray(String[]::new));
+            parameters.addChoice("Pre-Amp Gain Mode", this::getPreAmpGainMode, new PreAmpGainMode(0, 12, false), this::setPreAmpGainMode, this.getPreAmpGainModes().toArray(PreAmpGainMode[]::new));
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -1458,6 +1458,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             throw new DeviceException("Maximum number of tracks is 256, %d supplied.", tracks.size());
         }
 
+        setInt("MultitrackCount", 0);
         setInt("MultitrackCount", tracks.size());
 
         int i = 0;
@@ -1514,17 +1515,45 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         return getEnum("ShutterMode").getText().trim().equalsIgnoreCase("Auto");
     }
 
-    public List<String> getPreAmpGainModes() throws IOException, DeviceException {
-        return getEnumOptions("SimplePreAmpGainControl").stream().map(Enum::getText).collect(Collectors.toList());
+    public List<PreAmpGainMode> getPreAmpGainModes() throws IOException, DeviceException {
+
+        return getEnumOptions("SimplePreAmpGainControl").stream().map(e -> {
+
+            String  text      = e.getText();
+            boolean isHigh    = text.contains("high well capacity");
+            int     bithDepth = text.contains("12") ? 12 : 16;
+
+            return new PreAmpGainMode(e.getIndex(), bithDepth, isHigh);
+
+        }).collect(Collectors.toList());
+
     }
 
-    public void setPreAmpGainMode(String mode) throws DeviceException, IOException {
-        setEnum("SimplePreAmpGainControl", mode);
+    public void setPreAmpGainMode(PreAmpGainMode mode) throws DeviceException, IOException {
+        setEnum("SimplePreAmpGainControl", mode.getIndex());
+    }
+
+    public void setPreAmpGainMode(int bitDepth, boolean highWellCapacity) throws DeviceException, IOException {
+
+        PreAmpGainMode mode = getPreAmpGainModes()
+            .stream()
+            .filter(m -> m.getBitDepth() == bitDepth && m.isHighWellCapacity() == highWellCapacity)
+            .findFirst()
+            .orElseThrow(() -> new DeviceException("Specified preamp gain mode not found."));
+
+        setPreAmpGainMode(mode);
 
     }
 
-    public String getPreAmpGainMode() throws IOException, DeviceException {
-        return getEnum("SimplePreAmpGainControl").getText();
+    public PreAmpGainMode getPreAmpGainMode() throws IOException, DeviceException {
+
+        Enum    e         = getEnum("SimplePreAmpGainControl");
+        String  text      = e.getText();
+        boolean isHigh    = text.contains("high well capacity");
+        int     bithDepth = text.contains("12") ? 12 : 16;
+
+        return new PreAmpGainMode(e.getIndex(), bithDepth, isHigh);
+
     }
 
     protected static class Frame extends U16Frame {
@@ -1556,7 +1585,38 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         return addFrameListener(drawer::drawIntFrame);
     }
 
+    public static class PreAmpGainMode {
+
+        private final int     index;
+        private final int     bitDepth;
+        private final boolean highWellCapacity;
+
+        public PreAmpGainMode(int index, int bitDepth, boolean highWellCapacity) {
+            this.index            = index;
+            this.bitDepth         = bitDepth;
+            this.highWellCapacity = highWellCapacity;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public int getBitDepth() {
+            return bitDepth;
+        }
+
+        public boolean isHighWellCapacity() {
+            return highWellCapacity;
+        }
+
+        public String toString() {
+            return String.format("%d Bit, %s Well Capacity", bitDepth, highWellCapacity ? "High" : "Low");
+        }
+
+    }
+
     public static class Enum {
+
 
         private final int     index;
         private final String  text;

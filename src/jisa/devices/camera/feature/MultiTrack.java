@@ -10,6 +10,7 @@ import jisa.results.ResultTable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -65,6 +66,10 @@ public interface MultiTrack extends Feature {
      */
     default void setMultiTracks(Track... tracks) throws IOException, DeviceException {
         setMultiTracks(Arrays.asList(tracks));
+    }
+
+    default void clearMultiTracks() throws IOException, DeviceException {
+        setMultiTracks(Collections.emptyList());
     }
 
     /**

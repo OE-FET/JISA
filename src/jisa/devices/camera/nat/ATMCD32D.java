@@ -368,7 +368,7 @@ public interface ATMCD32D extends Library {
 
     int GetCameraEventStatus(IntBuffer camStatus);
 
-    int GetCameraPointer(NativeLong cameraIndex, NativeLongByReference cameraPointer);
+    int GetCameraHandle(NativeLong cameraIndex, NativeLongByReference cameraHandle);
 
     int GetCameraInformation(int index, NativeLongByReference information);
 
@@ -380,7 +380,7 @@ public interface ATMCD32D extends Library {
 
     int GetCountConvertWavelengthRange(FloatBuffer minval, FloatBuffer maxval);
 
-    int GetCurrentCamera(NativeLongByReference cameraPointer);
+    int GetCurrentCamera(NativeLongByReference cameraHandle);
 
     int GetCYMGShift(IntBuffer iXshift, IntBuffer iYShift);
 
@@ -748,7 +748,7 @@ public interface ATMCD32D extends Library {
 
     int SetCropMode(int active, int cropHeight, int reserved);
 
-    int SetCurrentCamera(NativeLong cameraPointer);
+    int SetCurrentCamera(NativeLong cameraHandle);
 
     int SetCustomTrackHBin(int bin);
 
@@ -1008,9 +1008,9 @@ public interface ATMCD32D extends Library {
 
     int WaitForAcquisition();
 
-    int WaitForAcquisitionByPointer(NativeLong cameraPointer);
+    int WaitForAcquisitionByHandle(NativeLong cameraHandle);
 
-    int WaitForAcquisitionByPointerTimeOut(NativeLong cameraPointer, int iTimeOutMs);
+    int WaitForAcquisitionByHandleTimeOut(NativeLong cameraHandle, int iTimeOutMs);
 
     int WaitForAcquisitionTimeOut(int iTimeOutMs);
 

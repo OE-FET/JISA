@@ -617,16 +617,6 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     }
 
     @Override
-    public boolean isTimestampEnabled() throws IOException, DeviceException {
-        return false;
-    }
-
-    @Override
-    public void setTimestampEnabled(boolean timestamping) throws IOException, DeviceException {
-
-    }
-
-    @Override
     public String getIDN() throws IOException, DeviceException {
         return "Lumenera Lucam SDK Camera";
     }

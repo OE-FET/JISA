@@ -201,16 +201,6 @@ public class Webcam extends ManagedCamera<RGBFrame> {
     }
 
     @Override
-    public boolean isTimestampEnabled() throws IOException, DeviceException {
-        return false;
-    }
-
-    @Override
-    public void setTimestampEnabled(boolean timestamping) throws IOException, DeviceException {
-
-    }
-
-    @Override
     public String getIDN() throws IOException, DeviceException {
         return "";
     }

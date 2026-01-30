@@ -10,6 +10,7 @@ import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
 import jisa.devices.camera.feature.Amplified;
+import jisa.devices.camera.feature.Timestamping;
 import jisa.devices.camera.frame.*;
 import jisa.devices.camera.nat.ThorCamLibrary;
 import jisa.devices.camera.nat.ThorCamMosaicLibrary;
@@ -26,7 +27,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Driver class for ThorLabs cameras.
  */
-public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice implements Camera<F>, Amplified {
+public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice implements Camera<F>, Amplified, Timestamping {
 
     // CONSTANTS
     public static final int ERROR_NONE                    = 0;
