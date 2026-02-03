@@ -262,7 +262,13 @@ public class Configuration<T extends Instrument> {
         }
 
         for (Parameter<?> parameter : parameters) {
-            parameter.write();
+
+            try {
+                parameter.write();
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+
         }
 
         return choice;

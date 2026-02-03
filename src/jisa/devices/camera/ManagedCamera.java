@@ -292,7 +292,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
     }
 
     @Override
-    public synchronized void removeFrameListener(Listener<F> listener) {
+    public synchronized void removeFrameListener(Listener listener) {
         manager.removeListener(listener);
     }
 

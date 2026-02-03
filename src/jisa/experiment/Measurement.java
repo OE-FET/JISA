@@ -392,6 +392,11 @@ public abstract class Measurement<R> {
         messageListeners.remove(messageListener);
     }
 
+    public void reset() {
+        setStatus(Status.STOPPED);
+        exceptions.clear();
+    }
+
     public static class ParamValue<T> {
 
         private final String    section;

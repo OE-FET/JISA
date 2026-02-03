@@ -622,7 +622,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     @Override
-    public void removeFrameListener(Listener<F> listener) {
+    public void removeFrameListener(Listener listener) {
         listenerManager.removeListener(listener);
     }
 

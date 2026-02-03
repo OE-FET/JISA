@@ -1135,7 +1135,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     }
 
     @Override
-    public void removeFrameListener(Listener<U16Frame> listener) {
+    public void removeFrameListener(Listener listener) {
         listenerManager.removeListener(listener);
     }
 

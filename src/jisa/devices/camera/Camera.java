@@ -180,7 +180,7 @@ public interface Camera<F extends Frame> extends Instrument {
      *
      * @param listener Listener to remove
      */
-    void removeFrameListener(Listener<F> listener);
+    void removeFrameListener(Listener listener);
 
     /**
      * Opens a new (blocking) queue into which copies of each newly acquired frame will be placed.

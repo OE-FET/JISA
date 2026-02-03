@@ -255,7 +255,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     }
 
     @Override
-    public void removeFrameListener(Listener<U16Frame> listener) {
+    public void removeFrameListener(Listener listener) {
         listenerManager.removeListener(listener);
     }
 

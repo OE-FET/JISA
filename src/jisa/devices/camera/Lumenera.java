@@ -5,6 +5,7 @@ import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.NativeLongByReference;
 import jisa.addresses.Address;
+import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.camera.feature.Amplified;
 import jisa.devices.camera.frame.FrameReader;
@@ -67,6 +68,10 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
 
         setAcquisitionTimeout(10000);
 
+    }
+
+    public Lumenera(Address address) throws IOException, DeviceException {
+        this(Integer.parseInt(((IDAddress) address).getID()));
     }
 
     public static FrameReader<U16RGBFrame> openFrameReader(String path) throws IOException {
