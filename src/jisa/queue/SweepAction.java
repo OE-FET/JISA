@@ -9,13 +9,12 @@ public class SweepAction<SweepValue> implements Action {
     private final DataGenerator<SweepValue>      dataGenerator;
     private final List<Action>                   sweepActions         = new LinkedList<>();
     private final List<SweepValue>               sweepValues          = new LinkedList<>();
-    private final List<Throwable>                errors               = new LinkedList<>();
     private final List<StatusListener>           statusListeners      = new LinkedList<>();
     private final List<SweepActionListener>      sweepActionListeners = new LinkedList<>();
+    private final List<MessageListener>          messageListeners     = new LinkedList<>();
     private final Map<String, Object>            data                 = new LinkedHashMap<>();
     private       boolean                        critical             = false;
     private       Status                         status               = Status.QUEUED;
-    private       String                         message              = "";
 
     public SweepAction(String name, IterationGenerator<SweepValue> sweepGenerator, DataGenerator<SweepValue> dataGenerator) {
         this.name           = name;
@@ -29,12 +28,21 @@ public class SweepAction<SweepValue> implements Action {
     }
 
     @Override
-    public Status run() {
+    public Result run() {
 
-        errors.clear();
+        List<Message> messages = new LinkedList<>();
+
+        Message startMessage = new Message(MessageType.INFO, "Starting Sweep: " + name, null, List.of(new ActionPathPart(this, null)));
+        messages.add(startMessage);
+        messageListeners.forEach(l -> l.newMessage(startMessage));
+
         setStatus(Status.RUNNING);
 
         for (SweepValue sweepValue : sweepValues) {
+
+            Message sweepMessage = new Message(MessageType.INFO, "Sweep Value = " + sweepValue.toString(), null, List.of(new ActionPathPart(this, sweepValue)));
+            messages.add(sweepMessage);
+            messageListeners.forEach(l -> l.newMessage(sweepMessage));
 
             List<Action>        actions   = sweepGenerator.generateActions(sweepValue, sweepActions);
             Map<String, Object> sweepData = dataGenerator.generateData(sweepValue);
@@ -45,20 +53,25 @@ public class SweepAction<SweepValue> implements Action {
 
             for (Action action : actions) {
 
-                switch (action.run()) {
+                MessageListener messageListener = action.addMessageListener(m -> {
+                    Message message = m.propagate(new ActionPathPart(this, sweepValue));
+                    messages.add(message);
+                    messageListeners.forEach(l -> l.newMessage(message));
+                });
+
+                Result result = action.run();
+
+                action.removeMessageListener(messageListener);
+
+                switch (result.getFinalStatus()) {
 
                     case CRITICAL_ERROR:
-                        action.getErrors().stream().map(e -> new SweepException(sweepValue, action, e)).forEach(errors::add);
                         setStatus(Status.CRITICAL_ERROR);
-                        return Status.CRITICAL_ERROR;
-
-                    case ERROR:
-                        action.getErrors().stream().map(e -> new SweepException(sweepValue, action, e)).forEach(errors::add);
-                        break;
+                        return new Result(getStatus(), messages);
 
                     case INTERRUPTED:
                         setStatus(Status.INTERRUPTED);
-                        return Status.INTERRUPTED;
+                        return new Result(getStatus(), messages);
 
                 }
 
@@ -66,8 +79,13 @@ public class SweepAction<SweepValue> implements Action {
 
         }
 
-        setStatus(errors.isEmpty() ? Status.SUCCESS : Status.ERROR);
-        return getStatus();
+        setStatus(messages.stream().noneMatch(m -> m.getType() == MessageType.ERROR) ? Status.SUCCESS : Status.ERROR);
+
+        Message endMessage = new Message(MessageType.INFO, "Sweep Finished", null, List.of(new ActionPathPart(this, null)));
+        messages.add(endMessage);
+        messageListeners.forEach(l -> l.newMessage(endMessage));
+
+        return new Result(getStatus(), messages);
 
     }
 
@@ -101,28 +119,13 @@ public class SweepAction<SweepValue> implements Action {
     }
 
     @Override
-    public List<Throwable> getErrors() {
-        return List.copyOf(errors);
-    }
-
-    @Override
     public synchronized Status getStatus() {
         return status;
     }
 
     protected synchronized void setStatus(Status status) {
         this.status = status;
-        statusListeners.forEach(l -> l.statusChanged(status, message));
-    }
-
-    @Override
-    public synchronized String getStatusMessage() {
-        return message;
-    }
-
-    public synchronized void setStatusMessage(String message) {
-        this.message = message;
-        statusListeners.forEach(l -> l.statusChanged(status, message));
+        statusListeners.forEach(l -> l.statusChanged(status));
     }
 
     @Override
@@ -139,6 +142,17 @@ public class SweepAction<SweepValue> implements Action {
     @Override
     public boolean isCritical() {
         return critical;
+    }
+
+    @Override
+    public MessageListener addMessageListener(MessageListener listener) {
+        messageListeners.add(listener);
+        return listener;
+    }
+
+    @Override
+    public void removeMessageListener(MessageListener listener) {
+        messageListeners.remove(listener);
     }
 
     @Override
@@ -164,7 +178,6 @@ public class SweepAction<SweepValue> implements Action {
     @Override
     public void reset() {
         setStatus(Status.QUEUED);
-        errors.clear();
         sweepActions.forEach(Action::reset);
     }
 

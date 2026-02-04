@@ -9,13 +9,13 @@ import java.util.Map;
 
 public class MeasurementAction<M extends Measurement> implements Action {
 
-    private final M                    measurement;
-    private final DataHandler<M>       dataHandler;
-    private final List<StatusListener> statusListeners = new LinkedList<>();
-    private final Map<String, Object>  data            = new LinkedHashMap<>();
+    private final M                     measurement;
+    private final DataHandler<M>        dataHandler;
+    private final List<StatusListener>  statusListeners  = new LinkedList<>();
+    private final List<MessageListener> messageListeners = new LinkedList<>();
+    private final Map<String, Object>   data             = new LinkedHashMap<>();
 
     private Status status  = Status.QUEUED;
-    private String message = "";
 
     public MeasurementAction(M measurement, DataHandler<M> dataHandler) {
 
@@ -51,26 +51,11 @@ public class MeasurementAction<M extends Measurement> implements Action {
 
         });
 
-        measurement.addMessageListener((type, message) -> {
-
-            if (type == Measurement.MessageType.INFO) {
-                setStatusMessage(message);
-            } else {
-                setStatusMessage(String.format("%s: %s", type, message));
-            }
-
-        });
-
     }
 
     protected synchronized void setStatus(Status status) {
         this.status = status;
-        statusListeners.forEach(l -> l.statusChanged(status, message));
-    }
-
-    protected synchronized void setStatusMessage(String message) {
-        this.message = message;
-        statusListeners.forEach(l -> l.statusChanged(status, message));
+        statusListeners.forEach(l -> l.statusChanged(status));
     }
 
     @Override
@@ -83,48 +68,74 @@ public class MeasurementAction<M extends Measurement> implements Action {
     }
 
     @Override
-    public Status run() {
+    public Result run() {
 
+        // Initialise measurement
         measurement.reset();
         dataHandler.handleData(measurement, data);
+        measurement.newData();
 
-        Measurement.Result result = measurement.run();
+        // Record messages from measurement routine
+        List<Message>        messages = new LinkedList<>();
+        ActionPathPart<Void> pathPart = new ActionPathPart<>(this, null);
 
+        Measurement.MessageListener listener = measurement.addMessageListener((type, message) -> {
+
+            Message newMessage;
+
+            switch (type) {
+
+                case WARNING:
+                    newMessage = new Message(MessageType.WARNING, message, null, List.of(pathPart));
+                    break;
+
+                case ERROR:
+                    newMessage = new Message(MessageType.ERROR, message, null, List.of(pathPart));
+                    break;
+
+                case INFO:
+                default:
+                    newMessage = new Message(MessageType.INFO, message, null, List.of(pathPart));
+                    break;
+
+            }
+
+            messages.add(newMessage);
+            messageListeners.forEach(l -> l.newMessage(newMessage));
+
+        });
+
+        // Run measurement
+        Measurement<?>.Result result = measurement.run();
+
+        measurement.removeMessageListener(listener);
+
+        // Determine what to return based on the measurement result type
         switch (result.getType()) {
 
             case SUCCESS:
                 setStatus(Status.SUCCESS);
-                return Status.SUCCESS;
+                return new Result(Status.SUCCESS, messages);
 
             case ERROR:
                 setStatus(Status.ERROR);
-                return Status.ERROR;
+                return new Result(Status.ERROR, messages);
 
             case INTERRUPTED:
                 setStatus(Status.INTERRUPTED);
-                return Status.INTERRUPTED;
+                return new Result(Status.INTERRUPTED, messages);
 
             default:
                 setStatus(Status.QUEUED);
-                return Status.QUEUED;
+                return new Result(Status.QUEUED, messages);
 
         }
 
     }
 
     @Override
-    public List<Throwable> getErrors() {
-        return measurement.getExceptions();
-    }
-
-    @Override
     public Status getStatus() {
         return status;
-    }
-
-    @Override
-    public String getStatusMessage() {
-        return message;
     }
 
     @Override
@@ -141,6 +152,17 @@ public class MeasurementAction<M extends Measurement> implements Action {
     @Override
     public boolean isCritical() {
         return false;
+    }
+
+    @Override
+    public MessageListener addMessageListener(MessageListener listener) {
+        messageListeners.add(listener);
+        return listener;
+    }
+
+    @Override
+    public void removeMessageListener(MessageListener listener) {
+        messageListeners.remove(listener);
     }
 
     @Override
@@ -167,11 +189,7 @@ public class MeasurementAction<M extends Measurement> implements Action {
     public void reset() {
 
         measurement.reset();
-
-        status  = Status.QUEUED;
-        message = "";
-
-        statusListeners.forEach(l -> l.statusChanged(status, message));
+        setStatus(Status.QUEUED);
 
     }
 

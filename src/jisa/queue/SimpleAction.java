@@ -7,14 +7,13 @@ import java.util.Map;
 
 public class SimpleAction implements Action {
 
-    private final ActionRunner         action;
-    private final String               name;
-    private final List<StatusListener> statusListeners = new LinkedList<>();
-    private final Map<String, Object>  data            = new LinkedHashMap<>();
-    private       boolean              critical        = false;
-    private       Throwable            error           = null;
-    private       Status               status          = Status.QUEUED;
-    private       String               message         = "";
+    private final ActionRunner          action;
+    private final String                name;
+    private final List<StatusListener>  statusListeners  = new LinkedList<>();
+    private final List<MessageListener> messageListeners = new LinkedList<>();
+    private final Map<String, Object>   data             = new LinkedHashMap<>();
+    private       boolean               critical         = false;
+    private       Status                status           = Status.QUEUED;
 
     public SimpleAction(String name, ActionRunner action) {
         this.name   = name;
@@ -27,28 +26,45 @@ public class SimpleAction implements Action {
     }
 
     @Override
-    public Status run() {
+    public Result run() {
 
-        error = null;
         setStatus(Status.RUNNING);
 
+        List<Message>   messages = new LinkedList<>();
+        MessageListener listener = addMessageListener(messages::add);
+
         try {
+
+            message(MessageType.INFO, "Starting " + name);
+
             action.run(this);
             setStatus(Status.SUCCESS);
-        } catch (InterruptedException ex) {
-            setStatus(Status.INTERRUPTED);
-        } catch (Throwable ex) {
-            error = ex;
-            setStatus(isCritical() ? Status.CRITICAL_ERROR : Status.ERROR);
-        }
+            return new Result(Status.SUCCESS, messages);
 
-        return getStatus();
+        } catch (InterruptedException ex) {
+
+            setStatus(Status.INTERRUPTED);
+            return new Result(Status.INTERRUPTED, messages);
+
+        } catch (Throwable ex) {
+
+            setStatus(isCritical() ? Status.CRITICAL_ERROR : Status.ERROR);
+
+            Message message = new Message(Action.MessageType.ERROR, ex.getMessage(), ex, List.of(new ActionPathPart(this, null)));
+
+            messages.add(message);
+            messageListeners.forEach(l -> l.newMessage(message));
+
+            return new Result(getStatus(), messages);
+
+        } finally {
+            message(MessageType.INFO, "Finished " + name);
+        }
 
     }
 
-    @Override
-    public List<Throwable> getErrors() {
-        return List.of(error);
+    public void message(MessageType type, String message) {
+        messageListeners.forEach(l -> l.newMessage(new Message(type, message, null, List.of(new ActionPathPart(this, null)))));
     }
 
     @Override
@@ -58,17 +74,7 @@ public class SimpleAction implements Action {
 
     protected synchronized void setStatus(Status status) {
         this.status = status;
-        statusListeners.forEach(l -> l.statusChanged(status, message));
-    }
-
-    @Override
-    public synchronized String getStatusMessage() {
-        return message;
-    }
-
-    public synchronized void setStatusMessage(String message) {
-        this.message = message;
-        statusListeners.forEach(l -> l.statusChanged(status, message));
+        statusListeners.forEach(l -> l.statusChanged(status));
     }
 
     @Override
@@ -85,6 +91,17 @@ public class SimpleAction implements Action {
     @Override
     public boolean isCritical() {
         return critical;
+    }
+
+    @Override
+    public MessageListener addMessageListener(MessageListener listener) {
+        messageListeners.add(listener);
+        return listener;
+    }
+
+    @Override
+    public void removeMessageListener(MessageListener listener) {
+        messageListeners.remove(listener);
     }
 
     public void setCritical(boolean critical) {
@@ -113,12 +130,7 @@ public class SimpleAction implements Action {
 
     @Override
     public synchronized void reset() {
-
-        status  = Status.QUEUED;
-        message = "";
-
-        statusListeners.forEach(l -> l.statusChanged(status, message));
-
+        setStatus(Status.QUEUED);
     }
 
     public interface ActionRunner {
