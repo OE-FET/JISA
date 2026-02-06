@@ -261,10 +261,10 @@ public class Connection<T extends Instrument> {
 
     public enum Status {
 
-        DISCONNECTED(Action.Status.NOT_STARTED.getImage()),
+        DISCONNECTED(Action.Status.QUEUED.getImage()),
         CONNECTING(Action.Status.RUNNING.getImage()),
-        RECONNECTING(Action.Status.RETRY.getImage()),
-        CONNECTED(Action.Status.COMPLETED.getImage()),
+        RECONNECTING(Action.Status.RUNNING.getImage()),
+        CONNECTED(Action.Status.SUCCESS.getImage()),
         ERROR(Action.Status.ERROR.getImage());
 
         private final Image image;

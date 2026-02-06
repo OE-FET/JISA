@@ -1,11 +1,20 @@
 package jisa;
 
 import jisa.addresses.Address;
+import jisa.experiment.IVCurve;
+import jisa.experiment.queue.*;
 import jisa.gui.DeviceShell;
 import jisa.gui.Doc;
 import jisa.gui.GUI;
+import jisa.gui.Grid;
+import jisa.gui.queue.ActionQueueDisplay;
+import jisa.gui.queue.ActionQueueMessageDisplay;
+import jisa.maths.Range;
 
 import java.time.LocalDateTime;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class Main {
 
@@ -17,6 +26,51 @@ public class Main {
     public static void main(String[] args) {
 
         try {
+
+            ActionQueue queue = new ActionQueue();
+
+            SweepAction<Double> sweep1 = new SweepAction<>("Voltage Sweep", (v, actions) -> {
+
+                List<Action> acts = new LinkedList<>();
+                acts.add(new SimpleAction(String.format("Change voltage to %.02g V", v), action -> Util.sleep(1000)));
+                acts.addAll(actions);
+
+                return acts;
+
+            }, v -> Map.of("VOLTAGE", v), Range.linear(0, 4).list());
+
+            SweepAction<Double> sweep2 = new SweepAction<>("Temperature Sweep", (v, actions) -> {
+
+                List<Action> acts = new LinkedList<>();
+                acts.add(new SimpleAction(String.format("Change temperature to %.02g K", v), action -> Util.sleep(1000)));
+                acts.addAll(actions);
+
+                return acts;
+
+            }, v -> Map.of("TEMPERATURE", v), List.of(100.0, 200.0, 300.0));
+
+            MeasurementAction<IVCurve> measurementAction = new MeasurementAction<>(new IVCurve("Measurement"), (m, d) -> d.forEach((k, v) -> m.getData().setAttribute(k, v)));
+            sweep1.addSweepAction(measurementAction);
+
+            sweep2.addSweepAction(sweep1);
+
+            queue.addAction(sweep2);
+
+            sweep1.addSweepAction(new SimpleAction("Wait", action -> Util.sleep(1000)));
+
+            ActionQueueDisplay        display  = new ActionQueueDisplay("Queue", queue);
+            ActionQueueMessageDisplay messages = new ActionQueueMessageDisplay("Messages", queue);
+
+            Grid grid = new Grid("Queue", display, messages);
+
+            grid.setWindowSize(1024, 800);
+            grid.show();
+
+            Util.sleep(2500);
+
+            queue.run();
+
+            System.in.read();
 
             Doc doc = new Doc("Help");
 

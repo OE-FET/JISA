@@ -55,7 +55,7 @@ public class HeatMap extends JFXElement implements FrameAcceptor {
     private       PixelBuffer<IntBuffer> buffer    = null;
     private       WritableImage          image     = null;
 
-    private ColourMap  colourMap = ColourMap.JISA;
+    private ColourMap  colourMap = ColourMap.VIRIDIS;
     private TickMapper xMapper   = TickMapper.DEFAULT;
     private TickMapper yMapper   = TickMapper.DEFAULT;
 
@@ -365,7 +365,6 @@ public class HeatMap extends JFXElement implements FrameAcceptor {
 
         // Draw pixels
         for (int y = 0; y < ny; y++) {
-
 
             for (int x = 0; x < nx; x++) {
 

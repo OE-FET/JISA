@@ -1,114 +1,139 @@
 package jisa.experiment.queue;
 
-import jisa.control.SRunnable;
-import jisa.gui.queue.ActionDisplay;
-import jisa.gui.queue.SimpleActionDisplay;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
-import java.util.*;
+public class SimpleAction implements Action {
 
-public class SimpleAction extends AbstractAction<Void> {
+    private final ActionRunner          action;
+    private final String                name;
+    private final List<StatusListener>  statusListeners  = new LinkedList<>();
+    private final List<MessageListener> messageListeners = new LinkedList<>();
+    private final Map<String, Object>   data             = new LinkedHashMap<>();
+    private       boolean               critical         = false;
+    private       Status                status           = Status.QUEUED;
 
-    private       boolean   skip          = false;
-    private       String    name;
-    private       boolean   isRunning     = false;
-    private       Thread    runningThread = null;
-    private       Exception lastException = null;
-    private final SRunnable runnable;
-
-    public SimpleAction(String name, SRunnable action) {
-        this.runnable = action;
-        setName(name);
+    public SimpleAction(String name, ActionRunner action) {
+        this.name   = name;
+        this.action = action;
     }
 
     @Override
-    public void reset() {
-        setStatus(Status.NOT_STARTED);
+    public String getName() {
+        return name;
     }
 
     @Override
-    public void start() {
+    public Result run() {
 
-        if (skip) {
-            setStatus(Status.SKIPPED);
-            skip = false;
-            return;
-        }
-
-        runningThread = Thread.currentThread();
-
-        setStatus(Status.RUNNING);
-        isRunning = true;
-
-        onStart();
+        List<Message>   messages = new LinkedList<>();
+        MessageListener listener = addMessageListener(messages::add);
 
         try {
-            runnable.run();
-            setStatus(Status.COMPLETED);
-        } catch (InterruptedException e) {
-            lastException = e;
-            setStatus(skip ? Status.SKIPPED : Status.INTERRUPTED);
-            skip = false;
-        } catch (Exception e) {
-            lastException = e;
-            setStatus(Status.ERROR);
+
+            message(MessageType.INFO, name + " Started");
+            setStatus(Status.RUNNING);
+
+            action.run(this);
+            setStatus(Status.SUCCESS);
+            return new Result(Status.SUCCESS, messages);
+
+        } catch (InterruptedException ex) {
+
+            setStatus(Status.INTERRUPTED);
+            return new Result(Status.INTERRUPTED, messages);
+
+        } catch (Throwable ex) {
+
+            setStatus(isCritical() ? Status.CRITICAL_ERROR : Status.ERROR);
+
+            Message message = new Message(Action.MessageType.ERROR, ex.getMessage(), ex, List.of(new ActionPathPart(this, null)));
+
+            messages.add(message);
+            messageListeners.forEach(l -> l.newMessage(message));
+
+            return new Result(getStatus(), messages);
+
         } finally {
-            isRunning = false;
-        }
-
-        onFinish();
-
-    }
-
-    @Override
-    public void stop() {
-
-        setStatus(Status.STOPPING);
-
-        int i = 0;
-        while (isRunning && i < 500) {
-            runningThread.interrupt();
-            i++;
+            message(MessageType.INFO, name + " Finished");
         }
 
     }
 
-    public void skip() {
-        skip = true;
-        if (isRunning) stop();
+    public void message(MessageType type, String message) {
+        messageListeners.forEach(l -> l.newMessage(new Message(type, message, null, List.of(new ActionPathPart(this, null)))));
     }
 
     @Override
-    public Exception getError() {
-        return lastException;
+    public synchronized Status getStatus() {
+        return status;
+    }
+
+    protected synchronized void setStatus(Status status) {
+        this.status = status;
+        statusListeners.forEach(l -> l.statusChanged(status));
     }
 
     @Override
-    public boolean isRunning() {
-        return isRunning;
+    public synchronized StatusListener addStatusListener(StatusListener listener) {
+        statusListeners.add(listener);
+        return listener;
     }
 
     @Override
-    public Void getData() {
-        return null;
+    public synchronized void removeStatusListener(StatusListener listener) {
+        statusListeners.remove(listener);
     }
 
     @Override
-    public List<Action> getChildren() {
-        return Collections.emptyList();
+    public boolean isCritical() {
+        return critical;
     }
 
     @Override
-    public SimpleActionDisplay getDisplay() {
-        return new SimpleActionDisplay(this);
+    public MessageListener addMessageListener(MessageListener listener) {
+        messageListeners.add(listener);
+        return listener;
     }
 
     @Override
-    public SimpleAction copy() {
+    public void removeMessageListener(MessageListener listener) {
+        messageListeners.remove(listener);
+    }
 
-        SimpleAction copy = new SimpleAction(getName(), runnable);
-        copyBasicParametersTo(copy);
-        return copy;
+    public void setCritical(boolean critical) {
+        this.critical = critical;
+    }
 
+    @Override
+    public void setData(String key, Object data) {
+        this.data.put(key, data);
+    }
+
+    @Override
+    public <T> T getData(String key, Class<T> type) {
+        return (T) data.get(key);
+    }
+
+    @Override
+    public boolean hasData(String key) {
+        return data.containsKey(key);
+    }
+
+    @Override
+    public void removeData(String key) {
+        data.remove(key);
+    }
+
+    @Override
+    public synchronized void reset() {
+        setStatus(Status.QUEUED);
+    }
+
+    public interface ActionRunner {
+        void run(SimpleAction action) throws Exception;
     }
 
 }

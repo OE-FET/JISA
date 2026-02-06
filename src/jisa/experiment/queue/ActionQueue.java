@@ -1,408 +1,163 @@
 package jisa.experiment.queue;
 
-import jisa.Util;
-import org.json.JSONObject;
-
-import java.io.*;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.emptyMap;
+public class ActionQueue {
 
-public class ActionQueue implements Serializable {
+    private final List<Action>                 actions          = new LinkedList<>();
+    private final List<ActionListener>         actionListeners  = new LinkedList<>();
+    private final List<Action.Message>         messages         = new LinkedList<>();
+    private final List<Action.MessageListener> messageListeners = new LinkedList<>();
+    private       boolean                      running          = false;
 
-    private final List<Action<?>>               queue         = new LinkedList<>();
-    private       ActionQueue                   startActions  = null;
-    private       ActionQueue                   stopActions   = null;
-    private final List<ListListener<Action<?>>> listListeners = new LinkedList<>();
+    public synchronized Action.Result run() throws IllegalStateException {
 
-    private boolean isRunning = false;
-    private boolean isStopped = false;
+        if (running) {
+            throw new IllegalStateException("ActionQueue is already running.");
+        }
 
-    public ActionQueue() {
-        this(true);
-    }
+        try {
 
-    protected ActionQueue(boolean subQueues) {
+            List<Action.Message> runMessages = new LinkedList<>();
 
-        if (subQueues) {
-            startActions = new ActionQueue(false);
-            stopActions  = new ActionQueue(false);
+            running = true;
+
+            message(Action.MessageType.INFO, "Queue Started");
+
+            actions.forEach(Action::reset);
+
+            boolean error = false;
+
+            for (Action action : actions) {
+
+                Action.MessageListener listener = action.addMessageListener(m -> {
+                    messages.add(m);
+                    runMessages.add(m);
+                    messageListeners.forEach(l -> l.newMessage(m));
+                });
+
+                Action.Result result = action.run();
+
+                action.removeMessageListener(listener);
+
+                switch (result.getFinalStatus()) {
+
+                    case CRITICAL_ERROR:
+                        message(Action.MessageType.ERROR, "Action (" + action.getName() + ") ended with critical error, ending queue.");
+                        return new Action.Result(Action.Status.CRITICAL_ERROR, runMessages);
+
+                    case INTERRUPTED:
+                        message(Action.MessageType.ERROR, "Action (" + action.getName() + ") was interrupted, ending queue.");
+                        return new Action.Result(Action.Status.INTERRUPTED, runMessages);
+
+                    case ERROR:
+                        message(Action.MessageType.ERROR, "Action (" + action.getName() + ") ended with an error, continuing to next action.");
+                        error = true;
+                        break;
+
+                }
+
+            }
+
+            return new Action.Result(error ? Action.Status.ERROR : Action.Status.SUCCESS, runMessages);
+
+        } finally {
+            running = false;
+            message(Action.MessageType.INFO, "Queue Ended");
         }
 
     }
 
-    /**
-     * Adds an action to the queue.
-     *
-     * @param action Action to add
-     * @param <T>    Action type
-     *
-     * @return The action that was added
-     */
-    public synchronized <T extends Action> T addAction(T action) {
-        checkRunning();
-        queue.add(action);
-        listListeners.forEach(l -> l.added(action));
+    protected void message(Action.MessageType type, String message) {
+        Action.Message msg = new Action.Message(type, message, null, Collections.emptyList());
+        messages.add(msg);
+        messageListeners.forEach(l -> l.newMessage(msg));
+    }
+
+    public List<Action.Message> getMessages() {
+        return List.copyOf(messages);
+    }
+
+    public void clearMessages() {
+        messages.clear();
+    }
+
+    public synchronized <A extends Action> A addAction(A action) {
+
+        if (running) {
+            throw new IllegalStateException("Cannot modify actions in an ActionQueue that is running.");
+        }
+
+        actions.add(action);
+        actionListeners.forEach(l -> l.changed(Collections.unmodifiableList(actions)));
+
         return action;
     }
 
-    public void saveActions(String path) throws IOException {
-        JSONObject       object = new JSONObject(queue);
-        FileOutputStream out    = new FileOutputStream(path);
-        out.write(object.toString(4).getBytes());
-        out.close();
-    }
-
-    public void loadActions(String path) throws IOException, ClassNotFoundException {
-        ObjectInputStream in     = new ObjectInputStream(new FileInputStream(path));
-        List<Action<?>>   loaded = (List<Action<?>>) in.readObject();
-        addActions(loaded);
-        in.close();
-    }
-
-    /**
-     * Adds all the given actions to the queue.
-     *
-     * @param actions Actions to add
-     */
-    public synchronized void addActions(Action... actions) {
-        addActions(List.of(actions));
-    }
-
-    /**
-     * Adds all the given actions to the queue.
-     *
-     * @param actions Actions to add
-     */
-    public synchronized void addActions(Collection<Action<?>> actions) {
-        checkRunning();
-        queue.addAll(actions);
-        listListeners.forEach(l -> l.added(actions));
-    }
-
-    /**
-     * Removes the supplied action from the queue.
-     *
-     * @param action Action to remove
-     */
     public synchronized void removeAction(Action action) {
-        checkRunning();
-        queue.remove(action);
-        listListeners.forEach(l -> l.removed(action));
-    }
 
-    /**
-     * Removes all the supplied actions from the queue.
-     *
-     * @param actions Actions to remove
-     */
-    public synchronized void removeActions(Action... actions) {
-        removeActions(List.of(actions));
-    }
-
-    /**
-     * Removes all the supplied actions from the queue.
-     *
-     * @param actions Actions to remove
-     */
-    public synchronized void removeActions(Collection<Action<?>> actions) {
-        checkRunning();
-        queue.removeAll(actions);
-        listListeners.forEach(l -> l.removed(actions));
-    }
-
-    /**
-     * Returns the number of actions in the queue.
-     *
-     * @return Number of actions in queue
-     */
-    public int size() {
-        return queue.size();
-    }
-
-    /**
-     * Returns the index of a given action in the queue
-     *
-     * @param action Action to find index of
-     *
-     * @return Index of action
-     */
-    public int indexOf(Action<?> action) {
-        return queue.indexOf(action);
-    }
-
-    /**
-     * Swaps the positions of two actions in the queue.
-     *
-     * @param indexA Index of action to swap
-     * @param indexB Index of action to swap
-     */
-    public synchronized void swapActions(int indexA, int indexB) {
-
-        checkRunning();
-
-        if (!Util.isBetween(indexA, 0, queue.size() - 1) || !Util.isBetween(indexB, 0, queue.size() - 1)) {
-            throw new IllegalArgumentException("Both actions must be in the queue before their positions can be swapped.");
+        if (running) {
+            throw new IllegalStateException("Cannot modify actions in an ActionQueue that is running.");
         }
 
-        Action<?> a = queue.get(indexA);
-        Action<?> b = queue.get(indexB);
-
-        queue.set(indexA, b);
-        queue.set(indexB, a);
-
-        Map<Integer, Action<?>> moves = Map.of(
-            indexA, b,
-            indexB, a
-        );
-
-        listListeners.forEach(l -> l.moved(moves));
+        actions.remove(action);
+        actionListeners.forEach(l -> l.changed(Collections.unmodifiableList(actions)));
 
     }
 
-    /**
-     * Swaps the positions of two actions in the queue.
-     *
-     * @param a Action to swap
-     * @param b Action to swap
-     */
+    public synchronized void clearActions() {
+
+        if (running) {
+            throw new IllegalStateException("Cannot modify actions in an ActionQueue that is running.");
+        }
+
+        actions.clear();
+        actionListeners.forEach(l -> l.changed(Collections.unmodifiableList(actions)));
+
+    }
+
     public synchronized void swapActions(Action a, Action b) {
 
-        checkRunning();
+        int indexA = actions.indexOf(a);
+        int indexB = actions.indexOf(b);
 
-        int indexA = queue.indexOf(a);
-        int indexB = queue.indexOf(b);
+        actions.set(indexA, b);
+        actions.set(indexB, a);
 
-        if (indexA < 0 || indexB < 0) {
-            throw new IllegalArgumentException("Both actions must be in the queue before their positions can be swapped.");
-        }
-
-        queue.set(indexA, b);
-        queue.set(indexB, a);
-
-        Map<Integer, Action<?>> moves = Map.of(
-            indexA, b,
-            indexB, a
-        );
-
-        listListeners.forEach(l -> l.moved(moves));
+        actionListeners.forEach(l -> l.changed(Collections.unmodifiableList(actions)));
 
     }
 
-    public List<Action<?>> getActions() {
-        return List.copyOf(queue);
+    public List<Action> getActions() {
+        return Collections.unmodifiableList(actions);
     }
 
-    /**
-     * Removes all actions from the queue.
-     */
-    public synchronized void clear() {
-        checkRunning();
-        List<Action<?>> removed = List.copyOf(queue);
-        queue.clear();
-        listListeners.forEach(l -> l.removed(removed));
-    }
-
-    /**
-     * Adds a listener to be triggered every time the queue is changed (actions added, removed or changed order).
-     *
-     * @param listener Listener to add
-     *
-     * @return The listener that was added
-     */
-    public ListListener<Action<?>> addListener(ListListener<Action<?>> listener) {
-        listListeners.add(listener);
+    public Action.MessageListener addMessageListener(Action.MessageListener listener) {
+        messageListeners.add(listener);
         return listener;
     }
 
-    /**
-     * Removes a listener from the queue.
-     *
-     * @param listener The listener to be removed
-     */
-    public void removeListener(ListListener<Action> listener) {
-        listListeners.remove(listener);
+    public void removeMessageListener(Action.MessageListener listener) {
+        messageListeners.remove(listener);
     }
 
-    /**
-     * Internal method for checking whether the queue is running before making queue alterations. Throws an
-     * IllegalStateException if it is running.
-     *
-     * @throws IllegalStateException If the queue is running
-     */
-    protected void checkRunning() throws IllegalStateException {
+    public ActionListener addActionListener(ActionListener listener) {
+        actionListeners.add(listener);
+        return listener;
+    }
 
-        if (isRunning) {
-            throw new IllegalStateException("Cannot modify action queue: queue is running.");
-        }
+    public void removeActionListener(ActionListener listener) {
+        actionListeners.remove(listener);
+    }
 
+    public interface ActionListener {
+        void changed(List<Action> actions);
     }
 
     public boolean isRunning() {
-        return isRunning;
-    }
-
-    /**
-     * Returns whether the last run of the queue was interrupted or not.
-     *
-     * @return Was it interrupted?
-     */
-    public boolean isInterrupted() {
-        return queue.stream().anyMatch(a -> a.getStatus() == Action.Status.INTERRUPTED);
-    }
-
-    public Action<?> getInterruptedAction() {
-        return this.queue.stream().filter(a -> a.getStatus() == Action.Status.INTERRUPTED).findFirst().orElse(null);
-    }
-
-    /**
-     * Starts the queue from the beginning. Returns the overall result of the queue once completed.
-     *
-     * @return Result of queue execution (SUCCESS, INTERRUPTED or ERROR)
-     */
-    public Result start() {
-        return start(false);
-    }
-
-    /**
-     * Starts the queue from the last interrupted action.
-     *
-     * @return Result of queue execution (SUCCESS, INTERRUPTED or ERROR)
-     */
-    public Result resume() {
-        return start(true);
-    }
-
-    public ActionQueue getStartActions() {
-        return startActions;
-    }
-
-    public ActionQueue getStopActions() {
-        return stopActions;
-    }
-
-    protected Result start(boolean resume) {
-
-        isRunning = true;
-        isStopped = false;
-
-        List<Action<?>> queue;
-
-        if (resume && isInterrupted()) {
-            int start = this.queue.indexOf(getInterruptedAction());
-            queue = this.queue.subList(start, this.queue.size());
-        } else {
-            resume = false;
-            queue  = this.queue;
-        }
-
-        queue.forEach(Action::reset);
-
-        if (startActions != null) {
-            startActions.start(false);
-        }
-
-        for (Action action : queue) {
-
-            if (isStopped) {
-                action.setStatus(Action.Status.INTERRUPTED);
-                isRunning = false;
-                return Result.INTERRUPTED;
-            }
-
-            if (resume) {
-                resume = false;
-                action.resume();
-            } else {
-                action.start();
-            }
-
-            switch (action.getStatus()) {
-
-                case INTERRUPTED:
-
-                    if (stopActions != null) {
-                        stopActions.start(false);
-                    }
-
-                    isRunning = false;
-                    return Result.INTERRUPTED;
-
-                case ERROR:
-
-                    if (action.isCritical()) {
-
-                        if (stopActions != null) {
-                            stopActions.start(false);
-                        }
-
-                        isRunning = false;
-                        return Result.ERROR;
-
-                    }
-                    break;
-
-            }
-
-        }
-
-        if (stopActions != null) {
-            stopActions.start(false);
-        }
-
-        isRunning = false;
-
-        if (queue.stream().anyMatch(a -> a.getStatus() == Action.Status.ERROR)) {
-            return Result.ERROR;
-        } else {
-            return Result.SUCCESS;
-        }
-
-    }
-
-    public void stop() {
-        isStopped = true;
-        queue.forEach(Action::stop);
-    }
-
-    public enum Result {
-        SUCCESS,
-        INTERRUPTED,
-        ERROR
-    }
-
-    public interface ListListener<T> {
-
-        void update(Collection<T> added, Collection<T> removed, Map<Integer, T> moved);
-
-        default void moved(Map<Integer, T> changes) {
-            update(emptyList(), emptyList(), changes);
-        }
-
-        default void added(T added) {
-            added(List.of(added));
-        }
-
-        default void removed(T removed) {
-            removed(List.of(removed));
-        }
-
-        default void added(Collection<T> added) {
-            update(added, emptyList(), emptyMap());
-        }
-
-        default void removed(Collection<T> removed) {
-            update(emptyList(), removed, emptyMap());
-        }
-
-        default void addedAndRemoved(Collection<T> added, Collection<T> removed) {
-            update(added, removed, emptyMap());
-        }
-
+        return running;
     }
 
 }
