@@ -63,7 +63,7 @@ public class ActionQueueMessageDisplay extends JFXElement {
         timestamp.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(LocalDateTime.ofEpochSecond(param.getValue().getTimestamp() / 1000, 0, OffsetDateTime.now().getOffset()).format(DateTimeFormatter.ISO_DATE_TIME).replace("T", " ")));
 
         TableColumn<Action.Message, String> action = new TableColumn<>("Action");
-        action.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().getActionPath().stream().map(Action.ActionPathPart::toString).collect(Collectors.joining(" > "))));
+        action.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().getActionPath().stream().map(Action.ActionPathPart::toString).collect(Collectors.joining(" → "))));
 
         TableColumn<Action.Message, String> type = new TableColumn<>("Type");
         type.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().getType().name()));

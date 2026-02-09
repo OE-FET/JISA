@@ -23,12 +23,14 @@ public class ActionDisplay extends VBox {
     private static final Border     BORDER         = new Border(new BorderStroke(Color.SILVER, BorderStrokeStyle.SOLID, null, new BorderWidths(1)));
     private static final Border     BORDER_PARTIAL = new Border(new BorderStroke(Color.SILVER, BorderStrokeStyle.SOLID, null, new BorderWidths(1.0, 0.0, 0.0, 0.0)));
 
+    private final Action    action;
     private final ImageView statusImage  = new ImageView();
     private final Label     titleLabel   = new Label();
     private final Label     statusLabel  = new Label();
-    private final Label     messageLabel = new Label();
+    private final Label     messageLabel = new Label("Queued");
     private final VBox      titleLines   = new VBox(new HBox(titleLabel, statusLabel), messageLabel);
     private final HBox      topLine      = new HBox(statusImage, titleLines);
+    private final Pane      childHeader  = new Pane();
     private final Pane      childLabel   = new Pane();
     private final VBox      childList    = new VBox();
     private final HBox      childBox     = new HBox(childLabel, childList);
@@ -37,11 +39,16 @@ public class ActionDisplay extends VBox {
 
     public ActionDisplay(Action action) {
 
+        this.action = action;
+
         HBox.setHgrow(titleLines, Priority.ALWAYS);
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
         HBox.setHgrow(statusLabel, Priority.NEVER);
 
+        titleLines.setSpacing(0.0);
+
         titleLabel.setMaxWidth(Double.MAX_VALUE);
+        VBox.setMargin(messageLabel, new Insets(-10.0, 0.0, 0.0, 0.0));
 
         setPadding(new Insets(10.0));
         setSpacing(10.0);
@@ -52,11 +59,14 @@ public class ActionDisplay extends VBox {
         childLabel.setPadding(new Insets(10.0));
         childLabel.setBackground(BG_LABEL);
 
+        childHeader.setMaxWidth(Double.MAX_VALUE);
+        childHeader.setPadding(new Insets(10.0));
+        childHeader.setBackground(BG_LABEL);
+
         setOnMouseEntered(event -> setBackground(selected ? BG_SELECTED : BG_HOVER));
         setOnMouseExited(event -> setBackground(selected ? BG_SELECTED : BG_NORMAL));
 
         topLine.setSpacing(10.0);
-        titleLines.setSpacing(50.0);
 
         getChildren().addAll(topLine);
 
@@ -102,21 +112,32 @@ public class ActionDisplay extends VBox {
 
             SweepAction sweepAction = (SweepAction) action;
             childList.setSpacing(-2.0);
-            VBox.setMargin(childBox, new Insets(0.0, -10.0, -10.0, -10.0));
-            childList.getChildren().addAll((List<ActionDisplay>) sweepAction.generateActions(sweepAction.getCurrentSweepValue()).stream().map(a -> new ActionDisplay((Action) a)).peek(ad -> ((ActionDisplay) ad).setBorder(BORDER_PARTIAL)).collect(Collectors.toList()));
+            childList.getChildren().addAll((List<ActionDisplay>) sweepAction.generateActions(sweepAction.getCurrentSweepValue()).stream().map(a -> new ActionDisplay((Action) a)).collect(Collectors.toList()));
 
             sweepAction.addSweepActionListener(actions -> Platform.runLater(() -> {
                 childList.getChildren().clear();
-                childList.getChildren().addAll(actions.stream().map(ActionDisplay::new).peek(ad -> ad.setBorder(BORDER_PARTIAL)).collect(Collectors.toList()));
+                childList.getChildren().addAll(actions.stream().map(ActionDisplay::new).collect(Collectors.toList()));
             }));
 
             HBox.setHgrow(childLabel, Priority.NEVER);
             HBox.setHgrow(childList, Priority.ALWAYS);
 
-            getChildren().add(childBox);
+            getChildren().addAll(childBox);
 
         }
 
     }
 
+    public void setSelected(boolean selected) {
+        this.selected = selected;
+        Platform.runLater(() -> setBackground(selected ? BG_SELECTED : BG_NORMAL));
+    }
+
+    public Action getAction() {
+        return action;
+    }
+
+    public boolean isSelected() {
+        return selected;
+    }
 }

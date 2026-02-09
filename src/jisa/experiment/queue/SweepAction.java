@@ -4,25 +4,30 @@ import java.util.*;
 
 public class SweepAction<SweepValue> implements Action {
 
-    private final String                         name;
-    private final IterationGenerator<SweepValue> sweepGenerator;
-    private final DataGenerator<SweepValue>      dataGenerator;
-    private final List<Action>                   sweepActions         = new LinkedList<>();
-    private final List<Action>                   currentActions       = new LinkedList<>();
-    private final List<SweepValue>               sweepValues          = new LinkedList<>();
-    private final List<StatusListener>           statusListeners      = new LinkedList<>();
-    private final List<SweepActionListener>      sweepActionListeners = new LinkedList<>();
-    private final List<MessageListener>          messageListeners     = new LinkedList<>();
-    private final Map<String, Object>            data                 = new LinkedHashMap<>();
-    private       boolean                        critical             = false;
-    private       Status status            = Status.QUEUED;
-    private       int    currentSweepIndex = 0;
+    private final String                            name;
+    private final IterationGenerator<SweepValue>    sweepGenerator;
+    private final DataGenerator<SweepValue>         dataGenerator;
+    private final SweepValueStringifier<SweepValue> sweepValueStringifier;
+    private final List<Action>                      sweepActions         = new LinkedList<>();
+    private final List<Action>                      currentActions       = new LinkedList<>();
+    private final List<SweepValue>                  sweepValues          = new LinkedList<>();
+    private final List<StatusListener>              statusListeners      = new LinkedList<>();
+    private final List<SweepActionListener>         sweepActionListeners = new LinkedList<>();
+    private final List<MessageListener>             messageListeners     = new LinkedList<>();
+    private final Map<String, Object>               data                 = new LinkedHashMap<>();
+    private       boolean                           critical             = false;
+    private       Status                            status               = Status.QUEUED;
+    private       int                               currentSweepIndex    = 0;
 
-    public SweepAction(String name, IterationGenerator<SweepValue> sweepGenerator, DataGenerator<SweepValue> dataGenerator, Collection<SweepValue> sweepValues) {
-        this.name           = name;
-        this.sweepGenerator = sweepGenerator;
-        this.dataGenerator  = dataGenerator;
+    public SweepAction(String name, IterationGenerator<SweepValue> sweepGenerator, DataGenerator<SweepValue> dataGenerator, Collection<SweepValue> sweepValues, SweepValueStringifier<SweepValue> stringifier) {
+
+        this.name                  = name;
+        this.sweepGenerator        = sweepGenerator;
+        this.dataGenerator         = dataGenerator;
+        this.sweepValueStringifier = stringifier;
+
         this.sweepValues.addAll(sweepValues);
+
     }
 
     @Override
@@ -47,7 +52,7 @@ public class SweepAction<SweepValue> implements Action {
 
             currentSweepIndex++;
 
-            Message sweepMessage = new Message(MessageType.INFO, String.format("Sweep Value = %s (%d / %d)", sweepValue, currentSweepIndex + 1, sweepValues.size()), null, List.of(new ActionPathPart(this, sweepValue)));
+            Message sweepMessage = new Message(MessageType.INFO, String.format("Sweep Value = %s (%d / %d)", sweepValueStringifier.stringify(sweepValue), currentSweepIndex + 1, sweepValues.size()), null, List.of(new ActionPathPart(this, sweepValue)));
             messages.add(sweepMessage);
             messageListeners.forEach(l -> l.newMessage(sweepMessage));
 
@@ -209,18 +214,6 @@ public class SweepAction<SweepValue> implements Action {
         sweepActions.forEach(Action::reset);
     }
 
-    public interface IterationGenerator<SweepValue> {
-        List<Action> generateActions(SweepValue sweepValue, List<Action> sweepActions);
-    }
-
-    public interface DataGenerator<SweepValue> {
-        Map<String, Object> generateData(SweepValue sweepValue);
-    }
-
-    public interface SweepActionListener {
-        void changed(List<Action> actions);
-    }
-
     public List<SweepValue> getSweepValues() {
         return List.copyOf(sweepValues);
     }
@@ -241,6 +234,26 @@ public class SweepAction<SweepValue> implements Action {
         this.sweepValues.clear();
         this.sweepValues.addAll(sweepValues);
         sweepActionListeners.forEach(l -> l.changed(this.sweepActions));
+    }
+
+    public String stringify(SweepValue sweepValue) {
+        return sweepValueStringifier.stringify(sweepValue);
+    }
+
+    public interface IterationGenerator<SweepValue> {
+        List<Action> generateActions(SweepValue sweepValue, List<Action> sweepActions);
+    }
+
+    public interface DataGenerator<SweepValue> {
+        Map<String, Object> generateData(SweepValue sweepValue);
+    }
+
+    public interface SweepActionListener {
+        void changed(List<Action> actions);
+    }
+
+    public interface SweepValueStringifier<SweepValue> {
+        String stringify(SweepValue value);
     }
 
 }

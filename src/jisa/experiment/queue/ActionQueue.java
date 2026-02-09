@@ -6,11 +6,12 @@ import java.util.List;
 
 public class ActionQueue {
 
-    private final List<Action>                 actions          = new LinkedList<>();
-    private final List<ActionListener>         actionListeners  = new LinkedList<>();
-    private final List<Action.Message>         messages         = new LinkedList<>();
-    private final List<Action.MessageListener> messageListeners = new LinkedList<>();
-    private       boolean                      running          = false;
+    private final List<Action>                 actions                = new LinkedList<>();
+    private final List<ActionListener>         actionListeners        = new LinkedList<>();
+    private final List<Action.Message>         messages               = new LinkedList<>();
+    private final List<Action.MessageListener> messageListeners       = new LinkedList<>();
+    private final List<CurrentActionListener>  currentActionListeners = new LinkedList<>();
+    private       boolean                      running                = false;
 
     public synchronized Action.Result run() throws IllegalStateException {
 
@@ -37,6 +38,8 @@ public class ActionQueue {
                     runMessages.add(m);
                     messageListeners.forEach(l -> l.newMessage(m));
                 });
+
+                currentActionListeners.forEach(l -> l.changed(action));
 
                 Action.Result result = action.run();
 
@@ -94,6 +97,7 @@ public class ActionQueue {
         actionListeners.forEach(l -> l.changed(Collections.unmodifiableList(actions)));
 
         return action;
+
     }
 
     public synchronized void removeAction(Action action) {
@@ -152,12 +156,16 @@ public class ActionQueue {
         actionListeners.remove(listener);
     }
 
+    public boolean isRunning() {
+        return running;
+    }
+
     public interface ActionListener {
         void changed(List<Action> actions);
     }
 
-    public boolean isRunning() {
-        return running;
+    public interface CurrentActionListener {
+        void changed(Action action);
     }
 
 }

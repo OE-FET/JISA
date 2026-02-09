@@ -22,35 +22,6 @@ public class MeasurementAction<M extends Measurement> implements Action {
         this.measurement = measurement;
         this.dataHandler = dataHandler;
 
-        measurement.addStatusListener(status -> {
-
-            switch (status) {
-
-                case STOPPED:
-                    setStatus(Status.QUEUED);
-                    break;
-
-                case RUNNING:
-                case POST_RUN:
-                    setStatus(Status.RUNNING);
-                    break;
-
-                case INTERRUPTED:
-                    setStatus(Status.INTERRUPTED);
-                    break;
-
-                case ERROR:
-                    setStatus(Status.ERROR);
-                    break;
-
-                case COMPLETE:
-                    setStatus(Status.SUCCESS);
-                    break;
-
-            }
-
-        });
-
     }
 
     protected synchronized void setStatus(Status status) {
@@ -108,6 +79,8 @@ public class MeasurementAction<M extends Measurement> implements Action {
         Message startMessage = new Message(MessageType.INFO, getName() + " Started", null, List.of(pathPart));
         messageListeners.forEach(l -> l.newMessage(startMessage));
         messages.add(startMessage);
+
+        setStatus(Status.RUNNING);
 
         // Run measurement
         Measurement<?>.Result result = measurement.run();

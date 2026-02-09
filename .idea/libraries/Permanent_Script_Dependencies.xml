@@ -141,6 +141,7 @@
       <root url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.29/slf4j-api-1.7.29.jar" />
       <root url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.4.31/kotlin-stdlib-common-1.4.31.jar" />
       <root url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.6.1/kotlinx-datetime-jvm-0.6.1.jar" />
+      <root url="file://$USER_HOME$/.cache/JetBrains/IntelliJIdea2025.3/kotlinNotebook/kernels/0.15.1-761-1/kotlin-jupyter-ide-classpath-shadowed-jar/kotlin-jupyter-ide-classpath-shadowed-0.15.1-761-1.jar" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
@@ -283,6 +284,7 @@
       <root url="file://$PROJECT_DIR$/lib/org.apache.commons.compress-1.9.2.jar" />
       <root url="file://$PROJECT_DIR$/lib/OO.jar" />
       <root url="file://$PROJECT_DIR$/lib/jhdf-0.9.4.jar" />
+      <root url="file://$USER_HOME$/.cache/JetBrains/IntelliJIdea2025.3/kotlinNotebook/kernels/0.15.1-761-1/kotlin-jupyter-ide-classpath-shadowed-sources-jar/kotlin-jupyter-ide-classpath-shadowed-0.15.1-761-1-sources.jar" />
     </SOURCES>
   </library>
 </component>
