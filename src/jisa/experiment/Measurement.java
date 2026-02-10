@@ -62,6 +62,21 @@ public abstract class Measurement<R> {
 
     }
 
+    public <T> void addParameter(String section, String name, Class<T> dataType, Type type, T defaultValue, ParamValue.Getter<T> getter, ParamValue.Setter<T> setter, String... options) {
+
+        ParamValue<T> value = new ParamValue(section, name, dataType, type, getter, setter, options);
+        value.set(defaultValue);
+        parameters.add(value);
+
+    }
+
+    public <I extends jisa.devices.Instrument> void addInstrument(String name, Class<I> type, InstrumentValue.Getter<I> getter, InstrumentValue.Setter<I> setter, boolean required) {
+
+        InstrumentValue<I> value = new InstrumentValue<>(name + (required ? " (Required)" : " (Optional)"), type, getter, setter, required);
+        instruments.add(value);
+
+    }
+
     public String getName() {
         return name;
     }
@@ -176,11 +191,11 @@ public abstract class Measurement<R> {
 
             try {
 
+                instrument.set(instrument.configuration.configure());
+
                 if (instrument.isRequired() && instrument.get() == null) {
                     throw new MissingInstrumentException("Required instrument \"" + instrument.name + "\" is not configured.");
                 }
-
-                instrument.applyConfiguration();
 
             } catch (Throwable e) {
                 exceptions.add(e);
