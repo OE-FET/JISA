@@ -1,8 +1,16 @@
 package jisa;
 
 import jisa.addresses.Address;
-import jisa.experiment.queue.*;
-import jisa.gui.*;
+import jisa.experiment.IVCurve;
+import jisa.experiment.queue.Action;
+import jisa.experiment.queue.ActionQueue;
+import jisa.experiment.queue.SimpleAction;
+import jisa.experiment.queue.SweepAction;
+import jisa.gui.DeviceShell;
+import jisa.gui.Doc;
+import jisa.gui.GUI;
+import jisa.gui.Tabs;
+import jisa.gui.measurement.MeasurementSetup;
 import jisa.gui.queue.ActionQueueDisplay;
 import jisa.gui.queue.ActionQueueMessageDisplay;
 import jisa.maths.Range;
@@ -22,6 +30,12 @@ public class Main {
     public static void main(String[] args) {
 
         try {
+
+            IVCurve                   measurement = new IVCurve("Test");
+            MeasurementSetup<IVCurve> setup       = new MeasurementSetup<>(measurement);
+
+            setup.showAndApply();
+            setup.showAndApply();
 
             ActionQueue queue = new ActionQueue();
 

@@ -14,7 +14,10 @@ import jisa.results.ResultList;
 import jisa.results.ResultStream;
 import jisa.results.ResultTable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class MeasurementSetup<R extends Measurement<?>> extends Tabs {
 
@@ -45,6 +48,7 @@ public class MeasurementSetup<R extends Measurement<?>> extends Tabs {
 
         measurement.getInstruments().stream().map(i -> new Util.Pair<Measurement.InstrumentValue, Configurator>(i, new Configurator(i.getName(), i.getType()))).forEach(p -> {
 
+            p.a().setConfiguration(p.b().getConfiguration());
             p.b().getConfiguration().setInputInstrument(p.a().get());
             instruments.add(p.b());
             setters.add(() -> p.a().set(p.b().getConfiguration().getInstrument()));
@@ -54,6 +58,12 @@ public class MeasurementSetup<R extends Measurement<?>> extends Tabs {
         Map<String, Form> sections = new HashMap<>();
 
         for (Measurement.ParamValue p : measurement.getParameters()) {
+
+            if (p.getType() == Measurement.Type.CUSTOM) {
+                p.set(null);
+                setters.add(p::get);
+                continue;
+            }
 
             if (!sections.containsKey(p.getSection())) {
                 Form section = new Form(p.getSection());
@@ -116,6 +126,8 @@ public class MeasurementSetup<R extends Measurement<?>> extends Tabs {
             }
 
         }
+
+        parameters.addAll(measurement.getCustomGUIElements());
 
         parameters.setGrowth(true, false);
         instruments.setGrowth(true, false);
