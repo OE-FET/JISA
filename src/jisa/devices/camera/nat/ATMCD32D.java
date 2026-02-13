@@ -1,11 +1,11 @@
 package jisa.devices.camera.nat;
 
-import com.sun.jna.Library;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.ptr.NativeLongByReference;
 import com.sun.jna.ptr.PointerByReference;
+import jisa.visa.Library;
 
 import java.nio.*;
 import java.util.Arrays;

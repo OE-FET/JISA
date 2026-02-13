@@ -64,7 +64,7 @@ public interface MultiTrack extends Feature {
      * @throws IOException     Upon communications error.
      * @throws DeviceException Upon device/compatibility error.
      */
-    default void setMultiTracks(Track... tracks) throws IOException, DeviceException {
+    default void setAllMultiTracks(Track... tracks) throws IOException, DeviceException {
         setMultiTracks(Arrays.asList(tracks));
     }
 

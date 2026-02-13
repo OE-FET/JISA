@@ -285,10 +285,16 @@ public interface Instrument {
 
         private final boolean auto;
         private final S       otherwise;
+        private final String  autoText;
 
-        public AutoQuantity(boolean auto, S otherwise) {
+        public AutoQuantity(boolean auto, S otherwise, String autoText) {
             this.auto      = auto;
             this.otherwise = otherwise;
+            this.autoText  = autoText;
+        }
+
+        public AutoQuantity(boolean auto, S otherwise) {
+            this(auto, otherwise, "Auto");
         }
 
         public boolean isAuto() {
@@ -297,6 +303,10 @@ public interface Instrument {
 
         public S getValue() {
             return otherwise;
+        }
+
+        public String getAutoText() {
+            return autoText;
         }
 
         public boolean equals(Object o) {

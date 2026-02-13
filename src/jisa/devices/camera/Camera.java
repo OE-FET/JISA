@@ -31,8 +31,17 @@ public interface Camera<F extends Frame> extends Instrument {
 
         parameters.addValue("Integration Time [s]", inst::getIntegrationTime, 20e-3, inst::setIntegrationTime);
         parameters.addValue("Acquisition Timeout [ms]", inst::getAcquisitionTimeout, 1000, inst::setAcquisitionTimeout);
-        parameters.addValue("X Binning", inst::getBinningX, 1, inst::setBinningX);
-        parameters.addValue("Y Binning", inst::getBinningY, 1, inst::setBinningY);
+
+        parameters.addAuto("X Binning", "Full", inst::isFullBinningX, false, inst::getBinningX, 1, v -> inst.setFullBinningX(true), v -> {
+            inst.setFullBinningX(false);
+            inst.setBinningX(v);
+        });
+
+        parameters.addAuto("Y Binning", "Full", inst::isFullBinningY, false, inst::getBinningY, 1, v -> inst.setFullBinningY(true), v -> {
+            inst.setFullBinningY(false);
+            inst.setBinningY(v);
+        });
+
         parameters.addValue("Frame Width", inst::getFrameWidth, 1024, inst::setFrameWidth);
         parameters.addValue("Frame Height", inst::getFrameHeight, 1024, inst::setFrameHeight);
 
@@ -461,6 +470,20 @@ public interface Camera<F extends Frame> extends Instrument {
      */
     void setBinningX(int x) throws IOException, DeviceException;
 
+    default void setFullBinningX(boolean fullBinningX) throws IOException, DeviceException {
+
+        if (fullBinningX) {
+            setBinningX(getSensorWidth());
+        } else {
+            setBinningX(1);
+        }
+
+    }
+
+    default boolean isFullBinningX() throws IOException, DeviceException {
+        return getBinningX() == getSensorWidth();
+    }
+
     /**
      * Returns how many "real" pixels are being summed in the y direction per returned pixel.
      *
@@ -480,6 +503,20 @@ public interface Camera<F extends Frame> extends Instrument {
      * @throws DeviceException Upon device compatibility error
      */
     void setBinningY(int y) throws IOException, DeviceException;
+
+    default void setFullBinningY(boolean fullBinningY) throws IOException, DeviceException {
+
+        if (fullBinningY) {
+            setBinningY(getSensorHeight());
+        } else {
+            setBinningY(1);
+        }
+
+    }
+
+    default boolean isFullBinningY() throws IOException, DeviceException {
+        return getBinningY() == getSensorHeight();
+    }
 
     /**
      * Sets both the x and y binning simultaneously. Has the same end result as calling setBinningX(x) and setBinningY(y)
