@@ -229,28 +229,17 @@ public interface Instrument {
         private final Setter<S> setter;
         private final List<S>   options;
         private final Getter<S> getter;
-        private final Type      type;
-
-        public Parameter(String name, S defaultValue, Setter<S> setter, Type type, S... options) {
-            this(name, defaultValue, setter, null, type, options);
-        }
 
         public Parameter(String name, S defaultValue, Setter<S> setter, S... options) {
-            this(name, defaultValue, setter, Type.AUTO, options);
+            this(name, defaultValue, setter, null, options);
         }
 
-        public Parameter(String name, S defaultValue, Setter<S> setter, Getter<S> getter, Type type, S... options) {
+        public Parameter(String name, S defaultValue, Setter<S> setter, Getter<S> getter, S... options) {
             this.name         = name;
             this.defaultValue = defaultValue;
             this.setter       = setter;
             this.getter       = getter;
-            this.type         = type;
             this.options      = options.length > 0 ? List.of(options) : Collections.emptyList();
-        }
-
-
-        public Parameter(String name, S defaultValue, Setter<S> setter, Getter<S> getter, S... options) {
-         this(name, defaultValue, setter, getter, Type.AUTO, options);
         }
 
         public String getName() {
@@ -258,7 +247,7 @@ public interface Instrument {
         }
 
         public Parameter<S> copy(String newName) {
-            return new Parameter<>(newName, defaultValue, setter, getter, type, (S[]) options.toArray());
+            return new Parameter<>(newName, defaultValue, setter, getter, (S[]) options.toArray());
         }
 
         public void set(S value) throws IOException, DeviceException {
@@ -276,7 +265,6 @@ public interface Instrument {
             }
 
             return getter.get();
-
         }
 
         public boolean hasGetter() {
@@ -289,15 +277,6 @@ public interface Instrument {
 
         public List<S> getChoices() {
             return options;
-        }
-
-        public static enum Type {
-            AUTO,
-            SLIDER,
-            TIME,
-            FILE_SAVE,
-            FILE_OPEN,
-            DIRECTORY
         }
 
     }
