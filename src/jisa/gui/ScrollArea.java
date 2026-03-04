@@ -1,12 +1,10 @@
 package jisa.gui;
 
-import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Pane;
 
 public class ScrollArea extends JFXElement {
 
@@ -17,7 +15,6 @@ public class ScrollArea extends JFXElement {
         super(title);
 
         GUI.touch();
-
         scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(false);
         scrollPane.setFitToWidth(true);
@@ -25,8 +22,7 @@ public class ScrollArea extends JFXElement {
         BorderPane.setMargin(scrollPane, Insets.EMPTY);
         scrollPane.setBorder(Border.EMPTY);
         scrollPane.setBackground(Background.EMPTY);
-        scrollPane.getChildrenUnmodifiable().addListener((InvalidationListener) a -> scrollPane.getChildrenUnmodifiable().stream().filter(node -> node.getStyleClass().contains("viewport")).forEach(node -> ((Pane) node).setBackground(Background.EMPTY)));
-
+        scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         setCentreNode(scrollPane);
         getNode().setPadding(Insets.EMPTY);
 

@@ -33,7 +33,7 @@ public class SimpleAction implements Action {
 
         try {
 
-            message(MessageType.INFO, "Started");
+            message(MessageType.INFO, name + " Started");
             setStatus(Status.RUNNING);
 
             action.run(this);
@@ -57,9 +57,7 @@ public class SimpleAction implements Action {
             return new Result(getStatus(), messages);
 
         } finally {
-
-            message(MessageType.INFO, "Finished: " + getStatus().getText());
-
+            message(MessageType.INFO, name + " Finished");
         }
 
     }

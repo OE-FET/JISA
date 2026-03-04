@@ -3,12 +3,12 @@ package jisa.experiment.queue;
 import javafx.scene.image.Image;
 import jisa.gui.GUI;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public interface Action {
-
-    Set<Status> FINISHED_STATUSES = Collections.unmodifiableSet(EnumSet.of(Status.SUCCESS, Status.INTERRUPTED, Status.ERROR, Status.CRITICAL_ERROR));
 
     /**
      * Returns the name of this action.
@@ -37,30 +37,6 @@ public interface Action {
      * @return The listener that was added.
      */
     StatusListener addStatusListener(StatusListener listener);
-
-    default StatusListener addStartListener(StatusListener listener) {
-
-        return addStatusListener(status -> {
-
-            if (status == Status.RUNNING) {
-                listener.statusChanged(status);
-            }
-
-        });
-
-    }
-
-    default StatusListener addFinishListener(StatusListener listener) {
-
-        return addStatusListener(status -> {
-
-            if (FINISHED_STATUSES.contains(status)) {
-                listener.statusChanged(status);
-            }
-
-        });
-
-    }
 
     /**
      * Removes the given listener from this action, if it was indeed attached in the first place.
@@ -98,7 +74,7 @@ public interface Action {
 
         QUEUED("Queued", "queued"),
         RUNNING("Running", "progress"),
-        SUCCESS("Successful", "complete"),
+        SUCCESS("Completed", "complete"),
         INTERRUPTED("Interrupted", "cancelled"),
         ERROR("Error Encountered", "error"),
         CRITICAL_ERROR("Critical Error Encountered", "error");
@@ -235,7 +211,7 @@ public interface Action {
             if (sweepValue == null) {
                 return action.getName();
             } else {
-                return String.format("%s (%s)", action.getName(), action instanceof SweepAction ? ((SweepAction) action).stringify(sweepValue) : sweepValue);
+                return String.format("%s (%s)", action.getName(), sweepValue);
             }
 
         }

@@ -1,8 +1,12 @@
 package jisa;
 
 import jisa.addresses.Address;
+import jisa.experiment.IVCurve;
 import jisa.experiment.queue.*;
-import jisa.gui.*;
+import jisa.gui.DeviceShell;
+import jisa.gui.Doc;
+import jisa.gui.GUI;
+import jisa.gui.Grid;
 import jisa.gui.queue.ActionQueueDisplay;
 import jisa.gui.queue.ActionQueueMessageDisplay;
 import jisa.maths.Range;
@@ -28,25 +32,25 @@ public class Main {
             SweepAction<Double> sweep1 = new SweepAction<>("Voltage Sweep", (v, actions) -> {
 
                 List<Action> acts = new LinkedList<>();
-
-                acts.add(new SimpleAction(String.format("Change Voltage to %.02f V", v), action -> Util.sleep(1000)));
+                acts.add(new SimpleAction(String.format("Change voltage to %.02g V", v), action -> Util.sleep(1000)));
                 acts.addAll(actions);
 
                 return acts;
 
-            }, v -> Map.of("VOLTAGE", v), Range.linear(0, 4).list(), v -> String.format("%.02f V", v));
+            }, v -> Map.of("VOLTAGE", v), Range.linear(0, 4).list());
 
             SweepAction<Double> sweep2 = new SweepAction<>("Temperature Sweep", (v, actions) -> {
 
                 List<Action> acts = new LinkedList<>();
-                acts.add(new SimpleAction(String.format("Change Temperature to %.02f K", v), action -> Util.sleep(1000)));
+                acts.add(new SimpleAction(String.format("Change temperature to %.02g K", v), action -> Util.sleep(1000)));
                 acts.addAll(actions);
 
                 return acts;
 
-            }, v -> Map.of("TEMPERATURE", v), List.of(100.0, 200.0, 300.0), v -> String.format("%.02f K", v));
+            }, v -> Map.of("TEMPERATURE", v), List.of(100.0, 200.0, 300.0));
 
-            sweep1.addSweepAction(new SimpleAction("Run Measurement", action -> Util.sleep(2500)));
+            MeasurementAction<IVCurve> measurementAction = new MeasurementAction<>(new IVCurve("Measurement"), (m, d) -> d.forEach((k, v) -> m.getData().setAttribute(k, v)));
+            sweep1.addSweepAction(measurementAction);
 
             sweep2.addSweepAction(sweep1);
 
@@ -54,14 +58,12 @@ public class Main {
 
             sweep1.addSweepAction(new SimpleAction("Wait", action -> Util.sleep(1000)));
 
-            queue.addAction(new SimpleAction("Something", action -> Util.sleep(1000)));
-            queue.addAction(new SimpleAction("Something Else", action -> Util.sleep(1000)));
-
             ActionQueueDisplay        display  = new ActionQueueDisplay("Queue", queue);
             ActionQueueMessageDisplay messages = new ActionQueueMessageDisplay("Messages", queue);
 
-            Tabs grid = new Tabs("Queue", display, messages);
+            Grid grid = new Grid("Queue", display, messages);
 
+            grid.setWindowSize(1024, 800);
             grid.show();
 
             Util.sleep(2500);
