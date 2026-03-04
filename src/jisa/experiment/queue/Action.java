@@ -2,224 +2,285 @@ package jisa.experiment.queue;
 
 import javafx.scene.image.Image;
 import jisa.gui.GUI;
+import jisa.gui.queue.ActionDisplay;
 
-import java.util.Collections;
-import java.util.LinkedList;
+import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-public interface Action {
+public interface Action<T> extends Serializable {
 
     /**
-     * Returns the name of this action.
+     * Returns the name of the action.
      *
-     * @return Name, String.
+     * @return Name of the action
      */
     String getName();
 
     /**
-     * Runs the action on the current thread.
+     * Changes the name of the action.
+     *
+     * @param name The new name
      */
-    Result run();
+    void setName(String name);
+
+    /**
+     * Adds a listener to this action that is triggered any time its name is changed.
+     *
+     * @param listener Listener to add
+     *
+     * @return The added listener
+     */
+    Listener<Action<T>> addNameListener(Listener<Action<T>> listener);
+
+    /**
+     * Returns the value of the specified attribute for this action. Returns null if it doesn't exist.
+     *
+     * @param key Attribute key
+     *
+     * @return Attribute value
+     */
+    String getAttribute(String key);
+
+    /**
+     * Sets the value of the specified attribute for this action.
+     *
+     * @param key   Attribute key
+     * @param value Attribute value
+     */
+    void setAttribute(String key, String value);
+
+    /**
+     * Returns whether this action has an attribute with the given name.
+     *
+     * @param key Attribute key to check
+     *
+     * @return Does it exist?
+     */
+    boolean hasAttribute(String key);
+
+    /**
+     * Removes the attribute with the given name from this action - if it exists.
+     *
+     * @param key Key of attribute to remove
+     */
+    void removeAttribute(String key);
+
+    /**
+     * Returns an unmodifiable mapping of all attributes.
+     *
+     * @return Attribtues
+     */
+    Map<String, String> getAttributes();
+
+    default String getAttributeString(String delimiter, String assignment) {
+
+        return getAttributes()
+            .entrySet()
+            .stream()
+            .map(e -> String.format("%s%s%s", e.getKey(), assignment, e.getValue()))
+            .collect(Collectors.joining(delimiter));
+
+    }
+
+    default String getAttributeString() {
+        return getAttributeString(", ", "=");
+    }
+
+    /**
+     * Adds a listener that is triggered any time the attributes of the action are updated.
+     *
+     * @param listener Listener to add
+     *
+     * @return The added listener
+     */
+    Listener<Action<T>> addAttributeListener(Listener<Action<T>> listener);
+
+    void addTag(String tag);
+
+    void removeTag(String tag);
+
+    void clearTags();
+
+    List<String> getTags();
+
+    /**
+     * Resets the action to the state it was in before being run.
+     */
+    void reset();
+
+    /**
+     * Runs the action. Should only return once the action is complete/interrupted/failed.
+     */
+    void start();
+
+    void setOnStart(Listener<Action<T>> onStart);
+
+    void setOnFinish(Listener<Action<T>> onFinish);
+
+    /**
+     * Resumes the action from where it was last interrupted
+     */
+    default void resume() {
+        start();
+    }
+
+    /**
+     * Interrupts and stops the action.
+     */
+    void stop();
+
+    /**
+     * Marks the action to be skipped next time it is run, or immediately if it is currently running.
+     */
+    void skip();
 
     /**
      * Returns the current status of this action.
      *
-     * @return Status, enum.
+     * @return Status of action
      */
     Status getStatus();
 
     /**
-     * Adds a listener that gets called every time the status or status message of this action is changed.
+     * Returns the exception that caused the the action to result in failure.
      *
-     * @param listener Listener.
-     *
-     * @return The listener that was added.
+     * @return Exception
      */
-    StatusListener addStatusListener(StatusListener listener);
+    Exception getError();
 
     /**
-     * Removes the given listener from this action, if it was indeed attached in the first place.
+     * Sets the current status of this action.
      *
-     * @param listener The listener to remove.
+     * @param status The status to set
      */
-    void removeStatusListener(StatusListener listener);
+    void setStatus(Status status);
 
     /**
-     * Returns whether this action is considered "critical" or not. If it is, then it failing will cause an entire ActionQueue to fail.
+     * Adds a listener that is triggered any time the status of the action is changed.
      *
-     * @return Critical?
+     * @param listener Listener to add
+     *
+     * @return The added listener
+     */
+    Listener<Action<T>> addStatusListener(Listener<Action<T>> listener);
+
+    /**
+     * Adds a listener that is triggered any time the name, status or attributes of the action are changed.
+     *
+     * @param listener Listener to add
+     *
+     * @return The added listener
+     */
+    default Listener<Action<T>> addListener(Listener<Action<T>> listener) {
+        addNameListener(listener);
+        addAttributeListener(listener);
+        addStatusListener(listener);
+        addChildrenListener(listener);
+        return listener;
+    }
+
+    List<Listener<Action<T>>> getStatusListeners();
+
+    /**
+     * Removes the specified listener for the action - if it has it.
+     *
+     * @param listener The listener to remove
+     */
+    void removeListener(Listener<Action<T>> listener);
+
+    /**
+     * Returns whether the action is currently running or not.
+     *
+     * @return Is it running?
+     */
+    boolean isRunning();
+
+    /**
+     * Returns whether this action is critical - critical actions require the entire action queue to abort if they fail.
+     *
+     * @return Is it critical?
      */
     boolean isCritical();
 
-    MessageListener addMessageListener(MessageListener listener);
+    /**
+     * Sets whether this action is critical - critical actions require the entire action queue to abort if they fail.
+     *
+     * @param critical Should it be critical
+     */
+    void setCritical(boolean critical);
 
-    void removeMessageListener(MessageListener listener);
+    /**
+     * Returns whatever data this action generates.
+     *
+     * @return Generated data
+     */
+    T getData();
 
-    void setData(String key, Object data);
+    /**
+     * Returns an unmodifiable list of sub-actions that this action contains. The exact meaning of a sub-action and how
+     * it relates to the running of this action depends on the type of action this is.
+     *
+     * @return List of sub-actions
+     */
+    List<Action> getChildren();
 
-    <T> T getData(String key, Class<T> type);
+    /**
+     * Adds a listener that is triggered any time child actions are added/removed.
+     *
+     * @param listener Listener to add
+     *
+     * @return The added listener
+     */
+    Listener<Action<T>> addChildrenListener(Listener<Action<T>> listener);
 
-    default Object getData(String key) {
-        return getData(key, Object.class);
-    }
+    /**
+     * Performs whatever routine is necessary to allow the user to edit this action.
+     */
+    void userEdit();
 
-    boolean hasData(String key);
+    /**
+     * Returns the JavaFX node used to display this action in an ActionQueueDisplay object.
+     *
+     * @return Node
+     */
+    ActionDisplay<Action<T>> getDisplay();
 
-    void removeData(String key);
-
-    void reset();
+    /**
+     * Creates a deep copy of this action.
+     *
+     * @return Deep copy of this action
+     */
+    Action<T> copy();
 
     enum Status {
 
-        QUEUED("Queued", "queued"),
+        NOT_STARTED("Not Started", "queued"),
         RUNNING("Running", "progress"),
-        SUCCESS("Completed", "complete"),
+        RETRY("Running (Retry)", "progress"),
+        STOPPING("Stopping", "progress"),
         INTERRUPTED("Interrupted", "cancelled"),
-        ERROR("Error Encountered", "error"),
-        CRITICAL_ERROR("Critical Error Encountered", "error");
+        SKIPPED("Skipped", "cancelled"),
+        COMPLETED("Completed", "complete"),
+        ERROR("Error Encountered", "error");
 
-        private final String text;
         private final Image  image;
+        private final String text;
 
-        Status(String text, String image) {
-            this.text  = text;
-            this.image = new Image(GUI.class.getResourceAsStream(String.format("images/%s.png", image)));
-        }
-
-        public String getText() {
-            return text;
+        Status(String text, String imageName) {
+            this.text = text;
+            image     = new Image(GUI.class.getResourceAsStream(String.format("images/%s.png", imageName)));
         }
 
         public Image getImage() {
             return image;
         }
 
-    }
-
-    interface StatusListener {
-        void statusChanged(Status status);
-    }
-
-    class Result {
-
-        private final Status        finalStatus;
-        private final List<Message> messages;
-
-        public Result(Status finalStatus, List<Message> messages) {
-            this.finalStatus = finalStatus;
-            this.messages    = messages;
+        public String getText() {
+            return text;
         }
 
-        public Result(Status finalStatus) {
-            this(finalStatus, Collections.emptyList());
-        }
-
-        public Status getFinalStatus() {
-            return finalStatus;
-        }
-
-        public List<Message> getMessages() {
-            return messages;
-        }
-
-        public List<Message> getErrors() {
-            return messages.stream().filter(m -> m.getType() == MessageType.ERROR).collect(Collectors.toList());
-        }
-
-    }
-
-    class Message {
-
-        private final long                 timestamp;
-        private final MessageType          type;
-        private final String               message;
-        private final Throwable            exception;
-        private final List<ActionPathPart> actionPath;
-
-        public Message(long timestamp, MessageType type, String message, Throwable exception, List<ActionPathPart> actionPath) {
-            this.timestamp  = timestamp;
-            this.type       = type;
-            this.message    = message;
-            this.exception  = exception;
-            this.actionPath = actionPath;
-        }
-
-        public Message(MessageType type, String message, Throwable exception, List<ActionPathPart> actionPath) {
-            this(System.currentTimeMillis(), type, message, exception, actionPath);
-        }
-
-        public long getTimestamp() {
-            return timestamp;
-        }
-
-        public MessageType getType() {
-            return type;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public Throwable getException() {
-            return exception;
-        }
-
-        public List<ActionPathPart> getActionPath() {
-            return actionPath;
-        }
-
-        public Message propagate(ActionPathPart actionPathPart) {
-
-            List<ActionPathPart> path = new LinkedList<>();
-
-            path.add(actionPathPart);
-            path.addAll(actionPath);
-
-            return new Message(timestamp, type, message, exception, path);
-
-        }
-
-    }
-
-    enum MessageType {
-        INFO,
-        WARNING,
-        ERROR
-    }
-
-    class ActionPathPart<T> {
-
-        private final Action action;
-        private final T      sweepValue;
-
-        public ActionPathPart(Action action, T sweepValue) {
-            this.action     = action;
-            this.sweepValue = sweepValue;
-        }
-
-        public Action getAction() {
-            return action;
-        }
-
-        public T getSweepValue() {
-            return sweepValue;
-        }
-
-        public String toString() {
-
-            if (sweepValue == null) {
-                return action.getName();
-            } else {
-                return String.format("%s (%s)", action.getName(), sweepValue);
-            }
-
-        }
-
-    }
-
-    interface MessageListener {
-        void newMessage(Message message);
     }
 
 }
