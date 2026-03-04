@@ -1,88 +1,277 @@
 package jisa.experiment.queue;
 
+import jisa.experiment.MeasurementOld;
+import jisa.gui.queue.SweepActionDisplay;
+
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class SweepAction<SweepValue> implements Action {
+public class SweepAction<T> extends AbstractAction<Void> {
 
-    private final String                         name;
-    private final IterationGenerator<SweepValue> sweepGenerator;
-    private final DataGenerator<SweepValue>      dataGenerator;
-    private final List<Action>                   sweepActions         = new LinkedList<>();
-    private final List<Action>                   currentActions       = new LinkedList<>();
-    private final List<SweepValue>               sweepValues          = new LinkedList<>();
-    private final List<StatusListener>           statusListeners      = new LinkedList<>();
-    private final List<SweepActionListener>      sweepActionListeners = new LinkedList<>();
-    private final List<MessageListener>          messageListeners     = new LinkedList<>();
-    private final Map<String, Object>            data                 = new LinkedHashMap<>();
-    private       boolean                        critical             = false;
-    private       Status status            = Status.QUEUED;
-    private       int    currentSweepIndex = 0;
+    private       int                lastIndex;
+    private       Action             lastAction;
+    private       MeasurementOld     sweepMeasure   = null;
+    private       boolean            isRunning      = false;
+    private       Formatter<T>       formatter      = String::valueOf;
+    private       boolean            isStopped      = false;
+    private final List<Listener<T>>  valueListeners = new LinkedList<>();
+    private final List<T>            sweepValues    = new LinkedList<>();
+    private final List<Action>       subActions     = new LinkedList<>();
+    private final List<Action>       finalActions   = new LinkedList<>();
+    private final List<List<Action>> children       = new LinkedList<>();
+    private final List<Exception>    exceptions     = new LinkedList<>();
+    private final ActionGenerator<T> generator;
 
-    public SweepAction(String name, IterationGenerator<SweepValue> sweepGenerator, DataGenerator<SweepValue> dataGenerator, Collection<SweepValue> sweepValues) {
-        this.name           = name;
-        this.sweepGenerator = sweepGenerator;
-        this.dataGenerator  = dataGenerator;
-        this.sweepValues.addAll(sweepValues);
+    public SweepAction(String name, Iterable<T> sweepValues, ActionGenerator<T> generator) {
+        setName(name);
+        sweepValues.forEach(this.sweepValues::add);
+        this.generator = generator;
+        regenerateActions();
+    }
+
+    /**
+     * Adds a listener that is triggered every time the current sweep value is changed.
+     *
+     * @param listener Listener to add
+     *
+     * @return The listener that was added
+     */
+    public Listener<T> addSweepValueListener(Listener<T> listener) {
+        valueListeners.add(listener);
+        return listener;
+    }
+
+    /**
+     * Removes the specified listener from this action - if it was added to begin with.
+     *
+     * @param listener The listener to remove
+     */
+    public void removeSweepValueListener(Listener listener) {
+        valueListeners.remove(listener);
     }
 
     @Override
-    public String getName() {
-        return name;
+    public void reset() {
+        setStatus(Status.NOT_STARTED);
+        children.stream().flatMap(List::stream).forEach(Action::reset);
+    }
+
+    /**
+     * Returns an unmodifiable list of values that this action will sweep over.
+     *
+     * @return Sweep values
+     */
+    public List<T> getSweepValues() {
+        return List.copyOf(sweepValues);
+    }
+
+    /**
+     * Returns an unmodifiable list of the string representations of the values this action will sweep over.
+     *
+     * @return String representation of sweep values
+     */
+    public List<String> getSweepStrings() {
+        return sweepValues.stream().map(formatter::format).collect(Collectors.toUnmodifiableList());
+    }
+
+    /**
+     * Sets the values for this action to sweep over.
+     *
+     * @param values Sweep values to use
+     */
+    public void setSweepValues(T... values) {
+        sweepValues.clear();
+        sweepValues.addAll(List.of(values));
+        regenerateActions();
+    }
+
+    /**
+     * Sets the values for this action to sweep over.
+     *
+     * @param values Sweep values to use
+     */
+    public void setSweepValues(Iterable<T> values) {
+        sweepValues.clear();
+        values.forEach(sweepValues::add);
+        regenerateActions();
+    }
+
+    /**
+     * Generates the set of actions for the iteration of the sweep with the given value.
+     *
+     * @param value Value of iteration
+     *
+     * @return List of actions
+     */
+    public List<Action> generateActionsForValue(T value) {
+
+        List<Action<?>> copies = new LinkedList<>();
+
+        for (Action<?> action : subActions) {
+
+            Action<?> copy = action.copy();
+            action.addNameListener(it -> copy.setName(it.getName()));
+            copies.add(copy);
+
+        }
+
+        return generator.generate(value, copies);
+
+    }
+
+    /**
+     * Returns the current value of the swept variable.
+     *
+     * @return Current sweep value
+     */
+    public int getCurrentSweepIndex() {
+        return lastIndex;
+    }
+
+    /**
+     * Returns the string representation of the current value of the swept variable.
+     *
+     * @return String representation of current sweep value
+     */
+    public String getCurrentSweepString() {
+        return format(sweepValues.get(lastIndex));
+    }
+
+    public void setAttribute(String key, String value) {
+        super.setAttribute(key, value);
+        children.stream().flatMap(List::stream).forEach(it -> it.setAttribute(key, value));
     }
 
     @Override
-    public Result run() {
+    public void addTag(String tag) {
+        super.addTag(tag);
+        children.stream().flatMap(List::stream).forEach(it -> it.addTag(tag));
+    }
 
-        List<Message> messages = new LinkedList<>();
+    @Override
+    public void removeTag(String tag) {
+        super.removeTag(tag);
+        children.stream().flatMap(List::stream).forEach(it -> it.removeTag(tag));
+    }
 
-        Message startMessage = new Message(MessageType.INFO, "Starting Sweep", null, List.of(new ActionPathPart(this, null)));
-        messages.add(startMessage);
-        messageListeners.forEach(l -> l.newMessage(startMessage));
+    public void clearTags() {
+        super.clearTags();
+        children.stream().flatMap(List::stream).forEach(Action::clearTags);
+    }
 
+    /**
+     * Specifies how the sweep variable should be converted to a string.
+     *
+     * @param formatter Formatter to use
+     */
+    public void setFormatter(Formatter<T> formatter) {
+        this.formatter = formatter;
+        regenerateActions();
+    }
+
+    public String format(T value) {
+        return formatter.format(value);
+    }
+
+    /**
+     * Regenerates all the sub-actions for this sweep.
+     */
+    public synchronized void regenerateActions() {
+
+        children.clear();
+        lastIndex = 0;
+
+        for (T value : sweepValues) {
+            children.add(generateActionsForValue(value));
+        }
+
+        childrenChanged();
+        valueListeners.forEach(l -> l.updateRegardless(sweepValues.get(lastIndex)));
+
+    }
+
+    public void resume() {
+        start(true);
+    }
+
+    @Override
+    public void start() {
+        start(false);
+    }
+
+    protected void start(boolean resume) {
+
+        isRunning = true;
+        isStopped = false;
         setStatus(Status.RUNNING);
 
-        currentSweepIndex = -1;
+        boolean failed = false;
 
-        for (SweepValue sweepValue : sweepValues) {
+        onStart();
 
-            currentSweepIndex++;
+        int start = 0;
 
-            Message sweepMessage = new Message(MessageType.INFO, String.format("Sweep Value = %s (%d / %d)", sweepValue, currentSweepIndex + 1, sweepValues.size()), null, List.of(new ActionPathPart(this, sweepValue)));
-            messages.add(sweepMessage);
-            messageListeners.forEach(l -> l.newMessage(sweepMessage));
+        if (resume && lastIndex >= 0 && lastIndex < sweepValues.size()) {
+            start = lastIndex;
+        } else {
+            resume = false;
+        }
 
-            currentActions.clear();
-            currentActions.addAll(generateActions(sweepValue));
+        for (int i = 0; i < sweepValues.size(); i++) {
 
-            triggerSweepActionListeners();
+            lastIndex = i;
 
-            Map<String, Object> sweepData = dataGenerator.generateData(sweepValue);
+            T            value   = sweepValues.get(i);
+            List<Action> actions = children.get(i);
 
-            currentActions.forEach(Action::reset);
-            currentActions.forEach(action -> data.forEach(action::setData));
-            currentActions.forEach(action -> sweepData.forEach(action::setData));
+            valueListeners.forEach(l -> l.updateRegardless(value));
 
-            for (Action action : currentActions) {
+            if (resume && actions.contains(lastAction)) {
+                actions = getChildrenByValue(value).subList(actions.indexOf(lastAction), actions.size());
+            } else {
+                resume = false;
+            }
 
-                MessageListener messageListener = action.addMessageListener(m -> {
-                    Message message = m.propagate(new ActionPathPart(this, sweepValue));
-                    messages.add(message);
-                    messageListeners.forEach(l -> l.newMessage(message));
-                });
+            for (Action action : actions) {
 
-                Result result = action.run();
+                lastAction = action;
+                setCritical(action.isCritical());
 
-                action.removeMessageListener(messageListener);
+                if (isStopped) {
+                    action.setStatus(Status.INTERRUPTED);
+                    setStatus(Status.INTERRUPTED);
+                    isRunning = false;
+                    runFinalActions();
+                    onFinish();
+                    return;
+                }
 
-                switch (result.getFinalStatus()) {
+                if (resume) {
+                    action.resume();
+                    resume = false;
+                } else {
+                    action.start();
+                }
 
-                    case CRITICAL_ERROR:
-                        setStatus(Status.CRITICAL_ERROR);
-                        return new Result(getStatus(), messages);
+                if (action.getStatus() == Status.INTERRUPTED) {
+                    setStatus(Status.INTERRUPTED);
+                    isRunning = false;
+                    runFinalActions();
+                    onFinish();
+                    return;
+                }
 
-                    case INTERRUPTED:
-                        setStatus(Status.INTERRUPTED);
-                        return new Result(getStatus(), messages);
+                if (action.getStatus() == Status.ERROR) {
+
+                    failed = true;
+
+                    if (action.isCritical()) {
+                        setStatus(Status.ERROR);
+                        isRunning = false;
+                        runFinalActions();
+                        onFinish();
+                        return;
+                    }
 
                 }
 
@@ -90,157 +279,188 @@ public class SweepAction<SweepValue> implements Action {
 
         }
 
-        setStatus(messages.stream().noneMatch(m -> m.getType() == MessageType.ERROR) ? Status.SUCCESS : Status.ERROR);
+        isRunning = false;
 
-        Message endMessage = new Message(MessageType.INFO, "Sweep Finished", null, List.of(new ActionPathPart(this, null)));
-        messages.add(endMessage);
-        messageListeners.forEach(l -> l.newMessage(endMessage));
+        setStatus(failed ? Status.ERROR : Status.COMPLETED);
 
-        return new Result(getStatus(), messages);
+        runFinalActions();
 
-    }
+        onFinish();
 
-    public synchronized List<Action> getSweepActions() {
-        return List.copyOf(sweepActions);
-    }
-
-    protected void triggerSweepActionListeners() {
-        sweepActionListeners.forEach(l -> l.changed(currentActions));
-    }
-
-    public synchronized void clearSweepActions() {
-        sweepActions.clear();
-        currentActions.clear();
-        currentActions.addAll(generateActions(sweepValues.get(currentSweepIndex)));
-        triggerSweepActionListeners();
-    }
-
-    public synchronized void setSweepActions(Collection<Action> sweepActions) {
-        this.sweepActions.clear();
-        this.sweepActions.addAll(sweepActions);
-        currentActions.clear();
-        currentActions.addAll(generateActions(sweepValues.get(currentSweepIndex)));
-        triggerSweepActionListeners();
-    }
-
-    public synchronized void addSweepAction(Action sweepAction) {
-        sweepActions.add(sweepAction);
-        currentActions.clear();
-        currentActions.addAll(generateActions(sweepValues.get(currentSweepIndex)));
-        triggerSweepActionListeners();
-    }
-
-    public void removeSweepAction(Action sweepAction) {
-        sweepActions.remove(sweepAction);
-        currentActions.clear();
-        currentActions.addAll(generateActions(sweepValues.get(currentSweepIndex)));
-        triggerSweepActionListeners();
     }
 
     @Override
-    public synchronized Status getStatus() {
-        return status;
-    }
+    public void stop() {
 
-    protected synchronized void setStatus(Status status) {
-        this.status = status;
-        statusListeners.forEach(l -> l.statusChanged(status));
-    }
+        isStopped = true;
 
-    @Override
-    public synchronized StatusListener addStatusListener(StatusListener listener) {
-        statusListeners.add(listener);
-        return listener;
+        while (lastAction.isRunning()) {
+            lastAction.stop();
+        }
+
     }
 
     @Override
-    public synchronized void removeStatusListener(StatusListener listener) {
-        statusListeners.remove(listener);
+    public void skip() {
+        lastAction.skip();
+    }
+
+    protected void runFinalActions() {
+        finalActions.forEach(Action::start);
     }
 
     @Override
-    public boolean isCritical() {
-        return critical;
+    public Exception getError() {
+        return new MultiException(exceptions);
     }
 
     @Override
-    public MessageListener addMessageListener(MessageListener listener) {
-        messageListeners.add(listener);
-        return listener;
-    }
-
-    public SweepActionListener addSweepActionListener(SweepActionListener sweepActionListener) {
-        sweepActionListeners.add(sweepActionListener);
-        return sweepActionListener;
-    }
-
-    public void removeSweepActionListener(SweepActionListener sweepActionListener) {
-        sweepActionListeners.remove(sweepActionListener);
+    public boolean isRunning() {
+        return isRunning;
     }
 
     @Override
-    public void removeMessageListener(MessageListener listener) {
-        messageListeners.remove(listener);
+    public Void getData() {
+        return null;
+    }
+
+    public synchronized <R extends Action> R addAction(R action) {
+        subActions.add(action);
+        action.addChildrenListener(it -> regenerateActions());
+        regenerateActions();
+        return action;
+    }
+
+    public synchronized void addActions(Collection<Action> actions) {
+        subActions.addAll(actions);
+        actions.forEach(a -> a.addChildrenListener(it -> regenerateActions()));
+        regenerateActions();
+    }
+
+    public synchronized void removeAction(Action action) {
+        subActions.remove(action);
+        regenerateActions();
+    }
+
+    public synchronized void removeActions(Collection<Action> actions) {
+        subActions.removeAll(actions);
+        regenerateActions();
+    }
+
+    public synchronized void clearActions() {
+        subActions.clear();
+        regenerateActions();
+    }
+
+    public List<Action> getActions() {
+        return List.copyOf(subActions);
     }
 
     @Override
-    public void setData(String key, Object data) {
-        this.data.put(key, data);
+    public List<Action> getChildren() {
+        return children.stream().flatMap(List::stream).collect(Collectors.toList());
+    }
+
+    /**
+     * Returns an unmodifiable list of the actions in the iteration of the sweep with the given value.
+     *
+     * @param value Value
+     *
+     * @return List of actions
+     */
+    public List<Action> getChildrenByValue(T value) {
+
+        int index = sweepValues.indexOf(value);
+
+        if (index < 0) {
+            return Collections.emptyList();
+        }
+
+        return List.copyOf(children.get(index));
+
+    }
+
+    public List<Action> getChildrenByIndex(int index) {
+        return List.copyOf(children.get(index));
+    }
+
+    public List<Action> getFinalActions() {
+        return List.copyOf(finalActions);
+    }
+
+    public synchronized <R extends Action> R addFinalAction(R action) {
+        finalActions.add(action);
+        action.addChildrenListener(it -> regenerateActions());
+        childrenChanged();
+        return action;
+    }
+
+    public synchronized void addFinalActions(Collection<Action> actions) {
+        finalActions.addAll(actions);
+        actions.forEach(a -> a.addChildrenListener(it -> regenerateActions()));
+        childrenChanged();
+    }
+
+    public synchronized void removeFinalAction(Action action) {
+        finalActions.remove(action);
+        childrenChanged();
+    }
+
+    public synchronized void clearFinalActions() {
+        finalActions.clear();
+        childrenChanged();
     }
 
     @Override
-    public <D> D getData(String key, Class<D> type) {
-        return (D) data.get(key);
+    public SweepActionDisplay<T> getDisplay() {
+        return new SweepActionDisplay<T>(this);
+    }
+
+    public void setMeasurement(MeasurementOld measure) {
+        sweepMeasure = measure;
+    }
+
+    public MeasurementOld getMeasurement() {
+        return sweepMeasure;
     }
 
     @Override
-    public boolean hasData(String key) {
-        return data.containsKey(key);
+    public SweepAction<T> copy() {
+
+        SweepAction<T> copy = new SweepAction<>(getName(), getSweepValues(), generator);
+        getAttributes().forEach(copy::setAttribute);
+        copy.addActions(subActions);
+
+        return copy;
+
     }
 
-    @Override
-    public void removeData(String key) {
-        data.remove(key);
+    public static class MultiException extends Exception {
+
+        private final List<Exception> exceptions;
+
+        public MultiException(Exception... exceptions) {
+            super(Arrays.stream(exceptions).map(Exception::getMessage).collect(Collectors.joining(", ")));
+            this.exceptions = List.of(exceptions);
+        }
+
+        public MultiException(Collection<Exception> exceptions) {
+            super(exceptions.stream().map(Exception::getMessage).collect(Collectors.joining(", ")));
+            this.exceptions = List.copyOf(exceptions);
+        }
+
+        public List<Exception> getExceptions() {
+            return exceptions;
+        }
+
     }
 
-    @Override
-    public void reset() {
-        setStatus(Status.QUEUED);
-        sweepActions.forEach(Action::reset);
+    public interface ActionGenerator<T> {
+        List<Action> generate(T value, List<Action<?>> actions);
     }
 
-    public interface IterationGenerator<SweepValue> {
-        List<Action> generateActions(SweepValue sweepValue, List<Action> sweepActions);
-    }
-
-    public interface DataGenerator<SweepValue> {
-        Map<String, Object> generateData(SweepValue sweepValue);
-    }
-
-    public interface SweepActionListener {
-        void changed(List<Action> actions);
-    }
-
-    public List<SweepValue> getSweepValues() {
-        return List.copyOf(sweepValues);
-    }
-
-    public List<Action> generateActions(SweepValue sweepValue) {
-        return sweepGenerator.generateActions(sweepValue, sweepActions);
-    }
-
-    public int getCurrentSweepIndex() {
-        return currentSweepIndex;
-    }
-
-    public SweepValue getCurrentSweepValue() {
-        return sweepValues.get(currentSweepIndex);
-    }
-
-    public void setSweepValues(Collection<SweepValue> sweepValues) {
-        this.sweepValues.clear();
-        this.sweepValues.addAll(sweepValues);
-        sweepActionListeners.forEach(l -> l.changed(this.sweepActions));
+    public interface Formatter<T> {
+        String format(T value);
     }
 
 }
