@@ -1,259 +1,81 @@
 package jisa.gui.queue;
 
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
-import javafx.geometry.Bounds;
+import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.util.Duration;
-import jisa.Util;
 import jisa.experiment.queue.Action;
 import jisa.experiment.queue.ActionQueue;
-import jisa.gui.GUI;
 import jisa.gui.JFXElement;
-import jisa.maths.Range;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ActionQueueDisplay extends JFXElement {
 
-    static {
-        GUI.touch();
-    }
+    private final ActionQueue actionQueue;
 
-    private final VBox               container  = new VBox();
-    private final ScrollPane         scrollPane;
-    private final VBox               list       = new VBox();
-    private final ActionQueue        queue;
-    private final Set<ActionDisplay> selected   = new HashSet<>();
+    private final VBox                      list                 = new VBox();
+    private final ScrollPane                scrollPane           = new ScrollPane(list);
+    private final List<Action>              selected             = new LinkedList<>();
+    private final List<DoubleClickListener> doubleClickListeners = new LinkedList<>();
+    private final ExecutorService           executor             = Executors.newSingleThreadExecutor();
 
-    public ActionQueueDisplay(String title, ActionQueue queue) {
+    public ActionQueueDisplay(String title, ActionQueue actionQueue) {
 
-        super(title, new ScrollPane());
+        super(title);
 
-        this.scrollPane = (ScrollPane) getNode().getCenter();
-        list.setMaxWidth(Double.MAX_VALUE);
-        list.setMaxHeight(Double.MAX_VALUE);
-        VBox.setVgrow(scrollPane, Priority.ALWAYS);
-        container.setMinWidth(500.0);
-        container.setMinHeight(300.0);
-        scrollPane.setContent(container);
-        scrollPane.setFitToHeight(false);
+        setWindowSize(800, 600);
+
+        setCentreNode(scrollPane);
+
         scrollPane.setFitToWidth(true);
-        scrollPane.setBackground(Background.EMPTY);
-        scrollPane.widthProperty().addListener(l -> ((Region) scrollPane.lookup(".viewport")).setBackground(Background.EMPTY));
         BorderPane.setMargin(scrollPane, Insets.EMPTY);
-        container.setPadding(new Insets(GUI.SPACING));
-        list.setBackground(Background.EMPTY);
-        this.queue = queue;
+        scrollPane.setPadding(new Insets(10));
+        scrollPane.setBorder(Border.EMPTY);
+        scrollPane.setBackground(Background.EMPTY);
+        scrollPane.getChildrenUnmodifiable().addListener((InvalidationListener) a -> scrollPane.getChildrenUnmodifiable().stream().filter(node -> node.getStyleClass().contains("viewport")).forEach(node -> ((Pane) node).setBackground(Background.EMPTY)));
 
-        this.list.setSpacing(10.0);
+        this.actionQueue = actionQueue;
 
-        queue.addListener((added, removed, moved) -> GUI.runNow(() -> {
-            addActions(added);
-            removeActions(removed);
-            moveActions(moved);
+        list.setSpacing(10.0);
+
+        actionQueue.getActions().stream().map(ActionDisplay::new).peek(ad -> ad.setOnMouseClicked(event -> executor.submit((() -> handleClick(ad, event))))).forEach(list.getChildren()::add);
+
+        actionQueue.addActionListener(actions -> Platform.runLater(() -> {
+            list.getChildren().clear();
+            actions.stream().map(ActionDisplay::new).peek(ad -> ad.setOnMouseClicked(event -> executor.submit((() -> handleClick(ad, event))))).forEach(list.getChildren()::add);
         }));
 
-        addActions(queue.getActions());
-
-        if (queue.getStartActions() != null) {
-
-            Label label = new Label("Queue Start Actions");
-            label.setPadding(new Insets(5, 0, 5, 0));
-            label.setMaxWidth(Double.MAX_VALUE);
-            VBox.setMargin(label, new Insets(0, 0, 15, 0));
-            label.setBorder(new Border(new BorderStroke(Color.SILVER, BorderStrokeStyle.SOLID, null, new BorderWidths(0, 0, 1, 0))));
-            container.getChildren().add(label);
-
-            ActionQueueDisplay list = new ActionQueueDisplay("Start Actions", queue.getStartActions());
-            list.list.setPadding(new Insets(0, 0, 15, 0));
-            VBox.setMargin(list.list, new Insets(0, 0, 15, 0));
-            list.list.setBorder(label.getBorder());
-            container.getChildren().add(list.list);
-
-            list.queue.addListener((a, b, c) -> {
-                boolean show = list.queue.getActions().size() > 0;
-                list.list.setVisible(show);
-                list.list.setManaged(show);
-                label.setVisible(show);
-                label.setManaged(show);
-            });
-
-            boolean show = list.queue.getActions().size() > 0;
-            list.list.setVisible(show);
-            list.list.setManaged(show);
-            label.setVisible(show);
-            label.setManaged(show);
-            VBox.setVgrow(list.list, Priority.NEVER);
-
-        }
-
-        container.getChildren().add(list);
-
-        if (queue.getStopActions() != null) {
-
-            Label label = new Label("Queue Stop Actions");
-            label.setPadding(new Insets(0, 0, 5, 0));
-            label.setMaxWidth(Double.MAX_VALUE);
-            VBox.setMargin(label, new Insets(15, 0, 15, 0));
-            label.setBorder(new Border(new BorderStroke(Color.SILVER, BorderStrokeStyle.SOLID, null, new BorderWidths(0, 0, 1, 0))));
-            container.getChildren().add(label);
-            ActionQueueDisplay list = new ActionQueueDisplay("Stop Actions", queue.getStopActions());
-            list.list.setPadding(new Insets(0, 0, 15, 0));
-            container.getChildren().add(list.list);
-
-            list.queue.addListener((a, b, c) -> {
-                boolean show = list.queue.getActions().size() > 0;
-                list.list.setVisible(show);
-                list.list.setManaged(show);
-                label.setVisible(show);
-                label.setManaged(show);
-            });
-
-            boolean show = list.queue.getActions().size() > 0;
-            list.list.setVisible(show);
-            list.list.setManaged(show);
-            label.setVisible(show);
-            label.setManaged(show);
-            VBox.setVgrow(list.list, Priority.NEVER);
-
-        }
-
     }
 
-    public List<Action> getSelectedActions() {
-        return selected.stream().map(ActionDisplay::getAction).collect(Collectors.toUnmodifiableList());
-    }
+    private void handleClick(ActionDisplay ad, MouseEvent event) {
 
-    public List<Integer> getSelectedIndices() {
-        List<Action<?>> actions = this.queue.getActions();
-        return selected.stream().map(it -> actions.indexOf(it.getAction())).filter(it -> it > -1).collect(Collectors.toList());
-    }
+        if (event.getButton() == MouseButton.PRIMARY) {
 
-    public void setSelectedActions(Action... actions) {
-        setSelectedActions(List.of(actions));
-    }
+            if (event.getClickCount() == 2) {
 
-    public void setSelectedActions(Collection<Action> actions) {
-        selected.clear();
-        selected.addAll(list.getChildren().stream().filter(it -> it instanceof ActionDisplay).map(it -> (ActionDisplay) it).filter(it -> actions.contains(it.getAction())).collect(Collectors.toList()));
-        updateSelected();
-    }
+                doubleClickListeners.forEach(l -> l.onDoubleClick(ad.getAction()));
 
-    public void setSelectedIndices(Collection<Integer> indices) {
-        List<Action<?>> actions = this.queue.getActions();
-        setSelectedActions(indices.stream().filter(it -> it > -1 && it < actions.size()).map(actions::get).collect(Collectors.toList()));
-    }
+            } else if (event.getClickCount() == 1) {
 
-    protected void updateSelected() {
-        GUI.runNow(() -> {
-            list.getChildren().forEach(it -> ((ActionDisplay) it).setSelected(false));
-            selected.forEach(it -> it.setSelected(true));
-        });
-    }
+                if (!event.isShiftDown()) {
+                    selected.clear();
+                }
 
-    protected void addActions(Collection<Action<?>> actions) {
+                if (ad.isSelected()) {
+                    selected.remove(ad.getAction());
+                } else {
+                    selected.add(ad.getAction());
+                }
 
-        list.getChildren().addAll(
-            actions.stream()
-                   .map(Action::getDisplay)
-                   .peek(a -> a.setOnMouseClicked(e -> Util.runAsync(() -> onActionClicked(a, e))))
-                   .peek(a -> a.addRunningListener(this::scrollToNode))
-                   .collect(Collectors.toList())
-        );
-
-    }
-
-    protected void onActionClicked(ActionDisplay<?> actionDisplay, MouseEvent mouseEvent) {
-
-        if (!queue.isRunning() && mouseEvent.getClickCount() >= 2) {
-
-            actionDisplay.getAction().userEdit();
-
-        } else if (mouseEvent.isControlDown() && !actionDisplay.isSelected()) {
-
-            selected.add(actionDisplay);
-            updateSelected();
-
-        } else if (mouseEvent.isControlDown() && actionDisplay.isSelected()) {
-
-            selected.remove(actionDisplay);
-            updateSelected();
-
-        } else if (mouseEvent.isShiftDown() && !selected.isEmpty()) {
-
-            int index = list.getChildren().indexOf(actionDisplay);
-            int closest = selected.stream()
-                                  .map(list.getChildren()::indexOf)
-                                  .min(Comparator.comparingInt(i -> Math.abs(i - index)))
-                                  .orElse(index);
-
-            for (int i : Range.count(closest, index)) {
-                selected.add((ActionDisplay) list.getChildren().get(i));
-            }
-
-            updateSelected();
-
-        } else if (actionDisplay.isSelected() && selected.size() == 1) {
-
-            selected.clear();
-            updateSelected();
-
-        } else {
-
-            selected.clear();
-            selected.add(actionDisplay);
-            updateSelected();
-
-        }
-
-    }
-
-    public void scrollToAction(Action<?> action) {
-
-        scrollToNode(
-            list.getChildren()
-                .stream()
-                .filter(it -> it instanceof ActionDisplay)
-                .filter(it -> ((ActionDisplay) it).getAction() == action)
-                .findFirst()
-                .orElse(null)
-        );
-
-    }
-
-    public synchronized void scrollToNode(Node node) {
-
-        if (node != null) {
-
-            Bounds scroll  = scrollPane.getViewportBounds();
-            Bounds content = scrollPane.getContent().getBoundsInLocal();
-            Bounds item    = scrollPane.getContent().sceneToLocal(node.localToScene(node.getBoundsInLocal()));
-
-            if (!scrollPane.localToScene(scrollPane.getBoundsInLocal()).contains(node.localToScene(node.getBoundsInLocal()))) {
-
-                GUI.runNow(() -> {
-
-                    double h = content.getHeight();
-                    double y = item.getMinY();
-                    double v = scroll.getHeight();
-
-                    Timeline timeline = new Timeline(
-                        new KeyFrame(Duration.ZERO, new KeyValue(scrollPane.vvalueProperty(), scrollPane.getVvalue())),
-                        new KeyFrame(Duration.millis(250), new KeyValue(scrollPane.vvalueProperty(), scrollPane.getVmax() * (y / (h - v))))
-                    );
-
-                    timeline.playFromStart();
-
+                list.getChildren().stream().filter(n -> n instanceof ActionDisplay).forEach(n -> {
+                    ((ActionDisplay) n).setSelected(selected.contains(((ActionDisplay) n).getAction()));
                 });
 
             }
@@ -262,62 +84,17 @@ public class ActionQueueDisplay extends JFXElement {
 
     }
 
-    protected void removeActions(Collection<Action<?>> actions) {
-        list.getChildren().removeIf(it -> actions.contains(((ActionDisplay) it).getAction()));
+    public DoubleClickListener addDoubleClickListener(DoubleClickListener listener) {
+        doubleClickListeners.add(listener);
+        return listener;
     }
 
-    protected void moveActions(Map<Integer, Action<?>> map) {
-
-        Map<Integer, ActionDisplay<?>> displayMap = new LinkedHashMap<>();
-
-        map.forEach((i, a) -> {
-
-            ActionDisplay<?> display = list.getChildren()
-                                           .stream()
-                                           .filter(it -> it instanceof ActionDisplay)
-                                           .filter(it -> ((ActionDisplay) it).getAction() == a)
-                                           .map(it -> (ActionDisplay<?>) it)
-                                           .findFirst()
-                                           .orElse(null);
-
-            displayMap.put(i, display);
-
-        });
-
-        List<Node> children = new ArrayList<>(list.getChildren());
-
-        displayMap.forEach(children::set);
-        list.getChildren().setAll(children);
-
+    public void removeDoubleClickListener(DoubleClickListener listener) {
+        doubleClickListeners.remove(listener);
     }
 
-    public void setExpanded(boolean show) {
-
-        getAllNodes().stream()
-                     .filter(it -> it instanceof SweepActionDisplay)
-                     .map(it -> (SweepActionDisplay<?>) it)
-                     .forEach(it -> it.setShowAll(show));
-
-        getAllNodes().stream()
-                     .filter(it -> it instanceof SimpleActionDisplay)
-                     .map(it -> (SimpleActionDisplay) it)
-                     .forEach(it -> it.setShowAll(show));
-
-    }
-
-    protected List<Node> getAllNodes() {
-        List<Node> nodes = new LinkedList<>();
-        addAllDescendents(this.list, nodes);
-        return nodes;
-    }
-
-    private static void addAllDescendents(Parent parent, List<Node> nodes) {
-
-        for (Node node : parent.getChildrenUnmodifiable()) {
-            nodes.add(node);
-            if (node instanceof Parent) {addAllDescendents((Parent) node, nodes);}
-        }
-
+    public interface DoubleClickListener {
+        void onDoubleClick(Action action);
     }
 
 }

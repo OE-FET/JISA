@@ -1,5 +1,6 @@
 package jisa.devices.spectrometer;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.camera.Camera;
@@ -28,9 +29,33 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
     private       Converter<F>                    converter;
 
     public CameraSpectrometer(C camera, S spectrograph) throws IOException, DeviceException {
+
         this.camera       = camera;
         this.spectrograph = spectrograph;
-        setConverter(0, getCamera().getFrameHeight()/2, camera.getFrameWidth() - 1, getCamera().getFrameHeight()/2, 200.0, 800.0);
+
+        double[][] counts = new double[1][0];
+        Spectrum[] buffer = new Spectrum[1];
+
+        setConverter(frame -> {
+
+            if (counts[0].length != frame.getWidth()) {
+                counts[0] = new double[frame.getWidth()];
+                buffer[0] = new Spectrum(Range.linear(200, 800, frame.getWidth()).doubleArray(), counts[0]);
+            }
+
+            for (int i = 0; i < frame.getWidth(); i++) {
+
+                counts[0][i] = 0;
+
+                for (int j = 0; j < frame.getHeight(); j++) {
+                    counts[0][i] += frame.get(i, j).doubleValue();
+                }
+
+            }
+
+            return buffer[0];
+
+        });
     }
 
     public void setConverter(Converter<F> converter) {
@@ -51,11 +76,11 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
         Function fitFunc = fit.getFunction();
 
+        List<Util.Pair<Integer, Integer>> pairs = Range.count(startX, endX).stream().map(x -> new Util.Pair<>(x, (int) fitFunc.value(x))).collect(Collectors.toList());
+
         converter = frame -> {
 
-            for (int x = startX; x <= endX; x++) {
-                counts[x - startX] = frame.get(x, (int) fitFunc.value(x)).doubleValue();
-            }
+            System.arraycopy(pairs.stream().mapToDouble(p -> frame.get(p.a(), p.b()).doubleValue()).toArray(), 0, counts, 0, counts.length);
 
             return buffer;
 

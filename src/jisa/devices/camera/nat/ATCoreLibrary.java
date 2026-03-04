@@ -5,6 +5,7 @@ import com.sun.jna.Pointer;
 import com.sun.jna.WString;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
+import jisa.Util;
 import jisa.devices.DeviceException;
 import jisa.visa.Library;
 
@@ -35,6 +36,8 @@ public interface ATCoreLibrary extends Library {
         if (result != AT_SUCCESS) {
             throw new DeviceException("%d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
         }
+
+        Util.addShutdownHook(this::AT_FinaliseLibrary);
 
     }
 

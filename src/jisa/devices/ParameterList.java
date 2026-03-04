@@ -93,6 +93,10 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
     }
 
     public <T> void addAuto(String name, Instrument.Getter<Boolean> autoGet, boolean autoDef, Instrument.Getter<T> valueGet, T defValue, Instrument.Setter<T> autoSetter, Instrument.Setter<T> valueSetter) {
+        addAuto(name, "Auto", autoGet, autoDef, valueGet, defValue, autoSetter, valueSetter);
+    }
+
+    public <T> void addAuto(String name, String autoText, Instrument.Getter<Boolean> autoGet, boolean autoDef, Instrument.Getter<T> valueGet, T defValue, Instrument.Setter<T> autoSetter, Instrument.Setter<T> valueSetter) {
 
         boolean auto;
 
@@ -110,7 +114,7 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
             value = defValue;
         }
 
-        add(new Parameter<Instrument.AutoQuantity<T>>(name, new Instrument.AutoQuantity<>(auto, value), q -> {
+        add(new Parameter<Instrument.AutoQuantity<T>>(name, new Instrument.AutoQuantity<>(auto, value, autoText), q -> {
 
             if (q.isAuto()) {
                 autoSetter.set(q.getValue());

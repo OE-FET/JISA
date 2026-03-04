@@ -240,7 +240,7 @@ public class ConnectorGrid extends Grid {
                 connector,
                 String.format("Connect to \"%s\" (%s)", connector.getTitle(), name),
                 connector.getConnection().getDriver() != null ? "Waiting..." : "Not Configured",
-                connector.getConnection().getDriver() != null ? Action.Status.NOT_STARTED.getImage() : Action.Status.INTERRUPTED.getImage()
+                connector.getConnection().getDriver() != null ? Action.Status.QUEUED.getImage() : Action.Status.INTERRUPTED.getImage()
             );
 
             connector.getConnection().addChangeListener(() -> {
@@ -258,7 +258,7 @@ public class ConnectorGrid extends Grid {
                         break;
 
                     case CONNECTED:
-                        item.setImage(Action.Status.COMPLETED.getImage());
+                        item.setImage(Action.Status.SUCCESS.getImage());
                         item.setSubTitle("Connection Successful");
                         break;
 
@@ -268,7 +268,7 @@ public class ConnectorGrid extends Grid {
                         break;
 
                     default:
-                        item.setImage(Action.Status.NOT_STARTED.getImage());
+                        item.setImage(Action.Status.QUEUED.getImage());
                         item.setSubTitle("Waiting...");
                         break;
 

@@ -2,6 +2,7 @@ package jisa.devices.camera.nat;
 
 import com.sun.jna.WString;
 import com.sun.jna.ptr.LongByReference;
+import jisa.Util;
 import jisa.devices.DeviceException;
 import jisa.visa.Library;
 
@@ -31,6 +32,8 @@ public interface ATUtilityLibrary extends Library {
         if (result != AT_SUCCESS) {
             throw new DeviceException("%d (%s)", result, ERROR_NAMES.getOrDefault(result, "UNKNOWN"));
         }
+
+        Util.addShutdownHook(this::AT_FinaliseUtilityLibrary);
 
     }
 

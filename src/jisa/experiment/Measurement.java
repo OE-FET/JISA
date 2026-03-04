@@ -2,16 +2,16 @@ package jisa.experiment;
 
 import jisa.devices.Configuration;
 import jisa.devices.DeviceException;
+import jisa.gui.Element;
 
 import java.io.IOException;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -24,9 +24,10 @@ public abstract class Measurement<R> {
 
     private final List<InstrumentValue> instruments;
     private final List<ParamValue>      parameters;
-    private final List<StatusListener>  statusListeners  = new LinkedList<>();
-    private final List<MessageListener> messageListeners = new LinkedList<>();
-    private final List<Throwable>       exceptions       = new LinkedList<>();
+    private       List<Element>         customGUIElements = null;
+    private final List<StatusListener>  statusListeners   = new LinkedList<>();
+    private final List<MessageListener> messageListeners  = new LinkedList<>();
+    private final List<Throwable>       exceptions        = new LinkedList<>();
     private final String                name;
 
     private String  label;
@@ -44,10 +45,46 @@ public abstract class Measurement<R> {
         parameters = Arrays.stream(getClass().getDeclaredFields())
                            .filter(f -> f.isAnnotationPresent(Parameter.class))
                            .map(f -> {
+
                                f.setAccessible(true);
                                Parameter annotation = f.getAnnotation(Parameter.class);
-                               return new ParamValue(annotation.section(), annotation.name(), f.getType(), annotation.type(), () -> f.get(this), v -> f.set(this, v), annotation.options());
-                           })
+
+                               if (annotation.type() != Type.CUSTOM) {
+                                   return new ParamValue(annotation.section(), annotation.name(), f.getType(), annotation.type(), () -> f.get(this), v -> f.set(this, v), annotation.options());
+                               } else {
+
+                                   Method getter = Arrays.stream(getClass().getDeclaredMethods())
+                                                         .filter(m -> m.isAnnotationPresent(ParameterGetter.class) && m.getAnnotation(ParameterGetter.class).name().equals(annotation.name()))
+                                                         .filter(m -> m.getParameters().length == 0 && f.getType().isAssignableFrom(m.getReturnType()))
+                                                         .findFirst()
+                                                         .orElse(null);
+
+                                   Method setter = Arrays.stream(getClass().getDeclaredMethods())
+                                                         .filter(m -> m.isAnnotationPresent(ParameterSetter.class) && m.getAnnotation(ParameterSetter.class).name().equals(annotation.name()))
+                                                         .filter(m -> m.getParameters().length == 1 && f.getType().isAssignableFrom(m.getParameters()[0].getType()))
+                                                         .findFirst()
+                                                         .orElse(null);
+
+                                   if (getter == null || setter == null) {
+                                       return null;
+                                   }
+
+                                   return new ParamValue(annotation.section(), annotation.name(), f.getType(), Type.CUSTOM, () -> {
+                                       try {
+                                           f.set(this, getter.invoke(this));
+                                           return f.get(this);
+                                       } catch (InvocationTargetException e) {
+                                           e.printStackTrace();
+                                           return null;
+                                       }
+                                   }, v -> {
+                                       try { setter.invoke(this, f.get(this)); } catch (InvocationTargetException e) {
+                                           e.printStackTrace();
+                                       }
+                                   });
+
+                               }
+                           }).filter(Objects::nonNull)
                            .collect(Collectors.toList());
 
         instruments = Arrays.stream(getClass().getDeclaredFields())
@@ -59,6 +96,21 @@ public abstract class Measurement<R> {
                                 return new InstrumentValue(a.name() + (a.required() ? " (Required)" : " (Optional)"), f.getType(), () -> f.get(this), v -> f.set(this, v), a.required());
                             })
                             .collect(Collectors.toList());
+
+    }
+
+    public <T> void addParameter(String section, String name, Class<T> dataType, Type type, T defaultValue, ParamValue.Getter<T> getter, ParamValue.Setter<T> setter, String... options) {
+
+        ParamValue<T> value = new ParamValue(section, name, dataType, type, getter, setter, options);
+        value.set(defaultValue);
+        parameters.add(value);
+
+    }
+
+    public <I extends jisa.devices.Instrument> void addInstrument(String name, Class<I> type, InstrumentValue.Getter<I> getter, InstrumentValue.Setter<I> setter, boolean required) {
+
+        InstrumentValue<I> value = new InstrumentValue<>(name + (required ? " (Required)" : " (Optional)"), type, getter, setter, required);
+        instruments.add(value);
 
     }
 
@@ -159,12 +211,42 @@ public abstract class Measurement<R> {
      */
     protected abstract void error(R data, List<Throwable> exception);
 
+    /**
+     * This method is called after everything has finished in order to handle the completed data object. For instance,
+     * it may be used to write it to a file, or to convert it from one format to another.
+     *
+     * @param data The data from this run of the measurement/
+     */
+    protected abstract void handleData(R data) throws Exception;
+
     public List<InstrumentValue> getInstruments() {
         return List.copyOf(instruments);
     }
 
     public List<ParamValue> getParameters() {
         return List.copyOf(parameters);
+    }
+
+    public List<Element> getCustomGUIElements() {
+
+        if (customGUIElements == null) {
+
+            customGUIElements = Arrays.stream(getClass().getDeclaredFields())
+                                      .filter(f -> f.isAnnotationPresent(CustomGUIElement.class))
+                                      .filter(f -> Element.class.isAssignableFrom(f.getType()))
+                                      .map(f -> {
+                                          f.setAccessible(true);
+                                          try {
+                                              return (Element) f.get(this);
+                                          } catch (Throwable e) {
+                                              return null;
+                                          }
+                                      }).filter(Objects::nonNull)
+                                      .collect(Collectors.toList());
+
+        }
+
+        return List.copyOf(customGUIElements);
     }
 
     protected void thread(R data) {
@@ -176,11 +258,11 @@ public abstract class Measurement<R> {
 
             try {
 
+                instrument.set(instrument.configuration.configure());
+
                 if (instrument.isRequired() && instrument.get() == null) {
                     throw new MissingInstrumentException("Required instrument \"" + instrument.name + "\" is not configured.");
                 }
-
-                instrument.applyConfiguration();
 
             } catch (Throwable e) {
                 exceptions.add(e);
@@ -628,12 +710,31 @@ public abstract class Measurement<R> {
 
     }
 
+    @Target(ElementType.FIELD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface CustomGUIElement {
+
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface ParameterGetter {
+        String name();
+    }
+
+    @Target(ElementType.METHOD)
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface ParameterSetter {
+        String name();
+    }
+
     public enum Type {
         AUTO,
         TIME,
         FILE_OPEN,
         FILE_SAVE,
-        DIRECTORY_SELECT
+        DIRECTORY_SELECT,
+        CUSTOM;
     }
 
     public enum MessageType {
