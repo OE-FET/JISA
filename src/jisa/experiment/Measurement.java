@@ -211,14 +211,6 @@ public abstract class Measurement<R> {
      */
     protected abstract void error(R data, List<Throwable> exception);
 
-    /**
-     * This method is called after everything has finished in order to handle the completed data object. For instance,
-     * it may be used to write it to a file, or to convert it from one format to another.
-     *
-     * @param data The data from this run of the measurement/
-     */
-    protected abstract void handleData(R data) throws Exception;
-
     public List<InstrumentValue> getInstruments() {
         return List.copyOf(instruments);
     }
