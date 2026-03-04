@@ -163,7 +163,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
         if (defaultValue instanceof Instrument.AutoQuantity) {
 
-            CheckBox checkBox = new CheckBox(((Instrument.AutoQuantity<?>) defaultValue).getAutoText());
+            CheckBox checkBox = new CheckBox("Auto");
             NodeItem quantity = createNode(((Instrument.AutoQuantity<?>) defaultValue).getValue(), choices);
 
             if (quantity == null) {

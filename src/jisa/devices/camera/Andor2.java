@@ -1,13 +1,11 @@
 package jisa.devices.camera;
 
-import com.sun.jna.Memory;
 import com.sun.jna.NativeLong;
 import com.sun.jna.ptr.NativeLongByReference;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.camera.feature.MultiTrack;
-import jisa.devices.camera.feature.SensorCrop;
 import jisa.devices.camera.frame.U16Frame;
 import jisa.devices.camera.nat.ATMCD32D;
 import jisa.devices.features.TemperatureControlled;
@@ -23,7 +21,7 @@ import java.util.concurrent.TimeoutException;
 
 import static jisa.devices.camera.nat.ATMCD32D.*;
 
-public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureControlled, MultiTrack, SensorCrop {
+public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureControlled, MultiTrack {
 
     private final ATMCD32D                  sdk;
     private final int                       index;
@@ -36,21 +34,16 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     private int timeout = 10000;
     private int target  = 290;
 
-    private int         width        = 500;
-    private int         height       = 500;
-    private int         startX       = 0;
-    private int         startY       = 0;
-    private int         xBin         = 1;
-    private int         yBin         = 1;
-    private boolean     centredX     = false;
-    private boolean     centredY     = false;
-    private boolean     multiTrack   = false;
-    private boolean     isolatedCrop = false;
-    private int         cropX        = 1;
-    private int         cropY        = 1;
-    private Memory      imageMemory  = null;
-    private ShortBuffer imageBuffer  = null;
-    private int         frameSize    = 0;
+    private int         width       = 500;
+    private int         height      = 500;
+    private int         startX      = 0;
+    private int         startY      = 0;
+    private int         xBin        = 1;
+    private int         yBin        = 1;
+    private boolean     centredX    = false;
+    private boolean     centredY    = false;
+    private boolean     multiTrack  = false;
+    private ShortBuffer imageBuffer = null;
 
     private static void handle(int result, String method) throws DeviceException {
 
@@ -83,10 +76,10 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
                 NativeLongByReference ref = new NativeLongByReference();
 
-                handle(sdk.GetCameraHandle(new NativeLong(index, true), ref), "GetCameraHandle");
+                handle(sdk.GetCameraHandle(new NativeLong(index, true), ref), "GetCameraPointer");
                 handle = ref.getValue();
 
-                handle(sdk.SetCurrentCamera(handle), "SetCurrentCamera");
+                handle(sdk.SetCurrentCamera(handle), "SelectDevice");
                 handle(sdk.Initialize(""), "Initialize");
 
                 IntBuffer xBuffer = IntBuffer.allocate(1);
@@ -98,12 +91,105 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
                 maxWidth  = width;
                 maxHeight = height;
 
-                handle(sdk.SetReadMode(4), "SetReadMode(IMAGE)");
                 handle(sdk.SetImage(xBin, yBin, 1, width, 1, height), "SetImage");
 
             }
 
         }
+
+    }
+
+    protected void configureReadout() throws IOException, DeviceException {
+
+        withCameraSelected(sdk -> {
+
+            if (multiTrack) {
+
+                if (multiTracks.size() == 1 && (multiTracks.get(0).isBinned() || multiTracks.get(0).getStartRow() == multiTracks.get(0).getEndRow())) {
+
+                    Track track = multiTracks.get(0);
+
+                    if (track.getStartRow() == 1 && track.getEndRow() == maxHeight) {
+
+                        handle(sdk.SetReadMode(0), "SetReadMode(FULL-VERTICAL-BINNING)");
+
+                    } else {
+
+                        int height = track.getEndRow() - track.getStartRow() + 1;
+                        int centre = (track.getStartRow() + track.getEndRow()) / 2;
+
+                        handle(sdk.SetReadMode(3), "SetReadMode(SINGLE-TRACK)");
+                        handle(sdk.SetSingleTrack(centre, height), String.format("SetSingleTrack(%d, %d)", centre, height));
+
+                    }
+
+                } else {
+
+                    int count = 0;
+
+                    for (Track track : multiTracks) {
+
+                        if (track.isBinned()) {
+                            count++;
+                        } else {
+                            count += track.getEndRow() - track.getStartRow() + 1;
+                        }
+
+                    }
+
+                    IntBuffer areas = IntBuffer.allocate(count * 2);
+
+                    for (Track track : multiTracks) {
+
+                        if (track.isBinned()) {
+
+                            areas.put(track.getStartRow());
+                            areas.put(track.getEndRow());
+
+                        } else {
+
+                            for (int i = track.getStartRow(); i <= track.getEndRow(); i++) {
+                                areas.put(i);
+                                areas.put(i);
+                            }
+
+                        }
+
+                    }
+
+                    handle(sdk.SetReadMode(2), "SetReadMode(RANDOM-TRACK)");
+                    handle(sdk.SetRandomTracks(count, areas), "SetRandomTracks");
+
+                }
+
+            } else {
+
+                int xStart;
+                int xEnd;
+                int yStart;
+                int yEnd;
+
+                if (centredX) {
+                    xStart = (maxWidth - width) / 2;
+                } else {
+                    xStart = startX;
+                }
+
+                if (centredY) {
+                    yStart = (maxHeight - height) / 2;
+                } else {
+                    yStart = startY;
+                }
+
+                xEnd = xStart + width - 1;
+                yEnd = yStart + height - 1;
+
+                handle(sdk.SetReadMode(4), "SetReadMode(IMAGE)");
+                handle(sdk.SetImage(xBin, yBin, xStart, xEnd, yStart, yEnd), "SetImage");
+
+            }
+
+        });
 
     }
 
@@ -167,26 +253,20 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     @Override
     public boolean isTemperatureControlStable() throws IOException, DeviceException {
 
-        int[]     resBuffer = new int[1];
+        int[]     buffer    = new int[1];
         IntBuffer intBuffer = IntBuffer.allocate(1);
 
         withCameraSelected(sdk -> {
-            resBuffer[0] = sdk.GetTemperature(intBuffer);
+            buffer[0] = sdk.GetTemperature(intBuffer);
         });
 
-        return resBuffer[0] == DRV_TEMP_STABILIZED;
+        return buffer[0] == DRV_TEMP_STABILIZED;
 
     }
 
     @Override
     public void setMultiTrackEnabled(boolean enabled) throws IOException, DeviceException {
-
         this.multiTrack = enabled;
-
-        if (enabled) {
-            isolatedCrop = false;
-        }
-
     }
 
     @Override
@@ -203,22 +283,6 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     @Override
     public List<Track> getMultiTracks() throws IOException, DeviceException {
         return List.copyOf(multiTracks);
-    }
-
-    @Override
-    public void setSensorCropEnabled(boolean enabled) throws IOException, DeviceException {
-
-        isolatedCrop = enabled;
-
-        if (enabled) {
-            multiTrack = false;
-        }
-
-    }
-
-    @Override
-    public boolean isSensorCropEnabled() throws IOException, DeviceException {
-        return isolatedCrop;
     }
 
     public interface CameraAction {
@@ -299,133 +363,13 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     @Override
     protected void setupAcquisition(int limit) throws IOException, DeviceException {
 
+        configureReadout();
+
+        imageBuffer = ShortBuffer.allocate(getFrameSize());
+
         withCameraSelected(sdk -> {
 
-            // Disable isolated crop mode to start with
-            sdk.SetIsolatedCropMode(0, height, width, xBin, yBin);
-
-            // We need to decide which read mode to use.
-            if (multiTrack) {
-
-                // If we only have one track defined, then we can use one of the single-track modes
-                if (multiTracks.size() == 1 && (multiTracks.get(0).isBinned() || multiTracks.get(0).getStartRow() == multiTracks.get(0).getEndRow())) {
-
-                    Track track = multiTracks.get(0);
-
-                    // For one track that spans the entire sensor, use full vertical binning
-                    if (track.getStartRow() == 1 && track.getEndRow() == maxHeight) {
-
-                        handle(sdk.SetReadMode(0), "SetReadMode(FULL-VERTICAL-BINNING)");
-                        handle(sdk.SetFVBHBin(xBin), "SetFVBHBin");
-
-                        frameSize = maxWidth / xBin;
-
-                    } else {
-
-                        int height = track.getEndRow() - track.getStartRow() + 1;
-                        int centre = (track.getStartRow() + track.getEndRow()) / 2;
-
-                        handle(sdk.SetReadMode(3), "SetReadMode(SINGLE-TRACK)");
-                        handle(sdk.SetSingleTrack(centre, height), String.format("SetSingleTrack(%d, %d)", centre, height));
-                        handle(sdk.SetSingleTrackHBin(xBin), "SetSingleTrackHBin");
-
-                        frameSize = maxWidth / xBin;
-
-                    }
-
-                } else {
-
-                    int count = 0;
-
-                    for (Track track : multiTracks) {
-
-                        if (track.isBinned()) {
-                            count++;
-                        } else {
-                            count += track.getEndRow() - track.getStartRow() + 1;
-                        }
-
-                    }
-
-                    IntBuffer areas = IntBuffer.allocate(count * 2);
-
-                    for (Track track : multiTracks) {
-
-                        if (track.isBinned()) {
-
-                            areas.put(track.getStartRow());
-                            areas.put(track.getEndRow());
-
-                        } else {
-
-                            for (int i = track.getStartRow(); i <= track.getEndRow(); i++) {
-                                areas.put(i);
-                                areas.put(i);
-                            }
-
-                        }
-
-                    }
-
-                    handle(sdk.SetReadMode(2), "SetReadMode(RANDOM-TRACK)");
-                    handle(sdk.SetRandomTracks(count, areas), "SetRandomTracks");
-                    handle(sdk.SetCustomTrackHBin(xBin), "SetCustomTrackHBin");
-
-                    frameSize = count * (maxWidth / xBin);
-
-                }
-
-            } else if (isolatedCrop) {
-
-                if (yBin == height) {
-
-                    handle(sdk.SetReadMode(0), "SetReadMode(FULL-VERTICAL-BINNING)");
-                    handle(sdk.SetIsolatedCropMode(1, height, width, xBin, 1), "SetIsolatedCropMode");
-
-                    frameSize = width;
-
-                } else {
-
-                    handle(sdk.SetReadMode(4), "SetReadMode(IMAGE)");
-                    handle(sdk.SetIsolatedCropMode(1, height, width, xBin, yBin), "SetIsolatedCropMode");
-                    handle(sdk.SetImage(1, 1, 1, width, 1, height), "SetImage");
-
-                    frameSize = width * height;
-
-                }
-
-
-            } else {
-
-                int xStart;
-                int xEnd;
-                int yStart;
-                int yEnd;
-
-                if (centredX) {
-                    xStart = (maxWidth - width) / 2;
-                } else {
-                    xStart = startX;
-                }
-
-                if (centredY) {
-                    yStart = (maxHeight - height) / 2;
-                } else {
-                    yStart = startY;
-                }
-
-                xEnd = xStart + width - 1;
-                yEnd = yStart + height - 1;
-
-                handle(sdk.SetReadMode(4), "SetReadMode(IMAGE)");
-                handle(sdk.SetImage(xBin, yBin, xStart, xEnd, yStart, yEnd), "SetImage");
-
-                frameSize = width * height;
-
-            }
-
-            imageMemory = new Memory(frameSize * Short.BYTES);
-            imageBuffer = imageMemory.getByteBuffer(0, frameSize * Short.BYTES).asShortBuffer();
+            int result;
 
             if (limit == 1) {
                 handle(sdk.SetAcquisitionMode(AC_ACQMODE_SINGLE), "SetAcquisitionMode(SINGLE)");
@@ -442,14 +386,13 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
     @Override
     protected U16Frame createFrameBuffer() {
-        return new U16Frame(new short[frameSize], width, height);
+        return new U16Frame(new short[width * height], width, height);
     }
 
     @Override
     protected void acquisitionLoop(U16Frame frameBuffer) throws IOException, DeviceException, InterruptedException, TimeoutException {
 
-        int  result    = sdk.WaitForAcquisitionByHandleTimeOut(handle, timeout);
-        long timestamp = System.nanoTime();
+        int result = sdk.WaitForAcquisitionByHandleTimeOut(handle, timeout);
 
         if (result != DRV_SUCCESS) {
 
@@ -461,12 +404,9 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         }
 
-        withCameraSelected(sdk -> {
-            sdk.GetMostRecentImage16(imageBuffer.clear().rewind(), new NativeLong(imageBuffer.capacity(), true));
-        });
+        withCameraSelected(sdk -> sdk.GetMostRecentImage16(imageBuffer.clear().rewind(), new NativeLong(imageBuffer.capacity(), true)));
 
         imageBuffer.get(frameBuffer.array());
-        frameBuffer.setTimestamp(timestamp);
 
     }
 
@@ -476,9 +416,6 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
         withCameraSelected(sdk -> {
             handle(sdk.AbortAcquisition(), "AbortAcquisition");
         });
-
-        imageBuffer = null;
-        imageMemory.close();
 
     }
 
