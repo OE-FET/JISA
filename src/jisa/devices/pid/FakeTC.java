@@ -3,6 +3,7 @@ package jisa.devices.pid;
 import jisa.addresses.Address;
 import jisa.control.RTask;
 import jisa.devices.DeviceException;
+import jisa.devices.ParameterList;
 
 import java.io.IOException;
 import java.util.List;
@@ -270,6 +271,10 @@ public class FakeTC implements TC {
             return FakeTC.this.getAddress();
         }
 
+        @Override
+        public void addInstrumentParameters(Class<?> target, ParameterList parameters) {
+            parameters.addChoice("Type", "TYPE A", (v) -> {}, "TYPE A", "TYPE B", "TYPE C");
+        }
     };
 
 }

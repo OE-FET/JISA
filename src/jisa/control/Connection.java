@@ -30,6 +30,7 @@ public class Connection<T extends Instrument> {
     private       T                  instrument = null;
     private       Status             status     = Status.DISCONNECTED;
     private       int                attempts   = 1;
+    private       int                timeout    = 2000;
 
     public Connection(String name, Class<T> type) {
         this.driverClass = type;
@@ -75,19 +76,19 @@ public class Connection<T extends Instrument> {
     public static <T extends Instrument> List<Connection<?>> getConnectionsByTarget(Class<T> target) {
 
         return ALL_CONNECTIONS.stream()
-                              .filter(c ->
-                                  (c.isConnected() && target.isAssignableFrom(c.getDriver()))
-                                      || target.isAssignableFrom(c.getType())
-                                      || (c.getInstrument() instanceof MultiInstrument && ((MultiInstrument) c.getInstrument()).contains(target))
-                              ).collect(Collectors.toList());
+                .filter(c ->
+                        (c.isConnected() && target.isAssignableFrom(c.getDriver()))
+                                || target.isAssignableFrom(c.getType())
+                                || (c.getInstrument() instanceof MultiInstrument && ((MultiInstrument) c.getInstrument()).contains(target))
+                ).collect(Collectors.toList());
 
     }
 
     public static <T> List<Connection<?>> getConnectionsOf(Class<T> type) {
 
         return ALL_CONNECTIONS.stream()
-                              .filter(con -> con.isConnected() && type.isAssignableFrom(con.getInstrument().getClass()))
-                              .collect(Collectors.toList());
+                .filter(con -> con.isConnected() && type.isAssignableFrom(con.getInstrument().getClass()))
+                .collect(Collectors.toList());
 
     }
 
@@ -96,6 +97,7 @@ public class Connection<T extends Instrument> {
         block.stringValue("Driver").set(driver == null ? null : driver.getName());
         block.stringValue("Address").set(address == null ? null : address.getJISAString());
         block.intValue("Attempts").set(attempts);
+        block.intValue("Timeout").set(timeout);
         block.save();
 
     }
@@ -106,6 +108,7 @@ public class Connection<T extends Instrument> {
             driver   = (Class<? extends T>) Class.forName(block.stringValue("Driver").get());
             address  = Address.parse(block.stringValue("Address").get());
             attempts = block.intValue("Attempts").getOrDefault(1);
+            timeout  = block.intValue("Timeout").getOrDefault(2000);
             triggerChange();
         } catch (Exception e) {
             e.printStackTrace();
@@ -176,6 +179,14 @@ public class Connection<T extends Instrument> {
         return attempts;
     }
 
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
+    }
+
+    public int getTimeout() {
+        return timeout;
+    }
+
     public void connect() throws Exception {
 
         Exception caught = null;
@@ -198,6 +209,8 @@ public class Connection<T extends Instrument> {
                     Constructor<? extends T> constructor = driver.getConstructor(Address.class);
                     instrument = constructor.newInstance(address);
                     status     = Status.CONNECTED;
+
+                    instrument.setTimeout(timeout);
 
                 } catch (IllegalAccessException | InstantiationException | NoSuchMethodException e) {
 

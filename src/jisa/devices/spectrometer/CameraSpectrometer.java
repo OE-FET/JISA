@@ -13,6 +13,7 @@ import jisa.maths.fits.LinearFit;
 import jisa.maths.functions.Function;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,31 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
             }
 
             return buffer;
+
+        };
+
+    }
+
+    public void setConverter(double[] wavelengths) throws IOException, DeviceException {
+
+        final double[] counts   = new double[camera.getFrameWidth()];
+        final Spectrum spectrum = new Spectrum(wavelengths, counts);
+
+        this.converter = frame -> {
+
+            Arrays.fill(counts, 0.0);
+
+            for (int y = 0; y < frame.getHeight(); y++) {
+
+                for (int x = 0; x < frame.getWidth(); x++) {
+                    counts[x] += frame.get(x, y).doubleValue();
+                }
+
+            }
+
+            spectrum.setTimestamp(frame.getTimestamp());
+
+            return spectrum;
 
         };
 

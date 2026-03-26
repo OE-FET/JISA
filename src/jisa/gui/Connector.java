@@ -23,7 +23,6 @@ import jisa.gui.controls.IntegerField;
 import kotlin.reflect.KClass;
 import org.reflections.Reflections;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.Comparator;
 import java.util.Map;
@@ -53,6 +52,8 @@ public class Connector<T extends Instrument> extends JFXElement {
     protected Button                                    removeButton;
     @FXML
     protected com.sun.javafx.scene.control.IntegerField retries;
+    @FXML
+    protected com.sun.javafx.scene.control.IntegerField timeout;
 
     protected Connection<T>       connection;
     protected Map<String, Object> addressParams = null;
@@ -124,6 +125,7 @@ public class Connector<T extends Instrument> extends JFXElement {
         }
 
         retries.setValue(connection.getAttempts());
+        timeout.setValue(connection.getTimeout());
 
         protocolChoice.getItems().setAll(reflections.getSubTypesOf(Address.class)
                                                     .stream()
@@ -248,6 +250,7 @@ public class Connector<T extends Instrument> extends JFXElement {
                     addressParams = connection.getAddress().getParameters();
                     protocolChoice.setValue(connection.getAddress().getClass());
                     retries.setValue(connection.getAttempts());
+                    timeout.setValue(connection.getTimeout());
                     updateAddressParameters();
                 }
 
@@ -339,6 +342,7 @@ public class Connector<T extends Instrument> extends JFXElement {
             connection.setDriver(driverChoice.getValue());
             connection.setAddress(address);
             connection.setAttempts(Math.max(1, retries.getValue()));
+            connection.setTimeout(Math.max(0, timeout.getValue()));
             connection.connect();
 
         } catch (Exception e) {
