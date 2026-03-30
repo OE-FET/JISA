@@ -7,9 +7,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.*;
 
 
@@ -18,6 +16,8 @@ public class Spectrum implements Iterable<Spectrum.Point> {
     protected final double[] wavelengths;
     protected final double[] counts;
     protected       long     timestamp;
+
+    protected final Map<String, Object> attributes = new LinkedHashMap<>();
 
     public Spectrum(double[] wavelengths, double[] counts, long timestamp) {
 
@@ -29,6 +29,11 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         this.counts      = counts;
         this.timestamp   = timestamp;
 
+    }
+
+    public Spectrum(double[] wavelengths, double[] counts, long timestamp, Map<String, Object> attributes) {
+        this(wavelengths, counts, timestamp);
+        this.attributes.putAll(attributes);
     }
 
     public Spectrum(Iterable<? extends Number> wavelengths, Iterable<? extends Number> counts, long timestamp) {
@@ -98,12 +103,18 @@ public class Spectrum implements Iterable<Spectrum.Point> {
             throw new IllegalArgumentException(String.format("Spectrum sizes are not equal (trying to add %d points to %d).", other.size(), size()));
         }
 
+        Map<String, Object> attributes = new LinkedHashMap<>();
+
         return new Spectrum(
             wavelengths.clone(),
             IntStream.range(0, size()).mapToDouble(i -> counts[i] + other.counts[i]).toArray(),
             Math.max(timestamp, other.timestamp)
         );
 
+    }
+
+    public Map<String, Object> getAttributes() {
+        return attributes;
     }
 
     /**
@@ -259,7 +270,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      * @return Deep copy.
      */
     public Spectrum copy() {
-        return new Spectrum(getWavelengths(), getCounts(), getTimestamp());
+        return new Spectrum(getWavelengths(), getCounts(), getTimestamp(), getAttributes());
     }
 
     /**
@@ -341,7 +352,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         System.arraycopy(wavelengths, start, newWl, 0, newWl.length);
         System.arraycopy(counts, start, newCt, 0, newCt.length);
 
-        return new Spectrum(newWl, newCt, timestamp);
+        return new Spectrum(newWl, newCt, timestamp, attributes);
 
     }
 
@@ -395,7 +406,7 @@ public class Spectrum implements Iterable<Spectrum.Point> {
             ctBuffer.put(spectrum.counts);
         }
 
-        return new Spectrum(wlBuffer.array(), ctBuffer.array(), Arrays.stream(spectra).mapToLong(Spectrum::getTimestamp).max().orElse(0L));
+        return new Spectrum(wlBuffer.array(), ctBuffer.array(), Arrays.stream(spectra).mapToLong(Spectrum::getTimestamp).max().orElse(0L), spectra[0].getAttributes());
 
     }
 

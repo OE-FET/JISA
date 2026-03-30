@@ -6,6 +6,8 @@ import io.jhdf.api.WritableGroup;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -14,6 +16,8 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
     private final int[] argb;
     private final int   width;
     private final int   height;
+
+    private final Map<String, Object> attributes = new LinkedHashMap<>();
 
     private long timestamp;
 
@@ -25,6 +29,7 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
         this.argb      = Stream.of(data).mapToInt(RGB::getARGB).toArray();
 
     }
+
 
     public RGBFrame(RGB[] data, int width, int height) {
         this(data, width, height, System.nanoTime());
@@ -50,9 +55,14 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
         this.argb      = argb;
     }
 
+    public RGBFrame(int[] argb, int width, int height, long timestamp, Map<String, Object> attributes) {
+        this(argb, width, height, timestamp);
+        this.attributes.putAll(attributes);
+    }
+
     @Override
     public RGBFrame copy() {
-        return new RGBFrame(argb.clone(), width, height, timestamp);
+        return new RGBFrame(argb.clone(), width, height, timestamp, attributes);
     }
 
     @Override
@@ -195,8 +205,13 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
             }
         }
 
-        return new RGBFrame(sub, width, height, timestamp);
+        return new RGBFrame(sub, width, height, timestamp, attributes);
 
+    }
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes;
     }
 
 }

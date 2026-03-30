@@ -31,11 +31,29 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
     public CameraSpectrometer(C camera, S spectrograph) throws IOException, DeviceException {
         this.camera       = camera;
         this.spectrograph = spectrograph;
-        setConverter(0, getCamera().getFrameHeight()/2, camera.getFrameWidth() - 1, getCamera().getFrameHeight()/2, 200.0, 800.0);
+        setConverter(0, getCamera().getFrameHeight() / 2, camera.getFrameWidth() - 1, getCamera().getFrameHeight() / 2, 200.0, 800.0);
     }
 
     public void setConverter(Converter<F> converter) {
-        this.converter = converter;
+
+        this.converter = f -> {
+
+            Spectrum s = converter.convert(f);
+
+            s.getAttributes().putAll(f.getAttributes());
+            s.getAttributes().putAll(spectrograph.getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
+
+                try {
+                    return p.getCurrentValue();
+                } catch (Throwable e) {
+                    return null;
+                }
+
+            })));
+
+            return s;
+
+        };
     }
 
     public void setConverter(int startX, int startY, int endX, int endY, double startWL, double endWL) throws DeviceException {
@@ -52,7 +70,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
         Function fitFunc = fit.getFunction();
 
-        converter = frame -> {
+        setConverter(frame -> {
 
             for (int x = startX; x <= endX; x++) {
                 counts[x - startX] = frame.get(x, (int) fitFunc.value(x)).doubleValue();
@@ -60,7 +78,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
             return buffer;
 
-        };
+        });
 
     }
 
@@ -69,7 +87,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
         final double[] counts   = new double[camera.getFrameWidth()];
         final Spectrum spectrum = new Spectrum(wavelengths, counts);
 
-        this.converter = frame -> {
+        setConverter(frame -> {
 
             Arrays.fill(counts, 0.0);
 
@@ -85,7 +103,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
             return spectrum;
 
-        };
+        });
 
     }
 
@@ -169,7 +187,13 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
     @Override
     public Spectrum getSpectrum() throws IOException, DeviceException, InterruptedException, TimeoutException {
-        return converter.convert(camera.getFrame());
+
+        F        frame    = camera.getFrame();
+        Spectrum spectrum = converter.convert(frame);
+        spectrum.getAttributes().putAll(frame.getAttributes());
+
+        return spectrum;
+
     }
 
     @Override

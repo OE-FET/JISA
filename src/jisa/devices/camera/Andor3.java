@@ -625,6 +625,8 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
                 flush();
 
+                frame.loadAttributes(this);
+
                 return frame;
 
             }
@@ -771,7 +773,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
                     short[] frameData = new short[imageSize];
                     converted.asShortBuffer().get(frameData, 0, imageSize);
 
-                    Frame frame = new Frame(frameData, width, height);
+                    Frame frame = new Frame(frameData, width, height, this);
 
                     if (timeStampEnabled) {
 
@@ -1066,7 +1068,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         final Enum    encoding   = getEnum("PixelEncoding");
 
         // Create a frame to hold the latest frame data
-        frameBuffer = new Frame(data, width, height);
+        frameBuffer = new Frame(data, width, height, this);
 
         // Clear the queue between the acquisition and processing threads
         queued.clear();
@@ -1562,12 +1564,35 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             super(data, width, height);
         }
 
+        public Frame(short[] data, int width, int height, Andor3 camera) {
+            this(data, width, height);
+            loadAttributes(camera);
+        }
+
         public Frame(Short[] data, int width, int height) {
             super(data, width, height);
         }
 
         public Frame(int width, int height) {
             super(new short[width * height], width, height);
+        }
+
+        public void loadAttributes(Andor3 camera) {
+
+            getAttributes().putAll(
+
+                    camera.getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
+
+                        try {
+                            return p.getCurrentValue();
+                        } catch (Throwable e) {
+                            return null;
+                        }
+
+                    }))
+
+            );
+
         }
 
         protected void update(short[] data, long timestamp) {

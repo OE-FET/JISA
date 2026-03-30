@@ -57,7 +57,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         super("Andor SDK2 Camera");
 
-        this.sdk   = findLibrary(ATMCD32D.class, "atmcd23d");
+        this.sdk   = findLibrary(ATMCD32D.class, "atmcd32d");
         this.index = index;
 
         synchronized (sdk) {

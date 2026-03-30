@@ -9,6 +9,7 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 public interface Frame<D, F extends Frame> {
@@ -178,6 +179,20 @@ public interface Frame<D, F extends Frame> {
      * @return Sub-image
      */
     F subFrame(int x, int y, int width, int height);
+
+    Map<String, Object> getAttributes();
+
+    default int getAttributeInt(String key) {
+        return (int) getAttributes().get(key);
+    }
+
+    default double getAttributeDouble(String key) {
+        return (double) getAttributes().get(key);
+    }
+
+    default void setAttribute(String key, Object value) {
+        getAttributes().put(key, value);
+    }
 
     /**
      * Loop over each (x, y) value and the value of the pixel at each pair.

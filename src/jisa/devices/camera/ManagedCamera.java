@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 /**
  * Abstract class for NativeDevice cameras (i.e., those that need to use a system library/so/dylib/dll) that provides
@@ -84,6 +85,28 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
      */
     protected abstract void cancelAcquisition();
 
+    protected F newFrameBuffer() {
+
+        final F frameBuffer = createFrameBuffer();
+
+        frameBuffer.getAttributes().putAll(
+
+                getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
+
+                    try {
+                        return p.getCurrentValue();
+                    } catch (Throwable e) {
+                        return null;
+                    }
+
+                }))
+
+        );
+
+        return frameBuffer;
+
+    }
+
     @Override
     public synchronized void startAcquisition() throws IOException, DeviceException {
 
@@ -98,7 +121,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
         // Create a thread that will continously acquire until we set acquiring = false
         acquisitionThread = new Thread(() -> {
 
-            final F frameBuffer = createFrameBuffer();
+            final F frameBuffer = newFrameBuffer();
 
             count         = 0;
             lastCount     = 0;
@@ -239,7 +262,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
             setupAcquisition(count);
 
             for (int i = 0; i < count; i++) {
-                F frame = createFrameBuffer();
+                F frame = newFrameBuffer();
                 acquisitionLoop(frame);
                 frames.add(frame);
             }
@@ -274,7 +297,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
         try {
 
             setupAcquisition(1);
-            F frame = createFrameBuffer();
+            F frame = newFrameBuffer();
             acquisitionLoop(frame);
 
             return frame;

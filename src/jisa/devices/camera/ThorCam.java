@@ -20,9 +20,11 @@ import java.io.*;
 import java.nio.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 /**
  * Driver class for ThorLabs cameras.
@@ -57,25 +59,25 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     public static final int BYTES_PER_COLOUR_PIXEL = 6;
 
     public static final Map<Integer, String> ERROR_NAMES =
-        Util.map(ERROR_NONE, "No Error")
-            .map(ERROR_COMMAND_NOT_FOUND, "Unknown Command")
-            .map(ERROR_TOO_MANY_ARGUMENTS, "Too Many Arguments sent with Command")
-            .map(ERROR_NOT_ENOUGH_ARGUMENTS, "Too Few Arguments sent with Command")
-            .map(ERROR_INVALID_COMMAND, "Invalid Command")
-            .map(ERROR_DUPLICATE_COMMAND, "Duplicate Command")
-            .map(ERROR_MISSING_JSON_COMMAND, "Command not Documented in JSON")
-            .map(ERROR_INITIALIZING, "Camera Still Initialising")
-            .map(ERROR_NOTSUPPORTED, "Command Not Supported")
-            .map(ERROR_FPGA_NOT_PROGRAMMED, "No Firmware Image on FPGA")
-            .map(ERROR_ROI_WIDTH_ERROR, "Invalid ROI Width Value")
-            .map(ERROR_ROI_RANGE_ERROR, "Invalid ROI Range Value")
-            .map(ERROR_RANGE_ERROR, "Value out of Range for Command")
-            .map(ERROR_COMMAND_LOCKED, "Command Locked")
-            .map(ERROR_CAMERA_MUST_BE_STOPPED, "Command Requires Camera to be Stopped")
-            .map(ERROR_ROI_BIN_COMBO_ERROR, "ROI/Binning Error")
-            .map(ERROR_IMAGE_DATA_SYNC_ERROR, "Data Sync Error")
-            .map(ERROR_CAMERA_MUST_BE_DISARMED, "Command Requires Camera to be Disarmed")
-            .map(ERROR_MAX_ERRORS, "END OF ENUMERATION");
+            Util.map(ERROR_NONE, "No Error")
+                    .map(ERROR_COMMAND_NOT_FOUND, "Unknown Command")
+                    .map(ERROR_TOO_MANY_ARGUMENTS, "Too Many Arguments sent with Command")
+                    .map(ERROR_NOT_ENOUGH_ARGUMENTS, "Too Few Arguments sent with Command")
+                    .map(ERROR_INVALID_COMMAND, "Invalid Command")
+                    .map(ERROR_DUPLICATE_COMMAND, "Duplicate Command")
+                    .map(ERROR_MISSING_JSON_COMMAND, "Command not Documented in JSON")
+                    .map(ERROR_INITIALIZING, "Camera Still Initialising")
+                    .map(ERROR_NOTSUPPORTED, "Command Not Supported")
+                    .map(ERROR_FPGA_NOT_PROGRAMMED, "No Firmware Image on FPGA")
+                    .map(ERROR_ROI_WIDTH_ERROR, "Invalid ROI Width Value")
+                    .map(ERROR_ROI_RANGE_ERROR, "Invalid ROI Range Value")
+                    .map(ERROR_RANGE_ERROR, "Value out of Range for Command")
+                    .map(ERROR_COMMAND_LOCKED, "Command Locked")
+                    .map(ERROR_CAMERA_MUST_BE_STOPPED, "Command Requires Camera to be Stopped")
+                    .map(ERROR_ROI_BIN_COMBO_ERROR, "ROI/Binning Error")
+                    .map(ERROR_IMAGE_DATA_SYNC_ERROR, "Data Sync Error")
+                    .map(ERROR_CAMERA_MUST_BE_DISARMED, "Command Requires Camera to be Disarmed")
+                    .map(ERROR_MAX_ERRORS, "END OF ENUMERATION");
 
     private final ListenerManager<F> listenerManager = new ListenerManager<>();
 
@@ -221,14 +223,14 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         try (Memory memory = new Memory(4 * Integer.BYTES)) {
 
             process(
-                converter.get(
-                    handle,
-                    memory.getByteBuffer(0, Integer.BYTES).asIntBuffer(),
-                    memory.getByteBuffer(Integer.BYTES, Integer.BYTES).asIntBuffer(),
-                    memory.getByteBuffer(2 * Integer.BYTES, Integer.BYTES).asIntBuffer(),
-                    memory.getByteBuffer(3 * Integer.BYTES, Integer.BYTES).asIntBuffer()
-                ),
-                name
+                    converter.get(
+                            handle,
+                            memory.getByteBuffer(0, Integer.BYTES).asIntBuffer(),
+                            memory.getByteBuffer(Integer.BYTES, Integer.BYTES).asIntBuffer(),
+                            memory.getByteBuffer(2 * Integer.BYTES, Integer.BYTES).asIntBuffer(),
+                            memory.getByteBuffer(3 * Integer.BYTES, Integer.BYTES).asIntBuffer()
+                    ),
+                    name
             );
 
             return memory.getIntArray(0, 4);
@@ -481,7 +483,8 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         try {
             acquisitionThread.join();
-        } catch (InterruptedException ignored) { }
+        } catch (InterruptedException ignored) {
+        }
 
     }
 
@@ -865,7 +868,6 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
      * Sets whether the LED on the camera is turned on or not.
      *
      * @param enabled Turned on?
-     *
      * @throws IOException     Upon communications error.
      * @throws DeviceException Upon device compatibility error.
      */
@@ -877,7 +879,6 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
      * Returns whether the LED on the camera is turned on or not.
      *
      * @return Turned on?
-     *
      * @throws IOException     Upon communications error.
      * @throws DeviceException Upon device compatibility error.
      */
@@ -896,7 +897,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
                 if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
                     dBuffer[0] = new long[width * height];
-                    buffer[0]  = new ColourFrame(dBuffer[0], width, height, timestamp);
+                    buffer[0]  = new ColourFrame(dBuffer[0], width, height, timestamp, Collections.emptyMap());
                 }
 
                 ByteBuffer.wrap(data).asLongBuffer().rewind().get(dBuffer[0]);
@@ -1029,15 +1030,19 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         protected U16RGBFrame createFrame(int width, int height, long[] array, long timestamp) {
 
             try {
-
-                if (getBinningX() > 1 || getBinningY() > 1) {
-                    return new U16RGBFrame(array, width, height, timestamp);
-                } else {
-                    return new ColourFrame(array, width, height, timestamp);
-                }
-
+                return new ColourFrame(array, width, height, timestamp, this);
             } catch (Throwable ignored) {
-                return new U16RGBFrame(array, width, height, timestamp);
+
+                return new U16RGBFrame(array, width, height, timestamp, getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
+
+                    try {
+                        return p.getCurrentValue();
+                    } catch (Throwable e) {
+                        return null;
+                    }
+
+                })));
+
             }
 
         }
@@ -1078,7 +1083,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
                 if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
                     dBuffer[0] = new short[width * height];
-                    buffer[0]  = new MonoFrame(dBuffer[0], width, height, timestamp);
+                    buffer[0]  = new MonoFrame(dBuffer[0], width, height, timestamp, Collections.emptyMap());
                 }
                 ByteBuffer.wrap(data).asShortBuffer().rewind().get(dBuffer[0]);
                 buffer[0].setTimestamp(timestamp);
@@ -1112,7 +1117,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         @Override
         protected U16Frame createFrame(int width, int height, short[] array, long timestamp) {
-            return new MonoFrame(array, width, height, timestamp);
+            return new MonoFrame(array, width, height, timestamp, this);
         }
 
         @Override
@@ -1126,12 +1131,22 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         private final static U16RGB MAX = new U16RGB(((long) Character.MAX_VALUE << 48 | (long) 4096 << 32 | (long) 4096 << 16 | 4096));
 
-        public ColourFrame(char[] red, char[] green, char[] blue, int width, int height, long timestamp) {
-            super(red, green, blue, width, height, timestamp);
+        public ColourFrame(long[] argb, int width, int height, long timestamp, ThorCam camera) {
+
+            super(argb, width, height, timestamp, camera.getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
+
+                try {
+                    return p.getCurrentValue();
+                } catch (Throwable e) {
+                    return null;
+                }
+
+            })));
+
         }
 
-        public ColourFrame(long[] argb, int width, int height, long timestamp) {
-            super(argb, width, height, timestamp);
+        public ColourFrame(long[] argb, int width, int height, long timestamp, Map<String, Object> attributes) {
+            super(argb, width, height, timestamp, attributes);
         }
 
         public U16RGB getMax() {
@@ -1139,7 +1154,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         }
 
         public ColourFrame copy() {
-            return new ColourFrame(argb.clone(), width, height, timestamp);
+            return new ColourFrame(argb.clone(), width, height, timestamp, attributes);
         }
 
         @Override
@@ -1152,9 +1167,9 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
                 v = argb[i];
 
                 destination[i] = (int) (((0xFF << 24)
-                    | (((v >> 32) & 0xFFFF) >> 4) << 16)
-                    | (((v >> 16) & 0xFFFF) >> 4) << 8
-                    | ((v & 0xFFFF) >> 4));
+                        | (((v >> 32) & 0xFFFF) >> 4) << 16)
+                        | (((v >> 16) & 0xFFFF) >> 4) << 8
+                        | ((v & 0xFFFF) >> 4));
 
             }
 
@@ -1164,20 +1179,22 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
     protected static class MonoFrame extends U16Frame {
 
-        public MonoFrame(short[] data, int width, int height, long timestamp) {
-            super(data, width, height, timestamp);
+        public MonoFrame(short[] data, int width, int height, long timestamp, ThorCam camera) {
+
+            super(data, width, height, timestamp, camera.getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
+
+                try {
+                    return p.getCurrentValue();
+                } catch (Throwable e) {
+                    return null;
+                }
+
+            })));
+
         }
 
-        public MonoFrame(short[] data, int width, int height) {
-            super(data, width, height);
-        }
-
-        public MonoFrame(Short[] data, int width, int height, long timestamp) {
-            super(data, width, height, timestamp);
-        }
-
-        public MonoFrame(Short[] data, int width, int height) {
-            super(data, width, height);
+        public MonoFrame(short[] data, int width, int height, long timestamp, Map<String, Object> attributes) {
+            super(data, width, height, timestamp, attributes);
         }
 
         public Integer getMax() {
@@ -1185,7 +1202,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         }
 
         public MonoFrame copy() {
-            return new MonoFrame(data.clone(), width, height, timestamp);
+            return new MonoFrame(data.clone(), width, height, timestamp, attributes);
         }
 
         @Override

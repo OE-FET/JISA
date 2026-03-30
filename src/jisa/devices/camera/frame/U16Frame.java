@@ -3,6 +3,8 @@ package jisa.devices.camera.frame;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 public class U16Frame implements Frame.UShortFrame<U16Frame> {
@@ -10,6 +12,8 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
     protected final short[] data;
     protected final int     width;
     protected final int     height;
+
+    protected final Map<String, Object> attributes = new LinkedHashMap<>();
 
     protected long timestamp;
 
@@ -20,6 +24,12 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
         this.height = height;
 
         this.timestamp = timestamp;
+
+    }
+
+    public U16Frame(short[] data, int width, int height, long timestamp, Map<String, Object> attributes) {
+        this(data, width, height, timestamp);
+        this.attributes.putAll(attributes);
     }
 
     public U16Frame(short[] data, int width, int height) {
@@ -45,7 +55,7 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
 
     @Override
     public U16Frame copy() {
-        return new U16Frame(data.clone(), width, height, timestamp);
+        return new U16Frame(data.clone(), width, height, timestamp, attributes);
     }
 
     @Override
@@ -151,8 +161,13 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
             }
         }
 
-        return new U16Frame(subData, width, height, timestamp);
+        return new U16Frame(subData, width, height, timestamp, attributes);
 
+    }
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes;
     }
 
 }

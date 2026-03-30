@@ -6,6 +6,8 @@ import io.jhdf.api.WritableGroup;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
@@ -15,6 +17,8 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
     protected final int    width;
     protected final int    height;
     protected       long   timestamp;
+
+    protected final Map<String, Object> attributes = new LinkedHashMap<>();
 
     public U16RGBFrame(char[] red, char[] green, char[] blue, int width, int height, long timestamp) {
 
@@ -34,9 +38,14 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
 
     }
 
+    public U16RGBFrame(long[] argb, int width, int height, long timestamp, Map<String, Object> attributes) {
+        this(argb, width, height, timestamp);
+        this.attributes.putAll(attributes);
+    }
+
     @Override
     public U16RGBFrame copy() {
-        return new U16RGBFrame(argb.clone(), width, height, timestamp);
+        return new U16RGBFrame(argb.clone(), width, height, timestamp, attributes);
     }
 
     @Override
@@ -244,6 +253,11 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
             }
         }
 
-        return new U16RGBFrame(sub, width, height, timestamp);
+        return new U16RGBFrame(sub, width, height, timestamp, attributes);
+    }
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes;
     }
 }

@@ -4,6 +4,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 public class U32Frame implements Frame.UIntFrame<U32Frame> {
@@ -11,8 +13,9 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
     protected final int[] data;
     protected final int   width;
     protected final int   height;
+    protected       long  timestamp;
 
-    protected long timestamp;
+    protected final Map<String, Object> attributes = new LinkedHashMap<>();
 
     public U32Frame(int[] data, int width, int height, long timestamp) {
 
@@ -21,6 +24,11 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
         this.height    = height;
         this.timestamp = timestamp;
 
+    }
+
+    public U32Frame(int[] data, int width, int height, long timestamp, Map<String, Object> attributes) {
+        this(data, width, height, timestamp);
+        this.attributes.putAll(attributes);
     }
 
     public U32Frame(int[] data, int width, int height) {
@@ -82,7 +90,7 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
         byte value;
 
         for (int i = 0; i < data.length; i++) {
-            value = (byte) (data[i] >> 24);
+            value          = (byte) (data[i] >> 24);
             destination[i] = (255 << 24) | (value << 16) | (value << 8) | value;
         }
 
@@ -147,6 +155,11 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
 
         return new U32Frame(subData, width, height, timestamp);
 
+    }
+
+    @Override
+    public Map<String, Object> getAttributes() {
+        return attributes;
     }
 
     @Override
