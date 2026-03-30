@@ -11,6 +11,8 @@ import org.reflections.Reflections;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Interface for defining the base functionality of all instruments.
@@ -172,6 +174,23 @@ public interface Instrument {
      */
     default List<Parameter<?>> getAllParameters() {
         return getAllParameters(getClass());
+    }
+
+    default Map<String, Object> getAllParametersAsMap() {
+
+        return getAllParameters().stream().collect(Collectors.toMap(
+                Parameter::getName,
+                p -> {
+
+                    try {
+                        return p.getCurrentValue();
+                    } catch (Throwable e) {
+                        return null;
+                    }
+
+                }
+        ));
+
     }
 
     default <I> void ifImplements(Class<I> target, InstrumentAcceptor<I> action) throws IOException, DeviceException, InterruptedException {

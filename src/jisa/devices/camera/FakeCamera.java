@@ -106,7 +106,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
         Thread.sleep(integrationTime);
 
-        return new U16Frame(data, width, height);
+        return new U16Frame(data, width, height, System.nanoTime(), getAllParametersAsMap());
 
     }
 
@@ -155,7 +155,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
         acquireThread = new Thread(() -> {
 
             short[]  data  = new short[width * height];
-            U16Frame frame = new U16Frame(data, width, height);
+            U16Frame frame = new U16Frame(data, width, height, System.nanoTime(), getAllParametersAsMap());
 
             while (running) {
 
