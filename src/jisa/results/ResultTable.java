@@ -620,7 +620,7 @@ public abstract class ResultTable implements Iterable<Row> {
     }
 
     public Object[][] asArray() {
-        return stream().map(r -> r.getValues().values().toArray()).toArray(Object[][]::new);
+        return stream().map(r -> r.getValues().values().toArray(Object[]::new)).toArray(Object[][]::new);
     }
 
     public String[][] asStringArray() {

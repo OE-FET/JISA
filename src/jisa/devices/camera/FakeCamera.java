@@ -416,7 +416,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
     @Override
     public boolean isMultiTrackEnabled() throws IOException, DeviceException {
-        return false;
+        return true;
     }
 
     @Override
