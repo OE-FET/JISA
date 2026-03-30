@@ -1535,7 +1535,7 @@ public abstract class ResultTable implements Iterable<Row> {
 
         OutputStream os     = new ByteArrayOutputStream();
         PrintStream  writer = new PrintStream(os);
-        outputTable(writer);
+        outputCSV(writer);
         writer.close();
 
         return os.toString();
