@@ -426,7 +426,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
     @Override
     public List<Track> getMultiTracks() throws IOException, DeviceException {
-        return List.of();
+        return List.of(new Track(0, 15, false), new Track(16, 25, true));
     }
 
 }
