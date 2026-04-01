@@ -487,78 +487,114 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     }
 
     @Override
-    public void setFrameWidth(int width) throws IOException, DeviceException {
+    public void setImageWidth(int width) throws IOException, DeviceException {
         this.width = width;
     }
 
     @Override
+    public int getImageWidth() throws IOException, DeviceException {
+        return width;
+    }
+
+    @Override
     public int getPhysicalFrameWidth() throws IOException, DeviceException {
-        return width * xBin;
+        return getImageWidth() * xBin;
     }
 
     @Override
     public int getFrameHeight() throws IOException, DeviceException {
+
+        switch (imageMode) {
+
+            case IMAGE:
+                return height;
+
+            case FULL_VERTICAL_BINNING:
+            case SINGLE_TRACK:
+                return 1;
+
+            case TRACK_SEQUENCE:
+                return trackSequenceCount * trackSequenceHeight;
+
+            case MULTI_TRACK:
+
+                int count = 0;
+
+                for (Track track : multiTracks) {
+                    count += track.isBinned() ? 1 : (track.getEndRow() - track.getStartRow() + 1);
+                }
+
+                return count;
+
+        }
+
         return height;
+
     }
 
     @Override
-    public void setFrameHeight(int height) throws IOException, DeviceException {
+    public void setImageHeight(int height) throws IOException, DeviceException {
         this.height = height;
     }
 
     @Override
-    public int getPhysicalFrameHeight() throws IOException, DeviceException {
-        return height * yBin;
+    public int getImageHeight() throws IOException, DeviceException {
+        return height;
     }
 
     @Override
-    public int getFrameOffsetX() throws IOException, DeviceException {
+    public int getPhysicalFrameHeight() throws IOException, DeviceException {
+        return getFrameHeight() * yBin;
+    }
+
+    @Override
+    public int getImageOffsetX() throws IOException, DeviceException {
         return startX;
     }
 
     @Override
-    public void setFrameOffsetX(int offsetX) throws IOException, DeviceException {
+    public void setImageOffsetX(int offsetX) throws IOException, DeviceException {
         this.startX = offsetX;
     }
 
     @Override
-    public void setFrameCentredX(boolean centredX) throws IOException, DeviceException {
+    public void setImageCentredX(boolean centredX) throws IOException, DeviceException {
         this.centredX = centredX;
     }
 
     @Override
-    public boolean isFrameCentredX() throws IOException, DeviceException {
+    public boolean isImageCentredX() throws IOException, DeviceException {
         return centredX;
     }
 
     @Override
-    public int getFrameOffsetY() throws IOException, DeviceException {
+    public int getImageOffsetY() throws IOException, DeviceException {
         return startY;
     }
 
     @Override
-    public void setFrameOffsetY(int offsetY) throws IOException, DeviceException {
+    public void setImageOffsetY(int offsetY) throws IOException, DeviceException {
         startY = offsetY;
     }
 
     @Override
-    public void setFrameCentredY(boolean centredY) throws IOException, DeviceException {
+    public void setImageCentredY(boolean centredY) throws IOException, DeviceException {
         this.centredY = centredY;
     }
 
     @Override
-    public boolean isFrameCentredY() throws IOException, DeviceException {
+    public boolean isImageCentredY() throws IOException, DeviceException {
         return centredY;
     }
 
     @Override
     public int getFrameSize() throws IOException, DeviceException {
-        return width * height;
+        return getFrameWidth() * getFrameHeight();
     }
 
     @Override
     public int getPhysicalFrameSize() throws IOException, DeviceException {
-        return width * xBin * height * yBin;
+        return getFrameWidth() * xBin * getFrameHeight() * yBin;
     }
 
     @Override

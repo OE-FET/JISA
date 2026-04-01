@@ -1298,9 +1298,14 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     }
 
     @Override
-    public void setFrameWidth(int width) throws DeviceException, IOException {
+    public void setImageWidth(int width) throws DeviceException, IOException {
         setInt("AOIWidth", width);
-        setFrameCentredX(centreX);
+        setImageCentredX(centreX);
+    }
+
+    @Override
+    public int getImageWidth() throws IOException, DeviceException {
+        return getFrameWidth();
     }
 
     @Override
@@ -1309,8 +1314,13 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     }
 
     @Override
-    public void setFrameHeight(int height) throws DeviceException, IOException {
+    public void setImageHeight(int height) throws DeviceException, IOException {
         setInt("AOIHeight", height);
+    }
+
+    @Override
+    public int getImageHeight() throws IOException, DeviceException {
+        return getFrameHeight();
     }
 
     @Override
@@ -1319,12 +1329,12 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     }
 
     @Override
-    public int getFrameOffsetX() throws DeviceException, IOException {
+    public int getImageOffsetX() throws DeviceException, IOException {
         return getInt("AOILeft");
     }
 
     @Override
-    public void setFrameCentredX(boolean centredX) throws DeviceException, IOException {
+    public void setImageCentredX(boolean centredX) throws DeviceException, IOException {
 
         if (centredX) {
             setInt("AOILeft", (int) Math.floor((getSensorWidth() - getPhysicalFrameWidth()) / 2.0));
@@ -1335,14 +1345,14 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     }
 
     @Override
-    public boolean isFrameCentredX() {
+    public boolean isImageCentredX() {
         return centreX;
     }
 
     @Override
-    public void setFrameOffsetX(int offsetX) throws DeviceException, IOException {
+    public void setImageOffsetX(int offsetX) throws DeviceException, IOException {
 
-        if (isFrameCentredX()) {
+        if (isImageCentredX()) {
             throw new DeviceException("Cannot change frame x offset when x-centring is enabled.");
         }
 
@@ -1351,14 +1361,14 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     }
 
     @Override
-    public int getFrameOffsetY() throws DeviceException, IOException {
+    public int getImageOffsetY() throws DeviceException, IOException {
         return getInt("AOITop");
     }
 
     @Override
-    public void setFrameOffsetY(int offsetY) throws DeviceException, IOException {
+    public void setImageOffsetY(int offsetY) throws DeviceException, IOException {
 
-        if (isFrameCentredY()) {
+        if (isImageCentredY()) {
             throw new DeviceException("Cannot change frame y offset when y-centring is enabled.");
         }
 
@@ -1367,12 +1377,12 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     }
 
     @Override
-    public void setFrameCentredY(boolean centredY) throws DeviceException, IOException {
+    public void setImageCentredY(boolean centredY) throws DeviceException, IOException {
         setBoolean("VerticallyCentreAOI", centredY);
     }
 
     @Override
-    public boolean isFrameCentredY() throws DeviceException, IOException {
+    public boolean isImageCentredY() throws DeviceException, IOException {
         return getBoolean("VerticallyCentreAOI");
     }
 

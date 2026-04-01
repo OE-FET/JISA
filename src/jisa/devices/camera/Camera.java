@@ -43,17 +43,17 @@ public interface Camera<F extends Frame> extends Instrument, Image {
         parameters.addValue("X Binning", inst::getBinningX, 1, inst::setBinningX);
         parameters.addValue("Y Binning", inst::getBinningY, 1, inst::setBinningY);
 
-        parameters.addValue("Frame Width", inst::getFrameWidth, 1024, inst::setFrameWidth);
-        parameters.addValue("Frame Height", inst::getFrameHeight, 1024, inst::setFrameHeight);
+        parameters.addValue("Image Width", inst::getImageWidth, 1024, inst::setImageWidth);
+        parameters.addValue("Image Height", inst::getImageHeight, 1024, inst::setImageHeight);
 
-        parameters.addAuto("Frame X Offset", inst::isFrameCentredX, false, inst::getFrameOffsetX, 1, o -> inst.setFrameCentredX(true), o -> {
-            inst.setFrameCentredX(false);
-            inst.setFrameOffsetX(o);
+        parameters.addAuto("Image X Offset", inst::isImageCentredX, false, inst::getImageOffsetX, 1, o -> inst.setImageCentredX(true), o -> {
+            inst.setImageCentredX(false);
+            inst.setImageOffsetX(o);
         });
 
-        parameters.addAuto("Frame Y Offset", inst::isFrameCentredY, false, inst::getFrameOffsetY, 1, o -> inst.setFrameCentredY(true), o -> {
-            inst.setFrameCentredY(false);
-            inst.setFrameOffsetY(o);
+        parameters.addAuto("Image Y Offset", inst::isImageCentredY, false, inst::getImageOffsetY, 1, o -> inst.setImageCentredY(true), o -> {
+            inst.setImageCentredY(false);
+            inst.setImageOffsetY(o);
         });
 
 
@@ -262,13 +262,22 @@ public interface Camera<F extends Frame> extends Instrument, Image {
     int getFrameWidth() throws IOException, DeviceException;
 
     /**
-     * Sets the width (in pixels) to use when taking images.
+     * Sets the width (in pixels) to use when ImageMode is set to IMAGE.
      *
      * @param width Width, in pixels.
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
-    void setFrameWidth(int width) throws IOException, DeviceException;
+    void setImageWidth(int width) throws IOException, DeviceException;
+
+    /**
+     * Returns the width (in pixels) the camera is configured to use when ImageMode is set to IMAGE
+     *
+     * @return width, in pixels.
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    int getImageWidth() throws IOException, DeviceException;
 
     /**
      * Returns number of physical pixel columns (i.e., before binning) used on the sensor to capture each frame.
@@ -289,13 +298,22 @@ public interface Camera<F extends Frame> extends Instrument, Image {
     int getFrameHeight() throws IOException, DeviceException;
 
     /**
-     * Sets the height (in pixels) to use when taking images.
+     * Sets the height (in pixels) to use when when ImageMode is set to IMAGE.
      *
      * @param height Height, in pixels.
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
-    void setFrameHeight(int height) throws IOException, DeviceException;
+    void setImageHeight(int height) throws IOException, DeviceException;
+
+    /**
+     * Returns the height (in pixels) the camera is configured to use when ImageMode is set to IMAGE
+     *
+     * @return height, in pixels.
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    int getImageHeight() throws IOException, DeviceException;
 
     /**
      * Returns number of physical pixel rows (i.e., before binning) used on the sensor to capture each frame.
@@ -313,7 +331,7 @@ public interface Camera<F extends Frame> extends Instrument, Image {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
-    int getFrameOffsetX() throws IOException, DeviceException;
+    int getImageOffsetX() throws IOException, DeviceException;
 
     /**
      * Sets which physical pixel column on the sensor is the left-most column used for acquiring frames.
@@ -322,7 +340,7 @@ public interface Camera<F extends Frame> extends Instrument, Image {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
-    void setFrameOffsetX(int offsetX) throws IOException, DeviceException;
+    void setImageOffsetX(int offsetX) throws IOException, DeviceException;
 
     /**
      * Sets whether the offset set using setFrameOffsetX() is ignored and the frame instead automatically
@@ -332,7 +350,7 @@ public interface Camera<F extends Frame> extends Instrument, Image {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
-    void setFrameCentredX(boolean centredX) throws IOException, DeviceException;
+    void setImageCentredX(boolean centredX) throws IOException, DeviceException;
 
     /**
      * Returns whether the offset set using setFrameOffsetX() is ignored and the frame instead automatically
@@ -342,7 +360,7 @@ public interface Camera<F extends Frame> extends Instrument, Image {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
-    boolean isFrameCentredX() throws IOException, DeviceException;
+    boolean isImageCentredX() throws IOException, DeviceException;
 
     /**
      * Returns the y co-ordinate of the top-most pixel used for capturing images.
@@ -351,7 +369,7 @@ public interface Camera<F extends Frame> extends Instrument, Image {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
-    int getFrameOffsetY() throws IOException, DeviceException;
+    int getImageOffsetY() throws IOException, DeviceException;
 
     /**
      * Sets the y co-ordinate of the top-most pixel used for capturing images.
@@ -360,7 +378,7 @@ public interface Camera<F extends Frame> extends Instrument, Image {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
-    void setFrameOffsetY(int offsetY) throws IOException, DeviceException;
+    void setImageOffsetY(int offsetY) throws IOException, DeviceException;
 
     /**
      * Sets whether the offset set using setFrameOffsetY() is ignored and the frame instead automatically
@@ -370,7 +388,7 @@ public interface Camera<F extends Frame> extends Instrument, Image {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
-    void setFrameCentredY(boolean centredY) throws IOException, DeviceException;
+    void setImageCentredY(boolean centredY) throws IOException, DeviceException;
 
     /**
      * Returns whether the offset set using setFrameOffsetY() is ignored and the frame instead automatically
@@ -380,7 +398,7 @@ public interface Camera<F extends Frame> extends Instrument, Image {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
-    boolean isFrameCentredY() throws IOException, DeviceException;
+    boolean isImageCentredY() throws IOException, DeviceException;
 
     /**
      * Returns the total number of pixels in images captured by this camera, for its current configuration.

@@ -151,6 +151,10 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
         stats[1] = 0;
         stats[2] = System.nanoTime();
 
+        final int size   = getFrameSize();
+        final int width  = getFrameWidth();
+        final int height = getFrameHeight();
+
         acquireThread = new Thread(() -> {
 
             short[]  data  = new short[width * height];
@@ -282,8 +286,13 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     }
 
     @Override
-    public void setFrameWidth(int width) throws IOException, DeviceException {
+    public void setImageWidth(int width) throws IOException, DeviceException {
         this.width = width;
+    }
+
+    @Override
+    public int getImageWidth() throws IOException, DeviceException {
+        return width;
     }
 
     @Override
@@ -293,12 +302,36 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
     @Override
     public int getFrameHeight() throws IOException, DeviceException {
+
+        switch (imageMode) {
+
+            case IMAGE:
+                return height;
+
+            case MULTI_TRACK:
+
+                int count = 0;
+
+                for (Track track : getMultiTracks()) {
+                    count += track.isBinned() ? 1 : (track.getEndRow() - track.getStartRow() + 1);
+                }
+
+                return count;
+
+        }
+
         return height;
+
     }
 
     @Override
-    public void setFrameHeight(int height) throws IOException, DeviceException {
+    public void setImageHeight(int height) throws IOException, DeviceException {
         this.height = height;
+    }
+
+    @Override
+    public int getImageHeight() throws IOException, DeviceException {
+        return height;
     }
 
     @Override
@@ -307,48 +340,48 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     }
 
     @Override
-    public int getFrameOffsetX() throws IOException, DeviceException {
+    public int getImageOffsetX() throws IOException, DeviceException {
         return 0;
     }
 
     @Override
-    public void setFrameOffsetX(int offsetX) throws IOException, DeviceException {
+    public void setImageOffsetX(int offsetX) throws IOException, DeviceException {
 
     }
 
     @Override
-    public void setFrameCentredX(boolean centredX) throws IOException, DeviceException {
+    public void setImageCentredX(boolean centredX) throws IOException, DeviceException {
 
     }
 
     @Override
-    public boolean isFrameCentredX() throws IOException, DeviceException {
+    public boolean isImageCentredX() throws IOException, DeviceException {
         return false;
     }
 
     @Override
-    public int getFrameOffsetY() throws IOException, DeviceException {
+    public int getImageOffsetY() throws IOException, DeviceException {
         return 0;
     }
 
     @Override
-    public void setFrameOffsetY(int offsetY) throws IOException, DeviceException {
+    public void setImageOffsetY(int offsetY) throws IOException, DeviceException {
 
     }
 
     @Override
-    public void setFrameCentredY(boolean centredY) throws IOException, DeviceException {
+    public void setImageCentredY(boolean centredY) throws IOException, DeviceException {
 
     }
 
     @Override
-    public boolean isFrameCentredY() throws IOException, DeviceException {
+    public boolean isImageCentredY() throws IOException, DeviceException {
         return false;
     }
 
     @Override
     public int getFrameSize() throws IOException, DeviceException {
-        return 0;
+        return getFrameWidth() * getFrameHeight();
     }
 
     @Override

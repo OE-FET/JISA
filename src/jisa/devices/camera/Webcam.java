@@ -91,8 +91,13 @@ public class Webcam extends ManagedCamera<RGBFrame> {
     }
 
     @Override
-    public void setFrameWidth(int width) throws IOException, DeviceException {
+    public void setImageWidth(int width) throws IOException, DeviceException {
 
+    }
+
+    @Override
+    public int getImageWidth() throws IOException, DeviceException {
+        return 0;
     }
 
     @Override
@@ -106,8 +111,13 @@ public class Webcam extends ManagedCamera<RGBFrame> {
     }
 
     @Override
-    public void setFrameHeight(int height) throws IOException, DeviceException {
+    public void setImageHeight(int height) throws IOException, DeviceException {
 
+    }
+
+    @Override
+    public int getImageHeight() throws IOException, DeviceException {
+        return 0;
     }
 
     @Override
@@ -116,42 +126,42 @@ public class Webcam extends ManagedCamera<RGBFrame> {
     }
 
     @Override
-    public int getFrameOffsetX() throws IOException, DeviceException {
+    public int getImageOffsetX() throws IOException, DeviceException {
         return 0;
     }
 
     @Override
-    public void setFrameOffsetX(int offsetX) throws IOException, DeviceException {
+    public void setImageOffsetX(int offsetX) throws IOException, DeviceException {
 
     }
 
     @Override
-    public void setFrameCentredX(boolean centredX) throws IOException, DeviceException {
+    public void setImageCentredX(boolean centredX) throws IOException, DeviceException {
 
     }
 
     @Override
-    public boolean isFrameCentredX() throws IOException, DeviceException {
+    public boolean isImageCentredX() throws IOException, DeviceException {
         return false;
     }
 
     @Override
-    public int getFrameOffsetY() throws IOException, DeviceException {
+    public int getImageOffsetY() throws IOException, DeviceException {
         return 0;
     }
 
     @Override
-    public void setFrameOffsetY(int offsetY) throws IOException, DeviceException {
+    public void setImageOffsetY(int offsetY) throws IOException, DeviceException {
 
     }
 
     @Override
-    public void setFrameCentredY(boolean centredY) throws IOException, DeviceException {
+    public void setImageCentredY(boolean centredY) throws IOException, DeviceException {
 
     }
 
     @Override
-    public boolean isFrameCentredY() throws IOException, DeviceException {
+    public boolean isImageCentredY() throws IOException, DeviceException {
         return false;
     }
 

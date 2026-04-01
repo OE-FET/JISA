@@ -653,7 +653,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     @Override
-    public void setFrameWidth(int width) throws IOException, DeviceException {
+    public void setImageWidth(int width) throws IOException, DeviceException {
 
 
         int[] points          = getInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
@@ -661,7 +661,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         process(sdk.tl_camera_set_roi(handle, points[0], points[1], points[0] + width, points[3]), "tl_camera_set_roi");
 
-        setFrameCentredX(centredX);
+        setImageCentredX(centredX);
 
     }
 
@@ -676,14 +676,14 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     @Override
-    public void setFrameHeight(int height) throws IOException, DeviceException {
+    public void setImageHeight(int height) throws IOException, DeviceException {
 
         int[] points          = getInts(sdk::tl_camera_get_roi, "tl_camera_get_roi");
         int   newBottomRightY = points[1] + height;
 
         process(sdk.tl_camera_set_roi(handle, points[0], points[1], points[2], newBottomRightY), "tl_camera_set_roi");
 
-        setFrameCentredY(centredY);
+        setImageCentredY(centredY);
 
     }
 
@@ -693,14 +693,14 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     @Override
-    public int getFrameOffsetX() throws IOException, DeviceException {
+    public int getImageOffsetX() throws IOException, DeviceException {
         return getInts(sdk::tl_camera_get_roi, "tl_camera_get_roi")[0];
     }
 
     @Override
-    public void setFrameOffsetX(int offsetX) throws IOException, DeviceException {
+    public void setImageOffsetX(int offsetX) throws IOException, DeviceException {
 
-        if (isFrameCentredX()) {
+        if (isImageCentredX()) {
             throw new DeviceException("Cannot change frame x offset when x-centring is enabled.");
         }
 
@@ -712,7 +712,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     @Override
-    public void setFrameCentredX(boolean centredX) throws IOException, DeviceException {
+    public void setImageCentredX(boolean centredX) throws IOException, DeviceException {
 
         if (centredX) {
 
@@ -730,19 +730,19 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     @Override
-    public boolean isFrameCentredX() throws IOException, DeviceException {
+    public boolean isImageCentredX() throws IOException, DeviceException {
         return centredX;
     }
 
     @Override
-    public int getFrameOffsetY() throws IOException, DeviceException {
+    public int getImageOffsetY() throws IOException, DeviceException {
         return getInts(sdk::tl_camera_get_roi, "tl_camera_get_roi")[1];
     }
 
     @Override
-    public void setFrameOffsetY(int offsetY) throws IOException, DeviceException {
+    public void setImageOffsetY(int offsetY) throws IOException, DeviceException {
 
-        if (isFrameCentredY()) {
+        if (isImageCentredY()) {
             throw new DeviceException("Cannot change frame y offset when y-centring is enabled.");
         }
 
@@ -754,7 +754,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     @Override
-    public void setFrameCentredY(boolean centredY) throws IOException, DeviceException {
+    public void setImageCentredY(boolean centredY) throws IOException, DeviceException {
 
         if (centredY) {
 
@@ -772,7 +772,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     @Override
-    public boolean isFrameCentredY() throws IOException, DeviceException {
+    public boolean isImageCentredY() throws IOException, DeviceException {
         return centredY;
     }
 
@@ -898,6 +898,16 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             throw new DeviceException("Invalid ImageMode \"%s\" for ThorCam cameras.", mode);
         }
 
+    }
+
+    @Override
+    public int getImageWidth() throws IOException, DeviceException {
+        return getFrameWidth();
+    }
+
+    @Override
+    public int getImageHeight() throws IOException, DeviceException {
+        return getFrameHeight();
     }
 
     public static class Colour extends ThorCam<U16RGBFrame, long[]> {

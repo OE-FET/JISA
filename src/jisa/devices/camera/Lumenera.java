@@ -275,7 +275,7 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     }
 
     @Override
-    public void setFrameWidth(int width) throws IOException, DeviceException {
+    public void setImageWidth(int width) throws IOException, DeviceException {
 
         LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
         LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
@@ -291,6 +291,11 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
             throwError("LucamSetFormat");
         }
 
+    }
+
+    @Override
+    public int getImageWidth() throws IOException, DeviceException {
+        return getFrameWidth();
     }
 
     @Override
@@ -324,7 +329,7 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     }
 
     @Override
-    public void setFrameHeight(int height) throws IOException, DeviceException {
+    public void setImageHeight(int height) throws IOException, DeviceException {
 
         LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
         LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
@@ -343,6 +348,11 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     }
 
     @Override
+    public int getImageHeight() throws IOException, DeviceException {
+        return getFrameHeight();
+    }
+
+    @Override
     public int getPhysicalFrameHeight() throws IOException, DeviceException {
 
         LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
@@ -358,7 +368,7 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     }
 
     @Override
-    public int getFrameOffsetX() throws IOException, DeviceException {
+    public int getImageOffsetX() throws IOException, DeviceException {
 
         LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
         LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
@@ -373,9 +383,9 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     }
 
     @Override
-    public void setFrameOffsetX(int offsetX) throws IOException, DeviceException {
+    public void setImageOffsetX(int offsetX) throws IOException, DeviceException {
 
-        if (isFrameCentredX()) {
+        if (isImageCentredX()) {
             return;
         }
 
@@ -396,7 +406,7 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     }
 
     @Override
-    public synchronized void setFrameCentredX(boolean centredX) throws IOException, DeviceException {
+    public synchronized void setImageCentredX(boolean centredX) throws IOException, DeviceException {
 
         this.centredX = centredX;
 
@@ -421,12 +431,12 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     }
 
     @Override
-    public synchronized boolean isFrameCentredX() throws IOException, DeviceException {
+    public synchronized boolean isImageCentredX() throws IOException, DeviceException {
         return centredX;
     }
 
     @Override
-    public int getFrameOffsetY() throws IOException, DeviceException {
+    public int getImageOffsetY() throws IOException, DeviceException {
 
         LucamAPI.LUCAM_FRAME_FORMAT frameFormat = new LucamAPI.LUCAM_FRAME_FORMAT();
         LucamAPI.LUCAM_CONVERSION   conversion  = new LucamAPI.LUCAM_CONVERSION();
@@ -440,9 +450,9 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     }
 
     @Override
-    public void setFrameOffsetY(int offsetY) throws IOException, DeviceException {
+    public void setImageOffsetY(int offsetY) throws IOException, DeviceException {
 
-        if (isFrameCentredY()) {
+        if (isImageCentredY()) {
             return;
         }
 
@@ -463,7 +473,7 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     }
 
     @Override
-    public synchronized void setFrameCentredY(boolean centredY) throws IOException, DeviceException {
+    public synchronized void setImageCentredY(boolean centredY) throws IOException, DeviceException {
 
         this.centredY = centredY;
 
@@ -488,7 +498,7 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     }
 
     @Override
-    public synchronized boolean isFrameCentredY() throws IOException, DeviceException {
+    public synchronized boolean isImageCentredY() throws IOException, DeviceException {
         return centredY;
     }
 
