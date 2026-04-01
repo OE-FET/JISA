@@ -21,9 +21,9 @@ public interface TrackSequence extends CameraImageMode {
 
     static void addParameters(TrackSequence inst, Class<?> target, ParameterList parameters) {
 
-        parameters.addValue("Track Sequence","Track Sequence Count", inst::getTrackSequenceCount, 1, inst::setTrackSequenceCount);
-        parameters.addValue("Track Sequence","Track Sequence Height", inst::getTrackSequenceHeight, 1, inst::setTrackSequenceHeight);
-        parameters.addValue("Track Sequence","Track Sequence Offset", inst::getTrackSequenceOffset, 1, inst::setTrackSequenceOffset);
+        parameters.addValue("Track Sequence Mode","Track Sequence Count", inst::getTrackSequenceCount, 1, inst::setTrackSequenceCount);
+        parameters.addValue("Track Sequence Mode","Track Sequence Height", inst::getTrackSequenceHeight, 1, inst::setTrackSequenceHeight);
+        parameters.addValue("Track Sequence Mode","Track Sequence Offset", inst::getTrackSequenceOffset, 1, inst::setTrackSequenceOffset);
 
     }
 
