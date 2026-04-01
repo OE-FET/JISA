@@ -41,7 +41,7 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
 
     }
 
-    public <T> void addValue(String name, Instrument.Getter<T> defValue, T elseValue, Instrument.Setter<T> setter) {
+    public <T> void addValue(String group, String name, Instrument.Getter<T> defValue, T elseValue, Instrument.Setter<T> setter) {
 
         T def;
 
@@ -51,20 +51,28 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
             def = elseValue;
         }
 
-        add(new Parameter<>(name, def, setter, defValue));
+        add(new Parameter<>(group, name, def, setter, defValue));
 
     }
 
-    public <T> void addChoice(String name, T defValue, Instrument.Setter<T> setter, T... options) {
+    public <T> void addValue(String name, Instrument.Getter<T> defValue, T elseValue, Instrument.Setter<T> setter) {
+        addValue("", name, defValue, elseValue, setter);
+    }
+
+    public <T> void addChoice(String group, String name, T defValue, Instrument.Setter<T> setter, T... options) {
 
         if (defValue instanceof Enum && options.length == 0) {
             options = (T[]) defValue.getClass().getEnumConstants();
         }
 
-        add(new Parameter<>(name, defValue, setter, options));
+        add(new Parameter<>(group, name, defValue, setter, options));
     }
 
-    public <T> void addChoice(String name, Instrument.Getter<T> defValue, T elseValue, Instrument.Setter<T> setter, T... options) {
+    public <T> void addChoice(String name, T defValue, Instrument.Setter<T> setter, T... options) {
+        addChoice("", name, defValue, setter, options);
+    }
+
+    public <T> void addChoice(String group, String name, Instrument.Getter<T> defValue, T elseValue, Instrument.Setter<T> setter, T... options) {
 
         T def;
 
@@ -74,14 +82,18 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
             def = elseValue;
         }
 
-        add(new Parameter<>(name, def, setter, defValue, options));
+        add(new Parameter<>(group, name, def, setter, defValue, options));
 
     }
 
+    public <T> void addChoice(String name, Instrument.Getter<T> defValue, T elseValue, Instrument.Setter<T> setter, T... options) {
+        addChoice("",  name, defValue, elseValue, setter, options);
+    }
+
     public <T> void addAuto(String name, boolean auto, T defValue, Instrument.Setter<T> autoSetter, Instrument.Setter<T> valueSetter) {
-        
+
         add(new Parameter<>(name, new Instrument.AutoQuantity<>(auto, defValue), q -> {
-            
+
             if (q.isAuto()) {
                 autoSetter.set(q.getValue());
             } else {
@@ -92,7 +104,7 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
 
     }
 
-    public <T> void addAuto(String name, Instrument.Getter<Boolean> autoGet, boolean autoDef, Instrument.Getter<T> valueGet, T defValue, Instrument.Setter<T> autoSetter, Instrument.Setter<T> valueSetter) {
+    public <T> void addAuto(String group, String name, Instrument.Getter<Boolean> autoGet, boolean autoDef, Instrument.Getter<T> valueGet, T defValue, Instrument.Setter<T> autoSetter, Instrument.Setter<T> valueSetter) {
 
         boolean auto;
 
@@ -110,7 +122,7 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
             value = defValue;
         }
 
-        add(new Parameter<Instrument.AutoQuantity<T>>(name, new Instrument.AutoQuantity<>(auto, value), q -> {
+        add(new Parameter<Instrument.AutoQuantity<T>>(group, name, new Instrument.AutoQuantity<>(auto, value), q -> {
 
             if (q.isAuto()) {
                 autoSetter.set(q.getValue());
@@ -122,9 +134,13 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
 
     }
 
-    public <T> void addOptional(String name, boolean used, T defValue, Instrument.Setter<T> unusedSetter, Instrument.Setter<T> usedSetter) {
+    public <T> void addAuto(String name, Instrument.Getter<Boolean> autoGet, boolean autoDef, Instrument.Getter<T> valueGet, T defValue, Instrument.Setter<T> autoSetter, Instrument.Setter<T> valueSetter) {
+        addAuto("", name, autoGet, autoDef, valueGet, defValue, autoSetter, valueSetter);
+    }
 
-        add(new Parameter<>(name, new Instrument.OptionalQuantity<>(used, defValue), q -> {
+    public <T> void addOptional(String group, String name, boolean used, T defValue, Instrument.Setter<T> unusedSetter, Instrument.Setter<T> usedSetter) {
+
+        add(new Parameter<>(group, name, new Instrument.OptionalQuantity<>(used, defValue), q -> {
 
             if (q.isUsed()) {
                 usedSetter.set(q.getValue());
@@ -136,7 +152,11 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
 
     }
 
-    public <T> void addOptional(String name, Instrument.Getter<Boolean> usedGet, boolean usedDef, Instrument.Getter<T> valueGet, T defValue, Instrument.Setter<T> unusedSetter, Instrument.Setter<T> usedSetter) {
+    public <T> void addOptional(String name, boolean used, T defValue, Instrument.Setter<T> unusedSetter, Instrument.Setter<T> usedSetter) {
+        addOptional("", name, used, defValue, usedSetter, usedSetter);
+    }
+
+    public <T> void addOptional(String group, String name, Instrument.Getter<Boolean> usedGet, boolean usedDef, Instrument.Getter<T> valueGet, T defValue, Instrument.Setter<T> unusedSetter, Instrument.Setter<T> usedSetter) {
 
         boolean used;
 
@@ -154,7 +174,7 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
             value = defValue;
         }
 
-        add(new Parameter<Instrument.OptionalQuantity<T>>(name, new Instrument.OptionalQuantity<>(used, defValue), q -> {
+        add(new Parameter<Instrument.OptionalQuantity<T>>(group, name, new Instrument.OptionalQuantity<>(used, defValue), q -> {
 
             if (!q.isUsed()) {
                 unusedSetter.set(q.getValue());
@@ -164,6 +184,10 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
 
         }, () -> new Instrument.OptionalQuantity<>(usedGet.get(), valueGet.get())));
 
+    }
+
+    public <T> void addOptional(String name, Instrument.Getter<Boolean> usedGet, boolean usedDef, Instrument.Getter<T> valueGet, T defValue, Instrument.Setter<T> unusedSetter, Instrument.Setter<T> usedSetter) {
+        addOptional("", name, usedGet, usedDef, valueGet, defValue, usedSetter, usedSetter);
     }
 
 }

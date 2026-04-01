@@ -23,35 +23,35 @@ import java.util.Map;
 
 /**
  * GUI element for configuring instrument parameters.
+ *
  * @param <I>
  */
 public class ConfigPanel<I extends Instrument> extends JFXElement {
 
     private final I                                   instrument;
-    private final GridPane                            grid;
+    private final VBox                                list;
+    private final Map<String, GridPane>               grids;
     private final Map<Instrument.Parameter, NodeItem> parameters = new LinkedHashMap<>();
-
-    private int row = 0;
 
     public ConfigPanel(String title, I instrument) {
 
         super(title);
 
         this.instrument = instrument;
-        this.grid       = new GridPane();
+        this.list       = new VBox();
+        this.grids      = new LinkedHashMap<>();
 
-        grid.setHgap(0);
-        grid.setVgap(15);
+        list.setSpacing(15);
 
         BorderPane.setMargin(getNode().getCenter(), new Insets(15.0));
 
-        ScrollPane scrollPane = new ScrollPane(grid);
+        ScrollPane scrollPane = new ScrollPane(list);
         scrollPane.setFitToHeight(false);
         scrollPane.setFitToWidth(true);
         scrollPane.setBorder(Border.EMPTY);
         scrollPane.setBackground(Background.EMPTY);
         scrollPane.setStyle("-fx-background: rgba(255,255,255,0); -fx-background-color: rgba(255,255,255,0);");
-        grid.setPadding(new Insets(GUI.SPACING));
+        list.setPadding(new Insets(GUI.SPACING));
         setCentreNode(scrollPane);
 
         BorderPane.setMargin(scrollPane, Insets.EMPTY);
@@ -90,17 +90,54 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
         this(instrument.getName(), instrument);
     }
 
-    protected void generateForm() {
+    protected void reset() {
 
-        grid.getChildren().clear();
+        list.getChildren().clear();
+        grids.clear();
         parameters.clear();
-        row = 0;
+
+        String   group = "General";
+        GridPane grid  = new GridPane();
+
+        grid.setHgap(0);
+        grid.setVgap(15);
+        grid.setPadding(new Insets(GUI.SPACING));
+        grid.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
+
+        TitledPane pane = new TitledPane(group, grid);
+
+        list.getChildren().add(pane);
+        grids.put(group, grid);
+
+    }
+
+    protected void generateForm() {
 
         for (Instrument.Parameter parameter : instrument.getAllParameters()) {
 
+            String group = parameter.isGrouped() ? parameter.getGroup() : "General";
+
+            if (!grids.containsKey(group)) {
+
+                GridPane grid = new GridPane();
+
+                grid.setHgap(0);
+                grid.setVgap(15);
+                grid.setPadding(new Insets(GUI.SPACING));
+                grid.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
+
+                TitledPane pane = new TitledPane(group, grid);
+
+                list.getChildren().add(pane);
+                grids.put(group, grid);
+
+            }
+
+            GridPane grid = grids.get(group);
+
             Label    label = new Label(parameter.getName());
             NodeItem item  = createNode(parameter.getDefaultValue(), parameter.getChoices().toArray());
-            Button   set   = new Button("Set");
+            Button   set   = new Button("✓");
 
             set.setMinWidth(Button.USE_PREF_SIZE);
 
@@ -112,7 +149,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
                     e.printStackTrace();
                 }
 
-                parameters.forEach((p,i) -> {
+                parameters.forEach((p, i) -> {
 
                     try {
                         i.setValue(p.getCurrentValue());
@@ -148,16 +185,12 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             GridPane.setMargin(node, new Insets(0, 5, 0, 0));
             GridPane.setValignment(set, VPos.TOP);
 
-            addRow(label, node, set);
+            grid.addRow(grid.getRowCount(), label, node, set);
 
             parameters.put(parameter, item);
 
         }
 
-    }
-
-    protected void addRow(Node... children) {
-        grid.addRow(row++, children);
     }
 
     public static <Q> NodeItem<Q> createNode(Q defaultValue, Q... choices) {
@@ -180,7 +213,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             HBox.setHgrow(quantity.getNode(), Priority.ALWAYS);
 
             return (NodeItem<Q>) new NodeItem<Instrument.AutoQuantity>(
-                quantity.getNode() instanceof TableInput ? new VBox(15.0, checkBox, quantity.getNode()) : new HBox(5, quantity.getNode(), checkBox)
+                    quantity.getNode() instanceof TableInput ? new VBox(15.0, checkBox, quantity.getNode()) : new HBox(5, quantity.getNode(), checkBox)
             ) {
 
                 @Override
@@ -228,7 +261,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             HBox.setHgrow(quantity.getNode(), Priority.ALWAYS);
 
             return (NodeItem<Q>) new NodeItem<Instrument.OptionalQuantity>(
-                quantity.getNode() instanceof TableInput ? new VBox(15.0, checkBox, quantity.getNode()) : new HBox(5, quantity.getNode(), checkBox)
+                    quantity.getNode() instanceof TableInput ? new VBox(15.0, checkBox, quantity.getNode()) : new HBox(5, quantity.getNode(), checkBox)
             ) {
 
                 @Override

@@ -45,7 +45,6 @@ public interface Instrument {
      * Returns an identifying String of the instrument.
      *
      * @return Identifying String
-     *
      * @throws DeviceException Upon incompatibility with device
      * @throws IOException     Upon communications error
      */
@@ -77,7 +76,6 @@ public interface Instrument {
      * Sets the timeout for read/write operations to this instrument (if applicable).
      *
      * @param msec Timeout, in milliseconds
-     *
      * @throws IOException Upon communications error
      */
     default void setTimeout(int msec) throws IOException {
@@ -94,7 +92,6 @@ public interface Instrument {
      * for instance an SMU being used as a VMeter will return an extra configuration option to set current to zero.
      *
      * @param target The target class that ths instrument is going to be used as.
-     *
      * @return List of base instrument parameters.
      */
     default void addBaseParameters(Class<?> target, ParameterList parameters) {
@@ -111,13 +108,14 @@ public interface Instrument {
             try {
 
                 type.getMethod(
-                    "addParameters",
-                    type,
-                    Class.class,
-                    ParameterList.class
+                        "addParameters",
+                        type,
+                        Class.class,
+                        ParameterList.class
                 ).invoke(null, this, target, parameters);
 
-            } catch (Throwable ignored) { }
+            } catch (Throwable ignored) {
+            }
 
         });
 
@@ -128,7 +126,6 @@ public interface Instrument {
      * make/model of instrument.
      *
      * @param target The target class that this instrument is going to be used as.
-     *
      * @return List of instrument-specific configuration parameters.
      */
     default void addInstrumentParameters(Class<?> target, ParameterList parameters) {
@@ -139,7 +136,6 @@ public interface Instrument {
      * Returns a list of all configuration parameters from extra features this instrument implements.
      *
      * @param target The target class that this instrument is going to be used as (e.g., an SMU might be used as a VMeter).
-     *
      * @return List of feature configuration parameters.
      */
     default void addFeatureParameters(Class<?> target, ParameterList parameters) {
@@ -152,7 +148,6 @@ public interface Instrument {
      * current measurements will be omitted etc.
      *
      * @param target Target instrument type.
-     *
      * @return List of parameters.
      */
     default List<Parameter<?>> getAllParameters(Class<?> target) {
@@ -243,6 +238,7 @@ public interface Instrument {
 
     class Parameter<S> {
 
+        private final String    group;
         private final String    name;
         private final S         defaultValue;
         private final Setter<S> setter;
@@ -250,15 +246,31 @@ public interface Instrument {
         private final Getter<S> getter;
 
         public Parameter(String name, S defaultValue, Setter<S> setter, S... options) {
-            this(name, defaultValue, setter, null, options);
+            this("", name, defaultValue, setter, null, options);
+        }
+        public Parameter(String group, String name, S defaultValue, Setter<S> setter, S... options) {
+            this(group, name, defaultValue, setter, null, options);
         }
 
         public Parameter(String name, S defaultValue, Setter<S> setter, Getter<S> getter, S... options) {
+            this("", name, defaultValue, setter, getter, options);
+        }
+
+        public Parameter(String group, String name, S defaultValue, Setter<S> setter, Getter<S> getter, S... options) {
+            this.group        = group;
             this.name         = name;
             this.defaultValue = defaultValue;
             this.setter       = setter;
             this.getter       = getter;
             this.options      = options.length > 0 ? List.of(options) : Collections.emptyList();
+        }
+
+        public String getGroup() {
+            return group;
+        }
+
+        public boolean isGrouped() {
+            return !group.isBlank();
         }
 
         public String getName() {

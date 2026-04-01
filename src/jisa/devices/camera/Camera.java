@@ -40,18 +40,18 @@ public interface Camera<F extends Frame> extends Instrument, Image {
         parameters.addValue("Integration Time [s]", inst::getIntegrationTime, 20e-3, inst::setIntegrationTime);
         parameters.addValue("Acquisition Timeout [ms]", inst::getAcquisitionTimeout, 1000, inst::setAcquisitionTimeout);
 
-        parameters.addValue("X Binning", inst::getBinningX, 1, inst::setBinningX);
-        parameters.addValue("Y Binning", inst::getBinningY, 1, inst::setBinningY);
+        parameters.addValue("Binning", "X Binning", inst::getBinningX, 1, inst::setBinningX);
+        parameters.addValue("Binning", "Y Binning", inst::getBinningY, 1, inst::setBinningY);
 
-        parameters.addValue("Image Width", inst::getImageWidth, 1024, inst::setImageWidth);
-        parameters.addValue("Image Height", inst::getImageHeight, 1024, inst::setImageHeight);
+        parameters.addValue("Image", "Image Width", inst::getImageWidth, 1024, inst::setImageWidth);
+        parameters.addValue("Image", "Image Height", inst::getImageHeight, 1024, inst::setImageHeight);
 
-        parameters.addAuto("Image X Offset", inst::isImageCentredX, false, inst::getImageOffsetX, 1, o -> inst.setImageCentredX(true), o -> {
+        parameters.addAuto("Image", "Image X Offset", inst::isImageCentredX, false, inst::getImageOffsetX, 1, o -> inst.setImageCentredX(true), o -> {
             inst.setImageCentredX(false);
             inst.setImageOffsetX(o);
         });
 
-        parameters.addAuto("Image Y Offset", inst::isImageCentredY, false, inst::getImageOffsetY, 1, o -> inst.setImageCentredY(true), o -> {
+        parameters.addAuto("Image", "Image Y Offset", inst::isImageCentredY, false, inst::getImageOffsetY, 1, o -> inst.setImageCentredY(true), o -> {
             inst.setImageCentredY(false);
             inst.setImageOffsetY(o);
         });
