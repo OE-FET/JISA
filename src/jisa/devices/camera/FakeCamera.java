@@ -105,7 +105,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
         Thread.sleep(integrationTime);
 
-        return new U16Frame(data, width, height, System.nanoTime(), getAllParametersAsMap());
+        return new U16Frame(data, getFrameWidth(), getFrameHeight(), System.nanoTime(), getAllParametersAsMap());
 
     }
 
