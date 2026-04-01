@@ -37,7 +37,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     private int timeout = 10000;
     private int target  = 290;
 
-    private ImageMode   imageMode           = ImageMode.IMAGE;
+    private ImageMode   imageMode           = ImageMode.FULL_IMAGE;
     private int         width               = 500;
     private int         height              = 500;
     private int         startX              = 0;
@@ -113,7 +113,14 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
             switch (imageMode) {
 
-                case IMAGE:
+                case FULL_IMAGE:
+
+                    handle(sdk.SetReadMode(4), "SetReadMode(IMAGE)");
+                    handle(sdk.SetImage(xBin, yBin, 1, maxWidth, 1, maxHeight), "SetImage");
+
+                    break;
+
+                case ROI:
 
                     int xStart;
                     int xEnd;
@@ -493,7 +500,17 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
     @Override
     public int getImageWidth() throws IOException, DeviceException {
-        return width;
+
+        switch (imageMode) {
+
+            case FULL_IMAGE:
+                return maxWidth / xBin;
+
+            default:
+                return getFrameWidth();
+
+        }
+
     }
 
     @Override
@@ -506,7 +523,10 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         switch (imageMode) {
 
-            case IMAGE:
+            case FULL_IMAGE:
+                return maxHeight / yBin;
+
+            case ROI:
                 return height;
 
             case FULL_VERTICAL_BINNING:

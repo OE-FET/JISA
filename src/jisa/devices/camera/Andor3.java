@@ -1226,7 +1226,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
             case "IMAGE":
             default:
-                return ImageMode.IMAGE;
+                return ImageMode.ROI;
 
         }
 
@@ -1235,11 +1235,31 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     @Override
     public void setImageMode(ImageMode mode) throws IOException, DeviceException {
 
-        if (mode != ImageMode.MULTI_TRACK && mode != ImageMode.IMAGE) {
+        if (!getImageModes().contains(mode)) {
             throw new DeviceException("Invalid image mode for Andor3 camera.");
         }
 
-        setEnum("AOILayout", mode == ImageMode.MULTI_TRACK ? "Multitrack" : "Image");
+        switch (mode) {
+
+            case FULL_IMAGE:
+                setEnum("AOILayout", "Image");
+                setImageCentredX(false);
+                setImageCentredY(false);
+                setImageOffsetX(0);
+                setImageOffsetY(0);
+                setBinning(1, 1);
+                setImageWidth(getSensorWidth());
+                setImageHeight(getSensorHeight());
+                break;
+
+            case ROI:
+                setEnum("AOILayout", "Image");
+                break;
+
+            case MULTI_TRACK:
+                setEnum("AOILayout", "MultiTrack");
+
+        }
 
     }
 

@@ -22,7 +22,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     private       boolean     running         = false;
     private       Thread      acquireThread;
     private       double      fps             = 0.0;
-    private       ImageMode   imageMode       = ImageMode.IMAGE;
+    private       ImageMode   imageMode       = ImageMode.FULL_IMAGE;
     private final long[]      stats           = {0, 0, System.nanoTime()};
     private final List<Track> tracks          = new LinkedList<>();
 
@@ -280,7 +280,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
     @Override
     public int getFrameWidth() throws IOException, DeviceException {
-        return width;
+        return imageMode == ImageMode.FULL_IMAGE ? getSensorWidth() : width;
     }
 
     @Override
@@ -303,7 +303,10 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
         switch (imageMode) {
 
-            case IMAGE:
+            case FULL_IMAGE:
+                return getSensorHeight();
+
+            case ROI:
                 return height;
 
             case MULTI_TRACK:
@@ -389,12 +392,12 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
     @Override
     public int getSensorWidth() throws IOException, DeviceException {
-        return width;
+        return 1024;
     }
 
     @Override
     public int getSensorHeight() throws IOException, DeviceException {
-        return height;
+        return 1024;
     }
 
     @Override
@@ -435,6 +438,15 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
         }
 
         this.imageMode = mode;
+
+        if (mode == ImageMode.FULL_IMAGE) {
+            setImageCentredX(false);
+            setImageCentredY(false);
+            setImageOffsetX(0);
+            setImageOffsetY(0);
+            setImageWidth(getSensorWidth());
+            setImageHeight(getSensorHeight());
+        }
 
     }
 

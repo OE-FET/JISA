@@ -10,18 +10,18 @@ public interface TemperatureControlled extends Feature {
 
     static void addParameters(TemperatureControlled instrument, Class<?> target, ParameterList parameters) {
 
-
         parameters.addOptional(
-            "Temperature Control [K]",
-            instrument::isTemperatureControlEnabled,
-            false,
-            instrument::getTemperatureControlTarget,
-            300.0,
-            T -> instrument.setTemperatureControlEnabled(false),
-            T -> {
-                instrument.setTemperatureControlEnabled(true);
-                instrument.setTemperatureControlTarget(T);
-            }
+                "Temperature Control",
+                "Setpoint [K]",
+                instrument::isTemperatureControlEnabled,
+                false,
+                instrument::getTemperatureControlTarget,
+                300.0,
+                T -> instrument.setTemperatureControlEnabled(false),
+                T -> {
+                    instrument.setTemperatureControlEnabled(true);
+                    instrument.setTemperatureControlTarget(T);
+                }
         );
 
     }
@@ -30,7 +30,6 @@ public interface TemperatureControlled extends Feature {
      * Enables or disables temperature control for this instrument.
      *
      * @param enabled Enabled?
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -40,7 +39,6 @@ public interface TemperatureControlled extends Feature {
      * Returns whether temperature is currently enabled for this instrument.
      *
      * @return Enabled?
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -50,7 +48,6 @@ public interface TemperatureControlled extends Feature {
      * Sets the set-point for the temperature controller on this instrument (if configurable).
      *
      * @param targetTemperature The target temperature to reach, in Kelvin.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -60,7 +57,6 @@ public interface TemperatureControlled extends Feature {
      * Returns the set-point for the temperature controller on this instrument.
      *
      * @return Temperature set-point, in Kelvin.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -70,7 +66,6 @@ public interface TemperatureControlled extends Feature {
      * Returns the current temperature of this instrument.
      *
      * @return Current temperature, in Kelvin.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -80,7 +75,6 @@ public interface TemperatureControlled extends Feature {
      * Returns whether the temperature control on this instrument has stabilised or not.
      *
      * @return Is it stable?
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */

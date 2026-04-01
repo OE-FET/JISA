@@ -48,9 +48,12 @@ public class Configuration<T extends Instrument> {
 
         for (Parameter parameter : parameters) {
 
-            if (parameter.getType() == Instrument.AutoQuantity.class && block.hasBlock(parameter.getName())) {
+            String      group  = parameter.isGrouped() ? parameter.getGroup() : "General";
+            ConfigBlock pBlock = block.subBlock(group);
 
-                ConfigBlock subBlock = block.subBlock(parameter.getName());
+            if (parameter.getType() == Instrument.AutoQuantity.class && pBlock.hasBlock(parameter.getName())) {
+
+                ConfigBlock subBlock = pBlock.subBlock(parameter.getName());
 
                 if (!subBlock.hasValue("Auto") || !subBlock.hasValue("Value")) {
                     continue;
@@ -65,9 +68,9 @@ public class Configuration<T extends Instrument> {
 
                 parameter.setValue(new Instrument.AutoQuantity<>(auto.get(), value.get()));
 
-            } else if (parameter.getType() == Instrument.OptionalQuantity.class && block.hasBlock(parameter.getName())) {
+            } else if (parameter.getType() == Instrument.OptionalQuantity.class && pBlock.hasBlock(parameter.getName())) {
 
-                ConfigBlock subBlock = block.subBlock(parameter.getName());
+                ConfigBlock subBlock = pBlock.subBlock(parameter.getName());
 
                 if (!subBlock.hasValue("Use") || !subBlock.hasValue("Value")) {
                     continue;
@@ -82,21 +85,22 @@ public class Configuration<T extends Instrument> {
 
                 parameter.setValue(new Instrument.OptionalQuantity<>(use.get(), value.get()));
 
-            } else if (ResultTable.class.isAssignableFrom(parameter.getType()) && block.hasBlock(parameter.getName())) {
+            } else if (ResultTable.class.isAssignableFrom(parameter.getType()) && pBlock.hasBlock(parameter.getName())) {
 
-                ConfigBlock subBlock = block.subBlock(parameter.getName());
+                ConfigBlock subBlock = pBlock.subBlock(parameter.getName());
 
                 try {
                     parameter.setValue(ResultList.fromCSVString(subBlock.stringValue("contents").getOrDefault("")));
-                } catch (Throwable ignored) { }
+                } catch (Throwable ignored) {
+                }
 
 
-            } else if (block.hasValue(parameter.getName())) {
+            } else if (pBlock.hasValue(parameter.getName())) {
 
-                ConfigBlock.Value value = makeValue(block, parameter.getType(), parameter.getName());
+                ConfigBlock.Value value = makeValue(pBlock, parameter.getType(), parameter.getName());
 
                 if (parameter.getType().isEnum()) {
-                    ConfigBlock.Value<String> value2 = block.stringValue(parameter.getName());
+                    ConfigBlock.Value<String> value2 = pBlock.stringValue(parameter.getName());
                     parameter.setValue(Arrays.stream(parameter.getType().getEnumConstants()).filter(e -> e.toString().equals(value2.get())).findFirst().orElse(parameter.getType().getEnumConstants()[0]));
                 } else if (value != null) {
                     parameter.setValue(value.get());
@@ -127,9 +131,12 @@ public class Configuration<T extends Instrument> {
 
         for (Parameter parameter : parameters) {
 
+            String      group  = parameter.isGrouped() ? parameter.getGroup() : "General";
+            ConfigBlock pBlock = block.subBlock(group);
+
             if (parameter.getType() == Instrument.AutoQuantity.class) {
 
-                ConfigBlock                subBlock = block.subBlock(parameter.getName());
+                ConfigBlock                subBlock = pBlock.subBlock(parameter.getName());
                 ConfigBlock.Value<Boolean> auto     = subBlock.booleanValue("Auto");
                 ConfigBlock.Value          value    = makeValue(subBlock, ((Instrument.AutoQuantity) parameter.getValue()).getValue().getClass(), "Value");
 
@@ -142,7 +149,7 @@ public class Configuration<T extends Instrument> {
 
             } else if (parameter.getType() == Instrument.OptionalQuantity.class) {
 
-                ConfigBlock                subBlock = block.subBlock(parameter.getName());
+                ConfigBlock                subBlock = pBlock.subBlock(parameter.getName());
                 ConfigBlock.Value<Boolean> use      = subBlock.booleanValue("Use");
                 ConfigBlock.Value          value    = makeValue(subBlock, ((Instrument.OptionalQuantity) parameter.getValue()).getValue().getClass(), "Value");
 
@@ -155,17 +162,17 @@ public class Configuration<T extends Instrument> {
 
             } else if (ResultTable.class.isAssignableFrom(parameter.getType())) {
 
-                ConfigBlock subBlock = block.subBlock(parameter.getName());
+                ConfigBlock subBlock = pBlock.subBlock(parameter.getName());
                 subBlock.clear();
                 ResultTable quantity = (ResultTable) parameter.getValue();
                 subBlock.stringValue("contents").set(quantity.getCSV());
 
             } else {
 
-                ConfigBlock.Value value = makeValue(block, parameter.getType(), parameter.getName());
+                ConfigBlock.Value value = makeValue(pBlock, parameter.getType(), parameter.getName());
 
                 if (parameter.getType().isEnum()) {
-                    value = block.stringValue(parameter.getName());
+                    value = pBlock.stringValue(parameter.getName());
                     value.set(parameter.getValue().toString());
                 } else if (value != null) {
                     value.set(parameter.getValue());
@@ -219,12 +226,12 @@ public class Configuration<T extends Instrument> {
         for (Parameter p : newParameters) {
 
             pastParameters.stream()
-                          .filter(p2 -> p.getType().equals(p2.getType()) && p.getName().equals(p2.getName()))
-                          .findFirst()
-                          .ifPresent(found -> {
-                              p.setValue(found.getValue());
-                              toRemove.add(found);
-                          });
+                    .filter(p2 -> p.getType().equals(p2.getType()) && p.getName().equals(p2.getName()))
+                    .findFirst()
+                    .ifPresent(found -> {
+                        p.setValue(found.getValue());
+                        toRemove.add(found);
+                    });
 
         }
 
@@ -337,6 +344,14 @@ public class Configuration<T extends Instrument> {
 
         public String getName() {
             return parameter.getName();
+        }
+
+        public boolean isGrouped() {
+            return parameter.isGrouped();
+        }
+
+        public String getGroup() {
+            return parameter.getGroup();
         }
 
         public boolean isChoice() {

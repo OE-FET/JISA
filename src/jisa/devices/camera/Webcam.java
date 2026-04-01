@@ -212,14 +212,23 @@ public class Webcam extends ManagedCamera<RGBFrame> {
 
     @Override
     public ImageMode getImageMode() throws IOException, DeviceException {
-        return ImageMode.IMAGE;
+        return ImageMode.ROI;
     }
 
     @Override
     public void setImageMode(ImageMode mode) throws IOException, DeviceException {
 
-        if (mode != ImageMode.IMAGE) {
+        if (!getImageModes().contains(mode)) {
             throw new DeviceException("Invalid ImageMode \"%s\" for Webcam cameras.", mode);
+        }
+
+        if (mode == ImageMode.FULL_IMAGE) {
+            setImageCentredX(false);
+            setImageCentredY(false);
+            setImageOffsetX(0);
+            setImageOffsetY(0);
+            setImageWidth(getSensorWidth());
+            setImageHeight(getSensorHeight());
         }
 
     }
