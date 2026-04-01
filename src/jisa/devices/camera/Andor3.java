@@ -15,6 +15,7 @@ import jisa.devices.camera.feature.*;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameReader;
 import jisa.devices.camera.frame.U16Frame;
+import jisa.devices.camera.imagemodes.MultiTrack;
 import jisa.devices.camera.nat.ATCoreLibrary;
 import jisa.devices.camera.nat.ATUtilityLibrary;
 import jisa.devices.features.TemperatureControlled;
@@ -1216,6 +1217,33 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     }
 
     @Override
+    public ImageMode getImageMode() throws IOException, DeviceException {
+
+        switch(getEnum("AOILayout").getText().toUpperCase().trim()) {
+
+            case "MULTITRACK":
+                return ImageMode.MULTI_TRACK;
+
+            case "IMAGE":
+            default:
+                return ImageMode.IMAGE;
+
+        }
+
+    }
+
+    @Override
+    public void setImageMode(ImageMode mode) throws IOException, DeviceException {
+
+        if (mode != ImageMode.MULTI_TRACK && mode != ImageMode.IMAGE) {
+            throw new DeviceException("Invalid image mode for Andor3 camera.");
+        }
+
+        setEnum("AOILayout", mode == ImageMode.MULTI_TRACK ? "Multitrack" : "Image");
+
+    }
+
+    @Override
     public double getPixelReadoutRate() throws IOException, DeviceException {
         return Integer.parseInt(getEnum("PixelReadoutRate").getText().replace("MHz", "").trim()) * 1e6;
     }
@@ -1441,16 +1469,6 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
     public boolean isTemperatureControlStable() throws DeviceException, IOException {
         return getEnum("TemperatureStatus").getText().equals("Stabilised");
-    }
-
-    @Override
-    public void setMultiTrackEnabled(boolean enabled) throws IOException, DeviceException {
-        setEnum("AOILayout", enabled ? "Multitrack" : "Image");
-    }
-
-    @Override
-    public boolean isMultiTrackEnabled() throws IOException, DeviceException {
-        return getEnum("AOILayout").getText().equalsIgnoreCase("MULTITRACK");
     }
 
     @Override

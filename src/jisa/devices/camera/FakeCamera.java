@@ -3,29 +3,28 @@ package jisa.devices.camera;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.camera.feature.MultiTrack;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameReader;
 import jisa.devices.camera.frame.U16Frame;
+import jisa.devices.camera.imagemodes.MultiTrack;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
-    private       int     width           = 1024;
-    private       int     height          = 1024;
-    private       int     integrationTime = 5;
-    private       int     timeout;
-    private       boolean running         = false;
-    private       Thread  acquireThread;
-    private       double  fps             = 0.0;
-    private final long[]  stats           = {0, 0, System.nanoTime()};
+    private       int         width           = 1024;
+    private       int         height          = 1024;
+    private       int         integrationTime = 5;
+    private       int         timeout;
+    private       boolean     running         = false;
+    private       Thread      acquireThread;
+    private       double      fps             = 0.0;
+    private       ImageMode   imageMode       = ImageMode.IMAGE;
+    private final long[]      stats           = {0, 0, System.nanoTime()};
+    private final List<Track> tracks          = new LinkedList<>();
 
     private final Random                    random          = new Random();
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
@@ -186,13 +185,14 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
         try {
             acquireThread.join();
-        } catch (InterruptedException ignored) { }
+        } catch (InterruptedException ignored) {
+        }
 
         synchronized (stats) {
             stats[0] = 0;
             stats[1] = 0;
             stats[2] = System.nanoTime();
-            fps = 0.0;
+            fps      = 0.0;
         }
 
     }
@@ -390,6 +390,22 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     }
 
     @Override
+    public ImageMode getImageMode() throws IOException, DeviceException {
+        return imageMode;
+    }
+
+    @Override
+    public void setImageMode(ImageMode mode) throws IOException, DeviceException {
+
+        if (!getImageModes().contains(mode)) {
+            throw new DeviceException("Invalid ImageMode \"%s\" supplied for FakeCamera", mode);
+        }
+
+        this.imageMode = mode;
+
+    }
+
+    @Override
     public String getIDN() throws IOException, DeviceException {
         return "Fake Camera";
     }
@@ -409,24 +425,16 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
         return null;
     }
 
-    @Override
-    public void setMultiTrackEnabled(boolean enabled) throws IOException, DeviceException {
-
-    }
-
-    @Override
-    public boolean isMultiTrackEnabled() throws IOException, DeviceException {
-        return true;
-    }
 
     @Override
     public void setMultiTracks(Collection<Track> tracks) throws IOException, DeviceException {
-
+        this.tracks.clear();
+        this.tracks.addAll(tracks);
     }
 
     @Override
     public List<Track> getMultiTracks() throws IOException, DeviceException {
-        return List.of(new Track(0, 15, false), new Track(16, 25, true));
+        return List.copyOf(tracks);
     }
 
 }

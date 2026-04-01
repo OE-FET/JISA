@@ -201,6 +201,20 @@ public class Webcam extends ManagedCamera<RGBFrame> {
     }
 
     @Override
+    public ImageMode getImageMode() throws IOException, DeviceException {
+        return ImageMode.IMAGE;
+    }
+
+    @Override
+    public void setImageMode(ImageMode mode) throws IOException, DeviceException {
+
+        if (mode != ImageMode.IMAGE) {
+            throw new DeviceException("Invalid ImageMode \"%s\" for Webcam cameras.", mode);
+        }
+
+    }
+
+    @Override
     public String getIDN() throws IOException, DeviceException {
         return "";
     }

@@ -886,6 +886,20 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         return getInt(sdk::tl_camera_get_is_led_on, "tl_camera_get_is_led_on") != 0;
     }
 
+    @Override
+    public ImageMode getImageMode() throws IOException, DeviceException {
+        return ImageMode.IMAGE;
+    }
+
+    @Override
+    public void setImageMode(ImageMode mode) throws IOException, DeviceException {
+
+        if (mode != ImageMode.IMAGE) {
+            throw new DeviceException("Invalid ImageMode \"%s\" for ThorCam cameras.", mode);
+        }
+
+    }
+
     public static class Colour extends ThorCam<U16RGBFrame, long[]> {
 
         public static FrameReader<U16RGBFrame> openFrameReader(String path) throws IOException {

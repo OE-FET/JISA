@@ -6,33 +6,43 @@ import jisa.devices.ParameterList;
 import jisa.devices.camera.frame.Frame;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameThread;
+import jisa.devices.camera.imagemodes.*;
 import jisa.gui.FrameAcceptor;
 import jisa.gui.HeatMap;
 import jisa.gui.ImageDisplay;
+import org.apache.commons.lang3.ClassUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 /**
  * Standard interface for representing cameras.
  *
  * @param <F> The class used to represent each frame returned by this camera, must extend Frame.
  */
-public interface Camera<F extends Frame> extends Instrument {
+public interface Camera<F extends Frame> extends Instrument, Image {
 
     String IMAGE_STREAM_HEADER = "JISA IMAGE STREAM: width (int, 4 bytes), height (int, 4 bytes), bytes per pixel (int, 4 bytes), timestamp (long, 8 bytes), image data (byte array, w*h*bpp bytes)";
 
     static void addParameters(Camera<?> inst, Class<?> target, ParameterList parameters) {
 
+        parameters.addChoice("Image Mode", inst::getImageMode, ImageMode.IMAGE, inst::setImageMode, inst.getImageModes().toArray(ImageMode[]::new));
+
         parameters.addValue("Integration Time [s]", inst::getIntegrationTime, 20e-3, inst::setIntegrationTime);
         parameters.addValue("Acquisition Timeout [ms]", inst::getAcquisitionTimeout, 1000, inst::setAcquisitionTimeout);
+
         parameters.addValue("X Binning", inst::getBinningX, 1, inst::setBinningX);
         parameters.addValue("Y Binning", inst::getBinningY, 1, inst::setBinningY);
+
         parameters.addValue("Frame Width", inst::getFrameWidth, 1024, inst::setFrameWidth);
         parameters.addValue("Frame Height", inst::getFrameHeight, 1024, inst::setFrameHeight);
 
@@ -46,13 +56,13 @@ public interface Camera<F extends Frame> extends Instrument {
             inst.setFrameOffsetY(o);
         });
 
+
     }
 
     /**
      * Returns the integration/exposure time being used by this camera.
      *
      * @return Integration/exposure time, in seconds.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -62,7 +72,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Sets the integration/exposure time for this camera to use.
      *
      * @param time Integration/exposure time, in seconds.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -72,7 +81,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Acquires and returns a single frame from the camera.
      *
      * @return Single acquisition frame, represented as a Frame object
-     *
      * @throws IOException          Upon communications error
      * @throws DeviceException      Upon device compatibility error
      * @throws InterruptedException If the thread is interrupted while waiting for frame from camera
@@ -84,7 +92,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Sets the maximum time to wait for acquisitions before giving up. A value of 0 indicates no timeout.
      *
      * @param timeout Timeout, in millisefconds
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -94,7 +101,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns the timeout currently being used for acquisitions. A value of 0 indicates no timeout.
      *
      * @return Timeout, in milliseconds.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -104,7 +110,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns the current rate at which the camera is acquiring frames (if it is continuously acquiring, zero otherwise).
      *
      * @return Acquisition frames per second.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -115,7 +120,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Unless this has been overridden, this will just return the same value as getAcquisitionFPS() by default.
      *
      * @return Processing frames per second.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -143,7 +147,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns whether the camera is currently continuously acquiring frames.
      *
      * @return Acquiring continuously?
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -153,9 +156,7 @@ public interface Camera<F extends Frame> extends Instrument {
      * Acquires a series of frames from the camera, returning them all as a List of Frame objects.
      *
      * @param count Number of frames to acquire
-     *
      * @return List of acquisitions, as Frame objects
-     *
      * @throws IOException          Upon communications error
      * @throws DeviceException      Upon device compatibility error
      * @throws InterruptedException If acquisition is interrupted
@@ -170,7 +171,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * if you intend to store it.
      *
      * @param listener Listener to add
-     *
      * @return Reference to added listener
      */
     Listener<F> addFrameListener(Listener<F> listener);
@@ -187,7 +187,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * This is to allow for asynchronous, lossless processing of frame data.
      *
      * @param capacity The maximum capacity of the queue (beyond which frames will be rejected).
-     *
      * @return Queue of frames
      */
     FrameQueue<F> openFrameQueue(int capacity);
@@ -214,7 +213,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * provided lambda sequentially. In effect, this is like adding a frame listener, except it is lossless.
      *
      * @param listener Action to perform with each frame that comes through the queue.
-     *
      * @return FrameThread object representing the new thread and queue.
      */
     default FrameThread<F> startFrameThread(CountStreamer<F> listener) {
@@ -226,7 +224,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * provided lambda sequentially. In effect, this is like adding a frame listener, except it is lossless.
      *
      * @param listener Action to perform with each frame that comes through the queue.
-     *
      * @return FrameThread object representing the new thread and queue.
      */
     default FrameThread<F> startFrameThread(Streamer<F> listener) {
@@ -237,7 +234,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Stream binary frame data losslessly to the given output stream.
      *
      * @param stream The output stream to stream to.
-     *
      * @return FrameThread object representing the worker thread running the stream.
      */
     default FrameThread<F> stream(DataOutputStream stream) {
@@ -248,7 +244,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Stream binary frame data losslessly to the given file.
      *
      * @param path The file to stream to.
-     *
      * @return FrameThread object representing the worker thread running the stream.
      */
     default FrameThread<F> streamToFile(String path) throws IOException {
@@ -261,7 +256,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns the width (in pixels) of images captured by this camera, for its current configuration.
      *
      * @return Image width, in pixels.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -271,7 +265,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Sets the width (in pixels) to use when taking images.
      *
      * @param width Width, in pixels.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -281,7 +274,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns number of physical pixel columns (i.e., before binning) used on the sensor to capture each frame.
      *
      * @return Width, in physical pixel columns.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -291,7 +283,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns the height (in pixels) of images captured by this camera, for its current configuration.
      *
      * @return Image height, in pixels.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -301,7 +292,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Sets the height (in pixels) to use when taking images.
      *
      * @param height Height, in pixels.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -311,7 +301,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns number of physical pixel rows (i.e., before binning) used on the sensor to capture each frame.
      *
      * @return Height, in physical pixel rows.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -321,7 +310,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns which physical pixel column on the sensor is the left-most column used for acquiring frames.
      *
      * @return X-Offset of image, in physical pixels.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -331,7 +319,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Sets which physical pixel column on the sensor is the left-most column used for acquiring frames.
      *
      * @param offsetX X-Offset of image, in physical pixels.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -342,7 +329,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * centred in x on the sensor.
      *
      * @param centredX Centre in the x direction?
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -353,7 +339,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * centred in x on the sensor.
      *
      * @return Centre in the x direction?
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -363,7 +348,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns the y co-ordinate of the top-most pixel used for capturing images.
      *
      * @return Y-Offset of image, in pixels.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -373,7 +357,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Sets the y co-ordinate of the top-most pixel used for capturing images.
      *
      * @param offsetY Y-Offset for images, in pixels.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -384,7 +367,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * centred in y on the sensor.
      *
      * @param centredY Centre in the x direction?
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -395,7 +377,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * centred in y on the sensor.
      *
      * @return Centre in the y direction?
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -405,7 +386,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns the total number of pixels in images captured by this camera, for its current configuration.
      *
      * @return Total number of pixels.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -415,7 +395,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns the total number of physical pixels (i.e., before binning) used to capture each frame.
      *
      * @return Total number of physical pixels per frame.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -425,7 +404,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns the total number of physical pixel columns on the sensor.
      *
      * @return Number of physical pixel columns.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -435,7 +413,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns the total number of physical pixel rows on the sensor.
      *
      * @return Number of physical pixel rows.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -445,7 +422,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns how many "real" pixels are being summed in the x direction per returned pixel.
      *
      * @return Number of "real" pixels binned in x direction per returned pixel.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -455,7 +431,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Sets how many "real" pixels are being summed in the x direction per returned pixel.
      *
      * @param x Number of "real" pixels binned in x direction per returned pixel.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -465,7 +440,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Returns how many "real" pixels are being summed in the y direction per returned pixel.
      *
      * @return Number of "real" pixels binned in y direction per returned pixel.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -475,7 +449,6 @@ public interface Camera<F extends Frame> extends Instrument {
      * Sets how many "real" pixels are being summed in the y direction per returned pixel.
      *
      * @param y Number of "real" pixels binned in y direction per returned pixel.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
@@ -487,11 +460,26 @@ public interface Camera<F extends Frame> extends Instrument {
      *
      * @param x Binning in x
      * @param y Binning in y
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
     void setBinning(int x, int y) throws IOException, DeviceException;
+
+    default List<ImageMode> getImageModes() {
+
+        List<Class<?>> interfaces = ClassUtils.getAllInterfaces(getClass());
+
+        return interfaces.stream()
+                .filter(CameraImageMode.class::isAssignableFrom)
+                .map(ImageMode::lookup)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+    }
+
+    ImageMode getImageMode() throws IOException, DeviceException;
+
+    void setImageMode(ImageMode mode) throws IOException, DeviceException;
 
     default Listener<F> sendFramesTo(FrameAcceptor drawer) {
         return addFrameListener(drawer::acceptFrame);
@@ -515,6 +503,50 @@ public interface Camera<F extends Frame> extends Instrument {
 
     interface CountStreamer<F extends Frame> {
         void newFrame(long count, F frame) throws Exception;
+    }
+
+    enum ImageMode {
+
+        IMAGE("Image", Image.class),
+        FULL_VERTICAL_BINNING("Full Vertical Binning", FullVerticalBinning.class),
+        SINGLE_TRACK("Single-Track", SingleTrack.class),
+        TRACK_SEQUENCE("Track Sequence", TrackSequence.class),
+        MULTI_TRACK("Multi-Track", MultiTrack.class);
+
+        private final static Map<Class<?>, ImageMode> map = new LinkedHashMap<>();
+
+        static {
+
+            for (ImageMode value : values()) {
+                map.put(value.getInterface(), value);
+            }
+
+        }
+
+        public static ImageMode lookup(Class<?> itfc) {
+            return map.getOrDefault(itfc, null);
+        }
+
+        private final String                           name;
+        private final Class<? extends CameraImageMode> mode;
+
+        private ImageMode(String name, Class<? extends CameraImageMode> mode) {
+            this.name = name;
+            this.mode = mode;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String toString() {
+            return getName();
+        }
+
+        public Class<? extends CameraImageMode> getInterface() {
+            return mode;
+        }
+
     }
 
 }

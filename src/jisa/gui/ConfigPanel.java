@@ -146,6 +146,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             GridPane.setMargin(label, new Insets(5, 0, 0, 0));
             GridPane.setMargin(label, new Insets(0, 15, 0, 0));
             GridPane.setMargin(node, new Insets(0, 5, 0, 0));
+            GridPane.setValignment(set, VPos.TOP);
 
             addRow(label, node, set);
 
@@ -259,6 +260,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
             ChoiceBox<Q> choiceBox = new ChoiceBox<>(FXCollections.observableArrayList(choices));
             choiceBox.setValue(defaultValue);
+            choiceBox.setMaxWidth(Double.MAX_VALUE);
 
             return new BasicNodeItem<>(choiceBox, choiceBox.valueProperty());
 

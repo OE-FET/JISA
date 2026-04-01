@@ -622,6 +622,20 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     }
 
     @Override
+    public ImageMode getImageMode() throws IOException, DeviceException {
+        return ImageMode.IMAGE;
+    }
+
+    @Override
+    public void setImageMode(ImageMode mode) throws IOException, DeviceException {
+
+        if (mode != ImageMode.IMAGE) {
+            throw new DeviceException("Invalid ImageMode \"%s\" for Lumenera cameras.", mode);
+        }
+
+    }
+
+    @Override
     public String getIDN() throws IOException, DeviceException {
         return "Lumenera Lucam SDK Camera";
     }

@@ -5,8 +5,11 @@ import com.sun.jna.ptr.NativeLongByReference;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
-import jisa.devices.camera.feature.MultiTrack;
 import jisa.devices.camera.frame.U16Frame;
+import jisa.devices.camera.imagemodes.FullVerticalBinning;
+import jisa.devices.camera.imagemodes.MultiTrack;
+import jisa.devices.camera.imagemodes.SingleTrack;
+import jisa.devices.camera.imagemodes.TrackSequence;
 import jisa.devices.camera.nat.ATMCD32D;
 import jisa.devices.features.TemperatureControlled;
 
@@ -21,7 +24,7 @@ import java.util.concurrent.TimeoutException;
 
 import static jisa.devices.camera.nat.ATMCD32D.*;
 
-public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureControlled, MultiTrack {
+public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureControlled, SingleTrack, FullVerticalBinning, TrackSequence, MultiTrack {
 
     private final ATMCD32D                  sdk;
     private final int                       index;
@@ -34,16 +37,21 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     private int timeout = 10000;
     private int target  = 290;
 
-    private int         width       = 500;
-    private int         height      = 500;
-    private int         startX      = 0;
-    private int         startY      = 0;
-    private int         xBin        = 1;
-    private int         yBin        = 1;
-    private boolean     centredX    = false;
-    private boolean     centredY    = false;
-    private boolean     multiTrack  = false;
-    private ShortBuffer imageBuffer = null;
+    private ImageMode   imageMode           = ImageMode.IMAGE;
+    private int         width               = 500;
+    private int         height              = 500;
+    private int         startX              = 0;
+    private int         startY              = 0;
+    private int         xBin                = 1;
+    private int         yBin                = 1;
+    private boolean     centredX            = false;
+    private boolean     centredY            = false;
+    private int         singleTrackStart    = 1;
+    private int         singleTrackHeight   = 1;
+    private int         trackSequenceCount  = 1;
+    private int         trackSequenceHeight = 1;
+    private int         trackSequanceOffset = 1;
+    private ShortBuffer imageBuffer         = null;
 
     private static void handle(int result, String method) throws DeviceException {
 
@@ -103,27 +111,58 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         withCameraSelected(sdk -> {
 
-            if (multiTrack) {
+            switch (imageMode) {
 
-                if (multiTracks.size() == 1 && (multiTracks.get(0).isBinned() || multiTracks.get(0).getStartRow() == multiTracks.get(0).getEndRow())) {
+                case IMAGE:
 
-                    Track track = multiTracks.get(0);
+                    int xStart;
+                    int xEnd;
+                    int yStart;
+                    int yEnd;
 
-                    if (track.getStartRow() == 1 && track.getEndRow() == maxHeight) {
-
-                        handle(sdk.SetReadMode(0), "SetReadMode(FULL-VERTICAL-BINNING)");
-
+                    if (centredX) {
+                        xStart = (maxWidth - width) / 2;
                     } else {
-
-                        int height = track.getEndRow() - track.getStartRow() + 1;
-                        int centre = (track.getStartRow() + track.getEndRow()) / 2;
-
-                        handle(sdk.SetReadMode(3), "SetReadMode(SINGLE-TRACK)");
-                        handle(sdk.SetSingleTrack(centre, height), String.format("SetSingleTrack(%d, %d)", centre, height));
-
+                        xStart = startX;
                     }
 
-                } else {
+                    if (centredY) {
+                        yStart = (maxHeight - height) / 2;
+                    } else {
+                        yStart = startY;
+                    }
+
+                    xEnd = xStart + width - 1;
+                    yEnd = yStart + height - 1;
+
+                    handle(sdk.SetReadMode(4), "SetReadMode(IMAGE)");
+                    handle(sdk.SetImage(xBin, yBin, xStart, xEnd, yStart, yEnd), "SetImage");
+
+                    break;
+
+
+                case SINGLE_TRACK:
+
+                    handle(sdk.SetReadMode(3), "SetReadMode(SINGLE-TRACK)");
+                    handle(sdk.SetSingleTrack(singleTrackStart - singleTrackHeight / 2, singleTrackHeight), String.format("SetSingleTrack(%d, %d)", singleTrackStart - singleTrackHeight / 2, height));
+
+                    break;
+
+
+                case TRACK_SEQUENCE:
+
+                    handle(sdk.SetReadMode(1), "SetReadMode(MULTI-TRACK [sequence])");
+                    handle(
+                        sdk.SetMultiTrack(trackSequenceCount, trackSequenceHeight, trackSequanceOffset, IntBuffer.allocate(1), IntBuffer.allocate(1)),
+                        String.format("SetMultiTrack(%d, %d, %d)", trackSequenceCount, trackSequenceHeight, trackSequanceOffset)
+                    );
+
+                    break;
+
+
+                case MULTI_TRACK:
+
+                    handle(sdk.SetReadMode(3), "SetReadMode(RANDOM-TRACK [multitrack])");
 
                     int count = 0;
 
@@ -157,35 +196,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
                     }
 
-                    handle(sdk.SetReadMode(2), "SetReadMode(RANDOM-TRACK)");
                     handle(sdk.SetRandomTracks(count, areas), "SetRandomTracks");
-
-                }
-
-            } else {
-
-                int xStart;
-                int xEnd;
-                int yStart;
-                int yEnd;
-
-                if (centredX) {
-                    xStart = (maxWidth - width) / 2;
-                } else {
-                    xStart = startX;
-                }
-
-                if (centredY) {
-                    yStart = (maxHeight - height) / 2;
-                } else {
-                    yStart = startY;
-                }
-
-                xEnd = xStart + width - 1;
-                yEnd = yStart + height - 1;
-
-                handle(sdk.SetReadMode(4), "SetReadMode(IMAGE)");
-                handle(sdk.SetImage(xBin, yBin, xStart, xEnd, yStart, yEnd), "SetImage");
 
             }
 
@@ -265,16 +276,6 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     }
 
     @Override
-    public void setMultiTrackEnabled(boolean enabled) throws IOException, DeviceException {
-        this.multiTrack = enabled;
-    }
-
-    @Override
-    public boolean isMultiTrackEnabled() throws IOException, DeviceException {
-        return multiTrack;
-    }
-
-    @Override
     public void setMultiTracks(Collection<Track> tracks) throws IOException, DeviceException {
         multiTracks.clear();
         multiTracks.addAll(tracks);
@@ -283,6 +284,56 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     @Override
     public List<Track> getMultiTracks() throws IOException, DeviceException {
         return List.copyOf(multiTracks);
+    }
+
+    @Override
+    public void setSingleTrackStart(int track) throws IOException, DeviceException {
+        singleTrackStart = track;
+    }
+
+    @Override
+    public int getSingleTrackStart() throws IOException, DeviceException {
+        return singleTrackStart;
+    }
+
+    @Override
+    public void setSingleTrackHeight(int tracks) throws IOException, DeviceException {
+        singleTrackHeight = tracks;
+    }
+
+    @Override
+    public int getSingleTrackHeight() throws IOException, DeviceException {
+        return singleTrackHeight;
+    }
+
+    @Override
+    public void setTrackSequenceCount(int count) throws IOException, DeviceException {
+        trackSequenceCount = count;
+    }
+
+    @Override
+    public int getTrackSequenceCount() throws IOException, DeviceException {
+        return trackSequenceCount;
+    }
+
+    @Override
+    public void setTrackSequenceHeight(int height) throws IOException, DeviceException {
+        trackSequenceHeight = height;
+    }
+
+    @Override
+    public int getTrackSequenceHeight() throws IOException, DeviceException {
+        return trackSequenceHeight;
+    }
+
+    @Override
+    public void setTrackSequenceOffset(int offset) throws IOException, DeviceException {
+        trackSequanceOffset = offset;
+    }
+
+    @Override
+    public int getTrackSequenceOffset() throws IOException, DeviceException {
+        return trackSequanceOffset;
     }
 
     public interface CameraAction {
@@ -329,8 +380,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
         withCameraSelected(sdk -> {
 
             handle(
-                sdk.GetAcquisitionTimings(exposure, accumulate, kinetic),
-                "GetAcquisitionTimings"
+                    sdk.GetAcquisitionTimings(exposure, accumulate, kinetic),
+                    "GetAcquisitionTimings"
             );
 
         });
@@ -544,6 +595,16 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     public void setBinning(int x, int y) throws IOException, DeviceException {
         xBin = x;
         yBin = y;
+    }
+
+    @Override
+    public synchronized ImageMode getImageMode() throws IOException, DeviceException {
+        return imageMode;
+    }
+
+    @Override
+    public synchronized void setImageMode(ImageMode mode) throws IOException, DeviceException {
+        this.imageMode = mode;
     }
 
     @Override
