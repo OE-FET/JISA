@@ -100,7 +100,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
 
         }
 
-        short[] data = new short[width * height];
+        short[] data = new short[getFrameSize()];
         generate(data);
 
         Thread.sleep(integrationTime);
@@ -122,7 +122,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
     @Override
     public double getAcquisitionFPS() {
 
-        if ((stats[0] != stats[1]) && ((System.nanoTime() - stats[2]) >= 100000)) {
+        if ((stats[0] != stats[1]) && ((System.nanoTime() - stats[2]) >= 2L * integrationTime * 1e6)) {
 
             synchronized (stats) {
 
@@ -165,8 +165,6 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
                 Util.sleep(integrationTime);
                 generate(data);
                 frame.setTimestamp(System.nanoTime());
-                frame.getAttributes().clear();
-                frame.getAttributes().putAll(getAllParametersAsMap());
                 listenerManager.trigger(frame);
 
                 synchronized (stats) {
