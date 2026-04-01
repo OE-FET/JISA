@@ -161,6 +161,8 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
                 Util.sleep(integrationTime);
                 generate(data);
                 frame.setTimestamp(System.nanoTime());
+                frame.getAttributes().clear();
+                frame.getAttributes().putAll(getAllParametersAsMap());
                 listenerManager.trigger(frame);
 
                 synchronized (stats) {
