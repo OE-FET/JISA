@@ -403,7 +403,7 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
     enum ImageMode {
 
         FULL_IMAGE("Full Image", FullImage.class),
-        ROI("Image", ROI.class),
+        ROI("Region of Interest", ROI.class),
         FULL_VERTICAL_BINNING("Full Vertical Binning", FullVerticalBinning.class),
         SINGLE_TRACK("Single-Track", SingleTrack.class),
         TRACK_SEQUENCE("Track Sequence", TrackSequence.class),

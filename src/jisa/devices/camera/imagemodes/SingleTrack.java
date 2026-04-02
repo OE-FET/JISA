@@ -17,8 +17,8 @@ public interface SingleTrack extends CameraImageMode {
 
     static void addParameters(SingleTrack inst, Class<?> target, ParameterList parameters) {
 
-        parameters.addValue("Single-Track Mode","Single Track Start", inst::getSingleTrackStart, 0, inst::setSingleTrackStart);
-        parameters.addValue("Single-Track Mode","Single Track Height", inst::getSingleTrackHeight, 1, inst::setSingleTrackHeight);
+        parameters.addValue("Single-Track","Start", inst::getSingleTrackStart, 0, inst::setSingleTrackStart);
+        parameters.addValue("Single-Track","Height", inst::getSingleTrackHeight, 1, inst::setSingleTrackHeight);
 
     }
 

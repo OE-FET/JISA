@@ -490,7 +490,23 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
     @Override
     public int getFrameWidth() throws IOException, DeviceException {
+
+        switch (imageMode) {
+
+            case FULL_IMAGE:
+                return maxWidth / xBin;
+
+            case ROI:
+            case FULL_VERTICAL_BINNING:
+            case SINGLE_TRACK:
+            case TRACK_SEQUENCE:
+            case MULTI_TRACK:
+                return width;
+
+        }
+
         return width;
+
     }
 
     @Override

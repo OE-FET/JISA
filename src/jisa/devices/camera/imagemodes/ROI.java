@@ -9,15 +9,15 @@ public interface ROI extends CameraImageMode {
 
     public static void addParameters(ROI inst, Class<?> target, ParameterList parameters) {
 
-        parameters.addValue("Image Mode", "Image Width", inst::getImageWidth, 1024, inst::setImageWidth);
-        parameters.addValue("Image Mode", "Image Height", inst::getImageHeight, 1024, inst::setImageHeight);
+        parameters.addValue("Region of Interest", "Width", inst::getImageWidth, 1024, inst::setImageWidth);
+        parameters.addValue("Region of Interest", "Height", inst::getImageHeight, 1024, inst::setImageHeight);
 
-        parameters.addAuto("Image Mode", "Image X Offset", inst::isImageCentredX, false, inst::getImageOffsetX, 1, o -> inst.setImageCentredX(true), o -> {
+        parameters.addAuto("Region of Interest", "X Offset", inst::isImageCentredX, false, inst::getImageOffsetX, 1, o -> inst.setImageCentredX(true), o -> {
             inst.setImageCentredX(false);
             inst.setImageOffsetX(o);
         });
 
-        parameters.addAuto("Image Mode", "Image Y Offset", inst::isImageCentredY, false, inst::getImageOffsetY, 1, o -> inst.setImageCentredY(true), o -> {
+        parameters.addAuto("Region of Interest", "Y Offset", inst::isImageCentredY, false, inst::getImageOffsetY, 1, o -> inst.setImageCentredY(true), o -> {
             inst.setImageCentredY(false);
             inst.setImageOffsetY(o);
         });

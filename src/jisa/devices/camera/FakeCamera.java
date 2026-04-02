@@ -6,6 +6,7 @@ import jisa.devices.DeviceException;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameReader;
 import jisa.devices.camera.frame.U16Frame;
+import jisa.devices.camera.imagemodes.FullVerticalBinning;
 import jisa.devices.camera.imagemodes.MultiTrack;
 
 import java.io.IOException;
@@ -13,7 +14,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
-public class FakeCamera implements Camera<U16Frame>, MultiTrack {
+public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBinning {
 
     private       int         width           = 1024;
     private       int         height          = 1024;
@@ -309,6 +310,9 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
             case ROI:
                 return height;
 
+            case FULL_VERTICAL_BINNING:
+                return 1;
+
             case MULTI_TRACK:
 
                 int count = 0;
@@ -438,15 +442,6 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack {
         }
 
         this.imageMode = mode;
-
-        if (mode == ImageMode.FULL_IMAGE) {
-            setImageCentredX(false);
-            setImageCentredY(false);
-            setImageOffsetX(0);
-            setImageOffsetY(0);
-            setImageWidth(getSensorWidth());
-            setImageHeight(getSensorHeight());
-        }
 
     }
 

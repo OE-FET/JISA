@@ -134,7 +134,7 @@ public interface MultiTrack extends CameraImageMode {
         ResultTable     table  = new ResultList(start, end, binned);
 
         parameters.addValue(
-                "Multi-Track Mode",
+                "Multi-Track",
                 "Tracks",
                 () -> {
 
