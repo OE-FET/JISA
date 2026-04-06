@@ -142,10 +142,14 @@ public class FakeSpectrometer implements Spectrometer {
     private final Random          random      = new Random();
     private final ListenerManager manager     = new ListenerManager();
 
-    protected synchronized void generate() throws InterruptedException {
+    protected void generate() throws InterruptedException {
 
-        for (int i = 0; i < buffer.length; i++) {
-            buffer[i] = random.nextDouble();
+        synchronized (buffer) {
+
+            for (int i = 0; i < buffer.length; i++) {
+                buffer[i] = random.nextDouble();
+            }
+
         }
 
     }
