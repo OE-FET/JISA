@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /**
@@ -174,13 +175,21 @@ public interface Instrument {
     default Map<String, Object> getAllParametersAsMap() {
 
         return getAllParameters().stream().collect(Collectors.toMap(
-                Parameter::getName,
+                p -> {
+
+                    if (p.isGrouped()) {
+                        return String.format("%s %s", p.getGroup(), p.getName());
+                    } else {
+                        return p.getName();
+                    }
+
+                },
                 p -> {
 
                     try {
                         return p.getCurrentValue();
                     } catch (Throwable e) {
-                        return null;
+                        return p.getDefaultValue();
                     }
 
                 }
@@ -188,7 +197,7 @@ public interface Instrument {
 
     }
 
-    default <I> void ifImplements(Class<I> target, InstrumentAcceptor<I> action) throws IOException, DeviceException, InterruptedException {
+    default <I> void ifImplements(Class<I> target, InstrumentAcceptor<I> action) throws IOException, DeviceException, InterruptedException, TimeoutException {
 
         if (target.isAssignableFrom(this.getClass())) {
             action.accept((I) this);
@@ -196,7 +205,7 @@ public interface Instrument {
 
     }
 
-    default <I> void ifImplements(Class<I> target, InstrumentAcceptor<I> action, SRunnable otherwise) throws IOException, DeviceException, InterruptedException {
+    default <I> void ifImplements(Class<I> target, InstrumentAcceptor<I> action, SRunnable otherwise) throws IOException, DeviceException, InterruptedException, TimeoutException {
 
         if (target.isAssignableFrom(this.getClass())) {
 
@@ -206,7 +215,7 @@ public interface Instrument {
 
             try {
                 otherwise.run();
-            } catch (IOException | DeviceException | InterruptedException e) {
+            } catch (IOException | DeviceException | InterruptedException | TimeoutException e) {
                 throw e;
             } catch (Exception e) {
                 throw new DeviceException(e.getMessage());
@@ -216,16 +225,16 @@ public interface Instrument {
 
     }
 
-    default <I> void ifImplements(KClass<I> target, InstrumentAcceptor<I> action) throws IOException, DeviceException, InterruptedException {
+    default <I> void ifImplements(KClass<I> target, InstrumentAcceptor<I> action) throws IOException, DeviceException, InterruptedException, TimeoutException {
         ifImplements(JvmClassMappingKt.getJavaObjectType(target), action);
     }
 
-    default <I> void ifImplements(KClass<I> target, InstrumentAcceptor<I> action, SRunnable otherwise) throws IOException, DeviceException, InterruptedException {
+    default <I> void ifImplements(KClass<I> target, InstrumentAcceptor<I> action, SRunnable otherwise) throws IOException, DeviceException, InterruptedException, TimeoutException {
         ifImplements(JvmClassMappingKt.getJavaObjectType(target), action, otherwise);
     }
 
     interface InstrumentAcceptor<I> {
-        void accept(I instrument) throws IOException, DeviceException, InterruptedException;
+        void accept(I instrument) throws IOException, DeviceException, InterruptedException, TimeoutException;
     }
 
     interface Setter<S> {

@@ -9,6 +9,7 @@ import jisa.maths.Range;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeoutException;
 
@@ -55,7 +56,7 @@ public class FakeSpectrometer implements Spectrometer {
 
         acquisitionThread = new Thread(() -> {
 
-            Spectrum specBuf = new Spectrum(wavelengths, buffer, System.nanoTime());
+            Spectrum specBuf = new Spectrum(wavelengths, buffer, System.nanoTime(), getAllParametersAsMap());
 
             try {
 
@@ -65,6 +66,10 @@ public class FakeSpectrometer implements Spectrometer {
                     generate();
                     specBuf.setTimestamp(System.nanoTime());
                     manager.trigger(specBuf);
+
+                    if (Thread.interrupted()) {
+                        throw new InterruptedException();
+                    }
 
                 }
 
@@ -90,9 +95,9 @@ public class FakeSpectrometer implements Spectrometer {
         acquisitionThread.interrupt();
 
         try {
-            acquisitionThread.join();
+            acquisitionThread.join(10000);
         } catch (InterruptedException ignored) {
-
+            acquisitionThread.stop();
         }
 
     }
@@ -163,7 +168,7 @@ public class FakeSpectrometer implements Spectrometer {
 
             Thread.sleep(delay);
             generate();
-            return new Spectrum(wavelengths, buffer.clone(), System.nanoTime());
+            return new Spectrum(wavelengths, buffer.clone(), System.nanoTime(), getAllParametersAsMap());
 
         }
 
@@ -192,11 +197,13 @@ public class FakeSpectrometer implements Spectrometer {
 
         } else {
 
+            Map<String, Object> attributes = getAllParametersAsMap();
+
             for (int i = 0; i < count; i++) {
 
                 Thread.sleep(delay);
                 generate();
-                spectra.add(new Spectrum(wavelengths, buffer.clone(), System.nanoTime()));
+                spectra.add(new Spectrum(wavelengths, buffer.clone(), System.nanoTime(), attributes));
 
             }
 
