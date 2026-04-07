@@ -3,6 +3,7 @@ package jisa.devices.spectrometer;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
+import jisa.devices.ParameterList;
 import jisa.devices.camera.Camera;
 import jisa.devices.camera.frame.Frame;
 import jisa.devices.camera.frame.FrameThread;
@@ -37,6 +38,17 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
         this.spectrograph = spectrograph;
 
         setConverterFullVerticalBinning();
+
+    }
+
+    @Override
+    public void addInstrumentParameters(Class<?> target, ParameterList parameters) {
+
+        parameters.addAll(camera.getAllParameters());
+
+        if (spectrograph != null) {
+            parameters.addAll(spectrograph.getAllParameters());
+        }
 
     }
 
