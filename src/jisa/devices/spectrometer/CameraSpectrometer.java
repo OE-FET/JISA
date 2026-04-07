@@ -80,7 +80,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
                 cts[x] = 0.0;
 
-                for (int y = 0; y < count; y++) {
+                for (int y = 0; y < height; y++) {
                     cts[x] += frame.get(x, y).doubleValue();
                 }
 
@@ -132,7 +132,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
                 cts[x] = 0.0;
 
-                for (int y = 0; y < count; y++) {
+                for (int y = 0; y < height; y++) {
                     cts[x] += frame.get(x, y).doubleValue();
                 }
 
