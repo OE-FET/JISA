@@ -41,15 +41,10 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
             Spectrum s = converter.convert(f);
 
             s.getAttributes().putAll(f.getAttributes());
-            s.getAttributes().putAll(spectrograph.getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
 
-                try {
-                    return p.getCurrentValue();
-                } catch (Throwable e) {
-                    return null;
-                }
-
-            })));
+            if (spectrograph != null) {
+                s.getAttributes().putAll(spectrograph.getAllParametersAsMap());
+            }
 
             return s;
 
@@ -152,18 +147,23 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
     @Override
     public String getIDN() throws IOException, DeviceException {
-        return String.format("%s + %s", camera.getIDN(), spectrograph.getIDN());
+        return String.format("%s + %s", camera.getIDN(), spectrograph != null ? spectrograph.getName() : "No Spectrograph");
     }
 
     @Override
     public String getName() {
-        return String.format("%s + %s", camera.getName(), spectrograph.getName());
+        return String.format("%s + %s", camera.getName(), spectrograph != null ? spectrograph.getName() : "No Spectrograph");
     }
 
     @Override
     public void close() throws IOException, DeviceException {
+
         camera.close();
-        spectrograph.close();
+
+        if (spectrograph != null) {
+            spectrograph.close();
+        }
+
     }
 
     @Override
@@ -173,12 +173,12 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
     @Override
     public double getSlitWidth() throws IOException, DeviceException {
-        return spectrograph.getSlitWidth();
+        return spectrograph != null ? spectrograph.getSlitWidth() : 0.0;
     }
 
     @Override
     public double getGratingDensity() throws IOException, DeviceException {
-        return spectrograph.getGratingDensity();
+        return spectrograph != null ? spectrograph.getGratingDensity() : 0.0;
     }
 
     public interface Converter<F extends Frame> {
