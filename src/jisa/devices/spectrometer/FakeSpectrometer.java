@@ -7,10 +7,7 @@ import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 import jisa.maths.Range;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
 public class FakeSpectrometer implements Spectrometer {
@@ -19,9 +16,10 @@ public class FakeSpectrometer implements Spectrometer {
         return "Fake Spectrometer";
     }
 
-    private long    delay             = 50;
-    private Thread  acquisitionThread = null;
-    private boolean acquiring         = false;
+    private long                      delay                = 50;
+    private Thread                    acquisitionThread    = null;
+    private boolean                   acquiring            = false;
+    private List<AcquisitionListener> acquisitionListeners = new LinkedList<>();
 
     public FakeSpectrometer(Address address) {
 
@@ -82,6 +80,8 @@ public class FakeSpectrometer implements Spectrometer {
         acquiring = true;
         acquisitionThread.start();
 
+        acquisitionListeners.forEach(l -> l.changed(true));
+
     }
 
     @Override
@@ -100,11 +100,24 @@ public class FakeSpectrometer implements Spectrometer {
             acquisitionThread.stop();
         }
 
+        acquisitionListeners.forEach(l -> l.changed(false));
+
     }
 
     @Override
     public boolean isAcquiring() throws IOException, DeviceException {
         return acquiring;
+    }
+
+    @Override
+    public AcquisitionListener addAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.add(listener);
+        return listener;
+    }
+
+    @Override
+    public void removeAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.remove(listener);
     }
 
     @Override

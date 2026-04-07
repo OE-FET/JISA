@@ -12,17 +12,19 @@ import jisa.visa.NativeDevice;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsLegacy<T, S>> extends NativeDevice implements Spectrometer {
 
     private final T                                           usb;
     private final SpectrometerChannel                         channel;
-    private final ListenerManager                             manager           = new ListenerManager();
-    private       boolean                                     acquiring         = false;
-    private       Thread                                      acquisitionThread = null;
-    private       com.oceanoptics.omnidriver.spectra.Spectrum buffer            = null;
-    private       Spectrum                                    spectrum          = null;
+    private final ListenerManager                             manager              = new ListenerManager();
+    private final List<AcquisitionListener>                   acquisitionListeners = new LinkedList<>();
+    private       boolean                                     acquiring            = false;
+    private       Thread                                      acquisitionThread    = null;
+    private       com.oceanoptics.omnidriver.spectra.Spectrum buffer               = null;
+    private       Spectrum                                    spectrum             = null;
 
     public OceanOpticsLegacy(String name, Class<T> type) throws IOException, DeviceException {
 
@@ -138,6 +140,8 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
         acquiring         = true;
         acquisitionThread.start();
 
+        acquisitionListeners.forEach(l -> l.changed(true));
+
     }
 
     @Override
@@ -154,11 +158,24 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
             acquisitionThread.join();
         } catch (InterruptedException ignored) { }
 
+        acquisitionListeners.forEach(l -> l.changed(false));
+
     }
 
     @Override
     public boolean isAcquiring() {
         return acquiring;
+    }
+
+    @Override
+    public AcquisitionListener addAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.add(listener);
+        return listener;
+    }
+
+    @Override
+    public void removeAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.remove(listener);
     }
 
     @Override

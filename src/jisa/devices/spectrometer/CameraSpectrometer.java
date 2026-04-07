@@ -24,11 +24,12 @@ import java.util.stream.IntStream;
 
 public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends Number, ? extends F>, S extends Spectrograph> implements Spectrometer {
 
-    private final C                               camera;
-    private final S                               spectrograph;
-    private final Map<Listener, Camera.Listener>  listeners = new HashMap<>();
-    private final Map<SpectrumQueue, FrameThread> threads   = new HashMap<>();
-    private       Converter<F>                    converter;
+    private final C                                                    camera;
+    private final S                                                    spectrograph;
+    private final Map<Listener, Camera.Listener>                       listeners            = new HashMap<>();
+    private final Map<SpectrumQueue, FrameThread>                      threads              = new HashMap<>();
+    private final Map<AcquisitionListener, Camera.AcquisitionListener> acquisitionListeners = new HashMap<>();
+    private       Converter<F>                                         converter;
 
     public CameraSpectrometer(C camera, S spectrograph) throws IOException, DeviceException {
 
@@ -51,6 +52,8 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
             if (spectrograph != null) {
                 s.getAttributes().putAll(spectrograph.getAllParametersAsMap());
             }
+
+            s.setTimestamp(f.getTimestamp());
 
             return s;
 
@@ -254,6 +257,18 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
     @Override
     public boolean isAcquiring() throws IOException, DeviceException {
         return camera.isAcquiring();
+    }
+
+    @Override
+    public AcquisitionListener addAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.put(listener, camera.addAcquisitionListener(listener::changed));
+        return listener;
+    }
+
+    @Override
+    public void removeAcquisitionListener(AcquisitionListener listener) {
+        camera.removeAcquisitionListener(acquisitionListeners.get(listener));
+        acquisitionListeners.remove(listener);
     }
 
     @Override

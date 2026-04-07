@@ -158,7 +158,8 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     private final ATUtilityLibrary util;
     private final int              handle;
 
-    private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
+    private final ListenerManager<U16Frame> listenerManager      = new ListenerManager<>();
+    private final List<AcquisitionListener> acquisitionListeners = new LinkedList<>();
 
     private BlockingQueue<byte[]> queued            = new LinkedBlockingQueue<>();
     private boolean               backlog           = true;
@@ -1091,6 +1092,8 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         acquisitionThread.start();
         processingThread.start();
 
+        acquisitionListeners.forEach(l -> l.changed(true));
+
     }
 
     @Override
@@ -1122,11 +1125,24 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         processingThread  = null;
         flush();
 
+        acquisitionListeners.forEach(l -> l.changed(false));
+
     }
 
     @Override
     public synchronized boolean isAcquiring() throws IOException, DeviceException {
         return acquiring;
+    }
+
+    @Override
+    public AcquisitionListener addAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.add(listener);
+        return listener;
+    }
+
+    @Override
+    public void removeAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.remove(listener);
     }
 
     @Override
@@ -1219,7 +1235,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     @Override
     public ImageMode getImageMode() throws IOException, DeviceException {
 
-        switch(getEnum("AOILayout").getText().toUpperCase().trim()) {
+        switch (getEnum("AOILayout").getText().toUpperCase().trim()) {
 
             case "MULTITRACK":
                 return ImageMode.MULTI_TRACK;
@@ -1629,15 +1645,15 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
             getAttributes().putAll(
 
-                    camera.getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
+                camera.getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
 
-                        try {
-                            return p.getCurrentValue();
-                        } catch (Throwable e) {
-                            return null;
-                        }
+                    try {
+                        return p.getCurrentValue();
+                    } catch (Throwable e) {
+                        return null;
+                    }
 
-                    }))
+                }))
 
             );
 

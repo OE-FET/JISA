@@ -16,16 +16,17 @@ import java.util.concurrent.TimeoutException;
 
 public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBinning {
 
-    private       int         width           = 1024;
-    private       int         height          = 1024;
-    private       int         integrationTime = 5;
-    private       int         timeout;
-    private       boolean     running         = false;
-    private       Thread      acquireThread;
-    private       double      fps             = 0.0;
-    private       ImageMode   imageMode       = ImageMode.FULL_IMAGE;
-    private final long[]      stats           = {0, 0, System.nanoTime()};
-    private final List<Track> tracks          = new LinkedList<>();
+    private       int                       width                = 1024;
+    private       int                       height               = 1024;
+    private       int                       integrationTime      = 5;
+    private       int                       timeout;
+    private       boolean                   running              = false;
+    private       Thread                    acquireThread;
+    private       double                    fps                  = 0.0;
+    private       ImageMode                 imageMode            = ImageMode.FULL_IMAGE;
+    private final long[]                    stats                = {0, 0, System.nanoTime()};
+    private final List<Track>               tracks               = new LinkedList<>();
+    private final List<AcquisitionListener> acquisitionListeners = new LinkedList<>();
 
     private final Random                    random          = new Random();
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
@@ -179,6 +180,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
         running = true;
 
         acquireThread.start();
+        acquisitionListeners.forEach(l -> l.changed(true));
 
     }
 
@@ -199,12 +201,24 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
             stats[2] = System.nanoTime();
             fps      = 0.0;
         }
+        acquisitionListeners.forEach(l -> l.changed(false));
 
     }
 
     @Override
     public boolean isAcquiring() throws IOException, DeviceException {
         return running;
+    }
+
+    @Override
+    public AcquisitionListener addAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.add(listener);
+        return listener;
+    }
+
+    @Override
+    public void removeAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.remove(listener);
     }
 
     @Override

@@ -92,6 +92,10 @@ public interface Spectrometer extends Spectrograph {
      */
     boolean isAcquiring() throws IOException, DeviceException;
 
+    AcquisitionListener addAcquisitionListener(AcquisitionListener listener);
+
+    void removeAcquisitionListener(AcquisitionListener listener);
+
     /**
      * Acquires and returns a single spectrum.
      *
@@ -216,6 +220,12 @@ public interface Spectrometer extends Spectrograph {
             }
 
         }
+
+    }
+
+    interface AcquisitionListener {
+
+        void changed(boolean acquiring);
 
     }
 

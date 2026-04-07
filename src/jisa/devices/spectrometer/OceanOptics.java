@@ -17,17 +17,19 @@ import java.nio.ByteBuffer;
 import java.nio.DoubleBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 public class OceanOptics extends NativeDevice implements Spectrometer, TemperatureControlled, Fan, Shutter {
 
-    private final SeabreezeLibrary lib;
-    private final int              index;
-    private final int              specSize;
-    private final double[]         wavelengths;
-    private final String           model   = "UNKNOWN";
-    private final ListenerManager  manager = new ListenerManager();
+    private final SeabreezeLibrary          lib;
+    private final int                       index;
+    private final int                       specSize;
+    private final double[]                  wavelengths;
+    private final String                    model     = "UNKNOWN";
+    private final ListenerManager           manager              = new ListenerManager();
+    private final List<AcquisitionListener> acquisitionListeners = new LinkedList<>();
 
     private long    intTime           = 20000;
     private boolean acquiring         = false;
@@ -174,6 +176,7 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
 
         acquiring = true;
         acquisitionThread.start();
+        acquisitionListeners.forEach(l -> l.changed(true));
 
     }
 
@@ -184,24 +187,41 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
             return;
         }
 
-        acquiring = false;
-        acquisitionThread.interrupt();
-
         try {
-            acquisitionThread.join(10000);
-        } catch (InterruptedException ignored) {
-            acquisitionThread.stop();
-        }
 
-        IntBuffer error = IntBuffer.allocate(1);
-        lib.seabreeze_clear_buffer(index, error);
-        checkForError(error);
+            acquiring = false;
+            acquisitionThread.interrupt();
+
+            try {
+                acquisitionThread.join(10000);
+            } catch (InterruptedException ignored) {
+                acquisitionThread.stop();
+            }
+
+            IntBuffer error = IntBuffer.allocate(1);
+            lib.seabreeze_clear_buffer(index, error);
+            checkForError(error);
+
+        } finally {
+            acquisitionListeners.forEach(l -> l.changed(false));
+        }
 
     }
 
     @Override
     public synchronized boolean isAcquiring() throws IOException, DeviceException {
         return acquiring;
+    }
+
+    @Override
+    public AcquisitionListener addAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.add(listener);
+        return listener;
+    }
+
+    @Override
+    public void removeAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.remove(listener);
     }
 
     @Override
@@ -310,9 +330,9 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
         }
 
 
-        int          capacity    = wavelengths.length;
-        IntBuffer    error       = IntBuffer.allocate(1);
-        DoubleBuffer buffer      = DoubleBuffer.allocate(capacity);
+        int          capacity = wavelengths.length;
+        IntBuffer    error    = IntBuffer.allocate(1);
+        DoubleBuffer buffer   = DoubleBuffer.allocate(capacity);
 
         lib.seabreeze_get_formatted_spectrum(index, error.rewind(), buffer, capacity);
         checkForError(error);

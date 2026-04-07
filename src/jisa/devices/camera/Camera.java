@@ -139,6 +139,10 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
      */
     boolean isAcquiring() throws IOException, DeviceException;
 
+    AcquisitionListener addAcquisitionListener(AcquisitionListener listener);
+
+    void removeAcquisitionListener(AcquisitionListener listener);
+
     /**
      * Acquires a series of frames from the camera, returning them all as a List of Frame objects.
      *
@@ -398,6 +402,10 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
 
     interface CountStreamer<F extends Frame> {
         void newFrame(long count, F frame) throws Exception;
+    }
+
+    interface AcquisitionListener {
+        void changed(boolean acquiring);
     }
 
     enum ImageMode {

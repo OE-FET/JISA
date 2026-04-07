@@ -7,13 +7,15 @@ import jisa.visa.NativeDevice;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 public abstract class ManagedSpectrometer extends NativeDevice implements Spectrometer {
 
-    private final ListenerManager listenerManager = new ListenerManager();
-    
+    private final ListenerManager           listenerManager      = new ListenerManager();
+    private final List<AcquisitionListener> acquisitionListeners = new LinkedList<>();
+
     private boolean acquiring         = false;
     private Thread  acquisitionThread = null;
 
@@ -67,6 +69,8 @@ public abstract class ManagedSpectrometer extends NativeDevice implements Spectr
         acquiring = true;
         acquisitionThread.start();
 
+        acquisitionListeners.forEach(l -> l.changed(true));
+
     }
 
     @Override
@@ -104,9 +108,20 @@ public abstract class ManagedSpectrometer extends NativeDevice implements Spectr
             throw e;
 
         } finally {
-
+            acquisitionListeners.forEach(l -> l.changed(false));
         }
 
+    }
+
+    @Override
+    public AcquisitionListener addAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.add(listener);
+        return listener;
+    }
+
+    @Override
+    public void removeAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.remove(listener);
     }
 
     @Override

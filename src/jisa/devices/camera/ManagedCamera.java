@@ -7,6 +7,7 @@ import jisa.visa.NativeDevice;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -19,7 +20,8 @@ import java.util.stream.Collectors;
  */
 public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice implements Camera<F> {
 
-    protected final ListenerManager<F> manager = new ListenerManager<>();
+    protected final ListenerManager<F>        manager              = new ListenerManager<>();
+    protected final List<AcquisitionListener> acquisitionListeners = new LinkedList<>();
 
     protected boolean acquiring         = false;
     protected Thread  acquisitionThread = null;
@@ -91,15 +93,15 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
 
         frameBuffer.getAttributes().putAll(
 
-                getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
+            getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
 
-                    try {
-                        return p.getCurrentValue();
-                    } catch (Throwable e) {
-                        return null;
-                    }
+                try {
+                    return p.getCurrentValue();
+                } catch (Throwable e) {
+                    return null;
+                }
 
-                }))
+            }))
 
         );
 
@@ -154,6 +156,8 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
         acquiring = true;
         acquisitionThread.start();
 
+        acquisitionListeners.forEach(l -> l.changed(true));
+
     }
 
     @Override
@@ -197,8 +201,21 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
             lastCount     = 0;
             lastTimestamp = 0;
 
+            acquisitionListeners.forEach(l -> l.changed(false));
+
         }
 
+    }
+
+    @Override
+    public AcquisitionListener addAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.add(listener);
+        return listener;
+    }
+
+    @Override
+    public void removeAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.remove(listener);
     }
 
     @Override

@@ -19,10 +19,7 @@ import jisa.visa.NativeDevice;
 import java.io.*;
 import java.nio.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -59,27 +56,28 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     public static final int BYTES_PER_COLOUR_PIXEL = 6;
 
     public static final Map<Integer, String> ERROR_NAMES =
-            Util.map(ERROR_NONE, "No Error")
-                    .map(ERROR_COMMAND_NOT_FOUND, "Unknown Command")
-                    .map(ERROR_TOO_MANY_ARGUMENTS, "Too Many Arguments sent with Command")
-                    .map(ERROR_NOT_ENOUGH_ARGUMENTS, "Too Few Arguments sent with Command")
-                    .map(ERROR_INVALID_COMMAND, "Invalid Command")
-                    .map(ERROR_DUPLICATE_COMMAND, "Duplicate Command")
-                    .map(ERROR_MISSING_JSON_COMMAND, "Command not Documented in JSON")
-                    .map(ERROR_INITIALIZING, "Camera Still Initialising")
-                    .map(ERROR_NOTSUPPORTED, "Command Not Supported")
-                    .map(ERROR_FPGA_NOT_PROGRAMMED, "No Firmware Image on FPGA")
-                    .map(ERROR_ROI_WIDTH_ERROR, "Invalid ROI Width Value")
-                    .map(ERROR_ROI_RANGE_ERROR, "Invalid ROI Range Value")
-                    .map(ERROR_RANGE_ERROR, "Value out of Range for Command")
-                    .map(ERROR_COMMAND_LOCKED, "Command Locked")
-                    .map(ERROR_CAMERA_MUST_BE_STOPPED, "Command Requires Camera to be Stopped")
-                    .map(ERROR_ROI_BIN_COMBO_ERROR, "ROI/Binning Error")
-                    .map(ERROR_IMAGE_DATA_SYNC_ERROR, "Data Sync Error")
-                    .map(ERROR_CAMERA_MUST_BE_DISARMED, "Command Requires Camera to be Disarmed")
-                    .map(ERROR_MAX_ERRORS, "END OF ENUMERATION");
+        Util.map(ERROR_NONE, "No Error")
+            .map(ERROR_COMMAND_NOT_FOUND, "Unknown Command")
+            .map(ERROR_TOO_MANY_ARGUMENTS, "Too Many Arguments sent with Command")
+            .map(ERROR_NOT_ENOUGH_ARGUMENTS, "Too Few Arguments sent with Command")
+            .map(ERROR_INVALID_COMMAND, "Invalid Command")
+            .map(ERROR_DUPLICATE_COMMAND, "Duplicate Command")
+            .map(ERROR_MISSING_JSON_COMMAND, "Command not Documented in JSON")
+            .map(ERROR_INITIALIZING, "Camera Still Initialising")
+            .map(ERROR_NOTSUPPORTED, "Command Not Supported")
+            .map(ERROR_FPGA_NOT_PROGRAMMED, "No Firmware Image on FPGA")
+            .map(ERROR_ROI_WIDTH_ERROR, "Invalid ROI Width Value")
+            .map(ERROR_ROI_RANGE_ERROR, "Invalid ROI Range Value")
+            .map(ERROR_RANGE_ERROR, "Value out of Range for Command")
+            .map(ERROR_COMMAND_LOCKED, "Command Locked")
+            .map(ERROR_CAMERA_MUST_BE_STOPPED, "Command Requires Camera to be Stopped")
+            .map(ERROR_ROI_BIN_COMBO_ERROR, "ROI/Binning Error")
+            .map(ERROR_IMAGE_DATA_SYNC_ERROR, "Data Sync Error")
+            .map(ERROR_CAMERA_MUST_BE_DISARMED, "Command Requires Camera to be Disarmed")
+            .map(ERROR_MAX_ERRORS, "END OF ENUMERATION");
 
-    private final ListenerManager<F> listenerManager = new ListenerManager<>();
+    private final ListenerManager<F>        listenerManager      = new ListenerManager<>();
+    private final List<AcquisitionListener> acquisitionListeners = new LinkedList<>();
 
     protected final ThorCamLibrary sdk;
     protected final Pointer        handle;
@@ -223,14 +221,14 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         try (Memory memory = new Memory(4 * Integer.BYTES)) {
 
             process(
-                    converter.get(
-                            handle,
-                            memory.getByteBuffer(0, Integer.BYTES).asIntBuffer(),
-                            memory.getByteBuffer(Integer.BYTES, Integer.BYTES).asIntBuffer(),
-                            memory.getByteBuffer(2 * Integer.BYTES, Integer.BYTES).asIntBuffer(),
-                            memory.getByteBuffer(3 * Integer.BYTES, Integer.BYTES).asIntBuffer()
-                    ),
-                    name
+                converter.get(
+                    handle,
+                    memory.getByteBuffer(0, Integer.BYTES).asIntBuffer(),
+                    memory.getByteBuffer(Integer.BYTES, Integer.BYTES).asIntBuffer(),
+                    memory.getByteBuffer(2 * Integer.BYTES, Integer.BYTES).asIntBuffer(),
+                    memory.getByteBuffer(3 * Integer.BYTES, Integer.BYTES).asIntBuffer()
+                ),
+                name
             );
 
             return memory.getIntArray(0, 4);
@@ -467,6 +465,8 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         acquisitionThread.start();
 
+        acquisitionListeners.forEach(l -> l.changed(true));
+
     }
 
     @Override
@@ -486,6 +486,19 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         } catch (InterruptedException ignored) {
         }
 
+        acquisitionListeners.forEach(l -> l.changed(false));
+
+    }
+
+    @Override
+    public AcquisitionListener addAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.add(listener);
+        return listener;
+    }
+
+    @Override
+    public void removeAcquisitionListener(AcquisitionListener listener) {
+        acquisitionListeners.remove(listener);
     }
 
     @Override
@@ -868,6 +881,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
      * Sets whether the LED on the camera is turned on or not.
      *
      * @param enabled Turned on?
+     *
      * @throws IOException     Upon communications error.
      * @throws DeviceException Upon device compatibility error.
      */
@@ -879,6 +893,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
      * Returns whether the LED on the camera is turned on or not.
      *
      * @return Turned on?
+     *
      * @throws IOException     Upon communications error.
      * @throws DeviceException Upon device compatibility error.
      */
@@ -1200,9 +1215,9 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
                 v = argb[i];
 
                 destination[i] = (int) (((0xFF << 24)
-                        | (((v >> 32) & 0xFFFF) >> 4) << 16)
-                        | (((v >> 16) & 0xFFFF) >> 4) << 8
-                        | ((v & 0xFFFF) >> 4));
+                    | (((v >> 32) & 0xFFFF) >> 4) << 16)
+                    | (((v >> 16) & 0xFFFF) >> 4) << 8
+                    | ((v & 0xFFFF) >> 4));
 
             }
 
