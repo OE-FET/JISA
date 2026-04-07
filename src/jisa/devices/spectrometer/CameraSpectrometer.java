@@ -313,18 +313,12 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
     @Override
     public Spectrum getSpectrum() throws IOException, DeviceException, InterruptedException, TimeoutException {
-
-        F        frame    = camera.getFrame();
-        Spectrum spectrum = converter.convert(frame);
-        spectrum.getAttributes().putAll(frame.getAttributes());
-
-        return spectrum;
-
+        return converter.convert(camera.getFrame()).copy();
     }
 
     @Override
     public List<Spectrum> getSpectrumSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
-        return camera.getFrameSeries(count).stream().map(converter::convert).collect(Collectors.toList());
+        return camera.getFrameSeries(count).stream().map(f -> converter.convert(f).copy()).collect(Collectors.toList());
     }
 
     @Override
@@ -350,7 +344,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
     public SpectrumQueue openSpectrumQueue(int limit) {
 
         SpectrumQueue  spectrumQueue = new SpectrumQueue(this, limit);
-        FrameThread<F> thread        = camera.startFrameThread(f -> spectrumQueue.offer(converter.convert(f)));
+        FrameThread<F> thread        = camera.startFrameThread(f -> spectrumQueue.offer(converter.convert(f).copy()));
 
         threads.put(spectrumQueue, thread);
 
