@@ -18,6 +18,7 @@ import kotlin.ranges.IntRange;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -30,9 +31,12 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
     private       Converter<F>                    converter;
 
     public CameraSpectrometer(C camera, S spectrograph) throws IOException, DeviceException {
+
         this.camera       = camera;
         this.spectrograph = spectrograph;
-        setConverter(0, getCamera().getFrameHeight() / 2, camera.getFrameWidth() - 1, getCamera().getFrameHeight() / 2, 200.0, 800.0);
+
+        setConverterFullVerticalBinning();
+
     }
 
     public void setConverter(Converter<F> converter) {
@@ -53,27 +57,88 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
         };
     }
 
-    public void setConverter(int startX, int startY, int endX, int endY, double startWL, double endWL) throws DeviceException {
+    public void setConverterFullVerticalBinning() {
 
-        int       count       = endX - startX + 1;
-        double[]  wavelengths = Range.linear(startWL, endWL, count).doubleArray();
-        double[]  counts      = new double[count];
-        LinearFit fit         = Fitting.linearFit(List.of((double) startX, (double) endX), List.of((double) startY, (double) endY));
-        Spectrum  buffer      = new Spectrum(wavelengths, counts);
-
-        if (fit == null) {
-            throw new DeviceException("Cannot fit line to specified points.");
-        }
-
-        Function fitFunc = fit.getFunction();
+        AtomicReference<double[]> wavelengths = new AtomicReference<>(new double[0]);
+        AtomicReference<double[]> counts      = new AtomicReference<>(new double[0]);
+        AtomicReference<Spectrum> spectrum    = new AtomicReference<>(null);
 
         setConverter(frame -> {
 
-            for (int x = startX; x <= endX; x++) {
-                counts[x - startX] = frame.get(x, (int) fitFunc.value(x)).doubleValue();
+            int count  = frame.getWidth();
+            int height = frame.getHeight();
+
+            if (counts.get().length != count) {
+                wavelengths.set(Range.linear(0, count - 1).doubleArray());
+                counts.set(new double[count]);
+                spectrum.set(new Spectrum(wavelengths.get(), counts.get()));
             }
 
-            return buffer;
+            double[] cts = counts.get();
+
+            for (int x = 0; x < count; x++) {
+
+                cts[x] = 0.0;
+
+                for (int y = 0; y < count; y++) {
+                    cts[x] += frame.get(x, y).doubleValue();
+                }
+
+            }
+
+            return spectrum.get();
+
+        });
+
+    }
+
+    public void setConverterFullVerticalBinning(Map<Integer, Double> peaks, int fitOrder) {
+
+        if (peaks.size() < Math.max(2, fitOrder)) {
+            setConverterFullVerticalBinning();
+            return;
+        }
+
+        PolyFit fit = Fitting.polyFit(
+            peaks.keySet().stream().map(Number::doubleValue).collect(Collectors.toList()),
+            peaks.values(),
+            fitOrder
+        );
+
+        if (fit == null) {
+            setConverterFullVerticalBinning();
+            return;
+        }
+
+        Function                  fitFunc     = fit.getFunction();
+        AtomicReference<double[]> wavelengths = new AtomicReference<>(new double[0]);
+        AtomicReference<double[]> counts      = new AtomicReference<>(new double[0]);
+        AtomicReference<Spectrum> spectrum    = new AtomicReference<>(null);
+
+        setConverter(frame -> {
+
+            int count  = frame.getWidth();
+            int height = frame.getHeight();
+
+            if (counts.get().length != count) {
+                wavelengths.set(Range.linear(0, count - 1).stream().mapToDouble(fitFunc::value).toArray());
+                counts.set(new double[count]);
+                spectrum.set(new Spectrum(wavelengths.get(), counts.get()));
+            }
+
+            double[] cts = counts.get();
+
+            for (int x = 0; x < count; x++) {
+
+                cts[x] = 0.0;
+
+                for (int y = 0; y < count; y++) {
+                    cts[x] += frame.get(x, y).doubleValue();
+                }
+
+            }
+
+            return spectrum.get();
 
         });
 
@@ -99,14 +164,14 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
         final double theta      = Math.atan2(endY - startY, endX - startX);
         final double orthogonal = theta + Math.PI / 2.0;
         final int    steps      = Math.max(Math.abs(endY - startY), Math.abs(endX - startX)) + 1;
-        final double step       = Math.sqrt(Math.pow(endY - startY, 2) + Math.pow(endX - startX, 2)) / (steps - 1);
+        final double step       = steps > 1 ? Math.sqrt(Math.pow(endY - startY, 2) + Math.pow(endX - startX, 2)) / (steps - 1) : 0.0;
 
         final int    topLeftX    = (int) Math.round(startX + binning * Math.cos(orthogonal));
         final int    topLeftY    = (int) Math.round(startY + binning * Math.sin(orthogonal));
         final int    bottomLeftX = (int) Math.round(startX - binning * Math.cos(orthogonal));
         final int    bottomLeftY = (int) Math.round(startY - binning * Math.sin(orthogonal));
         final int    binSteps    = Math.max(Math.abs(topLeftX - bottomLeftX), Math.abs(topLeftY - bottomLeftY)) + 1;
-        final double binStep     = Math.sqrt(Math.pow(topLeftX - bottomLeftX, 2) + Math.pow(topLeftY - bottomLeftY, 2)) / (binSteps - 1);
+        final double binStep     = binSteps > 1 ? Math.sqrt(Math.pow(topLeftX - bottomLeftX, 2) + Math.pow(topLeftY - bottomLeftY, 2)) / (binSteps - 1) : 0.0;
 
         final int[][][] pixels = new int[steps][binSteps][2];
 
@@ -143,31 +208,6 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
             }
 
             return buffer;
-
-        });
-
-    }
-
-    public void setConverter(double[] wavelengths) throws IOException, DeviceException {
-
-        final double[] counts   = new double[camera.getFrameWidth()];
-        final Spectrum spectrum = new Spectrum(wavelengths, counts);
-
-        setConverter(frame -> {
-
-            Arrays.fill(counts, 0.0);
-
-            for (int y = 0; y < frame.getHeight(); y++) {
-
-                for (int x = 0; x < frame.getWidth(); x++) {
-                    counts[x] += frame.get(x, y).doubleValue();
-                }
-
-            }
-
-            spectrum.setTimestamp(frame.getTimestamp());
-
-            return spectrum;
 
         });
 
