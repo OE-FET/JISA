@@ -1,5 +1,6 @@
 package jisa.devices.spectrometer;
 
+import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.camera.Camera;
@@ -10,15 +11,15 @@ import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 import jisa.maths.Range;
 import jisa.maths.fits.Fitting;
 import jisa.maths.fits.LinearFit;
+import jisa.maths.fits.PolyFit;
 import jisa.maths.functions.Function;
+import kotlin.ranges.IntRange;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends Number, ? extends F>, S extends Spectrograph> implements Spectrometer {
 
@@ -40,6 +41,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
             Spectrum s = converter.convert(f);
 
+            s.getAttributes().clear();
             s.getAttributes().putAll(f.getAttributes());
 
             if (spectrograph != null) {
@@ -69,6 +71,75 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
             for (int x = startX; x <= endX; x++) {
                 counts[x - startX] = frame.get(x, (int) fitFunc.value(x)).doubleValue();
+            }
+
+            return buffer;
+
+        });
+
+    }
+
+    public void setConverter(int startX, int startY, int endX, int endY, int binning, Map<Integer, Double> wavelengths) throws DeviceException {
+
+        if (wavelengths.size() < 2) {
+            throw new DeviceException("Need at least two wavelength positions to calibrate spectra.");
+        }
+
+        int                order   = wavelengths.size() - 1;
+        List<Double>       indices = wavelengths.keySet().stream().map(Number::doubleValue).collect(Collectors.toList());
+        Collection<Double> wls     = wavelengths.values();
+        PolyFit            wlFit   = Fitting.polyFit(indices, wls, order);
+
+        if (wlFit == null) {
+            throw new DeviceException("Cannot fit function to provided wavelength data");
+        }
+
+        Function wlFunc = wlFit.getFunction();
+
+        final double theta      = Math.atan2(endY - startY, endX - startX);
+        final double orthogonal = theta + Math.PI / 2.0;
+        final int    steps      = Math.max(Math.abs(endY - startY), Math.abs(endX - startX)) + 1;
+        final double step       = Math.sqrt(Math.pow(endY - startY, 2) + Math.pow(endX - startX, 2)) / (steps - 1);
+
+        final int    topLeftX    = (int) Math.round(startX + binning * Math.cos(orthogonal));
+        final int    topLeftY    = (int) Math.round(startY + binning * Math.sin(orthogonal));
+        final int    bottomLeftX = (int) Math.round(startX - binning * Math.cos(orthogonal));
+        final int    bottomLeftY = (int) Math.round(startY - binning * Math.sin(orthogonal));
+        final int    binSteps    = Math.max(Math.abs(topLeftX - bottomLeftX), Math.abs(topLeftY - bottomLeftY)) + 1;
+        final double binStep     = Math.sqrt(Math.pow(topLeftX - bottomLeftX, 2) + Math.pow(topLeftY - bottomLeftY, 2)) / (binSteps - 1);
+
+        final int[][][] pixels = new int[steps][binSteps][2];
+
+        for (int i = 0; i < steps; i++) {
+
+            for (int j = 0; j < binSteps; j++) {
+
+                double rp = i * step;
+                double ro = j * binStep;
+
+                pixels[i][j][0] = (int) Math.round(bottomLeftX + (rp * Math.cos(theta)) + (ro * Math.cos(orthogonal)));
+                pixels[i][j][1] = (int) Math.round(bottomLeftY + (rp * Math.sin(theta)) + (ro * Math.sin(orthogonal)));
+
+            }
+
+        }
+
+        final double[] wl     = IntStream.range(0, steps).mapToDouble(wlFunc::value).toArray();
+        final double[] counts = new double[wl.length];
+        final Spectrum buffer = new Spectrum(wl, counts);
+
+        setConverter(frame -> {
+
+            for (int i = 0; i < steps; i++) {
+
+                double value = 0.0;
+
+                for (int j = 0; j < binSteps; j++) {
+                    value += frame.get(pixels[i][j][0], pixels[i][j][1]).doubleValue();
+                }
+
+                counts[i] = value;
+
             }
 
             return buffer;
