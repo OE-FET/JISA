@@ -31,6 +31,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
     private final Map<SpectrumQueue, FrameThread>                      threads              = new HashMap<>();
     private final Map<AcquisitionListener, Camera.AcquisitionListener> acquisitionListeners = new HashMap<>();
     private       Converter<F>                                         converter;
+    private       Converter<F>                                         converterCopy;
 
     public CameraSpectrometer(C camera, S spectrograph) throws IOException, DeviceException {
 
@@ -56,20 +57,46 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
         this.converter = f -> {
 
-            Spectrum s = converter.convert(f);
+            synchronized (this) {
 
-            s.getAttributes().clear();
-            s.getAttributes().putAll(f.getAttributes());
+                Spectrum s = converter.convert(f);
 
-            if (spectrograph != null) {
-                s.getAttributes().putAll(spectrograph.getAllParametersAsMap());
+                s.getAttributes().clear();
+                s.getAttributes().putAll(f.getAttributes());
+
+                if (spectrograph != null) {
+                    s.getAttributes().putAll(spectrograph.getAllParametersAsMap());
+                }
+
+                s.setTimestamp(f.getTimestamp());
+
+                return s;
+
             }
 
-            s.setTimestamp(f.getTimestamp());
+        };
 
-            return s;
+        this.converterCopy = f -> {
+
+            synchronized (this) {
+
+                Spectrum s = converter.convert(f);
+
+                s.getAttributes().clear();
+                s.getAttributes().putAll(f.getAttributes());
+
+                if (spectrograph != null) {
+                    s.getAttributes().putAll(spectrograph.getAllParametersAsMap());
+                }
+
+                s.setTimestamp(f.getTimestamp());
+
+                return s.copy();
+
+            }
 
         };
+
     }
 
     public void setConverterFullVerticalBinning() {
@@ -325,12 +352,12 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
     @Override
     public Spectrum getSpectrum() throws IOException, DeviceException, InterruptedException, TimeoutException {
-        return converter.convert(camera.getFrame()).copy();
+        return converterCopy.convert(camera.getFrame()).copy();
     }
 
     @Override
     public List<Spectrum> getSpectrumSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
-        return camera.getFrameSeries(count).stream().map(f -> converter.convert(f).copy()).collect(Collectors.toList());
+        return camera.getFrameSeries(count).stream().map(f -> converterCopy.convert(f).copy()).collect(Collectors.toList());
     }
 
     @Override
@@ -356,7 +383,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
     public SpectrumQueue openSpectrumQueue(int limit) {
 
         SpectrumQueue  spectrumQueue = new SpectrumQueue(this, limit);
-        FrameThread<F> thread        = camera.startFrameThread(f -> spectrumQueue.offer(converter.convert(f).copy()));
+        FrameThread<F> thread        = camera.startFrameThread(f -> spectrumQueue.offer(converterCopy.convert(f)));
 
         threads.put(spectrumQueue, thread);
 
