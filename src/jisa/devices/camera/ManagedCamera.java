@@ -219,7 +219,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
     }
 
     @Override
-    public synchronized double getAcquisitionFPS() throws IOException, DeviceException {
+    public synchronized double getAcquisitionRate() throws IOException, DeviceException {
 
         if (isAcquiring()) {
 

@@ -311,6 +311,11 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
     }
 
     @Override
+    public double getAcquisitionRate() throws IOException, DeviceException {
+        return camera.getAcquisitionRate();
+    }
+
+    @Override
     public String getIDN() throws IOException, DeviceException {
         return String.format("%s + %s", camera.getIDN(), spectrograph != null ? spectrograph.getName() : "No Spectrograph");
     }

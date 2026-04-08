@@ -27,9 +27,10 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
     private final int                       index;
     private final int                       specSize;
     private final double[]                  wavelengths;
-    private final String                    model     = "UNKNOWN";
+    private final String                    model                = "UNKNOWN";
     private final ListenerManager           manager              = new ListenerManager();
     private final List<AcquisitionListener> acquisitionListeners = new LinkedList<>();
+    private final long[]                    stats                = new long[3];
 
     private long    intTime           = 20000;
     private boolean acquiring         = false;
@@ -39,6 +40,7 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
     private double  tecTarget         = 273.15;
     private int     timeout           = 10000;
     private boolean shutter           = false;
+    private double  fps               = 0.0;
 
     protected OceanOptics(Object indexObject) throws DeviceException, IOException {
 
@@ -170,6 +172,10 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
                 buffer.setTimestamp(System.nanoTime());
                 manager.trigger(buffer);
 
+                synchronized (stats) {
+                    stats[0]++;
+                }
+
             }
 
         });
@@ -203,7 +209,16 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
             checkForError(error);
 
         } finally {
+
+            synchronized (stats) {
+                stats[0] = 0;
+                stats[1] = 0;
+                stats[2] = System.nanoTime();
+                fps      = 0.0;
+            }
+
             acquisitionListeners.forEach(l -> l.changed(false));
+
         }
 
     }
@@ -222,6 +237,31 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
     @Override
     public void removeAcquisitionListener(AcquisitionListener listener) {
         acquisitionListeners.remove(listener);
+    }
+
+    @Override
+    public double getAcquisitionRate() throws IOException, DeviceException {
+
+        if ((stats[0] != stats[1]) && ((System.nanoTime() - stats[2]) >= 2L * getIntegrationTime() * 1e9)) {
+
+            synchronized (stats) {
+
+                long frames  = stats[0];
+                long dFrames = frames - stats[1];
+                long time    = System.nanoTime();
+                long dTime   = time - stats[2];
+
+                stats[1] = frames;
+                stats[2] = time;
+
+                fps = 1e9 * dFrames / dTime;
+
+            }
+
+        }
+
+        return fps;
+
     }
 
     @Override

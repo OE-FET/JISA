@@ -100,7 +100,7 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
-    double getAcquisitionFPS() throws IOException, DeviceException;
+    double getAcquisitionRate() throws IOException, DeviceException;
 
     /**
      * Returns the current rate at which the camera is processing frames (if it is continuously acquiring, zero otherwise).
@@ -110,8 +110,8 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device compatibility error
      */
-    default double getProcessingFPS() throws IOException, DeviceException {
-        return getAcquisitionFPS();
+    default double getProcessingRate() throws IOException, DeviceException {
+        return getAcquisitionRate();
     }
 
     /**

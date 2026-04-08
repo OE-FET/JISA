@@ -805,11 +805,11 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
     }
 
-    public double getAcquisitionFPS() {
+    public double getAcquisitionRate() {
         return acquireFPS;
     }
 
-    public double getProcessingFPS() {
+    public double getProcessingRate() {
         return processFPS;
     }
 

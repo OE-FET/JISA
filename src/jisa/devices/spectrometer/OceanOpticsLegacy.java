@@ -2,7 +2,6 @@ package jisa.devices.spectrometer;
 
 import com.oceanoptics.omnidriver.spectrometer.SpectrometerChannel;
 import com.oceanoptics.omnidriver.spectrometer.USBSpectrometer;
-import com.oceanoptics.omnidriver.spectrometer.usb2000plus.USB2000Plus;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
@@ -21,6 +20,8 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
     private final SpectrometerChannel                         channel;
     private final ListenerManager                             manager              = new ListenerManager();
     private final List<AcquisitionListener>                   acquisitionListeners = new LinkedList<>();
+    private final long[]                                      stats                = new long[3];
+    private       double                                      fps                  = 0.0;
     private       boolean                                     acquiring            = false;
     private       Thread                                      acquisitionThread    = null;
     private       com.oceanoptics.omnidriver.spectra.Spectrum buffer               = null;
@@ -121,6 +122,10 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
                 System.err.println("Error acquiring spectrum: " + e.getMessage());
             }
 
+            synchronized (stats) {
+                stats[0]++;
+            }
+
             if (Thread.interrupted() || !acquiring) {
                 break;
             }
@@ -158,6 +163,13 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
             acquisitionThread.join();
         } catch (InterruptedException ignored) { }
 
+        synchronized (stats) {
+            stats[0] = 0;
+            stats[1] = 0;
+            stats[2] = System.nanoTime();
+            fps      = 0.0;
+        }
+
         acquisitionListeners.forEach(l -> l.changed(false));
 
     }
@@ -176,6 +188,31 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
     @Override
     public void removeAcquisitionListener(AcquisitionListener listener) {
         acquisitionListeners.remove(listener);
+    }
+
+    @Override
+    public double getAcquisitionRate() throws IOException, DeviceException {
+
+        if ((stats[0] != stats[1]) && ((System.nanoTime() - stats[2]) >= 2L * getIntegrationTime() * 1e9)) {
+
+            synchronized (stats) {
+
+                long frames  = stats[0];
+                long dFrames = frames - stats[1];
+                long time    = System.nanoTime();
+                long dTime   = time - stats[2];
+
+                stats[1] = frames;
+                stats[2] = time;
+
+                fps = 1e9 * dFrames / dTime;
+
+            }
+
+        }
+
+        return fps;
+
     }
 
     @Override

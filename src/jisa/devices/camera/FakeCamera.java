@@ -122,7 +122,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
     }
 
     @Override
-    public double getAcquisitionFPS() {
+    public double getAcquisitionRate() {
 
         if ((stats[0] != stats[1]) && ((System.nanoTime() - stats[2]) >= 2L * integrationTime * 1e6)) {
 
@@ -201,6 +201,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
             stats[2] = System.nanoTime();
             fps      = 0.0;
         }
+
         acquisitionListeners.forEach(l -> l.changed(false));
 
     }

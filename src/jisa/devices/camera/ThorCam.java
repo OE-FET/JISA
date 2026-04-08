@@ -352,7 +352,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     @Override
-    public double getAcquisitionFPS() throws IOException, DeviceException {
+    public double getAcquisitionRate() throws IOException, DeviceException {
 
         // Update if new frames have come in since last time, and it's been at least 10us since last call
         if ((stats[0] != stats[1]) && ((System.nanoTime() - stats[2]) >= 10000)) {

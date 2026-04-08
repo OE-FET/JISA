@@ -96,6 +96,8 @@ public interface Spectrometer extends Spectrograph {
 
     void removeAcquisitionListener(AcquisitionListener listener);
 
+    double getAcquisitionRate() throws IOException, DeviceException;
+
     /**
      * Acquires and returns a single spectrum.
      *
