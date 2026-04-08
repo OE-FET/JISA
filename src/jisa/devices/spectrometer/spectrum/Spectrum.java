@@ -280,7 +280,10 @@ public class Spectrum implements Iterable<Spectrum.Point> {
      */
     public void copyFrom(Spectrum other) {
         System.arraycopy(other.counts, 0, counts, 0, counts.length);
+        System.arraycopy(other.wavelengths, 0, wavelengths, 0, wavelengths.length);
         this.timestamp = other.timestamp;
+        attributes.clear();
+        attributes.putAll(other.attributes);
     }
 
     /**
