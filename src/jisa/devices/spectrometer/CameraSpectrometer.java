@@ -1,6 +1,5 @@
 package jisa.devices.spectrometer;
 
-import jisa.Util;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
@@ -11,13 +10,14 @@ import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 import jisa.maths.Range;
 import jisa.maths.fits.Fitting;
-import jisa.maths.fits.LinearFit;
 import jisa.maths.fits.PolyFit;
 import jisa.maths.functions.Function;
-import kotlin.ranges.IntRange;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -363,7 +363,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
     @Override
     public Listener addSpectrumListener(Listener listener) {
 
-        Camera.Listener<F> cameraListener = camera.addFrameListener(f -> listener.newSpectrum(converter.convert(f)));
+        Camera.Listener<F> cameraListener = camera.addFrameListener(f -> listener.newSpectrum(converterCopy.convert(f)));
         listeners.put(listener, cameraListener);
         return listener;
 
