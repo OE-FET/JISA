@@ -65,17 +65,29 @@ public class K2400 extends VISADevice implements SMU {
     private static final   String C_SET_SOURCE_MODE_VOLTAGE = ":SOUR:VOLT:MODE FIX";
 
     // === SET RANGES
-    private static final String C_SET_CURRENT_RANGE         = ":SOUR:CURR:RANG %f";
-    private static final String C_SET_VOLTAGE_RANGE         = ":SOUR:VOLT:RANG %f";
-    private static final String C_SET_CURRENT_LEVEL         = ":SOUR:CURR:LEV %f";
-    private static final String C_SET_VOLTAGE_LEVEL         = ":SOUR:VOLT:LEV %f";
+    private static final   String C_SET_CURRENT_RANGE         = ":SOUR:CURR:RANG %f";
+    private static final   String C_SET_VOLTAGE_RANGE         = ":SOUR:VOLT:RANG %f";
+    private static final   String C_SET_CURRENT_LEVEL         = ":SOUR:CURR:LEV %f";
+    private static final   String C_SET_VOLTAGE_LEVEL         = ":SOUR:VOLT:LEV %f";
     // Sense Function Commands
-    private static final String C_SET_SENSE_FUNCTION        = ":SENS:FUNCtion %s";
-    private static final String C_SET_CURRENT_PROTECTION    = ":SENSe:CURRent:PROTection %f";
-    private static final String C_SET_VOLTAGE_PROTECTION    = ":SENSe:VOLTage:PROTection %f";
-    private static final String C_SET_N_COUNTS_VOLTAGE      = ":SENSe:VOLTage:NPLCycles %f";
-    private static final String C_SET_N_COUNTS_CURRENT      = ":SENSe:CURRent:NPLCycles %f";
-    private static final String C_SET_CURRENT_MEASURE_RANGE = ":SENSe:CURRent:RANGe %f";
+    private static final   String C_SET_SENSE_FUNCTION        = ":SENS:FUNCtion %s";
+    private static final   String C_SET_CURRENT_PROTECTION    = ":SENSe:CURRent:PROTection %f";
+    private static final   String C_SET_VOLTAGE_PROTECTION    = ":SENSe:VOLTage:PROTection %f";
+    private static final   String C_SET_N_COUNTS_VOLTAGE      = ":SENSe:VOLTage:NPLCycles %f";
+    private static final   String C_SET_N_COUNTS_CURRENT      = ":SENSe:CURRent:NPLCycles %f";
+    private static final   String C_SET_CURRENT_MEASURE_RANGE = ":SENSe:CURRent:RANGe %f";
+    protected static final String C_SET_SRC_RANGE             = ":SOUR:%s:RANG %e";
+    protected static final String C_QUERY_SRC_RANGE           = ":SOUR:%s:RANG?";
+    protected static final String C_QUERY_SRC_RANGE_MIN       = ":SOUR:%s:RANG? MIN";
+    protected static final String C_QUERY_SRC_RANGE_MAX       = ":SOUR:%s:RANG? MAX";
+    protected static final String C_SET_SRC_AUTO_RANGE        = ":SOUR:%s:RANG:AUTO %s";
+    protected static final String C_QUERY_SRC_AUTO_RANGE      = ":SOUR:%s:RANG:AUTO?";
+    protected static final String C_SET_MEAS_RANGE            = ":SENS:%s:RANG %e";
+    protected static final String C_QUERY_MEAS_RANGE          = ":SENS:%s:RANG?";
+    protected static final String C_QUERY_MEAS_RANGE_MIN      = ":SENS:%s:RANG? MIN";
+    protected static final String C_QUERY_MEAS_RANGE_MAX      = ":SENS:%s:RANG? MAX";
+    protected static final String C_SET_MEAS_AUTO_RANGE       = ":SENS:%s:RANG:AUTO %s";
+    protected static final String C_QUERY_MEAS_AUTO_RANGE     = ":SENS:%s:RANG:AUTO?";
 
     private void setCurrRangeManual(double range) throws IOException {
         write(C_SET_CURRENT_MEASURE_RANGE, range);
@@ -88,52 +100,71 @@ public class K2400 extends VISADevice implements SMU {
 
     // === FILTERS ============================================================================
     private final MedianRepeatFilter MEDIAN_REPEAT_V = new MedianRepeatFilter(
-        this::measureVoltage,
-        (c) -> disableAveraging()
+            this::measureVoltage,
+            (c) -> disableAveraging()
     );
     private final MedianRepeatFilter MEDIAN_REPEAT_I = new MedianRepeatFilter(
-        this::measureCurrent,
-        (c) -> disableAveraging()
+            this::measureCurrent,
+            (c) -> disableAveraging()
     );
     private final MedianMovingFilter MEDIAN_MOVING_V = new MedianMovingFilter(
-        this::measureVoltage,
-        (c) -> disableAveraging()
+            this::measureVoltage,
+            (c) -> disableAveraging()
     );
     private final MedianMovingFilter MEDIAN_MOVING_I = new MedianMovingFilter(
-        this::measureCurrent,
-        (c) -> disableAveraging()
+            this::measureCurrent,
+            (c) -> disableAveraging()
     );
     private final MeanRepeatFilter   MEAN_REPEAT_V   = new MeanRepeatFilter(
-        this::measureVoltage,
-        (c) -> disableAveraging()
+            this::measureVoltage,
+            (c) -> disableAveraging()
     );
     private final MeanRepeatFilter   MEAN_REPEAT_I   = new MeanRepeatFilter(
-        this::measureCurrent,
-        (c) -> disableAveraging()
+            this::measureCurrent,
+            (c) -> disableAveraging()
     );
     private final MeanMovingFilter   MEAN_MOVING_V   = new MeanMovingFilter(
-        this::measureVoltage,
-        (c) -> disableAveraging()
+            this::measureVoltage,
+            (c) -> disableAveraging()
     );
     private final MeanMovingFilter   MEAN_MOVING_I   = new MeanMovingFilter(
-        this::measureCurrent,
-        (c) -> disableAveraging()
+            this::measureCurrent,
+            (c) -> disableAveraging()
     );
     private final BypassFilter       NONE_V          = new BypassFilter(
-        this::measureVoltage,
-        (c) -> disableAveraging()
+            this::measureVoltage,
+            (c) -> disableAveraging()
     );
     private final BypassFilter       NONE_I          = new BypassFilter(
-        this::measureCurrent,
-        (c) -> disableAveraging()
+            this::measureCurrent,
+            (c) -> disableAveraging()
     );
     protected     double             vLimit;
     protected     double             iLimit;
     private       ReadFilter         filterV         = MEAN_REPEAT_V;
     private       ReadFilter         filterI         = MEAN_REPEAT_I;
     private       AMode              filterMode      = AMode.MEAN_REPEAT;
-    private       int                filterCount     = (int) queryDouble(C_QUERY_NPLC, getMeasureMode());
+    private       int                filterCount     = 1; // This is for the averaging feature, not integration time/NPLC
 
+    public K2400(Address address) throws IOException, DeviceException {
+
+        super(address);
+
+        // Set these *before* trying to ask the SMU for anything, otherwise it will just timeout
+        setIOLimit(50, true, true);
+        setWriteTerminator("\n");
+        setReadTerminator("\n");
+        addAutoRemove("\r");
+        addAutoRemove("\n");
+
+        String  idn     = getIDN();
+        Matcher matcher = Pattern.compile("MODEL (2400|2410|2420|2425|2430|2440)").matcher(idn.toUpperCase());
+
+        if (!matcher.find()) {
+            throw new DeviceException("Instrument at address \"%s\" is not a Keithley 2400, 2410, 2420, 2425, 2430 or 2440.", address.toString());
+        }
+
+    }
 
     // New methods for range and digits commands
 
@@ -174,12 +205,20 @@ public class K2400 extends VISADevice implements SMU {
 
     @Override
     public void setCurrentRange(double value) throws DeviceException, IOException {
-        write(C_SET_CURRENT_RANGE, value);
+        write(C_SET_SRC_AUTO_RANGE, "CURRENT", OUTPUT_OFF);
+        write(C_SET_MEAS_AUTO_RANGE, "CURRENT", OUTPUT_OFF);
+        write(C_SET_SRC_RANGE, "CURRENT", value);
+        write(C_SET_MEAS_RANGE, "CURRENT", value);
     }
 
     @Override
     public void setVoltageRange(double value) throws DeviceException, IOException {
-        write(C_SET_VOLTAGE_RANGE, value);
+
+        write(C_SET_SRC_AUTO_RANGE, "VOLTAGE", OUTPUT_OFF);
+        write(C_SET_MEAS_AUTO_RANGE, "VOLTAGE", OUTPUT_OFF);
+
+        write(C_SET_SRC_RANGE, "VOLTAGE", value);
+        write(C_SET_MEAS_RANGE, "VOLTAGE", value);
     }
 
     @Override
@@ -256,19 +295,14 @@ public class K2400 extends VISADevice implements SMU {
 
     public Source getSourceMode() throws IOException {
 
-        String mode = query(C_QUERY_SOURCE_FUNCTION).trim();
+        String mode = query(C_QUERY_SOURCE_FUNCTION).trim().toUpperCase();
 
-        switch (mode) {
-
-            case "VOLTAGE":
-                return Source.VOLTAGE;
-
-            case "CURRENT":
-                return Source.CURRENT;
-
-            default:
-                return Source.VOLTAGE;
-
+        if (mode.contains("CURR")) {
+            return Source.CURRENT;
+        } else if (mode.contains("VOLT")) {
+            return Source.VOLTAGE;
+        } else {
+            throw new IOException("Unknown source mode returned by K2400: " + mode);
         }
 
     }
@@ -308,15 +342,17 @@ public class K2400 extends VISADevice implements SMU {
 
     public Source getMeasureMode() throws IOException {
 
-        String mode = query(C_QUERY_SOURCE_FUNCTION).trim();
+        switch (getSourceMode()) {
 
-        switch (mode) {
-            case "VOLT":
+            case VOLTAGE:
                 return Source.CURRENT;
-            case "CURR":
+
+            case CURRENT:
                 return Source.VOLTAGE;
+
             default:
-                throw new IllegalStateException("Unexpected value: " + mode);
+                throw new IOException("Unexpected source mode returned by K2400: " + getSourceMode());
+
         }
 
     }
@@ -342,7 +378,11 @@ public class K2400 extends VISADevice implements SMU {
 
     @Override
     public void setFourProbeEnabled(boolean fourProbes) throws DeviceException, IOException {
-        if (fourProbes) { write(":SYSTem:RSENse ON"); } else { write(":SYSTem:RSENse OFF"); }
+        if (fourProbes) {
+            write(":SYSTem:RSENse ON");
+        } else {
+            write(":SYSTem:RSENse OFF");
+        }
     }
 
     @Override
@@ -432,116 +472,165 @@ public class K2400 extends VISADevice implements SMU {
     @Override
     public void useAutoSourceRange() throws DeviceException, IOException {
 
-        String mode = query(C_QUERY_SOURCE_FUNCTION).trim();
+        switch (getSourceMode()) {
 
-        write(C_SET_SRC_AUTO_RANGE, mode, OUTPUT_ON);
+            case VOLTAGE:
+                useAutoVoltageRange();
+
+            case CURRENT:
+                useAutoCurrentRange();
+
+        }
 
     }
 
     @Override
     public boolean isAutoRangingSource() throws DeviceException, IOException {
-        String mode = query(C_QUERY_SOURCE_FUNCTION);
-        mode = mode.replaceAll("\\s+", "");
 
-        return query(C_QUERY_SRC_AUTO_RANGE, mode).equals(OUTPUT_ON);
+        switch (getSourceMode()) {
+
+            case VOLTAGE:
+                return isAutoRangingVoltage();
+
+            case CURRENT:
+                return isAutoRangingCurrent();
+
+            default:
+                throw new IOException("Invalid source mode");
+
+        }
+
     }
 
     @Override
     public double getMeasureRange() throws DeviceException, IOException {
-        String mode = query(C_QUERY_SOURCE_FUNCTION);
-        mode = mode.replaceAll("\\s+", "");
 
-        return queryDouble(C_QUERY_SRC_RANGE, mode);
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                return getVoltageRange();
+
+            case CURRENT:
+                return getCurrentRange();
+
+            default:
+                throw new IOException("Invalid measure mode");
+
+        }
+
     }
 
     @Override
     public void setMeasureRange(double value) throws DeviceException, IOException {
-        String mode = query(C_QUERY_SOURCE_FUNCTION);
-        mode = mode.replaceAll("\\s+", "");
-        double low = queryDouble(C_QUERY_SRC_RANGE_MIN, mode);
-        double upp = queryDouble(C_QUERY_SRC_RANGE_MAX, mode);
 
-        checkLimit(mode, value, low, upp);
+        switch (getMeasureMode()) {
 
-        write(C_SET_SRC_AUTO_RANGE, mode, OUTPUT_OFF);
-        write(C_SET_SRC_RANGE, mode, value);
+            case VOLTAGE:
+                setVoltageRange(value);
+
+            case CURRENT:
+                setCurrentRange(value);
+
+        }
+
     }
 
     @Override
     public void useAutoMeasureRange() throws DeviceException, IOException {
-        String mode = query(C_QUERY_SOURCE_FUNCTION);
-        mode = mode.replaceAll("\\s+", "");
 
-        write(C_SET_SRC_AUTO_RANGE, mode, OUTPUT_ON);
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                useAutoVoltageRange();
+
+            case CURRENT:
+                useAutoCurrentRange();
+
+        }
+
     }
 
     @Override
     public boolean isAutoRangingMeasure() throws DeviceException, IOException {
-        String mode = query(C_QUERY_SOURCE_FUNCTION);
-        mode = mode.replaceAll("\\s+", "");
-        return query(C_QUERY_SRC_AUTO_RANGE, mode).equals(OUTPUT_ON);
+
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                return isAutoRangingVoltage();
+
+            case CURRENT:
+                return isAutoRangingCurrent();
+
+            default:
+                throw new IOException("Invalid measure mode");
+
+        }
 
     }
 
     @Override
     public double getVoltageRange() throws DeviceException, IOException {
-        String mode = query(C_QUERY_SOURCE_FUNCTION);
-        mode = mode.replaceAll("\\s+", "");
-        return queryDouble((mode.equals("VOLTAGE")) ? C_QUERY_SRC_RANGE : C_QUERY_MEAS_RANGE, mode);
+
+        if (isSourcing(Source.VOLTAGE)) {
+            return queryDouble(C_QUERY_SRC_RANGE, "VOLT");
+        } else {
+            return queryDouble(C_QUERY_MEAS_RANGE, "VOLT");
+        }
 
     }
 
 
     @Override
     public void useAutoVoltageRange() throws DeviceException, IOException {
-        String mode = query(C_QUERY_SOURCE_FUNCTION);
-        mode = mode.replaceAll("\\s+", "");
-        write(
-            (mode.equals("VOLTAGE")) ? C_SET_SRC_AUTO_RANGE : C_SET_MEAS_AUTO_RANGE,
-            mode,
-            OUTPUT_ON
-        );
+        write(C_SET_SRC_AUTO_RANGE, "VOLT", OUTPUT_ON);
     }
 
     @Override
     public boolean isAutoRangingVoltage() throws DeviceException, IOException {
-        String mode = query(C_QUERY_SOURCE_FUNCTION);
-        mode = mode.replaceAll("\\s+", "");
-        return query(
-            (mode.equals("VOLTAGE")) ? C_QUERY_SRC_AUTO_RANGE : C_QUERY_MEAS_AUTO_RANGE, mode).equals(OUTPUT_ON);
+
+        if (isSourcing(Source.VOLTAGE)) {
+            return query(C_QUERY_SRC_AUTO_RANGE, "VOLT").contains(OUTPUT_ON);
+        } else {
+            return query(C_QUERY_MEAS_AUTO_RANGE, "VOLT").contains(OUTPUT_ON);
+        }
+
     }
 
     @Override
     public double getCurrentRange() throws DeviceException, IOException {
-        String mode = query(C_QUERY_SOURCE_FUNCTION);
-        mode = mode.replaceAll("\\s+", "");
-        return queryDouble((mode.equals("CURRENT")) ? C_QUERY_SRC_RANGE : C_QUERY_MEAS_RANGE, mode);
+
+        if (isSourcing(Source.CURRENT)) {
+            return queryDouble(C_QUERY_SRC_RANGE, "CURR");
+        } else {
+            return queryDouble(C_QUERY_MEAS_RANGE, "CURR");
+        }
 
     }
 
     @Override
     public void useAutoCurrentRange() throws DeviceException, IOException {
-        String mode = query(C_QUERY_SOURCE_FUNCTION);
-        mode = mode.replaceAll("\\s+", "");
-        write(C_SET_SRC_AUTO_RANGE, mode, OUTPUT_ON);
+        write(C_SET_SRC_AUTO_RANGE, "CURR", OUTPUT_ON);
+        write(C_SET_MEAS_AUTO_RANGE, "CURR", OUTPUT_ON);
     }
 
     private boolean isSourcing(Source func) throws IOException {
-
         return getSourceMode() == func;
-
     }
 
     @Override
     public boolean isAutoRangingCurrent() throws DeviceException, IOException {
-        return query(
-            isSourcing(Source.CURRENT) ? C_QUERY_SRC_AUTO_RANGE : C_QUERY_MEAS_AUTO_RANGE,
-            KeithleySCPI.Source.CURRENT.getTag()
-        ).equals(OUTPUT_ON);
+
+        if (isSourcing(Source.VOLTAGE)) {
+            return query(C_QUERY_SRC_AUTO_RANGE, "CURR").contains(OUTPUT_ON);
+        } else {
+            return query(C_QUERY_MEAS_AUTO_RANGE, "CURR").contains(OUTPUT_ON);
+        }
+
     }
 
     @Override
     public double getOutputLimit() throws DeviceException, IOException {
+
         switch (getMeasureMode()) {
             case VOLTAGE:
                 return getVoltageLimit();
@@ -550,6 +639,7 @@ public class K2400 extends VISADevice implements SMU {
             default:
                 throw new IllegalArgumentException();
         }
+
     }
 
     @Override
@@ -593,25 +683,29 @@ public class K2400 extends VISADevice implements SMU {
 
     @Override
     public double getIntegrationTime() throws DeviceException, IOException {
-        String MeasMode = "VOLTAGE";
-        if (getMeasureMode() == Source.CURRENT) { MeasMode = "CURRENT"; }
 
-        return queryDouble(C_QUERY_NPLC, MeasMode) / LINE_FREQUENCY;
+        switch (getMeasureMode()) {
+
+            case VOLTAGE:
+                return queryDouble(C_QUERY_NPLC, "VOLT") / LINE_FREQUENCY;
+
+            case CURRENT:
+                return queryDouble(C_QUERY_NPLC, "CURR") / LINE_FREQUENCY;
+
+            default:
+                throw new IOException("Invalid measure mode");
+
+        }
+
     }
 
     @Override
     public void setIntegrationTime(double time) throws DeviceException, IOException {
+
         double counts = LINE_FREQUENCY * time;
-        //System.out.printf("Counts: %f\n\n", counts);
-        switch (getMeasureMode()) {
-            case VOLTAGE:
-                write(C_SET_N_COUNTS_VOLTAGE, counts);
-                break;
-            case CURRENT:
-                write(C_SET_N_COUNTS_CURRENT, counts);
-                break;
-        }
-        filterCount = (int) counts;
+        write(C_SET_N_COUNTS_VOLTAGE, counts);
+        write(C_SET_N_COUNTS_CURRENT, counts);
+
     }
 
 
@@ -622,6 +716,7 @@ public class K2400 extends VISADevice implements SMU {
 
     @Override
     public Terminals getTerminals() throws DeviceException, IOException {
+
         String response = query(C_QUERY_TERMINALS);
 
         if (response.contains(TERMS_FRONT)) {
@@ -631,10 +726,12 @@ public class K2400 extends VISADevice implements SMU {
         } else {
             throw new IOException("Invalid response from Keithley");
         }
+
     }
 
     @Override
     public void setTerminals(Terminals terminals) throws DeviceException, IOException {
+
         switch (terminals) {
 
             case FRONT:
@@ -646,10 +743,12 @@ public class K2400 extends VISADevice implements SMU {
                 break;
 
         }
+
     }
 
     @Override
     public OffMode getOffMode() throws DeviceException, IOException {
+
         String code = query(C_QUERY_OFF_STATE);
 
         if (code.contains(OFF_NORMAL)) {
@@ -663,10 +762,12 @@ public class K2400 extends VISADevice implements SMU {
         } else {
             return OffMode.NORMAL;
         }
+
     }
 
     @Override
     public void setOffMode(OffMode mode) throws DeviceException, IOException {
+
         switch (mode) {
 
             case NORMAL:
@@ -686,6 +787,7 @@ public class K2400 extends VISADevice implements SMU {
                 break;
 
         }
+
     }
 
     @Override
@@ -999,25 +1101,6 @@ public class K2400 extends VISADevice implements SMU {
         Util.sleep(550);
         write("SYST:BEEP %s,%s", 380, 100.0 / 1000.0);
         Util.sleep(575);
-    }
-
-    public K2400(Address address) throws IOException, DeviceException {
-
-        super(address);
-
-        setIOLimit(50, true, true);
-        setWriteTerminator("\n");
-        setReadTerminator("\n");
-        addAutoRemove("\r");
-        addAutoRemove("\n");
-
-        String  idn     = getIDN();
-        Matcher matcher = Pattern.compile("MODEL (2400|2410|2420|2425|2430|2440)").matcher(idn.toUpperCase());
-
-        if (!matcher.find()) {
-            throw new DeviceException("Instrument at address \"%s\" is not a Keithley 2400, 2410, 2420, 2425, 2430 or 2440.", address.toString());
-        }
-
     }
 
 
