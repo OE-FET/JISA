@@ -60,8 +60,8 @@ public class TCPIPDriver implements Driver {
         private final Socket       socket;
         private final OutputStream out;
         private final InputStream  in;
-        private       byte[]       terminationSequence;
-        private       Charset      charset = StandardCharsets.UTF_8;
+        private       byte[]       terminationSequence = new byte[0];
+        private       Charset      charset             = StandardCharsets.UTF_8;
 
         public TCPIPConnection(Socket tcpipSocket) throws IOException {
             socket = tcpipSocket;

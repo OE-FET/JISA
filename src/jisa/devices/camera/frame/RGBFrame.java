@@ -100,11 +100,11 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
     @Override
     public RGB[][] getImage() {
 
-        RGB[][] image = new RGB[width][height];
+        RGB[][] image = new RGB[height][width];
 
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                image[x][y] = get(x, y);
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                image[y][x] = get(x, y);
             }
         }
 
@@ -114,12 +114,10 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
 
     public int[][] getARGBImage() {
 
-        int[][] raw = new int[width][height];
+        int[][] raw = new int[height][width];
 
         for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                raw[x][y] = argb[width * y + x];
-            }
+            System.arraycopy(argb, width * y, raw[y], 0, width);
         }
 
         return raw;
@@ -128,13 +126,13 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
 
     public short[][][] getRGBImage() {
 
-        short[][][] output = new short[width][height][3];
+        short[][][] output = new short[height][width][3];
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                output[x][y][0] = getRed(x, y);
-                output[x][y][1] = getGreen(x, y);
-                output[x][y][2] = getBlue(x, y);
+                output[y][x][0] = getRed(x, y);
+                output[y][x][1] = getGreen(x, y);
+                output[y][x][2] = getBlue(x, y);
             }
         }
 

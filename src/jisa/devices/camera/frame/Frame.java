@@ -99,11 +99,11 @@ public interface Frame<D, F extends Frame> {
         int     width  = getWidth();
         int     height = getHeight();
         int[]   data   = getARGBData();
-        int[][] image  = new int[width][height];
+        int[][] image  = new int[height][width];
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                image[x][y] = data[y * width + x];
+                image[y][x] = data[y * width + x];
             }
         }
 

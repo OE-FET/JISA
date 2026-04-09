@@ -1005,19 +1005,19 @@ public class K2400 extends VISADevice implements SMU {
 
         super(address);
 
+        setIOLimit(50, true, true);
+        setWriteTerminator("\n");
+        setReadTerminator("\n");
+        addAutoRemove("\r");
+        addAutoRemove("\n");
+
         String  idn     = getIDN();
         Matcher matcher = Pattern.compile("MODEL (2400|2410|2420|2425|2430|2440)").matcher(idn.toUpperCase());
 
         if (!matcher.find()) {
             throw new DeviceException("Instrument at address \"%s\" is not a Keithley 2400, 2410, 2420, 2425, 2430 or 2440.", address.toString());
         }
-        System.out.println(idn);
 
-        setIOLimit(50, true, true);
-        setWriteTerminator("\n");
-        setReadTerminator("\n");
-        addAutoRemove("\r");
-        addAutoRemove("\n");
     }
 
 

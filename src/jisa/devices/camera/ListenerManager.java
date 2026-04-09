@@ -96,22 +96,30 @@ public class ListenerManager<F extends Frame<?, F>> {
 
             if (semaphore.tryAcquire()) {
 
-                if (buffer == null || frame.size() != buffer.size()) {
-                    buffer = frame.copy();
-                } else {
-                    buffer.copyFrom(frame);
-                    buffer.setTimestamp(frame.getTimestamp());
-                }
+                try {
 
-                executor.execute(() -> {
-
-                    try {
-                        listener.newFrame(buffer);
-                    } finally {
-                        semaphore.release();
+                    if (buffer == null || frame.getWidth() != buffer.getWidth() || frame.getHeight() != buffer.getHeight()) {
+                        buffer = frame.copy();
+                    } else {
+                        buffer.copyFrom(frame);
+                        buffer.setTimestamp(frame.getTimestamp());
                     }
 
-                });
+                    executor.execute(() -> {
+
+                        try {
+                            listener.newFrame(buffer);
+                        } finally {
+                            semaphore.release();
+                        }
+
+                    });
+
+                } catch (Throwable e) {
+                    // If something goes wrong, just release the semaphore so we don't lock ourselves out
+                    e.printStackTrace();
+                    semaphore.release();
+                }
 
             }
 
