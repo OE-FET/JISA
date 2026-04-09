@@ -178,13 +178,13 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
 
     public short[][][] getRGBImage() {
 
-        short[][][] output = new short[width][height][3];
+        short[][][] output = new short[height][width][3];
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                output[x][y][0] = getR(x, y);
-                output[x][y][1] = getG(x, y);
-                output[x][y][2] = getB(x, y);
+                output[y][x][0] = getR(x, y);
+                output[y][x][1] = getG(x, y);
+                output[y][x][2] = getB(x, y);
             }
         }
 
