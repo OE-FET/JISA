@@ -282,8 +282,6 @@ public class Spectrum implements Iterable<Spectrum.Point> {
         System.arraycopy(other.counts, 0, counts, 0, counts.length);
         System.arraycopy(other.wavelengths, 0, wavelengths, 0, wavelengths.length);
         this.timestamp = other.timestamp;
-        attributes.clear();
-        attributes.putAll(other.attributes);
     }
 
     /**
