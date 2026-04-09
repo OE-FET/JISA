@@ -2,7 +2,6 @@ package jisa.devices.smu;
 
 import jisa.Util;
 import jisa.addresses.Address;
-import jisa.addresses.GPIBAddress;
 import jisa.control.*;
 import jisa.devices.DeviceException;
 import jisa.enums.AMode;
@@ -22,9 +21,144 @@ public class K2400 extends VISADevice implements SMU {
     // === CONSTANTS ========================================================
 
     // MEAS COMMANDS
-    protected static final String C_MEASURE_VOLTAGE    = ":MEAS:VOLT?";
-    protected static final String C_MEASURE_CURRENT    = ":MEAS:CURR?";
-    protected static final String C_MEASURE_RESISTANCE = ":MEAS:RES?";
+    protected static final String C_MEASURE_VOLTAGE           = ":MEAS:VOLT?";
+    protected static final String C_MEASURE_CURRENT           = ":MEAS:CURR?";
+    protected static final String C_MEASURE_RESISTANCE        = ":MEAS:RES?";
+    protected static final String C_SET_SOURCE_FUNCTION       = ":SOUR:FUNC %s";
+    protected static final String C_SET_OUTPUT_STATE          = ":OUTP:STATE %s";
+    protected static final String C_QUERY_SOURCE_FUNCTION     = ":SOUR:FUNC?";
+    protected static final String C_QUERY_OUTPUT_STATE        = ":OUTP:STATE?";
+    protected static final String OUTPUT_ON                   = "1";
+    protected static final String OUTPUT_OFF                  = "0";
+    protected static final String TERMS_FRONT                 = "FRON";
+    protected static final String TERMS_REAR                  = "REAR";
+    protected static final String C_SET_SRC_RANGE             = ":SOUR:%s:RANG %e";
+    protected static final String C_QUERY_SRC_RANGE           = ":SOUR:%s:RANG?";
+    protected static final String C_QUERY_SRC_RANGE_MIN       = ":SOUR:%s:RANG? MIN";
+    protected static final String C_QUERY_SRC_RANGE_MAX       = ":SOUR:%s:RANG? MAX";
+    protected static final String C_SET_SRC_AUTO_RANGE        = ":SOUR:%s:RANG:AUTO %s";
+    protected static final String C_QUERY_SRC_AUTO_RANGE      = ":SOUR:%s:RANG:AUTO?";
+    protected static final String C_SET_MEAS_RANGE            = ":SENS:%s:RANG %e";
+    protected static final String C_QUERY_MEAS_RANGE          = ":SENS:%s:RANG?";
+    protected static final String C_QUERY_MEAS_RANGE_MIN      = ":SENS:%s:RANG? MIN";
+    protected static final String C_QUERY_MEAS_RANGE_MAX      = ":SENS:%s:RANG? MAX";
+    protected static final String C_SET_MEAS_AUTO_RANGE       = ":SENS:%s:RANG:AUTO %s";
+    protected static final String C_QUERY_MEAS_AUTO_RANGE     = ":SENS:%s:RANG:AUTO?";
+    // ========== Everything needed for getVoltage()
+    protected static final String C_SET_AVG_MODE              = "AVER:TCON %s";
+    protected static final String C_SET_AVG_COUNT             = "AVER:COUNT %d";
+    protected static final String C_SET_AVG_STATE             = "AVER %s";
+    protected static final String C_QUERY_PROBE_MODE          = "CURR:RSEN?";
+    // === INTEGRATION TIME ================================
+    protected static final String C_QUERY_LFR                 = ":SYST:LFR?";
+    protected static final String C_QUERY_NPLC                = ":SENS:%s:NPLC?";
+    private static final   String C_SET_SOURCE_MODE_CURRENT   = ":SOUR:CURR:MODE FIX";
+    private static final   String C_SET_SOURCE_MODE_VOLTAGE   = ":SOUR:VOLT:MODE FIX";
+    // === SET RANGES
+    private static final   String C_SET_CURRENT_RANGE         = ":SOUR:CURR:RANG %f";
+    private static final   String C_SET_VOLTAGE_RANGE         = ":SOUR:VOLT:RANG %f";
+    private static final   String C_SET_CURRENT_LEVEL         = ":SOUR:CURR:LEV %f";
+    private static final   String C_SET_VOLTAGE_LEVEL         = ":SOUR:VOLT:LEV %f";
+    // Sense Function Commands
+    private static final   String C_SET_SENSE_FUNCTION        = ":SENS:FUNCtion %s";
+    private static final   String C_SET_CURRENT_PROTECTION    = ":SENSe:CURRent:PROTection %f";
+    private static final   String C_SET_VOLTAGE_PROTECTION    = ":SENSe:VOLTage:PROTection %f";
+    private static final   String C_SET_N_COUNTS_VOLTAGE      = ":SENSe:VOLTage:NPLCycles %f";
+    private static final   String C_SET_N_COUNTS_CURRENT      = ":SENSe:CURRent:NPLCycles %f";
+    private static final   String C_SET_CURRENT_MEASURE_RANGE = ":SENSe:CURRent:RANGe %f";
+    private static final   String C_SET_VOLTAGE_MEASURE_RANGE = ":SENSe:VOLTage:RANGe %f";
+    // Output Commands
+    private static final   String C_TRIGGER_AND_READ          = ":READ?";
+
+    protected final double LINE_FREQUENCY;
+
+    // === FILTERS ============================================================================
+    private final MedianRepeatFilter MEDIAN_REPEAT_V = new MedianRepeatFilter(
+            this::measureVoltage,
+            (c) -> disableAveraging()
+    );
+
+    private final MedianRepeatFilter MEDIAN_REPEAT_I = new MedianRepeatFilter(
+            this::measureCurrent,
+            (c) -> disableAveraging()
+    );
+
+    private final MedianMovingFilter MEDIAN_MOVING_V = new MedianMovingFilter(
+            this::measureVoltage,
+            (c) -> disableAveraging()
+    );
+
+    private final MedianMovingFilter MEDIAN_MOVING_I = new MedianMovingFilter(
+            this::measureCurrent,
+            (c) -> disableAveraging()
+    );
+
+    private final MeanRepeatFilter MEAN_REPEAT_V = new MeanRepeatFilter(
+            this::measureVoltage,
+            (c) -> disableAveraging()
+    );
+
+    private final MeanRepeatFilter MEAN_REPEAT_I = new MeanRepeatFilter(
+            this::measureCurrent,
+            (c) -> disableAveraging()
+    );
+
+    private final MeanMovingFilter MEAN_MOVING_V = new MeanMovingFilter(
+            this::measureVoltage,
+            (c) -> disableAveraging()
+    );
+
+    private final MeanMovingFilter MEAN_MOVING_I = new MeanMovingFilter(
+            this::measureCurrent,
+            (c) -> disableAveraging()
+    );
+
+    private final BypassFilter NONE_V = new BypassFilter(
+            this::measureVoltage,
+            (c) -> disableAveraging()
+    );
+
+    private final BypassFilter NONE_I = new BypassFilter(
+            this::measureCurrent,
+            (c) -> disableAveraging()
+    );
+
+    protected double     vLimit;
+    protected double     iLimit;
+    private   ReadFilter filterV = MEAN_REPEAT_V;
+
+    // New methods for range and digits commands
+    private ReadFilter filterI     = MEAN_REPEAT_I;
+    private AMode      filterMode  = AMode.MEAN_REPEAT;
+    private int        filterCount = 1; // This is for the averaging feature, not integration time/NPLC
+
+    public K2400(Address address) throws IOException, DeviceException {
+
+        super(address);
+
+        // Set these *before* trying to ask the SMU for anything, otherwise it will just timeout
+        setIOLimit(50, true, true);
+        setWriteTerminator("\n");
+        setReadTerminator("\n");
+        addAutoRemove("\r");
+        addAutoRemove("\n");
+
+        String  idn     = getIDN();
+        Matcher matcher = Pattern.compile("MODEL (2400|2410|2420|2425|2430|2440)").matcher(idn.toUpperCase());
+
+        if (!matcher.find()) {
+            throw new DeviceException("Instrument at address \"%s\" is not a Keithley 2400, 2410, 2420, 2425, 2430 or 2440.", address.toString());
+        }
+
+        LINE_FREQUENCY = queryDouble(C_QUERY_LFR);
+
+    }
+
+    public static String getDescription() {
+        return "Keithley 2400";
+    }
+
+    // METHODS TO IMPLEMENT
 
     // These functions were modified as follows because query(:MEAS:<MODE>?) returns a string of 5 elements.
     // See "FETch?" command in the K2400 manual.
@@ -51,122 +185,9 @@ public class K2400 extends VISADevice implements SMU {
         return Double.parseDouble(measuredCurrent);
     }
 
-    protected static final String C_SET_SOURCE_FUNCTION = ":SOUR:FUNC %s";
-
-    protected static final String C_SET_OUTPUT_STATE      = ":OUTP:STATE %s";
-    protected static final String C_QUERY_SOURCE_FUNCTION = ":SOUR:FUNC?";
-    protected static final String C_QUERY_OUTPUT_STATE    = ":OUTP:STATE?";
-    protected static final String OUTPUT_ON               = "1";
-    protected static final String OUTPUT_OFF              = "0";
-
-    protected static final String TERMS_FRONT               = "FRON";
-    protected static final String TERMS_REAR                = "REAR";
-    private static final   String C_SET_SOURCE_MODE_CURRENT = ":SOUR:CURR:MODE FIX";
-    private static final   String C_SET_SOURCE_MODE_VOLTAGE = ":SOUR:VOLT:MODE FIX";
-
-    // === SET RANGES
-    private static final   String C_SET_CURRENT_RANGE         = ":SOUR:CURR:RANG %f";
-    private static final   String C_SET_VOLTAGE_RANGE         = ":SOUR:VOLT:RANG %f";
-    private static final   String C_SET_CURRENT_LEVEL         = ":SOUR:CURR:LEV %f";
-    private static final   String C_SET_VOLTAGE_LEVEL         = ":SOUR:VOLT:LEV %f";
-    // Sense Function Commands
-    private static final   String C_SET_SENSE_FUNCTION        = ":SENS:FUNCtion %s";
-    private static final   String C_SET_CURRENT_PROTECTION    = ":SENSe:CURRent:PROTection %f";
-    private static final   String C_SET_VOLTAGE_PROTECTION    = ":SENSe:VOLTage:PROTection %f";
-    private static final   String C_SET_N_COUNTS_VOLTAGE      = ":SENSe:VOLTage:NPLCycles %f";
-    private static final   String C_SET_N_COUNTS_CURRENT      = ":SENSe:CURRent:NPLCycles %f";
-    private static final   String C_SET_CURRENT_MEASURE_RANGE = ":SENSe:CURRent:RANGe %f";
-    protected static final String C_SET_SRC_RANGE             = ":SOUR:%s:RANG %e";
-    protected static final String C_QUERY_SRC_RANGE           = ":SOUR:%s:RANG?";
-    protected static final String C_QUERY_SRC_RANGE_MIN       = ":SOUR:%s:RANG? MIN";
-    protected static final String C_QUERY_SRC_RANGE_MAX       = ":SOUR:%s:RANG? MAX";
-    protected static final String C_SET_SRC_AUTO_RANGE        = ":SOUR:%s:RANG:AUTO %s";
-    protected static final String C_QUERY_SRC_AUTO_RANGE      = ":SOUR:%s:RANG:AUTO?";
-    protected static final String C_SET_MEAS_RANGE            = ":SENS:%s:RANG %e";
-    protected static final String C_QUERY_MEAS_RANGE          = ":SENS:%s:RANG?";
-    protected static final String C_QUERY_MEAS_RANGE_MIN      = ":SENS:%s:RANG? MIN";
-    protected static final String C_QUERY_MEAS_RANGE_MAX      = ":SENS:%s:RANG? MAX";
-    protected static final String C_SET_MEAS_AUTO_RANGE       = ":SENS:%s:RANG:AUTO %s";
-    protected static final String C_QUERY_MEAS_AUTO_RANGE     = ":SENS:%s:RANG:AUTO?";
-
     private void setCurrRangeManual(double range) throws IOException {
         write(C_SET_CURRENT_MEASURE_RANGE, range);
     }
-
-    private static final String C_SET_VOLTAGE_MEASURE_RANGE = ":SENSe:VOLTage:RANGe %f";
-
-    // Output Commands
-    private static final String C_TRIGGER_AND_READ = ":READ?";
-
-    // === FILTERS ============================================================================
-    private final MedianRepeatFilter MEDIAN_REPEAT_V = new MedianRepeatFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
-    );
-    private final MedianRepeatFilter MEDIAN_REPEAT_I = new MedianRepeatFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
-    );
-    private final MedianMovingFilter MEDIAN_MOVING_V = new MedianMovingFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
-    );
-    private final MedianMovingFilter MEDIAN_MOVING_I = new MedianMovingFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
-    );
-    private final MeanRepeatFilter   MEAN_REPEAT_V   = new MeanRepeatFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
-    );
-    private final MeanRepeatFilter   MEAN_REPEAT_I   = new MeanRepeatFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
-    );
-    private final MeanMovingFilter   MEAN_MOVING_V   = new MeanMovingFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
-    );
-    private final MeanMovingFilter   MEAN_MOVING_I   = new MeanMovingFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
-    );
-    private final BypassFilter       NONE_V          = new BypassFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
-    );
-    private final BypassFilter       NONE_I          = new BypassFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
-    );
-    protected     double             vLimit;
-    protected     double             iLimit;
-    private       ReadFilter         filterV         = MEAN_REPEAT_V;
-    private       ReadFilter         filterI         = MEAN_REPEAT_I;
-    private       AMode              filterMode      = AMode.MEAN_REPEAT;
-    private       int                filterCount     = 1; // This is for the averaging feature, not integration time/NPLC
-
-    public K2400(Address address) throws IOException, DeviceException {
-
-        super(address);
-
-        // Set these *before* trying to ask the SMU for anything, otherwise it will just timeout
-        setIOLimit(50, true, true);
-        setWriteTerminator("\n");
-        setReadTerminator("\n");
-        addAutoRemove("\r");
-        addAutoRemove("\n");
-
-        String  idn     = getIDN();
-        Matcher matcher = Pattern.compile("MODEL (2400|2410|2420|2425|2430|2440)").matcher(idn.toUpperCase());
-
-        if (!matcher.find()) {
-            throw new DeviceException("Instrument at address \"%s\" is not a Keithley 2400, 2410, 2420, 2425, 2430 or 2440.", address.toString());
-        }
-
-    }
-
-    // New methods for range and digits commands
 
     private void setCurrRangeAuto(boolean state) throws IOException {
         write(":SENSe:CURRent:RANGe:AUTO " + (state ? "ON" : "OFF"));
@@ -192,33 +213,9 @@ public class K2400 extends VISADevice implements SMU {
         write(":DISPlay:DIGits " + digits);
     }
 
-    // METHODS TO IMPLEMENT
-
-    public static String getDescription() {
-        return "Keithley 2400";
-    }
-
     @Override
     public String getName() {
         return "Keithley 2400";
-    }
-
-    @Override
-    public void setCurrentRange(double value) throws DeviceException, IOException {
-        write(C_SET_SRC_AUTO_RANGE, "CURRENT", OUTPUT_OFF);
-        write(C_SET_MEAS_AUTO_RANGE, "CURRENT", OUTPUT_OFF);
-        write(C_SET_SRC_RANGE, "CURRENT", value);
-        write(C_SET_MEAS_RANGE, "CURRENT", value);
-    }
-
-    @Override
-    public void setVoltageRange(double value) throws DeviceException, IOException {
-
-        write(C_SET_SRC_AUTO_RANGE, "VOLTAGE", OUTPUT_OFF);
-        write(C_SET_MEAS_AUTO_RANGE, "VOLTAGE", OUTPUT_OFF);
-
-        write(C_SET_SRC_RANGE, "VOLTAGE", value);
-        write(C_SET_MEAS_RANGE, "VOLTAGE", value);
     }
 
     @Override
@@ -230,13 +227,6 @@ public class K2400 extends VISADevice implements SMU {
     public double getSetVoltage() throws DeviceException, IOException {
         throw new DeviceException("Not implemented.");
     }
-
-
-    // ========== Everything needed for getVoltage()
-    protected static final String C_SET_AVG_MODE  = "AVER:TCON %s";
-    protected static final String C_SET_AVG_COUNT = "AVER:COUNT %d";
-    protected static final String C_SET_AVG_STATE = "AVER %s";
-
 
     public void disableAveraging() throws IOException {
 
@@ -252,13 +242,13 @@ public class K2400 extends VISADevice implements SMU {
     }
 
     @Override
-    public double getCurrent() throws DeviceException, IOException {
-        return filterI.getValue();
+    public void setVoltage(double voltage) throws DeviceException, IOException {
+        write(C_SET_VOLTAGE_LEVEL, voltage);
     }
 
     @Override
-    public void setVoltage(double voltage) throws DeviceException, IOException {
-        write(C_SET_VOLTAGE_LEVEL, voltage);
+    public double getCurrent() throws DeviceException, IOException {
+        return filterI.getValue();
     }
 
     @Override
@@ -308,6 +298,22 @@ public class K2400 extends VISADevice implements SMU {
     }
 
     @Override
+    public double getSourceValue() throws DeviceException, IOException {
+
+        switch (getSourceMode()) {
+
+            case VOLTAGE:
+                return getVoltage();
+            case CURRENT:
+                return getCurrent();
+            default:
+                throw new IllegalArgumentException();
+
+        }
+
+    }
+
+    @Override
     public void setSourceValue(double level) throws DeviceException, IOException {
 
         switch (getSourceMode()) {
@@ -319,22 +325,6 @@ public class K2400 extends VISADevice implements SMU {
             case CURRENT:
                 setCurrent(level);
                 break;
-
-        }
-
-    }
-
-    @Override
-    public double getSourceValue() throws DeviceException, IOException {
-
-        switch (getSourceMode()) {
-
-            case VOLTAGE:
-                return getVoltage();
-            case CURRENT:
-                return getCurrent();
-            default:
-                throw new IllegalArgumentException();
 
         }
 
@@ -368,8 +358,6 @@ public class K2400 extends VISADevice implements SMU {
                 throw new IllegalArgumentException();
         }
     }
-
-    protected static final String C_QUERY_PROBE_MODE = "CURR:RSEN?";
 
     @Override
     public boolean isFourProbeEnabled() throws DeviceException, IOException {
@@ -579,6 +567,15 @@ public class K2400 extends VISADevice implements SMU {
 
     }
 
+    @Override
+    public void setVoltageRange(double value) throws DeviceException, IOException {
+
+        write(C_SET_SRC_AUTO_RANGE, "VOLTAGE", OUTPUT_OFF);
+        write(C_SET_MEAS_AUTO_RANGE, "VOLTAGE", OUTPUT_OFF);
+
+        write(C_SET_SRC_RANGE, "VOLTAGE", value);
+        write(C_SET_MEAS_RANGE, "VOLTAGE", value);
+    }
 
     @Override
     public void useAutoVoltageRange() throws DeviceException, IOException {
@@ -605,6 +602,14 @@ public class K2400 extends VISADevice implements SMU {
             return queryDouble(C_QUERY_MEAS_RANGE, "CURR");
         }
 
+    }
+
+    @Override
+    public void setCurrentRange(double value) throws DeviceException, IOException {
+        write(C_SET_SRC_AUTO_RANGE, "CURRENT", OUTPUT_OFF);
+        write(C_SET_MEAS_AUTO_RANGE, "CURRENT", OUTPUT_OFF);
+        write(C_SET_SRC_RANGE, "CURRENT", value);
+        write(C_SET_MEAS_RANGE, "CURRENT", value);
     }
 
     @Override
@@ -676,11 +681,6 @@ public class K2400 extends VISADevice implements SMU {
         iLimit = limit;
     }
 
-    // === INTEGRATION TIME ================================
-    protected static final String C_QUERY_LFR    = ":SYST:LFR?";
-    protected final        double LINE_FREQUENCY = queryDouble(C_QUERY_LFR);
-    protected static final String C_QUERY_NPLC   = ":SENS:%s:NPLC?";
-
     @Override
     public double getIntegrationTime() throws DeviceException, IOException {
 
@@ -707,7 +707,6 @@ public class K2400 extends VISADevice implements SMU {
         write(C_SET_N_COUNTS_CURRENT, counts);
 
     }
-
 
     @Override
     public TType getTerminalType(Terminals terminals) throws DeviceException, IOException {
@@ -798,7 +797,6 @@ public class K2400 extends VISADevice implements SMU {
     @Override
     public void setLineFilterEnabled(boolean enabled) throws DeviceException, IOException {
     }
-
 
     public void mario() throws IOException {
         write("SYST:BEEP %s,%s", 660, 100.0 / 1000.0);
@@ -1101,70 +1099,6 @@ public class K2400 extends VISADevice implements SMU {
         Util.sleep(550);
         write("SYST:BEEP %s,%s", 380, 100.0 / 1000.0);
         Util.sleep(575);
-    }
-
-
-    // === main to test the methods ====================================================================
-    public static void main(String[] args) throws IOException, DeviceException {
-        SMU k2400;
-        try {
-            k2400 = new K2400(new GPIBAddress(28));
-        } catch (IOException | DeviceException e) {
-            throw new RuntimeException(e);
-        }
-
-        double voltage = 0.789;
-        double current = 0.234;
-        //k2400.mario();
-
-        // test voltage source
-        System.out.println("This is a " + k2400.getName());
-        k2400.setSource(Source.VOLTAGE);
-        System.out.printf("Source: %s \n", k2400.getSource());
-        k2400.setVoltageRange(2);
-        k2400.setVoltageLimit(1);
-        k2400.setVoltage(voltage);
-        k2400.turnOn();
-        k2400.setIntegrationTime(0.04);
-        double integrationTime = k2400.getIntegrationTime();
-        k2400.setAverageMode(AMode.NONE); // also the other modes work
-        System.out.printf(" + Integration Time: %f \n", (integrationTime));
-        System.out.printf(" + Average Counts: %d \n", k2400.getAverageCount());
-        System.out.printf(" + Measured Current: %f A\n", k2400.getCurrent());
-
-        // test get compliance
-        System.out.printf(" - Compliance (output Limit): %f V \n", k2400.getOutputLimit());
-        System.out.printf(" - Compliance (Voltage Limit): %f V \n", k2400.getVoltageLimit());
-        System.out.printf(" - Compliance (Voltage Range): %f V \n", k2400.getVoltageRange());
-
-        // test current source
-        k2400.setSource(Source.CURRENT);
-        System.out.printf("Source: %s \n", k2400.getSource());
-        k2400.setCurrentRange(1);
-        k2400.setCurrentLimit(1);
-        k2400.setCurrent(current);
-        k2400.turnOn();
-        System.out.printf(" > Integration Time: %f \n", (integrationTime));
-        System.out.printf(" > Average Counts: %d \n", k2400.getAverageCount());
-        System.out.printf(" > Measured Voltage: %f V\n", k2400.getVoltage());
-        System.out.printf(" > Measure Range: %s \n", k2400.getMeasureRange());
-        k2400.turnOff();
-
-        //test fpp
-        System.out.printf(" ~ Is 4 probe enabled?: %b \n", k2400.isFourProbeEnabled());
-        k2400.setFourProbeEnabled(true);
-        System.out.printf(" ~ Is 4 probe enabled?: %b \n", k2400.isFourProbeEnabled());
-        k2400.setFourProbeEnabled(false);
-
-        //test terminals
-
-        k2400.setTerminals(Terminals.REAR);
-        System.out.printf(" # Terminals: %s \n", k2400.getTerminals());
-        k2400.setTerminals(Terminals.FRONT);
-        System.out.printf(" # Terminals: %s \n", k2400.getTerminals());
-
-        k2400.close();
-
     }
 
 }
