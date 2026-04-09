@@ -9,7 +9,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="lib" level="project" />
     <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="library" name="jssc" level="project" />
     <orderEntry type="library" name="reflections-0.9.11" level="project" />
     <orderEntry type="library" name="json-20180813" level="project" />
     <orderEntry type="library" name="jython-standalone-2.7.0" level="project" />
@@ -30,5 +29,6 @@
     <orderEntry type="library" name="jhdf-0.9.4" level="project" />
     <orderEntry type="library" name="jcodec-0.2.5" level="project" />
     <orderEntry type="library" name="jcodec-streaming-0.2.3" level="project" />
+    <orderEntry type="library" name="jssc-2.10.2" level="project" />
   </component>
 </module>

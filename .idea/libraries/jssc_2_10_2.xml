@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="jssc-2.10.2">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/jssc-2.10.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

@@ -10,7 +10,6 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/javafx-16-combined.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/reflections-0.9.11.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/pretty-tools-JDDE-2.1.0.jar" path-in-jar="/" />
-      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jssc.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/json-20180813.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jna.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jlibmodbus-1.2.9.0.jar" path-in-jar="/" />
@@ -41,6 +40,7 @@
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/OO.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jhdf-0.9.4.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/jcodec-0.2.5.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/jssc-2.10.2.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
