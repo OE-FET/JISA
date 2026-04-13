@@ -1660,6 +1660,54 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         return addFrameListener(drawer::drawIntFrame);
     }
 
+    public void setAuxOutSourceTwo(AuxOutSource mode) throws DeviceException, IOException {
+
+        switch(mode) {
+
+            case EXTERNAL_SHUTTER:
+                setEnum("AuxOutSourceTwo", "ExternalShutterControl");
+                break;
+
+            case FRAME_CLOCK:
+                setEnum("AuxOutSourceTwo", "FrameClock");
+                break;
+
+            case ROW_CLOCK:
+                setEnum("AuxOutSourceTwo", "RowClock");
+                break;
+
+            case EXPOSED_ROW_CLOCK:
+                setEnum("AuxOutSourceTwo", "ExposedRowClock");
+
+        }
+
+    }
+
+    public AuxOutSource getAuxOutSourceTwo() throws IOException, DeviceException {
+
+        Enum value = getEnum("AuxOutSourceTwo");
+
+        switch (value.getText().trim()) {
+
+            case "ExternalShutterControl":
+                return AuxOutSource.EXTERNAL_SHUTTER;
+
+            case "FrameClock":
+                return AuxOutSource.FRAME_CLOCK;
+
+            case "RowClock":
+                return AuxOutSource.ROW_CLOCK;
+
+            case "ExposedRowClock":
+                return AuxOutSource.EXPOSED_ROW_CLOCK;
+
+            default:
+                throw new IOException("Invalid response from Andor3 camera.");
+
+        }
+
+    }
+
     public static class PreAmpGainMode {
 
         private final int     index;
@@ -1725,6 +1773,13 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             return implemented;
         }
 
+    }
+
+    public enum AuxOutSource {
+        EXTERNAL_SHUTTER,
+        FRAME_CLOCK,
+        ROW_CLOCK,
+        EXPOSED_ROW_CLOCK;
     }
 
 }
