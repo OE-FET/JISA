@@ -1,6 +1,7 @@
 package jisa.devices.camera;
 
 import com.sun.jna.NativeLong;
+import com.sun.jna.Platform;
 import com.sun.jna.ptr.NativeLongByReference;
 import jisa.Util;
 import jisa.addresses.Address;
@@ -17,6 +18,8 @@ import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -65,7 +68,16 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         super("Andor SDK2 Camera");
 
-        this.sdk   = findLibrary(ATMCD32D.class, "atmcd32d");
+        if (Platform.isWindows() && Files.exists(Path.of("C:\\Program Files\\Andor SDK"))) {
+            System.setProperty("jna.library.path", System.getProperty("jna.library.path") + ";" + "C:\\Program Files\\Andor SDK");
+        }
+
+        if (Platform.is64Bit()) {
+            this.sdk = findLibrary(ATMCD32D.class, "atmcd64d");
+        } else {
+            this.sdk = findLibrary(ATMCD32D.class, "atmcd32d");
+        }
+
         this.index = index;
 
         synchronized (sdk) {
@@ -160,8 +172,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
                     handle(sdk.SetReadMode(1), "SetReadMode(MULTI-TRACK [sequence])");
                     handle(
-                        sdk.SetMultiTrack(trackSequenceCount, trackSequenceHeight, trackSequanceOffset, IntBuffer.allocate(1), IntBuffer.allocate(1)),
-                        String.format("SetMultiTrack(%d, %d, %d)", trackSequenceCount, trackSequenceHeight, trackSequanceOffset)
+                            sdk.SetMultiTrack(trackSequenceCount, trackSequenceHeight, trackSequanceOffset, IntBuffer.allocate(1), IntBuffer.allocate(1)),
+                            String.format("SetMultiTrack(%d, %d, %d)", trackSequenceCount, trackSequenceHeight, trackSequanceOffset)
                     );
 
                     break;
