@@ -1567,6 +1567,14 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         setEnum("ShutterOutputMode", open ? "Open" : "Closed");
     }
 
+    public Enum getShutterMode() throws IOException, DeviceException {
+        return getEnum("ShutterMode");
+    }
+
+    public Enum getShutterOutputMode() throws IOException, DeviceException {
+        return getEnum("ShutterOutputMode");
+    }
+
     @Override
     public boolean isShutterOpen() throws IOException, DeviceException {
         return getBoolean("ShutterState");
