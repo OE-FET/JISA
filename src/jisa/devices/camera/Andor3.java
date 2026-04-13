@@ -1564,6 +1564,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     @Override
     public void setShutterOpen(boolean open) throws IOException, DeviceException {
         setEnum("ShutterMode", open ? "Open" : "Closed");
+        setEnum("ShutterOutputMode", open ? "Open" : "Closed");
     }
 
     @Override
