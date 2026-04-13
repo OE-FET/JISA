@@ -1642,21 +1642,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         }
 
         public void loadAttributes(Andor3 camera) {
-
-            getAttributes().putAll(
-
-                camera.getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
-
-                    try {
-                        return p.getCurrentValue();
-                    } catch (Throwable e) {
-                        return null;
-                    }
-
-                }))
-
-            );
-
+            getAttributes().putAll(camera.getAllParametersAsMap());
         }
 
         protected void update(short[] data, long timestamp) {
