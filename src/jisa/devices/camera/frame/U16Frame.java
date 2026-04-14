@@ -86,6 +86,29 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
     }
 
     @Override
+    public void readScaledARGBData(int[] argb) {
+
+        int max    = 0;
+        int buffer = 0;
+
+        for (short value : data) {
+
+            buffer = Short.toUnsignedInt(value);
+
+            if (buffer > max) {
+                max = buffer;
+            }
+
+        }
+
+        for (int i = 0; i < data.length; i++) {
+            buffer  = (255 * data[i]) / max;
+            argb[i] = (255 << 24) | (buffer << 16) | (buffer << 8) | buffer;
+        }
+
+    }
+
+    @Override
     public int[][] getARGBImage() {
 
         int[][] image = new int[width][height];

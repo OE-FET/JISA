@@ -97,6 +97,31 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
     }
 
     @Override
+    public void readScaledARGBData(int[] argb) {
+
+        long max    = 0;
+        long buffer = 0;
+
+        for (int value : data) {
+
+            buffer = Integer.toUnsignedLong(value);
+
+            if (buffer > max) {
+                max = buffer;
+            }
+
+        }
+
+        int value;
+
+        for (int i = 0; i < data.length; i++) {
+            value   = (int) ((255L * data[i]) / max);
+            argb[i] = (255 << 24) | (value << 16) | (value << 8) | value;
+        }
+
+    }
+
+    @Override
     public int[][] getARGBImage() {
 
         int[]   argb  = getARGBData();

@@ -6,6 +6,7 @@ import io.jhdf.api.WritableGroup;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -153,10 +154,43 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
 
         for (int i = 0; i < argb.length; i++) {
 
-            v = argb[i];
-            destination[i] = (int) (0xFF << 24| (v >> 32 & 0xFF00) << 8 | (v >> 16 & 0xFF00) | (v & 0xFF00) >> 8);
+            v              = argb[i];
+            destination[i] = (int) (0xFF << 24 | (v >> 32 & 0xFF00) << 8 | (v >> 16 & 0xFF00) | (v & 0xFF00) >> 8);
 
         }
+
+    }
+
+    @Override
+    public void readScaledARGBData(int[] destination) {
+
+        ByteBuffer buffer = ByteBuffer.allocate(argb.length * Long.BYTES);
+        buffer.asLongBuffer().put(argb);
+
+        short[] separated = new short[argb.length * 4];
+        buffer.rewind().asShortBuffer().get(separated);
+
+        int max      = 0;
+        int unsigned = 0;
+
+        for (short s : separated) {
+
+            unsigned = Short.toUnsignedInt(s);
+
+            if (unsigned > max) {
+                max = unsigned;
+            }
+
+        }
+
+        ByteBuffer outputBuffer = ByteBuffer.allocate(argb.length * 4);
+        byte[]     outputArray  = outputBuffer.array();
+
+        for (int i = 0; i < separated.length; i++) {
+            outputArray[i] = (byte) ((255 * separated[i]) / max);
+        }
+
+        outputBuffer.rewind().asIntBuffer().get(destination);
 
     }
 

@@ -81,6 +81,14 @@ public interface Frame<D, F extends Frame> {
 
     }
 
+    default int[] getScaledARGBData() {
+
+        int[] data = new int[size()];
+        readARGBData(data);
+        return data;
+
+    }
+
     /**
      * Reads the frame's ARGB data into a given linear/1D array. This is for fast data transfer operations (such as populating
      * a PixelBuffer).
@@ -88,6 +96,15 @@ public interface Frame<D, F extends Frame> {
      * @param destination Destination array to fill.
      */
     void readARGBData(int[] destination);
+
+
+    /**
+     * Reads the frame's ARGB data, normalised to the maximum pixel value, into a given linear/1D array. This is for fast data transfer operations (such as populating
+     * a PixelBuffer).
+     *
+     * @param destination Destination array to fill.
+     */
+    void readScaledARGBData(int[] destination);
 
     /**
      * Returns the frame's ARGB values in the form of a 2D array corresponding to pixels.

@@ -6,6 +6,7 @@ import io.jhdf.api.WritableGroup;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -160,6 +161,34 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
 
     public void readARGBData(int[] destination) {
         System.arraycopy(argb, 0, destination, 0, argb.length);
+    }
+
+    @Override
+    public void readScaledARGBData(int[] destination) {
+
+        ByteBuffer buffer = ByteBuffer.allocate(argb.length * 4);
+        buffer.asIntBuffer().put(argb);
+
+        byte[] separated = buffer.array();
+        int    max       = 0;
+        int    unsigned  = 0;
+
+        for (byte b : separated) {
+
+            unsigned = Byte.toUnsignedInt(b);
+
+            if (unsigned > max) {
+                max = unsigned;
+            }
+
+        }
+
+        for (int i = 0; i < separated.length; i++) {
+            separated[i] = (byte) ((255 * separated[i]) / max);
+        }
+
+        buffer.rewind().asIntBuffer().get(destination);
+
     }
 
     @Override
