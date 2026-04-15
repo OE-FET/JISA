@@ -5,6 +5,8 @@ import jisa.devices.ParameterList;
 import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 import jisa.devices.spectrometer.spectrum.SpectrumThread;
+import jisa.gui.Plot;
+import jisa.gui.Series;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -138,6 +140,17 @@ public interface Spectrometer extends Spectrograph {
      * @param listener Listener to remove.
      */
     void removeSpectrumListener(Listener listener);
+
+    default Listener sendSpectraTo(Plot plot, String seriesName) {
+
+        Series series = plot.createSeries()
+                            .setName(seriesName)
+                            .setMarkerVisible(false)
+                            .setLineWidth(1.0);
+
+        return addSpectrumListener(series::plotSpectrum);
+
+    }
 
     /**
      * Opens a (blocking) queue into which copies of newly acquired spectra will be placed, with an upper limit on capacity. This is to allow for asynchronous, lossless processing of spectral data.

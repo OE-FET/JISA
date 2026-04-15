@@ -19,7 +19,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
     private       int                       width                = 1024;
     private       int                       height               = 1024;
     private       int                       integrationTime      = 5;
-    private       int                       timeout;
+    private       int                       timeout              = 10000;
     private       boolean                   running              = false;
     private       Thread                    acquireThread;
     private       double                    fps                  = 0.0;
