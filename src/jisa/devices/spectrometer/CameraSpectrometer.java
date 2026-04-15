@@ -14,10 +14,7 @@ import jisa.maths.fits.PolyFit;
 import jisa.maths.functions.Function;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -27,18 +24,40 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
     private final C                                                    camera;
     private final S                                                    spectrograph;
-    private final Map<Listener, Camera.Listener>                       listeners            = new HashMap<>();
     private final Map<SpectrumQueue, FrameThread>                      threads              = new HashMap<>();
     private final Map<AcquisitionListener, Camera.AcquisitionListener> acquisitionListeners = new HashMap<>();
+    private final ListenerManager                                      listenerManager      = new ListenerManager();
+    private final Map<String, Object>                                  frameAttributes      = new LinkedHashMap<>();
+    private       boolean                                              attributesChanged    = true;
     private       Converter<F>                                         converter;
     private       Converter<F>                                         converterCopy;
 
-    public CameraSpectrometer(C camera, S spectrograph) throws IOException, DeviceException {
+    public CameraSpectrometer(C camera, S spectrograph) {
 
         this.camera       = camera;
         this.spectrograph = spectrograph;
 
         setConverterFullVerticalBinning();
+
+        camera.addFrameListener(frame -> listenerManager.trigger(converter.convert(frame)));
+        camera.addAcquisitionListener(acquiring -> { if (acquiring) { updateAttributes(); } });
+
+    }
+
+    public CameraSpectrometer(C camera) {
+        this(camera, null);
+    }
+
+    public void updateAttributes() {
+
+        frameAttributes.clear();
+        frameAttributes.putAll(camera.getAllParametersAsMap());
+
+        if (spectrograph != null) {
+            frameAttributes.putAll(spectrograph.getAllParametersAsMap());
+        }
+
+        attributesChanged = true;
 
     }
 
@@ -61,11 +80,9 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
                 Spectrum s = converter.convert(f);
 
-                s.getAttributes().clear();
-                s.getAttributes().putAll(f.getAttributes());
-
-                if (spectrograph != null) {
-                    s.getAttributes().putAll(spectrograph.getAllParametersAsMap());
+                if (s.getAttributes().isEmpty() || attributesChanged) {
+                    s.getAttributes().putAll(frameAttributes);
+                    attributesChanged = false;
                 }
 
                 s.setTimestamp(f.getTimestamp());
@@ -82,11 +99,9 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
                 Spectrum s = converter.convert(f);
 
-                s.getAttributes().clear();
-                s.getAttributes().putAll(f.getAttributes());
-
-                if (spectrograph != null) {
-                    s.getAttributes().putAll(spectrograph.getAllParametersAsMap());
+                if (s.getAttributes().isEmpty() || attributesChanged) {
+                    s.getAttributes().putAll(frameAttributes);
+                    attributesChanged = false;
                 }
 
                 s.setTimestamp(f.getTimestamp());
@@ -134,7 +149,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
     }
 
-    public void setConverterFullVerticalBinning(Map<Number, Number> peaks, int fitOrder) {
+    public void setConverterFullVerticalBinning(Map<? extends Number, ? extends Number> peaks, int fitOrder) {
 
         if (peaks.size() < Math.max(2, fitOrder)) {
             setConverterFullVerticalBinning();
@@ -186,11 +201,11 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
     }
 
-    public void setConverter(int startX, int startY, int endX, int endY, int binning, Map<Number, Number> wavelengths) throws DeviceException {
+    public void setConverter(int startX, int startY, int endX, int endY, int binning, Map<? extends Number, ? extends Number> wavelengths) throws DeviceException {
         setConverter(startX, startY, endX, endY, binning, wavelengths, wavelengths.size() - 1);
     }
 
-    public void setConverter(int startX, int startY, int endX, int endY, int binning, Map<Number, Number> wavelengths, int order) throws DeviceException {
+    public void setConverter(int startX, int startY, int endX, int endY, int binning, Map<? extends Number, ? extends Number> wavelengths, int order) throws DeviceException {
 
         if (wavelengths.size() < 2) {
             throw new DeviceException("Need at least two wavelength positions to calibrate spectra.");
@@ -362,31 +377,25 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
     @Override
     public Spectrum getSpectrum() throws IOException, DeviceException, InterruptedException, TimeoutException {
-        return converterCopy.convert(camera.getFrame()).copy();
+        updateAttributes();
+        return converterCopy.convert(camera.getFrame());
     }
 
     @Override
     public List<Spectrum> getSpectrumSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException {
+        updateAttributes();
         return camera.getFrameSeries(count).stream().map(f -> converterCopy.convert(f).copy()).collect(Collectors.toList());
     }
 
     @Override
     public Listener addSpectrumListener(Listener listener) {
-
-        Camera.Listener<F> cameraListener = camera.addFrameListener(f -> listener.newSpectrum(converterCopy.convert(f)));
-        listeners.put(listener, cameraListener);
+        listenerManager.addListener(listener);
         return listener;
-
     }
 
     @Override
     public void removeSpectrumListener(Listener listener) {
-
-        if (listeners.containsKey(listener)) {
-            camera.removeFrameListener(listeners.get(listener));
-            listeners.remove(listener);
-        }
-
+        listenerManager.removeListener(listener);
     }
 
     @Override

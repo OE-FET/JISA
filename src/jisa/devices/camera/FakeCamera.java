@@ -53,9 +53,11 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
     }
 
     public FakeCamera() {
+        this(null);
     }
 
     public FakeCamera(Address address) {
+        tracks.add(new Track(0, 1023, false));
     }
 
     protected void generate(short[] data) {
@@ -163,7 +165,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
 
         acquireThread = new Thread(() -> {
 
-            short[]  data  = new short[width * height];
+            short[]  data  = new short[size];
             U16Frame frame = new U16Frame(data, width, height, System.nanoTime(), getAllParametersAsMap());
 
             while (running) {
@@ -309,7 +311,13 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
 
     @Override
     public void setImageWidth(int width) throws IOException, DeviceException {
+
+        if (!Util.isBetween(width, 1, 1024)) {
+            throw new DeviceException("Image width must be between 1 to 1024");
+        }
+
         this.width = width;
+
     }
 
     @Override
@@ -319,7 +327,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
 
     @Override
     public int getPhysicalFrameWidth() throws IOException, DeviceException {
-        return width;
+        return getFrameWidth();
     }
 
     @Override
@@ -354,6 +362,11 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
 
     @Override
     public void setImageHeight(int height) throws IOException, DeviceException {
+
+        if (!Util.isBetween(height, 1, 1024)) {
+            throw new DeviceException("Image height must be between 1 to 1024");
+        }
+
         this.height = height;
     }
 
@@ -491,6 +504,11 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
 
     @Override
     public void setMultiTracks(Collection<Track> tracks) throws IOException, DeviceException {
+
+        if (tracks.isEmpty()) {
+            throw new DeviceException("Must have at least one track defined.");
+        }
+
         this.tracks.clear();
         this.tracks.addAll(tracks);
     }

@@ -87,6 +87,14 @@ public interface Instrument {
         return this;
     }
 
+    default boolean beforeApplyParameters() {
+        return false;
+    }
+
+    default void afterApplyParameters(boolean result) {
+
+    }
+
     /**
      * Returns a list of all instrument parameters defined by its base type(s) --- i.e., configuration parameters
      * common to all instruments of the same type. This may depend on what the instrument is intended to be used as,

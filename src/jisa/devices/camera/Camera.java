@@ -46,6 +46,36 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
 
     }
 
+    @Override
+    default boolean beforeApplyParameters() {
+
+        try {
+
+            if (isAcquiring()) {
+                stopAcquisition();
+                return true;
+            } else {
+                return false;
+            }
+
+        } catch (Throwable e) {
+            return false;
+        }
+
+    }
+
+    default void afterApplyParameters(boolean result) {
+
+        try {
+
+            if (result){
+                startAcquisition();
+            }
+
+        } catch (Throwable ignored) {}
+
+    }
+
     /**
      * Returns the integration/exposure time being used by this camera.
      *

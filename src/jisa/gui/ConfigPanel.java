@@ -10,8 +10,12 @@ import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
+import javafx.scene.control.MenuButton;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import jisa.devices.Instrument;
 import jisa.gui.controls.DoubleInput;
 import jisa.gui.controls.IntegerField;
@@ -19,6 +23,8 @@ import jisa.gui.controls.TableInput;
 import jisa.results.ResultTable;
 
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,14 +34,22 @@ import java.util.Map;
  */
 public class ConfigPanel<I extends Instrument> extends JFXElement {
 
+    public static final List<ConfigPanel<?>> ALL = new LinkedList<>();
+
     private final I                                   instrument;
     private final VBox                                list;
     private final Map<String, GridPane>               grids;
     private final Map<Instrument.Parameter, NodeItem> parameters = new LinkedHashMap<>();
+    private final List<Entry<?, ?>>                   entries    = new LinkedList<>();
+
+    public static void refreshAll() {
+        ALL.forEach(ConfigPanel::refresh);
+    }
 
     public ConfigPanel(String title, I instrument) {
 
         super(title);
+        ALL.add(this);
 
         this.instrument = instrument;
         this.list       = new VBox();
@@ -56,33 +70,9 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
         BorderPane.setMargin(scrollPane, Insets.EMPTY);
 
+        addToolbarButton("Apply All", this::applyAll);
+
         generateForm();
-
-        addToolbarButton("Apply", () -> {
-
-            parameters.forEach((p, i) -> {
-
-                try {
-                    p.set(i.getValue());
-                } catch (Throwable e) {
-                    e.printStackTrace();
-                }
-
-            });
-
-            parameters.forEach((p, i) -> {
-
-                try {
-                    i.setValue(p.getCurrentValue());
-                    i.updateLastValue();
-                    i.setValue(p.getCurrentValue());
-                } catch (Throwable e) {
-                    e.printStackTrace();
-                }
-
-            });
-
-        });
 
     }
 
@@ -94,7 +84,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
         list.getChildren().clear();
         grids.clear();
-        parameters.clear();
+        entries.clear();
 
         String   group = "General";
         GridPane grid  = new GridPane();
@@ -121,7 +111,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
                 GridPane grid = new GridPane();
 
-                grid.setHgap(0);
+                grid.setHgap(5);
                 grid.setVgap(15);
                 grid.setPadding(new Insets(GUI.SPACING));
                 grid.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
@@ -134,62 +124,73 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             }
 
             GridPane grid = grids.get(group);
-
-            Label    label = new Label(parameter.getName());
-            NodeItem item  = createNode(parameter.getDefaultValue(), parameter.getChoices().toArray());
-            Button   set   = new Button("✓");
-
-            set.setMinWidth(Button.USE_PREF_SIZE);
-
-            set.setOnAction(event -> {
-
-                try {
-                    parameter.set(item.getValue());
-                } catch (Throwable e) {
-                    e.printStackTrace();
-                }
-
-                parameters.forEach((p, i) -> {
-
-                    try {
-                        i.setValue(p.getCurrentValue());
-                    } catch (Throwable e) {
-                        e.printStackTrace();
-                    }
-
-                    i.updateLastValue();
-                    label.setTextFill(item.getValue().equals(item.getLastValue()) ? Color.BLACK : Color.BROWN);
-
-                });
-
-            });
+            NodeItem item = createNode(parameter.getDefaultValue(), parameter.getChoices().toArray());
 
             if (item == null) {
                 continue;
             }
 
-            Node node = item.getNode();
+            Label      label = new Label(parameter.getName());
+            Button     set   = new Button("✓");
+            MenuButton error = new SplitMenuButton(new MenuItem("More details..."));
 
-            item.addListener(i -> label.setTextFill(item.getValue().equals(item.getLastValue()) ? Color.BLACK : Color.BROWN));
+            set.setMinWidth(Region.USE_PREF_SIZE);
+            error.setMaxWidth(Double.MAX_VALUE);
+            error.setTextFill(Color.RED);
+            error.setVisible(false);
+            error.setManaged(false);
+
+            Node node        = item.getNode();
+            HBox nodeDisplay = new HBox(0, node, error);
 
             label.setMinWidth(Region.USE_PREF_SIZE);
 
             GridPane.setVgrow(label, Priority.NEVER);
             GridPane.setVgrow(node, Priority.NEVER);
             GridPane.setHgrow(label, Priority.NEVER);
-            GridPane.setHgrow(node, Priority.ALWAYS);
+            HBox.setHgrow(node, Priority.ALWAYS);
+            HBox.setHgrow(error, Priority.ALWAYS);
+            GridPane.setHgrow(nodeDisplay, Priority.ALWAYS);
             GridPane.setHalignment(label, HPos.RIGHT);
             GridPane.setValignment(label, parameter.getDefaultValue() instanceof ResultTable || node instanceof VBox ? VPos.TOP : VPos.CENTER);
             GridPane.setMargin(label, new Insets(5, 0, 0, 0));
             GridPane.setMargin(label, new Insets(0, 15, 0, 0));
             GridPane.setMargin(node, new Insets(0, 5, 0, 0));
             GridPane.setValignment(set, VPos.TOP);
+            GridPane.setValignment(error, VPos.TOP);
 
-            grid.addRow(grid.getRowCount(), label, node, set);
 
-            parameters.put(parameter, item);
+            grid.addRow(grid.getRowCount(), label, nodeDisplay, set);
+
+            entries.add(new Entry(item, parameter, label, set, error));
 
         }
+
+    }
+
+    public void refresh() {
+
+        for (Entry<?, ?> entry : entries) {
+
+            if (!entry.isChanged()) {
+                entry.update();
+            }
+
+        }
+
+    }
+
+    public void applyAll() {
+
+        boolean triggered = instrument.beforeApplyParameters();
+
+        for (Entry<?, ?> entry : entries) {
+            entry.set(false);
+        }
+
+        refreshAll();
+
+        instrument.afterApplyParameters(triggered);
 
     }
 
@@ -213,7 +214,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             HBox.setHgrow(quantity.getNode(), Priority.ALWAYS);
 
             return (NodeItem<Q>) new NodeItem<Instrument.AutoQuantity>(
-                    quantity.getNode() instanceof TableInput ? new VBox(15.0, checkBox, quantity.getNode()) : new HBox(5, quantity.getNode(), checkBox)
+                quantity.getNode() instanceof TableInput ? new VBox(15.0, checkBox, quantity.getNode()) : new HBox(5, quantity.getNode(), checkBox)
             ) {
 
                 @Override
@@ -261,7 +262,7 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
             HBox.setHgrow(quantity.getNode(), Priority.ALWAYS);
 
             return (NodeItem<Q>) new NodeItem<Instrument.OptionalQuantity>(
-                    quantity.getNode() instanceof TableInput ? new VBox(15.0, checkBox, quantity.getNode()) : new HBox(5, quantity.getNode(), checkBox)
+                quantity.getNode() instanceof TableInput ? new VBox(15.0, checkBox, quantity.getNode()) : new HBox(5, quantity.getNode(), checkBox)
             ) {
 
                 @Override
@@ -450,6 +451,125 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
         @Override
         public void addListener(InvalidationListener listener) {
             property.addListener(listener);
+        }
+
+    }
+
+    public class Entry<Q, N extends NodeItem<Q>> {
+
+        private final N                       nodeItem;
+        private final Instrument.Parameter<Q> parameter;
+        private final Label                   text;
+        private final Button                  setButton;
+        private final MenuButton              errorButton;
+
+        public Entry(N nodeItem, Instrument.Parameter<Q> parameter, Label text, Button setButton, MenuButton errorButton) {
+
+            this.nodeItem    = nodeItem;
+            this.parameter   = parameter;
+            this.text        = text;
+            this.setButton   = setButton;
+            this.errorButton = errorButton;
+
+            setButton.setDisable(!isChanged());
+
+            setButton.setOnAction(event -> set(true));
+
+            nodeItem.getNode().setOnKeyReleased(event -> {
+
+                if (event.getCode() == KeyCode.ENTER) {
+                    setButton.getOnAction().handle(null);
+                }
+
+            });
+
+            nodeItem.addListener(i -> {
+
+                if (isChanged()) {
+                    setButton.setDisable(false);
+                    text.setTextFill(Color.BROWN);
+                } else {
+                    setButton.setDisable(true);
+                    text.setTextFill(Color.BLACK);
+                }
+
+            });
+
+            errorButton.setOnAction(ev -> {
+                errorButton.setVisible(false);
+                errorButton.setManaged(false);
+                nodeItem.getNode().setVisible(true);
+                nodeItem.getNode().setManaged(true);
+            });
+
+        }
+
+        public void set(boolean individual) {
+
+            boolean triggered = individual && instrument.beforeApplyParameters();
+
+            try {
+
+                parameter.set(nodeItem.getValue());
+
+            } catch (Throwable e) {
+
+                errorButton.getItems().get(0).setOnAction(event -> GUI.showException(e));
+
+                nodeItem.getNode().setVisible(false);
+                nodeItem.getNode().setManaged(false);
+                errorButton.setText("Error: " + e.getMessage());
+                errorButton.setVisible(true);
+                errorButton.setManaged(true);
+
+            }
+
+            update();
+
+            if (individual) {
+                instrument.afterApplyParameters(triggered);
+                refreshAll();
+            }
+
+        }
+
+        public void update() {
+
+            try {
+                nodeItem.setValue(parameter.getCurrentValue());
+                updateLastValue();
+            } catch (Throwable ignored) { }
+
+        }
+
+        public void updateLastValue() {
+            nodeItem.updateLastValue();
+            setButton.setDisable(true);
+            text.setTextFill(Color.BLACK);
+        }
+
+        public boolean isChanged() {
+            return !nodeItem.getValue().equals(nodeItem.getLastValue());
+        }
+
+        public N getNodeItem() {
+            return nodeItem;
+        }
+
+        public Instrument.Parameter<Q> getParameter() {
+            return parameter;
+        }
+
+        public Label getText() {
+            return text;
+        }
+
+        public Button getSetButton() {
+            return setButton;
+        }
+
+        public MenuButton getErrorButton() {
+            return errorButton;
         }
 
     }

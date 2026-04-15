@@ -11,7 +11,7 @@ import jisa.devices.camera.imagemodes.FullVerticalBinning;
 import jisa.devices.camera.imagemodes.MultiTrack;
 import jisa.devices.camera.imagemodes.SingleTrack;
 import jisa.devices.camera.imagemodes.TrackSequence;
-import jisa.devices.camera.nat.ATMCD32D;
+import jisa.devices.camera.nat.ATMCDxxD;
 import jisa.devices.features.TemperatureControlled;
 
 import java.io.IOException;
@@ -20,21 +20,20 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 
-import static jisa.devices.camera.nat.ATMCD32D.*;
+import static jisa.devices.camera.nat.ATMCDxxD.*;
 
 public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureControlled, SingleTrack, FullVerticalBinning, TrackSequence, MultiTrack {
 
-    private final ATMCD32D                  sdk;
-    private final int                       index;
-    private final NativeLong                handle;
+    private final ATMCDxxD   sdk;
+    private final int        index;
+    private final NativeLong handle;
+    private final int        maxWidth;
+    private final int        maxHeight;
+
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
-    private final int                       maxWidth;
-    private final int                       maxHeight;
     private final List<Track>               multiTracks     = new LinkedList<>();
 
     private int timeout = 10000;
@@ -53,7 +52,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     private int         singleTrackHeight   = 1;
     private int         trackSequenceCount  = 1;
     private int         trackSequenceHeight = 1;
-    private int         trackSequanceOffset = 1;
+    private int         trackSequenceOffset = 1;
     private ShortBuffer imageBuffer         = null;
 
     private static void handle(int result, String method) throws DeviceException {
@@ -68,14 +67,25 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         super("Andor SDK2 Camera");
 
-        if (Platform.isWindows() && Files.exists(Path.of("C:\\Program Files\\Andor SDK"))) {
-            System.setProperty("jna.library.path", System.getProperty("jna.library.path") + ";" + "C:\\Program Files\\Andor SDK");
+        if (Platform.isWindows() && System.getenv("ProgramFiles") != null) {
+
+            Path windowsPath = Path.of(System.getenv("ProgramFiles"), "Andor SDK");
+
+            if (Files.exists(windowsPath)) {
+
+                String       path  = System.getProperty("jna.library.path");
+                List<String> parts = path == null ? new ArrayList<>() : Arrays.asList(path.split(";"));
+                parts.add(windowsPath.toString());
+                System.setProperty("jna.library.path", String.join(";", parts));
+
+            }
+
         }
 
         if (Platform.is64Bit()) {
-            this.sdk = findLibrary(ATMCD32D.class, "atmcd64d");
+            this.sdk = findLibrary(ATMCDxxD.class, "atmcd64d");
         } else {
-            this.sdk = findLibrary(ATMCD32D.class, "atmcd32d");
+            this.sdk = findLibrary(ATMCDxxD.class, "atmcd32d");
         }
 
         this.index = index;
@@ -172,8 +182,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
                     handle(sdk.SetReadMode(1), "SetReadMode(MULTI-TRACK [sequence])");
                     handle(
-                            sdk.SetMultiTrack(trackSequenceCount, trackSequenceHeight, trackSequanceOffset, IntBuffer.allocate(1), IntBuffer.allocate(1)),
-                            String.format("SetMultiTrack(%d, %d, %d)", trackSequenceCount, trackSequenceHeight, trackSequanceOffset)
+                        sdk.SetMultiTrack(trackSequenceCount, trackSequenceHeight, trackSequenceOffset, IntBuffer.allocate(1), IntBuffer.allocate(1)),
+                        String.format("SetMultiTrack(%d, %d, %d)", trackSequenceCount, trackSequenceHeight, trackSequenceOffset)
                     );
 
                     break;
@@ -347,20 +357,20 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
     @Override
     public void setTrackSequenceOffset(int offset) throws IOException, DeviceException {
-        trackSequanceOffset = offset;
+        trackSequenceOffset = offset;
     }
 
     @Override
     public int getTrackSequenceOffset() throws IOException, DeviceException {
-        return trackSequanceOffset;
+        return trackSequenceOffset;
     }
 
     public interface CameraAction {
-        void run(ATMCD32D sdk) throws IOException, DeviceException;
+        void run(ATMCDxxD sdk) throws IOException, DeviceException;
     }
 
     public interface CameraActionInterruptable {
-        void run(ATMCD32D sdk) throws IOException, DeviceException, InterruptedException, TimeoutException;
+        void run(ATMCDxxD sdk) throws IOException, DeviceException, InterruptedException, TimeoutException;
     }
 
     protected void withCameraSelected(CameraAction toRun) throws IOException, DeviceException {
@@ -399,8 +409,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
         withCameraSelected(sdk -> {
 
             handle(
-                    sdk.GetAcquisitionTimings(exposure, accumulate, kinetic),
-                    "GetAcquisitionTimings"
+                sdk.GetAcquisitionTimings(exposure, accumulate, kinetic),
+                "GetAcquisitionTimings"
             );
 
         });
@@ -528,22 +538,12 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
     @Override
     public int getImageWidth() throws IOException, DeviceException {
-
-        switch (imageMode) {
-
-            case FULL_IMAGE:
-                return maxWidth / xBin;
-
-            default:
-                return getFrameWidth();
-
-        }
-
+        return width;
     }
 
     @Override
     public int getPhysicalFrameWidth() throws IOException, DeviceException {
-        return getImageWidth() * xBin;
+        return getFrameWidth() * xBin;
     }
 
     @Override

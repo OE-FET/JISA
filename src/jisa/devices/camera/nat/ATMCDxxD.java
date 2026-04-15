@@ -11,7 +11,7 @@ import java.nio.*;
 import java.util.Arrays;
 import java.util.List;
 
-public interface ATMCD32D extends Library {
+public interface ATMCDxxD extends Library {
 
     int DRV_ERROR_ACK                              = 20013;
     int AC_GETFUNCTION_GATEMODE                    = 0x80;

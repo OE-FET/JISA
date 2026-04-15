@@ -28,6 +28,36 @@ public interface Spectrometer extends Spectrograph {
 
     }
 
+    @Override
+    default boolean beforeApplyParameters() {
+
+        try {
+
+            if (isAcquiring()) {
+                stopAcquisition();
+                return true;
+            } else {
+                return false;
+            }
+
+        } catch (Throwable e) {
+            return false;
+        }
+
+    }
+
+    default void afterApplyParameters(boolean result) {
+
+        try {
+
+            if (result){
+                startAcquisition();
+            }
+
+        } catch (Throwable ignored) {}
+
+    }
+
     /**
      * Returns the integration time currently being used by the spectrometer, in seconds.
      *
@@ -94,10 +124,30 @@ public interface Spectrometer extends Spectrograph {
      */
     boolean isAcquiring() throws IOException, DeviceException;
 
+    /**
+     * Attaches a listener that is called every time the continuous acquisition state of the spectrometer changes.
+     *
+     * @param listener Listener to call.
+     *
+     * @return Reference to listener added.
+     */
     AcquisitionListener addAcquisitionListener(AcquisitionListener listener);
 
+    /**
+     * Detaches the specified acquisition listener from the spectrometer.
+     *
+     * @param listener Listener to detach.
+     */
     void removeAcquisitionListener(AcquisitionListener listener);
 
+    /**
+     * Returns the rate at which the spectrometer is currently acquiring spectra.
+     *
+     * @return Rate, in Hz.
+     *
+     * @throws IOException     Upon communications error.
+     * @throws DeviceException Upon device compatibility error.
+     */
     double getAcquisitionRate() throws IOException, DeviceException;
 
     /**
@@ -141,6 +191,14 @@ public interface Spectrometer extends Spectrograph {
      */
     void removeSpectrumListener(Listener listener);
 
+    /**
+     * Automatically links the output of this spectrometer's continuous acquisition to a JISA Plot GUI element.
+     *
+     * @param plot       The plot to send spectra to
+     * @param seriesName The name of the series to create in the plot
+     *
+     * @return Listener object representing the connection.
+     */
     default Listener sendSpectraTo(Plot plot, String seriesName) {
 
         Series series = plot.createSeries()
@@ -152,6 +210,13 @@ public interface Spectrometer extends Spectrograph {
 
     }
 
+    /**
+     * Automatically links the output of this spectrometer's continuous acquisition to a JISA Plot GUI element.
+     *
+     * @param plot The plot to send spectra to
+     *
+     * @return Listener object representing the connection.
+     */
     default Listener sendSpectraTo(Plot plot) {
         return sendSpectraTo(plot, getName());
     }

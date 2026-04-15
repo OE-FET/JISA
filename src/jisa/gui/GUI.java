@@ -24,6 +24,8 @@ import kotlin.reflect.KClass;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -309,12 +311,24 @@ public class GUI {
             textArea.setEditable(false);
             textArea.setWrapText(true);
 
+            TextArea trace = new TextArea(e.getMessage());
+            trace.setEditable(false);
+            trace.setWrapText(true);
+
+            StringWriter sw = new StringWriter();
+            PrintWriter  pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            String exceptionText = sw.toString();
+
+            trace.setText(exceptionText);
+
             Label stackLabel = new Label("Stack Trace:");
             stackLabel.setFont(bold);
 
+            Node stack = stackTrace.getNode().getCenter();
+
             grid.addRow(0, typeLabel, type);
             grid.addRow(1, messageLabel, textArea);
-            grid.addRow(2, stackLabel, stackTrace.getNode().getCenter());
 
             GridPane.setHalignment(typeLabel, HPos.RIGHT);
             GridPane.setHalignment(messageLabel, HPos.RIGHT);
@@ -324,10 +338,16 @@ public class GUI {
             GridPane.setValignment(messageLabel, VPos.TOP);
             GridPane.setValignment(stackLabel, VPos.TOP);
 
+            GridPane.setHgrow(type, Priority.ALWAYS);
+            GridPane.setHgrow(textArea, Priority.ALWAYS);
+            GridPane.setHgrow(stack, Priority.ALWAYS);
+            GridPane.setVgrow(stack, Priority.ALWAYS);
+
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Exception Encountered");
             alert.setHeaderText("Exception Encountered");
             alert.getDialogPane().setContent(grid);
+            alert.getDialogPane().setExpandableContent(new VBox(15, stack, trace));
             alert.getDialogPane().setMinWidth(600.0);
             alert.getDialogPane().setMinHeight(400.0);
             alert.setResizable(true);
