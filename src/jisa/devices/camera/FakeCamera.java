@@ -147,7 +147,11 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
     }
 
     @Override
-    public void startAcquisition() throws IOException, DeviceException {
+    public synchronized void startAcquisition() throws IOException, DeviceException {
+
+        if (running) {
+            return;
+        }
 
         stats[0] = 0;
         stats[1] = 0;
@@ -185,7 +189,11 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
     }
 
     @Override
-    public void stopAcquisition() throws IOException, DeviceException {
+    public synchronized void stopAcquisition() throws IOException, DeviceException {
+
+        if (!running) {
+            return;
+        }
 
         running = false;
         acquireThread.interrupt();
