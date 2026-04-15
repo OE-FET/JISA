@@ -102,7 +102,7 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
         }
 
         for (int i = 0; i < data.length; i++) {
-            buffer  = (255 * data[i]) / max;
+            buffer  = ((255 * data[i]) / max) & 0xFF;
             argb[i] = (255 << 24) | (buffer << 16) | (buffer << 8) | buffer;
         }
 

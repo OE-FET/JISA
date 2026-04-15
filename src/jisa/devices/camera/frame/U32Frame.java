@@ -115,7 +115,7 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
         int value;
 
         for (int i = 0; i < data.length; i++) {
-            value   = (int) ((255L * data[i]) / max);
+            value   = (int) (((255L * data[i]) / max) & 0xFF);
             argb[i] = (255 << 24) | (value << 16) | (value << 8) | value;
         }
 

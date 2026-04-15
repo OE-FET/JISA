@@ -184,7 +184,7 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
         }
 
         for (int i = 0; i < separated.length; i++) {
-            separated[i] = (byte) ((255 * separated[i]) / max);
+            separated[i] = (byte) (((255 * separated[i]) / max) & 0xFF);
         }
 
         buffer.rewind().asIntBuffer().get(destination);

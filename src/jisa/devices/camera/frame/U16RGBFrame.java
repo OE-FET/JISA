@@ -187,7 +187,7 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
         byte[]     outputArray  = outputBuffer.array();
 
         for (int i = 0; i < separated.length; i++) {
-            outputArray[i] = (byte) ((255 * separated[i]) / max);
+            outputArray[i] = (byte) (((255 * separated[i]) / max) & 0xFF);
         }
 
         outputBuffer.rewind().asIntBuffer().get(destination);
