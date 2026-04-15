@@ -6,7 +6,6 @@ import jisa.devices.features.Feature;
 import kotlin.jvm.JvmClassMappingKt;
 import kotlin.reflect.KClass;
 import org.apache.commons.lang3.ClassUtils;
-import org.reflections.Reflections;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -104,9 +103,6 @@ public interface Instrument {
      * @return List of base instrument parameters.
      */
     default void addBaseParameters(Class<?> target, ParameterList parameters) {
-
-        Reflections                 reflections = new Reflections("jisa.devices");
-        Class<? extends Instrument> thisClass   = getClass();
 
         List<Class<?>> interfaces = ClassUtils.getAllInterfaces(getClass());
 
