@@ -152,6 +152,10 @@ public interface Spectrometer extends Spectrograph {
 
     }
 
+    default Listener sendSpectraTo(Plot plot) {
+        return sendSpectraTo(plot, getName());
+    }
+
     /**
      * Opens a (blocking) queue into which copies of newly acquired spectra will be placed, with an upper limit on capacity. This is to allow for asynchronous, lossless processing of spectral data.
      *
