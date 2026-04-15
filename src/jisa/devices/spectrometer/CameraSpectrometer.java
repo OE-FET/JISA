@@ -134,7 +134,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
     }
 
-    public void setConverterFullVerticalBinning(Map<Integer, Double> peaks, int fitOrder) {
+    public void setConverterFullVerticalBinning(Map<Number, Number> peaks, int fitOrder) {
 
         if (peaks.size() < Math.max(2, fitOrder)) {
             setConverterFullVerticalBinning();
@@ -143,7 +143,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
         PolyFit fit = Fitting.polyFit(
             peaks.keySet().stream().map(Number::doubleValue).collect(Collectors.toList()),
-            peaks.values(),
+            peaks.values().stream().map(Number::doubleValue).collect(Collectors.toList()),
             fitOrder
         );
 
@@ -186,16 +186,21 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
     }
 
-    public void setConverter(int startX, int startY, int endX, int endY, int binning, Map<Integer, Double> wavelengths) throws DeviceException {
+    public void setConverter(int startX, int startY, int endX, int endY, int binning, Map<Number, Number> wavelengths) throws DeviceException {
+        setConverter(startX, startY, endX, endY, binning, wavelengths, wavelengths.size() - 1);
+    }
+
+    public void setConverter(int startX, int startY, int endX, int endY, int binning, Map<Number, Number> wavelengths, int order) throws DeviceException {
 
         if (wavelengths.size() < 2) {
             throw new DeviceException("Need at least two wavelength positions to calibrate spectra.");
         }
 
-        int                order   = wavelengths.size() - 1;
-        List<Double>       indices = wavelengths.keySet().stream().map(Number::doubleValue).collect(Collectors.toList());
-        Collection<Double> wls     = wavelengths.values();
-        PolyFit            wlFit   = Fitting.polyFit(indices, wls, order);
+        PolyFit wlFit = Fitting.polyFit(
+            wavelengths.keySet().stream().map(Number::doubleValue).collect(Collectors.toList()),
+            wavelengths.values().stream().map(Number::doubleValue).collect(Collectors.toList()),
+            order
+        );
 
         if (wlFit == null) {
             throw new DeviceException("Cannot fit function to provided wavelength data");
