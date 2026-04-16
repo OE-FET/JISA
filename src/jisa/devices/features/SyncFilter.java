@@ -10,6 +10,7 @@ public interface SyncFilter extends Feature {
     static void addParameters(SyncFilter instrument, Class<?> target, ParameterList parameters) {
 
         parameters.addValue(
+            "Filtering",
             "Sync Filter",
             instrument::isSyncFilterEnabled,
             false,

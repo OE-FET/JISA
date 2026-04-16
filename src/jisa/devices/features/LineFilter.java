@@ -13,6 +13,7 @@ public interface LineFilter extends Feature {
     static void addParameters(LineFilter instrument, Class<?> target, ParameterList parameters) {
 
         parameters.addValue(
+            "Filtering",
             "Line Filter",
             instrument::isLineFilterEnabled,
             false,

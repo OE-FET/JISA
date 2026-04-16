@@ -19,12 +19,12 @@ public interface LockIn extends Instrument, FMeter {
 
     static void addParameters(LockIn inst, Class target, ParameterList parameters) {
 
-        parameters.addValue("Differential Input", inst::isDifferentialInputEnabled, false, inst::setDifferentialInputEnabled);
-        parameters.addValue("Range [V]", inst::getVoltageRange, 1.0, inst::setVoltageRange);
+        parameters.addValue("Input", "Differential Input", inst::isDifferentialInputEnabled, false, inst::setDifferentialInputEnabled);
+        parameters.addValue("Input", "Range [V]", inst::getVoltageRange, 1.0, inst::setVoltageRange);
         parameters.addValue("Integration Time [s]", inst::getIntegrationTime, 1e-3, inst::setIntegrationTime);
-        parameters.addValue("AC Input Coupling", inst::isCouplingAC, true, inst::setCouplingAC);
-        parameters.addValue("Ground Input Shielding", inst::isShieldGrounded, true, inst::setShieldGrounded);
-        parameters.addValue("Low-Pass Filter Roll-Off [dB/oct]", inst::getLowPassRollOff, 24.0, inst::setLowPassRollOff);
+        parameters.addValue("Input","AC Input Coupling", inst::isCouplingAC, true, inst::setCouplingAC);
+        parameters.addValue("Input","Ground Input Shielding", inst::isShieldGrounded, true, inst::setShieldGrounded);
+        parameters.addValue("Filtering", "Low-Pass Filter Roll-Off [dB/oct]", inst::getLowPassRollOff, 24.0, inst::setLowPassRollOff);
 
     }
 

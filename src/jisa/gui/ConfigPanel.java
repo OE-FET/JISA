@@ -103,6 +103,21 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
     protected void generateForm() {
 
+        try {
+            GridPane grid = new GridPane();
+
+            grid.setHgap(5);
+            grid.setVgap(15);
+            grid.setPadding(new Insets(GUI.SPACING));
+            grid.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
+
+            TitledPane pane = new TitledPane("General", grid);
+
+            list.getChildren().add(pane);
+            grids.put("General", grid);
+
+        } finally { }
+
         for (Instrument.Parameter parameter : instrument.getAllParameters()) {
 
             String group = parameter.isGrouped() ? parameter.getGroup() : "General";

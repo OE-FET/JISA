@@ -9,9 +9,9 @@ public interface CurrentPreAmpInput extends Feature {
 
     static void addParameters(CurrentPreAmpInput instrument, Class<?> target, ParameterList parameters) {
 
-        parameters.addValue("Use Current Input", instrument::isCurrentInputEnabled, false, instrument::setCurrentInputEnabled);
-        parameters.addValue("Current Input Gain [V/A]", instrument::getCurrentGain, 1e-6, instrument::setCurrentGain);
-        parameters.addValue("Current Range [A]", instrument::getCurrentRange, 1e-6, instrument::setCurrentRange);
+        parameters.addValue("Current Input", "Enabled", instrument::isCurrentInputEnabled, false, instrument::setCurrentInputEnabled);
+        parameters.addValue("Current Input", "Input Gain [V/A]", instrument::getCurrentGain, 1e-6, instrument::setCurrentGain);
+        parameters.addValue("Current Input", "Current Range [A]", instrument::getCurrentRange, 1e-6, instrument::setCurrentRange);
 
     }
 

@@ -463,9 +463,10 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         process(sdk.tl_camera_arm(handle, 2), "tl_camera_arm");
         process(sdk.tl_camera_issue_software_trigger(handle), "tl_camera_issue_software_trigger");
 
+        acquisitionListeners.forEach(l -> l.changed(true));
+
         acquisitionThread.start();
 
-        acquisitionListeners.forEach(l -> l.changed(true));
 
     }
 
@@ -836,12 +837,12 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     }
 
     @Override
-    public boolean isTimestampEnabled() throws IOException, DeviceException {
+    public boolean isHardwareTimestampingEnabled() throws IOException, DeviceException {
         return timestamping;
     }
 
     @Override
-    public void setTimestampEnabled(boolean timestamping) throws IOException, DeviceException {
+    public void setHardwareTimestampingEnabled(boolean timestamping) throws IOException, DeviceException {
         this.timestamping = timestamping;
     }
 

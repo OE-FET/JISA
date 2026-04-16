@@ -159,16 +159,6 @@ public class FakeSpectrometer implements Spectrometer {
     }
 
     @Override
-    public double getSlitWidth() throws IOException, DeviceException {
-        return 0;
-    }
-
-    @Override
-    public double getGratingDensity() throws IOException, DeviceException {
-        return 0;
-    }
-
-    @Override
     public String getIDN() throws IOException, DeviceException {
         return "";
     }
@@ -292,4 +282,8 @@ public class FakeSpectrometer implements Spectrometer {
     }
 
 
+    @Override
+    public List<Component> getComponents() {
+        return List.of();
+    }
 }

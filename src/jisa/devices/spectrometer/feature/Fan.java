@@ -9,7 +9,7 @@ import java.io.IOException;
 public interface Fan extends Feature {
 
     static void addParameters(Fan inst, Class<?> target, ParameterList params) {
-        params.addValue("Fan Enabled", inst::isFanEnabled, false, inst::setFanEnabled);
+        params.addValue("Temperature Control", "Fan Enabled", inst::isFanEnabled, false, inst::setFanEnabled);
     }
 
     void setFanEnabled(boolean enabled) throws IOException, DeviceException;

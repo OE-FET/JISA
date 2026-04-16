@@ -1,11 +1,16 @@
 package jisa.devices.spectrometer.feature;
 
 import jisa.devices.DeviceException;
+import jisa.devices.ParameterList;
 import jisa.devices.features.Feature;
 
 import java.io.IOException;
 
 public interface AdjustableSlit extends Feature {
+
+    static void addParameters(AdjustableSlit inst, Class<?> target, ParameterList parameters) {
+        parameters.addValue("Input", "Slit Width", inst::getSlitWidth, 0.0, inst::setSlitWidth);
+    }
 
     /**
      * Returns the slit width currently being used at the entrance of the spectrograph.

@@ -10,7 +10,7 @@ public interface Shuttered extends Feature {
 
     static void addParameters(Shuttered inst, Class<?> target, ParameterList parameters) {
 
-        parameters.addAuto("Shutter Open", inst::isShutterAuto, false, inst::isShutterOpen, false,
+        parameters.addAuto("Shutter", "Shutter Open", inst::isShutterAuto, false, inst::isShutterOpen, false,
             v -> inst.setShutterAuto(true),
             v -> {
                 inst.setShutterAuto(false);

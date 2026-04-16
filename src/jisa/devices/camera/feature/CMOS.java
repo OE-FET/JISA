@@ -65,9 +65,9 @@ public interface CMOS extends Feature {
             return String.format("%.01f %s", v / Math.pow(10, base3 * 3), units.get(base3));
         }).collect(Collectors.toList());
 
-        parameters.addChoice("Pixel Readout Rate", () -> names.get(rates.indexOf(inst.getPixelReadoutRate())), names.get(0), v -> inst.setPixelReadoutRate(rates.get(names.indexOf(v))), names.toArray(String[]::new));
+        parameters.addChoice("CMOS", "Pixel Readout Rate", () -> names.get(rates.indexOf(inst.getPixelReadoutRate())), names.get(0), v -> inst.setPixelReadoutRate(rates.get(names.indexOf(v))), names.toArray(String[]::new));
 
-        parameters.addValue("Rolling Electronic Shutter", inst::isRollingElectronicShutterEnabled, false, inst::setRollingElectronicShutterEnabled);
+        parameters.addValue("CMOS", "Rolling Electronic Shutter", inst::isRollingElectronicShutterEnabled, false, inst::setRollingElectronicShutterEnabled);
 
 
     }

@@ -29,7 +29,7 @@ public interface Overlap extends Feature {
     void setOverlapEnabled(boolean overlapEnabled) throws IOException, DeviceException;
 
     static void addParameters(Overlap inst, Class<?> target, ParameterList parameters)  {
-        parameters.addValue("Overlapping Readout", inst::isOverlapEnabled, false, inst::setOverlapEnabled);
+        parameters.addValue("Readout", "Overlapping Readout", inst::isOverlapEnabled, false, inst::setOverlapEnabled);
     }
 
 }

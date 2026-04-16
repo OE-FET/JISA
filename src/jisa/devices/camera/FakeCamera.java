@@ -185,8 +185,9 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
 
         running = true;
 
-        acquireThread.start();
         acquisitionListeners.forEach(l -> l.changed(true));
+
+        acquireThread.start();
 
     }
 

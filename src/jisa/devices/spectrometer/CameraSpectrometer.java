@@ -362,13 +362,14 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
     }
 
     @Override
-    public double getSlitWidth() throws IOException, DeviceException {
-        return spectrograph != null ? spectrograph.getSlitWidth() : 0.0;
-    }
+    public List<Component> getComponents() {
 
-    @Override
-    public double getGratingDensity() throws IOException, DeviceException {
-        return spectrograph != null ? spectrograph.getGratingDensity() : 0.0;
+        if (spectrograph != null) {
+            return spectrograph.getComponents();
+        } else {
+            return Collections.emptyList();
+        }
+
     }
 
     public interface Converter<F extends Frame> {

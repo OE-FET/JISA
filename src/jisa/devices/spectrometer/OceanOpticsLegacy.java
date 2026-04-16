@@ -216,16 +216,6 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
     }
 
     @Override
-    public double getSlitWidth() {
-        return 25e-6;
-    }
-
-    @Override
-    public double getGratingDensity() {
-        return 0;
-    }
-
-    @Override
     public String getIDN() throws IOException, DeviceException {
         return getName();
     }
@@ -324,6 +314,11 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
             queue.close();
         }
 
+    }
+
+    @Override
+    public List<Component> getComponents() {
+        return List.of();
     }
 
 

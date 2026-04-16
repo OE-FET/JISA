@@ -13,6 +13,7 @@ public interface LineFilter2X extends Feature {
     static void addParameters(LineFilter2X instrument, Class<?> target, ParameterList parameters) {
 
         parameters.addValue(
+            "Filtering",
             "2x Line Filter",
             instrument::is2xLineFilterEnabled,
             false,

@@ -6,7 +6,7 @@ import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.features.TemperatureControlled;
 import jisa.devices.spectrometer.feature.Fan;
-import jisa.devices.spectrometer.feature.Shutter;
+import jisa.devices.spectrometer.feature.Shuttered;
 import jisa.devices.spectrometer.nat.SeabreezeLibrary;
 import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.devices.spectrometer.spectrum.SpectrumQueue;
@@ -21,7 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 
-public class OceanOptics extends NativeDevice implements Spectrometer, TemperatureControlled, Fan, Shutter {
+public class OceanOptics extends NativeDevice implements Spectrometer, TemperatureControlled, Fan {
 
     private final SeabreezeLibrary          lib;
     private final int                       index;
@@ -89,6 +89,11 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
         // Make sure the spectrometer state matches what we have recorded
         setIntegrationTime(((double) intTime) / 1e6);
 
+    }
+
+    @Override
+    public List<Component> getComponents() {
+        return List.of();
     }
 
     protected interface ErrorHandler {
@@ -265,16 +270,6 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
     }
 
     @Override
-    public double getSlitWidth() throws IOException, DeviceException {
-        return 0;
-    }
-
-    @Override
-    public double getGratingDensity() throws IOException, DeviceException {
-        return 0;
-    }
-
-    @Override
     public String getIDN() throws IOException, DeviceException {
         return String.format("Ocean Optics %s Spectrometer", model);
     }
@@ -442,35 +437,6 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
     @Override
     public void closeSpectrumQueue(SpectrumQueue queue) {
         manager.removeQueue(queue);
-    }
-
-    @Override
-    public synchronized void openShutter() throws IOException, DeviceException {
-
-        IntBuffer error = IntBuffer.allocate(1);
-        lib.seabreeze_set_shutter_open(index, error, (byte) 1);
-
-        checkForError(error);
-
-        shutter = true;
-
-    }
-
-    @Override
-    public synchronized void closeShutter() throws IOException, DeviceException {
-
-        IntBuffer error = IntBuffer.allocate(1);
-        lib.seabreeze_set_shutter_open(index, error, (byte) 0);
-
-        checkForError(error);
-
-        shutter = false;
-
-    }
-
-    @Override
-    public synchronized boolean isShutterOpen() throws IOException, DeviceException {
-        return shutter;
     }
 
 }

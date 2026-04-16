@@ -154,9 +154,10 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
 
         // Set the acquiring flag to true and launch the thread
         acquiring = true;
-        acquisitionThread.start();
 
         acquisitionListeners.forEach(l -> l.changed(true));
+
+        acquisitionThread.start();
 
     }
 

@@ -161,8 +161,8 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     private final ListenerManager<U16Frame> listenerManager      = new ListenerManager<>();
     private final List<AcquisitionListener> acquisitionListeners = new LinkedList<>();
 
-    private BlockingQueue<byte[]> queued            = new LinkedBlockingQueue<>();
-    private boolean               backlog           = true;
+    private BlockingQueue<byte[]> queued            = new LinkedBlockingQueue<>(1);
+    private boolean               backlog           = false;
     private Frame                 frameBuffer       = null;
     private boolean               centreX           = false;
     private int                   timeout           = 0;
@@ -175,11 +175,11 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     @Override
     public void addInstrumentParameters(Class<?> target, ParameterList parameters) {
 
-        parameters.addValue("Fast AOI Readout Mode", this::isFastAOIFrameRateEnabled, false, this::setFastAOIFrameRateEnabled);
-        parameters.addValue("Internal Backlog Enabled", this::isInternalBacklogEnabled, false, this::setInternalBacklogEnabled);
+        parameters.addValue("Readout", "Fast AOI Readout Mode", this::isFastAOIFrameRateEnabled, false, this::setFastAOIFrameRateEnabled);
+        parameters.addValue("Processing", "Internal Backlog Enabled", this::isInternalBacklogEnabled, false, this::setInternalBacklogEnabled);
 
         try {
-            parameters.addChoice("Pre-Amp Gain Mode", this::getPreAmpGainMode, new PreAmpGainMode(0, 12, false), this::setPreAmpGainMode, this.getPreAmpGainModes().toArray(PreAmpGainMode[]::new));
+            parameters.addChoice("Amplifier", "Pre-Amp Gain Mode", this::getPreAmpGainMode, new PreAmpGainMode(0, 12, false), this::setPreAmpGainMode, this.getPreAmpGainModes().toArray(PreAmpGainMode[]::new));
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -677,7 +677,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         Enum    encoding         = getEnum("PixelEncoding");
         WString mono16           = new WString("Mono16");
         WString encText          = new WString(encoding.getText());
-        boolean timeStampEnabled = isTimestampEnabled();
+        boolean timeStampEnabled = isHardwareTimestampingEnabled();
         int     result;
 
         setEnum("CycleMode", "Fixed");
@@ -955,7 +955,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
         boolean timestampEnabled;
         try {
-            timestampEnabled = isTimestampEnabled();
+            timestampEnabled = isHardwareTimestampingEnabled();
         } catch (Exception e) {
             timestampEnabled = false;
         }
@@ -1088,11 +1088,11 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         // Set the camera rolling
         acquisitionStart();
 
+        acquisitionListeners.forEach(l -> l.changed(true));
+
         // Start the acquisition and processing threads
         acquisitionThread.start();
         processingThread.start();
-
-        acquisitionListeners.forEach(l -> l.changed(true));
 
     }
 
@@ -1308,12 +1308,12 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     }
 
     @Override
-    public boolean isTimestampEnabled() throws IOException, DeviceException {
+    public boolean isHardwareTimestampingEnabled() throws IOException, DeviceException {
         return getBoolean("MetadataTimestamp") && getBoolean("MetadataEnable");
     }
 
     @Override
-    public void setTimestampEnabled(boolean timestamping) throws IOException, DeviceException {
+    public void setHardwareTimestampingEnabled(boolean timestamping) throws IOException, DeviceException {
 
         setBoolean("MetadataTimestamp", timestamping);
 
@@ -1604,17 +1604,32 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
     }
 
+    /**
+     * Finds the first pre-amp gain mode that matches to given criteria. Returns null if none found that match.
+     *
+     * @param bitDepth     The bit depth of the amplifier gain mode desired.
+     * @param highCapacity High well capacity?
+     *
+     * @return Found mode, or null.
+     *
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device error
+     */
+    public PreAmpGainMode findPreAmpGainMode(int bitDepth, boolean highCapacity) throws IOException, DeviceException {
+        return getPreAmpGainModes().stream().filter(m -> m.getBitDepth() == bitDepth && m.isHighWellCapacity() == highCapacity).findFirst().orElse(null);
+    }
+
     public void setPreAmpGainMode(PreAmpGainMode mode) throws DeviceException, IOException {
         setEnum("SimplePreAmpGainControl", mode.getIndex());
     }
 
     public void setPreAmpGainMode(int bitDepth, boolean highWellCapacity) throws DeviceException, IOException {
 
-        PreAmpGainMode mode = getPreAmpGainModes()
-            .stream()
-            .filter(m -> m.getBitDepth() == bitDepth && m.isHighWellCapacity() == highWellCapacity)
-            .findFirst()
-            .orElseThrow(() -> new DeviceException("Specified preamp gain mode not found."));
+        PreAmpGainMode mode = findPreAmpGainMode(bitDepth, highWellCapacity);
+
+        if (mode == null) {
+            throw new DeviceException("No matching pre-amp gain mode was found.");
+        }
 
         setPreAmpGainMode(mode);
 
@@ -1671,7 +1686,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
     public void setAuxOutSourceTwo(AuxOutSource mode) throws DeviceException, IOException {
 
-        switch(mode) {
+        switch (mode) {
 
             case EXTERNAL_SHUTTER:
                 setEnum("AuxOutSourceTwo", "ExternalShutterControl");
@@ -1745,10 +1760,20 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             return String.format("%d Bit, %s Well Capacity", bitDepth, highWellCapacity ? "High" : "Low");
         }
 
+        public boolean equals(Object o) {
+
+            if (this == o) { return true; }
+            if (o == null || getClass() != o.getClass()) { return false; }
+
+            PreAmpGainMode that = (PreAmpGainMode) o;
+
+            return (this.bitDepth == that.bitDepth) && (this.highWellCapacity == that.highWellCapacity);
+
+        }
+
     }
 
     public static class Enum {
-
 
         private final int     index;
         private final String  text;
