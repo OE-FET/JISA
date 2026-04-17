@@ -8,6 +8,7 @@ import java.awt.image.*;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -47,7 +48,6 @@ public interface Frame<D, F extends Frame> {
      *
      * @param x X co-ordinate
      * @param y Y co-ordinate
-     *
      * @return Pixel value
      */
     D get(int x, int y);
@@ -130,31 +130,80 @@ public interface Frame<D, F extends Frame> {
 
     default byte[] getRGBBytes() {
 
-        int[]  data   = getARGBData();
-        byte[] bytes  = new byte[data.length * 3];
+        int[]      data   = getARGBData();
+        ByteBuffer buffer = ByteBuffer.allocate(data.length * Integer.BYTES);
+        buffer.asIntBuffer().put(data);
+
+        byte[] output = new byte[data.length * 3];
+        buffer.rewind();
 
         for (int i = 0; i < data.length; i++) {
-            bytes[i * 3 + 0] = (byte) ((data[i] >> 16) & 0xFF);
-            bytes[i * 3 + 1] = (byte) ((data[i] >> 8) & 0xFF);
-            bytes[i * 3 + 2] = (byte) (data[i] & 0xFF);
+            buffer.get();
+            buffer.get(output, 3 * i, 3);
         }
 
-        return bytes;
+        return output;
+
+    }
+
+    default byte[][] getRGBPlanes() {
+
+        int[]      data   = getARGBData();
+        ByteBuffer buffer = ByteBuffer.allocate(data.length * Integer.BYTES);
+        buffer.asIntBuffer().put(data);
+
+        byte[][] output = new byte[3][data.length];
+        buffer.rewind();
+
+        for (int i = 0; i < data.length; i++) {
+            buffer.get();
+            output[0][i] = buffer.get();
+            output[1][i] = buffer.get();
+            output[2][i] = buffer.get();
+        }
+
+        return output;
+
+    }
+
+    default byte[][][] getNPArray() {
+
+        byte[][][] output = new byte[getHeight()][getWidth()][3];
+        int[]      data   = getARGBData();
+        ByteBuffer buffer = ByteBuffer.allocate(data.length * Integer.BYTES);
+
+        buffer.asIntBuffer().put(data).rewind();
+
+        for (int y = 0; y < getHeight(); y++) {
+
+            for (int x = 0; x < getWidth(); x++) {
+                buffer.get();
+                buffer.get(output[y][x]);
+            }
+
+        }
+
+        return output;
 
     }
 
     default byte[] getBGRBytes() {
 
-        int[]  data   = getARGBData();
-        byte[] bytes  = new byte[data.length * 3];
+        int[]      data   = getARGBData();
+        ByteBuffer buffer = ByteBuffer.allocate(data.length * Integer.BYTES);
+        buffer.asIntBuffer().put(data);
+
+        byte[] output = new byte[data.length * 3];
+        buffer.rewind();
 
         for (int i = 0; i < data.length; i++) {
-            bytes[i * 3 + 2] = (byte) ((data[i] >> 16) & 0xFF);
-            bytes[i * 3 + 1] = (byte) ((data[i] >> 8) & 0xFF);
-            bytes[i * 3 + 0] = (byte) (data[i] & 0xFF);
+            buffer.get();
+            buffer.get(output, 3 * i + 2, 1);
+            buffer.get(output, 3 * i + 1, 1);
+            buffer.get(output, 3 * i + 0, 1);
         }
 
-        return bytes;
+        return output;
 
     }
 
@@ -207,7 +256,6 @@ public interface Frame<D, F extends Frame> {
      * @param y      Starting y co-ordinate
      * @param width  Number of pixels wide
      * @param height Number of pixels tall
-     *
      * @return Sub-image
      */
     F subFrame(int x, int y, int width, int height);
@@ -252,7 +300,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate.
          * @param y Y co-ordinate.
-         *
          * @return Boxed pixel value (memory inefficient).
          */
         @Deprecated
@@ -265,7 +312,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
-         *
          * @return Unboxed value.
          */
         short value(int x, int y);
@@ -339,7 +385,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate.
          * @param y Y co-ordinate.
-         *
          * @return Boxed pixel value (memory inefficient).
          */
         @Deprecated
@@ -406,7 +451,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
-         *
          * @return Signed value
          */
         short signed(int x, int y);
@@ -416,7 +460,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
-         *
          * @return Unboxed value.
          */
         default int value(int x, int y) {
@@ -503,7 +546,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
-         *
          * @return Signed value
          */
         int signed(int x, int y);
@@ -513,7 +555,6 @@ public interface Frame<D, F extends Frame> {
          *
          * @param x X co-ordinate of pixel.
          * @param y X co-ordinate of pixel.
-         *
          * @return Unboxed value.
          */
         default long value(int x, int y) {

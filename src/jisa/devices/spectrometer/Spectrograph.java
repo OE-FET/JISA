@@ -99,19 +99,18 @@ public interface Spectrograph extends Instrument, MultiInstrument {
     interface SwappableGrating<S extends Spectrograph> extends Component<S, Grating> {
 
 
-
     }
 
     class Grating {
 
         private final int    index;
         private final String name;
-        private final double density;
+        private final double lines;
 
-        public Grating(int index, String name, double density) {
-            this.index   = index;
-            this.name    = name;
-            this.density = density;
+        public Grating(int index, String name, double lines) {
+            this.index = index;
+            this.name  = name;
+            this.lines = lines;
         }
 
         public int getIndex() {
@@ -122,12 +121,12 @@ public interface Spectrograph extends Instrument, MultiInstrument {
             return name;
         }
 
-        public double getDensity() {
-            return density;
+        public double getLines() {
+            return lines;
         }
 
         public String toString() {
-            return getName();
+            return String.format("%s (%.02g lines)", name, lines);
         }
 
     }
