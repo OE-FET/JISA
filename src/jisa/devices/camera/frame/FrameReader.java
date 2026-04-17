@@ -120,10 +120,9 @@ public class FrameReader<F extends Frame> {
         Frame  frame2 = readFrame().copy();
         double diff   = (frame2.getTimestamp() - frame1.getTimestamp()) / 1e9;
         int    fps    = (int) (1.0 / diff);
+        Path   file   = Path.of(path);
 
-        Path            file = Path.of(path);
-
-        SequenceEncoder enc  = SequenceEncoder.createWithFps(NIOUtils.writableChannel(file.toFile()), new Rational(fps, 1));
+        SequenceEncoder enc = SequenceEncoder.createWithFps(NIOUtils.writableChannel(file.toFile()), new Rational(fps, 1));
 
         enc.encodeNativeFrame(Picture.createPicture(frame1.getWidth(), frame1.getHeight(), frame1.getRGBPlanes(), ColorSpace.RGB));
         enc.encodeNativeFrame(Picture.createPicture(frame2.getWidth(), frame2.getHeight(), frame2.getRGBPlanes(), ColorSpace.RGB));
