@@ -23,10 +23,7 @@ import jisa.gui.controls.TableInput;
 import jisa.results.ResultTable;
 
 import java.lang.ref.WeakReference;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * GUI element for configuring instrument parameters.
@@ -45,21 +42,21 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
 
     public static void refreshAll() {
 
-        List<WeakReference<ConfigPanel<?>>> toRemove = new LinkedList<>();
+        List<WeakReference<ConfigPanel<?>>>     toRemove = new LinkedList<>();
+        Iterator<WeakReference<ConfigPanel<?>>> iterator = ALL.iterator();
 
-        for (WeakReference<ConfigPanel<?>> ref : ALL) {
+        while (iterator.hasNext()) {
 
-            ConfigPanel<?> panel = ref.get();
+            WeakReference<ConfigPanel<?>> ref   = iterator.next();
+            ConfigPanel<?>                panel = ref.get();
 
-            if (panel != null) {
-                panel.refresh();
+            if (panel == null) {
+                iterator.remove();
             } else {
-                toRemove.add(ref);
+                panel.refresh();
             }
 
         }
-
-        ALL.removeAll(toRemove);
 
     }
 
