@@ -22,6 +22,7 @@ import jisa.gui.controls.IntegerField;
 import jisa.gui.controls.TableInput;
 import jisa.results.ResultTable;
 
+import java.lang.ref.WeakReference;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,7 +35,7 @@ import java.util.Map;
  */
 public class ConfigPanel<I extends Instrument> extends JFXElement {
 
-    public static final List<ConfigPanel<?>> ALL = new LinkedList<>();
+    public static final List<WeakReference<ConfigPanel<?>>> ALL = new LinkedList<>();
 
     private final I                                   instrument;
     private final VBox                                list;
@@ -43,13 +44,29 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
     private final List<Entry<?, ?>>                   entries    = new LinkedList<>();
 
     public static void refreshAll() {
-        ALL.forEach(ConfigPanel::refresh);
+
+        List<WeakReference<ConfigPanel<?>>> toRemove = new LinkedList<>();
+
+        for (WeakReference<ConfigPanel<?>> ref : ALL) {
+
+            ConfigPanel<?> panel = ref.get();
+
+            if (panel != null) {
+                panel.refresh();
+            } else {
+                toRemove.add(ref);
+            }
+
+        }
+
+        ALL.removeAll(toRemove);
+
     }
 
     public ConfigPanel(String title, I instrument) {
 
         super(title);
-        ALL.add(this);
+        ALL.add(new WeakReference<>(this));
 
         this.instrument = instrument;
         this.list       = new VBox();
