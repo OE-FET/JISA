@@ -63,18 +63,22 @@ public abstract class NativeDevice implements Instrument {
      *
      * @throws DeviceException If the library cannot be found or fails to initialise.
      */
-    public <I extends com.sun.jna.Library> I findLibrary(Class<I> libraryInterface, String libraryName) throws DeviceException {
+    public <I extends com.sun.jna.Library>  I findLibrary(Class<I> libraryInterface, String libraryName) throws DeviceException {
 
-        // If it's already been loaded, return cached instance.
-        if (libraries.containsKey(libraryInterface)) {
-            return (I) libraries.get(libraryInterface);
+        synchronized (libraries) {
+
+            // If it's already been loaded, return cached instance.
+            if (libraries.containsKey(libraryInterface)) {
+                return (I) libraries.get(libraryInterface);
+            }
+
+            I loaded = getNewLibraryInstance(libraryInterface, libraryName);
+
+            libraries.put(libraryInterface, loaded);
+
+            return loaded;
+
         }
-
-        I loaded = getNewLibraryInstance(libraryInterface, libraryName);
-
-        libraries.put(libraryInterface, loaded);
-
-        return loaded;
 
     }
 

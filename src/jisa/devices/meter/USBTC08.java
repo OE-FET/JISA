@@ -10,10 +10,7 @@ import jisa.devices.DeviceException;
 import jisa.visa.NativeDevice;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +25,7 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
     // Native Library Constants
     private static final String                         LIBRARY_NAME  = "usbtc08";
     private static final Class<USBTC08.NativeInterface> LIBRARY_CLASS = USBTC08.NativeInterface.class;
+    private static final Map<String, Short>             CONNECTED     = new LinkedHashMap<>();
 
     // Device Constants
     private static final int   SENSORS_PER_UNIT             = 9;
@@ -78,22 +76,33 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
      * @throws DeviceException Upon instrument error
      */
     public USBTC08() throws IOException, DeviceException {
+        this((Address) null);
+    }
 
-        super("USB-TC08 Temperature Data Logger");
+    /**
+     * Returns a list of all USB-TC08 units found connected to this computer.
+     *
+     * @return List of USBTC08 objects representing the found units
+     */
+    public void refreshUnits() {
 
-        usbtc08 = findLibrary(LIBRARY_CLASS, LIBRARY_NAME);
+        while (true) {
 
-        short handle = usbtc08.usb_tc08_open_unit();
+            short handle = usbtc08.usb_tc08_open_unit();
 
-        if (handle > 0) {
-            this.handle = handle;
-        } else if (handle == ACTION_FAILED) {
-            throw new IOException("No USB TC-08 unit found!");
-        } else {
-            throw new DeviceException(getLastError((short) 0));
+            if (handle < 1) {
+                break;
+            }
+
+            byte[] read   = new byte[256];
+            short  result = usbtc08.usb_tc08_get_unit_info2(handle, read, (short) 256, NativeInterface.USBTC08LINE_BATCH_AND_SERIAL);
+
+            if (result != ACTION_FAILED) {
+                String serial = new String(read).trim().toUpperCase();
+                CONNECTED.put(serial, handle);
+            }
+
         }
-
-        interval = usbtc08.usb_tc08_get_minimum_interval_ms(handle);
 
     }
 
@@ -111,39 +120,44 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
 
         usbtc08 = findLibrary(LIBRARY_CLASS, LIBRARY_NAME);
 
-        if (!(address instanceof IDAddress)) {
-            throw new DeviceException("This driver requires an ID or serial number address.");
-        }
+        synchronized (CONNECTED) {
 
-        String serial = ((IDAddress) address).getID();
+            refreshUnits();
 
-        // Search for all connected units
-        List<USBTC08> found = findUnits();
+            if (address == null || (address instanceof IDAddress && ((IDAddress) address).getID().isBlank())) {
 
-        if (found.isEmpty()) {
-            throw new IOException("No USB TC-08 unit found!");
-        }
+                if (CONNECTED.isEmpty()) {
+                    throw new DeviceException("No USB TC-08 units found.");
+                }
 
-        Short value = null;
+                Map.Entry<String, Short> entry = CONNECTED.entrySet().iterator().next();
+                handle = entry.getValue();
+                CONNECTED.remove(entry.getKey());
 
-        for (USBTC08 unit : found) {
 
-            // If it's the one we want, give this instance the handle, otherwise close the connection
-            if (unit.getSerial().toLowerCase().equals(serial.toLowerCase().trim())) {
-                value = unit.handle;
             } else {
-                unit.close();
+
+                if (!(address instanceof IDAddress)) {
+                    throw new DeviceException("This driver requires an ID or serial number address.");
+                }
+
+                String serial = ((IDAddress) address).getID().trim().toUpperCase();
+                Short  value  = CONNECTED.get(serial);
+
+                // If nothing was found, then the serial number is wrong
+                if (value == null) {
+                    throw new IOException(String.format("No USB TC-08 unit with serial number \"%s\" was found.", serial));
+                }
+
+                CONNECTED.remove(serial);
+
+                handle   = value;
+                interval = usbtc08.usb_tc08_get_minimum_interval_ms(handle);
+
+
             }
 
         }
-
-        // If nothing was found, then the serial number is wrong
-        if (value == null) {
-            throw new IOException(String.format("No USB TC-08 unit with serial number \"%s\" was found.", serial));
-        }
-
-        handle   = value;
-        interval = usbtc08.usb_tc08_get_minimum_interval_ms(handle);
 
     }
 
@@ -177,29 +191,6 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
         }
 
         return Arrays.stream(channels).collect(Collectors.toMap(c -> c, c -> (double) lastValues[c.channel]));
-
-    }
-
-    /**
-     * Returns a list of all USB-TC08 units found connected to this computer.
-     *
-     * @return List of USBTC08 objects representing the found units
-     */
-    public static List<USBTC08> findUnits() {
-
-        List<USBTC08> devices = new LinkedList<>();
-
-        while (true) {
-
-            try {
-                devices.add(new USBTC08());
-            } catch (Throwable e) {
-                break;
-            }
-
-        }
-
-        return devices;
 
     }
 
@@ -296,7 +287,8 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
     @Override
     public void close() throws DeviceException {
 
-        int result = usbtc08.usb_tc08_close_unit(handle);
+        String serial = getSerial();
+        int    result = usbtc08.usb_tc08_close_unit(handle);
 
         if (result == ACTION_FAILED) {
             throw new DeviceException(getLastError(handle));
