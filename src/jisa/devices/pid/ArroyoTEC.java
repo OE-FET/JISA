@@ -1,6 +1,7 @@
 package jisa.devices.pid;
 
 import jisa.addresses.Address;
+import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
 import jisa.visa.VISADevice;
@@ -18,7 +19,11 @@ public class ArroyoTEC extends VISADevice implements TC {
 
     public ArroyoTEC(Address address) throws IOException, DeviceException {
 
-        super(address);
+        super(address instanceof IDAddress ? null : address);
+
+        if (address instanceof IDAddress) {
+            return;
+        }
 
         configSerial(serial -> serial.setSerialParameters(38400, 8));
 

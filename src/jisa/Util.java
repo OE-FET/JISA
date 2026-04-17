@@ -1122,5 +1122,9 @@ public class Util {
             return this;
         }
 
+        public Map<K, V> end() {
+            return this;
+        }
+
     }
 }

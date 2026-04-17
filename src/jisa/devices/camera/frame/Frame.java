@@ -130,40 +130,19 @@ public interface Frame<D, F extends Frame> {
 
     default byte[] getRGBBytes() {
 
-        int[]      data   = getARGBData();
-        ByteBuffer buffer = ByteBuffer.allocate(data.length * Integer.BYTES);
-        buffer.asIntBuffer().put(data);
-
+        int[]  data   = getARGBData();
         byte[] output = new byte[data.length * 3];
-        buffer.rewind();
 
         for (int i = 0; i < data.length; i++) {
-            buffer.get();
-            buffer.get(output, 3 * i, 3);
+
+            int pixel = data[i];
+
+            output[i * 3]     = (byte) ((pixel >> 16) & 0xFF); // Red
+            output[i * 3 + 1] = (byte) ((pixel >> 8) & 0xFF);  // Green
+            output[i * 3 + 2] = (byte) (pixel & 0xFF);         // Blue
         }
 
         return output;
-
-    }
-
-    default byte[][] getRGBPlanes() {
-
-        int[]      data   = getARGBData();
-        ByteBuffer buffer = ByteBuffer.allocate(data.length * Integer.BYTES);
-        buffer.asIntBuffer().put(data);
-
-        byte[][] output = new byte[3][data.length];
-        buffer.rewind();
-
-        for (int i = 0; i < data.length; i++) {
-            buffer.get();
-            output[0][i] = buffer.get();
-            output[1][i] = buffer.get();
-            output[2][i] = buffer.get();
-        }
-
-        return output;
-
     }
 
     default byte[][][] getNPArray() {

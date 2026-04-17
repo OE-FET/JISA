@@ -124,12 +124,12 @@ public class FrameReader<F extends Frame> {
 
         SequenceEncoder enc = SequenceEncoder.createWithFps(NIOUtils.writableChannel(file.toFile()), new Rational(fps, 1));
 
-        enc.encodeNativeFrame(Picture.createPicture(frame1.getWidth(), frame1.getHeight(), frame1.getRGBPlanes(), ColorSpace.RGB));
-        enc.encodeNativeFrame(Picture.createPicture(frame2.getWidth(), frame2.getHeight(), frame2.getRGBPlanes(), ColorSpace.RGB));
+        enc.encodeNativeFrame(Picture.createPicture(frame1.getWidth(), frame1.getHeight(), new byte[][]{frame1.getRGBBytes()}, ColorSpace.RGB));
+        enc.encodeNativeFrame(Picture.createPicture(frame2.getWidth(), frame2.getHeight(), new byte[][]{frame2.getRGBBytes()}, ColorSpace.RGB));
 
         while (hasFrame()) {
             F frame = readFrame();
-            enc.encodeNativeFrame(Picture.createPicture(frame.getWidth(), frame.getHeight(), frame.getRGBPlanes(), ColorSpace.RGB));
+            enc.encodeNativeFrame(Picture.createPicture(frame.getWidth(), frame.getHeight(), new byte[][]{frame.getRGBBytes()}, ColorSpace.RGB));
         }
 
         enc.finish();

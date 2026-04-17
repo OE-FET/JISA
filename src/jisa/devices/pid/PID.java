@@ -5,6 +5,7 @@ import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.MultiInstrument;
 import jisa.devices.ParameterList;
+import jisa.results.Column;
 import jisa.results.ResultList;
 import jisa.results.ResultTable;
 import org.json.JSONObject;
@@ -19,7 +20,6 @@ public interface PID extends Instrument, MultiInstrument {
      * Returns a list of all input channels connected to this PID controller.
      *
      * @return List of input channels
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
@@ -29,9 +29,7 @@ public interface PID extends Instrument, MultiInstrument {
      * Returns the input channel with a given index connected to this PID controller.
      *
      * @param index Input index
-     *
      * @return Input channel with specified index
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
@@ -43,7 +41,6 @@ public interface PID extends Instrument, MultiInstrument {
      * Returns a list of all output channels connected to this PID controller.
      *
      * @return List of output channels
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
@@ -53,9 +50,7 @@ public interface PID extends Instrument, MultiInstrument {
      * Returns the output channel with a given index connected to this PID controller.
      *
      * @param index Output index
-     *
      * @return Output channel with specified index
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
@@ -67,7 +62,6 @@ public interface PID extends Instrument, MultiInstrument {
      * Returns a list of all control loops provided by this PID controller.
      *
      * @return List of control loops
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
@@ -77,9 +71,7 @@ public interface PID extends Instrument, MultiInstrument {
      * Returns the control loop with a given index, provided by this PID controller.
      *
      * @param index Control loop index
-     *
      * @return PID control loop with specified index
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon compatibility error
      */
@@ -96,11 +88,10 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns the value currently being sensed by this input.
          *
          * @return Sensed value
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
-        
+
 
         double getValue() throws IOException, DeviceException;
 
@@ -108,7 +99,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns the measurement range currently being used by this input.
          *
          * @return Measurement range
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -119,7 +109,6 @@ public interface PID extends Instrument, MultiInstrument {
          * and it will select the smallest range that contains it.
          *
          * @param range Maximum (absolute) value to be measured
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -164,11 +153,10 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns the value this output is currently outputting.
          *
          * @return Value being output
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
-        
+
 
         double getValue() throws IOException, DeviceException;
 
@@ -176,7 +164,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns the limit/range currently being applied to the output value.
          *
          * @return Output limit
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -186,7 +173,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Sets the limit/range to apply to the output value.
          *
          * @param range Output limit/range
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -230,46 +216,72 @@ public interface PID extends Instrument, MultiInstrument {
                 Input  input;
                 Output output;
 
-                try { input = inst.getInput(); } catch (Exception e) { input = inst.getAvailableInputs().get(0); }
-                try { output = inst.getOutput(); } catch (Exception e) { output = inst.getAvailableOutputs().get(0); }
+                try {
+                    input = inst.getInput();
+                } catch (Exception e) {
+                    input = inst.getAvailableInputs().get(0);
+                }
+                try {
+                    output = inst.getOutput();
+                } catch (Exception e) {
+                    output = inst.getAvailableOutputs().get(0);
+                }
 
                 parameters.addChoice("Input", input.getName(), v -> inst.getAvailableInputs().stream().filter(i -> i.getName().equals(v)).findFirst().orElse(null), inst.getAvailableInputs().stream().map(Input::getName).toArray(String[]::new));
                 parameters.addChoice("Output", output.getName(), v -> inst.getAvailableOutputs().stream().filter(i -> i.getName().equals(v)).findFirst().orElse(null), inst.getAvailableOutputs().stream().map(Output::getName).toArray(String[]::new));
 
-                ResultTable values = new ResultList("Min", "Max", "P", "I", "D", "Output Limit");
+                Column<Double> MIN   = Column.ofDoubles("Min");
+                Column<Double> MAX   = Column.ofDoubles("Max");
+                Column<Double> P     = Column.ofDoubles("P");
+                Column<Double> I     = Column.ofDoubles("I");
+                Column<Double> D     = Column.ofDoubles("D");
+                Column<Double> LIMIT = Column.ofDoubles("Output Limit");
+
+
+                ResultTable values = new ResultList(MIN, MAX, P, I, D, LIMIT);
 
                 try {
                     inst.getPIDZones().stream().map(pid -> new Object[]{pid.getMin(), pid.getMax(), pid.getP(), pid.getI(), pid.getD(), pid.getOutput()}).forEach(values::addData);
-                } catch (Throwable ignored) { }
+                } catch (Throwable ignored) {
+                }
 
                 if (values.size() == 0) {
                     values.addData(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0);
                 }
 
-                parameters.addValue("PID Settings", values, q -> {
+                parameters.addValue(
+                    "PID Settings",
+                    () -> {
 
-                    if (q.size() == 0) {
-                        q.addData(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0);
+                        ResultTable table = ResultList.emptyCopyOf(values);
+                        inst.getPIDZones().forEach(z -> table.addData(z.getMin(), z.getMax(), z.getP(), z.getI(), z.getD(), z.getOutput()));
+                        return table;
+
+                    }, values, q -> {
+
+                        if (q.size() == 0) {
+                            q.addData(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0);
+                        }
+
+                        if (q.size() < 2) {
+
+                            inst.setPIDZoningEnabled(false);
+                            inst.setPIDValues(q.get(0).get(2), q.get(0).get(3), q.get(0).get(4));
+                            inst.getOutput().setLimit(q.get(0).get(5));
+
+                        } else {
+
+                            PID.Zone[] zones = q
+                                    .stream().map(r -> new PID.Zone(r.get(0), r.get(1), r.get(2), r.get(3), r.get(4), r.get(5)))
+                                    .toArray(PID.Zone[]::new);
+
+                            inst.setPIDZones(zones);
+                            inst.setPIDZoningEnabled(true);
+
+                        }
+
                     }
-
-                    if (q.size() < 2) {
-
-                        inst.setPIDZoningEnabled(false);
-                        inst.setPIDValues(q.get(0).get(2), q.get(0).get(3), q.get(0).get(4));
-                        inst.getOutput().setLimit(q.get(0).get(5));
-
-                    } else {
-
-                        PID.Zone[] zones = q
-                            .stream().map(r -> new PID.Zone(r.get(0), r.get(1), r.get(2), r.get(3), r.get(4), r.get(5)))
-                            .toArray(PID.Zone[]::new);
-
-                        inst.setPIDZones(zones);
-                        inst.setPIDZoningEnabled(true);
-
-                    }
-
-                });
+                );
 
                 parameters.add(new Parameter<>("Ramp Rate [per min]", new OptionalQuantity<>(false, 1.0), r -> {
                     inst.setRampRate(r.getValue());
@@ -291,7 +303,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Sets the value of the set-point for this loop.
          *
          * @param value Set-point value to use
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -301,7 +312,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns the current configured set-point value for this loop.
          *
          * @return Currently configured set-point value
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -311,7 +321,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Sets whether this loop should ramp to its set-point using the configured ramp rate.
          *
          * @param flag Should ramping be enabled?
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -321,7 +330,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns whether the loop is currently using the configured ramp rate to ramp to its set-point or not.
          *
          * @return Is ramping enabled?
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -332,7 +340,6 @@ public interface PID extends Instrument, MultiInstrument {
          * setRampEnabled(...).
          *
          * @param limit Maximum ramping rate
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -342,7 +349,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns the currently configured ramping rate for this loop.
          *
          * @return Currently configured ramping rate
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -353,7 +359,6 @@ public interface PID extends Instrument, MultiInstrument {
          * PID zoning, if enabled.
          *
          * @return Currently configured P value
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -364,7 +369,6 @@ public interface PID extends Instrument, MultiInstrument {
          * PID zoning, if enabled.
          *
          * @return Currently configured I value
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -375,7 +379,6 @@ public interface PID extends Instrument, MultiInstrument {
          * PID zoning, if enabled.
          *
          * @return Currently configured D value
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -386,7 +389,6 @@ public interface PID extends Instrument, MultiInstrument {
          * zoning is not enabled, otherwise it is overridden.
          *
          * @param value P (single) value to use.
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -397,7 +399,6 @@ public interface PID extends Instrument, MultiInstrument {
          * zoning is not enabled, otherwise it is overridden.
          *
          * @param value I (single) value to use.
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -408,7 +409,6 @@ public interface PID extends Instrument, MultiInstrument {
          * zoning is not enabled, otherwise it is overridden.
          *
          * @param value D (single) value to use.
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -421,7 +421,6 @@ public interface PID extends Instrument, MultiInstrument {
          * @param p P value to use
          * @param i I value to use
          * @param d D value to use
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -435,7 +434,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Sets the zones to use if PID zoning were to be enabled.
          *
          * @param zones List of PID.Zone objects representing the PID zone table to use
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -445,7 +443,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Sets the zones to use if PID zoning were to be enabled.
          *
          * @param zones PID.Zone objects representing the PID zone table to use
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -457,7 +454,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns a list of the currently configured PID zones to use for when PID zoning is enabled.
          *
          * @return List of configured PID zones
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -467,7 +463,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Sets whether PID zoning should be enabled for this loop or not.
          *
          * @param flag Should it be enabled?
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -477,7 +472,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns whether PID zoning is currently enabled for this loop or not.
          *
          * @return Is it enabled?
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -487,7 +481,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns the Input object representing which input value this loop is configured to monitor.
          *
          * @return Input object
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -497,7 +490,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns the Output object representing which output channel this loop is configured to control.
          *
          * @return Output object
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -508,7 +500,6 @@ public interface PID extends Instrument, MultiInstrument {
          * that this loop is allowed to use. Check by using getAvailableInputs().
          *
          * @param input Input object
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -519,7 +510,6 @@ public interface PID extends Instrument, MultiInstrument {
          * object that this loop is allowed to use. Check by using getAvailableOutputs().
          *
          * @param output Output object
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -543,7 +533,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Sets the value this loop should output through its output channel should PID control be disabled.
          *
          * @param value Manual value to use
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -553,7 +542,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns the value this loop is configured to use should PID control be disabled.
          *
          * @return Manual value configured to use
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -563,7 +551,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Sets whether PID control is enabled or disabled for this loop.
          *
          * @param flag Should PID control be enabled?
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -573,7 +560,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns whether PID control is currently enabled or disabled for this loop.
          *
          * @return Is PID control currently enabled?
-         *
          * @throws IOException     Upon communications error
          * @throws DeviceException Upon compatibility error
          */
@@ -586,11 +572,11 @@ public interface PID extends Instrument, MultiInstrument {
 
             try {
                 Sync.waitForStableTarget(
-                    getInput()::getValue,
-                    target,
-                    pct,
-                    500,
-                    msec
+                        getInput()::getValue,
+                        target,
+                        pct,
+                        500,
+                        msec
                 );
             } catch (Exception e) {
                 e.printStackTrace();
@@ -802,7 +788,6 @@ public interface PID extends Instrument, MultiInstrument {
          * Returns whether this zone should be used for a given set-point value.
          *
          * @param value Set-point value
-         *
          * @return Should it be used?
          */
         public boolean matches(double value) {
