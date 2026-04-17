@@ -74,53 +74,53 @@ public class K2400 extends VISADevice implements SMU {
 
     // === FILTERS ============================================================================
     private final MedianRepeatFilter MEDIAN_REPEAT_V = new MedianRepeatFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
+        this::measureVoltage,
+        (c) -> disableAveraging()
     );
 
     private final MedianRepeatFilter MEDIAN_REPEAT_I = new MedianRepeatFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
+        this::measureCurrent,
+        (c) -> disableAveraging()
     );
 
     private final MedianMovingFilter MEDIAN_MOVING_V = new MedianMovingFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
+        this::measureVoltage,
+        (c) -> disableAveraging()
     );
 
     private final MedianMovingFilter MEDIAN_MOVING_I = new MedianMovingFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
+        this::measureCurrent,
+        (c) -> disableAveraging()
     );
 
     private final MeanRepeatFilter MEAN_REPEAT_V = new MeanRepeatFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
+        this::measureVoltage,
+        (c) -> disableAveraging()
     );
 
     private final MeanRepeatFilter MEAN_REPEAT_I = new MeanRepeatFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
+        this::measureCurrent,
+        (c) -> disableAveraging()
     );
 
     private final MeanMovingFilter MEAN_MOVING_V = new MeanMovingFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
+        this::measureVoltage,
+        (c) -> disableAveraging()
     );
 
     private final MeanMovingFilter MEAN_MOVING_I = new MeanMovingFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
+        this::measureCurrent,
+        (c) -> disableAveraging()
     );
 
     private final BypassFilter NONE_V = new BypassFilter(
-            this::measureVoltage,
-            (c) -> disableAveraging()
+        this::measureVoltage,
+        (c) -> disableAveraging()
     );
 
     private final BypassFilter NONE_I = new BypassFilter(
-            this::measureCurrent,
-            (c) -> disableAveraging()
+        this::measureCurrent,
+        (c) -> disableAveraging()
     );
 
     protected double     vLimit;
@@ -163,15 +163,7 @@ public class K2400 extends VISADevice implements SMU {
     // These functions were modified as follows because query(:MEAS:<MODE>?) returns a string of 5 elements.
     // See "FETch?" command in the K2400 manual.
     public double measureVoltage() throws IOException, DeviceException {
-        String   s               = query(C_MEASURE_VOLTAGE);
-        String[] values          = s.split(",");
-        String   measuredVoltage = "9.91E37"; // NaN value
-        if (values.length >= 2) {
-            measuredVoltage = values[0]; // Index 0 represents the first position (i.e., measured voltage)
-            //System.out.println(measuredVoltage);
-        }
-        return Double.parseDouble(measuredVoltage);
-
+        return querySplitSingleDouble(C_MEASURE_VOLTAGE, ",", 0);
     }
 
     public double measureCurrent() throws IOException, DeviceException {
@@ -366,11 +358,13 @@ public class K2400 extends VISADevice implements SMU {
 
     @Override
     public void setFourProbeEnabled(boolean fourProbes) throws DeviceException, IOException {
+
         if (fourProbes) {
             write(":SYSTem:RSENse ON");
         } else {
             write(":SYSTem:RSENse OFF");
         }
+
     }
 
     @Override
