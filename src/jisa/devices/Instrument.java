@@ -291,7 +291,11 @@ public interface Instrument {
         }
 
         public Parameter<S> copy(String newName) {
-            return new Parameter<>(newName, defaultValue, setter, getter, (S[]) options.toArray());
+            return new Parameter<>(group, newName, defaultValue, setter, getter, (S[]) options.toArray());
+        }
+
+        public Parameter<S> copy(String newGroup, String newName) {
+            return new Parameter<>(newGroup, newName, defaultValue, setter, getter, (S[]) options.toArray());
         }
 
         public void set(S value) throws IOException, DeviceException {
