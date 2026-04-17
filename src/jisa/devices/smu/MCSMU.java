@@ -3,6 +3,7 @@ package jisa.devices.smu;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
 import jisa.devices.MultiInstrument;
+import jisa.devices.ParameterList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -13,6 +14,25 @@ import java.util.List;
  * Abstract class defining the standard interface for Multiple-Channel SMUs.
  */
 public interface MCSMU<T extends SMU> extends Instrument, MultiInstrument, Iterable<T> {
+
+    static void addParameters(MCSMU<?> inst, Class<?> target, ParameterList parameters) {
+
+        for (SMU smu : inst.getSMUs()) {
+
+            for (Parameter<?> parameter : smu.getAllParameters()) {
+
+                if (parameter.isGrouped()) {
+                    parameters.add(parameter.copy(String.format("%s %s", smu.getName(), parameter.getGroup()), parameter.getName()));
+                } else {
+                    parameters.add(parameter.copy(smu.getName(), parameter.getName()));
+                }
+
+            }
+
+        }
+
+
+    }
 
     static String getDescription() {
         return "Multi-Channel Source Measure Unit";

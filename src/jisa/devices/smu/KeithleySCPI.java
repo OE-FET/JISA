@@ -72,42 +72,52 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
         this::measureVoltage,
         (c) -> disableAveraging()
     );
+
     private final MedianRepeatFilter MEDIAN_REPEAT_I = new MedianRepeatFilter(
         this::measureCurrent,
         (c) -> disableAveraging()
     );
+
     private final MedianMovingFilter MEDIAN_MOVING_V = new MedianMovingFilter(
         this::measureVoltage,
         (c) -> disableAveraging()
     );
+
     private final MedianMovingFilter MEDIAN_MOVING_I = new MedianMovingFilter(
         this::measureCurrent,
         (c) -> disableAveraging()
     );
+
     private final MeanRepeatFilter   MEAN_REPEAT_V   = new MeanRepeatFilter(
         this::measureVoltage,
         (c) -> disableAveraging()
     );
+
     private final MeanRepeatFilter   MEAN_REPEAT_I   = new MeanRepeatFilter(
         this::measureCurrent,
         (c) -> disableAveraging()
     );
+
     private final MeanMovingFilter   MEAN_MOVING_V   = new MeanMovingFilter(
         this::measureVoltage,
         (c) -> disableAveraging()
     );
+
     private final MeanMovingFilter   MEAN_MOVING_I   = new MeanMovingFilter(
         this::measureCurrent,
         (c) -> disableAveraging()
     );
+
     private final BypassFilter       NONE_V          = new BypassFilter(
         this::measureVoltage,
         (c) -> disableAveraging()
     );
+
     private final BypassFilter       NONE_I          = new BypassFilter(
         this::measureCurrent,
         (c) -> disableAveraging()
     );
+
     protected     double             vLimit;
     protected     double             iLimit;
     private       ReadFilter         filterV         = NONE_V;
@@ -142,7 +152,7 @@ public abstract class KeithleySCPI extends VISADevice implements SMU {
         write(":SYSTEM:CLEAR");
         write(":TRAC:CLE"); // clears all readings and statistics from default buffer
         write(":STAT:CLE"); // clears event registers and the event log
-        
+
         setAverageMode(AMode.NONE);
 
         LINE_FREQUENCY = queryDouble(C_QUERY_LFR);

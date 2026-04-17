@@ -83,6 +83,7 @@ public abstract class KeithleyTSP extends VISADevice {
 
         // Check that this is a Keithley 2600B series
         String idn = getIDN().toUpperCase();
+
         if (!(idn.contains("KEITHLEY") && idn.contains(model.toUpperCase()))) {
 
             throw new DeviceException(

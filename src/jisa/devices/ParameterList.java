@@ -17,7 +17,8 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
 
     public boolean add(Instrument.Parameter<?> e) {
 
-        Parameter<?> found = stream().filter(q -> q.getName().equalsIgnoreCase(e.getName())).findFirst().orElse(null);
+        String       id    = String.format("%s-%s", e.getGroup(), e.getName());
+        Parameter<?> found = stream().filter(q -> String.format("%s-%s", q.getGroup(), q.getName()).equalsIgnoreCase(id)).findFirst().orElse(null);
 
         if (found == null) {
             return super.add(e);
@@ -87,7 +88,7 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
     }
 
     public <T> void addChoice(String name, Instrument.Getter<T> defValue, T elseValue, Instrument.Setter<T> setter, T... options) {
-        addChoice("",  name, defValue, elseValue, setter, options);
+        addChoice("", name, defValue, elseValue, setter, options);
     }
 
     public <T> void addAuto(String name, boolean auto, T defValue, Instrument.Setter<T> autoSetter, Instrument.Setter<T> valueSetter) {
