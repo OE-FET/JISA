@@ -5,6 +5,7 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.StageStyle;
 
 import java.net.URL;
 
@@ -41,6 +42,12 @@ public class SplashScreen extends JFXElement {
         this.imageView = imageView;
         BorderPane.setMargin(imageView, Insets.EMPTY);
         setDecorated(false);
+        getStage().initStyle(StageStyle.TRANSPARENT);
+        getStage().getScene().setFill(Colour.TRANSPARENT);
+        imageView.setSmooth(true);
+        imageView.fitWidthProperty().bind(getStage().widthProperty());
+        imageView.fitHeightProperty().bind(getStage().heightProperty());
+
     }
 
     public void setImage(Image image) {
