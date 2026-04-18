@@ -80,27 +80,98 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
     }
 
     /**
-     * Returns a list of all USB-TC08 units found connected to this computer.
-     *
-     * @return List of USBTC08 objects representing the found units
+     * Closes every handle still tracked in {@link #CONNECTED} and clears the map.
+     * Prevents stacking multiple {@code open_unit} sessions without matching {@code close_unit} calls.
      */
-    public void refreshUnits() {
+    private void closeEnumeratedHandlesInMap() {
+
+        for (Short h : new ArrayList<>(CONNECTED.values())) {
+
+            try {
+                usbtc08.usb_tc08_close_unit(h);
+            } catch (Throwable ignored) {
+            }
+
+        }
+
+        CONNECTED.clear();
+
+    }
+
+    /**
+     * Re-enumerates USB-TC08 units. Any previously enumerated handles are closed first.
+     * Only used while constructing an instance so {@link #CONNECTED} is not left holding orphan opens.
+     */
+    private void refreshUnits() {
+
+        closeEnumeratedHandlesInMap();
 
         while (true) {
 
-            short handle = usbtc08.usb_tc08_open_unit();
+            short unitHandle = usbtc08.usb_tc08_open_unit();
 
-            if (handle < 1) {
+            if (unitHandle < 1) {
                 break;
             }
 
             byte[] read   = new byte[256];
-            short  result = usbtc08.usb_tc08_get_unit_info2(handle, read, (short) 256, NativeInterface.USBTC08LINE_BATCH_AND_SERIAL);
+            short  result = usbtc08.usb_tc08_get_unit_info2(unitHandle, read, (short) 256, NativeInterface.USBTC08LINE_BATCH_AND_SERIAL);
 
             if (result != ACTION_FAILED) {
                 String serial = new String(read).trim().toUpperCase();
-                CONNECTED.put(serial, handle);
+                CONNECTED.put(serial, unitHandle);
+            } else {
+
+                try {
+                    usbtc08.usb_tc08_close_unit(unitHandle);
+                } catch (Throwable ignored) {
+                }
+
             }
+
+        }
+
+    }
+
+    /**
+     * Opens units, claims one for this instance, and closes every other enumerated handle (same idea as upstream JISA).
+     */
+    private short connectAndClaim(Address address) throws IOException, DeviceException {
+
+        refreshUnits();
+
+        try {
+
+            if (address == null || (address instanceof IDAddress && ((IDAddress) address).getID().isBlank())) {
+
+                if (CONNECTED.isEmpty()) {
+                    throw new DeviceException("No USB TC-08 units found.");
+                }
+
+                Map.Entry<String, Short> entry = CONNECTED.entrySet().iterator().next();
+                short                     h     = entry.getValue();
+                CONNECTED.remove(entry.getKey());
+                return h;
+
+            }
+
+            if (!(address instanceof IDAddress)) {
+                throw new DeviceException("This driver requires an ID or serial number address.");
+            }
+
+            String serial = ((IDAddress) address).getID().trim().toUpperCase();
+            Short  value  = CONNECTED.get(serial);
+
+            if (value == null) {
+                throw new IOException(String.format("No USB TC-08 unit with serial number \"%s\" was found.", serial));
+            }
+
+            CONNECTED.remove(serial);
+            return value;
+
+        } finally {
+
+            closeEnumeratedHandlesInMap();
 
         }
 
@@ -122,40 +193,8 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
 
         synchronized (CONNECTED) {
 
-            refreshUnits();
-
-            if (address == null || (address instanceof IDAddress && ((IDAddress) address).getID().isBlank())) {
-
-                if (CONNECTED.isEmpty()) {
-                    throw new DeviceException("No USB TC-08 units found.");
-                }
-
-                Map.Entry<String, Short> entry = CONNECTED.entrySet().iterator().next();
-                handle = entry.getValue();
-                CONNECTED.remove(entry.getKey());
-
-
-            } else {
-
-                if (!(address instanceof IDAddress)) {
-                    throw new DeviceException("This driver requires an ID or serial number address.");
-                }
-
-                String serial = ((IDAddress) address).getID().trim().toUpperCase();
-                Short  value  = CONNECTED.get(serial);
-
-                // If nothing was found, then the serial number is wrong
-                if (value == null) {
-                    throw new IOException(String.format("No USB TC-08 unit with serial number \"%s\" was found.", serial));
-                }
-
-                CONNECTED.remove(serial);
-
-                handle   = value;
-                interval = usbtc08.usb_tc08_get_minimum_interval_ms(handle);
-
-
-            }
+            handle   = connectAndClaim(address);
+            interval = usbtc08.usb_tc08_get_minimum_interval_ms(handle);
 
         }
 
@@ -424,9 +463,9 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
         public void setSensorType(Type type) throws IOException, DeviceException {
 
             int result = usbtc08.usb_tc08_set_channel(
-                handle,
-                channel,
-                NativeInterface.TYPE_MAP.getOrDefault(type, NativeInterface.USB_TC08_DISABLE_CHANNEL)
+                    handle,
+                    channel,
+                    NativeInterface.TYPE_MAP.getOrDefault(type, NativeInterface.USB_TC08_DISABLE_CHANNEL)
             );
 
             if (result == ACTION_FAILED) {
@@ -481,14 +520,14 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
         byte  USB_TC08_DISABLE_CHANNEL     = (byte) ' ';
 
         Map<TCouple.Type, Byte> TYPE_MAP = Map.of(
-            TCouple.Type.B, USB_TC08_THERMOCOUPLE_TYPE_B,
-            TCouple.Type.E, USB_TC08_THERMOCOUPLE_TYPE_E,
-            TCouple.Type.J, USB_TC08_THERMOCOUPLE_TYPE_J,
-            TCouple.Type.K, USB_TC08_THERMOCOUPLE_TYPE_K,
-            TCouple.Type.N, USB_TC08_THERMOCOUPLE_TYPE_N,
-            TCouple.Type.R, USB_TC08_THERMOCOUPLE_TYPE_R,
-            TCouple.Type.S, USB_TC08_THERMOCOUPLE_TYPE_S,
-            TCouple.Type.T, USB_TC08_THERMOCOUPLE_TYPE_T
+                TCouple.Type.B, USB_TC08_THERMOCOUPLE_TYPE_B,
+                TCouple.Type.E, USB_TC08_THERMOCOUPLE_TYPE_E,
+                TCouple.Type.J, USB_TC08_THERMOCOUPLE_TYPE_J,
+                TCouple.Type.K, USB_TC08_THERMOCOUPLE_TYPE_K,
+                TCouple.Type.N, USB_TC08_THERMOCOUPLE_TYPE_N,
+                TCouple.Type.R, USB_TC08_THERMOCOUPLE_TYPE_R,
+                TCouple.Type.S, USB_TC08_THERMOCOUPLE_TYPE_S,
+                TCouple.Type.T, USB_TC08_THERMOCOUPLE_TYPE_T
         );
 
         short usb_tc08_open_unit();
