@@ -180,25 +180,25 @@ public class ArroyoTEC extends VISADevice implements TC {
 
         @Override
         public double getPValue() throws IOException {
-            return Double.parseDouble(query("TEC:PID?").split(",")[0]);
+            return Arrays.stream(query("TEC:PID?").split(",")).mapToDouble(Double::parseDouble).toArray()[1];
         }
 
         @Override
         public double getIValue() throws IOException {
-            return Double.parseDouble(query("TEC:PID?").split(",")[1]);
+            return Arrays.stream(query("TEC:PID?").split(",")).mapToDouble(Double::parseDouble).toArray()[0];
         }
 
         @Override
         public double getDValue() throws IOException {
-            return Double.parseDouble(query("TEC:PID?").split(",")[2]);
+            return Arrays.stream(query("TEC:PID?").split(",")).mapToDouble(Double::parseDouble).toArray()[2];
         }
 
         public void setPIDValues(double p, double i, double d) throws IOException {
 
             write(
                 "TEC:PID %f,%f,%f",
-                Math.min(10.0, Math.max(0, p)),
                 Math.min(10.0, Math.max(0, i)),
+                Math.min(10.0, Math.max(0, p)),
                 Math.min(10.0, Math.max(0, d))
             );
 
@@ -209,22 +209,22 @@ public class ArroyoTEC extends VISADevice implements TC {
         @Override
         public void setPValue(double value) throws IOException {
             double[] values = Arrays.stream(query("TEC:PID?").split(",")).mapToDouble(Double::parseDouble).toArray();
-            values[0] = value;
-            setPIDValues(values[0], values[1], values[2]);
+            values[1] = value;
+            setPIDValues(values[1], values[0], values[2]);
         }
 
         @Override
         public void setIValue(double value) throws IOException {
             double[] values = Arrays.stream(query("TEC:PID?").split(",")).mapToDouble(Double::parseDouble).toArray();
-            values[1] = value;
-            setPIDValues(values[0], values[1], values[2]);
+            values[0] = value;
+            setPIDValues(values[1], values[0], values[2]);
         }
 
         @Override
         public void setDValue(double value) throws IOException {
             double[] values = Arrays.stream(query("TEC:PID?").split(",")).mapToDouble(Double::parseDouble).toArray();
             values[2] = value;
-            setPIDValues(values[0], values[1], values[2]);
+            setPIDValues(values[1], values[0], values[2]);
         }
 
         @Override
