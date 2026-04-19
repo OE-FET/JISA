@@ -11,6 +11,8 @@ import jisa.results.ResultTable;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -595,6 +597,7 @@ public interface PID extends Instrument, MultiInstrument {
         private       boolean    zoning = false;
 
         public void setPIDZones(List<Zone> zones) throws IOException, DeviceException {
+            validateZones(zones);
             this.zones.clear();
             this.zones.addAll(zones);
             updatePID(getSetPoint());
@@ -602,6 +605,54 @@ public interface PID extends Instrument, MultiInstrument {
 
         public List<Zone> getPIDZones() {
             return List.copyOf(zones);
+        }
+
+        private static void validateZones(List<Zone> zones) throws DeviceException {
+
+            if (zones == null || zones.isEmpty()) {
+                throw new DeviceException("PID zone list cannot be empty");
+            }
+
+            List<Zone> sorted = new ArrayList<>(zones);
+
+            for (Zone zone : sorted) {
+
+                if (zone.getMin() > zone.getMax()) {
+                    throw new DeviceException(
+                        "Invalid PID zone range: min (%f) is greater than max (%f)",
+                        zone.getMin(),
+                        zone.getMax()
+                    );
+                }
+
+                if (zone.getLimit() < 0) {
+                    throw new DeviceException(
+                        "Invalid PID zone output limit: %f (must be >= 0)",
+                        zone.getLimit()
+                    );
+                }
+
+            }
+
+            sorted.sort(Comparator.comparingDouble(Zone::getMin));
+
+            for (int i = 1; i < sorted.size(); i++) {
+
+                Zone previous = sorted.get(i - 1);
+                Zone current  = sorted.get(i);
+
+                if (current.getMin() <= previous.getMax()) {
+                    throw new DeviceException(
+                        "Overlapping PID zones: [%f, %f] and [%f, %f]",
+                        previous.getMin(),
+                        previous.getMax(),
+                        current.getMin(),
+                        current.getMax()
+                    );
+                }
+
+            }
+
         }
 
         public void setPIDZoningEnabled(boolean flag) throws DeviceException, IOException {

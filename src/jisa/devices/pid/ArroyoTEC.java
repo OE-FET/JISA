@@ -13,6 +13,8 @@ import java.util.List;
 
 public class ArroyoTEC extends VISADevice implements TC {
 
+    private static boolean outputLimitWarningShown = false;
+
     public static String getDescription() {
         return "Arroyo 585 TecPak";
     }
@@ -110,7 +112,11 @@ public class ArroyoTEC extends VISADevice implements TC {
 
         @Override
         public void setLimit(double range) {
-            // No limiting options
+            // This controller does not expose a direct output-limit command through this driver path.
+            if (!outputLimitWarningShown) {
+                System.err.println("ArroyoTEC warning: Output Limit is ignored for TecPak in this driver.");
+                outputLimitWarningShown = true;
+            }
         }
 
         @Override
@@ -138,7 +144,6 @@ public class ArroyoTEC extends VISADevice implements TC {
         @Override
         public void setSetPoint(double temperature) throws IOException, DeviceException {
             write("TEC:T %f", temperature - 273.15);
-            updatePID(temperature);
         }
 
         @Override
@@ -305,6 +310,8 @@ public class ArroyoTEC extends VISADevice implements TC {
         }
 
         public void addInstrumentParameters(Class<?> target, ParameterList parameters) {
+            // TecPak uses fixed PID in this driver; hide zoning table controls.
+            parameters.remove("PID Settings");
             parameters.addChoice("Sensor Type", this::getSensorType, SensorType.DISABLED, this::setSensorType, SensorType.values());
         }
 
