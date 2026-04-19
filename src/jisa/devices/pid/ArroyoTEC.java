@@ -8,6 +8,7 @@ import jisa.visa.VISADevice;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -144,6 +145,26 @@ public class ArroyoTEC extends VISADevice implements TC {
         @Override
         public void setSetPoint(double temperature) throws IOException, DeviceException {
             write("TEC:T %f", temperature - 273.15);
+        }
+
+        @Override
+        public void setPIDZones(List<Zone> zones) {
+            // TecPak runs fixed PID in this driver.
+        }
+
+        @Override
+        public List<Zone> getPIDZones() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public void setPIDZoningEnabled(boolean flag) {
+            // Zoning intentionally disabled for fixed PID operation.
+        }
+
+        @Override
+        public boolean isPIDZoningEnabled() {
+            return false;
         }
 
         @Override
