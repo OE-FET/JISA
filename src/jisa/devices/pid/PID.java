@@ -246,7 +246,7 @@ public interface PID extends Instrument, MultiInstrument {
                 }
 
                 if (values.size() == 0) {
-                    values.addData(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0);
+                    values.addData(0.0, 1000.0, 3.0, 0.003, 30.0, 100.0);
                 }
 
                 parameters.addValue(
@@ -260,7 +260,7 @@ public interface PID extends Instrument, MultiInstrument {
                     }, values, q -> {
 
                         if (q.size() == 0) {
-                            q.addData(0.0, 1000.0, 70.0, 30.0, 0.0, 100.0);
+                            q.addData(0.0, 1000.0, 3.0, 0.003, 30.0, 100.0);
                         }
 
                         if (q.size() < 2) {
