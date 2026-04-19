@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.ScrollPane?>
+
+<ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml" fx:id="scroll" style="-fx-background-color: transparent;"
+            fitToHeight="true"
+            fitToWidth="true">
+    <BorderPane style="-fx-background-color: transparent;" fx:id="container">
+        <center>
+            <VBox style="-fx-padding: 15px; -fx-background-color: transparent;" spacing="15" fx:id="list"/>
+        </center>
+    </BorderPane>
+</ScrollPane>
+
