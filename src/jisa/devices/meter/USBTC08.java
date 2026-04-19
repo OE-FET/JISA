@@ -224,10 +224,7 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
             channels = this.channels.toArray(TC08TMeter[]::new);
         }
 
-        // If it's been long enough, update the readings buffer
-        if ((System.currentTimeMillis() - lastTime) > interval) {
-            updateReadings();
-        }
+        refreshReadingsIfNeeded();
 
         return Arrays.stream(channels).collect(Collectors.toMap(c -> c, c -> (double) lastValues[c.channel]));
 
@@ -254,14 +251,18 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
     }
 
     /**
-     * Updates the currently held temperature readings for each sensor. This should be updated at most every minimum
-     * measurement interval, as calculated by the USB-TC08 unit.
-     *
-     * @throws DeviceException Upon instrument error
+     * Refreshes cached readings when the minimum interval has elapsed. The interval check and {@code usb_tc08_get_single}
+     * run under the same lock so concurrent callers cannot issue back-to-back reads; the Pico driver returns
+     * {@code ERROR_COMMUNICATION} if {@code get_single} is called again before the hardware conversion window finishes.
      */
-    private synchronized void updateReadings() throws DeviceException {
+    private synchronized void refreshReadingsIfNeeded() throws DeviceException {
 
-        lastTime = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
+
+        if (lastTime != 0 && (now - lastTime) <= interval) {
+            return;
+        }
+
         interval = usbtc08.usb_tc08_get_minimum_interval_ms(handle);
 
         // Need a pointer to some memory to store our returned values
@@ -440,10 +441,7 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
         @Override
         public double getTemperature() throws IOException, DeviceException {
 
-            // If it's been long enough, update the readings buffer
-            if ((System.currentTimeMillis() - lastTime) > interval) {
-                updateReadings();
-            }
+            refreshReadingsIfNeeded();
 
             return lastValues[channel];
 
