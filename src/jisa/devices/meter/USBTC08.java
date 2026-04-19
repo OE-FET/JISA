@@ -69,6 +69,9 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
 
     private final USBTC08.NativeInterface usbtc08;
 
+    /** Serializes every native call on {@link #handle}; the Pico driver is not safe for concurrent use from multiple threads. */
+    private final Object picoHandleLock = new Object();
+
     /**
      * Connects to the first USB-TC08 unit found connected to the system.
      *
@@ -239,14 +242,18 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
      */
     public String getSerial() throws DeviceException {
 
-        byte[] read   = new byte[256];
-        short  result = usbtc08.usb_tc08_get_unit_info2(handle, read, (short) 256, NativeInterface.USBTC08LINE_BATCH_AND_SERIAL);
+        synchronized (picoHandleLock) {
 
-        if (result == ACTION_FAILED) {
-            throw new DeviceException(getLastError(handle));
+            byte[] read   = new byte[256];
+            short  result = usbtc08.usb_tc08_get_unit_info2(handle, read, (short) 256, NativeInterface.USBTC08LINE_BATCH_AND_SERIAL);
+
+            if (result == ACTION_FAILED) {
+                throw new DeviceException(getLastError(handle));
+            }
+
+            return new String(read).trim();
+
         }
-
-        return new String(read).trim();
 
     }
 
@@ -255,28 +262,32 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
      * run under the same lock so concurrent callers cannot issue back-to-back reads; the Pico driver returns
      * {@code ERROR_COMMUNICATION} if {@code get_single} is called again before the hardware conversion window finishes.
      */
-    private synchronized void refreshReadingsIfNeeded() throws DeviceException {
+    private void refreshReadingsIfNeeded() throws DeviceException {
 
-        long now = System.currentTimeMillis();
+        synchronized (picoHandleLock) {
 
-        if (lastTime != 0 && (now - lastTime) <= interval) {
-            return;
-        }
+            long now = System.currentTimeMillis();
 
-        interval = usbtc08.usb_tc08_get_minimum_interval_ms(handle);
-
-        // Need a pointer to some memory to store our returned values
-        try (Memory tempPointer = new Memory(9L * Native.getNativeSize(Float.TYPE))) {
-
-            int result = usbtc08.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), UNITS_KELVIN);
-
-            // If zero, then something's gone wrong.
-            if (result == ACTION_FAILED) {
-                throw new DeviceException(getLastError(handle));
+            if (lastTime != 0 && (now - lastTime) <= interval) {
+                return;
             }
 
-            tempPointer.read(0, lastValues, 0, SENSORS_PER_UNIT);
-            lastTime = System.currentTimeMillis();
+            interval = usbtc08.usb_tc08_get_minimum_interval_ms(handle);
+
+            // Need a pointer to some memory to store our returned values
+            try (Memory tempPointer = new Memory(9L * Native.getNativeSize(Float.TYPE))) {
+
+                int result = usbtc08.usb_tc08_get_single(handle, tempPointer, new ShortByReference((short) 0), UNITS_KELVIN);
+
+                // If zero, then something's gone wrong.
+                if (result == ACTION_FAILED) {
+                    throw new DeviceException(getLastError(handle));
+                }
+
+                tempPointer.read(0, lastValues, 0, SENSORS_PER_UNIT);
+                lastTime = System.currentTimeMillis();
+
+            }
 
         }
 
@@ -304,12 +315,16 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
      */
     public void setLineFrequency(Frequency frequency) throws DeviceException {
 
-        int result = usbtc08.usb_tc08_set_mains(handle, (short) frequency.ordinal());
+        synchronized (picoHandleLock) {
 
-        if (result == ACTION_FAILED) {
-            throw new DeviceException(getLastError(handle));
-        } else {
-            lineFrequency = frequency;
+            int result = usbtc08.usb_tc08_set_mains(handle, (short) frequency.ordinal());
+
+            if (result == ACTION_FAILED) {
+                throw new DeviceException(getLastError(handle));
+            } else {
+                lineFrequency = frequency;
+            }
+
         }
 
     }
@@ -327,11 +342,15 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
     @Override
     public void close() throws DeviceException {
 
-        String serial = getSerial();
-        int    result = usbtc08.usb_tc08_close_unit(handle);
+        synchronized (picoHandleLock) {
 
-        if (result == ACTION_FAILED) {
-            throw new DeviceException(getLastError(handle));
+            getSerial();
+            int result = usbtc08.usb_tc08_close_unit(handle);
+
+            if (result == ACTION_FAILED) {
+                throw new DeviceException(getLastError(handle));
+            }
+
         }
 
     }
@@ -460,16 +479,20 @@ public class USBTC08 extends NativeDevice implements MSTMeter<USBTC08.TC08TMeter
         @Override
         public void setSensorType(Type type) throws IOException, DeviceException {
 
-            int result = usbtc08.usb_tc08_set_channel(
-                    handle,
-                    channel,
-                    NativeInterface.TYPE_MAP.getOrDefault(type, NativeInterface.USB_TC08_DISABLE_CHANNEL)
-            );
+            synchronized (picoHandleLock) {
 
-            if (result == ACTION_FAILED) {
-                throw new DeviceException(getLastError(handle));
-            } else {
-                this.type = type;
+                int result = usbtc08.usb_tc08_set_channel(
+                        handle,
+                        channel,
+                        NativeInterface.TYPE_MAP.getOrDefault(type, NativeInterface.USB_TC08_DISABLE_CHANNEL)
+                );
+
+                if (result == ACTION_FAILED) {
+                    throw new DeviceException(getLastError(handle));
+                } else {
+                    this.type = type;
+                }
+
             }
 
         }
