@@ -100,6 +100,7 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
     public void readScaledARGBData(int[] argb) {
 
         long max    = 0;
+        long min    = Long.MAX_VALUE;
         long buffer = 0;
 
         for (int value : data) {
@@ -110,12 +111,16 @@ public class U32Frame implements Frame.UIntFrame<U32Frame> {
                 max = buffer;
             }
 
+            if (buffer < min) {
+                min = buffer;
+            }
+
         }
 
         int value;
 
         for (int i = 0; i < data.length; i++) {
-            value   = (int) (((255L * data[i]) / max) & 0xFF);
+            value   = (int) (((255L * (data[i] - min)) / (max - min)) & 0xFF);
             argb[i] = (255 << 24) | (value << 16) | (value << 8) | value;
         }
 

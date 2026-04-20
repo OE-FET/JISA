@@ -6,7 +6,6 @@ import io.jhdf.api.WritableGroup;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -171,6 +170,7 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
         buffer.rewind().asShortBuffer().get(separated);
 
         int max      = 0;
+        int min      = Integer.MAX_VALUE;
         int unsigned = 0;
 
         for (short s : separated) {
@@ -181,13 +181,17 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
                 max = unsigned;
             }
 
+            if (unsigned < min) {
+                min = unsigned;
+            }
+
         }
 
         ByteBuffer outputBuffer = ByteBuffer.allocate(argb.length * 4);
         byte[]     outputArray  = outputBuffer.array();
 
         for (int i = 0; i < separated.length; i++) {
-            outputArray[i] = (byte) (((255 * separated[i]) / max) & 0xFF);
+            outputArray[i] = (byte) (((255 * (separated[i] - min)) / (max - min)) & 0xFF);
         }
 
         outputBuffer.rewind().asIntBuffer().get(destination);

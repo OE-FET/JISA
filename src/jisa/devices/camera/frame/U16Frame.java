@@ -89,6 +89,7 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
     public void readScaledARGBData(int[] argb) {
 
         int max    = 0;
+        int min    = Integer.MAX_VALUE;
         int buffer = 0;
 
         for (short value : data) {
@@ -99,10 +100,14 @@ public class U16Frame implements Frame.UShortFrame<U16Frame> {
                 max = buffer;
             }
 
+            if (buffer < min) {
+                min = buffer;
+            }
+
         }
 
         for (int i = 0; i < data.length; i++) {
-            buffer  = ((255 * data[i]) / max) & 0xFF;
+            buffer  = ((255 * (data[i] - min)) / (max - min)) & 0xFF;
             argb[i] = (255 << 24) | (buffer << 16) | (buffer << 8) | buffer;
         }
 
