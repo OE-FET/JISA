@@ -64,7 +64,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
         address = indexObject instanceof IDAddress ? (IDAddress) indexObject : new IDAddress(String.valueOf(indexObject));
 
         // Check how many devices there are
-        int count = getIntByReference(sdk::ATSpectrographGetNumberDevices);
+        int count = getIntByReference(sdk::ATSpectrographGetNumberDevices, "GetNumberDevices");
 
         if (device >= count) {
             throw new DeviceException("No spectrograph with index %d found.", device);
@@ -79,7 +79,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
         for (int i = 0; i < 2; i++) {
 
             int fi     = i;
-            int result = getIntByReference(buffer -> sdk.ATSpectrographFlipperMirrorIsPresent(device, fi, buffer));
+            int result = getIntByReference(buffer -> sdk.ATSpectrographFlipperMirrorIsPresent(device, fi, buffer), "FlipperMirrorIsPresent");
 
             if (result == 1) {
                 flippers.add(new Flipper(i + 1, String.format("%s Port Flipper", i == 0 ? "Input" : "Output")));
@@ -90,7 +90,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
         for (int i = 0; i < 4; i++) {
 
             int fi     = i;
-            int result = getIntByReference(buffer -> sdk.ATSpectrographSlitIsPresent(device, fi, buffer));
+            int result = getIntByReference(buffer -> sdk.ATSpectrographSlitIsPresent(device, fi, buffer), "SlitIsPresent");
 
             if (result == 1) {
                 slits.add(new AdjustableSlit(i + 1, String.format("Adjustable Slit %d", i + 1)));
@@ -101,7 +101,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
         for (int i = 0; i < 4; i++) {
 
             int fi     = i;
-            int result = getIntByReference(buffer -> sdk.ATSpectrographIrisIsPresent(device, fi, buffer));
+            int result = getIntByReference(buffer -> sdk.ATSpectrographIrisIsPresent(device, fi, buffer), "IrisIsPresent");
 
             if (result == 1) {
                 irises.add(new Iris(i + 1, String.format("Iris %d", i + 1)));
@@ -110,7 +110,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
         }
 
 
-        int gratingCount = getIntByReference(buffer -> sdk.ATSpectrographGetNumberGratings(device, buffer));
+        int gratingCount = getIntByReference(buffer -> sdk.ATSpectrographGetNumberGratings(device, buffer), "GetNumberGratings");
 
         for (int i = 0; i < gratingCount; i++) {
             gratings.add(new Grating(i + 1, String.format("Grating %d", i + 1)));
@@ -120,8 +120,8 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
             filters.add(new Filter(i + 1, String.format("Filter %d", i + 1)));
         }
 
-        boolean gratingPresent = getIntByReference(buffer -> sdk.ATSpectrographGratingIsPresent(device, buffer)) == 1;
-        boolean filterPresent  = getIntByReference(buffer -> sdk.ATSpectrographFilterIsPresent(device, buffer)) == 1;
+        boolean gratingPresent = getIntByReference(buffer -> sdk.ATSpectrographGratingIsPresent(device, buffer), "GratingIsPresent") == 1;
+        boolean filterPresent  = getIntByReference(buffer -> sdk.ATSpectrographFilterIsPresent(device, buffer), "FilterIsPresent") == 1;
 
         List<Component> singles = new LinkedList<>();
 
@@ -149,7 +149,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
     }
 
-    protected void handle(int result) throws IOException, DeviceException {
+    protected void handle(int result, String method) throws IOException, DeviceException {
 
         switch (result) {
 
@@ -157,31 +157,31 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
                 return;
 
             case ATSpectrograph.ERROR_CODE_COMMUNICATION_ERROR:
-                throw new IOException("Communication error.");
+                throw new IOException(String.format("%s: Communication error.", method));
 
             case ATSpectrograph.ERROR_CODE_ERROR:
-                throw new DeviceException("Command Failed.");
+                throw new DeviceException(String.format("%s: Command Failed.", method));
 
             case ATSpectrograph.ERROR_CODE_P1INVALID:
-                throw new DeviceException("Parameter 1 invalid.");
+                throw new DeviceException(String.format("%s: Parameter 1 invalid.", method));
 
             case ATSpectrograph.ERROR_CODE_P2INVALID:
-                throw new DeviceException("Parameter 2 invalid.");
+                throw new DeviceException(String.format("%s: Parameter 2 invalid.", method));
 
             case ATSpectrograph.ERROR_CODE_P3INVALID:
-                throw new DeviceException("Parameter 3 invalid.");
+                throw new DeviceException(String.format("%s: Parameter 3 invalid.", method));
 
             case ATSpectrograph.ERROR_CODE_P4INVALID:
-                throw new DeviceException("Parameter 4 invalid.");
+                throw new DeviceException(String.format("%s: Parameter 4 invalid.", method));
 
             case ATSpectrograph.ERROR_CODE_P5INVALID:
-                throw new DeviceException("Parameter 5 invalid.");
+                throw new DeviceException(String.format("%s: Parameter 5 invalid.", method));
 
             case ATSpectrograph.ERROR_CODE_NOT_INITIALIZED:
-                throw new DeviceException("ATSpectrograph library not initialized.");
+                throw new DeviceException(String.format("%s: ATSpectrograph library not initialized.", method));
 
             case ATSpectrograph.ERROR_CODE_NOT_AVAILABLE:
-                throw new DeviceException("Device not available.");
+                throw new DeviceException(String.format("%s: Device not available.", method));
 
         }
 
@@ -191,12 +191,12 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
         int execute(B buffer);
     }
 
-    protected double getDoubleByReference(ByReference<FloatBuffer> method) throws IOException, DeviceException {
+    protected double getDoubleByReference(ByReference<FloatBuffer> method, String methodName) throws IOException, DeviceException {
 
         try (Memory memory = new Memory(Float.BYTES)) {
 
             FloatBuffer buffer = memory.getByteBuffer(0, Float.BYTES).asFloatBuffer();
-            handle(method.execute(buffer));
+            handle(method.execute(buffer), methodName);
 
             return memory.getFloat(0);
 
@@ -204,12 +204,12 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
     }
 
-    protected int getIntByReference(ByReference<IntBuffer> method) throws IOException, DeviceException {
+    protected int getIntByReference(ByReference<IntBuffer> method, String methodName) throws IOException, DeviceException {
 
         try (Memory memory = new Memory(Integer.BYTES)) {
 
             IntBuffer buffer = memory.getByteBuffer(0, Integer.BYTES).asIntBuffer();
-            handle(method.execute(buffer));
+            handle(method.execute(buffer), methodName);
 
             return memory.getInt(0);
 
@@ -274,14 +274,14 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
         }
 
-        handle(sdk.ATSpectrographSetShutter(device, index));
+        handle(sdk.ATSpectrographSetShutter(device, index), "SetShutter");
 
     }
 
     @Override
     public Mode getShutterMode() throws IOException, DeviceException {
 
-        int index = getIntByReference(buffer -> sdk.ATSpectrographGetShutter(device, buffer));
+        int index = getIntByReference(buffer -> sdk.ATSpectrographGetShutter(device, buffer), "GetShutter");
 
         switch (index) {
 
@@ -323,12 +323,12 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
         @Override
         public int getRoute() throws IOException, DeviceException {
-            return getIntByReference(buffer -> sdk.ATSpectrographGetFlipperMirror(device, index, buffer)) - 1;
+            return getIntByReference(buffer -> sdk.ATSpectrographGetFlipperMirror(device, index, buffer), "GetFlipperMirror") - 1;
         }
 
         @Override
         public void setRoute(int route) throws IOException, DeviceException {
-            handle(sdk.ATSpectrographSetFlipperMirror(device, index, route + 1));
+            handle(sdk.ATSpectrographSetFlipperMirror(device, index, route + 1), "SetFlipperMirror");
         }
 
         @Override
@@ -357,7 +357,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
         @Override
         public Grating getValue() throws IOException, DeviceException {
 
-            int index = getIntByReference(buffer -> sdk.ATSpectrographGetGrating(device, buffer));
+            int index = getIntByReference(buffer -> sdk.ATSpectrographGetGrating(device, buffer), "GetGrating");
 
             return GRATINGS.stream()
                     .filter(grating -> grating.getIndex() == index)
@@ -373,7 +373,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
                 throw new DeviceException("Invalid grating specified.");
             }
 
-            handle(sdk.ATSpectrographSetGrating(device, value.getIndex()));
+            handle(sdk.ATSpectrographSetGrating(device, value.getIndex()), "SetGrating");
 
         }
 
@@ -406,12 +406,12 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
         @Override
         public Double getValue() throws IOException, DeviceException {
-            return getDoubleByReference(reference -> sdk.ATSpectrographGetSlitWidth(device, index, reference));
+            return getDoubleByReference(reference -> sdk.ATSpectrographGetSlitWidth(device, index, reference), "GetSlitWidth");
         }
 
         @Override
         public void setValue(Double value) throws IOException, DeviceException {
-            handle(sdk.ATSpectrographSetSlitWidth(device, index, value.floatValue()));
+            handle(sdk.ATSpectrographSetSlitWidth(device, index, value.floatValue()), "SetSlitWidth");
         }
 
         @Override
@@ -448,12 +448,12 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
         @Override
         public Double getValue() throws IOException, DeviceException {
-            return (double) getIntByReference(buffer -> sdk.ATSpectrographGetIris(device, index, buffer));
+            return (double) getIntByReference(buffer -> sdk.ATSpectrographGetIris(device, index, buffer), "GetIris");
         }
 
         @Override
         public void setValue(Double value) throws IOException, DeviceException {
-            handle(sdk.ATSpectrographSetIris(device, index, (int) Math.round(value)));
+            handle(sdk.ATSpectrographSetIris(device, index, (int) Math.round(value)), "SetIris");
         }
 
         @Override
@@ -506,7 +506,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
         @Override
         public Filter getValue() throws IOException, DeviceException {
 
-            int index = getIntByReference(buffer -> sdk.ATSpectrographGetFilter(device, buffer));
+            int index = getIntByReference(buffer -> sdk.ATSpectrographGetFilter(device, buffer), "GetFilter");
 
             return FILTERS.stream()
                     .filter(grating -> grating.getIndex() == index)
@@ -521,7 +521,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
                 throw new DeviceException("Invalid filter specified.");
             }
 
-            handle(sdk.ATSpectrographSetFilter(device, value.getIndex()));
+            handle(sdk.ATSpectrographSetFilter(device, value.getIndex()), "SetFilter");
 
         }
 
