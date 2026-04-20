@@ -78,33 +78,51 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
         for (int i = 0; i < 2; i++) {
 
-            int fi     = i + 1;
-            int result = getIntByReference(buffer -> sdk.ATSpectrographFlipperMirrorIsPresent(device, fi, buffer), "FlipperMirrorIsPresent(" + fi + ")");
+            int fi = i + 1;
 
-            if (result == 1) {
-                flippers.add(new Flipper(i + 1, String.format("%s Port Flipper", i == 0 ? "Input" : "Output")));
+            try {
+
+                int result = getIntByReference(buffer -> sdk.ATSpectrographFlipperMirrorIsPresent(device, fi, buffer), "FlipperMirrorIsPresent(" + fi + ")");
+
+                if (result == 1) {
+                    flippers.add(new Flipper(i + 1, String.format("%s Port Flipper", i == 0 ? "Input" : "Output")));
+                }
+
+            } catch (Throwable ignored) {
             }
 
         }
 
         for (int i = 0; i < 4; i++) {
 
-            int fi     = i + 1;
-            int result = getIntByReference(buffer -> sdk.ATSpectrographSlitIsPresent(device, fi, buffer), "SlitIsPresent");
+            int fi = i + 1;
 
-            if (result == 1) {
-                slits.add(new AdjustableSlit(i + 1, String.format("Adjustable Slit %d", i + 1)));
+            try {
+
+                int result = getIntByReference(buffer -> sdk.ATSpectrographSlitIsPresent(device, fi, buffer), "SlitIsPresent");
+
+                if (result == 1) {
+                    slits.add(new AdjustableSlit(i + 1, String.format("Adjustable Slit %d", i + 1)));
+                }
+
+            } catch (Throwable ignored) {
             }
 
         }
 
         for (int i = 0; i < 4; i++) {
 
-            int fi     = i + 1;
-            int result = getIntByReference(buffer -> sdk.ATSpectrographIrisIsPresent(device, fi, buffer), "IrisIsPresent(" + fi + ")");
+            int fi = i + 1;
 
-            if (result == 1) {
-                irises.add(new Iris(i + 1, String.format("Iris %d", i + 1)));
+            try {
+
+                int result = getIntByReference(buffer -> sdk.ATSpectrographIrisIsPresent(device, fi, buffer), "IrisIsPresent(" + fi + ")");
+
+                if (result == 1) {
+                    irises.add(new Iris(i + 1, String.format("Iris %d", i + 1)));
+                }
+
+            } catch (Throwable ignored) {
             }
 
         }
