@@ -9,10 +9,10 @@ import org.apache.commons.lang3.ClassUtils;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 /**
  * Interface for defining the base functionality of all instruments.
@@ -178,26 +178,23 @@ public interface Instrument {
 
     default Map<String, Object> getAllParametersAsMap() {
 
-        return getAllParameters().stream().collect(Collectors.toMap(
-                p -> {
+        Map<String, Object> map = new LinkedHashMap<>();
 
-                    if (p.isGrouped()) {
-                        return String.format("%s %s", p.getGroup(), p.getName());
-                    } else {
-                        return p.getName();
-                    }
+        for (Parameter<?> parameter : getAllParameters(getClass())) {
 
-                },
-                p -> {
+            try {
 
-                    try {
-                        return p.getCurrentValue();
-                    } catch (Throwable e) {
-                        return p.getDefaultValue();
-                    }
+                map.put(
+                    parameter.isGrouped() ? String.format("%s %s", parameter.getGroup(), parameter.getName()) : parameter.getName(),
+                    parameter.getCurrentValue()
+                );
 
-                }
-        ));
+            } catch (Throwable ignored) {
+            }
+
+        }
+
+        return map;
 
     }
 
@@ -261,6 +258,7 @@ public interface Instrument {
         public Parameter(String name, S defaultValue, Setter<S> setter, S... options) {
             this("", name, defaultValue, setter, null, options);
         }
+
         public Parameter(String group, String name, S defaultValue, Setter<S> setter, S... options) {
             this(group, name, defaultValue, setter, null, options);
         }
