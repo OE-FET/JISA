@@ -101,7 +101,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
         for (int i = 0; i < 4; i++) {
 
             int fi     = i + 1;
-            int result = getIntByReference(buffer -> sdk.ATSpectrographIrisIsPresent(device, fi, buffer), "IrisIsPresent");
+            int result = getIntByReference(buffer -> sdk.ATSpectrographIrisIsPresent(device, fi, buffer), "IrisIsPresent(" + fi + ")");
 
             if (result == 1) {
                 irises.add(new Iris(i + 1, String.format("Iris %d", i + 1)));
