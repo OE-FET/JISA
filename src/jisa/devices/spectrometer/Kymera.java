@@ -1,6 +1,7 @@
 package jisa.devices.spectrometer;
 
 import com.sun.jna.Memory;
+import com.sun.jna.Platform;
 import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
@@ -29,31 +30,20 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
     public final List<Filter>  FILTERS;
 
     protected final ATSpectrograph sdk;
-    private final   int            device;
+    protected final int            device;
+    protected final IDAddress      address;
 
     protected Kymera(Object indexObject) throws IOException, DeviceException {
 
         super("Andor Kymera Spectrograph");
 
-        if (indexObject == null) {
+        List<String> extraPaths = new LinkedList<>();
 
-            sdk    = null;
-            device = -1;
-
-            SWAPPABLE_GRATING = new SwappableGrating();
-            FILTER_WHEEL      = new FilterWheel();
-            FLIPPERS          = List.of(new Flipper(1, "Input Port Flipper"), new Flipper(2, "Output Port Flipper"));
-            SLITS             = List.of(new AdjustableSlit(1, "Adjustable Slit 1"));
-            GRATINGS          = List.of(new Grating(1, "Grating 1"), new Grating(2, "Grating 2"), new Grating(3, "Grating 3"), new Grating(4, "Grating 4"));
-            FILTERS           = List.of(new Filter(1, "Filter 1"), new Filter(2, "Filter 2"), new Filter(3, "Filter 3"), new Filter(4, "Filter 4"), new Filter(5, "Filter 5"), new Filter(6, "Filter 6"));
-            IRISES            = List.of(new Iris(1, "Iris 1"), new Iris(2, "Iris 2"));
-            COMPONENTS        = Util.joinLists(List.of(SWAPPABLE_GRATING, FILTER_WHEEL), FLIPPERS, SLITS, IRISES);
-
-            return;
-
+        if (Platform.isWindows() && System.getenv("ProgramFiles") != null) {
+            extraPaths.add(Util.joinPath(System.getenv("ProgramFiles"), "Andor SDK", "ATSpectrograph", Platform.is64Bit() ? "64" : "32"));
         }
 
-        sdk = findLibrary(ATSpectrograph.class, "atspectrograph");
+        sdk = findLibrary(ATSpectrograph.class, "atspectrograph", extraPaths.toArray(String[]::new));
 
         if (indexObject instanceof Integer) {
             device = (Integer) indexObject;
@@ -70,6 +60,8 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
         } else {
             throw new DeviceException("Address must either be an integer or an integer wrapped in an IDAddress object.");
         }
+
+        address = indexObject instanceof IDAddress ? (IDAddress) indexObject : new IDAddress(String.valueOf(indexObject));
 
         // Check how many devices there are
         int count = getIntByReference(sdk::ATSpectrographGetNumberDevices);
@@ -124,27 +116,27 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
             gratings.add(new Grating(i + 1, String.format("Grating %d", i + 1)));
         }
 
+        for (int i = 0; i < 6; i++) {
+            filters.add(new Filter(i + 1, String.format("Filter %d", i + 1)));
+        }
+
         boolean gratingPresent = getIntByReference(buffer -> sdk.ATSpectrographGratingIsPresent(device, buffer)) == 1;
         boolean filterPresent  = getIntByReference(buffer -> sdk.ATSpectrographFilterIsPresent(device, buffer)) == 1;
 
         List<Component> singles = new LinkedList<>();
 
         if (gratingPresent) {
-            SWAPPABLE_GRATING = new SwappableGrating();
+            SWAPPABLE_GRATING = new SwappableGrating(gratings);
             singles.add(SWAPPABLE_GRATING);
         } else {
             SWAPPABLE_GRATING = null;
         }
 
         if (filterPresent) {
-            FILTER_WHEEL = new FilterWheel();
+            FILTER_WHEEL = new FilterWheel(filters);
             singles.add(FILTER_WHEEL);
         } else {
             FILTER_WHEEL = null;
-        }
-
-        for (int i = 0; i < 6; i++) {
-            filters.add(new Filter(i + 1, String.format("Filter %d", i + 1)));
         }
 
         FLIPPERS   = List.copyOf(flippers);
@@ -255,7 +247,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
     @Override
     public Address getAddress() {
-        return new IDAddress(String.valueOf(device));
+        return address;
     }
 
     @Override
@@ -348,7 +340,17 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
     public class SwappableGrating implements Spectrograph.SwappableGrating<Kymera> {
 
-        protected SwappableGrating() {
+        public final Grating GRATING_1;
+        public final Grating GRATING_2;
+        public final Grating GRATING_3;
+        public final Grating GRATING_4;
+
+        protected SwappableGrating(List<Grating> gratings) {
+
+            GRATING_1 = Kymera.this.GRATINGS.stream().filter(g -> g.getIndex() == 1).findFirst().orElse(null);
+            GRATING_2 = Kymera.this.GRATINGS.stream().filter(g -> g.getIndex() == 2).findFirst().orElse(null);
+            GRATING_3 = Kymera.this.GRATINGS.stream().filter(g -> g.getIndex() == 3).findFirst().orElse(null);
+            GRATING_4 = Kymera.this.GRATINGS.stream().filter(g -> g.getIndex() == 4).findFirst().orElse(null);
 
         }
 
@@ -358,9 +360,9 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
             int index = getIntByReference(buffer -> sdk.ATSpectrographGetGrating(device, buffer));
 
             return GRATINGS.stream()
-                           .filter(grating -> grating.getIndex() == index)
-                           .findFirst()
-                           .orElseThrow(() -> new IOException("Invalid grating index response from Kymera."));
+                    .filter(grating -> grating.getIndex() == index)
+                    .findFirst()
+                    .orElseThrow(() -> new IOException("Invalid grating index response from Kymera."));
 
         }
 
@@ -483,6 +485,23 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
     public class FilterWheel implements Spectrograph.FilterWheel<Kymera> {
 
+        public final Filter FILTER_1;
+        public final Filter FILTER_2;
+        public final Filter FILTER_3;
+        public final Filter FILTER_4;
+        public final Filter FILTER_5;
+        public final Filter FILTER_6;
+
+        public FilterWheel(List<Filter> filters) {
+
+            FILTER_1 = filters.stream().filter(f -> f.getIndex() == 1).findFirst().orElse(null);
+            FILTER_2 = filters.stream().filter(f -> f.getIndex() == 2).findFirst().orElse(null);
+            FILTER_3 = filters.stream().filter(f -> f.getIndex() == 3).findFirst().orElse(null);
+            FILTER_4 = filters.stream().filter(f -> f.getIndex() == 4).findFirst().orElse(null);
+            FILTER_5 = filters.stream().filter(f -> f.getIndex() == 5).findFirst().orElse(null);
+            FILTER_6 = filters.stream().filter(f -> f.getIndex() == 6).findFirst().orElse(null);
+
+        }
 
         @Override
         public Filter getValue() throws IOException, DeviceException {
@@ -490,9 +509,9 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
             int index = getIntByReference(buffer -> sdk.ATSpectrographGetFilter(device, buffer));
 
             return FILTERS.stream()
-                          .filter(grating -> grating.getIndex() == index)
-                          .findFirst()
-                          .orElseThrow(() -> new IOException("Invalid filter index response from Kymera."));
+                    .filter(grating -> grating.getIndex() == index)
+                    .findFirst()
+                    .orElseThrow(() -> new IOException("Invalid filter index response from Kymera."));
         }
 
         @Override

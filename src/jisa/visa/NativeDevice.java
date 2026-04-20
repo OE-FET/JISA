@@ -1,6 +1,8 @@
 package jisa.visa;
 
 import com.sun.jna.Native;
+import com.sun.jna.NativeLibrary;
+import com.sun.jna.Platform;
 import jisa.Util;
 import jisa.devices.DeviceException;
 import jisa.devices.Instrument;
@@ -8,6 +10,7 @@ import jisa.devices.LibraryInitialisationException;
 import jisa.devices.LibraryNotFoundException;
 import org.reflections.Reflections;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
@@ -32,7 +35,9 @@ public abstract class NativeDevice implements Instrument {
                 NativeDevice device = reference.get();
 
                 try {
-                    if (device != null) { device.close(); }
+                    if (device != null) {
+                        device.close();
+                    }
                 } catch (Throwable ignored) {
                     // Ignored
                 }
@@ -58,12 +63,10 @@ public abstract class NativeDevice implements Instrument {
      * @param libraryInterface Class of the interface used to represent the library.
      * @param libraryName      Name of the library (i.e., X means X.dll or libX.so etc).
      * @param <I>              The interface used to represent the library.
-     *
      * @return Object representing the library.
-     *
      * @throws DeviceException If the library cannot be found or fails to initialise.
      */
-    public <I extends com.sun.jna.Library>  I findLibrary(Class<I> libraryInterface, String libraryName) throws DeviceException {
+    public <I extends com.sun.jna.Library> I findLibrary(Class<I> libraryInterface, String libraryName, String... extraPaths) throws DeviceException {
 
         synchronized (libraries) {
 
@@ -72,7 +75,7 @@ public abstract class NativeDevice implements Instrument {
                 return (I) libraries.get(libraryInterface);
             }
 
-            I loaded = getNewLibraryInstance(libraryInterface, libraryName);
+            I loaded = getNewLibraryInstance(libraryInterface, libraryName, extraPaths);
 
             libraries.put(libraryInterface, loaded);
 
@@ -89,16 +92,56 @@ public abstract class NativeDevice implements Instrument {
      * @param libraryInterface Class of the interface used to represent the library.
      * @param libraryName      Name of the library (i.e., X means X.dll or libX.so etc).
      * @param <I>              The interface used to represent the library.
-     *
      * @return Object representing the library.
-     *
      * @throws DeviceException If the library cannot be found or fails to initialise.
      */
-    public <I extends com.sun.jna.Library> I getNewLibraryInstance(Class<I> libraryInterface, String libraryName) throws DeviceException {
+    public <I extends com.sun.jna.Library> I getNewLibraryInstance(Class<I> libraryInterface, String libraryName, String... extraPaths) throws DeviceException {
+
+        for (String path : extraPaths) {
+            NativeLibrary.addSearchPath(libraryName, path);
+        }
 
         try {
 
-            I loaded = Native.load(libraryName, libraryInterface);
+            I loaded;
+
+            try {
+
+                // Try once as is, if this fails, try again including ~/libs and a recursive search of Program Files (Windows)
+                loaded = Native.load(libraryName, libraryInterface);
+
+            } catch (Throwable e) {
+
+                String fileName;
+
+                if (Platform.isWindows()) {
+                    fileName = String.format("%s\\.dll", libraryName);
+                } else if (Platform.isLinux()) {
+                    fileName = String.format("lib%s\\.so(\\..*?)?", libraryName);
+                } else if (Platform.isMac()) {
+                    fileName = String.format("lib%s\\.dylib", libraryName);
+                } else {
+                    fileName = libraryName;
+                }
+
+                String manualPath   = Util.joinPath(System.getProperty("user.home"), "libs");
+                String programFiles = System.getProperty("ProgramFiles");
+
+                NativeLibrary.addSearchPath(libraryName, manualPath);
+
+                if (programFiles != null) {
+
+                    File found = searchFile(new File(programFiles), fileName);
+
+                    if (found != null) {
+                        NativeLibrary.addSearchPath(libraryName, found.getParentFile().getAbsolutePath());
+                    }
+                }
+
+                // Try again
+                loaded = Native.load(libraryName, libraryInterface);
+
+            }
 
             if (loaded instanceof Library) {
 
@@ -120,6 +163,38 @@ public abstract class NativeDevice implements Instrument {
 
     }
 
+    protected static File searchFile(File root, String regex) {
+
+        if (root.isDirectory()) {
+
+            try {
+
+                for (File f : Objects.requireNonNull(root.listFiles())) {
+
+                    File found = searchFile(f, regex);
+
+                    if (found != null) {
+                        return found;
+                    }
+
+                }
+
+            } catch (NullPointerException e) {
+                return null;
+            }
+
+        } else {
+
+            if (root.getName().matches(regex)) {
+                return root;
+            }
+
+        }
+
+        return null;
+
+    }
+
     public static List<NativeDevice> search() {
 
         Reflections                        reflection = new Reflections("jisa");
@@ -134,7 +209,8 @@ public abstract class NativeDevice implements Instrument {
                 try {
                     Method search = c.getMethod("find");
                     found.addAll((List<NativeDevice>) search.invoke(null));
-                } catch (Throwable ignored) { }
+                } catch (Throwable ignored) {
+                }
 
             }
 

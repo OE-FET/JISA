@@ -18,9 +18,9 @@ import java.io.IOException;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import static jisa.devices.camera.nat.ATMCDxxD.*;
@@ -67,25 +67,16 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         super("Andor SDK2 Camera");
 
+        List<String> extraPaths = new LinkedList<>();
+
         if (Platform.isWindows() && System.getenv("ProgramFiles") != null) {
-
-            Path windowsPath = Path.of(System.getenv("ProgramFiles"), "Andor SDK");
-
-            if (Files.exists(windowsPath)) {
-
-                String       path  = System.getProperty("jna.library.path");
-                List<String> parts = path == null ? new ArrayList<>() : Arrays.asList(path.split(";"));
-                parts.add(windowsPath.toString());
-                System.setProperty("jna.library.path", String.join(";", parts));
-
-            }
-
+            extraPaths.add(Util.joinPath(System.getenv("ProgramFiles"), "Andor SDK"));
         }
 
         if (Platform.is64Bit()) {
-            this.sdk = findLibrary(ATMCDxxD.class, "atmcd64d");
+            this.sdk = findLibrary(ATMCDxxD.class, "atmcd64d", extraPaths.toArray(String[]::new));
         } else {
-            this.sdk = findLibrary(ATMCDxxD.class, "atmcd32d");
+            this.sdk = findLibrary(ATMCDxxD.class, "atmcd32d", extraPaths.toArray(String[]::new));
         }
 
         this.index = index;
@@ -182,8 +173,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
                     handle(sdk.SetReadMode(1), "SetReadMode(MULTI-TRACK [sequence])");
                     handle(
-                        sdk.SetMultiTrack(trackSequenceCount, trackSequenceHeight, trackSequenceOffset, IntBuffer.allocate(1), IntBuffer.allocate(1)),
-                        String.format("SetMultiTrack(%d, %d, %d)", trackSequenceCount, trackSequenceHeight, trackSequenceOffset)
+                            sdk.SetMultiTrack(trackSequenceCount, trackSequenceHeight, trackSequenceOffset, IntBuffer.allocate(1), IntBuffer.allocate(1)),
+                            String.format("SetMultiTrack(%d, %d, %d)", trackSequenceCount, trackSequenceHeight, trackSequenceOffset)
                     );
 
                     break;
@@ -409,8 +400,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
         withCameraSelected(sdk -> {
 
             handle(
-                sdk.GetAcquisitionTimings(exposure, accumulate, kinetic),
-                "GetAcquisitionTimings"
+                    sdk.GetAcquisitionTimings(exposure, accumulate, kinetic),
+                    "GetAcquisitionTimings"
             );
 
         });
