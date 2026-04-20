@@ -112,7 +112,6 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
             }
 
-
         }
 
     }
@@ -143,7 +142,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             String[] serialNumbers = memory.getString(0, "US_ASCII").trim().split(" ");
             String   serialNumber  = ((IDAddress) address).getID();
 
-            try (Memory memory2 = new Memory(serialNumbers[0].length())) {
+            try (Memory memory2 = new Memory(serialNumber.length())) {
 
                 memory2.setString(0, serialNumber, "US_ASCII");
                 handle = getPointer(ref -> sdk.tl_camera_open_camera(memory2.getByteBuffer(0, memory2.size()), ref), "tl_camera_open_camera");
