@@ -129,7 +129,7 @@ public abstract class NativeDevice implements Instrument {
                 }
 
                 String manualPath   = Util.joinPath(System.getProperty("user.home"), "libs");
-                String programFiles = System.getProperty("ProgramFiles");
+                String programFiles = System.getenv("ProgramFiles");
 
                 NativeLibrary.addSearchPath(libraryName, manualPath);
 

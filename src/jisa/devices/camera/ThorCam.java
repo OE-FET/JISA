@@ -2,6 +2,7 @@ package jisa.devices.camera;
 
 import com.google.common.primitives.Ints;
 import com.sun.jna.Memory;
+import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
 import jisa.Util;
@@ -115,7 +116,13 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         super("ThorCam SDK Camera");
 
-        sdk = findLibrary(ThorCamLibrary.class, "thorlabs_tsi_camera_sdk");
+        List<String> extraPaths = new LinkedList<>();
+
+        if (Platform.isWindows() && System.getenv("ProgramFiles") != null) {
+            String path = Util.joinPath(System.getenv("ProgramFiles"), "Thorlabs", "Scientific Imaging", "ThorCam");
+        }
+
+        sdk = findLibrary(ThorCamLibrary.class, "thorlabs_tsi_camera_sdk", extraPaths);
 
         ByteBuffer serials = ByteBuffer.allocate(1024);
         sdk.tl_camera_discover_available_cameras(serials, 1024);
