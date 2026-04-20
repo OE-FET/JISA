@@ -578,6 +578,11 @@ public class ConfigPanel<I extends Instrument> extends JFXElement {
         }
 
         public boolean isChanged() {
+
+            if (nodeItem.getValue() == null) {
+                return false;
+            }
+
             return !nodeItem.getValue().equals(nodeItem.getLastValue());
         }
 

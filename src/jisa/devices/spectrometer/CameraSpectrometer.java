@@ -1,5 +1,7 @@
 package jisa.devices.spectrometer;
 
+import javafx.beans.Observable;
+import javafx.beans.property.SimpleObjectProperty;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
@@ -12,6 +14,8 @@ import jisa.maths.Range;
 import jisa.maths.fits.Fitting;
 import jisa.maths.fits.PolyFit;
 import jisa.maths.functions.Function;
+import jisa.results.Column;
+import jisa.results.ResultList;
 
 import java.io.IOException;
 import java.util.*;
@@ -54,7 +58,9 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
         frameAttributes.putAll(camera.getAllParametersAsMap());
 
         if (spectrograph != null) {
-            frameAttributes.putAll(spectrograph.getAllParametersAsMap());
+            try {
+                frameAttributes.putAll(spectrograph.getAllParametersAsMap());
+            } catch (Throwable ignored) { }
         }
 
         attributesChanged = true;
@@ -69,6 +75,49 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
         if (spectrograph != null) {
             parameters.addAll(spectrograph.getAllParameters());
         }
+
+        Column<Integer> IX     = Column.ofIntegers("Channel Index");
+        Column<Double>  WL     = Column.ofDoubles("Wavelength", "m");
+        ResultList      values = new ResultList(IX, WL);
+
+        AtomicReference<ResultList> wavelengths  = new AtomicReference<>(values);
+        AtomicReference<Integer>    fittingOrder = new AtomicReference<>(1);
+
+        parameters.addValue(
+            "Frame Conversion",
+            "Wavelengths",
+            wavelengths::get,
+            values,
+            wl -> {
+
+                wavelengths.set(wl);
+
+                setConverterFullVerticalBinning(
+                    wavelengths.get().stream().collect(Collectors.toMap(r -> r.get(IX), r -> r.get(WL))),
+                    fittingOrder.get()
+                );
+
+            }
+
+        );
+
+        parameters.addValue(
+            "Frame Conversion",
+            "Fitting Order",
+            fittingOrder::get,
+            1,
+            fo -> {
+
+                fittingOrder.set(fo);
+
+                setConverterFullVerticalBinning(
+                    wavelengths.get().stream().collect(Collectors.toMap(r -> r.get(IX), r -> r.get(WL))),
+                    fittingOrder.get()
+                );
+
+            }
+
+        );
 
     }
 

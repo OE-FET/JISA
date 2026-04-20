@@ -45,7 +45,7 @@ public class TableInput extends VBox {
         setUpButtonBar();
 
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        table.setMinHeight(150.0);
+        table.setPrefHeight(150.0);
         table.setPrefWidth(75.0);
 
     }

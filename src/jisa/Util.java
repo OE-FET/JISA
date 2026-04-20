@@ -1,5 +1,6 @@
 package jisa;
 
+import com.google.common.collect.ImmutableList;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
@@ -10,6 +11,7 @@ import jisa.control.ERunnable;
 import jisa.control.SRunnable;
 import jisa.devices.DeviceException;
 import jisa.visa.exceptions.VISAException;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -1127,4 +1129,26 @@ public class Util {
         }
 
     }
+
+    public static <T> List<T> joinLists(List<? extends T>... lists) {
+
+        int totalCount = 0;
+
+        for (List<? extends T> list : lists) {
+            totalCount += list.size();
+        }
+
+        T[] array = (T[]) new Object[totalCount];
+
+        int i = 0;
+        for (List<? extends T> list : lists) {
+            for (T t : list) {
+                array[i++] = t;
+            }
+        }
+
+        return List.of(array);
+
+    }
+
 }

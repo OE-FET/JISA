@@ -38,9 +38,9 @@ public interface Spectrograph extends Instrument, MultiInstrument {
                 List possibleValues = inst.getPossibleValues();
 
                 if (possibleValues.isEmpty()) {
-                    parameters.addValue("Components", inst.getName(), inst::getValue, null, inst::setValue);
+                    parameters.addValue("Spectrograph Components", inst.getName(), inst::getValue, null, inst::setValue);
                 } else {
-                    parameters.addChoice("Components", inst.getName(), (Getter) inst::getValue, null, (Setter) inst::setValue, possibleValues.toArray());
+                    parameters.addChoice("Spectrograph Components", inst.getName(), (Getter) inst::getValue, null, (Setter) inst::setValue, possibleValues.toArray());
                 }
 
             } catch (Throwable ignored) {
@@ -101,16 +101,30 @@ public interface Spectrograph extends Instrument, MultiInstrument {
 
     }
 
+    interface AdjustableSlit<S extends Spectrograph> extends Component<S, Double> {
+
+        Double getMin() throws IOException, DeviceException;
+
+        Double getMax() throws IOException, DeviceException;
+
+        default List<Double> getPossibleValues() throws IOException, DeviceException {
+            return List.of();
+        }
+
+    }
+
+    interface FilterWheel<S extends Spectrograph> extends Component<S, Filter> {
+
+    }
+
     class Grating {
 
         private final int    index;
         private final String name;
-        private final double lines;
 
-        public Grating(int index, String name, double lines) {
+        public Grating(int index, String name) {
             this.index = index;
             this.name  = name;
-            this.lines = lines;
         }
 
         public int getIndex() {
@@ -121,12 +135,32 @@ public interface Spectrograph extends Instrument, MultiInstrument {
             return name;
         }
 
-        public double getLines() {
-            return lines;
+        public String toString() {
+            return name;
+        }
+
+    }
+
+    class Filter {
+
+        private final int    index;
+        private final String name;
+
+        public Filter(int index, String name) {
+            this.index = index;
+            this.name  = name;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public String getName() {
+            return name;
         }
 
         public String toString() {
-            return String.format("%s (%.02g lines)", name, lines);
+            return name;
         }
 
     }
