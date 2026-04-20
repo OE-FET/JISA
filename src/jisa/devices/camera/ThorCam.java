@@ -143,8 +143,12 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             sdk.tl_camera_discover_available_cameras(serials, 2048);
 
             String[] serialNumbers = memory.getString(0, "ASCII").trim().split(" ");
-            String   serialNumber  = ((IDAddress) address).getID();
+            String   serialNumber  = ((IDAddress) address).getID().trim();
             byte[]   bytes         = serialNumber.getBytes(StandardCharsets.US_ASCII);
+
+            if (!Arrays.asList(serialNumbers).contains(serialNumber)) {
+                throw new DeviceException("Invalid SerialNumber. Available options: %s", String.join(", ", serialNumbers));
+            }
 
             try (Memory memory2 = new Memory(bytes.length)) {
 
