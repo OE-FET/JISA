@@ -181,7 +181,7 @@ public interface ThorCamLibrary extends Library {
 
     int tl_camera_issue_software_trigger(Pointer tl_camera_handle);
 
-    int tl_camera_open_camera(String camera_serial_number, PointerByReference tl_camera_handle);
+    int tl_camera_open_camera(ByteBuffer camera_serial_number, PointerByReference tl_camera_handle);
 
     int tl_camera_open_sdk();
 

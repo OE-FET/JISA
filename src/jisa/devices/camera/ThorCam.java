@@ -105,7 +105,13 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
             String[] serialNumbers = memory.getString(0, "US_ASCII").trim().split(" ");
 
-            handle = getPointer(ref -> sdk.tl_camera_open_camera(serialNumbers[0], ref), "tl_camera_open_camera");
+            try (Memory memory2 = new Memory(serialNumbers[0].length())) {
+
+                memory2.setString(0, serialNumbers[0], "US_ASCII");
+                handle = getPointer(ref -> sdk.tl_camera_open_camera(memory2.getByteBuffer(0, memory2.size()), ref), "tl_camera_open_camera");
+
+            }
+
 
         }
 
@@ -135,11 +141,13 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             sdk.tl_camera_discover_available_cameras(serials, 2048);
 
             String[] serialNumbers = memory.getString(0, "US_ASCII").trim().split(" ");
+            String   serialNumber  = ((IDAddress) address).getID();
 
-            if (address instanceof IDAddress) {
-                handle = getPointer(ref -> sdk.tl_camera_open_camera(((IDAddress) address).getID(), ref), "tl_camera_open_camera");
-            } else {
-                throw new DeviceException("Only IDAddress objects are supported.");
+            try (Memory memory2 = new Memory(serialNumbers[0].length())) {
+
+                memory2.setString(0, serialNumber, "US_ASCII");
+                handle = getPointer(ref -> sdk.tl_camera_open_camera(memory2.getByteBuffer(0, memory2.size()), ref), "tl_camera_open_camera");
+
             }
 
         }
