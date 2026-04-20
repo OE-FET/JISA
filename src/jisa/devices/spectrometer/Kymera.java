@@ -365,10 +365,10 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
         protected SwappableGrating(List<Grating> gratings) {
 
-            GRATING_1 = Kymera.this.GRATINGS.stream().filter(g -> g.getIndex() == 1).findFirst().orElse(null);
-            GRATING_2 = Kymera.this.GRATINGS.stream().filter(g -> g.getIndex() == 2).findFirst().orElse(null);
-            GRATING_3 = Kymera.this.GRATINGS.stream().filter(g -> g.getIndex() == 3).findFirst().orElse(null);
-            GRATING_4 = Kymera.this.GRATINGS.stream().filter(g -> g.getIndex() == 4).findFirst().orElse(null);
+            GRATING_1 = gratings.stream().filter(g -> g.getIndex() == 1).findFirst().orElse(null);
+            GRATING_2 = gratings.stream().filter(g -> g.getIndex() == 2).findFirst().orElse(null);
+            GRATING_3 = gratings.stream().filter(g -> g.getIndex() == 3).findFirst().orElse(null);
+            GRATING_4 = gratings.stream().filter(g -> g.getIndex() == 4).findFirst().orElse(null);
 
         }
 
