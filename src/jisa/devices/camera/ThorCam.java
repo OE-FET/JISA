@@ -22,7 +22,6 @@ import java.nio.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 /**
  * Driver class for ThorLabs cameras.
@@ -1089,15 +1088,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
                 return new ColourFrame(array, width, height, timestamp, this);
             } catch (Throwable ignored) {
 
-                return new U16RGBFrame(array, width, height, timestamp, getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
-
-                    try {
-                        return p.getCurrentValue();
-                    } catch (Throwable e) {
-                        return null;
-                    }
-
-                })));
+                return new U16RGBFrame(array, width, height, timestamp, getAllParametersAsMap());
 
             }
 
@@ -1189,15 +1180,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         public ColourFrame(long[] argb, int width, int height, long timestamp, ThorCam camera) {
 
-            super(argb, width, height, timestamp, camera.getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
-
-                try {
-                    return p.getCurrentValue();
-                } catch (Throwable e) {
-                    return null;
-                }
-
-            })));
+            super(argb, width, height, timestamp, camera.getAllParametersAsMap());
 
         }
 
@@ -1237,15 +1220,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         public MonoFrame(short[] data, int width, int height, long timestamp, ThorCam camera) {
 
-            super(data, width, height, timestamp, camera.getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
-
-                try {
-                    return p.getCurrentValue();
-                } catch (Throwable e) {
-                    return null;
-                }
-
-            })));
+            super(data, width, height, timestamp, camera.getAllParametersAsMap());
 
         }
 

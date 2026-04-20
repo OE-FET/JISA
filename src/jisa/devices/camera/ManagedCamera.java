@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 /**
  * Abstract class for NativeDevice cameras (i.e., those that need to use a system library/so/dylib/dll) that provides
@@ -91,19 +90,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
 
         final F frameBuffer = createFrameBuffer();
 
-        frameBuffer.getAttributes().putAll(
-
-            getAllParameters().stream().collect(Collectors.toMap(Parameter::getName, p -> {
-
-                try {
-                    return p.getCurrentValue();
-                } catch (Throwable e) {
-                    return null;
-                }
-
-            }))
-
-        );
+        frameBuffer.getAttributes().putAll(getAllParametersAsMap());
 
         return frameBuffer;
 
