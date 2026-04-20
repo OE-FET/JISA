@@ -103,7 +103,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
             sdk.tl_camera_discover_available_cameras(serials, 2048);
 
-            String[] serialNumbers = memory.getString(0, "ASCII").trim().split(" ");
+            String[] serialNumbers = new String(memory.getByteArray(0, 2048), StandardCharsets.US_ASCII).trim().split(" ");
             String   serialNumber  = serialNumbers[0];
             byte[]   bytes         = serialNumber.getBytes(StandardCharsets.US_ASCII);
 
@@ -142,7 +142,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
             sdk.tl_camera_discover_available_cameras(serials, 2048);
 
-            String[] serialNumbers = memory.getString(0, "ASCII").trim().split(" ");
+            String[] serialNumbers = new String(memory.getByteArray(0, 2048), StandardCharsets.US_ASCII).trim().split(" ");
             String   serialNumber  = ((IDAddress) address).getID().trim();
             byte[]   bytes         = serialNumber.getBytes(StandardCharsets.US_ASCII);
 
