@@ -449,7 +449,6 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
             }
 
             handle(sdk.StartAcquisition(), "StartAcquisition");
-            handle(sdk.SendSoftwareTrigger(), "SendSoftwareTrigger");
 
         });
 
