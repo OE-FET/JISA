@@ -79,7 +79,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
         for (int i = 0; i < 2; i++) {
 
             int fi     = i + 1;
-            int result = getIntByReference(buffer -> sdk.ATSpectrographFlipperMirrorIsPresent(device, fi, buffer), "FlipperMirrorIsPresent");
+            int result = getIntByReference(buffer -> sdk.ATSpectrographFlipperMirrorIsPresent(device, fi, buffer), "FlipperMirrorIsPresent(" + fi + ")");
 
             if (result == 1) {
                 flippers.add(new Flipper(i + 1, String.format("%s Port Flipper", i == 0 ? "Input" : "Output")));
