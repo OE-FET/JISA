@@ -15,6 +15,8 @@ public interface ThorCamLibrary extends Library {
         tl_camera_open_sdk();
         Util.addShutdownHook(this::tl_camera_close_sdk);
 
+        Util.sleep(1000);
+
     }
 
     int tl_camera_arm(Pointer tl_camera_handle, int number_of_frames_to_buffer);
