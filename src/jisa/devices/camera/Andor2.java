@@ -460,7 +460,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
     @Override
     protected U16Frame createFrameBuffer() {
-        return new U16Frame(new short[width * height], width, height);
+        return new U16Frame(new short[getFrameSize()], getFrameWidth(), getFrameHeight());
     }
 
     @Override
@@ -480,7 +480,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         withCameraSelected(sdk -> sdk.GetMostRecentImage16(imageBuffer.clear().rewind(), new NativeLong(imageBuffer.capacity(), true)));
 
-        imageBuffer.get(frameBuffer.array());
+        imageBuffer.rewind().get(frameBuffer.array());
 
     }
 
@@ -505,7 +505,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     }
 
     @Override
-    public int getFrameWidth() throws IOException, DeviceException {
+    public int getFrameWidth() {
 
         switch (imageMode) {
 
@@ -541,7 +541,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     }
 
     @Override
-    public int getFrameHeight() throws IOException, DeviceException {
+    public int getFrameHeight() {
 
         switch (imageMode) {
 
@@ -630,7 +630,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     }
 
     @Override
-    public int getFrameSize() throws IOException, DeviceException {
+    public int getFrameSize() {
         return getFrameWidth() * getFrameHeight();
     }
 
