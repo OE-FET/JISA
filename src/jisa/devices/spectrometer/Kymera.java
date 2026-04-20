@@ -78,7 +78,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
         for (int i = 0; i < 2; i++) {
 
-            int fi     = i;
+            int fi     = i + 1;
             int result = getIntByReference(buffer -> sdk.ATSpectrographFlipperMirrorIsPresent(device, fi, buffer), "FlipperMirrorIsPresent");
 
             if (result == 1) {
@@ -89,7 +89,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
         for (int i = 0; i < 4; i++) {
 
-            int fi     = i;
+            int fi     = i + 1;
             int result = getIntByReference(buffer -> sdk.ATSpectrographSlitIsPresent(device, fi, buffer), "SlitIsPresent");
 
             if (result == 1) {
@@ -100,7 +100,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
 
         for (int i = 0; i < 4; i++) {
 
-            int fi     = i;
+            int fi     = i + 1;
             int result = getIntByReference(buffer -> sdk.ATSpectrographIrisIsPresent(device, fi, buffer), "IrisIsPresent");
 
             if (result == 1) {
