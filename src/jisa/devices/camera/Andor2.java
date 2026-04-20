@@ -154,7 +154,6 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
                     xEnd = xStart + width - 1;
                     yEnd = yStart + height - 1;
-            handle(sdk.SendSoftwareTrigger(), "SendSoftwareTrigger");
 
                     handle(sdk.SetReadMode(4), "SetReadMode(IMAGE)");
                     handle(sdk.SetImage(xBin, yBin, xStart, xEnd, yStart, yEnd), "SetImage");
@@ -169,6 +168,10 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
                     break;
 
+                case FULL_VERTICAL_BINNING:
+
+                    handle(sdk.SetReadMode(0), "SetReadMode(FULL-VERTICAL-BINNING)");
+                    break;
 
                 case TRACK_SEQUENCE:
 
@@ -444,9 +447,9 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
             int result;
 
             if (limit == 1) {
-                handle(sdk.SetAcquisitionMode(AC_ACQMODE_SINGLE), "SetAcquisitionMode(SINGLE)");
+                handle(sdk.SetAcquisitionMode(1), "SetAcquisitionMode(SINGLE)");
             } else {
-                handle(sdk.SetAcquisitionMode(AC_ACQMODE_VIDEO), "SetAcquisitionMode(VIDEO)");
+                handle(sdk.SetAcquisitionMode(5), "SetAcquisitionMode(RUN-UNTIL-ABORT)");
             }
 
             handle(sdk.StartAcquisition(), "StartAcquisition");
