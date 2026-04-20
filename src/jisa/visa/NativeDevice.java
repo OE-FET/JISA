@@ -101,6 +101,8 @@ public abstract class NativeDevice implements Instrument {
      */
     public <I extends com.sun.jna.Library> I getNewLibraryInstance(Class<I> libraryInterface, String libraryName, String... extraPaths) throws DeviceException {
 
+        NativeLibrary.addSearchPath(libraryName, Util.joinPath(System.getProperty("user.home"), "libs"));
+
         for (String path : extraPaths) {
             NativeLibrary.addSearchPath(libraryName, path);
         }
@@ -128,10 +130,7 @@ public abstract class NativeDevice implements Instrument {
                     fileName = libraryName;
                 }
 
-                String manualPath   = Util.joinPath(System.getProperty("user.home"), "libs");
                 String programFiles = System.getenv("ProgramFiles");
-
-                NativeLibrary.addSearchPath(libraryName, manualPath);
 
                 if (programFiles != null) {
 
