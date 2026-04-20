@@ -85,6 +85,10 @@ public abstract class NativeDevice implements Instrument {
 
     }
 
+    public <I extends com.sun.jna.Library> I findLibrary(Class<I> libraryInterface, String libraryName, Collection<String> extraPaths) throws DeviceException {
+        return findLibrary(libraryInterface, libraryName, extraPaths.toArray(String[]::new));
+    }
+
     /**
      * Returns a new instance of the specified native library. Does not use any caching --- a new instance will be
      * returned each time this is called. You probably want to use findLibrary(...) instead.

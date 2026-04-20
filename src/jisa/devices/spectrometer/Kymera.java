@@ -43,7 +43,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
             extraPaths.add(Util.joinPath(System.getenv("ProgramFiles"), "Andor SDK", "ATSpectrograph", Platform.is64Bit() ? "64" : "32"));
         }
 
-        sdk = findLibrary(ATSpectrograph.class, "atspectrograph", extraPaths.toArray(String[]::new));
+        sdk = findLibrary(ATSpectrograph.class, "atspectrograph", extraPaths);
 
         if (indexObject instanceof Integer) {
             device = (Integer) indexObject;
