@@ -99,17 +99,20 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         try (Memory memory = new Memory(2048)) {
 
-            ByteBuffer buffer = memory.getByteBuffer(0, 2048);
+            ByteBuffer serials = memory.getByteBuffer(0, 2048);
 
-            sdk.tl_camera_discover_available_cameras(buffer, 2048);
+            sdk.tl_camera_discover_available_cameras(serials, 2048);
 
-            String[] serialNumbers = memory.getString(0, "US_ASCII").trim().split(" ");
+            String[] serialNumbers = memory.getString(0, "ASCII").trim().split(" ");
+            String   serialNumber  = serialNumbers[0];
+            byte[]   bytes         = serialNumber.getBytes(StandardCharsets.US_ASCII);
 
-            try (Memory memory2 = new Memory(serialNumbers[0].length())) {
+            try (Memory memory2 = new Memory(bytes.length)) {
 
-                memory2.setString(0, serialNumbers[0], "US_ASCII");
-                handle = getPointer(ref -> sdk.tl_camera_open_camera(memory2.getByteBuffer(0, memory2.size()), ref), "tl_camera_open_camera");
+                ByteBuffer buffer = memory2.getByteBuffer(0, bytes.length);
+                buffer.put(bytes);
 
+                handle = getPointer(ref -> sdk.tl_camera_open_camera(buffer.rewind(), ref), "tl_camera_open_camera");
             }
 
         }
@@ -139,13 +142,16 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
             sdk.tl_camera_discover_available_cameras(serials, 2048);
 
-            String[] serialNumbers = memory.getString(0, "US_ASCII").trim().split(" ");
+            String[] serialNumbers = memory.getString(0, "ASCII").trim().split(" ");
             String   serialNumber  = ((IDAddress) address).getID();
+            byte[]   bytes         = serialNumber.getBytes(StandardCharsets.US_ASCII);
 
-            try (Memory memory2 = new Memory(serialNumber.length())) {
+            try (Memory memory2 = new Memory(bytes.length)) {
 
-                memory2.setString(0, serialNumber, "US_ASCII");
-                handle = getPointer(ref -> sdk.tl_camera_open_camera(memory2.getByteBuffer(0, memory2.size()), ref), "tl_camera_open_camera");
+                ByteBuffer buffer = memory2.getByteBuffer(0, bytes.length);
+                buffer.put(bytes);
+
+                handle = getPointer(ref -> sdk.tl_camera_open_camera(buffer.rewind(), ref), "tl_camera_open_camera");
 
             }
 
