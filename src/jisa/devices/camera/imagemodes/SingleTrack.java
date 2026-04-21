@@ -7,6 +7,13 @@ import java.io.IOException;
 
 public interface SingleTrack extends CameraImageMode {
 
+    static void addParameters(SingleTrack inst, Class<?> target, ParameterList parameters) {
+
+        parameters.addValue("Single-Track","Start", inst::getSingleTrackStart, 0, inst::setSingleTrackStart);
+        parameters.addValue("Single-Track","Height", inst::getSingleTrackHeight, 1, inst::setSingleTrackHeight);
+
+    }
+
     void setSingleTrackStart(int track) throws IOException, DeviceException;
 
     int getSingleTrackStart() throws IOException, DeviceException;
@@ -14,12 +21,5 @@ public interface SingleTrack extends CameraImageMode {
     void setSingleTrackHeight(int tracks) throws IOException, DeviceException;
 
     int getSingleTrackHeight() throws IOException, DeviceException;
-
-    static void addParameters(SingleTrack inst, Class<?> target, ParameterList parameters) {
-
-        parameters.addValue("Single-Track","Start", inst::getSingleTrackStart, 0, inst::setSingleTrackStart);
-        parameters.addValue("Single-Track","Height", inst::getSingleTrackHeight, 1, inst::setSingleTrackHeight);
-
-    }
 
 }

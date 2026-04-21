@@ -38,12 +38,17 @@ public class SplashScreen extends JFXElement {
     }
 
     private SplashScreen(String title, ImageView imageView) {
+
         super(title, imageView);
+
         this.imageView = imageView;
         BorderPane.setMargin(imageView, Insets.EMPTY);
+
         setDecorated(false);
+
         getStage().initStyle(StageStyle.TRANSPARENT);
         getStage().getScene().setFill(Colour.TRANSPARENT);
+
         imageView.setSmooth(true);
         imageView.fitWidthProperty().bind(getStage().widthProperty());
         imageView.fitHeightProperty().bind(getStage().heightProperty());

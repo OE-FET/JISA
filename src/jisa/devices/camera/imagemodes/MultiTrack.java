@@ -15,6 +15,33 @@ import java.util.stream.Collectors;
 
 public interface MultiTrack extends CameraImageMode {
 
+    static void addParameters(MultiTrack inst, Class<?> target, ParameterList parameters) {
+
+        Column<Integer> start  = Column.ofIntegers("Start Row");
+        Column<Integer> end    = Column.ofIntegers("End Row");
+        Column<Boolean> binned = Column.ofBooleans("Binned");
+        ResultTable     table  = new ResultList(start, end, binned);
+
+        parameters.addValue(
+                "Multi-Track",
+                "Tracks",
+                () -> {
+
+                    ResultTable tab = new ResultList(start, end, binned);
+
+                    for (Track track : inst.getMultiTracks()) {
+                        tab.addData(track.getStartRow(), track.getEndRow(), track.isBinned());
+                    }
+
+                    return tab;
+
+                },
+                table,
+                t -> inst.setMultiTracks(t.stream().map(r -> new Track(r.get(start), r.get(end), r.get(binned))).collect(Collectors.toList()))
+        );
+
+    }
+
     /**
      * Sets the tracks for the camera to use when in mult-track mode.
      *
@@ -123,33 +150,6 @@ public interface MultiTrack extends CameraImageMode {
         public boolean isBinned() {
             return binned;
         }
-
-    }
-
-    static void addParameters(MultiTrack inst, Class<?> target, ParameterList parameters) {
-
-        Column<Integer> start  = Column.ofIntegers("Start Row");
-        Column<Integer> end    = Column.ofIntegers("End Row");
-        Column<Boolean> binned = Column.ofBooleans("Binned");
-        ResultTable     table  = new ResultList(start, end, binned);
-
-        parameters.addValue(
-                "Multi-Track",
-                "Tracks",
-                () -> {
-
-                    ResultTable tab = new ResultList(start, end, binned);
-
-                    for (Track track : inst.getMultiTracks()) {
-                        tab.addData(track.getStartRow(), track.getEndRow(), track.isBinned());
-                    }
-
-                    return tab;
-
-                },
-                table,
-                t -> inst.setMultiTracks(t.stream().map(r -> new Track(r.get(start), r.get(end), r.get(binned))).collect(Collectors.toList()))
-        );
 
     }
 

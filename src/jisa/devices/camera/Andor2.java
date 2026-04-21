@@ -6,7 +6,9 @@ import com.sun.jna.Platform;
 import com.sun.jna.ptr.NativeLongByReference;
 import jisa.Util;
 import jisa.addresses.Address;
+import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
+import jisa.devices.camera.frame.FrameReader;
 import jisa.devices.camera.frame.U16Frame;
 import jisa.devices.camera.imagemodes.FullVerticalBinning;
 import jisa.devices.camera.imagemodes.MultiTrack;
@@ -16,6 +18,7 @@ import jisa.devices.camera.nat.ATMCDxxD;
 import jisa.devices.features.TemperatureControlled;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
@@ -28,33 +31,58 @@ import static jisa.devices.camera.nat.ATMCDxxD.*;
 
 public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureControlled, SingleTrack, FullVerticalBinning, TrackSequence, MultiTrack {
 
-    private final ATMCDxxD sdk;
-    private final int index;
+    public static String getDescription() {
+        return "Andor CCD Camera (Andor SDK2)";
+    }
+
+    private final ATMCDxxD   sdk;
+    private final int        index;
     private final NativeLong handle;
-    private final int maxWidth;
-    private final int maxHeight;
+    private final int        maxWidth;
+    private final int        maxHeight;
 
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
-    private final List<Track> multiTracks = new LinkedList<>();
+    private final List<Track>               multiTracks     = new LinkedList<>();
 
     private int timeout = 10000;
-    private int target = 290;
+    private int target  = 290;
 
-    private ImageMode imageMode = ImageMode.FULL_IMAGE;
-    private int width = 500;
-    private int height = 500;
-    private int startX = 0;
-    private int startY = 0;
-    private int xBin = 1;
-    private int yBin = 1;
-    private boolean centredX = false;
-    private boolean centredY = false;
-    private int singleTrackStart = 1;
-    private int singleTrackHeight = 1;
-    private int trackSequenceCount = 1;
-    private int trackSequenceHeight = 1;
-    private int trackSequenceOffset = 1;
-    private ShortBuffer imageBuffer = null;
+    private ImageMode   imageMode           = ImageMode.FULL_IMAGE;
+    private int         width               = 500;
+    private int         height              = 500;
+    private int         startX              = 0;
+    private int         startY              = 0;
+    private int         xBin                = 1;
+    private int         yBin                = 1;
+    private boolean     centredX            = false;
+    private boolean     centredY            = false;
+    private int         singleTrackStart    = 1;
+    private int         singleTrackHeight   = 1;
+    private int         trackSequenceCount  = 1;
+    private int         trackSequenceHeight = 1;
+    private int         trackSequenceOffset = 1;
+    private ShortBuffer imageBuffer         = null;
+
+    public static FrameReader<U16Frame> openFrameReader(String path) throws IOException {
+
+        U16Frame[] buffer  = new U16Frame[1];
+        short[][]  dBuffer = new short[1][];
+
+        return new FrameReader<>(path, (width, height, bpp, timestamp, data) -> {
+
+            if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
+                dBuffer[0] = new short[width * height];
+                buffer[0]  = new U16Frame(dBuffer[0], width, height);
+            }
+
+            ByteBuffer.wrap(data).asShortBuffer().rewind().get(dBuffer[0]);
+            buffer[0].setTimestamp(timestamp);
+
+            return buffer[0];
+
+        });
+
+    }
 
     private static void handle(int result, String method) throws DeviceException {
 
@@ -65,6 +93,14 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     }
 
     public Andor2(int index) throws DeviceException {
+        this((Object) index);
+    }
+
+    public Andor2(Address address) throws DeviceException {
+        this((Object) address);
+    }
+
+    protected Andor2(Object indexObject) throws DeviceException {
 
         super("Andor SDK2 Camera");
 
@@ -80,7 +116,13 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
             this.sdk = findLibrary(ATMCDxxD.class, "atmcd32d", extraPaths);
         }
 
-        this.index = index;
+        if (indexObject instanceof Integer) {
+            this.index = (Integer) indexObject;
+        } else if (indexObject instanceof IDAddress) {
+            this.index = Integer.parseInt(((IDAddress) indexObject).getID());
+        } else {
+            throw new DeviceException("Andor2 must have an integer index given as its address.");
+        }
 
         synchronized (sdk) {
 
@@ -115,15 +157,14 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
                 handle(sdk.GetDetector(xBuffer, yBuffer), "GetDetector");
 
-                width = xBuffer.get(0);
-                height = yBuffer.get(0);
-                maxWidth = width;
+                width     = xBuffer.get(0);
+                height    = yBuffer.get(0);
+                maxWidth  = width;
                 maxHeight = height;
 
             }
 
             handle(sdk.SetImage(xBin, yBin, 1, width, 1, height), "SetImage");
-
 
         }
 
@@ -298,7 +339,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     @Override
     public boolean isTemperatureControlStable() throws IOException, DeviceException {
 
-        int[] buffer = new int[1];
+        int[]     buffer    = new int[1];
         IntBuffer intBuffer = IntBuffer.allocate(1);
 
         withCameraSelected(sdk -> {
@@ -408,9 +449,9 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     @Override
     public double getIntegrationTime() throws IOException, DeviceException {
 
-        FloatBuffer exposure = FloatBuffer.allocate(1);
+        FloatBuffer exposure   = FloatBuffer.allocate(1);
         FloatBuffer accumulate = FloatBuffer.allocate(1);
-        FloatBuffer kinetic = FloatBuffer.allocate(1);
+        FloatBuffer kinetic    = FloatBuffer.allocate(1);
 
         withCameraSelected(sdk -> {
 

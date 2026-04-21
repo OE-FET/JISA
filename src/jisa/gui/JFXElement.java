@@ -15,8 +15,10 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ToolBar;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -31,6 +33,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class JFXElement implements Element {
 
@@ -96,7 +99,6 @@ public class JFXElement implements Element {
      *
      * @param title    Title to display in window title-bar
      * @param fxmlPath Path to FXML file to use
-     *
      * @throws IOException Upon error reading from FXML file
      */
     public JFXElement(String title, String fxmlPath) throws IOException {
@@ -202,8 +204,6 @@ public class JFXElement implements Element {
 
         });
 
-//        toolBar.setBackground(new Background(new BackgroundFill(Color.color(0, 0, 0, 0.1), null, null)));
-//        toolBar.setBorder(new Border(new BorderStroke(Color.SILVER, BorderStrokeStyle.SOLID, null, new BorderWidths(0, 0, 1, 0))));
         toolBar.setPadding(new Insets(5, GUI.SPACING, 5, GUI.SPACING));
         BorderPane.setMargin(toolBar, new Insets(0));
         BorderPane.setMargin(borderPane.getCenter(), new Insets(GUI.SPACING));
@@ -220,7 +220,6 @@ public class JFXElement implements Element {
      *
      * @param text    Test to display on the button
      * @param onClick Action to perform when clicked
-     *
      * @return Button handle
      */
     public Button addToolbarButton(String text, SRunnable onClick) {
@@ -245,7 +244,6 @@ public class JFXElement implements Element {
      * Adds a menu button to the toolbar at the top of this element. This button displays a menu with options when clicked.
      *
      * @param text Test to display on the button.
-     *
      * @return MenuButton handle
      */
     public MenuButton addToolbarMenuButton(String text) {
@@ -349,7 +347,6 @@ public class JFXElement implements Element {
      *
      * @param text    Text to display in button
      * @param onClick
-     *
      * @return
      */
     public Button addDialogButton(String text, SRunnable onClick) {
@@ -429,7 +426,9 @@ public class JFXElement implements Element {
 
         close();
 
-        for (Button button : added) { button.remove(); }
+        for (Button button : added) {
+            button.remove();
+        }
 
         return result.get();
 
@@ -471,7 +470,9 @@ public class JFXElement implements Element {
             this.width.set(-1);
             this.height.set(-1);
 
-            if (isShowing()) { stage.sizeToScene(); }
+            if (isShowing()) {
+                stage.sizeToScene();
+            }
 
         });
     }
@@ -512,13 +513,26 @@ public class JFXElement implements Element {
                 // so as a workaround, we make its un-maximised size the same as its maximised size...
                 if (Platform.isLinux() && System.getenv("XDG_SESSION_TYPE").toLowerCase().contains("wayland")) {
 
+                    final AtomicReference<Double> previousWidth  = new AtomicReference<>(null);
+                    final AtomicReference<Double> previousHeight = new AtomicReference<>(null);
+
                     stage.maximizedProperty().addListener((observable, oldValue, newValue) -> {
 
                         if (newValue) {
+
                             Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
-                            setWindowSize(bounds.getWidth(), bounds.getHeight());
+
+                            previousWidth.set(stage.getWidth());
+                            previousHeight.set(stage.getHeight());
+
+                            stage.setWidth(bounds.getWidth());
+                            stage.setHeight(bounds.getHeight());
+
                         } else {
-                            autoSizeWindow();
+
+                            stage.setWidth(previousWidth.get());
+                            stage.setHeight(previousHeight.get());
+
                         }
 
                     });
@@ -534,11 +548,15 @@ public class JFXElement implements Element {
     }
 
     private void updateWidth() {
-        if (stage != null && width.get() >= 0) { stage.setWidth(Math.min(maxWidth.get(), width.get())); }
+        if (stage != null && width.get() >= 0) {
+            stage.setWidth(Math.min(maxWidth.get(), width.get()));
+        }
     }
 
     private void updateHeight() {
-        if (stage != null && height.get() >= 0) { stage.setHeight(Math.min(maxHeight.get(), height.get())); }
+        if (stage != null && height.get() >= 0) {
+            stage.setHeight(Math.min(maxHeight.get(), height.get()));
+        }
     }
 
     private void updateIcon() {

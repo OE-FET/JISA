@@ -14,12 +14,14 @@ import javafx.scene.text.TextAlignment;
 import javafx.util.StringConverter;
 import jisa.Util;
 import jisa.addresses.Address;
+import jisa.addresses.IDAddress;
 import jisa.control.ConfigBlock;
 import jisa.control.Connection;
 import jisa.control.SRunnable;
 import jisa.devices.Instrument;
 import jisa.devices.SubInstrument;
 import jisa.gui.controls.IntegerField;
+import jisa.visa.NativeDevice;
 import kotlin.reflect.KClass;
 import org.reflections.Reflections;
 

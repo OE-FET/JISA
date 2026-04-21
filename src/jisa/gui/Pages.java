@@ -6,7 +6,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
-import javafx.scene.control.ToolBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -20,29 +19,42 @@ import java.util.List;
 
 public class Pages extends JFXElement implements Element, Container {
 
-    public  BorderPane          pane;
-    public  VBox                sidebar;
-    public        ScrollPane      scrollPane;
-    private final String          title;
-    private final ArrayList<HBox> tabs  = new ArrayList<>();
-    private final ArrayList<Element> added = new ArrayList<>();
+    public        BorderPane          pane;
+    public        VBox                sidebar;
+    public        ScrollPane          scrollPane;
+    private final String              title;
+    private final ArrayList<HBox>     tabs      = new ArrayList<>();
+    private final ArrayList<Element>  added     = new ArrayList<>();
     private final ArrayList<Runnable> switchers = new ArrayList<>();
-    private final ArrayList<Runnable> reseters  = new ArrayList<>();
+    private final ArrayList<Runnable> resetters = new ArrayList<>();
 
     /**
      * Creates an element that displays other GUI elements in their own individual tabs.
      *
      * @param title Window title
      * @param toAdd Elements to add
-     *
      * @throws IOException
      */
     public Pages(String title, Element... toAdd) {
+
         super(title, Pages.class.getResource("fxml/TabWindow.fxml"));
+
         BorderPane.setMargin(getNode().getTop(), new Insets(0, 0, 5, 0));
         BorderPane.setMargin(getNode().getCenter(), new Insets(0));
+
         this.title = title;
+
         addAll(toAdd);
+
+    }
+
+    public void setScrollDirections(boolean horizontal, boolean vertical) {
+
+        GUI.runNow(() -> {
+            scrollPane.setHbarPolicy(horizontal ? ScrollPane.ScrollBarPolicy.AS_NEEDED : ScrollPane.ScrollBarPolicy.NEVER);
+            scrollPane.setVbarPolicy(vertical ? ScrollPane.ScrollBarPolicy.AS_NEEDED : ScrollPane.ScrollBarPolicy.NEVER);
+        });
+
     }
 
     /**
@@ -69,14 +81,19 @@ public class Pages extends JFXElement implements Element, Container {
         imageView.setFitWidth(25.0);
 
         final Image finalInverted;
+
         if (icon != null) {
+
             imageView.setImage(icon);
             imageView.setSmooth(true);
             imageView.setPreserveRatio(true);
             finalInverted = Util.invertImage(icon);
             tab.getChildren().add(imageView);
+
         } else {
+
             finalInverted = null;
+
         }
 
         tab.getChildren().add(name);
@@ -99,7 +116,7 @@ public class Pages extends JFXElement implements Element, Container {
 
         Runnable onClick = () -> {
 
-            reseters.forEach(Runnable::run);
+            resetters.forEach(Runnable::run);
 
             tab.setStyle("-fx-background-color: white;");
             name.setStyle("-fx-text-fill: #4c4c4c;");
@@ -134,7 +151,7 @@ public class Pages extends JFXElement implements Element, Container {
         added.add(element);
         tabs.add(tab);
         switchers.add(onClick);
-        reseters.add(onReset);
+        resetters.add(onReset);
 
         if (tabs.size() == 1) {
             onClick.run();
@@ -192,12 +209,17 @@ public class Pages extends JFXElement implements Element, Container {
 
             @Override
             public void setVisible(boolean visible) {
+
                 GUI.runNow(() -> {
+
                     label.setVisible(visible);
                     label.setManaged(visible);
+
                     separator.setVisible(visible);
                     separator.setManaged(visible);
+
                 });
+
             }
 
         };
@@ -212,6 +234,7 @@ public class Pages extends JFXElement implements Element, Container {
         if (index > -1) {
 
             sidebar.getChildren().remove(tabs.get(index));
+
             tabs.remove(index);
             switchers.remove(index);
             added.remove(index);
@@ -222,10 +245,13 @@ public class Pages extends JFXElement implements Element, Container {
 
     @Override
     public void clear() {
+
         sidebar.getChildren().clear();
+
         tabs.clear();
         switchers.clear();
         added.clear();
+
     }
 
     @Override

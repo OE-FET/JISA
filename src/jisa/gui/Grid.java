@@ -57,6 +57,15 @@ public class Grid extends JFXElement implements Element, Container {
 
     }
 
+    public void setScrollDirections(boolean horizontal, boolean vertical) {
+
+        GUI.runNow(() -> {
+            scroll.setHbarPolicy(horizontal ? ScrollPane.ScrollBarPolicy.AS_NEEDED : ScrollPane.ScrollBarPolicy.NEVER);
+            scroll.setVbarPolicy(vertical ? ScrollPane.ScrollBarPolicy.AS_NEEDED : ScrollPane.ScrollBarPolicy.NEVER);
+        });
+
+    }
+
     public void autoArrange() {
 
         setNumColumns(100);

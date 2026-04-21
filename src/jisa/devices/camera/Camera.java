@@ -10,17 +10,13 @@ import jisa.devices.camera.imagemodes.*;
 import jisa.gui.FrameAcceptor;
 import jisa.gui.HeatMap;
 import jisa.gui.ImageDisplay;
-import org.apache.commons.lang3.ClassUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -42,7 +38,6 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
 
         parameters.addValue("Binning", "X Binning", inst::getBinningX, 1, inst::setBinningX);
         parameters.addValue("Binning", "Y Binning", inst::getBinningY, 1, inst::setBinningY);
-
 
     }
 
@@ -68,11 +63,12 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
 
         try {
 
-            if (result){
+            if (result) {
                 startAcquisition();
             }
 
-        } catch (Throwable ignored) {}
+        } catch (Throwable ignored) {
+        }
 
     }
 
@@ -169,8 +165,19 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
      */
     boolean isAcquiring() throws IOException, DeviceException;
 
+    /**
+     * Attaches a listener to the camera that is called anytime it starts or stops continuous acquisition.
+     *
+     * @param listener The listener to attach.
+     * @return Reference to the listener that was attached.
+     */
     AcquisitionListener addAcquisitionListener(AcquisitionListener listener);
 
+    /**
+     * Removes a listener that is currently attached to the camera, preventing it from being called anymore.
+     *
+     * @param listener The listener to remove.
+     */
     void removeAcquisitionListener(AcquisitionListener listener);
 
     /**
@@ -268,9 +275,12 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
      * @return FrameThread object representing the worker thread running the stream.
      */
     default FrameThread<F> streamToFile(String path) throws IOException {
+
         DataOutputStream dos = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(path)));
         dos.write(IMAGE_STREAM_HEADER.getBytes(StandardCharsets.US_ASCII));
+
         return new FrameThread<>(this, f -> f.writeToStream(dos), dos::close);
+
     }
 
     /**
@@ -396,12 +406,10 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
 
     default List<ImageMode> getImageModes() {
 
-        List<Class<?>> interfaces = ClassUtils.getAllInterfaces(getClass());
+        Class<? extends Camera> thisClass = this.getClass();
 
-        return interfaces.stream()
-                .filter(CameraImageMode.class::isAssignableFrom)
-                .map(ImageMode::lookup)
-                .filter(Objects::nonNull)
+        return Arrays.stream(ImageMode.values())
+                .filter(im -> im.getInterface().isAssignableFrom(thisClass))
                 .collect(Collectors.toList());
 
     }
