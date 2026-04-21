@@ -149,7 +149,7 @@ public class JFXElement implements Element {
 
             // Tell the loader to link the FXML file to this object
             loader.setController(this);
-            
+
             borderPane = new BorderPane();
             scene      = new Scene(borderPane);
             scene.setFill(Colour.string("#f4f4f4"));
@@ -507,6 +507,24 @@ public class JFXElement implements Element {
 
                 });
 
+
+                // If we're on Wayland, for some reason dialogues will make the maximised window shrink to its un-maximised size,
+                // so as a workaround, we make its un-maximised size the same as its maximised size...
+                if (Platform.isLinux() && System.getenv("XDG_SESSION_TYPE").toLowerCase().contains("wayland")) {
+
+                    stage.maximizedProperty().addListener((observable, oldValue, newValue) -> {
+
+                        if (newValue) {
+                            Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+                            setWindowSize(bounds.getWidth(), bounds.getHeight());
+                        } else {
+                            autoSizeWindow();
+                        }
+
+                    });
+
+                }
+
             });
 
         }
@@ -651,23 +669,7 @@ public class JFXElement implements Element {
      * @param flag Maximised?
      */
     public void setMaximised(boolean flag) {
-
-        if (Platform.isLinux() && System.getenv("XDG_SESSION_TYPE").toLowerCase().contains("wayland")) {
-
-            if (flag) {
-                Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
-                GUI.runNow(() -> getStage().setMaximized(false));
-                setWindowSize(bounds.getWidth()*0.999, bounds.getHeight()*0.999);
-            } else {
-                autoSizeWindow();
-            }
-
-        } else {
-            GUI.runNow(() -> getStage().setMaximized(flag));
-        }
-
-
-
+        GUI.runNow(() -> getStage().setMaximized(flag));
     }
 
     /**
