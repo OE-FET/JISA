@@ -1,5 +1,6 @@
 package jisa.gui;
 
+import com.sun.jna.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
@@ -650,7 +651,23 @@ public class JFXElement implements Element {
      * @param flag Maximised?
      */
     public void setMaximised(boolean flag) {
-        GUI.runNow(() -> getStage().setMaximized(flag));
+
+        if (Platform.isLinux() && System.getenv("XDG_SESSION_TYPE").toLowerCase().contains("wayland")) {
+
+            if (flag) {
+                Rectangle2D bounds = Screen.getPrimary().getVisualBounds();
+                GUI.runNow(() -> getStage().setMaximized(false));
+                setWindowSize(bounds.getWidth()*0.999, bounds.getHeight()*0.999);
+            } else {
+                autoSizeWindow();
+            }
+
+        } else {
+            GUI.runNow(() -> getStage().setMaximized(flag));
+        }
+
+
+
     }
 
     /**

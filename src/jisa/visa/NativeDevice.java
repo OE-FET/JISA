@@ -25,6 +25,7 @@ public abstract class NativeDevice implements Instrument {
 
     private final static List<WeakReference<NativeDevice>> opened    = new LinkedList<>();
     private final static Map<Class, com.sun.jna.Library>   libraries = new HashMap<>();
+    private final static Map<String, Set<String>>          paths     = new HashMap<>();
 
     static {
 
@@ -89,6 +90,30 @@ public abstract class NativeDevice implements Instrument {
         return findLibrary(libraryInterface, libraryName, extraPaths.toArray(String[]::new));
     }
 
+    public static void addSearchPath(String libraryName, String path) {
+
+        if (!paths.containsKey(libraryName)) {
+            paths.put(libraryName, new LinkedHashSet<>());
+        }
+
+        boolean added = paths.get(libraryName).add(path);
+
+        if (added) {
+            NativeLibrary.addSearchPath(libraryName, path);
+        }
+
+    }
+
+    public static List<String> getSearchPaths(String libraryName) {
+
+        if (!paths.containsKey(libraryName)) {
+            return List.of();
+        } else {
+            return List.copyOf(paths.get(libraryName));
+        }
+
+    }
+
     /**
      * Returns a new instance of the specified native library. Does not use any caching --- a new instance will be
      * returned each time this is called. You probably want to use findLibrary(...) instead.
@@ -101,10 +126,10 @@ public abstract class NativeDevice implements Instrument {
      */
     public <I extends com.sun.jna.Library> I getNewLibraryInstance(Class<I> libraryInterface, String libraryName, String... extraPaths) throws DeviceException {
 
-        NativeLibrary.addSearchPath(libraryName, Util.joinPath(System.getProperty("user.home"), "libs"));
+        addSearchPath(libraryName, Util.joinPath(System.getProperty("user.home"), "jisa-libs"));
 
         for (String path : extraPaths) {
-            NativeLibrary.addSearchPath(libraryName, path);
+            addSearchPath(libraryName, path);
         }
 
         try {
@@ -113,7 +138,7 @@ public abstract class NativeDevice implements Instrument {
 
             try {
 
-                // Try once as is, if this fails, try again including ~/libs and a recursive search of Program Files (Windows)
+                // Try once as is, if this fails, try again including a recursive search of Program Files (Windows)
                 loaded = Native.load(libraryName, libraryInterface);
 
             } catch (Throwable e) {
@@ -134,10 +159,12 @@ public abstract class NativeDevice implements Instrument {
 
                 if (programFiles != null) {
 
+                    System.out.printf("Could not find %s in system path, performing recursive search of %s...", libraryName, programFiles);
+
                     File found = searchFile(new File(programFiles), fileName);
 
                     if (found != null) {
-                        NativeLibrary.addSearchPath(libraryName, found.getParentFile().getAbsolutePath());
+                        addSearchPath(libraryName, found.getParentFile().getAbsolutePath());
                     }
                 }
 
