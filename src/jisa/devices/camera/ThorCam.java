@@ -1066,7 +1066,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             Pointer mHandle = ref.getValue();
 
             mosaic.tl_mono_to_color_set_color_space(mHandle, 1);
-            mosaic.tl_mono_to_color_set_output_format(mHandle, 1);
+            mosaic.tl_mono_to_color_set_output_format(mHandle, 2);
 
             mosaicHandle = mHandle;
 
@@ -1124,13 +1124,24 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
             try (Memory memory = new Memory(array.length * 6L)) {
 
+                // 3 channels, 2 bytes (16 bits) per channel -> 6 bytes (48 bits) per pixel
                 ByteBuffer output = memory.getByteBuffer(0, array.length * 6L);
                 int        result = mosaic.tl_mono_to_color_transform_to_48(mosaicHandle, input, width, height, output);
 
-                CharBuffer shorts = output.rewind().asCharBuffer();
+                output.rewind();
+
+                long r;
+                long g;
+                long b;
 
                 for (int i = 0; i < array.length; i++) {
-                    array[i] = ((long) Character.MAX_VALUE << 48) | ((long) shorts.get()) | ((long) shorts.get() << 16) | ((long) shorts.get() << 32);
+
+                    r = output.getShort() & 0xFFFFL;
+                    g = output.getShort() & 0xFFFFL;
+                    b = output.getShort() & 0xFFFFL;
+
+                    array[i] = (0xFFFFL << 48) | (r << 32) | (g << 16) | b;
+
                 }
 
             }
@@ -1228,12 +1239,8 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
             for (int i = 0; i < argb.length; i++) {
 
-                v = argb[i];
-
-                destination[i] = (int) (((0xFF << 24)
-                        | (((v >> 32) & 0xFFFF) >> 4) << 16)
-                        | (((v >> 16) & 0xFFFF) >> 4) << 8
-                        | ((v & 0xFFFF) >> 4));
+                v              = argb[i];
+                destination[i] = (int) (((v >> 40) & 0xFF000000L) | ((v >> 32) & 0x00FF0000L) | ((v >> 24) & 0x0000FF00L) | ((v >> 8) & 0x000000FFL));
 
             }
 
@@ -1244,9 +1251,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
     protected static class MonoFrame extends U16Frame {
 
         public MonoFrame(short[] data, int width, int height, long timestamp, ThorCam camera) {
-
             super(data, width, height, timestamp, camera.getAllParametersAsMap());
-
         }
 
         public MonoFrame(short[] data, int width, int height, long timestamp, Map<String, Object> attributes) {
@@ -1264,11 +1269,11 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         @Override
         public void readARGBData(int[] argb) {
 
-            byte value;
+            int value;
 
             for (int i = 0; i < data.length; i++) {
-                value   = (byte) ((data[i] >> 4) & 0xFF);
-                argb[i] = (255 << 24) | value << 16 | value << 8 | value;
+                value   = ((data[i] >> 4) & 0xFF);
+                argb[i] = ((255 << 24) & 0xFF) | ((value << 16) & 0xFF) | ((value << 8) & 0xFF) | (value & 0xFF);
             }
 
         }

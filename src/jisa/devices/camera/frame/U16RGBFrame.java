@@ -151,10 +151,11 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
 
         long v;
 
+        // We need to scale the values down to a 32-bit representation (i.e., 1 byte / 8 bits per channel)
         for (int i = 0; i < argb.length; i++) {
 
             v              = argb[i];
-            destination[i] = (int) (0xFF << 24 | (v >> 32 & 0xFF00) << 8 | (v >> 16 & 0xFF00) | (v & 0xFF00) >> 8);
+            destination[i] = (int) (((v >> 40) & 0xFF000000L) | ((v >> 32) & 0x00FF0000L) | ((v >> 24) & 0x0000FF00L) | ((v >> 8) & 0x000000FFL));
 
         }
 
@@ -163,38 +164,57 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
     @Override
     public void readScaledARGBData(int[] destination) {
 
-        ByteBuffer buffer = ByteBuffer.allocate(argb.length * Long.BYTES);
-        buffer.asLongBuffer().put(argb);
-
-        short[] separated = new short[argb.length * 4];
-        buffer.rewind().asShortBuffer().get(separated);
-
         int max      = 0;
         int min      = Integer.MAX_VALUE;
         int unsigned = 0;
 
-        for (short s : separated) {
+        int r;
+        int g;
+        int b;
 
-            unsigned = Short.toUnsignedInt(s);
+        for (long p : argb) {
 
-            if (unsigned > max) {
-                max = unsigned;
+            r = (int) ((p >> 32) & 0xFFFF);
+            g = (int) ((p >> 16) & 0xFFFF);
+            b = (int) (p & 0xFFFF);
+
+            if (r > max) {
+                max = r;
             }
 
-            if (unsigned < min) {
-                min = unsigned;
+            if (g > max) {
+                max = g;
+            }
+
+            if (b > max) {
+                max = b;
+            }
+
+            if (r < min) {
+                min = r;
+            }
+
+            if (g < min) {
+                min = g;
+            }
+
+            if (b < min) {
+                min = b;
             }
 
         }
 
-        ByteBuffer outputBuffer = ByteBuffer.allocate(argb.length * 4);
-        byte[]     outputArray  = outputBuffer.array();
+        for (int i = 0; i < destination.length; i++) {
 
-        for (int i = 0; i < separated.length; i++) {
-            outputArray[i] = (byte) (((255 * (separated[i] - min)) / (max - min)) & 0xFF);
+            long p = argb[i];
+
+            r  = (((((int) ((p >> 32) & 0xFFFF)) - min) / (max - min)) >> 8) & 0xFF;
+            g  = (((((int) ((p >> 16) & 0xFFFF)) - min) / (max - min)) >> 8) & 0xFF;
+            b  = (((((int) (p & 0xFFFF)) - min) / (max - min)) >> 8) & 0xFF;
+
+            destination[i] = (0xFF << 24) | (r << 16) | (g << 8) | b;
+
         }
-
-        outputBuffer.rewind().asIntBuffer().get(destination);
 
     }
 
