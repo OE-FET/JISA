@@ -149,13 +149,21 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
     @Override
     public void readARGBData(int[] destination) {
 
-        long v;
+        long p;
+        long r;
+        long g;
+        long b;
 
         // We need to scale the values down to a 32-bit representation (i.e., 1 byte / 8 bits per channel)
         for (int i = 0; i < argb.length; i++) {
 
-            v              = argb[i];
-            destination[i] = (int) (((v >> 40) & 0xFF000000L) | ((v >> 32) & 0x00FF0000L) | ((v >> 24) & 0x0000FF00L) | ((v >> 8) & 0x000000FFL));
+            p = argb[i];
+
+            r = ((int) ((p >> 32) & 0xFFFF) >> 8) & 0xFF;
+            g = ((int) ((p >> 16) & 0xFFFF) >> 8) & 0xFF;
+            b = ((int) (p & 0xFFFF) >> 8) & 0xFF;
+
+            destination[i] = (int) ((0xFF << 24) | (r << 16) | (g << 8) | b);
 
         }
 
@@ -208,9 +216,9 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
 
             long p = argb[i];
 
-            r  = (((((int) ((p >> 32) & 0xFFFF)) - min) / (max - min)) >> 8) & 0xFF;
-            g  = (((((int) ((p >> 16) & 0xFFFF)) - min) / (max - min)) >> 8) & 0xFF;
-            b  = (((((int) (p & 0xFFFF)) - min) / (max - min)) >> 8) & 0xFF;
+            r = (((((int) ((p >> 32) & 0xFFFF)) - min) / (max - min)) >> 8) & 0xFF;
+            g = (((((int) ((p >> 16) & 0xFFFF)) - min) / (max - min)) >> 8) & 0xFF;
+            b = (((((int) (p & 0xFFFF)) - min) / (max - min)) >> 8) & 0xFF;
 
             destination[i] = (0xFF << 24) | (r << 16) | (g << 8) | b;
 
