@@ -216,9 +216,9 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
 
             long p = argb[i];
 
-            r = (((((int) ((p >> 32) & 0xFFFF)) - min) / (max - min)) >> 8) & 0xFF;
-            g = (((((int) ((p >> 16) & 0xFFFF)) - min) / (max - min)) >> 8) & 0xFF;
-            b = (((((int) (p & 0xFFFF)) - min) / (max - min)) >> 8) & 0xFF;
+            r = (((((int) (0xFFFF * (((p >> 32) & 0xFFFF) - min)))) / (max - min)) >> 8) & 0xFF;
+            g = (((((int) (0xFFFF * (((p >> 16) & 0xFFFF) - min)))) / (max - min)) >> 8) & 0xFF;
+            b = (((((int) (0xFFFF * ((p & 0xFFFF) - min)))) / (max - min)) >> 8) & 0xFF;
 
             destination[i] = (0xFF << 24) | (r << 16) | (g << 8) | b;
 

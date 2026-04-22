@@ -1,7 +1,5 @@
 package jisa.devices.spectrometer;
 
-import javafx.beans.Observable;
-import javafx.beans.property.SimpleObjectProperty;
 import jisa.addresses.Address;
 import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
@@ -26,15 +24,16 @@ import java.util.stream.IntStream;
 
 public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends Number, ? extends F>, S extends Spectrograph> implements Spectrometer {
 
-    private final C                                                    camera;
-    private final S                                                    spectrograph;
+    private final C            camera;
+    private final S            spectrograph;
+    private       Converter<F> converter;
+    private       Converter<F> converterCopy;
+
     private final Map<SpectrumQueue, FrameThread>                      threads              = new HashMap<>();
     private final Map<AcquisitionListener, Camera.AcquisitionListener> acquisitionListeners = new HashMap<>();
     private final ListenerManager                                      listenerManager      = new ListenerManager();
     private final Map<String, Object>                                  frameAttributes      = new LinkedHashMap<>();
     private       boolean                                              attributesChanged    = true;
-    private       Converter<F>                                         converter;
-    private       Converter<F>                                         converterCopy;
 
     public CameraSpectrometer(C camera, S spectrograph) {
 
@@ -44,7 +43,11 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
         setConverterFullVerticalBinning();
 
         camera.addFrameListener(frame -> listenerManager.trigger(converter.convert(frame)));
-        camera.addAcquisitionListener(acquiring -> { if (acquiring) { updateAttributes(); } });
+        camera.addAcquisitionListener(acquiring -> {
+            if (acquiring) {
+                updateAttributes();
+            }
+        });
 
     }
 
@@ -58,9 +61,11 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
         frameAttributes.putAll(camera.getAllParametersAsMap());
 
         if (spectrograph != null) {
+
             try {
                 frameAttributes.putAll(spectrograph.getAllParametersAsMap());
-            } catch (Throwable ignored) { }
+            } catch (Throwable ignored) {}
+
         }
 
         attributesChanged = true;
@@ -84,38 +89,38 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
         AtomicReference<Integer>    fittingOrder = new AtomicReference<>(1);
 
         parameters.addValue(
-            "Frame Conversion",
-            "Wavelengths",
-            wavelengths::get,
-            values,
-            wl -> {
+                "Frame Conversion",
+                "Wavelengths",
+                wavelengths::get,
+                values,
+                wl -> {
 
-                wavelengths.set(wl);
+                    wavelengths.set(wl);
 
-                setConverterFullVerticalBinning(
-                    wavelengths.get().stream().collect(Collectors.toMap(r -> r.get(IX), r -> r.get(WL))),
-                    fittingOrder.get()
-                );
+                    setConverterFullVerticalBinning(
+                            wavelengths.get().stream().collect(Collectors.toMap(r -> r.get(IX), r -> r.get(WL))),
+                            fittingOrder.get()
+                    );
 
-            }
+                }
 
         );
 
         parameters.addValue(
-            "Frame Conversion",
-            "Fitting Order",
-            fittingOrder::get,
-            1,
-            fo -> {
+                "Frame Conversion",
+                "Fitting Order",
+                fittingOrder::get,
+                1,
+                fo -> {
 
-                fittingOrder.set(fo);
+                    fittingOrder.set(fo);
 
-                setConverterFullVerticalBinning(
-                    wavelengths.get().stream().collect(Collectors.toMap(r -> r.get(IX), r -> r.get(WL))),
-                    fittingOrder.get()
-                );
+                    setConverterFullVerticalBinning(
+                            wavelengths.get().stream().collect(Collectors.toMap(r -> r.get(IX), r -> r.get(WL))),
+                            fittingOrder.get()
+                    );
 
-            }
+                }
 
         );
 
@@ -206,9 +211,9 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
         }
 
         PolyFit fit = Fitting.polyFit(
-            peaks.keySet().stream().map(Number::doubleValue).collect(Collectors.toList()),
-            peaks.values().stream().map(Number::doubleValue).collect(Collectors.toList()),
-            fitOrder
+                peaks.keySet().stream().map(Number::doubleValue).collect(Collectors.toList()),
+                peaks.values().stream().map(Number::doubleValue).collect(Collectors.toList()),
+                fitOrder
         );
 
         if (fit == null) {
@@ -261,9 +266,9 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
         }
 
         PolyFit wlFit = Fitting.polyFit(
-            wavelengths.keySet().stream().map(Number::doubleValue).collect(Collectors.toList()),
-            wavelengths.values().stream().map(Number::doubleValue).collect(Collectors.toList()),
-            order
+                wavelengths.keySet().stream().map(Number::doubleValue).collect(Collectors.toList()),
+                wavelengths.values().stream().map(Number::doubleValue).collect(Collectors.toList()),
+                order
         );
 
         if (wlFit == null) {

@@ -7,6 +7,7 @@ import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.spectrometer.feature.Shuttered;
+import jisa.devices.spectrometer.feature.XCalibrated;
 import jisa.devices.spectrometer.nat.ATSpectrograph;
 import jisa.visa.NativeDevice;
 
@@ -16,8 +17,9 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.IntStream;
 
-public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
+public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCalibrated {
 
     public final SwappableGrating     SWAPPABLE_GRATING;
     public final FilterWheel          FILTER_WHEEL;
@@ -202,6 +204,20 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered {
                 throw new DeviceException(String.format("%s: Device not available.", method));
 
         }
+
+    }
+
+    @Override
+    public double[] getWavelengths(int fullWidth, int startX, int width) throws IOException, DeviceException {
+
+        FloatBuffer buffer = FloatBuffer.allocate(fullWidth);
+        handle(sdk.ATSpectrographGetCalibration(device, buffer, fullWidth), "GetCalibration");
+
+        float[] wavelengths = new float[width];
+
+        buffer.get(wavelengths, startX, width);
+
+        return IntStream.range(0, wavelengths.length).mapToDouble(i -> wavelengths[i]).toArray();
 
     }
 
