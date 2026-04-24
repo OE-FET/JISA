@@ -6,7 +6,6 @@ import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.features.TemperatureControlled;
 import jisa.devices.spectrometer.feature.Fan;
-import jisa.devices.spectrometer.feature.Shuttered;
 import jisa.devices.spectrometer.nat.SeabreezeLibrary;
 import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.devices.spectrometer.spectrum.SpectrumQueue;
@@ -187,7 +186,7 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
 
         acquiring = true;
         acquisitionThread.start();
-        acquisitionListeners.forEach(l -> l.changed(true));
+        acquisitionListeners.forEach(l -> l.changed(0, true));
 
     }
 
@@ -222,7 +221,7 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
                 fps      = 0.0;
             }
 
-            acquisitionListeners.forEach(l -> l.changed(false));
+            acquisitionListeners.forEach(l -> l.changed(0, false));
 
         }
 
@@ -364,15 +363,22 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
 
         }
 
+        acquisitionListeners.forEach(l -> l.changed(1, true));
 
-        int          capacity = wavelengths.length;
-        IntBuffer    error    = IntBuffer.allocate(1);
-        DoubleBuffer buffer   = DoubleBuffer.allocate(capacity);
+        try {
 
-        lib.seabreeze_get_formatted_spectrum(index, error.rewind(), buffer, capacity);
-        checkForError(error);
+            int          capacity = wavelengths.length;
+            IntBuffer    error    = IntBuffer.allocate(1);
+            DoubleBuffer buffer   = DoubleBuffer.allocate(capacity);
 
-        return new Spectrum(wavelengths.clone(), buffer.array(), System.nanoTime());
+            lib.seabreeze_get_formatted_spectrum(index, error.rewind(), buffer, capacity);
+            checkForError(error);
+
+            return new Spectrum(wavelengths.clone(), buffer.array(), System.nanoTime());
+
+        } finally {
+            acquisitionListeners.forEach(l -> l.changed(1, false));
+        }
 
     }
 
@@ -404,15 +410,23 @@ public class OceanOptics extends NativeDevice implements Spectrometer, Temperatu
         IntBuffer    error    = IntBuffer.allocate(1);
         DoubleBuffer buffer   = DoubleBuffer.allocate(capacity);
 
-        for (int i = 0; i < count; i++) {
+        acquisitionListeners.forEach(l -> l.changed(count, true));
 
-            lib.seabreeze_get_formatted_spectrum(index, error.rewind(), buffer.rewind().clear(), capacity);
-            checkForError(error);
-            series.add(new Spectrum(wavelengths.clone(), buffer.array().clone(), System.nanoTime()));
+        try {
 
+            for (int i = 0; i < count; i++) {
+
+                lib.seabreeze_get_formatted_spectrum(index, error.rewind(), buffer.rewind().clear(), capacity);
+                checkForError(error);
+                series.add(new Spectrum(wavelengths.clone(), buffer.array().clone(), System.nanoTime()));
+
+            }
+
+            return series;
+
+        } finally {
+            acquisitionListeners.forEach(l -> l.changed(count, false));
         }
-
-        return series;
 
     }
 

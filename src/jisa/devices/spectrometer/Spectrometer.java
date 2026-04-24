@@ -309,7 +309,7 @@ public interface Spectrometer extends Spectrograph {
 
     interface AcquisitionListener {
 
-        void changed(boolean acquiring);
+        void changed(int count, boolean acquiring);
 
     }
 

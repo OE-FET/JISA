@@ -16,7 +16,10 @@ import java.io.DataOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -167,6 +170,9 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
 
     /**
      * Attaches a listener to the camera that is called anytime it starts or stops continuous acquisition.
+     * The listener should accept two arguments: an integer representing the number of acquisitions to be taken
+     * or that were taken during the acquisition (0 means continuous), and a boolean representing whether the
+     * acquisition has started or ended.
      *
      * @param listener The listener to attach.
      * @return Reference to the listener that was attached.
@@ -443,7 +449,7 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
     }
 
     interface AcquisitionListener {
-        void changed(boolean acquiring);
+        void changed(int count, boolean acquiring);
     }
 
     enum ImageMode {

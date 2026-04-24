@@ -43,7 +43,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
         setConverterFullVerticalBinning();
 
         camera.addFrameListener(frame -> listenerManager.trigger(converter.convert(frame)));
-        camera.addAcquisitionListener(acquiring -> {
+        camera.addAcquisitionListener((count, acquiring) -> {
             if (acquiring) {
                 updateAttributes();
             }

@@ -145,7 +145,7 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
         acquiring         = true;
         acquisitionThread.start();
 
-        acquisitionListeners.forEach(l -> l.changed(true));
+        acquisitionListeners.forEach(l -> l.changed(0, true));
 
     }
 
@@ -170,7 +170,7 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
             fps      = 0.0;
         }
 
-        acquisitionListeners.forEach(l -> l.changed(false));
+        acquisitionListeners.forEach(l -> l.changed(0, false));
 
     }
 
@@ -250,7 +250,14 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
             }
 
         } else {
-            return new Spectrum(channel.getAllWavelengths(), channel.getSpectrum().getSpectrum());
+
+            acquisitionListeners.forEach(l -> l.changed(1, true));
+
+            try {
+                return new Spectrum(channel.getAllWavelengths(), channel.getSpectrum().getSpectrum(), System.nanoTime(), getAllParametersAsMap());
+            } finally {
+                acquisitionListeners.forEach(l -> l.changed(1, false));
+            }
         }
 
     }
@@ -277,8 +284,16 @@ public class OceanOpticsLegacy<T extends USBSpectrometer, S extends OceanOpticsL
 
         } else {
 
-            for (int i = 0; i < count; i++) {
-                spectrumSeries.add(getSpectrum());
+            acquisitionListeners.forEach(l -> l.changed(count, true));
+
+            try {
+
+                for (int i = 0; i < count; i++) {
+                    spectrumSeries.add(new Spectrum(channel.getAllWavelengths(), channel.getSpectrum().getSpectrum(), System.nanoTime(), getAllParametersAsMap()));
+                }
+
+            } finally {
+                acquisitionListeners.forEach(l -> l.changed(count, false));
             }
 
         }

@@ -54,6 +54,8 @@ public class FakeSpectrometer implements Spectrometer {
             return;
         }
 
+        acquisitionListeners.forEach(l -> l.changed(0, true));
+
         acquisitionThread = new Thread(() -> {
 
             Spectrum specBuf = new Spectrum(wavelengths, buffer, System.nanoTime(), getAllParametersAsMap());
@@ -86,8 +88,6 @@ public class FakeSpectrometer implements Spectrometer {
         acquiring = true;
         acquisitionThread.start();
 
-        acquisitionListeners.forEach(l -> l.changed(true));
-
     }
 
     @Override
@@ -113,7 +113,7 @@ public class FakeSpectrometer implements Spectrometer {
             fps      = 0.0;
         }
 
-        acquisitionListeners.forEach(l -> l.changed(false));
+        acquisitionListeners.forEach(l -> l.changed(0, false));
 
     }
 
@@ -211,9 +211,17 @@ public class FakeSpectrometer implements Spectrometer {
 
         } else {
 
-            Thread.sleep(delay);
-            generate();
-            return new Spectrum(wavelengths, buffer.clone(), System.nanoTime(), getAllParametersAsMap());
+            acquisitionListeners.forEach(l -> l.changed(1, true));
+
+            try {
+
+                Thread.sleep(delay);
+                generate();
+                return new Spectrum(wavelengths, buffer.clone(), System.nanoTime(), getAllParametersAsMap());
+
+            } finally {
+                acquisitionListeners.forEach(l -> l.changed(1, false));
+            }
 
         }
 
@@ -244,12 +252,21 @@ public class FakeSpectrometer implements Spectrometer {
 
             Map<String, Object> attributes = getAllParametersAsMap();
 
-            for (int i = 0; i < count; i++) {
 
-                Thread.sleep(delay);
-                generate();
-                spectra.add(new Spectrum(wavelengths, buffer.clone(), System.nanoTime(), attributes));
+            acquisitionListeners.forEach(l -> l.changed(count, true));
 
+            try {
+
+                for (int i = 0; i < count; i++) {
+
+                    Thread.sleep(delay);
+                    generate();
+                    spectra.add(new Spectrum(wavelengths, buffer.clone(), System.nanoTime(), attributes));
+
+                }
+
+            } finally {
+                acquisitionListeners.forEach(l -> l.changed(count, false));
             }
 
         }

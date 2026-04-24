@@ -324,6 +324,8 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         } else {
 
+            acquisitionListeners.forEach(l -> l.changed(1, true));
+
             int frequency = getInt(sdk::tl_camera_get_timestamp_clock_frequency, "tl_camera_get_timestamp_clock_frequency");
 
             process(sdk.tl_camera_set_frames_per_trigger_zero_for_unlimited(handle, 1), "tl_camera_set_frames_per_trigger_zero");
@@ -346,6 +348,8 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
             long timestamp = determineTimestamp(metaReference.getValue(), metaSize.get(0), frequency, System.nanoTime());
 
             process(sdk.tl_camera_disarm(handle), "tl_camera_disarm");
+
+            acquisitionListeners.forEach(l -> l.changed(1, false));
 
             Pointer framePointer = frameReference.getValue();
 
@@ -491,12 +495,12 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         acquisitionThread = new Thread(() -> acquisition(pixel, width, height, count));
 
+        acquisitionListeners.forEach(l -> l.changed(0, true));
+
         process(sdk.tl_camera_set_operation_mode(handle, 0), "tl_camera_set_operation_mode");
         process(sdk.tl_camera_set_frames_per_trigger_zero_for_unlimited(handle, 0), "tl_camera_set_frames_per_trigger_zero_for_unlimited");
         process(sdk.tl_camera_arm(handle, 2), "tl_camera_arm");
         process(sdk.tl_camera_issue_software_trigger(handle), "tl_camera_issue_software_trigger");
-
-        acquisitionListeners.forEach(l -> l.changed(true));
 
         acquisitionThread.start();
 
@@ -520,7 +524,7 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
         } catch (InterruptedException ignored) {
         }
 
-        acquisitionListeners.forEach(l -> l.changed(false));
+        acquisitionListeners.forEach(l -> l.changed(0, false));
 
     }
 
@@ -564,45 +568,53 @@ public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice imp
 
         } else {
 
-            int frequency = getInt(sdk::tl_camera_get_timestamp_clock_frequency, "tl_camera_get_timestamp_clock_frequency");
+            try {
 
-            process(sdk.tl_camera_set_operation_mode(handle, 0), "tl_camera_set_operation_mode");
-            process(sdk.tl_camera_set_frames_per_trigger_zero_for_unlimited(handle, count), "tl_camera_set_frames_per_trigger_zero_for_unlimited");
-            process(sdk.tl_camera_arm(handle, count + 1), "tl_camera_arm");
-            process(sdk.tl_camera_issue_software_trigger(handle), "tl_camera_issue_software_trigger");
+                acquisitionListeners.forEach(l -> l.changed(count, true));
 
-            final int pixel          = getInt(sdk::tl_camera_get_sensor_pixel_size_bytes, "tl_camera_get_sensor_pixel_size_bytes");
-            final int width          = getFrameWidth();
-            final int height         = getFrameHeight();
-            final int pCount         = width * height;
-            final int imageSizeBytes = pixel * pCount;
+                int frequency = getInt(sdk::tl_camera_get_timestamp_clock_frequency, "tl_camera_get_timestamp_clock_frequency");
 
-            for (int k = 0; k < count; k++) {
+                process(sdk.tl_camera_set_operation_mode(handle, 0), "tl_camera_set_operation_mode");
+                process(sdk.tl_camera_set_frames_per_trigger_zero_for_unlimited(handle, count), "tl_camera_set_frames_per_trigger_zero_for_unlimited");
+                process(sdk.tl_camera_arm(handle, count + 1), "tl_camera_arm");
+                process(sdk.tl_camera_issue_software_trigger(handle), "tl_camera_issue_software_trigger");
 
-                PointerByReference frameReference = new PointerByReference();
-                PointerByReference metaReference  = new PointerByReference();
-                IntBuffer          frameCount     = IntBuffer.allocate(1);
-                IntBuffer          metaSize       = IntBuffer.allocate(1);
+                final int pixel          = getInt(sdk::tl_camera_get_sensor_pixel_size_bytes, "tl_camera_get_sensor_pixel_size_bytes");
+                final int width          = getFrameWidth();
+                final int height         = getFrameHeight();
+                final int pCount         = width * height;
+                final int imageSizeBytes = pixel * pCount;
 
-                process(sdk.tl_camera_get_pending_frame_or_null(handle, frameReference, frameCount, metaReference, metaSize), "tl_camera_get_pending_frame_or_null");
-                process(sdk.tl_camera_disarm(handle), "tl_camera_disarm");
+                for (int k = 0; k < count; k++) {
 
-                Pointer framePointer = frameReference.getValue();
-                Pointer metaPointer  = metaReference.getValue();
+                    PointerByReference frameReference = new PointerByReference();
+                    PointerByReference metaReference  = new PointerByReference();
+                    IntBuffer          frameCount     = IntBuffer.allocate(1);
+                    IntBuffer          metaSize       = IntBuffer.allocate(1);
 
-                if (framePointer == null) {
-                    throw new TimeoutException("Timed out waiting for frame from ThorCam camera.");
+                    process(sdk.tl_camera_get_pending_frame_or_null(handle, frameReference, frameCount, metaReference, metaSize), "tl_camera_get_pending_frame_or_null");
+                    process(sdk.tl_camera_disarm(handle), "tl_camera_disarm");
+
+                    Pointer framePointer = frameReference.getValue();
+                    Pointer metaPointer  = metaReference.getValue();
+
+                    if (framePointer == null) {
+                        throw new TimeoutException("Timed out waiting for frame from ThorCam camera.");
+                    }
+
+                    long timestamp = determineTimestamp(metaPointer, metaSize.get(0), frequency, System.nanoTime());
+
+                    ByteBuffer frameBuffer = ByteBuffer.wrap(framePointer.getByteArray(0, imageSizeBytes));
+                    D          argb        = createBuffer(pCount);
+
+                    populateBuffer(argb, frameBuffer, width, height);
+
+                    captured.add(createFrame(width, height, argb, timestamp));
+
                 }
 
-                long timestamp = determineTimestamp(metaPointer, metaSize.get(0), frequency, System.nanoTime());
-
-                ByteBuffer frameBuffer = ByteBuffer.wrap(framePointer.getByteArray(0, imageSizeBytes));
-                D          argb        = createBuffer(pCount);
-
-                populateBuffer(argb, frameBuffer, width, height);
-
-                captured.add(createFrame(width, height, argb, timestamp));
-
+            } finally {
+                acquisitionListeners.forEach(l -> l.changed(count, false));
             }
 
         }

@@ -104,6 +104,9 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
             return;
         }
 
+        // Inform any attached listeners that we're about to start continuous acquisition
+        acquisitionListeners.forEach(l -> l.changed(0,true));
+
         // Set the camera up for unlimited acquisition
         setupAcquisition(0);
 
@@ -141,8 +144,6 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
 
         // Set the acquiring flag to true and launch the thread
         acquiring = true;
-
-        acquisitionListeners.forEach(l -> l.changed(true));
 
         acquisitionThread.start();
 
@@ -189,7 +190,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
             lastCount     = 0;
             lastTimestamp = 0;
 
-            acquisitionListeners.forEach(l -> l.changed(false));
+            acquisitionListeners.forEach(l -> l.changed(0,false));
 
         }
 
@@ -264,6 +265,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
         // Otherwise, run the acquisition loop n times to get the frames
         try {
 
+            acquisitionListeners.forEach(l -> l.changed(count,true));
             setupAcquisition(count);
 
             for (int i = 0; i < count; i++) {
@@ -274,6 +276,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
 
         } finally {
             cleanupAcquisition();
+            acquisitionListeners.forEach(l -> l.changed(count,true));
         }
 
         return frames;
@@ -301,6 +304,8 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
         // Otherwise, run the acquisition loop once to acquire a frame
         try {
 
+            acquisitionListeners.forEach(l -> l.changed(1,true));
+
             setupAcquisition(1);
             F frame = newFrameBuffer();
             acquisitionLoop(frame);
@@ -309,6 +314,7 @@ public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice 
 
         } finally {
             cleanupAcquisition();
+            acquisitionListeners.forEach(l -> l.changed(1,false));
         }
 
     }

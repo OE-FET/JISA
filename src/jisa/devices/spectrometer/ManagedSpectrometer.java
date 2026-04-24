@@ -69,7 +69,7 @@ public abstract class ManagedSpectrometer extends NativeDevice implements Spectr
         acquiring = true;
         acquisitionThread.start();
 
-        acquisitionListeners.forEach(l -> l.changed(true));
+        acquisitionListeners.forEach(l -> l.changed(0, true));
 
     }
 
@@ -108,7 +108,7 @@ public abstract class ManagedSpectrometer extends NativeDevice implements Spectr
             throw e;
 
         } finally {
-            acquisitionListeners.forEach(l -> l.changed(false));
+            acquisitionListeners.forEach(l -> l.changed(0, false));
         }
 
     }
@@ -147,6 +147,7 @@ public abstract class ManagedSpectrometer extends NativeDevice implements Spectr
 
         try {
 
+            acquisitionListeners.forEach(l -> l.changed(1, true));
             setupAcquisition(1);
 
             double[] buffer      = createSpectrumBuffer();
@@ -158,6 +159,7 @@ public abstract class ManagedSpectrometer extends NativeDevice implements Spectr
 
         } finally {
             cleanupAcquisition();
+            acquisitionListeners.forEach(l -> l.changed(1, false));
         }
 
     }
@@ -191,6 +193,8 @@ public abstract class ManagedSpectrometer extends NativeDevice implements Spectr
         // Otherwise, run the acquisition loop n times to get the frames
         try {
 
+            acquisitionListeners.forEach(l -> l.changed(count, true));
+
             double[] wavelengths = getWavelengths();
             setupAcquisition(count);
 
@@ -202,6 +206,7 @@ public abstract class ManagedSpectrometer extends NativeDevice implements Spectr
 
         } finally {
             cleanupAcquisition();
+            acquisitionListeners.forEach(l -> l.changed(count, false));
         }
 
         return spectra;

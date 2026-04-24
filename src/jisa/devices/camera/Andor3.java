@@ -537,6 +537,8 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         setEnum("CycleMode", "Fixed");
         setLong("FrameCount", 1);
 
+        acquisitionListeners.forEach(l -> l.changed(1, true));
+
         // Allocate memory for frame buffer
         try (Memory memory = new Memory(bufferSize)) {
 
@@ -633,6 +635,8 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
             }
 
+        } finally {
+            acquisitionListeners.forEach(l -> l.changed(1, false));
         }
 
     }
@@ -686,6 +690,8 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         flush();
 
         List<U16Frame> frames = new ArrayList<>(count);
+
+        acquisitionListeners.forEach(l -> l.changed(count, true));
 
         // Reserve block of memory for all frames
         try (Memory memory = new Memory(bufferSize * count)) {
@@ -799,6 +805,8 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
             }
 
+        } finally {
+            acquisitionListeners.forEach(l -> l.changed(count, false));
         }
 
         return frames;
@@ -1088,7 +1096,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         // Set the camera rolling
         acquisitionStart();
 
-        acquisitionListeners.forEach(l -> l.changed(true));
+        acquisitionListeners.forEach(l -> l.changed(0, true));
 
         // Start the acquisition and processing threads
         acquisitionThread.start();
@@ -1125,7 +1133,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         processingThread  = null;
         flush();
 
-        acquisitionListeners.forEach(l -> l.changed(false));
+        acquisitionListeners.forEach(l -> l.changed(0, false));
 
     }
 

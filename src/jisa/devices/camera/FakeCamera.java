@@ -163,6 +163,8 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
         final int width  = getFrameWidth();
         final int height = getFrameHeight();
 
+        acquisitionListeners.forEach(l -> l.changed(0, true));
+
         acquireThread = new Thread(() -> {
 
             short[]  data  = new short[size];
@@ -184,8 +186,6 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
         });
 
         running = true;
-
-        acquisitionListeners.forEach(l -> l.changed(true));
 
         acquireThread.start();
 
@@ -213,7 +213,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
             fps      = 0.0;
         }
 
-        acquisitionListeners.forEach(l -> l.changed(false));
+        acquisitionListeners.forEach(l -> l.changed(0, false));
 
     }
 
