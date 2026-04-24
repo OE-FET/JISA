@@ -7,6 +7,7 @@ import jisa.devices.camera.Camera;
 import jisa.devices.camera.frame.Frame;
 import jisa.devices.camera.frame.FrameThread;
 import jisa.devices.spectrometer.feature.Shuttered;
+import jisa.devices.spectrometer.feature.XCalibrated;
 import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 import jisa.maths.Range;
@@ -221,7 +222,13 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
             int height = frame.getHeight();
 
             if (counts.get().length != count) {
-                wavelengths.set(Range.linear(0, count - 1).doubleArray());
+
+                try {
+                    wavelengths.set(spectrograph instanceof XCalibrated ? ((XCalibrated) spectrograph).getWavelengths(camera.getSensorWidth(), camera.getImageOffsetX(), camera.getFrameWidth()) : Range.linear(0, count -1).doubleArray());
+                } catch (Throwable e) {
+                    wavelengths.set(Range.linear(0, count -1).doubleArray());
+                }
+
                 counts.set(new double[count]);
                 spectrum.set(new Spectrum(wavelengths.get(), counts.get()));
             }

@@ -217,7 +217,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
 
         buffer.get(wavelengths, startX, width);
 
-        return IntStream.range(0, wavelengths.length).mapToDouble(i -> wavelengths[i]).toArray();
+        return IntStream.range(0, wavelengths.length).mapToDouble(i -> 1e-9 * wavelengths[i]).toArray();
 
     }
 
