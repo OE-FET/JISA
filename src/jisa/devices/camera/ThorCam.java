@@ -57,24 +57,24 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
     public static final Map<Integer, String> ERROR_NAMES =
             Util.map(ERROR_NONE, "No Error")
-                    .map(ERROR_COMMAND_NOT_FOUND, "Unknown Command")
-                    .map(ERROR_TOO_MANY_ARGUMENTS, "Too Many Arguments sent with Command")
-                    .map(ERROR_NOT_ENOUGH_ARGUMENTS, "Too Few Arguments sent with Command")
-                    .map(ERROR_INVALID_COMMAND, "Invalid Command")
-                    .map(ERROR_DUPLICATE_COMMAND, "Duplicate Command")
-                    .map(ERROR_MISSING_JSON_COMMAND, "Command not Documented in JSON")
-                    .map(ERROR_INITIALIZING, "Camera Still Initialising")
-                    .map(ERROR_NOTSUPPORTED, "Command Not Supported")
-                    .map(ERROR_FPGA_NOT_PROGRAMMED, "No Firmware Image on FPGA")
-                    .map(ERROR_ROI_WIDTH_ERROR, "Invalid ROI Width Value")
-                    .map(ERROR_ROI_RANGE_ERROR, "Invalid ROI Range Value")
-                    .map(ERROR_RANGE_ERROR, "Value out of Range for Command")
-                    .map(ERROR_COMMAND_LOCKED, "Command Locked")
-                    .map(ERROR_CAMERA_MUST_BE_STOPPED, "Command Requires Camera to be Stopped")
-                    .map(ERROR_ROI_BIN_COMBO_ERROR, "ROI/Binning Error")
-                    .map(ERROR_IMAGE_DATA_SYNC_ERROR, "Data Sync Error")
-                    .map(ERROR_CAMERA_MUST_BE_DISARMED, "Command Requires Camera to be Disarmed")
-                    .map(ERROR_MAX_ERRORS, "END OF ENUMERATION");
+                .map(ERROR_COMMAND_NOT_FOUND, "Unknown Command")
+                .map(ERROR_TOO_MANY_ARGUMENTS, "Too Many Arguments sent with Command")
+                .map(ERROR_NOT_ENOUGH_ARGUMENTS, "Too Few Arguments sent with Command")
+                .map(ERROR_INVALID_COMMAND, "Invalid Command")
+                .map(ERROR_DUPLICATE_COMMAND, "Duplicate Command")
+                .map(ERROR_MISSING_JSON_COMMAND, "Command not Documented in JSON")
+                .map(ERROR_INITIALIZING, "Camera Still Initialising")
+                .map(ERROR_NOTSUPPORTED, "Command Not Supported")
+                .map(ERROR_FPGA_NOT_PROGRAMMED, "No Firmware Image on FPGA")
+                .map(ERROR_ROI_WIDTH_ERROR, "Invalid ROI Width Value")
+                .map(ERROR_ROI_RANGE_ERROR, "Invalid ROI Range Value")
+                .map(ERROR_RANGE_ERROR, "Value out of Range for Command")
+                .map(ERROR_COMMAND_LOCKED, "Command Locked")
+                .map(ERROR_CAMERA_MUST_BE_STOPPED, "Command Requires Camera to be Stopped")
+                .map(ERROR_ROI_BIN_COMBO_ERROR, "ROI/Binning Error")
+                .map(ERROR_IMAGE_DATA_SYNC_ERROR, "Data Sync Error")
+                .map(ERROR_CAMERA_MUST_BE_DISARMED, "Command Requires Camera to be Disarmed")
+                .map(ERROR_MAX_ERRORS, "END OF ENUMERATION");
 
     private final ListenerManager<F>        listenerManager      = new ListenerManager<>();
     private final List<AcquisitionListener> acquisitionListeners = new LinkedList<>();

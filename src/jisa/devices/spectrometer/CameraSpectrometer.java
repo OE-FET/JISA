@@ -6,6 +6,7 @@ import jisa.devices.ParameterList;
 import jisa.devices.camera.Camera;
 import jisa.devices.camera.frame.Frame;
 import jisa.devices.camera.frame.FrameThread;
+import jisa.devices.spectrometer.feature.Shuttered;
 import jisa.devices.spectrometer.spectrum.Spectrum;
 import jisa.devices.spectrometer.spectrum.SpectrumQueue;
 import jisa.maths.Range;
@@ -33,7 +34,9 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
     private final Map<AcquisitionListener, Camera.AcquisitionListener> acquisitionListeners = new HashMap<>();
     private final ListenerManager                                      listenerManager      = new ListenerManager();
     private final Map<String, Object>                                  frameAttributes      = new LinkedHashMap<>();
+    private final AcquisitionListener                                  shutterConnect;
     private       boolean                                              attributesChanged    = true;
+    private       boolean                                              shutterConnected     = false;
 
     public CameraSpectrometer(C camera, S spectrograph) {
 
@@ -48,6 +51,23 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
                 updateAttributes();
             }
         });
+
+        if (spectrograph instanceof Shuttered) {
+
+            shutterConnect = (c, a) -> {
+
+                try {
+                    ((Shuttered) spectrograph).setShutterMode(a ? Shuttered.Mode.OPEN : Shuttered.Mode.CLOSED);
+                } catch (Throwable e) {
+                    e.printStackTrace();
+                }
+
+            };
+
+        } else {
+            shutterConnect = (c, a) -> {
+            };
+        }
 
     }
 
@@ -64,12 +84,29 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
             try {
                 frameAttributes.putAll(spectrograph.getAllParametersAsMap());
-            } catch (Throwable ignored) {}
+            } catch (Throwable ignored) {
+            }
 
         }
 
         attributesChanged = true;
 
+    }
+
+    public void setSoftwareShutterControlEnabled(boolean enabled) {
+
+        if (enabled) {
+            addAcquisitionListener(shutterConnect);
+        } else {
+            removeAcquisitionListener(shutterConnect);
+        }
+
+        shutterConnected = enabled;
+
+    }
+
+    public boolean isSoftwareShutterControlEnabled() {
+        return shutterConnected;
     }
 
     @Override
@@ -123,6 +160,8 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
                 }
 
         );
+
+        parameters.addValue("Workarounds", "Software Shutter Control", this::isSoftwareShutterControlEnabled, false, this::setSoftwareShutterControlEnabled);
 
     }
 
