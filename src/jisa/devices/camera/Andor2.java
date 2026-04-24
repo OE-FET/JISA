@@ -447,7 +447,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
                     for (int i = 0; i < frameCount; i++) {
 
                         acquisitionLoop(frameBuffer);
-                        frameQueue.add(frameBuffer.copy());
+                        frameQueue.offer(frameBuffer.copy());
 
                     }
 
