@@ -2,10 +2,10 @@ package jisa.devices.camera.feature;
 
 import jisa.devices.DeviceException;
 import jisa.devices.camera.frame.Frame;
+import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.features.Feature;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 public interface KineticSeries<F extends Frame> extends Feature {
@@ -25,6 +25,6 @@ public interface KineticSeries<F extends Frame> extends Feature {
      * @throws TimeoutException     Upon operation timing out before completion.
      * @throws InterruptedException Upon operation being interrupted before completion.
      */
-    List<F> getKineticFrameSeries(int frameCount, int accPerFrame, double frameCycle, double accCycle) throws IOException, DeviceException, TimeoutException, InterruptedException;
+    FrameQueue<F> getKineticFrameSeries(int frameCount, int accPerFrame, double frameCycle, double accCycle) throws IOException, DeviceException, TimeoutException, InterruptedException;
 
 }

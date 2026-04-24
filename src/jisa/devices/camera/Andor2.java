@@ -8,6 +8,8 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
+import jisa.devices.camera.feature.KineticSeries;
+import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameReader;
 import jisa.devices.camera.frame.U16Frame;
 import jisa.devices.camera.imagemodes.FullVerticalBinning;
@@ -29,7 +31,7 @@ import java.util.concurrent.TimeoutException;
 
 import static jisa.devices.camera.nat.ATMCDxxD.*;
 
-public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureControlled, SingleTrack, FullVerticalBinning, TrackSequence, MultiTrack {
+public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureControlled, SingleTrack, FullVerticalBinning, TrackSequence, MultiTrack, KineticSeries<U16Frame> {
 
     public static String getDescription() {
         return "Andor CCD Camera (Andor SDK2)";
@@ -411,6 +413,61 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
         return trackSequenceOffset;
     }
 
+    @Override
+    public FrameQueue<U16Frame> getKineticFrameSeries(int frameCount, int accPerFrame, double frameCycle, double accCycle) throws IOException, DeviceException, TimeoutException, InterruptedException {
+
+        if (isAcquiring()) {
+            stopAcquisition();
+        }
+
+        withCameraSelected(sdk -> {
+
+            handle(sdk.SetAcquisitionMode(3), "SetAcquisitionMode(KINETICS)");
+            handle(sdk.SetNumberAccumulations(accPerFrame), "SetNumberAccumulations");
+            handle(sdk.SetAccumulationCycleTime((float) accCycle), "SetAccumulationCycleTime");
+            handle(sdk.SetNumberKinetics(frameCount), "SetNumberKinetics");
+            handle(sdk.SetKineticCycleTime((float) frameCycle), "SetKineticCycleTime");
+            handle(sdk.StartAcquisition(), "StartAcquisition");
+
+        });
+
+        imageBuffer = ShortBuffer.allocate(getFrameSize());
+
+        FrameQueue<U16Frame> frameQueue  = new FrameQueue<>(this, frameCount);
+        U16Frame             frameBuffer = createFrameBuffer();
+
+        Thread thread = new Thread(() -> {
+
+            try {
+
+                try {
+
+                    frameBuffer.getAttributes().putAll(getAllParametersAsMap());
+
+                    for (int i = 0; i < frameCount; i++) {
+
+                        acquisitionLoop(frameBuffer);
+                        frameQueue.add(frameBuffer.copy());
+
+                    }
+
+                } finally {
+                    frameQueue.close();
+                    cleanupAcquisition();
+                }
+
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+
+        });
+
+        thread.start();
+
+        return frameQueue;
+
+    }
+
     public interface CameraAction {
         void run(ATMCDxxD sdk) throws IOException, DeviceException;
     }
@@ -436,8 +493,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
     }
 
-    protected void withCameraSelectedTO(CameraActionInterruptable toRun) throws
-            IOException, DeviceException, InterruptedException, TimeoutException {
+    protected void withCameraSelectedTO(CameraActionInterruptable toRun) throws IOException, DeviceException, InterruptedException, TimeoutException {
 
         synchronized (sdk) {
             handle(sdk.SetCurrentCamera(handle), "SetCurrentCamera");
@@ -516,8 +572,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     }
 
     @Override
-    protected void acquisitionLoop(U16Frame frameBuffer) throws
-            IOException, DeviceException, InterruptedException, TimeoutException {
+    protected void acquisitionLoop(U16Frame frameBuffer) throws IOException, DeviceException, InterruptedException, TimeoutException {
 
         int result = sdk.WaitForAcquisitionByHandleTimeOut(handle, timeout);
 
@@ -534,6 +589,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
         withCameraSelected(sdk -> sdk.GetMostRecentImage16(imageBuffer.clear().rewind(), new NativeLong(imageBuffer.capacity(), true)));
 
         imageBuffer.rewind().get(frameBuffer.array());
+        frameBuffer.setTimestamp(System.nanoTime());
 
     }
 
