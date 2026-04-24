@@ -161,7 +161,9 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
 
         );
 
-        parameters.addValue("Workarounds", "Software Shutter Control", this::isSoftwareShutterControlEnabled, false, this::setSoftwareShutterControlEnabled);
+        if (spectrograph instanceof Shuttered) {
+            parameters.addValue("Workarounds", "Software Shutter Control", this::isSoftwareShutterControlEnabled, false, this::setSoftwareShutterControlEnabled);
+        }
 
     }
 
