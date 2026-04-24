@@ -389,7 +389,7 @@ public class HeatMap extends JFXElement implements FrameAcceptor {
 
     }
 
-    public synchronized void drawFrame(Frame<? extends Number, ?> frame) {
+    public synchronized void drawFrame(Frame<? extends Number, ?, ?> frame) {
 
         if (frame instanceof Frame.IntFrame) {
             drawIntFrame((Frame.IntFrame) frame);

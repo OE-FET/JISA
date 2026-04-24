@@ -26,7 +26,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Driver class for ThorLabs cameras.
  */
-public abstract class ThorCam<F extends Frame<?, F>, D> extends NativeDevice implements Camera<F>, Amplified, Timestamping {
+public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice implements Camera<F>, Amplified, Timestamping {
 
     // CONSTANTS
     public static final int ERROR_NONE                    = 0;

@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-public interface Frame<D, F extends Frame> {
+public interface Frame<D, F extends Frame, R> {
 
     /**
      * Returns a deep copy of this frame.
@@ -42,6 +42,8 @@ public interface Frame<D, F extends Frame> {
      * @param timestamp Timestamp, in nanoseconds.
      */
     void setTimestamp(long timestamp);
+
+    R getImageArray();
 
     /**
      * Returns the pixel value at the given x and y co-ordinates/indices.
@@ -272,7 +274,7 @@ public interface Frame<D, F extends Frame> {
         return group.putDataset(name, getARGBImage());
     }
 
-    interface ShortFrame<F extends ShortFrame> extends Frame<Short, F> {
+    interface ShortFrame<F extends ShortFrame> extends Frame<Short, F, short[][]> {
 
         /**
          * Use the value() method instead.
@@ -312,6 +314,10 @@ public interface Frame<D, F extends Frame> {
 
             return image;
 
+        }
+
+        default short[][] getImageArray() {
+            return image();
         }
 
         default WritableDataset writeToHDF(WritableGroup group, String name) {
@@ -355,7 +361,7 @@ public interface Frame<D, F extends Frame> {
 
     }
 
-    interface IntFrame<F extends IntFrame> extends Frame<Integer, F> {
+    interface IntFrame<F extends IntFrame> extends Frame<Integer, F, int[][]> {
 
         int value(int x, int y);
 
@@ -383,6 +389,10 @@ public interface Frame<D, F extends Frame> {
 
             return image;
 
+        }
+
+        default int[][] getImageArray() {
+            return image();
         }
 
         /**
@@ -467,7 +477,7 @@ public interface Frame<D, F extends Frame> {
 
     }
 
-    interface LongFrame<F extends LongFrame> extends Frame<Long, F> {
+    interface LongFrame<F extends LongFrame> extends Frame<Long, F, long[][]> {
 
         long value(int x, int y);
 
@@ -488,6 +498,10 @@ public interface Frame<D, F extends Frame> {
 
             return image;
 
+        }
+
+        default long[][] getImageArray() {
+            return image();
         }
 
         default WritableDataset writeToHDF(WritableGroup group, String name) {

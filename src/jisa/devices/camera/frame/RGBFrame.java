@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class RGBFrame implements Frame<RGB, RGBFrame> {
+public class RGBFrame implements Frame<RGB, RGBFrame, short[][][]> {
 
     private final int[] argb;
     private final int   width;
@@ -78,6 +78,31 @@ public class RGBFrame implements Frame<RGB, RGBFrame> {
     @Override
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    @Override
+    public short[][][] getImageArray() {
+
+        int width  = getWidth();
+        int height = getHeight();
+
+        short[][][] image = new short[getHeight()][getWidth()][3];
+
+        int v = 0;
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+
+                v = argb[y * width + x];
+
+                image[y][x][0] = (short) ((v >> 16) & 0xFF);
+                image[y][x][1] = (short) ((v >> 8) & 0xFF);
+                image[y][x][2] = (short) (v & 0xFF);
+
+            }
+        }
+
+        return image;
     }
 
     @Override

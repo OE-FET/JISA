@@ -17,7 +17,7 @@ import java.util.concurrent.TimeoutException;
  *
  * @param <F> The Frame class returned by this camera
  */
-public abstract class ManagedCamera<F extends Frame<?, F>> extends NativeDevice implements Camera<F> {
+public abstract class ManagedCamera<F extends Frame<?, F, ?>> extends NativeDevice implements Camera<F> {
 
     protected final ListenerManager<F>        manager              = new ListenerManager<>();
     protected final List<AcquisitionListener> acquisitionListeners = new LinkedList<>();

@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
-public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
+public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame, int[][][]> {
 
     protected final long[] argb;
     protected final int    width;
@@ -68,6 +68,32 @@ public class U16RGBFrame implements Frame<U16RGB, U16RGBFrame> {
     @Override
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    @Override
+    public int[][][] getImageArray() {
+
+        int width  = getWidth();
+        int height = getHeight();
+
+        int[][][] image = new int[getHeight()][getWidth()][3];
+
+        long v = 0;
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+
+                v = argb[y * width + x];
+
+                image[y][x][0] = (int) ((v >> 32) & 0xFFFF);
+                image[y][x][1] = (int) ((v >> 16) & 0xFFFF);
+                image[y][x][2] = (int) (v & 0xFFFF);
+
+            }
+        }
+
+        return image;
+
     }
 
     @Override

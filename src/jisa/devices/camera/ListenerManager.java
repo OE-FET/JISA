@@ -10,7 +10,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 
-public class ListenerManager<F extends Frame<?, F>> {
+public class ListenerManager<F extends Frame<?, F, ?>> {
 
     private final List<Runner<F>>     listeners = new LinkedList<>();
     private final List<FrameQueue<F>> queues    = new LinkedList<>();
@@ -77,7 +77,7 @@ public class ListenerManager<F extends Frame<?, F>> {
 
     }
 
-    public class Runner<I extends Frame<?, I>> {
+    public class Runner<I extends Frame<?, I, ?>> {
 
         private final Camera.Listener<I> listener;
         private final Semaphore          semaphore = new Semaphore(1);

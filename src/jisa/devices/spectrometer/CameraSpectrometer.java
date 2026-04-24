@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends Number, ? extends F>, S extends Spectrograph> implements Spectrometer {
+public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends Number, ? extends F, ?>, S extends Spectrograph> implements Spectrometer {
 
     private final C            camera;
     private final S            spectrograph;
