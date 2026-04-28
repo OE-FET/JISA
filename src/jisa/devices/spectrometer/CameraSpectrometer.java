@@ -141,7 +141,6 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
                     );
 
                 }
-
         );
 
         parameters.addValue(
@@ -159,7 +158,6 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
                     );
 
                 }
-
         );
 
         if (spectrograph instanceof Shuttered) {

@@ -8,6 +8,7 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
+import jisa.devices.ParameterList;
 import jisa.devices.camera.feature.KineticSeries;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameReader;
@@ -33,6 +34,7 @@ import static jisa.devices.camera.nat.ATMCDxxD.*;
 
 public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureControlled, SingleTrack, FullVerticalBinning, TrackSequence, MultiTrack, KineticSeries<U16Frame> {
 
+
     public static String getDescription() {
         return "Andor CCD Camera (Andor SDK2)";
     }
@@ -43,27 +45,50 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     private final int        maxWidth;
     private final int        maxHeight;
 
+    private final long ulSize;
+    private final long ulAcqModes;
+    private final long ulReadModes;
+    private final long ulTriggerModes;
+    private final long ulCameraType;
+    private final long ulPixelMode;
+    private final long ulSetFunctions;
+    private final long ulGetFunctions;
+    private final long ulFeatures;
+    private final long ulPCICard;
+    private final long ulEMGainCapability;
+    private final long ulFTReadModes;
+    private final long ulFeatures2;
+
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
     private final List<Track>               multiTracks     = new LinkedList<>();
 
     private int timeout = 10000;
     private int target  = 290;
 
-    private ImageMode   imageMode           = ImageMode.FULL_IMAGE;
-    private int         width               = 500;
-    private int         height              = 500;
-    private int         startX              = 0;
-    private int         startY              = 0;
-    private int         xBin                = 1;
-    private int         yBin                = 1;
-    private boolean     centredX            = false;
-    private boolean     centredY            = false;
-    private int         singleTrackStart    = 1;
-    private int         singleTrackHeight   = 1;
-    private int         trackSequenceCount  = 1;
-    private int         trackSequenceHeight = 1;
-    private int         trackSequenceOffset = 1;
-    private ShortBuffer imageBuffer         = null;
+    private ImageMode        imageMode           = ImageMode.FULL_IMAGE;
+    private int              width               = 500;
+    private int              height              = 500;
+    private int              startX              = 0;
+    private int              startY              = 0;
+    private int              xBin                = 1;
+    private int              yBin                = 1;
+    private boolean          centredX            = false;
+    private boolean          centredY            = false;
+    private int              singleTrackStart    = 1;
+    private int              singleTrackHeight   = 1;
+    private int              trackSequenceCount  = 1;
+    private int              trackSequenceHeight = 1;
+    private int              trackSequenceOffset = 1;
+    private AmplifierType    amplifierType       = null;
+    private boolean          useIsolatedCrop     = false;
+    private int              isolatedCropWidth   = 0;
+    private int              isolatedCropHeight  = 0;
+    private int              isolatedCropLeft    = 0;
+    private int              isolatedCropBottom  = 0;
+    private EMGainMode       emGainMode          = EMGainMode.DAC_8_BIT;
+    private int              emGain              = 0;
+    private IsolatedCropMode isolatedCropMode    = IsolatedCropMode.HIGH_SPEED;
+    private ShortBuffer      imageBuffer         = null;
 
     public static FrameReader<U16Frame> openFrameReader(String path) throws IOException {
 
@@ -84,6 +109,87 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         });
 
+    }
+
+    @Override
+    public void addInstrumentParameters(Class<?> target, ParameterList parameters) {
+
+        if ((ulSetFunctions & AC_SETFUNCTION_CROPMODE) != 0) {
+            parameters.addValue("Isolated Crop", "Enabled", this::isIsolatedCropEnabled, false, this::setIsolatedCropEnabled);
+            parameters.addChoice("Isolated Crop", "Mode", this::getIsolatedCropMode, IsolatedCropMode.HIGH_SPEED, this::setIsolatedCropMode, IsolatedCropMode.values());
+            parameters.addValue("Isolated Crop", "Width", this::getIsolatedCropWidth, 1, this::setIsolatedCropWidth);
+            parameters.addValue("Isolated Crop", "Height", this::getIsolatedCropHeight, 1, this::setIsolatedCropHeight);
+        }
+
+        if ((ulSetFunctions & AC_SETFUNCTION_EXTENDED_CROP_MODE) != 0) {
+            parameters.addValue("Isolated Crop", "Offset X", this::getIsolatedCropOffsetX, 0, this::setIsolatedCropOffsetX);
+            parameters.addValue("Isolated Crop", "Offset Y", this::getIsolatedCropOffsetY, 0, this::setIsolatedCropOffsetY);
+        }
+
+        if ((ulSetFunctions & AC_SETFUNCTION_EMCCDGAIN) != 0) {
+
+            if ((ulSetFunctions & AC_SETFUNCTION_EMADVANCED) != 0) {
+                parameters.addValue("EM-CCD", "Advanced Gain Enabled", this::isAdvancedEMGainEnabled, false, this::setAdvancedEMGainEnabled);
+            }
+
+            parameters.addChoice("EM-CCD", "Mode", this::getEMGainMode, EMGainMode.DAC_8_BIT, this::setEMGainMode, EMGainMode.values());
+            parameters.addValue("EM-CCD", "Gain", this::getEMGain, 0, this::setEMGain);
+        }
+
+    }
+
+    public boolean isIsolatedCropEnabled() {
+        return useIsolatedCrop;
+    }
+
+    public void setIsolatedCropEnabled(boolean useIsolatedCrop) throws IOException, DeviceException {
+
+        this.useIsolatedCrop = useIsolatedCrop;
+
+        if (useIsolatedCrop) {
+            setImageMode(ImageMode.FULL_VERTICAL_BINNING);
+        }
+
+    }
+
+    public IsolatedCropMode getIsolatedCropMode() {
+        return isolatedCropMode;
+    }
+
+    public void setIsolatedCropMode(IsolatedCropMode isolatedCropMode) {
+        this.isolatedCropMode = isolatedCropMode;
+    }
+
+    public int getIsolatedCropWidth() {
+        return isolatedCropWidth;
+    }
+
+    public int getIsolatedCropHeight() {
+        return isolatedCropHeight;
+    }
+
+    public void setIsolatedCropWidth(int isolatedCropWidth) {
+        this.isolatedCropWidth = isolatedCropWidth;
+    }
+
+    public void setIsolatedCropHeight(int isolatedCropHeight) {
+        this.isolatedCropHeight = isolatedCropHeight;
+    }
+
+    public int getIsolatedCropOffsetX() {
+        return isolatedCropLeft;
+    }
+
+    public void setIsolatedCropOffsetX(int isolatedCropOffsetX) {
+        this.isolatedCropLeft = isolatedCropOffsetX;
+    }
+
+    public int getIsolatedCropOffsetY() {
+        return isolatedCropBottom;
+    }
+
+    public void setIsolatedCropOffsetY(int isolatedCropOffsetY) {
+        this.isolatedCropBottom = isolatedCropOffsetY;
     }
 
     private static void handle(int result, String method) throws DeviceException {
@@ -168,6 +274,23 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
             handle(sdk.SetImage(xBin, yBin, 1, width, 1, height), "SetImage");
 
+            ANDORCAPS capabilities = new ANDORCAPS();
+            handle(sdk.GetCapabilities(capabilities), "GetCapabilities");
+
+            ulSize             = capabilities.ulSize.longValue();
+            ulAcqModes         = capabilities.ulAcqModes.longValue();
+            ulReadModes        = capabilities.ulReadModes.longValue();
+            ulTriggerModes     = capabilities.ulTriggerModes.longValue();
+            ulCameraType       = capabilities.ulCameraType.longValue();
+            ulPixelMode        = capabilities.ulPixelMode.longValue();
+            ulSetFunctions     = capabilities.ulSetFunctions.longValue();
+            ulGetFunctions     = capabilities.ulGetFunctions.longValue();
+            ulFeatures         = capabilities.ulFeatures.longValue();
+            ulPCICard          = capabilities.ulPCICard.longValue();
+            ulEMGainCapability = capabilities.ulEMGainCapability.longValue();
+            ulFTReadModes      = capabilities.ulFTReadModes.longValue();
+            ulFeatures2        = capabilities.ulFeatures2.longValue();
+
         }
 
     }
@@ -175,6 +298,11 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     protected void configureReadout() throws IOException, DeviceException {
 
         withCameraSelected(sdk -> {
+
+            if ((ulSetFunctions & AC_SETFUNCTION_CROPMODE) != 0) {
+                sdk.SetIsolatedCropMode(0, 1, 1, 1, 1);
+                sdk.SetCropMode(0, 1, 0);
+            }
 
             switch (imageMode) {
 
@@ -274,6 +402,12 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
                     handle(sdk.SetRandomTracks(count, areas), "SetRandomTracks");
 
+            }
+
+            if ((ulSetFunctions & AC_SETFUNCTION_EXTENDED_CROP_MODE) != 0 && useIsolatedCrop) {
+                handle(sdk.SetIsolatedCropModeEx(1, isolatedCropHeight, isolatedCropWidth, xBin, yBin, isolatedCropLeft + 1, isolatedCropBottom + 1), "SetIsolatedCropMode");
+            } else if ((ulSetFunctions & AC_SETFUNCTION_CROPMODE) != 0 && useIsolatedCrop) {
+                handle(sdk.SetIsolatedCropMode(1, isolatedCropHeight, isolatedCropWidth, xBin, yBin), "SetIsolatedCropMode");
             }
 
         });
@@ -791,7 +925,19 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
     @Override
     public synchronized void setImageMode(ImageMode mode) throws IOException, DeviceException {
+
         this.imageMode = mode;
+
+        if ((ulCameraType & AC_CAMERATYPE_IDUS) != 0) {
+
+            if (mode != ImageMode.FULL_VERTICAL_BINNING) {
+                setIsolatedCropEnabled(false);
+            }
+
+        } else if (mode != ImageMode.FULL_VERTICAL_BINNING || mode != ImageMode.FULL_IMAGE) {
+            setIsolatedCropEnabled(false);
+        }
+
     }
 
     @Override
@@ -813,4 +959,164 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     public Address getAddress() {
         return null;
     }
+
+    public List<AmplifierType> getAmplifierTypes() {
+
+        if ((ulCameraType & AC_CAMERATYPE_EMCCD) != 0) {
+            return List.of(AmplifierType.ELECTRON_MULTIPLYING, AmplifierType.CONVENTIONAL);
+        } else if ((ulCameraType & AC_CAMERATYPE_CLARA) != 0) {
+            return List.of(AmplifierType.CONVENTIONAL, AmplifierType.EXTENDED_NIR_MODE);
+        } else if ((ulCameraType & AC_CAMERATYPE_INGAAS) != 0) {
+            return List.of(AmplifierType.HIGH_SENSITIVITY, AmplifierType.HIGH_DYNAMIC_RANGE);
+        } else if ((ulCameraType & (AC_CAMERATYPE_NEWTON | AC_CAMERATYPE_IKON | AC_CAMERATYPE_IKONXL)) != 0) {
+            return List.of(AmplifierType.HIGH_SENSITIVITY, AmplifierType.HIGH_CAPACITY);
+        } else {
+            return List.of();
+        }
+
+    }
+
+    public void setAmplifierType(AmplifierType type) throws IOException, DeviceException {
+
+        List<AmplifierType> list = getAmplifierTypes();
+
+        if (!list.contains(type)) {
+            throw new DeviceException("Amplifier type %s not supported.", type);
+        }
+
+        withCameraSelected(sdk -> {
+            handle(sdk.SetOutputAmplifier(list.indexOf(type)), "SetOutputAmplifier");
+        });
+
+        amplifierType = type;
+
+    }
+
+    public AmplifierType getAmplifierType() throws IOException, DeviceException {
+        return amplifierType;
+    }
+
+    public void setEMGainMode(EMGainMode mode) throws IOException, DeviceException {
+
+        int index = mode.ordinal();
+
+        withCameraSelected(sdk -> {
+            handle(sdk.SetEMGainMode(index), "SetEMGainMode");
+        });
+
+        this.emGainMode = mode;
+
+    }
+
+    public EMGainMode getEMGainMode() throws IOException, DeviceException {
+        return emGainMode;
+    }
+
+    public void setEMGain(int gain) throws IOException, DeviceException {
+
+        withCameraSelected(sdk -> {
+            handle(sdk.SetEMCCDGain(gain), "SetEMCCDGain");
+        });
+
+    }
+
+    public int getEMGain() throws IOException, DeviceException {
+
+        IntBuffer buffer = IntBuffer.allocate(1);
+
+        withCameraSelected(sdk -> {
+            handle(sdk.GetEMCCDGain(buffer), "GetEMCCDGain");
+        });
+
+        return buffer.get(0);
+
+    }
+
+    public boolean isAdvancedEMGainEnabled() throws IOException, DeviceException {
+
+        IntBuffer intBuffer = IntBuffer.allocate(1);
+
+        withCameraSelected(sdk -> {
+            handle(sdk.GetEMAdvanced(intBuffer), "GetEMAdvanced");
+        });
+
+        return intBuffer.get(0) > 0;
+
+    }
+
+    public void setAdvancedEMGainEnabled(boolean enabled) throws IOException, DeviceException {
+        withCameraSelected(sdk -> {
+            handle(sdk.SetEMAdvanced(enabled ? 1 : 0), "SetEMAdvanced");
+        });
+    }
+
+    public enum AmplifierType {
+
+        CONVENTIONAL("Conventional"),
+        ELECTRON_MULTIPLYING("Electron Multiplying"),
+        EXTENDED_NIR_MODE("Extended NIR Mode"),
+        HIGH_SENSITIVITY("High Sensitivity"),
+        HIGH_DYNAMIC_RANGE("High Dynamic Range"),
+        HIGH_CAPACITY("High Capacity");
+
+        private final String name;
+
+        AmplifierType(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String toString() {
+            return getName();
+        }
+
+    }
+
+    public enum IsolatedCropMode {
+
+        HIGH_SPEED("High Speed"),
+        LOW_LATENCY("Low Latency");
+
+        private final String name;
+
+        IsolatedCropMode(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String toString() {
+            return getName();
+        }
+
+    }
+
+    public enum EMGainMode {
+
+        DAC_8_BIT("DAC 8 Bit (0-255)"),
+        DAC_12_BIT("DAC 12 Bit (0-4095)"),
+        LINEAR("Linear"),
+        REAL("Real");
+
+        private final String name;
+
+        EMGainMode(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String toString() {
+            return getName();
+        }
+
+    }
+
 }
