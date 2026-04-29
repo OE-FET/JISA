@@ -1,6 +1,5 @@
 package jisa;
 
-import com.google.common.collect.ImmutableList;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelReader;
 import javafx.scene.image.PixelWriter;
@@ -11,7 +10,6 @@ import jisa.control.ERunnable;
 import jisa.control.SRunnable;
 import jisa.devices.DeviceException;
 import jisa.visa.exceptions.VISAException;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -109,7 +107,7 @@ public class Util {
 
         try {
             toRun.run();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
         }
 
