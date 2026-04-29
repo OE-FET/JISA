@@ -26,6 +26,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -89,6 +90,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     private int              emGain              = 0;
     private IsolatedCropMode isolatedCropMode    = IsolatedCropMode.HIGH_SPEED;
     private ShortBuffer      imageBuffer         = null;
+    private PreAmpGain       preAmpGain          = null;
 
     public static FrameReader<U16Frame> openFrameReader(String path) throws IOException {
 
@@ -109,87 +111,6 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         });
 
-    }
-
-    @Override
-    public void addInstrumentParameters(Class<?> target, ParameterList parameters) {
-
-        if ((ulSetFunctions & AC_SETFUNCTION_CROPMODE) != 0) {
-            parameters.addValue("Isolated Crop", "Enabled", this::isIsolatedCropEnabled, false, this::setIsolatedCropEnabled);
-            parameters.addChoice("Isolated Crop", "Mode", this::getIsolatedCropMode, IsolatedCropMode.HIGH_SPEED, this::setIsolatedCropMode, IsolatedCropMode.values());
-            parameters.addValue("Isolated Crop", "Width", this::getIsolatedCropWidth, 1, this::setIsolatedCropWidth);
-            parameters.addValue("Isolated Crop", "Height", this::getIsolatedCropHeight, 1, this::setIsolatedCropHeight);
-        }
-
-        if ((ulSetFunctions & AC_SETFUNCTION_EXTENDED_CROP_MODE) != 0) {
-            parameters.addValue("Isolated Crop", "Offset X", this::getIsolatedCropOffsetX, 0, this::setIsolatedCropOffsetX);
-            parameters.addValue("Isolated Crop", "Offset Y", this::getIsolatedCropOffsetY, 0, this::setIsolatedCropOffsetY);
-        }
-
-        if ((ulSetFunctions & AC_SETFUNCTION_EMCCDGAIN) != 0) {
-
-            if ((ulSetFunctions & AC_SETFUNCTION_EMADVANCED) != 0) {
-                parameters.addValue("EM-CCD", "Advanced Gain Enabled", this::isAdvancedEMGainEnabled, false, this::setAdvancedEMGainEnabled);
-            }
-
-            parameters.addChoice("EM-CCD", "Mode", this::getEMGainMode, EMGainMode.DAC_8_BIT, this::setEMGainMode, EMGainMode.values());
-            parameters.addValue("EM-CCD", "Gain", this::getEMGain, 0, this::setEMGain);
-        }
-
-    }
-
-    public boolean isIsolatedCropEnabled() {
-        return useIsolatedCrop;
-    }
-
-    public void setIsolatedCropEnabled(boolean useIsolatedCrop) throws IOException, DeviceException {
-
-        this.useIsolatedCrop = useIsolatedCrop;
-
-        if (useIsolatedCrop) {
-            setImageMode(ImageMode.FULL_VERTICAL_BINNING);
-        }
-
-    }
-
-    public IsolatedCropMode getIsolatedCropMode() {
-        return isolatedCropMode;
-    }
-
-    public void setIsolatedCropMode(IsolatedCropMode isolatedCropMode) {
-        this.isolatedCropMode = isolatedCropMode;
-    }
-
-    public int getIsolatedCropWidth() {
-        return isolatedCropWidth;
-    }
-
-    public int getIsolatedCropHeight() {
-        return isolatedCropHeight;
-    }
-
-    public void setIsolatedCropWidth(int isolatedCropWidth) {
-        this.isolatedCropWidth = isolatedCropWidth;
-    }
-
-    public void setIsolatedCropHeight(int isolatedCropHeight) {
-        this.isolatedCropHeight = isolatedCropHeight;
-    }
-
-    public int getIsolatedCropOffsetX() {
-        return isolatedCropLeft;
-    }
-
-    public void setIsolatedCropOffsetX(int isolatedCropOffsetX) {
-        this.isolatedCropLeft = isolatedCropOffsetX;
-    }
-
-    public int getIsolatedCropOffsetY() {
-        return isolatedCropBottom;
-    }
-
-    public void setIsolatedCropOffsetY(int isolatedCropOffsetY) {
-        this.isolatedCropBottom = isolatedCropOffsetY;
     }
 
     private static void handle(int result, String method) throws DeviceException {
@@ -291,8 +212,100 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
             ulFTReadModes      = capabilities.ulFTReadModes.longValue();
             ulFeatures2        = capabilities.ulFeatures2.longValue();
 
+            Util.runRegardless(() -> setAmplifierType(getAmplifierTypes().get(0)));
+            Util.runRegardless(() -> setPreAmpGain(getPreAmpGains().get(0)));
+
         }
 
+    }
+
+    @Override
+    public void addInstrumentParameters(Class<?> target, ParameterList parameters) {
+
+        parameters.addChoice("Spurious Noise Filter", "Mode", this::getFilterMode, FilterMode.NO_FILTER, this::setFilterMode, FilterMode.values());
+        parameters.addValue("Spurious Noise Filter", "Threshold", this::getFilterThreshold, 0.0, this::setFilterThreshold);
+
+        if ((ulSetFunctions & AC_SETFUNCTION_CROPMODE) != 0) {
+            parameters.addValue("Isolated Crop", "Enabled", this::isIsolatedCropEnabled, false, this::setIsolatedCropEnabled);
+            parameters.addChoice("Isolated Crop", "Mode", this::getIsolatedCropMode, IsolatedCropMode.HIGH_SPEED, this::setIsolatedCropMode, IsolatedCropMode.values());
+            parameters.addValue("Isolated Crop", "Width", this::getIsolatedCropWidth, 1, this::setIsolatedCropWidth);
+            parameters.addValue("Isolated Crop", "Height", this::getIsolatedCropHeight, 1, this::setIsolatedCropHeight);
+        }
+
+        if ((ulSetFunctions & AC_SETFUNCTION_EXTENDED_CROP_MODE) != 0) {
+            parameters.addValue("Isolated Crop", "Offset X", this::getIsolatedCropOffsetX, 0, this::setIsolatedCropOffsetX);
+            parameters.addValue("Isolated Crop", "Offset Y", this::getIsolatedCropOffsetY, 0, this::setIsolatedCropOffsetY);
+        }
+
+        if ((ulSetFunctions & AC_SETFUNCTION_EMCCDGAIN) != 0) {
+
+            if ((ulSetFunctions & AC_SETFUNCTION_EMADVANCED) != 0) {
+                parameters.addValue("EM-CCD", "Advanced Gain Enabled", this::isAdvancedEMGainEnabled, false, this::setAdvancedEMGainEnabled);
+            }
+
+            parameters.addChoice("EM-CCD", "Mode", this::getEMGainMode, EMGainMode.DAC_8_BIT, this::setEMGainMode, EMGainMode.values());
+            parameters.addValue("EM-CCD", "Gain", this::getEMGain, 0, this::setEMGain);
+
+        }
+
+        if ((ulSetFunctions & AC_SETFUNCTION_PREAMPGAIN) != 0) {
+            parameters.addChoice("Pre-Amplifier", "Gain", this::getPreAmpGain, new PreAmpGain(0, 0), g -> setPreAmpGain((PreAmpGain) g), getPreAmpGains());
+        }
+
+    }
+
+    public boolean isIsolatedCropEnabled() {
+        return useIsolatedCrop;
+    }
+
+    public void setIsolatedCropEnabled(boolean useIsolatedCrop) throws IOException, DeviceException {
+
+        this.useIsolatedCrop = useIsolatedCrop;
+
+        if (useIsolatedCrop) {
+            setImageMode(ImageMode.FULL_VERTICAL_BINNING);
+        }
+
+    }
+
+    public IsolatedCropMode getIsolatedCropMode() {
+        return isolatedCropMode;
+    }
+
+    public void setIsolatedCropMode(IsolatedCropMode isolatedCropMode) {
+        this.isolatedCropMode = isolatedCropMode;
+    }
+
+    public int getIsolatedCropWidth() {
+        return isolatedCropWidth;
+    }
+
+    public int getIsolatedCropHeight() {
+        return isolatedCropHeight;
+    }
+
+    public void setIsolatedCropWidth(int isolatedCropWidth) {
+        this.isolatedCropWidth = isolatedCropWidth;
+    }
+
+    public void setIsolatedCropHeight(int isolatedCropHeight) {
+        this.isolatedCropHeight = isolatedCropHeight;
+    }
+
+    public int getIsolatedCropOffsetX() {
+        return isolatedCropLeft;
+    }
+
+    public void setIsolatedCropOffsetX(int isolatedCropOffsetX) {
+        this.isolatedCropLeft = isolatedCropOffsetX;
+    }
+
+    public int getIsolatedCropOffsetY() {
+        return isolatedCropBottom;
+    }
+
+    public void setIsolatedCropOffsetY(int isolatedCropOffsetY) {
+        this.isolatedCropBottom = isolatedCropOffsetY;
     }
 
     protected void configureReadout() throws IOException, DeviceException {
@@ -1050,6 +1063,103 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
         });
     }
 
+    public List<PreAmpGain> getPreAmpGains() {
+
+        List<PreAmpGain> list = new LinkedList<>();
+
+        try {
+
+            withCameraSelected(sdk -> {
+
+                IntBuffer   intBuffer   = IntBuffer.allocate(1);
+                FloatBuffer floatBuffer = FloatBuffer.allocate(1);
+
+                handle(sdk.GetNumberPreAmpGains(intBuffer), "GetNumberPreAmpGains");
+
+                int count = intBuffer.get(0);
+
+                for (int i = 0; i < count; i++) {
+
+                    handle(sdk.GetPreAmpGain(i, floatBuffer.clear().rewind()), "GetPreAmpGain");
+                    list.add(new PreAmpGain(i, floatBuffer.get(i)));
+
+                }
+
+            });
+
+            return list;
+
+        } catch (Throwable throwable) {
+            return list;
+        }
+
+    }
+
+    public PreAmpGain getPreAmpGain() throws IOException, DeviceException {
+        return preAmpGain;
+    }
+
+    public void setPreAmpGain(PreAmpGain gain) throws IOException, DeviceException {
+
+        withCameraSelected(sdk -> {
+            handle(sdk.SetPreAmpGain(gain.getIndex()),  "SetPreAmpGain");
+        });
+
+        this.preAmpGain = gain;
+
+    }
+
+    public void setPreAmpGain(double gain)  throws IOException, DeviceException {
+
+        PreAmpGain found = getPreAmpGains().stream()
+                .sorted(Comparator.comparingDouble(g -> Math.abs(g.getGain() - gain)))
+                .findFirst()
+                .orElseThrow(() -> new DeviceException("Invalid preamp gain."));
+
+        setPreAmpGain(found);
+
+    }
+
+    public FilterMode getFilterMode() throws IOException, DeviceException {
+
+        IntBuffer intBuffer = IntBuffer.allocate(1);
+
+        withCameraSelected(sdk -> {
+            handle(sdk.Filter_GetMode(intBuffer), "GetFilterMode");
+        });
+
+        return FilterMode.values()[intBuffer.get(0)];
+
+    }
+
+    public void setFilterMode(FilterMode mode) throws IOException, DeviceException {
+
+        withCameraSelected(sdk -> {
+            handle(sdk.Filter_SetMode(mode.ordinal()), "SetFilterMode");
+        });
+
+    }
+
+    public double getFilterThreshold() throws IOException, DeviceException {
+
+        FloatBuffer floatBuffer = FloatBuffer.allocate(1);
+
+        withCameraSelected(sdk -> {
+            handle(sdk.Filter_GetThreshold(floatBuffer), "Filter_GetThreshold");
+        });
+
+        return floatBuffer.get(0);
+
+    }
+
+    public void setFilterThreshold(double threshold) throws IOException, DeviceException {
+
+        withCameraSelected(sdk -> {
+            handle(sdk.Filter_SetThreshold((float) threshold),  "SetFilterThreshold");
+        });
+
+    }
+
     public enum AmplifierType {
 
         CONVENTIONAL("Conventional"),
@@ -1115,6 +1225,54 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         public String toString() {
             return getName();
+        }
+
+    }
+
+    public enum FilterMode {
+
+        NO_FILTER("No Filter"),
+        MEDIAN_FILTER("Median Filter"),
+        LEVEL_ABOVE_FILTER("Level Above Filter"),
+        INTERQUARTILE_RANGE_FILTER("Interquartile Range Filter"),
+        NOISE_THRESHOLD_FILTER("Noise Threshold Filter"),;
+
+        private final String name;
+
+        FilterMode(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String toString() {
+            return getName();
+        }
+
+    }
+
+    public static class PreAmpGain {
+
+        private final int    index;
+        private final double gain;
+
+        public PreAmpGain(int index, double gain) {
+            this.index = index;
+            this.gain  = gain;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public double getGain() {
+            return gain;
+        }
+
+        public String toString() {
+            return String.format("%.02g", gain);
         }
 
     }
