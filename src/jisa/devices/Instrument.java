@@ -234,6 +234,10 @@ public interface Instrument {
         ifImplements(JvmClassMappingKt.getJavaObjectType(target), action, otherwise);
     }
 
+    default boolean doesImplement(Class target) {
+        return target.isAssignableFrom(this.getClass());
+    }
+
     interface InstrumentAcceptor<I> {
         void accept(I instrument) throws IOException, DeviceException, InterruptedException, TimeoutException;
     }
