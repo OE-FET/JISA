@@ -157,7 +157,12 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
             NativeLongByReference ref = new NativeLongByReference();
 
-            handle(sdk.GetCameraHandle(new NativeLong(index, true), ref), "GetCameraPointer");
+            try {
+                handle(sdk.GetCameraHandle(new NativeLong(index, true), ref), "GetCameraPointer");
+            } catch (DeviceException e) {
+                throw new DeviceException("Cannot get handle for camera with index %d. Camera not found.", index);
+            }
+
             handle = ref.getValue();
 
             handle(sdk.SetCurrentCamera(handle), "SelectDevice");

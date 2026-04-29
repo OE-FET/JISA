@@ -1,11 +1,12 @@
 package jisa.devices.camera.nat;
 
-import com.sun.jna.Library;
 import com.sun.jna.NativeLong;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 import com.sun.jna.ptr.NativeLongByReference;
 import com.sun.jna.ptr.PointerByReference;
+import jisa.Util;
+import jisa.visa.Library;
 
 import java.nio.*;
 import java.util.Arrays;
@@ -321,6 +322,11 @@ public interface ATMCDxxD extends Library {
     int DRV_P4INVALID                              = 20069;
     int AC_PIXELMODE_RGB                           = 0x010000;
     int DRV_OW_NOT_INITIALIZED                     = 20154;
+
+    default void initialise() {
+        this.Initialize("");
+        Util.addShutdownHook(this::ShutDown);
+    }
 
     int AbortAcquisition();
 
