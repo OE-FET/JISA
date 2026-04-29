@@ -155,22 +155,6 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         synchronized (sdk) {
 
-            try (Memory countBuffer = new Memory(Integer.BYTES)) {
-
-                IntBuffer intBuffer = countBuffer.getByteBuffer(0, Integer.BYTES).asIntBuffer();
-
-                handle(sdk.GetNumberDevices(intBuffer), "GetNumberDevices");
-
-                int number = intBuffer.get(0);
-
-                if (number < 1) {
-                    throw new DeviceException("No connected devices found!");
-                } else if (index >= number || index < 0) {
-                    throw new DeviceException("Invalid device index!");
-                }
-
-            }
-
             NativeLongByReference ref = new NativeLongByReference();
 
             handle(sdk.GetCameraHandle(new NativeLong(index, true), ref), "GetCameraPointer");
