@@ -9,6 +9,7 @@ import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
+import jisa.devices.camera.feature.Amplified;
 import jisa.devices.camera.feature.KineticSeries;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameReader;
@@ -33,8 +34,7 @@ import java.util.concurrent.TimeoutException;
 
 import static jisa.devices.camera.nat.ATMCDxxD.*;
 
-public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureControlled, SingleTrack, FullVerticalBinning, TrackSequence, MultiTrack, KineticSeries<U16Frame> {
-
+public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, TemperatureControlled, SingleTrack, FullVerticalBinning, TrackSequence, MultiTrack, KineticSeries<U16Frame> {
 
     public static String getDescription() {
         return "Andor CCD Camera (Andor SDK2)";
@@ -80,7 +80,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     private int              trackSequenceCount  = 1;
     private int              trackSequenceHeight = 1;
     private int              trackSequenceOffset = 1;
-    private AmplifierType    amplifierType       = null;
+    private Amplifier        amplifierType       = null;
     private boolean          useIsolatedCrop     = false;
     private int              isolatedCropWidth   = 0;
     private int              isolatedCropHeight  = 0;
@@ -89,8 +89,9 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     private EMGainMode       emGainMode          = EMGainMode.DAC_8_BIT;
     private int              emGain              = 0;
     private IsolatedCropMode isolatedCropMode    = IsolatedCropMode.HIGH_SPEED;
+    private Memory           imageMemory         = null;
     private ShortBuffer      imageBuffer         = null;
-    private PreAmpGain       preAmpGain          = null;
+    private double           preAmpGain          = 0;
 
     public static FrameReader<U16Frame> openFrameReader(String path) throws IOException {
 
@@ -201,8 +202,13 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
             ulFTReadModes      = capabilities.ulFTReadModes.longValue();
             ulFeatures2        = capabilities.ulFeatures2.longValue();
 
-            Util.runRegardless(() -> setAmplifierType(getAmplifierTypes().get(0)));
-            Util.runRegardless(() -> setPreAmpGain(getPreAmpGains().get(0)));
+            try {
+                setAmplifier(getAmplifiers().get(0));
+            } catch (Throwable ignored) { }
+
+            try {
+                setAmplifierGain(getAmplifierGains().get(0));
+            } catch (Throwable ignored) { }
 
         }
 
@@ -235,10 +241,6 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
             parameters.addChoice("EM-CCD", "Mode", this::getEMGainMode, EMGainMode.DAC_8_BIT, this::setEMGainMode, EMGainMode.values());
             parameters.addValue("EM-CCD", "Gain", this::getEMGain, 0, this::setEMGain);
 
-        }
-
-        if ((ulSetFunctions & AC_SETFUNCTION_PREAMPGAIN) != 0) {
-            parameters.addChoice("Pre-Amplifier", "Gain", this::getPreAmpGain, new PreAmpGain(0, 0), g -> setPreAmpGain((PreAmpGain) g), getPreAmpGains());
         }
 
     }
@@ -567,7 +569,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         });
 
-        imageBuffer = ShortBuffer.allocate(getFrameSize());
+        imageMemory = new Memory(getFrameSize() * Short.BYTES);
+        imageBuffer = imageMemory.getByteBuffer(0, imageMemory.size()).asShortBuffer();
 
         FrameQueue<U16Frame> frameQueue  = new FrameQueue<>(this, frameCount);
         U16Frame             frameBuffer = createFrameBuffer();
@@ -684,7 +687,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
         configureReadout();
 
-        imageBuffer = ShortBuffer.allocate(getFrameSize());
+        imageMemory = new Memory(getFrameSize() * Short.BYTES);
+        imageBuffer = imageMemory.getByteBuffer(0, imageMemory.size()).asShortBuffer();
 
         withCameraSelected(sdk -> {
 
@@ -735,6 +739,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
         withCameraSelected(sdk -> {
             handle(sdk.AbortAcquisition(), "AbortAcquisition");
         });
+
+        imageMemory.close();
 
     }
 
@@ -962,40 +968,100 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
         return null;
     }
 
-    public List<AmplifierType> getAmplifierTypes() {
+    @Override
+    public void setAmplifierGain(double gain) throws DeviceException, IOException {
+
+        List<Double> gains = getAmplifierGains();
+
+        double closest = gains.stream()
+                .sorted(Comparator.comparingDouble(v -> Math.abs(v - gain)))
+                .findFirst()
+                .orElseThrow(() -> new DeviceException("No suitable amplifier gain found"));
+
+        int index = gains.indexOf(closest);
+
+        withCameraSelected(sdk -> {
+            handle(sdk.SetPreAmpGain(index), "SetPreAmpGain");
+        });
+
+        this.preAmpGain = closest;
+
+    }
+
+    @Override
+    public double getAmplifierGain() throws DeviceException, IOException {
+        return preAmpGain;
+    }
+
+    @Override
+    public List<Double> getAmplifierGains() {
+
+        List<Double> list = new LinkedList<>();
+
+        try {
+
+            withCameraSelected(sdk -> {
+
+                IntBuffer   intBuffer   = IntBuffer.allocate(1);
+                FloatBuffer floatBuffer = FloatBuffer.allocate(1);
+
+                handle(sdk.GetNumberPreAmpGains(intBuffer), "GetNumberPreAmpGains");
+
+                int count = intBuffer.get(0);
+
+                for (int i = 0; i < count; i++) {
+
+                    handle(sdk.GetPreAmpGain(i, floatBuffer.clear().rewind()), "GetPreAmpGain");
+                    list.add((double) floatBuffer.get(0));
+
+                }
+
+            });
+
+            return list;
+
+        } catch (Throwable throwable) {
+            return list;
+        }
+    }
+
+    @Override
+    public void setAmplifier(Amplifier amplifier) throws DeviceException, IOException {
+
+        int index = getAmplifiers().indexOf(amplifier);
+
+        if (index < 0) {
+            throw new DeviceException("Invalid amplifier for this camera: %s", amplifier);
+        }
+
+        withCameraSelected(sdk -> {
+            handle(sdk.SetOutputAmplifier(index), "SetOutputAmplifier");
+        });
+
+        amplifierType = amplifier;
+
+    }
+
+    @Override
+    public Amplifier getAmplifier() throws DeviceException, IOException {
+        return amplifierType;
+    }
+
+    @Override
+    public List<Amplifier> getAmplifiers() {
 
         if ((ulCameraType & AC_CAMERATYPE_EMCCD) != 0) {
-            return List.of(AmplifierType.ELECTRON_MULTIPLYING, AmplifierType.CONVENTIONAL);
+            return List.of(Amplifiers.EMCCD_REGISTER, Amplifiers.CONVENTIONAL);
         } else if ((ulCameraType & AC_CAMERATYPE_CLARA) != 0) {
-            return List.of(AmplifierType.CONVENTIONAL, AmplifierType.EXTENDED_NIR_MODE);
+            return List.of(Amplifiers.CONVENTIONAL, Amplifiers.EXTENDED_NIR_MODE);
         } else if ((ulCameraType & AC_CAMERATYPE_INGAAS) != 0) {
-            return List.of(AmplifierType.HIGH_SENSITIVITY, AmplifierType.HIGH_DYNAMIC_RANGE);
+            return List.of(Amplifiers.HIGH_SENSITIVITY, Amplifiers.HIGH_DYNAMIC_RANGE);
         } else if ((ulCameraType & (AC_CAMERATYPE_NEWTON | AC_CAMERATYPE_IKON | AC_CAMERATYPE_IKONXL)) != 0) {
-            return List.of(AmplifierType.HIGH_SENSITIVITY, AmplifierType.HIGH_CAPACITY);
+            return List.of(Amplifiers.HIGH_SENSITIVITY, Amplifiers.HIGH_CAPACITY);
         } else {
             return List.of();
         }
 
-    }
-
-    public void setAmplifierType(AmplifierType type) throws IOException, DeviceException {
-
-        List<AmplifierType> list = getAmplifierTypes();
-
-        if (!list.contains(type)) {
-            throw new DeviceException("Amplifier type %s not supported.", type);
-        }
-
-        withCameraSelected(sdk -> {
-            handle(sdk.SetOutputAmplifier(list.indexOf(type)), "SetOutputAmplifier");
-        });
-
-        amplifierType = type;
-
-    }
-
-    public AmplifierType getAmplifierType() throws IOException, DeviceException {
-        return amplifierType;
     }
 
     public void setEMGainMode(EMGainMode mode) throws IOException, DeviceException {
@@ -1052,63 +1118,6 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
         });
     }
 
-    public List<PreAmpGain> getPreAmpGains() {
-
-        List<PreAmpGain> list = new LinkedList<>();
-
-        try {
-
-            withCameraSelected(sdk -> {
-
-                IntBuffer   intBuffer   = IntBuffer.allocate(1);
-                FloatBuffer floatBuffer = FloatBuffer.allocate(1);
-
-                handle(sdk.GetNumberPreAmpGains(intBuffer), "GetNumberPreAmpGains");
-
-                int count = intBuffer.get(0);
-
-                for (int i = 0; i < count; i++) {
-
-                    handle(sdk.GetPreAmpGain(i, floatBuffer.clear().rewind()), "GetPreAmpGain");
-                    list.add(new PreAmpGain(i, floatBuffer.get(i)));
-
-                }
-
-            });
-
-            return list;
-
-        } catch (Throwable throwable) {
-            return list;
-        }
-
-    }
-
-    public PreAmpGain getPreAmpGain() throws IOException, DeviceException {
-        return preAmpGain;
-    }
-
-    public void setPreAmpGain(PreAmpGain gain) throws IOException, DeviceException {
-
-        withCameraSelected(sdk -> {
-            handle(sdk.SetPreAmpGain(gain.getIndex()),  "SetPreAmpGain");
-        });
-
-        this.preAmpGain = gain;
-
-    }
-
-    public void setPreAmpGain(double gain)  throws IOException, DeviceException {
-
-        PreAmpGain found = getPreAmpGains().stream()
-                .sorted(Comparator.comparingDouble(g -> Math.abs(g.getGain() - gain)))
-                .findFirst()
-                .orElseThrow(() -> new DeviceException("Invalid preamp gain."));
-
-        setPreAmpGain(found);
-
-    }
-
     public FilterMode getFilterMode() throws IOException, DeviceException {
 
         IntBuffer intBuffer = IntBuffer.allocate(1);
@@ -1144,33 +1153,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
     public void setFilterThreshold(double threshold) throws IOException, DeviceException {
 
         withCameraSelected(sdk -> {
-            handle(sdk.Filter_SetThreshold((float) threshold),  "SetFilterThreshold");
+            handle(sdk.Filter_SetThreshold((float) threshold), "SetFilterThreshold");
         });
-
-    }
-
-    public enum AmplifierType {
-
-        CONVENTIONAL("Conventional"),
-        ELECTRON_MULTIPLYING("Electron Multiplying"),
-        EXTENDED_NIR_MODE("Extended NIR Mode"),
-        HIGH_SENSITIVITY("High Sensitivity"),
-        HIGH_DYNAMIC_RANGE("High Dynamic Range"),
-        HIGH_CAPACITY("High Capacity");
-
-        private final String name;
-
-        AmplifierType(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String toString() {
-            return getName();
-        }
 
     }
 
@@ -1224,7 +1208,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
         MEDIAN_FILTER("Median Filter"),
         LEVEL_ABOVE_FILTER("Level Above Filter"),
         INTERQUARTILE_RANGE_FILTER("Interquartile Range Filter"),
-        NOISE_THRESHOLD_FILTER("Noise Threshold Filter"),;
+        NOISE_THRESHOLD_FILTER("Noise Threshold Filter"),
+        ;
 
         private final String name;
 
@@ -1242,27 +1227,14 @@ public class Andor2 extends ManagedCamera<U16Frame> implements TemperatureContro
 
     }
 
-    public static class PreAmpGain {
+    public static class Amplifiers {
 
-        private final int    index;
-        private final double gain;
-
-        public PreAmpGain(int index, double gain) {
-            this.index = index;
-            this.gain  = gain;
-        }
-
-        public int getIndex() {
-            return index;
-        }
-
-        public double getGain() {
-            return gain;
-        }
-
-        public String toString() {
-            return String.format("%.02g", gain);
-        }
+        public static final Amplifier CONVENTIONAL       = new Amplifier(0, "Conventional");
+        public static final Amplifier EMCCD_REGISTER     = new Amplifier(0, "EMCCD Register Only");
+        public static final Amplifier EXTENDED_NIR_MODE  = new Amplifier(0, "Extended NIR Mode");
+        public static final Amplifier HIGH_SENSITIVITY   = new Amplifier(0, "High Sensitivity");
+        public static final Amplifier HIGH_DYNAMIC_RANGE = new Amplifier(0, "High Dynamic Range");
+        public static final Amplifier HIGH_CAPACITY      = new Amplifier(0, "High Capacity");
 
     }
 

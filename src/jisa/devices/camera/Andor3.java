@@ -30,7 +30,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinning, CMOS, Overlap, MultiTrack, TemperatureControlled, Shuttered, Timestamping {
+public class Andor3 extends NativeDevice implements Camera<U16Frame>, Amplified, FrameBinning, CMOS, Overlap, MultiTrack, TemperatureControlled, Shuttered, Timestamping {
 
     public static String getDescription() {
         return "Andor sCMOS Camera (Andor SDK3)";
@@ -106,52 +106,52 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     public final static int  AT_ERR_NULL_ISAVAILABLE_VAR    = 31;
 
     public final static Map<Integer, String> ERROR_NAMES =
-        Util.map(AT_ERR_STRINGNOTAVAILABLE, "String Not Available")
-            .map(AT_ERR_NULL_COUNT_VAR, "Null Count Variable")
-            .map(AT_ERR_INDEXNOTIMPLEMENTED, "Index Not Implemented")
-            .map(AT_ERR_NULL_READABLE_VAR, "Null Readable Variable")
-            .map(AT_ERR_NULL_WRITABLE_VAR, "Null Writable Variable")
-            .map(AT_ERR_NULL_QUEUE_PTR, "Null Queue Pointer")
-            .map(AT_ERR_NOTWRITABLE, "Not Writable")
-            .map(AT_ERR_HARDWARE_OVERFLOW, "Hardware Overflow")
-            .map(AT_ERR_BUFFERFULL, "Buffer Full")
-            .map(AT_ERR_COMM, "Communications Error")
-            .map(AT_ERR_NOTINITIALISED, "Not Initialised")
-            .map(AT_ERR_NULL_READONLY_VAR, "Read-Only Variable is Null")
-            .map(AT_ERR_NULL_MINVALUE, "Minimum Value is Null")
-            .map(AT_ERR_NULL_MAXSTRINGLENGTH, "Maximum String Length is Null")
-            .map(AT_ERR_NOTREADABLE, "Not Readable")
-            .map(AT_ERR_NULL_WAIT_PTR, "Wait Pointer is Null")
-            .map(AT_ERR_NULL_EVCALLBACK, "Event Callback is Null")
-            .map(AT_ERR_OUTOFRANGE, "Out of Range")
-            .map(AT_ERR_STRINGNOTIMPLEMENTED, "String Not Implemented")
-            .map(AT_ERR_READONLY, "Read Only")
-            .map(AT_ERR_EXCEEDEDMAXSTRINGLENGTH, "Maximum String Length Exceeded")
-            .map(AT_ERR_INDEXNOTAVAILABLE, "Index Not Available")
-            .map(AT_ERR_CONNECTION, "Connection Error")
-            .map(AT_ERR_NULL_PTRSIZE, "Pointer Size is Null")
-            .map(AT_ERR_INVALIDALIGNMENT, "Invalid Alignment")
-            .map(AT_ERR_INVALIDHANDLE, "Invalid Handle")
-            .map(AT_ERR_NULL_STRING, "String is Null")
-            .map(AT_ERR_NULL_MAXVALUE, "Maximum Value is Null")
-            .map(AT_ERR_NOTIMPLEMENTED, "Not Implemented")
-            .map(AT_ERR_NULL_IMPLEMENTED_VAR, "isImplemented Variable is Null")
-            .map(AT_ERR_INVALIDSIZE, "Invalid Size")
-            .map(AT_ERR_NULL_HANDLE, "Handle is Null")
-            .map(AT_ERR_DEVICEINUSE, "Device in Use")
-            .map(AT_ERR_NULL_VALUE, "Value is Null")
-            .map(AT_ERR_NOMEMORY, "No Memory")
-            .map(AT_ERR_NODATA, "No Data")
-            .map(AT_ERR_TIMEDOUT, "Timed Out")
-            .map(AT_ERR_DEVICENOTFOUND, "Device Not Found")
-            .map(AT_ERR_NULL_FEATURE, "Feature is Null")
-            .map(AT_ERR_NULL_ISAVAILABLE_VAR, "isAvailable Variable is Null");
+            Util.map(AT_ERR_STRINGNOTAVAILABLE, "String Not Available")
+                    .map(AT_ERR_NULL_COUNT_VAR, "Null Count Variable")
+                    .map(AT_ERR_INDEXNOTIMPLEMENTED, "Index Not Implemented")
+                    .map(AT_ERR_NULL_READABLE_VAR, "Null Readable Variable")
+                    .map(AT_ERR_NULL_WRITABLE_VAR, "Null Writable Variable")
+                    .map(AT_ERR_NULL_QUEUE_PTR, "Null Queue Pointer")
+                    .map(AT_ERR_NOTWRITABLE, "Not Writable")
+                    .map(AT_ERR_HARDWARE_OVERFLOW, "Hardware Overflow")
+                    .map(AT_ERR_BUFFERFULL, "Buffer Full")
+                    .map(AT_ERR_COMM, "Communications Error")
+                    .map(AT_ERR_NOTINITIALISED, "Not Initialised")
+                    .map(AT_ERR_NULL_READONLY_VAR, "Read-Only Variable is Null")
+                    .map(AT_ERR_NULL_MINVALUE, "Minimum Value is Null")
+                    .map(AT_ERR_NULL_MAXSTRINGLENGTH, "Maximum String Length is Null")
+                    .map(AT_ERR_NOTREADABLE, "Not Readable")
+                    .map(AT_ERR_NULL_WAIT_PTR, "Wait Pointer is Null")
+                    .map(AT_ERR_NULL_EVCALLBACK, "Event Callback is Null")
+                    .map(AT_ERR_OUTOFRANGE, "Out of Range")
+                    .map(AT_ERR_STRINGNOTIMPLEMENTED, "String Not Implemented")
+                    .map(AT_ERR_READONLY, "Read Only")
+                    .map(AT_ERR_EXCEEDEDMAXSTRINGLENGTH, "Maximum String Length Exceeded")
+                    .map(AT_ERR_INDEXNOTAVAILABLE, "Index Not Available")
+                    .map(AT_ERR_CONNECTION, "Connection Error")
+                    .map(AT_ERR_NULL_PTRSIZE, "Pointer Size is Null")
+                    .map(AT_ERR_INVALIDALIGNMENT, "Invalid Alignment")
+                    .map(AT_ERR_INVALIDHANDLE, "Invalid Handle")
+                    .map(AT_ERR_NULL_STRING, "String is Null")
+                    .map(AT_ERR_NULL_MAXVALUE, "Maximum Value is Null")
+                    .map(AT_ERR_NOTIMPLEMENTED, "Not Implemented")
+                    .map(AT_ERR_NULL_IMPLEMENTED_VAR, "isImplemented Variable is Null")
+                    .map(AT_ERR_INVALIDSIZE, "Invalid Size")
+                    .map(AT_ERR_NULL_HANDLE, "Handle is Null")
+                    .map(AT_ERR_DEVICEINUSE, "Device in Use")
+                    .map(AT_ERR_NULL_VALUE, "Value is Null")
+                    .map(AT_ERR_NOMEMORY, "No Memory")
+                    .map(AT_ERR_NODATA, "No Data")
+                    .map(AT_ERR_TIMEDOUT, "Timed Out")
+                    .map(AT_ERR_DEVICENOTFOUND, "Device Not Found")
+                    .map(AT_ERR_NULL_FEATURE, "Feature is Null")
+                    .map(AT_ERR_NULL_ISAVAILABLE_VAR, "isAvailable Variable is Null");
 
     public final static List<Integer> IO_ERRORS = List.of(
-        AT_ERR_COMM,
-        AT_ERR_CONNECTION,
-        AT_ERR_DEVICEINUSE,
-        AT_ERR_TIMEDOUT
+            AT_ERR_COMM,
+            AT_ERR_CONNECTION,
+            AT_ERR_DEVICEINUSE,
+            AT_ERR_TIMEDOUT
     );
 
     private final ATCoreLibrary    core;
@@ -177,12 +177,6 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
         parameters.addValue("Readout", "Fast AOI Readout Mode", this::isFastAOIFrameRateEnabled, false, this::setFastAOIFrameRateEnabled);
         parameters.addValue("Processing", "Internal Backlog Enabled", this::isInternalBacklogEnabled, false, this::setInternalBacklogEnabled);
-
-        try {
-            parameters.addChoice("Amplifier", "Pre-Amp Gain Mode", this::getPreAmpGainMode, new PreAmpGainMode(0, 12, false), this::setPreAmpGainMode, this.getPreAmpGainModes().toArray(PreAmpGainMode[]::new));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
 
     }
 
@@ -444,8 +438,8 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         List<Enum> options = getEnumOptions("AOIBinning");
 
         List<Integer> values = options.stream()
-                                      .map(e -> Integer.parseInt(e.getText().split("x")[0]))
-                                      .collect(Collectors.toList());
+                .map(e -> Integer.parseInt(e.getText().split("x")[0]))
+                .collect(Collectors.toList());
 
         int x = getBinningX();
         int y = getBinningY();
@@ -1126,7 +1120,8 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         try {
             acquisitionThread.join();
             processingThread.join();
-        } catch (InterruptedException ignored) { }
+        } catch (InterruptedException ignored) {
+        }
 
         // Cleanup
         acquisitionThread = null;
@@ -1307,9 +1302,9 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
     public void setPixelReadoutRate(double rate) throws IOException, DeviceException {
 
         Enum option = getEnumOptions("PixelReadoutRate")
-            .stream()
-            .min(Comparator.comparingDouble(e -> Math.abs(rate - Integer.parseInt(e.getText().replace("MHz", "").trim()) * 1e6)))
-            .orElseThrow(() -> new DeviceException("Cannot find a readout rate."));
+                .stream()
+                .min(Comparator.comparingDouble(e -> Math.abs(rate - Integer.parseInt(e.getText().replace("MHz", "").trim()) * 1e6)))
+                .orElseThrow(() -> new DeviceException("Cannot find a readout rate."));
 
         setEnum("PixelReadoutRate", option);
 
@@ -1488,20 +1483,20 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
         // Find enum option with value closest to that requested, but not larger than it
         Enum value = options.stream()
-                            .map(e -> Map.entry(e, Double.parseDouble(e.getText().replaceAll("[A-z]", "").trim())))
-                            .filter(v -> v.getValue() <= degC)
-                            .max(Comparator.comparingDouble(Map.Entry::getValue))
-                            .map(Map.Entry::getKey)
-                            .orElse(null);
+                .map(e -> Map.entry(e, Double.parseDouble(e.getText().replaceAll("[A-z]", "").trim())))
+                .filter(v -> v.getValue() <= degC)
+                .max(Comparator.comparingDouble(Map.Entry::getValue))
+                .map(Map.Entry::getKey)
+                .orElse(null);
 
         if (value == null) {
 
             // If that failed, just use the minimum possible value
             Enum min = options.stream()
-                              .map(e -> Map.entry(e, Double.parseDouble(e.getText().replaceAll("[A-z]", "").trim())))
-                              .min(Comparator.comparingDouble(Map.Entry::getValue))
-                              .map(Map.Entry::getKey)
-                              .orElse(options.get(0));
+                    .map(e -> Map.entry(e, Double.parseDouble(e.getText().replaceAll("[A-z]", "").trim())))
+                    .min(Comparator.comparingDouble(Map.Entry::getValue))
+                    .map(Map.Entry::getKey)
+                    .orElse(options.get(0));
 
             setEnum("TemperatureControl", min);
 
@@ -1558,9 +1553,9 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
             setInt("MultitrackSelector", i);
 
             tracks.add(new Track(
-                getInt("MultitrackStart"),
-                getInt("MultitrackEnd"),
-                getBoolean("MultitrackBinned")
+                    getInt("MultitrackStart"),
+                    getInt("MultitrackEnd"),
+                    getBoolean("MultitrackBinned")
             ));
 
         }
@@ -1598,17 +1593,38 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         return getEnum("ShutterMode").getText().trim().equalsIgnoreCase("Auto");
     }
 
-    public List<PreAmpGainMode> getPreAmpGainModes() throws IOException, DeviceException {
+    @Override
+    public void setAmplifierGain(double gain) throws DeviceException, IOException {
+        /* Not configurable */
+    }
 
-        return getEnumOptions("SimplePreAmpGainControl").stream().map(e -> {
+    @Override
+    public double getAmplifierGain() throws DeviceException, IOException {
+        return 0;
+    }
 
-            String  text      = e.getText();
-            boolean isHigh    = text.contains("high well capacity");
-            int     bithDepth = text.contains("12") ? 12 : 16;
+    @Override
+    public List<Double> getAmplifierGains() {
+        return List.of();
+    }
 
-            return new PreAmpGainMode(e.getIndex(), bithDepth, isHigh);
+    public List<Amplifier> getAmplifiers() {
 
-        }).collect(Collectors.toList());
+        try {
+
+            return getEnumOptions("SimplePreAmpGainControl").stream().map(e -> {
+
+                String  text      = e.getText();
+                boolean isHigh    = text.contains("high well capacity");
+                int     bithDepth = text.contains("12") ? 12 : 16;
+
+                return new Amplifier(e.getIndex(), bithDepth, isHigh);
+
+            }).collect(Collectors.toList());
+
+        } catch (Throwable e) {
+            return List.of();
+        }
 
     }
 
@@ -1617,29 +1633,27 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
      *
      * @param bitDepth     The bit depth of the amplifier gain mode desired.
      * @param highCapacity High well capacity?
-     *
      * @return Found mode, or null.
-     *
      * @throws IOException     Upon communications error
      * @throws DeviceException Upon device error
      */
-    public PreAmpGainMode findPreAmpGainMode(int bitDepth, boolean highCapacity) throws IOException, DeviceException {
-        return getPreAmpGainModes().stream().filter(m -> m.getBitDepth() == bitDepth && m.isHighWellCapacity() == highCapacity).findFirst().orElse(null);
+    public Amplifier findPreAmpGainMode(int bitDepth, boolean highCapacity) throws IOException, DeviceException {
+        return getAmplifiers().stream().filter(m -> m.getBits() == bitDepth && m.isHighWellCapacity() == highCapacity).findFirst().orElse(null);
     }
 
-    public void setPreAmpGainMode(PreAmpGainMode mode) throws DeviceException, IOException {
+    public void setAmplifier(Amplifier mode) throws DeviceException, IOException {
         setEnum("SimplePreAmpGainControl", mode.getIndex());
     }
 
-    public void setPreAmpGainMode(int bitDepth, boolean highWellCapacity) throws DeviceException, IOException {
+    public void setAmplifier(int bitDepth, boolean highWellCapacity) throws DeviceException, IOException {
 
-        PreAmpGainMode mode = findPreAmpGainMode(bitDepth, highWellCapacity);
+        Amplifier mode = findPreAmpGainMode(bitDepth, highWellCapacity);
 
         if (mode == null) {
             throw new DeviceException("No matching pre-amp gain mode was found.");
         }
 
-        setPreAmpGainMode(mode);
+        setAmplifier(mode);
 
     }
 
@@ -1770,8 +1784,12 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
 
         public boolean equals(Object o) {
 
-            if (this == o) { return true; }
-            if (o == null || getClass() != o.getClass()) { return false; }
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
 
             PreAmpGainMode that = (PreAmpGainMode) o;
 
@@ -1822,6 +1840,30 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, FrameBinni
         FRAME_CLOCK,
         ROW_CLOCK,
         EXPOSED_ROW_CLOCK;
+    }
+
+    public static class Amplifier extends Amplified.Amplifier {
+
+        private final int     bits;
+        private final boolean highWellCapacity;
+
+        public Amplifier(int index, int bits, boolean highWellCapacity) {
+
+            super(index, String.format("%d Bit, %s Well Capacity", bits, highWellCapacity ? "High" : "Low"));
+
+            this.bits             = bits;
+            this.highWellCapacity = highWellCapacity;
+
+        }
+
+        public int getBits() {
+            return bits;
+        }
+
+        public boolean isHighWellCapacity() {
+            return highWellCapacity;
+        }
+
     }
 
 }
