@@ -552,11 +552,13 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     }
 
     @Override
-    public FrameQueue<U16Frame> getKineticFrameSeries(int frameCount, int accPerFrame, double frameCycle, double accCycle) throws IOException, DeviceException, TimeoutException, InterruptedException {
+    public FrameQueue<U16Frame> startKineticFrameSeries(int frameCount, int accPerFrame, double frameCycle, double accCycle) throws IOException, DeviceException, TimeoutException, InterruptedException {
 
         if (isAcquiring()) {
             stopAcquisition();
         }
+
+        acquiring = true;
 
         withCameraSelected(sdk -> {
 
@@ -593,6 +595,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
                 } finally {
                     frameQueue.close();
                     cleanupAcquisition();
+                    acquiring = false;
                 }
 
             } catch (Throwable e) {
