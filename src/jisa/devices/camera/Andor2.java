@@ -186,6 +186,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
             handle(sdk.SetImage(xBin, yBin, 1, width, 1, height), "SetImage");
 
             ANDORCAPS.ByReference capabilities = new ANDORCAPS.ByReference();
+            capabilities.ulSize                = new NativeLong(capabilities.size(), true);
+
             handle(sdk.GetCapabilities(capabilities), "GetCapabilities");
 
             ulSize             = capabilities.ulSize.longValue();
@@ -361,8 +363,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
                     handle(sdk.SetReadMode(1), "SetReadMode(MULTI-TRACK [sequence])");
                     handle(
-                            sdk.SetMultiTrack(trackSequenceCount, trackSequenceHeight, trackSequenceOffset, IntBuffer.allocate(1), IntBuffer.allocate(1)),
-                            String.format("SetMultiTrack(%d, %d, %d)", trackSequenceCount, trackSequenceHeight, trackSequenceOffset)
+                        sdk.SetMultiTrack(trackSequenceCount, trackSequenceHeight, trackSequenceOffset, IntBuffer.allocate(1), IntBuffer.allocate(1)),
+                        String.format("SetMultiTrack(%d, %d, %d)", trackSequenceCount, trackSequenceHeight, trackSequenceOffset)
                     );
 
                     break;
@@ -448,7 +450,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     @Override
     public synchronized void setTemperatureControlTarget(double targetTemperature) throws
-            IOException, DeviceException {
+        IOException, DeviceException {
 
         withCameraSelected(sdk -> {
             handle(sdk.SetTemperature((int) Math.round(targetTemperature - 273.15)), "SetTemperature");
@@ -654,8 +656,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
         withCameraSelected(sdk -> {
 
             handle(
-                    sdk.GetAcquisitionTimings(exposure, accumulate, kinetic),
-                    "GetAcquisitionTimings"
+                sdk.GetAcquisitionTimings(exposure, accumulate, kinetic),
+                "GetAcquisitionTimings"
             );
 
         });
@@ -977,9 +979,9 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
         List<Double> gains = getAmplifierGains();
 
         double closest = gains.stream()
-                .sorted(Comparator.comparingDouble(v -> Math.abs(v - gain)))
-                .findFirst()
-                .orElseThrow(() -> new DeviceException("No suitable amplifier gain found"));
+                              .sorted(Comparator.comparingDouble(v -> Math.abs(v - gain)))
+                              .findFirst()
+                              .orElseThrow(() -> new DeviceException("No suitable amplifier gain found"));
 
         int index = gains.indexOf(closest);
 
