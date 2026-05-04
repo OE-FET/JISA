@@ -185,7 +185,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
             handle(sdk.SetImage(xBin, yBin, 1, width, 1, height), "SetImage");
 
-            ANDORCAPS capabilities = new ANDORCAPS();
+            ANDORCAPS.ByReference capabilities = new ANDORCAPS.ByReference();
             handle(sdk.GetCapabilities(capabilities), "GetCapabilities");
 
             ulSize             = capabilities.ulSize.longValue();
@@ -1211,8 +1211,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
         MEDIAN_FILTER("Median Filter"),
         LEVEL_ABOVE_FILTER("Level Above Filter"),
         INTERQUARTILE_RANGE_FILTER("Interquartile Range Filter"),
-        NOISE_THRESHOLD_FILTER("Noise Threshold Filter"),
-        ;
+        NOISE_THRESHOLD_FILTER("Noise Threshold Filter");
 
         private final String name;
 

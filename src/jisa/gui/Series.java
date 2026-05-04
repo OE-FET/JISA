@@ -177,6 +177,7 @@ public interface Series {
     }
 
     default Series updateSpectrum(Spectrum spectrum) {
+        setXPoints(spectrum.getWavelengths());
         return setYPoints(spectrum.getCounts());
     }
 
