@@ -941,14 +941,18 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
         this.imageMode = mode;
 
-        if ((ulCameraType & AC_CAMERATYPE_IDUS) != 0) {
+        if ((ulCameraType & AC_SETFUNCTION_CROPMODE) != 0) {
 
-            if (mode != ImageMode.FULL_VERTICAL_BINNING) {
+            if ((ulCameraType & AC_CAMERATYPE_IDUS) != 0) {
+
+                if (mode != ImageMode.FULL_VERTICAL_BINNING) {
+                    setIsolatedCropEnabled(false);
+                }
+
+            } else if (mode != ImageMode.FULL_VERTICAL_BINNING && mode != ImageMode.FULL_IMAGE) {
                 setIsolatedCropEnabled(false);
             }
 
-        } else if (mode != ImageMode.FULL_VERTICAL_BINNING || mode != ImageMode.FULL_IMAGE) {
-            setIsolatedCropEnabled(false);
         }
 
     }
