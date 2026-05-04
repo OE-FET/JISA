@@ -40,6 +40,12 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
         return "Andor CCD Camera (Andor SDK2)";
     }
 
+    public static final int READOUT_MODE_FVB          = 0;
+    public static final int READOUT_MODE_MULTI_TRACK  = 1;
+    public static final int READOUT_MODE_RANDOM_TRACK = 2;
+    public static final int READOUT_MODE_SINGLE_TRACK = 3;
+    public static final int READOUT_MODE_IMAGE        = 4;
+
     private final ATMCDxxD   sdk;
     private final int        index;
     private final NativeLong handle;
@@ -186,7 +192,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
             handle(sdk.SetImage(xBin, yBin, 1, width, 1, height), "SetImage");
 
             ANDORCAPS.ByReference capabilities = new ANDORCAPS.ByReference();
-            capabilities.ulSize                = new NativeLong(capabilities.size(), true);
+            capabilities.ulSize = new NativeLong(capabilities.size(), true);
 
             handle(sdk.GetCapabilities(capabilities), "GetCapabilities");
 
@@ -314,7 +320,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
                 case FULL_IMAGE:
 
-                    handle(sdk.SetReadMode(4), "SetReadMode(IMAGE)");
+                    handle(sdk.SetReadMode(READOUT_MODE_IMAGE), "SetReadMode(IMAGE)");
                     handle(sdk.SetImage(xBin, yBin, 1, maxWidth, 1, maxHeight), "SetImage");
 
                     break;
@@ -341,7 +347,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
                     xEnd = xStart + width;
                     yEnd = yStart + height;
 
-                    handle(sdk.SetReadMode(4), "SetReadMode(IMAGE)");
+                    handle(sdk.SetReadMode(READOUT_MODE_IMAGE), "SetReadMode(IMAGE)");
                     handle(sdk.SetImage(xBin, yBin, xStart + 1, xEnd, yStart + 1, yEnd), "SetImage");
 
                     break;
@@ -349,30 +355,32 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
                 case SINGLE_TRACK:
 
-                    handle(sdk.SetReadMode(3), "SetReadMode(SINGLE-TRACK)");
+                    handle(sdk.SetReadMode(READOUT_MODE_SINGLE_TRACK), "SetReadMode(SINGLE-TRACK)");
                     handle(sdk.SetSingleTrack(singleTrackStart - singleTrackHeight / 2, singleTrackHeight), String.format("SetSingleTrack(%d, %d)", singleTrackStart - singleTrackHeight / 2, height));
 
                     break;
 
                 case FULL_VERTICAL_BINNING:
 
-                    handle(sdk.SetReadMode(0), "SetReadMode(FULL-VERTICAL-BINNING)");
+                    handle(sdk.SetReadMode(READOUT_MODE_FVB), "SetReadMode(FULL-VERTICAL-BINNING)");
+                    handle(sdk.SetFVBHBin(xBin), "SetFVBHBin");
                     break;
 
                 case TRACK_SEQUENCE:
 
-                    handle(sdk.SetReadMode(1), "SetReadMode(MULTI-TRACK [sequence])");
+                    handle(sdk.SetReadMode(READOUT_MODE_MULTI_TRACK), "SetReadMode(MULTI-TRACK [sequence])");
                     handle(
                         sdk.SetMultiTrack(trackSequenceCount, trackSequenceHeight, trackSequenceOffset, IntBuffer.allocate(1), IntBuffer.allocate(1)),
                         String.format("SetMultiTrack(%d, %d, %d)", trackSequenceCount, trackSequenceHeight, trackSequenceOffset)
                     );
+                    handle(sdk.SetMultiTrackHBin(xBin), "SetMultiTrackHBin");
 
                     break;
 
 
                 case MULTI_TRACK:
 
-                    handle(sdk.SetReadMode(3), "SetReadMode(RANDOM-TRACK [multitrack])");
+                    handle(sdk.SetReadMode(READOUT_MODE_RANDOM_TRACK), "SetReadMode(RANDOM-TRACK [multitrack])");
 
                     int count = 0;
 
