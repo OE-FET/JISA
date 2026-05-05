@@ -52,19 +52,18 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     private final int        maxWidth;
     private final int        maxHeight;
 
-    private final long ulSize;
-    private final long ulAcqModes;
-    private final long ulReadModes;
-    private final long ulTriggerModes;
-    private final long ulCameraType;
-    private final long ulPixelMode;
-    private final long ulSetFunctions;
-    private final long ulGetFunctions;
-    private final long ulFeatures;
-    private final long ulPCICard;
-    private final long ulEMGainCapability;
-    private final long ulFTReadModes;
-    private final long ulFeatures2;
+    private final int ulAcqModes;
+    private final int ulReadModes;
+    private final int ulTriggerModes;
+    private final int ulCameraType;
+    private final int ulPixelMode;
+    private final int ulSetFunctions;
+    private final int ulGetFunctions;
+    private final int ulFeatures;
+    private final int ulPCICard;
+    private final int ulEMGainCapability;
+    private final int ulFTReadModes;
+    private final int ulFeatures2;
 
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
     private final List<Track>               multiTracks     = new LinkedList<>();
@@ -192,31 +191,33 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
             handle(sdk.SetImage(xBin, yBin, 1, width, 1, height), "SetImage");
 
             ANDORCAPS.ByReference capabilities = new ANDORCAPS.ByReference();
-            capabilities.ulSize = new NativeLong(capabilities.size(), true);
+
+            capabilities.ulSize.setValue(capabilities.size());
 
             handle(sdk.GetCapabilities(capabilities), "GetCapabilities");
 
-            ulSize             = capabilities.ulSize.longValue();
-            ulAcqModes         = capabilities.ulAcqModes.longValue();
-            ulReadModes        = capabilities.ulReadModes.longValue();
-            ulTriggerModes     = capabilities.ulTriggerModes.longValue();
-            ulCameraType       = capabilities.ulCameraType.longValue();
-            ulPixelMode        = capabilities.ulPixelMode.longValue();
-            ulSetFunctions     = capabilities.ulSetFunctions.longValue();
-            ulGetFunctions     = capabilities.ulGetFunctions.longValue();
-            ulFeatures         = capabilities.ulFeatures.longValue();
-            ulPCICard          = capabilities.ulPCICard.longValue();
-            ulEMGainCapability = capabilities.ulEMGainCapability.longValue();
-            ulFTReadModes      = capabilities.ulFTReadModes.longValue();
-            ulFeatures2        = capabilities.ulFeatures2.longValue();
+            ulAcqModes         = capabilities.ulAcqModes.intValue();
+            ulReadModes        = capabilities.ulReadModes.intValue();
+            ulTriggerModes     = capabilities.ulTriggerModes.intValue();
+            ulCameraType       = capabilities.ulCameraType.intValue();
+            ulPixelMode        = capabilities.ulPixelMode.intValue();
+            ulSetFunctions     = capabilities.ulSetFunctions.intValue();
+            ulGetFunctions     = capabilities.ulGetFunctions.intValue();
+            ulFeatures         = capabilities.ulFeatures.intValue();
+            ulPCICard          = capabilities.ulPCICard.intValue();
+            ulEMGainCapability = capabilities.ulEMGainCapability.intValue();
+            ulFTReadModes      = capabilities.ulFTReadModes.intValue();
+            ulFeatures2        = capabilities.ulFeatures2.intValue();
 
             try {
                 setAmplifier(getAmplifiers().get(0));
-            } catch (Throwable ignored) { }
+            } catch (Throwable ignored) {
+            }
 
             try {
                 setAmplifierGain(getAmplifierGains().get(0));
-            } catch (Throwable ignored) { }
+            } catch (Throwable ignored) {
+            }
 
         }
 
@@ -357,6 +358,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
                     handle(sdk.SetReadMode(READOUT_MODE_SINGLE_TRACK), "SetReadMode(SINGLE-TRACK)");
                     handle(sdk.SetSingleTrack(singleTrackStart - singleTrackHeight / 2, singleTrackHeight), String.format("SetSingleTrack(%d, %d)", singleTrackStart - singleTrackHeight / 2, height));
+                    handle(sdk.SetSingleTrackHBin(xBin), "SetSingleTrackHBin");
 
                     break;
 
@@ -364,15 +366,13 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
                     handle(sdk.SetReadMode(READOUT_MODE_FVB), "SetReadMode(FULL-VERTICAL-BINNING)");
                     handle(sdk.SetFVBHBin(xBin), "SetFVBHBin");
+
                     break;
 
                 case TRACK_SEQUENCE:
 
                     handle(sdk.SetReadMode(READOUT_MODE_MULTI_TRACK), "SetReadMode(MULTI-TRACK [sequence])");
-                    handle(
-                        sdk.SetMultiTrack(trackSequenceCount, trackSequenceHeight, trackSequenceOffset, IntBuffer.allocate(1), IntBuffer.allocate(1)),
-                        String.format("SetMultiTrack(%d, %d, %d)", trackSequenceCount, trackSequenceHeight, trackSequenceOffset)
-                    );
+                    handle(sdk.SetMultiTrack(trackSequenceCount, trackSequenceHeight, trackSequenceOffset, IntBuffer.allocate(1), IntBuffer.allocate(1)), String.format("SetMultiTrack(%d, %d, %d)", trackSequenceCount, trackSequenceHeight, trackSequenceOffset));
                     handle(sdk.SetMultiTrackHBin(xBin), "SetMultiTrackHBin");
 
                     break;
@@ -415,6 +415,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
                     }
 
                     handle(sdk.SetRandomTracks(count, areas), "SetRandomTracks");
+                    handle(sdk.SetCustomTrackHBin(xBin), "SetCustomTrackHBin");
 
             }
 
@@ -458,7 +459,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     @Override
     public synchronized void setTemperatureControlTarget(double targetTemperature) throws
-        IOException, DeviceException {
+            IOException, DeviceException {
 
         withCameraSelected(sdk -> {
             handle(sdk.SetTemperature((int) Math.round(targetTemperature - 273.15)), "SetTemperature");
@@ -664,8 +665,8 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
         withCameraSelected(sdk -> {
 
             handle(
-                sdk.GetAcquisitionTimings(exposure, accumulate, kinetic),
-                "GetAcquisitionTimings"
+                    sdk.GetAcquisitionTimings(exposure, accumulate, kinetic),
+                    "GetAcquisitionTimings"
             );
 
         });
@@ -781,7 +782,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
             case SINGLE_TRACK:
             case TRACK_SEQUENCE:
             case MULTI_TRACK:
-                return width;
+                return width / xBin;
 
         }
 
@@ -791,7 +792,17 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     @Override
     public void setImageWidth(int width) throws IOException, DeviceException {
+
+        if (width > maxWidth) {
+            throw new DeviceException("Image width of %d exceeds maximum of %d.", width, maxWidth);
+        }
+
+        if (width < 1) {
+            throw new DeviceException("Image width must be greater than zero.");
+        }
+
         this.width = width;
+
     }
 
     @Override
@@ -813,7 +824,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
                 return maxHeight / yBin;
 
             case ROI:
-                return height;
+                return height / yBin;
 
             case FULL_VERTICAL_BINNING:
             case SINGLE_TRACK:
@@ -840,7 +851,17 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     @Override
     public void setImageHeight(int height) throws IOException, DeviceException {
+
+        if (height > maxHeight) {
+            throw new DeviceException("Image height of %d exceeds maximum of %d.", height, maxHeight);
+        }
+
+        if (height < 1) {
+            throw new DeviceException("Image height must be greater than zero.");
+        }
+
         this.height = height;
+
     }
 
     @Override
@@ -860,7 +881,17 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     @Override
     public void setImageOffsetX(int offsetX) throws IOException, DeviceException {
+
+        if (offsetX > maxWidth - 1) {
+            throw new DeviceException("Image x-offset of %d exceeds maximum of %d.", offsetX, maxWidth - 1);
+        }
+
+        if (offsetX < 0) {
+            throw new DeviceException("Image x-offset must be a positive integer.");
+        }
+
         this.startX = offsetX;
+
     }
 
     @Override
@@ -880,7 +911,17 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     @Override
     public void setImageOffsetY(int offsetY) throws IOException, DeviceException {
+
+        if (offsetY > maxHeight - 1) {
+            throw new DeviceException("Image y-offset of %d exceeds maximum of %d.", offsetY, maxHeight - 1);
+        }
+
+        if (offsetY < 0) {
+            throw new DeviceException("Image y-offset must be a positive integer.");
+        }
+
         startY = offsetY;
+
     }
 
     @Override
@@ -920,7 +961,17 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     @Override
     public void setBinningX(int x) throws IOException, DeviceException {
+
+        if (x > maxWidth) {
+            throw new DeviceException("Binning in x of %d exceeds maximum of %d.", x, maxWidth);
+        }
+
+        if (x < 1) {
+            throw new DeviceException("Binning in x must be greater than zero.");
+        }
+
         xBin = x;
+
     }
 
     @Override
@@ -930,13 +981,23 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     @Override
     public void setBinningY(int y) throws IOException, DeviceException {
+
+        if (y > maxHeight) {
+            throw new DeviceException("Binning in y of %d exceeds maximum of %d.", y, maxHeight);
+        }
+
+        if (y < 1) {
+            throw new DeviceException("Binning in y must be greater than zero.");
+        }
+
         yBin = y;
+
     }
 
     @Override
     public void setBinning(int x, int y) throws IOException, DeviceException {
-        xBin = x;
-        yBin = y;
+        setBinningX(x);
+        setBinningY(y);
     }
 
     @Override
@@ -946,6 +1007,10 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     @Override
     public synchronized void setImageMode(ImageMode mode) throws IOException, DeviceException {
+
+        if (!getImageModes().contains(mode)) {
+            throw new DeviceException("Inavlid imaging mode \"%s\" for Andor2 camera.", mode);
+        }
 
         this.imageMode = mode;
 
@@ -991,9 +1056,9 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
         List<Double> gains = getAmplifierGains();
 
         double closest = gains.stream()
-                              .sorted(Comparator.comparingDouble(v -> Math.abs(v - gain)))
-                              .findFirst()
-                              .orElseThrow(() -> new DeviceException("No suitable amplifier gain found"));
+                .sorted(Comparator.comparingDouble(v -> Math.abs(v - gain)))
+                .findFirst()
+                .orElseThrow(() -> new DeviceException("No suitable amplifier gain found"));
 
         int index = gains.indexOf(closest);
 
@@ -1068,13 +1133,21 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     public List<Amplifier> getAmplifiers() {
 
         if ((ulCameraType & AC_CAMERATYPE_EMCCD) != 0) {
+
             return List.of(Amplifiers.EMCCD_REGISTER, Amplifiers.CONVENTIONAL);
+
         } else if ((ulCameraType & AC_CAMERATYPE_CLARA) != 0) {
+
             return List.of(Amplifiers.CONVENTIONAL, Amplifiers.EXTENDED_NIR_MODE);
+
         } else if ((ulCameraType & AC_CAMERATYPE_INGAAS) != 0) {
+
             return List.of(Amplifiers.HIGH_SENSITIVITY, Amplifiers.HIGH_DYNAMIC_RANGE);
+
         } else if ((ulCameraType & (AC_CAMERATYPE_NEWTON | AC_CAMERATYPE_IKON | AC_CAMERATYPE_IKONXL)) != 0) {
+
             return List.of(Amplifiers.HIGH_SENSITIVITY, Amplifiers.HIGH_CAPACITY);
+
         } else {
             return List.of();
         }
@@ -1246,7 +1319,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     public static class Amplifiers {
 
         public static final Amplifier CONVENTIONAL       = new Amplifier(0, "Conventional");
-        public static final Amplifier EMCCD_REGISTER     = new Amplifier(0, "EMCCD Register Only");
+        public static final Amplifier EMCCD_REGISTER     = new Amplifier(0, "EMCCD Register");
         public static final Amplifier EXTENDED_NIR_MODE  = new Amplifier(0, "Extended NIR Mode");
         public static final Amplifier HIGH_SENSITIVITY   = new Amplifier(0, "High Sensitivity");
         public static final Amplifier HIGH_DYNAMIC_RANGE = new Amplifier(0, "High Dynamic Range");

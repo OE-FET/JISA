@@ -1096,19 +1096,20 @@ public interface ATMCDxxD extends Library {
     }
 
     class ANDORCAPS extends Structure {
-        public NativeLong ulSize;
-        public NativeLong ulAcqModes;
-        public NativeLong ulReadModes;
-        public NativeLong ulTriggerModes;
-        public NativeLong ulCameraType;
-        public NativeLong ulPixelMode;
-        public NativeLong ulSetFunctions;
-        public NativeLong ulGetFunctions;
-        public NativeLong ulFeatures;
-        public NativeLong ulPCICard;
-        public NativeLong ulEMGainCapability;
-        public NativeLong ulFTReadModes;
-        public NativeLong ulFeatures2;
+
+        public NativeLong ulSize             = new NativeLong(0, true);
+        public NativeLong ulAcqModes         = new NativeLong(0, true);
+        public NativeLong ulReadModes        = new NativeLong(0, true);
+        public NativeLong ulTriggerModes     = new NativeLong(0, true);
+        public NativeLong ulCameraType       = new NativeLong(0, true);
+        public NativeLong ulPixelMode        = new NativeLong(0, true);
+        public NativeLong ulSetFunctions     = new NativeLong(0, true);
+        public NativeLong ulGetFunctions     = new NativeLong(0, true);
+        public NativeLong ulFeatures         = new NativeLong(0, true);
+        public NativeLong ulPCICard          = new NativeLong(0, true);
+        public NativeLong ulEMGainCapability = new NativeLong(0, true);
+        public NativeLong ulFTReadModes      = new NativeLong(0, true);
+        public NativeLong ulFeatures2        = new NativeLong(0, true);
 
         public ANDORCAPS() {
             super();

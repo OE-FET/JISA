@@ -185,7 +185,7 @@ public abstract class ManagedCamera<F extends Frame<?, F, ?>> extends NativeDevi
 
         } finally {
 
-            // Reset the FPS counters
+            // Reset the FPS counters so the ICC will never know what we did here
             count         = 0;
             lastCount     = 0;
             lastTimestamp = 0;

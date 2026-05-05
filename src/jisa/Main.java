@@ -17,7 +17,6 @@ public class Main {
     public static void main(String[] args) {
 
         try {
-
             Doc doc = new Doc("Help");
 
             doc.addImage(Main.class.getResource("gui/images/jisa.png"))
