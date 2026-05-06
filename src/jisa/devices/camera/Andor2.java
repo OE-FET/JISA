@@ -10,6 +10,8 @@ import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
 import jisa.devices.camera.feature.Amplified;
+import jisa.devices.camera.feature.InvertibleX;
+import jisa.devices.camera.feature.InvertibleY;
 import jisa.devices.camera.feature.KineticSeries;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameReader;
@@ -34,17 +36,20 @@ import java.util.concurrent.TimeoutException;
 
 import static jisa.devices.camera.nat.ATMCDxxD.*;
 
-public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, TemperatureControlled, SingleTrack, FullVerticalBinning, TrackSequence, MultiTrack, KineticSeries<U16Frame> {
+public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, TemperatureControlled, SingleTrack, FullVerticalBinning, TrackSequence, MultiTrack, KineticSeries<U16Frame>, InvertibleX, InvertibleY {
 
     public static String getDescription() {
         return "Andor CCD Camera (Andor SDK2)";
     }
 
-    public static final int READOUT_MODE_FVB          = 0;
-    public static final int READOUT_MODE_MULTI_TRACK  = 1;
-    public static final int READOUT_MODE_RANDOM_TRACK = 2;
-    public static final int READOUT_MODE_SINGLE_TRACK = 3;
-    public static final int READOUT_MODE_IMAGE        = 4;
+    public static final int READOUT_MODE_FVB            = 0;
+    public static final int READOUT_MODE_MULTI_TRACK    = 1;
+    public static final int READOUT_MODE_RANDOM_TRACK   = 2;
+    public static final int READOUT_MODE_SINGLE_TRACK   = 3;
+    public static final int READOUT_MODE_IMAGE          = 4;
+    public static final int ACQUISITION_MODE_SINGLE     = 1;
+    public static final int ACQUISITION_MODE_KINETIC    = 3;
+    public static final int ACQUISITION_MODE_CONTINUOUS = 5;
 
     private final ATMCDxxD   sdk;
     private final int        index;
@@ -229,21 +234,21 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
         parameters.addChoice("Spurious Noise Filter", "Mode", this::getFilterMode, FilterMode.NO_FILTER, this::setFilterMode, FilterMode.values());
         parameters.addValue("Spurious Noise Filter", "Threshold", this::getFilterThreshold, 0.0, this::setFilterThreshold);
 
-        if ((ulSetFunctions & AC_SETFUNCTION_CROPMODE) != 0) {
+        if ((ulSetFunctions & (1 << AC_SETFUNCTION_CROPMODE)) != 0) {
             parameters.addValue("Isolated Crop", "Enabled", this::isIsolatedCropEnabled, false, this::setIsolatedCropEnabled);
             parameters.addChoice("Isolated Crop", "Mode", this::getIsolatedCropMode, IsolatedCropMode.HIGH_SPEED, this::setIsolatedCropMode, IsolatedCropMode.values());
             parameters.addValue("Isolated Crop", "Width", this::getIsolatedCropWidth, 1, this::setIsolatedCropWidth);
             parameters.addValue("Isolated Crop", "Height", this::getIsolatedCropHeight, 1, this::setIsolatedCropHeight);
         }
 
-        if ((ulSetFunctions & AC_SETFUNCTION_EXTENDED_CROP_MODE) != 0) {
+        if ((ulSetFunctions & (1 << AC_SETFUNCTION_EXTENDED_CROP_MODE)) != 0) {
             parameters.addValue("Isolated Crop", "Offset X", this::getIsolatedCropOffsetX, 0, this::setIsolatedCropOffsetX);
             parameters.addValue("Isolated Crop", "Offset Y", this::getIsolatedCropOffsetY, 0, this::setIsolatedCropOffsetY);
         }
 
-        if ((ulSetFunctions & AC_SETFUNCTION_EMCCDGAIN) != 0) {
+        if ((ulSetFunctions & (1 << AC_SETFUNCTION_EMCCDGAIN)) != 0) {
 
-            if ((ulSetFunctions & AC_SETFUNCTION_EMADVANCED) != 0) {
+            if ((ulSetFunctions & (1 << AC_SETFUNCTION_EMADVANCED)) != 0) {
                 parameters.addValue("EM-CCD", "Advanced Gain Enabled", this::isAdvancedEMGainEnabled, false, this::setAdvancedEMGainEnabled);
             }
 
@@ -312,7 +317,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
         withCameraSelected(sdk -> {
 
-            if ((ulSetFunctions & AC_SETFUNCTION_CROPMODE) != 0) {
+            if ((ulSetFunctions & (1 << AC_SETFUNCTION_CROPMODE)) != 0) {
                 sdk.SetIsolatedCropMode(0, 1, 1, 1, 1);
                 sdk.SetCropMode(0, 1, 0);
             }
@@ -419,9 +424,9 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
             }
 
-            if ((ulSetFunctions & AC_SETFUNCTION_EXTENDED_CROP_MODE) != 0 && useIsolatedCrop) {
+            if ((ulSetFunctions & (1 << AC_SETFUNCTION_EXTENDED_CROP_MODE)) != 0 && useIsolatedCrop) {
                 handle(sdk.SetIsolatedCropModeEx(1, isolatedCropHeight, isolatedCropWidth, xBin, yBin, isolatedCropLeft + 1, isolatedCropBottom + 1), "SetIsolatedCropMode");
-            } else if ((ulSetFunctions & AC_SETFUNCTION_CROPMODE) != 0 && useIsolatedCrop) {
+            } else if ((ulSetFunctions & (1 << AC_SETFUNCTION_CROPMODE)) != 0 && useIsolatedCrop) {
                 handle(sdk.SetIsolatedCropMode(1, isolatedCropHeight, isolatedCropWidth, xBin, yBin), "SetIsolatedCropMode");
             }
 
@@ -573,7 +578,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
         withCameraSelected(sdk -> {
 
-            handle(sdk.SetAcquisitionMode(3), "SetAcquisitionMode(KINETICS)");
+            handle(sdk.SetAcquisitionMode(ACQUISITION_MODE_KINETIC), "SetAcquisitionMode(KINETICS)");
             handle(sdk.SetNumberAccumulations(accPerFrame), "SetNumberAccumulations");
             handle(sdk.SetAccumulationCycleTime((float) accCycle), "SetAccumulationCycleTime");
             handle(sdk.SetNumberKinetics(frameCount), "SetNumberKinetics");
@@ -618,6 +623,64 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
         thread.start();
 
         return frameQueue;
+
+    }
+
+    @Override
+    public boolean isInvertedX() throws IOException, DeviceException {
+
+        IntBuffer x = IntBuffer.allocate(1);
+        IntBuffer y = IntBuffer.allocate(1);
+
+        withCameraSelected(sdk -> {
+
+            handle(sdk.GetImageFlip(x, y), "GetImageFlip");
+
+        });
+
+        return x.get(0) > 0;
+
+    }
+
+    @Override
+    public void setInvertedX(boolean flippedX) throws IOException, DeviceException {
+
+        IntBuffer x = IntBuffer.allocate(1);
+        IntBuffer y = IntBuffer.allocate(1);
+
+        withCameraSelected(sdk -> {
+            handle(sdk.GetImageFlip(x, y), "GetImageFlip");
+            handle(sdk.SetImageFlip(flippedX ? 1 : 0, y.get(0)), "SetImageFlip");
+        });
+
+    }
+
+    @Override
+    public boolean isInvertedY() throws IOException, DeviceException {
+
+        IntBuffer x = IntBuffer.allocate(1);
+        IntBuffer y = IntBuffer.allocate(1);
+
+        withCameraSelected(sdk -> {
+
+            handle(sdk.GetImageFlip(x, y), "GetImageFlip");
+
+        });
+
+        return y.get(0) > 0;
+
+    }
+
+    @Override
+    public void setInvertedY(boolean flippedY) throws IOException, DeviceException {
+
+        IntBuffer x = IntBuffer.allocate(1);
+        IntBuffer y = IntBuffer.allocate(1);
+
+        withCameraSelected(sdk -> {
+            handle(sdk.GetImageFlip(x, y), "GetImageFlip");
+            handle(sdk.SetImageFlip(x.get(0), flippedY ? 1 : 0), "SetImageFlip");
+        });
 
     }
 
@@ -709,9 +772,9 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
             int result;
 
             if (limit == 1) {
-                handle(sdk.SetAcquisitionMode(1), "SetAcquisitionMode(SINGLE)");
+                handle(sdk.SetAcquisitionMode(ACQUISITION_MODE_SINGLE), "SetAcquisitionMode(SINGLE)");
             } else {
-                handle(sdk.SetAcquisitionMode(5), "SetAcquisitionMode(RUN-UNTIL-ABORT)");
+                handle(sdk.SetAcquisitionMode(ACQUISITION_MODE_CONTINUOUS), "SetAcquisitionMode(RUN-UNTIL-ABORT)");
             }
 
             handle(sdk.StartAcquisition(), "StartAcquisition");
@@ -1014,9 +1077,9 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
         this.imageMode = mode;
 
-        if ((ulCameraType & AC_SETFUNCTION_CROPMODE) != 0) {
+        if ((ulCameraType & (1 << AC_SETFUNCTION_CROPMODE)) != 0) {
 
-            if ((ulCameraType & AC_CAMERATYPE_IDUS) != 0) {
+            if ((ulCameraType & (1 << AC_CAMERATYPE_IDUS)) != 0) {
 
                 if (mode != ImageMode.FULL_VERTICAL_BINNING) {
                     setIsolatedCropEnabled(false);
@@ -1132,19 +1195,19 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     @Override
     public List<Amplifier> getAmplifiers() {
 
-        if ((ulCameraType & AC_CAMERATYPE_EMCCD) != 0) {
+        if ((ulCameraType & (1 << AC_CAMERATYPE_EMCCD)) != 0) {
 
             return List.of(Amplifiers.EMCCD_REGISTER, Amplifiers.CONVENTIONAL);
 
-        } else if ((ulCameraType & AC_CAMERATYPE_CLARA) != 0) {
+        } else if ((ulCameraType & (1 << AC_CAMERATYPE_CLARA)) != 0) {
 
             return List.of(Amplifiers.CONVENTIONAL, Amplifiers.EXTENDED_NIR_MODE);
 
-        } else if ((ulCameraType & AC_CAMERATYPE_INGAAS) != 0) {
+        } else if ((ulCameraType & (1 << AC_CAMERATYPE_INGAAS)) != 0) {
 
             return List.of(Amplifiers.HIGH_SENSITIVITY, Amplifiers.HIGH_DYNAMIC_RANGE);
 
-        } else if ((ulCameraType & (AC_CAMERATYPE_NEWTON | AC_CAMERATYPE_IKON | AC_CAMERATYPE_IKONXL)) != 0) {
+        } else if ((ulCameraType & ((1 << AC_CAMERATYPE_NEWTON) | (1 << AC_CAMERATYPE_IKON) | (1 << AC_CAMERATYPE_IKONXL))) != 0) {
 
             return List.of(Amplifiers.HIGH_SENSITIVITY, Amplifiers.HIGH_CAPACITY);
 
