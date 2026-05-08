@@ -1530,7 +1530,6 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, Amplified,
             throw new DeviceException("Maximum number of tracks is 256, %d supplied.", tracks.size());
         }
 
-        setInt("MultitrackCount", 0);
         setInt("MultitrackCount", tracks.size());
 
         int i = 0;
