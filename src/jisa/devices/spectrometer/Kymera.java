@@ -6,6 +6,7 @@ import jisa.Util;
 import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
+import jisa.devices.ParameterList;
 import jisa.devices.spectrometer.feature.Shuttered;
 import jisa.devices.spectrometer.feature.XCalibrated;
 import jisa.devices.spectrometer.nat.ATSpectrograph;
@@ -23,6 +24,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
 
     public final SwappableGrating     SWAPPABLE_GRATING;
     public final FilterWheel          FILTER_WHEEL;
+    public final MotorMirror          FOCUSING_MIRROR;
     public final List<Flipper>        FLIPPERS;
     public final List<AdjustableSlit> SLITS;
     public final List<Iris>           IRISES;
@@ -142,6 +144,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
 
         boolean gratingPresent = getIntByReference(buffer -> sdk.ATSpectrographGratingIsPresent(device, buffer), "GratingIsPresent") == 1;
         boolean filterPresent  = getIntByReference(buffer -> sdk.ATSpectrographFilterIsPresent(device, buffer), "FilterIsPresent") == 1;
+        boolean mirrorPreset   = getIntByReference(buffer -> sdk.ATSpectrographFocusMirrorIsPresent(device, buffer), "FocusMirrorIsPresent") == 1;
 
         List<Component> singles = new LinkedList<>();
 
@@ -157,6 +160,13 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
             singles.add(FILTER_WHEEL);
         } else {
             FILTER_WHEEL = null;
+        }
+
+        if (mirrorPreset) {
+            FOCUSING_MIRROR = new MotorMirror("Focusing Mirror");
+            singles.add(FOCUSING_MIRROR);
+        } else {
+            FOCUSING_MIRROR = null;
         }
 
         FLIPPERS   = List.copyOf(flippers);
@@ -203,6 +213,15 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
             case ATSpectrograph.ERROR_CODE_NOT_AVAILABLE:
                 throw new DeviceException(String.format("%s: Device not available.", method));
 
+        }
+
+    }
+
+    @Override
+    public void addInstrumentParameters(Class<?> target, ParameterList parameters) {
+
+        for (Grating grating : GRATINGS) {
+            parameters.addValue("Grating Offsets", String.format("%s Offset", grating), () -> getGratingOffset(grating), 0, v -> setGratingOffset(grating, v));
         }
 
     }
@@ -284,6 +303,26 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
         return address;
     }
 
+    public int getGratingOffset(Grating grating) throws IOException, DeviceException {
+
+        if (!GRATINGS.contains(grating)) {
+            throw new DeviceException("Invalid grating: " + grating);
+        }
+
+        return getIntByReference(buffer -> sdk.ATSpectrographGetGratingOffset(device, grating.getIndex(), buffer), "GetGratingOffset");
+
+    }
+
+    public void setGratingOffset(Grating grating, int offset) throws IOException, DeviceException {
+
+        if (!GRATINGS.contains(grating)) {
+            throw new DeviceException("Invalid grating: " + grating);
+        }
+
+        handle(sdk.ATSpectrographSetGratingOffset(device, grating.getIndex(), offset),  "SetGratingOffset");
+
+    }
+
     @Override
     public void setShutterMode(Mode mode) throws IOException, DeviceException {
 
@@ -357,12 +396,12 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
 
         @Override
         public int getRoute() throws IOException, DeviceException {
-            return getIntByReference(buffer -> sdk.ATSpectrographGetFlipperMirror(device, index, buffer), "GetFlipperMirror") - 1;
+            return getIntByReference(buffer -> sdk.ATSpectrographGetFlipperMirror(device, index, buffer), "GetFlipperMirror");
         }
 
         @Override
         public void setRoute(int route) throws IOException, DeviceException {
-            handle(sdk.ATSpectrographSetFlipperMirror(device, index, route + 1), "SetFlipperMirror");
+            handle(sdk.ATSpectrographSetFlipperMirror(device, index, route), "SetFlipperMirror");
         }
 
         @Override
@@ -572,6 +611,46 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
         @Override
         public String getName() {
             return "Filter Wheel";
+        }
+
+    }
+
+    public class MotorMirror implements Spectrograph.MotorMirror<Kymera> {
+
+        private final String name;
+
+        public MotorMirror(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public Integer getValue() throws IOException, DeviceException {
+            return getIntByReference(buffer -> sdk.ATSpectrographGetFocusMirror(device, buffer),  "GetFocusMirror");
+        }
+
+        @Override
+        public void setValue(Integer value) throws IOException, DeviceException {
+            handle(sdk.ATSpectrographSetFocusMirror(device, value),  "SetFocusMirror");
+        }
+
+        @Override
+        public Integer getMin() throws IOException, DeviceException {
+            return 0;
+        }
+
+        @Override
+        public Integer getMax() throws IOException, DeviceException {
+            return getIntByReference(buffer -> sdk.ATSpectrographGetFocusMirrorMaxSteps(device, buffer),  "GetFocusMirrorMaxSteps");
+        }
+
+        @Override
+        public Kymera getParentInstrument() {
+            return Kymera.this;
+        }
+
+        @Override
+        public String getName() {
+            return name;
         }
     }
 

@@ -117,6 +117,18 @@ public interface Spectrograph extends Instrument, MultiInstrument {
 
     }
 
+    interface MotorMirror<S extends Spectrograph> extends Component<S, Integer> {
+
+        Integer getMin() throws IOException, DeviceException;
+
+        Integer getMax() throws IOException, DeviceException;
+
+        default List<Integer> getPossibleValues() throws IOException, DeviceException {
+            return List.of();
+        }
+
+    }
+
     class Grating {
 
         private final int    index;
