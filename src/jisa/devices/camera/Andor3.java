@@ -107,45 +107,45 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, Amplified,
 
     public final static Map<Integer, String> ERROR_NAMES =
             Util.map(AT_ERR_STRINGNOTAVAILABLE, "String Not Available")
-                .map(AT_ERR_NULL_COUNT_VAR, "Null Count Variable")
-                .map(AT_ERR_INDEXNOTIMPLEMENTED, "Index Not Implemented")
-                .map(AT_ERR_NULL_READABLE_VAR, "Null Readable Variable")
-                .map(AT_ERR_NULL_WRITABLE_VAR, "Null Writable Variable")
-                .map(AT_ERR_NULL_QUEUE_PTR, "Null Queue Pointer")
-                .map(AT_ERR_NOTWRITABLE, "Not Writable")
-                .map(AT_ERR_HARDWARE_OVERFLOW, "Hardware Overflow")
-                .map(AT_ERR_BUFFERFULL, "Buffer Full")
-                .map(AT_ERR_COMM, "Communications Error")
-                .map(AT_ERR_NOTINITIALISED, "Not Initialised")
-                .map(AT_ERR_NULL_READONLY_VAR, "Read-Only Variable is Null")
-                .map(AT_ERR_NULL_MINVALUE, "Minimum Value is Null")
-                .map(AT_ERR_NULL_MAXSTRINGLENGTH, "Maximum String Length is Null")
-                .map(AT_ERR_NOTREADABLE, "Not Readable")
-                .map(AT_ERR_NULL_WAIT_PTR, "Wait Pointer is Null")
-                .map(AT_ERR_NULL_EVCALLBACK, "Event Callback is Null")
-                .map(AT_ERR_OUTOFRANGE, "Out of Range")
-                .map(AT_ERR_STRINGNOTIMPLEMENTED, "String Not Implemented")
-                .map(AT_ERR_READONLY, "Read Only")
-                .map(AT_ERR_EXCEEDEDMAXSTRINGLENGTH, "Maximum String Length Exceeded")
-                .map(AT_ERR_INDEXNOTAVAILABLE, "Index Not Available")
-                .map(AT_ERR_CONNECTION, "Connection Error")
-                .map(AT_ERR_NULL_PTRSIZE, "Pointer Size is Null")
-                .map(AT_ERR_INVALIDALIGNMENT, "Invalid Alignment")
-                .map(AT_ERR_INVALIDHANDLE, "Invalid Handle")
-                .map(AT_ERR_NULL_STRING, "String is Null")
-                .map(AT_ERR_NULL_MAXVALUE, "Maximum Value is Null")
-                .map(AT_ERR_NOTIMPLEMENTED, "Not Implemented")
-                .map(AT_ERR_NULL_IMPLEMENTED_VAR, "isImplemented Variable is Null")
-                .map(AT_ERR_INVALIDSIZE, "Invalid Size")
-                .map(AT_ERR_NULL_HANDLE, "Handle is Null")
-                .map(AT_ERR_DEVICEINUSE, "Device in Use")
-                .map(AT_ERR_NULL_VALUE, "Value is Null")
-                .map(AT_ERR_NOMEMORY, "No Memory")
-                .map(AT_ERR_NODATA, "No Data")
-                .map(AT_ERR_TIMEDOUT, "Timed Out")
-                .map(AT_ERR_DEVICENOTFOUND, "Device Not Found")
-                .map(AT_ERR_NULL_FEATURE, "Feature is Null")
-                .map(AT_ERR_NULL_ISAVAILABLE_VAR, "isAvailable Variable is Null");
+                    .map(AT_ERR_NULL_COUNT_VAR, "Null Count Variable")
+                    .map(AT_ERR_INDEXNOTIMPLEMENTED, "Index Not Implemented")
+                    .map(AT_ERR_NULL_READABLE_VAR, "Null Readable Variable")
+                    .map(AT_ERR_NULL_WRITABLE_VAR, "Null Writable Variable")
+                    .map(AT_ERR_NULL_QUEUE_PTR, "Null Queue Pointer")
+                    .map(AT_ERR_NOTWRITABLE, "Not Writable")
+                    .map(AT_ERR_HARDWARE_OVERFLOW, "Hardware Overflow")
+                    .map(AT_ERR_BUFFERFULL, "Buffer Full")
+                    .map(AT_ERR_COMM, "Communications Error")
+                    .map(AT_ERR_NOTINITIALISED, "Not Initialised")
+                    .map(AT_ERR_NULL_READONLY_VAR, "Read-Only Variable is Null")
+                    .map(AT_ERR_NULL_MINVALUE, "Minimum Value is Null")
+                    .map(AT_ERR_NULL_MAXSTRINGLENGTH, "Maximum String Length is Null")
+                    .map(AT_ERR_NOTREADABLE, "Not Readable")
+                    .map(AT_ERR_NULL_WAIT_PTR, "Wait Pointer is Null")
+                    .map(AT_ERR_NULL_EVCALLBACK, "Event Callback is Null")
+                    .map(AT_ERR_OUTOFRANGE, "Out of Range")
+                    .map(AT_ERR_STRINGNOTIMPLEMENTED, "String Not Implemented")
+                    .map(AT_ERR_READONLY, "Read Only")
+                    .map(AT_ERR_EXCEEDEDMAXSTRINGLENGTH, "Maximum String Length Exceeded")
+                    .map(AT_ERR_INDEXNOTAVAILABLE, "Index Not Available")
+                    .map(AT_ERR_CONNECTION, "Connection Error")
+                    .map(AT_ERR_NULL_PTRSIZE, "Pointer Size is Null")
+                    .map(AT_ERR_INVALIDALIGNMENT, "Invalid Alignment")
+                    .map(AT_ERR_INVALIDHANDLE, "Invalid Handle")
+                    .map(AT_ERR_NULL_STRING, "String is Null")
+                    .map(AT_ERR_NULL_MAXVALUE, "Maximum Value is Null")
+                    .map(AT_ERR_NOTIMPLEMENTED, "Not Implemented")
+                    .map(AT_ERR_NULL_IMPLEMENTED_VAR, "isImplemented Variable is Null")
+                    .map(AT_ERR_INVALIDSIZE, "Invalid Size")
+                    .map(AT_ERR_NULL_HANDLE, "Handle is Null")
+                    .map(AT_ERR_DEVICEINUSE, "Device in Use")
+                    .map(AT_ERR_NULL_VALUE, "Value is Null")
+                    .map(AT_ERR_NOMEMORY, "No Memory")
+                    .map(AT_ERR_NODATA, "No Data")
+                    .map(AT_ERR_TIMEDOUT, "Timed Out")
+                    .map(AT_ERR_DEVICENOTFOUND, "Device Not Found")
+                    .map(AT_ERR_NULL_FEATURE, "Feature is Null")
+                    .map(AT_ERR_NULL_ISAVAILABLE_VAR, "isAvailable Variable is Null");
 
     public final static List<Integer> IO_ERRORS = List.of(
             AT_ERR_COMM,
@@ -171,6 +171,8 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, Amplified,
     private Thread                processingThread  = null;
     private double                acquireFPS        = 0;
     private double                processFPS        = 0;
+
+    public final List<Amplifier> AMPLIFIERS;
 
     @Override
     public void addInstrumentParameters(Class<?> target, ParameterList parameters) {
@@ -207,6 +209,16 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, Amplified,
 
         setEnum("TriggerMode", "Internal");
         setBoolean("RollingShutterGlobalClear", false);
+
+        AMPLIFIERS = getEnumOptions("SimplePreAmpGainControl").stream().map(e -> {
+
+            String  text      = e.getText();
+            boolean isHigh    = text.contains("high well capacity");
+            int     bithDepth = text.contains("12") ? 12 : 16;
+
+            return new Amplifier(e.getIndex(), bithDepth, isHigh);
+
+        }).collect(Collectors.toList());
 
     }
 
@@ -1611,23 +1623,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, Amplified,
     }
 
     public List<Amplifier> getAmplifiers() {
-
-        try {
-
-            return getEnumOptions("SimplePreAmpGainControl").stream().map(e -> {
-
-                String  text      = e.getText();
-                boolean isHigh    = text.contains("high well capacity");
-                int     bithDepth = text.contains("12") ? 12 : 16;
-
-                return new Amplifier(e.getIndex(), bithDepth, isHigh);
-
-            }).collect(Collectors.toList());
-
-        } catch (Throwable e) {
-            return List.of();
-        }
-
+        return AMPLIFIERS;
     }
 
     /**
@@ -1656,6 +1652,17 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, Amplified,
         }
 
         setAmplifier(mode);
+
+    }
+
+    public Amplifier getAmplifier() throws IOException, DeviceException {
+
+        int index = getEnum("SimplePreAmpGainControl").getIndex();
+
+        return AMPLIFIERS.stream()
+                .filter(m -> m.getIndex() == index)
+                .findFirst()
+                .orElseThrow(() -> new IOException("Invalid response from Andor3 camera."));
 
     }
 
