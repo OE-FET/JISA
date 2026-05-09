@@ -25,7 +25,7 @@ public interface ROI extends CameraImageMode {
     }
 
     /**
-     * Sets the width (in pixels) to use when ImageMode is set to IMAGE.
+     * Sets the width (in pixels) to use when ImageMode is set to ROI.
      *
      * @param width Width, in pixels.
      * @throws IOException     Upon communications error
@@ -34,7 +34,7 @@ public interface ROI extends CameraImageMode {
     void setImageWidth(int width) throws IOException, DeviceException;
 
     /**
-     * Returns the width (in pixels) the camera is configured to use when ImageMode is set to IMAGE
+     * Returns the width (in pixels) the camera is configured to use when ImageMode is set to ROI
      *
      * @return width, in pixels.
      * @throws IOException     Upon communications error
@@ -43,7 +43,7 @@ public interface ROI extends CameraImageMode {
     int getImageWidth() throws IOException, DeviceException;
 
     /**
-     * Sets the height (in pixels) to use when when ImageMode is set to IMAGE.
+     * Sets the height (in pixels) to use when ImageMode is set to ROI.
      *
      * @param height Height, in pixels.
      * @throws IOException     Upon communications error
@@ -52,7 +52,7 @@ public interface ROI extends CameraImageMode {
     void setImageHeight(int height) throws IOException, DeviceException;
 
     /**
-     * Returns the height (in pixels) the camera is configured to use when ImageMode is set to IMAGE
+     * Returns the height (in pixels) the camera is configured to use when ImageMode is set to ROI
      *
      * @return height, in pixels.
      * @throws IOException     Upon communications error

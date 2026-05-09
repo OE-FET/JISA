@@ -1113,6 +1113,7 @@ public interface ATMCDxxD extends Library {
 
         public ANDORCAPS() {
             super();
+            ulSize.setValue(size());
         }
 
         protected List<String> getFieldOrder() {

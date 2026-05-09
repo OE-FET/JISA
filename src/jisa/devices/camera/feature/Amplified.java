@@ -11,19 +11,27 @@ public interface Amplified extends Feature {
 
     static void addParameters(Amplified inst, Class<?> target, ParameterList params) {
 
-        List<? extends Amplifier> amps  = inst.getAmplifiers();
-        List<Double>              gains = inst.getAmplifierGains();
+        if (inst.isAmplifierAvailable()) {
 
-        if (!amps.isEmpty()) {
-            params.addChoice("Amplifier", "Type", inst::getAmplifier, Amplifier.NONE, inst::setAmplifier, amps.toArray(Amplifier[]::new));
+            List<? extends Amplifier> amps  = inst.getAmplifiers();
+            List<Double>              gains = inst.getAmplifierGains();
+
+            if (!amps.isEmpty()) {
+                params.addChoice("Amplifier", "Type", inst::getAmplifier, Amplifier.NONE, inst::setAmplifier, amps.toArray(Amplifier[]::new));
+            }
+
+            if (!gains.isEmpty() && gains.get(0) == -1.0) {
+                params.addValue("Amplifier", "Gain", inst::getAmplifierGain, 1.0, inst::setAmplifierGain);
+            } else if (!gains.isEmpty()) {
+                params.addChoice("Amplifier", "Gain", inst::getAmplifierGain, 1.0, inst::setAmplifierGain, gains.toArray(Double[]::new));
+            }
+
         }
 
-        if (!gains.isEmpty() && gains.get(0) == -1.0) {
-            params.addValue("Amplifier", "Gain", inst::getAmplifierGain, 1.0, inst::setAmplifierGain);
-        } else if (!gains.isEmpty()) {
-            params.addChoice("Amplifier", "Gain", inst::getAmplifierGain, 1.0, inst::setAmplifierGain, gains.toArray(Double[]::new));
-        }
+    }
 
+    default boolean isAmplifierAvailable() {
+        return true;
     }
 
     /**

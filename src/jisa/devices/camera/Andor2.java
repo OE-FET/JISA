@@ -9,10 +9,7 @@ import jisa.addresses.Address;
 import jisa.addresses.IDAddress;
 import jisa.devices.DeviceException;
 import jisa.devices.ParameterList;
-import jisa.devices.camera.feature.Amplified;
-import jisa.devices.camera.feature.InvertibleX;
-import jisa.devices.camera.feature.InvertibleY;
-import jisa.devices.camera.feature.KineticSeries;
+import jisa.devices.camera.feature.*;
 import jisa.devices.camera.frame.FrameQueue;
 import jisa.devices.camera.frame.FrameReader;
 import jisa.devices.camera.frame.U16Frame;
@@ -36,7 +33,7 @@ import java.util.concurrent.TimeoutException;
 
 import static jisa.devices.camera.nat.ATMCDxxD.*;
 
-public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, TemperatureControlled, SingleTrack, FullVerticalBinning, TrackSequence, MultiTrack, KineticSeries<U16Frame>, InvertibleX, InvertibleY {
+public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified, TemperatureControlled, InvertibleX, InvertibleY, SingleTrack, FullVerticalBinning, TrackSequence, MultiTrack, KineticSeries<U16Frame> {
 
     public static String getDescription() {
         return "Andor CCD Camera (Andor SDK2)";
@@ -96,8 +93,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     private int              isolatedCropHeight  = 0;
     private int              isolatedCropLeft    = 0;
     private int              isolatedCropBottom  = 0;
-    private EMGainMode       emGainMode          = EMGainMode.DAC_8_BIT;
-    private int              emGain              = 0;
+    private EMGainMode       emGainMode          = EMGainModes.DAC_8_BIT;
     private IsolatedCropMode isolatedCropMode    = IsolatedCropMode.HIGH_SPEED;
     private Memory           imageMemory         = null;
     private ShortBuffer      imageBuffer         = null;
@@ -197,8 +193,6 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
             ANDORCAPS.ByReference capabilities = new ANDORCAPS.ByReference();
 
-            capabilities.ulSize.setValue(capabilities.size());
-
             handle(sdk.GetCapabilities(capabilities), "GetCapabilities");
 
             ulAcqModes         = capabilities.ulAcqModes.intValue();
@@ -216,13 +210,12 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
             try {
                 setAmplifier(getAmplifiers().get(0));
-            } catch (Throwable ignored) {
-            }
+            } catch (Throwable ignored) { }
 
             try {
                 setAmplifierGain(getAmplifierGains().get(0));
-            } catch (Throwable ignored) {
-            }
+            } catch (Throwable ignored) { }
+
 
         }
 
@@ -234,26 +227,23 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
         parameters.addChoice("Spurious Noise Filter", "Mode", this::getFilterMode, FilterMode.NO_FILTER, this::setFilterMode, FilterMode.values());
         parameters.addValue("Spurious Noise Filter", "Threshold", this::getFilterThreshold, 0.0, this::setFilterThreshold);
 
-        if ((ulSetFunctions & (1 << AC_SETFUNCTION_CROPMODE)) != 0) {
+        if ((ulSetFunctions & AC_SETFUNCTION_CROPMODE) != 0) {
             parameters.addValue("Isolated Crop", "Enabled", this::isIsolatedCropEnabled, false, this::setIsolatedCropEnabled);
             parameters.addChoice("Isolated Crop", "Mode", this::getIsolatedCropMode, IsolatedCropMode.HIGH_SPEED, this::setIsolatedCropMode, IsolatedCropMode.values());
             parameters.addValue("Isolated Crop", "Width", this::getIsolatedCropWidth, 1, this::setIsolatedCropWidth);
             parameters.addValue("Isolated Crop", "Height", this::getIsolatedCropHeight, 1, this::setIsolatedCropHeight);
         }
 
-        if ((ulSetFunctions & (1 << AC_SETFUNCTION_EXTENDED_CROP_MODE)) != 0) {
+        if ((ulSetFunctions & AC_SETFUNCTION_EXTENDED_CROP_MODE) != 0) {
             parameters.addValue("Isolated Crop", "Offset X", this::getIsolatedCropOffsetX, 0, this::setIsolatedCropOffsetX);
             parameters.addValue("Isolated Crop", "Offset Y", this::getIsolatedCropOffsetY, 0, this::setIsolatedCropOffsetY);
         }
 
-        if ((ulSetFunctions & (1 << AC_SETFUNCTION_EMCCDGAIN)) != 0) {
+        if ((ulSetFunctions & AC_SETFUNCTION_EMCCDGAIN) != 0) {
 
-            if ((ulSetFunctions & (1 << AC_SETFUNCTION_EMADVANCED)) != 0) {
+            if ((ulSetFunctions & AC_SETFUNCTION_EMADVANCED) != 0) {
                 parameters.addValue("EM-CCD", "Advanced Gain Enabled", this::isAdvancedEMGainEnabled, false, this::setAdvancedEMGainEnabled);
             }
-
-            parameters.addChoice("EM-CCD", "Mode", this::getEMGainMode, EMGainMode.DAC_8_BIT, this::setEMGainMode, EMGainMode.values());
-            parameters.addValue("EM-CCD", "Gain", this::getEMGain, 0, this::setEMGain);
 
         }
 
@@ -317,7 +307,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
         withCameraSelected(sdk -> {
 
-            if ((ulSetFunctions & (1 << AC_SETFUNCTION_CROPMODE)) != 0) {
+            if ((ulSetFunctions & AC_SETFUNCTION_CROPMODE) != 0) {
                 sdk.SetIsolatedCropMode(0, 1, 1, 1, 1);
                 sdk.SetCropMode(0, 1, 0);
             }
@@ -424,9 +414,9 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
             }
 
-            if ((ulSetFunctions & (1 << AC_SETFUNCTION_EXTENDED_CROP_MODE)) != 0 && useIsolatedCrop) {
+            if ((ulSetFunctions & AC_SETFUNCTION_EXTENDED_CROP_MODE) != 0 && useIsolatedCrop) {
                 handle(sdk.SetIsolatedCropModeEx(1, isolatedCropHeight, isolatedCropWidth, xBin, yBin, isolatedCropLeft + 1, isolatedCropBottom + 1), "SetIsolatedCropMode");
-            } else if ((ulSetFunctions & (1 << AC_SETFUNCTION_CROPMODE)) != 0 && useIsolatedCrop) {
+            } else if ((ulSetFunctions & AC_SETFUNCTION_CROPMODE) != 0 && useIsolatedCrop) {
                 handle(sdk.SetIsolatedCropMode(1, isolatedCropHeight, isolatedCropWidth, xBin, yBin), "SetIsolatedCropMode");
             }
 
@@ -454,9 +444,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
         IntBuffer buffer = IntBuffer.allocate(1);
 
-        withCameraSelected(sdk -> {
-            handle(sdk.IsCoolerOn(buffer), "IsCoolerOn");
-        });
+        withCameraSelected(sdk -> handle(sdk.IsCoolerOn(buffer), "IsCoolerOn"));
 
         return buffer.get(0) == 1;
 
@@ -464,18 +452,16 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     @Override
     public synchronized void setTemperatureControlTarget(double targetTemperature) throws
-            IOException, DeviceException {
+        IOException, DeviceException {
 
-        withCameraSelected(sdk -> {
-            handle(sdk.SetTemperature((int) Math.round(targetTemperature - 273.15)), "SetTemperature");
-        });
+        withCameraSelected(sdk -> handle(sdk.SetTemperature((int) Math.round(targetTemperature - 273.15)), "SetTemperature"));
 
         target = (int) Math.round(targetTemperature);
 
     }
 
     @Override
-    public synchronized double getTemperatureControlTarget() throws IOException, DeviceException {
+    public synchronized double getTemperatureControlTarget() {
         return target;
     }
 
@@ -498,77 +484,75 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
         int[]     buffer    = new int[1];
         IntBuffer intBuffer = IntBuffer.allocate(1);
 
-        withCameraSelected(sdk -> {
-            buffer[0] = sdk.GetTemperature(intBuffer);
-        });
+        withCameraSelected(sdk -> buffer[0] = sdk.GetTemperature(intBuffer));
 
         return buffer[0] == DRV_TEMP_STABILIZED;
 
     }
 
     @Override
-    public void setMultiTracks(Collection<Track> tracks) throws IOException, DeviceException {
+    public void setMultiTracks(Collection<Track> tracks) {
         multiTracks.clear();
         multiTracks.addAll(tracks);
     }
 
     @Override
-    public List<Track> getMultiTracks() throws IOException, DeviceException {
+    public List<Track> getMultiTracks() {
         return List.copyOf(multiTracks);
     }
 
     @Override
-    public void setSingleTrackStart(int track) throws IOException, DeviceException {
+    public void setSingleTrackCentre(int track) {
         singleTrackStart = track;
     }
 
     @Override
-    public int getSingleTrackStart() throws IOException, DeviceException {
+    public int getSingleTrackCentre() {
         return singleTrackStart;
     }
 
     @Override
-    public void setSingleTrackHeight(int tracks) throws IOException, DeviceException {
+    public void setSingleTrackHeight(int tracks) {
         singleTrackHeight = tracks;
     }
 
     @Override
-    public int getSingleTrackHeight() throws IOException, DeviceException {
+    public int getSingleTrackHeight() {
         return singleTrackHeight;
     }
 
     @Override
-    public void setTrackSequenceCount(int count) throws IOException, DeviceException {
+    public void setTrackSequenceCount(int count) {
         trackSequenceCount = count;
     }
 
     @Override
-    public int getTrackSequenceCount() throws IOException, DeviceException {
+    public int getTrackSequenceCount() {
         return trackSequenceCount;
     }
 
     @Override
-    public void setTrackSequenceHeight(int height) throws IOException, DeviceException {
+    public void setTrackSequenceHeight(int height) {
         trackSequenceHeight = height;
     }
 
     @Override
-    public int getTrackSequenceHeight() throws IOException, DeviceException {
+    public int getTrackSequenceHeight() {
         return trackSequenceHeight;
     }
 
     @Override
-    public void setTrackSequenceOffset(int offset) throws IOException, DeviceException {
+    public void setTrackSequenceOffset(int offset) {
         trackSequenceOffset = offset;
     }
 
     @Override
-    public int getTrackSequenceOffset() throws IOException, DeviceException {
+    public int getTrackSequenceOffset() {
         return trackSequenceOffset;
     }
 
     @Override
-    public FrameQueue<U16Frame> startKineticFrameSeries(int frameCount, int accPerFrame, double frameCycle, double accCycle) throws IOException, DeviceException, TimeoutException, InterruptedException {
+    public FrameQueue<U16Frame> startKineticFrameSeries(int frameCount, int accPerFrame, double frameCycle, double accCycle) throws IOException, DeviceException {
 
         if (isAcquiring()) {
             stopAcquisition();
@@ -587,7 +571,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
         });
 
-        imageMemory = new Memory(getFrameSize() * Short.BYTES);
+        imageMemory = new Memory((long) getFrameSize() * Short.BYTES);
         imageBuffer = imageMemory.getByteBuffer(0, imageMemory.size()).asShortBuffer();
 
         FrameQueue<U16Frame> frameQueue  = new FrameQueue<>(this, frameCount);
@@ -632,11 +616,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
         IntBuffer x = IntBuffer.allocate(1);
         IntBuffer y = IntBuffer.allocate(1);
 
-        withCameraSelected(sdk -> {
-
-            handle(sdk.GetImageFlip(x, y), "GetImageFlip");
-
-        });
+        withCameraSelected(sdk -> handle(sdk.GetImageFlip(x, y), "GetImageFlip"));
 
         return x.get(0) > 0;
 
@@ -661,11 +641,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
         IntBuffer x = IntBuffer.allocate(1);
         IntBuffer y = IntBuffer.allocate(1);
 
-        withCameraSelected(sdk -> {
-
-            handle(sdk.GetImageFlip(x, y), "GetImageFlip");
-
-        });
+        withCameraSelected(sdk -> handle(sdk.GetImageFlip(x, y), "GetImageFlip"));
 
         return y.get(0) > 0;
 
@@ -725,14 +701,10 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
         FloatBuffer accumulate = FloatBuffer.allocate(1);
         FloatBuffer kinetic    = FloatBuffer.allocate(1);
 
-        withCameraSelected(sdk -> {
-
-            handle(
-                    sdk.GetAcquisitionTimings(exposure, accumulate, kinetic),
-                    "GetAcquisitionTimings"
-            );
-
-        });
+        withCameraSelected(sdk -> handle(
+            sdk.GetAcquisitionTimings(exposure, accumulate, kinetic),
+            "GetAcquisitionTimings"
+        ));
 
         return exposure.get(0);
 
@@ -764,7 +736,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
         configureReadout();
 
-        imageMemory = new Memory(getFrameSize() * Short.BYTES);
+        imageMemory = new Memory((long) getFrameSize() * Short.BYTES);
         imageBuffer = imageMemory.getByteBuffer(0, imageMemory.size()).asShortBuffer();
 
         withCameraSelected(sdk -> {
@@ -789,7 +761,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     }
 
     @Override
-    protected void acquisitionLoop(U16Frame frameBuffer) throws IOException, DeviceException, InterruptedException, TimeoutException {
+    protected void acquisitionLoop(U16Frame frameBuffer) throws IOException, DeviceException, InterruptedException {
 
         int result = sdk.WaitForAcquisitionByHandleTimeOut(handle, timeout);
 
@@ -803,9 +775,10 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
         }
 
-        withCameraSelected(sdk -> sdk.GetMostRecentImage16(imageBuffer.clear().rewind(), new NativeLong(imageBuffer.capacity(), true)));
+        withCameraSelected(sdk -> handle(sdk.GetMostRecentImage16(imageBuffer.clear().rewind(), new NativeLong(imageBuffer.capacity(), true)), "GetMostRecentImage16"));
 
         imageBuffer.rewind().get(frameBuffer.array());
+
         frameBuffer.setTimestamp(System.nanoTime());
 
     }
@@ -813,9 +786,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     @Override
     protected void cleanupAcquisition() throws IOException, DeviceException {
 
-        withCameraSelected(sdk -> {
-            handle(sdk.AbortAcquisition(), "AbortAcquisition");
-        });
+        withCameraSelected(sdk -> handle(sdk.AbortAcquisition(), "AbortAcquisition"));
 
         imageMemory.close();
 
@@ -825,7 +796,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     protected void cancelAcquisition() {
 
         try {
-            withCameraSelected(sdk -> sdk.CancelWait());
+            withCameraSelected(ATMCDxxD::CancelWait);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -854,7 +825,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     }
 
     @Override
-    public void setImageWidth(int width) throws IOException, DeviceException {
+    public void setImageWidth(int width) throws DeviceException {
 
         if (width > maxWidth) {
             throw new DeviceException("Image width of %d exceeds maximum of %d.", width, maxWidth);
@@ -869,12 +840,12 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     }
 
     @Override
-    public int getImageWidth() throws IOException, DeviceException {
+    public int getImageWidth() {
         return width;
     }
 
     @Override
-    public int getPhysicalFrameWidth() throws IOException, DeviceException {
+    public int getPhysicalFrameWidth() {
         return getFrameWidth() * xBin;
     }
 
@@ -913,7 +884,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     }
 
     @Override
-    public void setImageHeight(int height) throws IOException, DeviceException {
+    public void setImageHeight(int height) throws DeviceException {
 
         if (height > maxHeight) {
             throw new DeviceException("Image height of %d exceeds maximum of %d.", height, maxHeight);
@@ -928,22 +899,22 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     }
 
     @Override
-    public int getImageHeight() throws IOException, DeviceException {
+    public int getImageHeight() {
         return height;
     }
 
     @Override
-    public int getPhysicalFrameHeight() throws IOException, DeviceException {
+    public int getPhysicalFrameHeight() {
         return getFrameHeight() * yBin;
     }
 
     @Override
-    public int getImageOffsetX() throws IOException, DeviceException {
+    public int getImageOffsetX() {
         return startX;
     }
 
     @Override
-    public void setImageOffsetX(int offsetX) throws IOException, DeviceException {
+    public void setImageOffsetX(int offsetX) throws DeviceException {
 
         if (offsetX > maxWidth - 1) {
             throw new DeviceException("Image x-offset of %d exceeds maximum of %d.", offsetX, maxWidth - 1);
@@ -958,22 +929,22 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     }
 
     @Override
-    public void setImageCentredX(boolean centredX) throws IOException, DeviceException {
+    public void setImageCentredX(boolean centredX) {
         this.centredX = centredX;
     }
 
     @Override
-    public boolean isImageCentredX() throws IOException, DeviceException {
+    public boolean isImageCentredX() {
         return centredX;
     }
 
     @Override
-    public int getImageOffsetY() throws IOException, DeviceException {
+    public int getImageOffsetY() {
         return startY;
     }
 
     @Override
-    public void setImageOffsetY(int offsetY) throws IOException, DeviceException {
+    public void setImageOffsetY(int offsetY) throws DeviceException {
 
         if (offsetY > maxHeight - 1) {
             throw new DeviceException("Image y-offset of %d exceeds maximum of %d.", offsetY, maxHeight - 1);
@@ -988,12 +959,12 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     }
 
     @Override
-    public void setImageCentredY(boolean centredY) throws IOException, DeviceException {
+    public void setImageCentredY(boolean centredY) {
         this.centredY = centredY;
     }
 
     @Override
-    public boolean isImageCentredY() throws IOException, DeviceException {
+    public boolean isImageCentredY() {
         return centredY;
     }
 
@@ -1003,27 +974,27 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     }
 
     @Override
-    public int getPhysicalFrameSize() throws IOException, DeviceException {
+    public int getPhysicalFrameSize() {
         return getFrameWidth() * xBin * getFrameHeight() * yBin;
     }
 
     @Override
-    public int getSensorWidth() throws IOException, DeviceException {
+    public int getSensorWidth() {
         return maxWidth;
     }
 
     @Override
-    public int getSensorHeight() throws IOException, DeviceException {
+    public int getSensorHeight() {
         return maxHeight;
     }
 
     @Override
-    public int getBinningX() throws IOException, DeviceException {
+    public int getBinningX() {
         return xBin;
     }
 
     @Override
-    public void setBinningX(int x) throws IOException, DeviceException {
+    public void setBinningX(int x) throws DeviceException {
 
         if (x > maxWidth) {
             throw new DeviceException("Binning in x of %d exceeds maximum of %d.", x, maxWidth);
@@ -1038,12 +1009,12 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     }
 
     @Override
-    public int getBinningY() throws IOException, DeviceException {
+    public int getBinningY() {
         return yBin;
     }
 
     @Override
-    public void setBinningY(int y) throws IOException, DeviceException {
+    public void setBinningY(int y) throws DeviceException {
 
         if (y > maxHeight) {
             throw new DeviceException("Binning in y of %d exceeds maximum of %d.", y, maxHeight);
@@ -1058,13 +1029,13 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     }
 
     @Override
-    public void setBinning(int x, int y) throws IOException, DeviceException {
+    public void setBinning(int x, int y) throws DeviceException {
         setBinningX(x);
         setBinningY(y);
     }
 
     @Override
-    public synchronized ImageMode getImageMode() throws IOException, DeviceException {
+    public synchronized ImageMode getImageMode() {
         return imageMode;
     }
 
@@ -1077,9 +1048,9 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
         this.imageMode = mode;
 
-        if ((ulCameraType & (1 << AC_SETFUNCTION_CROPMODE)) != 0) {
+        if ((ulSetFunctions & AC_SETFUNCTION_CROPMODE) != 0) {
 
-            if ((ulCameraType & (1 << AC_CAMERATYPE_IDUS)) != 0) {
+            if (ulCameraType == AC_CAMERATYPE_IDUS) {
 
                 if (mode != ImageMode.FULL_VERTICAL_BINNING) {
                     setIsolatedCropEnabled(false);
@@ -1114,27 +1085,29 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
     }
 
     @Override
+    public boolean isAmplifierAvailable() {
+        return (ulSetFunctions & AC_SETFUNCTION_GAIN) != 0;
+    }
+
+    @Override
     public void setAmplifierGain(double gain) throws DeviceException, IOException {
 
         List<Double> gains = getAmplifierGains();
 
         double closest = gains.stream()
-                .sorted(Comparator.comparingDouble(v -> Math.abs(v - gain)))
-                .findFirst()
-                .orElseThrow(() -> new DeviceException("No suitable amplifier gain found"));
+                              .min(Comparator.comparingDouble(v -> Math.abs(v - gain)))
+                              .orElseThrow(() -> new DeviceException("No suitable amplifier gain found"));
 
         int index = gains.indexOf(closest);
 
-        withCameraSelected(sdk -> {
-            handle(sdk.SetPreAmpGain(index), "SetPreAmpGain");
-        });
+        withCameraSelected(sdk -> handle(sdk.SetPreAmpGain(index), "SetPreAmpGain"));
 
         this.preAmpGain = closest;
 
     }
 
     @Override
-    public double getAmplifierGain() throws DeviceException, IOException {
+    public double getAmplifierGain() {
         return preAmpGain;
     }
 
@@ -1179,35 +1152,33 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
             throw new DeviceException("Invalid amplifier for this camera: %s", amplifier);
         }
 
-        withCameraSelected(sdk -> {
-            handle(sdk.SetOutputAmplifier(index), "SetOutputAmplifier");
-        });
+        withCameraSelected(sdk -> handle(sdk.SetOutputAmplifier(index), "SetOutputAmplifier"));
 
         amplifierType = amplifier;
 
     }
 
     @Override
-    public Amplifier getAmplifier() throws DeviceException, IOException {
+    public Amplifier getAmplifier() {
         return amplifierType;
     }
 
     @Override
     public List<Amplifier> getAmplifiers() {
 
-        if ((ulCameraType & (1 << AC_CAMERATYPE_EMCCD)) != 0) {
+        if (ulCameraType == AC_CAMERATYPE_EMCCD) {
 
             return List.of(Amplifiers.EMCCD_REGISTER, Amplifiers.CONVENTIONAL);
 
-        } else if ((ulCameraType & (1 << AC_CAMERATYPE_CLARA)) != 0) {
+        } else if (ulCameraType == AC_CAMERATYPE_CLARA) {
 
             return List.of(Amplifiers.CONVENTIONAL, Amplifiers.EXTENDED_NIR_MODE);
 
-        } else if ((ulCameraType & (1 << AC_CAMERATYPE_INGAAS)) != 0) {
+        } else if (ulCameraType == AC_CAMERATYPE_INGAAS) {
 
             return List.of(Amplifiers.HIGH_SENSITIVITY, Amplifiers.HIGH_DYNAMIC_RANGE);
 
-        } else if ((ulCameraType & ((1 << AC_CAMERATYPE_NEWTON) | (1 << AC_CAMERATYPE_IKON) | (1 << AC_CAMERATYPE_IKONXL))) != 0) {
+        } else if (ulCameraType == (AC_CAMERATYPE_NEWTON | AC_CAMERATYPE_IKON | AC_CAMERATYPE_IKONXL)) {
 
             return List.of(Amplifiers.HIGH_SENSITIVITY, Amplifiers.HIGH_CAPACITY);
 
@@ -1219,25 +1190,55 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     public void setEMGainMode(EMGainMode mode) throws IOException, DeviceException {
 
-        int index = mode.ordinal();
+        if (!getEMGainModes().contains(mode)) {
+            throw new DeviceException("Invalid EMGainMode for this camera: %s", mode);
+        }
 
-        withCameraSelected(sdk -> {
-            handle(sdk.SetEMGainMode(index), "SetEMGainMode");
-        });
+        int index = mode.getIndex();
+
+        withCameraSelected(sdk -> handle(sdk.SetEMGainMode(index), "SetEMGainMode"));
 
         this.emGainMode = mode;
 
     }
 
-    public EMGainMode getEMGainMode() throws IOException, DeviceException {
+    public EMGainMode getEMGainMode() {
         return emGainMode;
+    }
+
+    @Override
+    public List<EMGainMode> getEMGainModes() {
+
+        List<EMGainMode> list = new LinkedList<>();
+
+        if ((ulEMGainCapability & AC_EMGAIN_8BIT) != 0) {
+            list.add(EMGainModes.DAC_8_BIT);
+        }
+
+        if ((ulEMGainCapability & AC_EMGAIN_12BIT) != 0) {
+            list.add(EMGainModes.DAC_12_BIT);
+        }
+
+        if ((ulEMGainCapability & AC_EMGAIN_LINEAR12) != 0) {
+            list.add(EMGainModes.LINEAR);
+        }
+
+        if ((ulEMGainCapability & AC_EMGAIN_REAL12) != 0) {
+            list.add(EMGainModes.REAL);
+        }
+
+        return list;
+
+    }
+
+    @Override
+    public boolean isEMAvailable() {
+        return ((ulSetFunctions & AC_SETFUNCTION_EMCCDGAIN) != 0);
     }
 
     public void setEMGain(int gain) throws IOException, DeviceException {
 
-        withCameraSelected(sdk -> {
-            handle(sdk.SetEMCCDGain(gain), "SetEMCCDGain");
-        });
+        withCameraSelected(sdk -> handle(sdk.SetEMCCDGain(gain), "SetEMCCDGain"));
 
     }
 
@@ -1245,9 +1246,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
         IntBuffer buffer = IntBuffer.allocate(1);
 
-        withCameraSelected(sdk -> {
-            handle(sdk.GetEMCCDGain(buffer), "GetEMCCDGain");
-        });
+        withCameraSelected(sdk -> handle(sdk.GetEMCCDGain(buffer), "GetEMCCDGain"));
 
         return buffer.get(0);
 
@@ -1257,27 +1256,21 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
         IntBuffer intBuffer = IntBuffer.allocate(1);
 
-        withCameraSelected(sdk -> {
-            handle(sdk.GetEMAdvanced(intBuffer), "GetEMAdvanced");
-        });
+        withCameraSelected(sdk -> handle(sdk.GetEMAdvanced(intBuffer), "GetEMAdvanced"));
 
         return intBuffer.get(0) > 0;
 
     }
 
     public void setAdvancedEMGainEnabled(boolean enabled) throws IOException, DeviceException {
-        withCameraSelected(sdk -> {
-            handle(sdk.SetEMAdvanced(enabled ? 1 : 0), "SetEMAdvanced");
-        });
+        withCameraSelected(sdk -> handle(sdk.SetEMAdvanced(enabled ? 1 : 0), "SetEMAdvanced"));
     }
 
     public FilterMode getFilterMode() throws IOException, DeviceException {
 
         IntBuffer intBuffer = IntBuffer.allocate(1);
 
-        withCameraSelected(sdk -> {
-            handle(sdk.Filter_GetMode(intBuffer), "GetFilterMode");
-        });
+        withCameraSelected(sdk -> handle(sdk.Filter_GetMode(intBuffer), "GetFilterMode"));
 
         return FilterMode.values()[intBuffer.get(0)];
 
@@ -1285,9 +1278,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     public void setFilterMode(FilterMode mode) throws IOException, DeviceException {
 
-        withCameraSelected(sdk -> {
-            handle(sdk.Filter_SetMode(mode.ordinal()), "SetFilterMode");
-        });
+        withCameraSelected(sdk -> handle(sdk.Filter_SetMode(mode.ordinal()), "SetFilterMode"));
 
     }
 
@@ -1295,9 +1286,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
         FloatBuffer floatBuffer = FloatBuffer.allocate(1);
 
-        withCameraSelected(sdk -> {
-            handle(sdk.Filter_GetThreshold(floatBuffer), "Filter_GetThreshold");
-        });
+        withCameraSelected(sdk -> handle(sdk.Filter_GetThreshold(floatBuffer), "Filter_GetThreshold"));
 
         return floatBuffer.get(0);
 
@@ -1305,9 +1294,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     public void setFilterThreshold(double threshold) throws IOException, DeviceException {
 
-        withCameraSelected(sdk -> {
-            handle(sdk.Filter_SetThreshold((float) threshold), "SetFilterThreshold");
-        });
+        withCameraSelected(sdk -> handle(sdk.Filter_SetThreshold((float) threshold), "SetFilterThreshold"));
 
     }
 
@@ -1332,26 +1319,12 @@ public class Andor2 extends ManagedCamera<U16Frame> implements Amplified, Temper
 
     }
 
-    public enum EMGainMode {
+    public static class EMGainModes {
 
-        DAC_8_BIT("DAC 8 Bit (0-255)"),
-        DAC_12_BIT("DAC 12 Bit (0-4095)"),
-        LINEAR("Linear"),
-        REAL("Real");
-
-        private final String name;
-
-        EMGainMode(String name) {
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String toString() {
-            return getName();
-        }
+        public static final EMGainMode DAC_8_BIT  = new EMGainMode(0, "DAC 8 Bit (0-255)");
+        public static final EMGainMode DAC_12_BIT = new EMGainMode(1, "DAC 12 Bit (0-4095)");
+        public static final EMGainMode LINEAR     = new EMGainMode(2, "Linear");
+        public static final EMGainMode REAL       = new EMGainMode(3, "Real");
 
     }
 

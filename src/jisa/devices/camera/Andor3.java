@@ -1260,7 +1260,12 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, Amplified,
 
             case "IMAGE":
             default:
-                return ImageMode.ROI;
+
+                if (getPhysicalFrameWidth() == getSensorWidth() && getPhysicalFrameHeight() == getSensorHeight()) {
+                    return ImageMode.FULL_IMAGE;
+                } else {
+                    return ImageMode.ROI;
+                }
 
         }
 
