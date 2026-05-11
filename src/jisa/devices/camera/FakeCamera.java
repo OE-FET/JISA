@@ -339,7 +339,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
             case FULL_IMAGE:
                 return getSensorHeight();
 
-            case ROI:
+            case REGION_OF_INTEREST:
                 return height;
 
             case FULL_VERTICAL_BINNING:

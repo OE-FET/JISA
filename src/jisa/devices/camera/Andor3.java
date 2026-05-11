@@ -1264,7 +1264,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, Amplified,
                 if (getPhysicalFrameWidth() == getSensorWidth() && getPhysicalFrameHeight() == getSensorHeight()) {
                     return ImageMode.FULL_IMAGE;
                 } else {
-                    return ImageMode.ROI;
+                    return ImageMode.REGION_OF_INTEREST;
                 }
 
         }
@@ -1291,7 +1291,7 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, Amplified,
                 setImageHeight(getSensorHeight());
                 break;
 
-            case ROI:
+            case REGION_OF_INTEREST:
                 setEnum("AOILayout", "Image");
                 break;
 

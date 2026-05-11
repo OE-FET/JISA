@@ -17,9 +17,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
@@ -28,7 +26,7 @@ import java.util.stream.Collectors;
  *
  * @param <F> The class used to represent each frame returned by this camera, must extend Frame.
  */
-public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
+public interface Camera<F extends Frame> extends Instrument, FullImage, RegionOfInterest {
 
     String IMAGE_STREAM_HEADER = "JISA IMAGE STREAM: width (int, 4 bytes), height (int, 4 bytes), bytes per pixel (int, 4 bytes), timestamp (long, 8 bytes), image data (byte array, w*h*bpp bytes)";
 
@@ -455,25 +453,11 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, ROI {
     enum ImageMode {
 
         FULL_IMAGE("Full Image", FullImage.class),
-        ROI("Region of Interest", ROI.class),
+        REGION_OF_INTEREST("Region of Interest", RegionOfInterest.class),
         FULL_VERTICAL_BINNING("Full Vertical Binning", FullVerticalBinning.class),
         SINGLE_TRACK("Single-Track", SingleTrack.class),
         TRACK_SEQUENCE("Track Sequence", TrackSequence.class),
         MULTI_TRACK("Multi-Track", MultiTrack.class);
-
-        private final static Map<Class<?>, ImageMode> map = new LinkedHashMap<>();
-
-        static {
-
-            for (ImageMode value : values()) {
-                map.put(value.getInterface(), value);
-            }
-
-        }
-
-        public static ImageMode lookup(Class<?> itfc) {
-            return map.getOrDefault(itfc, null);
-        }
 
         private final String                           name;
         private final Class<? extends CameraImageMode> mode;

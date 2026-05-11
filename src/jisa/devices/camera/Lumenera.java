@@ -633,7 +633,7 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
 
     @Override
     public ImageMode getImageMode() throws IOException, DeviceException {
-        return ImageMode.ROI;
+        return ImageMode.REGION_OF_INTEREST;
     }
 
     @Override

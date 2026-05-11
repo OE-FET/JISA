@@ -947,7 +947,7 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
     @Override
     public ImageMode getImageMode() throws IOException, DeviceException {
-        return ImageMode.ROI;
+        return ImageMode.REGION_OF_INTEREST;
     }
 
     @Override

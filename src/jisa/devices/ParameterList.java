@@ -167,14 +167,6 @@ public class ParameterList extends LinkedList<Instrument.Parameter<?>> {
             used = usedDef;
         }
 
-        T value;
-
-        try {
-            value = valueGet.get();
-        } catch (Throwable e) {
-            value = defValue;
-        }
-
         add(new Parameter<Instrument.OptionalQuantity<T>>(group, name, new Instrument.OptionalQuantity<>(used, defValue), q -> {
 
             if (!q.isUsed()) {

@@ -73,31 +73,31 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
     private int timeout = 10000;
     private int target  = 290;
 
-    private ImageMode        imageMode           = ImageMode.FULL_IMAGE;
-    private int              width               = 500;
-    private int              height              = 500;
-    private int              startX              = 0;
-    private int              startY              = 0;
-    private int              xBin                = 1;
-    private int              yBin                = 1;
-    private boolean          centredX            = false;
-    private boolean          centredY            = false;
-    private int              singleTrackStart    = 1;
-    private int              singleTrackHeight   = 1;
-    private int              trackSequenceCount  = 1;
-    private int              trackSequenceHeight = 1;
-    private int              trackSequenceOffset = 1;
-    private Amplifier        amplifierType       = null;
-    private boolean          useIsolatedCrop     = false;
-    private int              isolatedCropWidth   = 0;
-    private int              isolatedCropHeight  = 0;
-    private int              isolatedCropLeft    = 0;
-    private int              isolatedCropBottom  = 0;
-    private EMGainMode       emGainMode          = EMGainModes.DAC_8_BIT;
-    private IsolatedCropMode isolatedCropMode    = IsolatedCropMode.HIGH_SPEED;
-    private Memory           imageMemory         = null;
-    private ShortBuffer      imageBuffer         = null;
-    private double           preAmpGain          = 0;
+    private ImageMode           imageMode           = ImageMode.FULL_IMAGE;
+    private int                 width               = 500;
+    private int                 height              = 500;
+    private int                 startX              = 0;
+    private int                 startY              = 0;
+    private int                 xBin                = 1;
+    private int                 yBin                = 1;
+    private boolean             centredX            = false;
+    private boolean             centredY            = false;
+    private int                 singleTrackStart    = 1;
+    private int                 singleTrackHeight   = 1;
+    private int                 trackSequenceCount  = 1;
+    private int                 trackSequenceHeight = 1;
+    private int                 trackSequenceOffset = 1;
+    private Amplified.Amplifier amplifierType       = null;
+    private boolean             useIsolatedCrop     = false;
+    private int                 isolatedCropWidth   = 0;
+    private int                 isolatedCropHeight  = 0;
+    private int                 isolatedCropLeft    = 0;
+    private int                 isolatedCropBottom  = 0;
+    private EMCCD.EMGainMode    emGainMode          = EMGainMode.DAC_8_BIT;
+    private IsolatedCropMode    isolatedCropMode    = IsolatedCropMode.HIGH_SPEED;
+    private Memory              imageMemory         = null;
+    private ShortBuffer         imageBuffer         = null;
+    private double              preAmpGain          = 0;
 
     public static FrameReader<U16Frame> openFrameReader(String path) throws IOException {
 
@@ -321,7 +321,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
 
                     break;
 
-                case ROI:
+                case REGION_OF_INTEREST:
 
                     int xStart;
                     int xEnd;
@@ -811,7 +811,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
             case FULL_IMAGE:
                 return maxWidth / xBin;
 
-            case ROI:
+            case REGION_OF_INTEREST:
             case FULL_VERTICAL_BINNING:
             case SINGLE_TRACK:
             case TRACK_SEQUENCE:
@@ -857,7 +857,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
             case FULL_IMAGE:
                 return maxHeight / yBin;
 
-            case ROI:
+            case REGION_OF_INTEREST:
                 return height / yBin;
 
             case FULL_VERTICAL_BINNING:
@@ -1144,7 +1144,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
     }
 
     @Override
-    public void setAmplifier(Amplifier amplifier) throws DeviceException, IOException {
+    public void setAmplifier(Amplified.Amplifier amplifier) throws DeviceException, IOException {
 
         int index = getAmplifiers().indexOf(amplifier);
 
@@ -1159,28 +1159,28 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
     }
 
     @Override
-    public Amplifier getAmplifier() {
+    public Amplified.Amplifier getAmplifier() {
         return amplifierType;
     }
 
     @Override
-    public List<Amplifier> getAmplifiers() {
+    public List<Amplified.Amplifier> getAmplifiers() {
 
         if (ulCameraType == AC_CAMERATYPE_EMCCD) {
 
-            return List.of(Amplifiers.EMCCD_REGISTER, Amplifiers.CONVENTIONAL);
+            return List.of(Amplifier.EMCCD_REGISTER, Amplifier.CONVENTIONAL);
 
         } else if (ulCameraType == AC_CAMERATYPE_CLARA) {
 
-            return List.of(Amplifiers.CONVENTIONAL, Amplifiers.EXTENDED_NIR_MODE);
+            return List.of(Amplifier.CONVENTIONAL, Amplifier.EXTENDED_NIR_MODE);
 
         } else if (ulCameraType == AC_CAMERATYPE_INGAAS) {
 
-            return List.of(Amplifiers.HIGH_SENSITIVITY, Amplifiers.HIGH_DYNAMIC_RANGE);
+            return List.of(Amplifier.HIGH_SENSITIVITY, Amplifier.HIGH_DYNAMIC_RANGE);
 
         } else if (ulCameraType == (AC_CAMERATYPE_NEWTON | AC_CAMERATYPE_IKON | AC_CAMERATYPE_IKONXL)) {
 
-            return List.of(Amplifiers.HIGH_SENSITIVITY, Amplifiers.HIGH_CAPACITY);
+            return List.of(Amplifier.HIGH_SENSITIVITY, Amplifier.HIGH_CAPACITY);
 
         } else {
             return List.of();
@@ -1188,7 +1188,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
 
     }
 
-    public void setEMGainMode(EMGainMode mode) throws IOException, DeviceException {
+    public void setEMGainMode(EMCCD.EMGainMode mode) throws IOException, DeviceException {
 
         if (!getEMGainModes().contains(mode)) {
             throw new DeviceException("Invalid EMGainMode for this camera: %s", mode);
@@ -1202,29 +1202,29 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
 
     }
 
-    public EMGainMode getEMGainMode() {
+    public EMCCD.EMGainMode getEMGainMode() {
         return emGainMode;
     }
 
     @Override
-    public List<EMGainMode> getEMGainModes() {
+    public List<EMCCD.EMGainMode> getEMGainModes() {
 
-        List<EMGainMode> list = new LinkedList<>();
+        List<EMCCD.EMGainMode> list = new LinkedList<>();
 
         if ((ulEMGainCapability & AC_EMGAIN_8BIT) != 0) {
-            list.add(EMGainModes.DAC_8_BIT);
+            list.add(EMGainMode.DAC_8_BIT);
         }
 
         if ((ulEMGainCapability & AC_EMGAIN_12BIT) != 0) {
-            list.add(EMGainModes.DAC_12_BIT);
+            list.add(EMGainMode.DAC_12_BIT);
         }
 
         if ((ulEMGainCapability & AC_EMGAIN_LINEAR12) != 0) {
-            list.add(EMGainModes.LINEAR);
+            list.add(EMGainMode.LINEAR);
         }
 
         if ((ulEMGainCapability & AC_EMGAIN_REAL12) != 0) {
-            list.add(EMGainModes.REAL);
+            list.add(EMGainMode.REAL);
         }
 
         return list;
@@ -1319,12 +1319,12 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
 
     }
 
-    public static class EMGainModes {
+    public static class EMGainMode {
 
-        public static final EMGainMode DAC_8_BIT  = new EMGainMode(0, "DAC 8 Bit (0-255)");
-        public static final EMGainMode DAC_12_BIT = new EMGainMode(1, "DAC 12 Bit (0-4095)");
-        public static final EMGainMode LINEAR     = new EMGainMode(2, "Linear");
-        public static final EMGainMode REAL       = new EMGainMode(3, "Real");
+        public static final EMCCD.EMGainMode DAC_8_BIT  = new EMCCD.EMGainMode(0, "DAC 8 Bit (0-255)");
+        public static final EMCCD.EMGainMode DAC_12_BIT = new EMCCD.EMGainMode(1, "DAC 12 Bit (0-4095)");
+        public static final EMCCD.EMGainMode LINEAR     = new EMCCD.EMGainMode(2, "Linear");
+        public static final EMCCD.EMGainMode REAL       = new EMCCD.EMGainMode(3, "Real");
 
     }
 
@@ -1352,14 +1352,14 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
 
     }
 
-    public static class Amplifiers {
+    public static class Amplifier {
 
-        public static final Amplifier CONVENTIONAL       = new Amplifier(0, "Conventional");
-        public static final Amplifier EMCCD_REGISTER     = new Amplifier(0, "EMCCD Register");
-        public static final Amplifier EXTENDED_NIR_MODE  = new Amplifier(0, "Extended NIR Mode");
-        public static final Amplifier HIGH_SENSITIVITY   = new Amplifier(0, "High Sensitivity");
-        public static final Amplifier HIGH_DYNAMIC_RANGE = new Amplifier(0, "High Dynamic Range");
-        public static final Amplifier HIGH_CAPACITY      = new Amplifier(0, "High Capacity");
+        public static final Amplified.Amplifier CONVENTIONAL       = new Amplified.Amplifier(0, "Conventional");
+        public static final Amplified.Amplifier EMCCD_REGISTER     = new Amplified.Amplifier(0, "EMCCD Register");
+        public static final Amplified.Amplifier EXTENDED_NIR_MODE  = new Amplified.Amplifier(0, "Extended NIR Mode");
+        public static final Amplified.Amplifier HIGH_SENSITIVITY   = new Amplified.Amplifier(0, "High Sensitivity");
+        public static final Amplified.Amplifier HIGH_DYNAMIC_RANGE = new Amplified.Amplifier(0, "High Dynamic Range");
+        public static final Amplified.Amplifier HIGH_CAPACITY      = new Amplified.Amplifier(0, "High Capacity");
 
     }
 

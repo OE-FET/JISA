@@ -212,7 +212,7 @@ public class Webcam extends ManagedCamera<RGBFrame> {
 
     @Override
     public ImageMode getImageMode() throws IOException, DeviceException {
-        return ImageMode.ROI;
+        return ImageMode.REGION_OF_INTEREST;
     }
 
     @Override

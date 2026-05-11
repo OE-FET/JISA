@@ -5,9 +5,9 @@ import jisa.devices.ParameterList;
 
 import java.io.IOException;
 
-public interface ROI extends CameraImageMode {
+public interface RegionOfInterest extends CameraImageMode {
 
-    static void addParameters(ROI inst, Class<?> target, ParameterList parameters) {
+    static void addParameters(RegionOfInterest inst, Class<?> target, ParameterList parameters) {
 
         parameters.addValue("Region of Interest", "Width", inst::getImageWidth, 1024, inst::setImageWidth);
         parameters.addValue("Region of Interest", "Height", inst::getImageHeight, 1024, inst::setImageHeight);
