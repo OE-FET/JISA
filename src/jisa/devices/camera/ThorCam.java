@@ -101,7 +101,7 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
             ByteBuffer serials = memory.getByteBuffer(0, 2048);
 
-            sdk.tl_camera_discover_available_cameras(serials, 2048);
+            process(sdk.tl_camera_discover_available_cameras(serials, 2048), "tl_camera_discover_available_cameras");
 
             String[] serialNumbers = new String(memory.getByteArray(0, 2048), StandardCharsets.US_ASCII).trim().split(" ");
             String   serialNumber  = serialNumbers[0];
