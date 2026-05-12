@@ -187,7 +187,7 @@ public abstract class NativeDevice implements Instrument {
 
             return loaded;
 
-        } catch (Throwable e) {
+        } catch (UnsatisfiedLinkError e) {
             throw new LibraryNotFoundException(libraryName, name);
         }
 
