@@ -1120,9 +1120,9 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
             for (int i = 0; i < array.length; i++) {
 
-                b = processingBuffer.getShort() & 0xFFFF;
-                g = processingBuffer.getShort() & 0xFFFF;
                 r = processingBuffer.getShort() & 0xFFFF;
+                g = processingBuffer.getShort() & 0xFFFF;
+                b = processingBuffer.getShort() & 0xFFFF;
 
                 array[i] = (0xFFFFL << 48) | (r << 32) | (g << 16) | b;
 
