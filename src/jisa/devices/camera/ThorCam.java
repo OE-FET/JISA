@@ -17,7 +17,7 @@ import jisa.devices.camera.nat.ThorCamLibrary;
 import jisa.devices.camera.nat.ThorCamMosaicLibrary;
 import jisa.visa.NativeDevice;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -27,6 +27,8 @@ import java.util.concurrent.TimeoutException;
  * Driver class for ThorLabs cameras.
  */
 public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice implements Camera<F>, Amplified, Timestamping {
+
+    public static final int STRING_SIZE = 4096;
 
     // CONSTANTS
     public static final int ERROR_NONE                    = 0;
@@ -57,24 +59,24 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
     public static final Map<Integer, String> ERROR_NAMES =
             Util.map(ERROR_NONE, "No Error")
-                .map(ERROR_COMMAND_NOT_FOUND, "Unknown Command")
-                .map(ERROR_TOO_MANY_ARGUMENTS, "Too Many Arguments sent with Command")
-                .map(ERROR_NOT_ENOUGH_ARGUMENTS, "Too Few Arguments sent with Command")
-                .map(ERROR_INVALID_COMMAND, "Invalid Command")
-                .map(ERROR_DUPLICATE_COMMAND, "Duplicate Command")
-                .map(ERROR_MISSING_JSON_COMMAND, "Command not Documented in JSON")
-                .map(ERROR_INITIALIZING, "Camera Still Initialising")
-                .map(ERROR_NOTSUPPORTED, "Command Not Supported")
-                .map(ERROR_FPGA_NOT_PROGRAMMED, "No Firmware Image on FPGA")
-                .map(ERROR_ROI_WIDTH_ERROR, "Invalid ROI Width Value")
-                .map(ERROR_ROI_RANGE_ERROR, "Invalid ROI Range Value")
-                .map(ERROR_RANGE_ERROR, "Value out of Range for Command")
-                .map(ERROR_COMMAND_LOCKED, "Command Locked")
-                .map(ERROR_CAMERA_MUST_BE_STOPPED, "Command Requires Camera to be Stopped")
-                .map(ERROR_ROI_BIN_COMBO_ERROR, "ROI/Binning Error")
-                .map(ERROR_IMAGE_DATA_SYNC_ERROR, "Data Sync Error")
-                .map(ERROR_CAMERA_MUST_BE_DISARMED, "Command Requires Camera to be Disarmed")
-                .map(ERROR_MAX_ERRORS, "END OF ENUMERATION");
+                    .map(ERROR_COMMAND_NOT_FOUND, "Unknown Command")
+                    .map(ERROR_TOO_MANY_ARGUMENTS, "Too Many Arguments sent with Command")
+                    .map(ERROR_NOT_ENOUGH_ARGUMENTS, "Too Few Arguments sent with Command")
+                    .map(ERROR_INVALID_COMMAND, "Invalid Command")
+                    .map(ERROR_DUPLICATE_COMMAND, "Duplicate Command")
+                    .map(ERROR_MISSING_JSON_COMMAND, "Command not Documented in JSON")
+                    .map(ERROR_INITIALIZING, "Camera Still Initialising")
+                    .map(ERROR_NOTSUPPORTED, "Command Not Supported")
+                    .map(ERROR_FPGA_NOT_PROGRAMMED, "No Firmware Image on FPGA")
+                    .map(ERROR_ROI_WIDTH_ERROR, "Invalid ROI Width Value")
+                    .map(ERROR_ROI_RANGE_ERROR, "Invalid ROI Range Value")
+                    .map(ERROR_RANGE_ERROR, "Value out of Range for Command")
+                    .map(ERROR_COMMAND_LOCKED, "Command Locked")
+                    .map(ERROR_CAMERA_MUST_BE_STOPPED, "Command Requires Camera to be Stopped")
+                    .map(ERROR_ROI_BIN_COMBO_ERROR, "ROI/Binning Error")
+                    .map(ERROR_IMAGE_DATA_SYNC_ERROR, "Data Sync Error")
+                    .map(ERROR_CAMERA_MUST_BE_DISARMED, "Command Requires Camera to be Disarmed")
+                    .map(ERROR_MAX_ERRORS, "END OF ENUMERATION");
 
     private final ListenerManager<F>        listenerManager      = new ListenerManager<>();
     private final List<AcquisitionListener> acquisitionListeners = new LinkedList<>();
@@ -97,23 +99,16 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
         sdk = findLibrary(ThorCamLibrary.class, "thorlabs_tsi_camera_sdk");
 
-        try (Memory memory = new Memory(2048)) {
+        try (Memory memory = new Memory(STRING_SIZE)) {
 
-            ByteBuffer serials = memory.getByteBuffer(0, 2048);
+            ByteBuffer serials = memory.getByteBuffer(0, STRING_SIZE);
 
-            process(sdk.tl_camera_discover_available_cameras(serials, 2048), "tl_camera_discover_available_cameras");
+            process(sdk.tl_camera_discover_available_cameras(serials, STRING_SIZE), "tl_camera_discover_available_cameras");
 
-            String[] serialNumbers = new String(memory.getByteArray(0, 2048), StandardCharsets.US_ASCII).trim().split(" ");
+            String[] serialNumbers = new String(memory.getByteArray(0, STRING_SIZE), StandardCharsets.UTF_8).trim().split(" ");
             String   serialNumber  = serialNumbers[0];
-            byte[]   bytes         = serialNumber.getBytes(StandardCharsets.US_ASCII);
 
-            try (Memory memory2 = new Memory(bytes.length)) {
-
-                ByteBuffer buffer = memory2.getByteBuffer(0, bytes.length);
-                buffer.put(bytes);
-
-                handle = getPointer(ref -> sdk.tl_camera_open_camera(buffer.rewind(), ref), "tl_camera_open_camera");
-            }
+            handle = getPointer(ref -> sdk.tl_camera_open_camera((serialNumber + '\0').getBytes(StandardCharsets.UTF_8), ref), "tl_camera_open_camera");
 
         }
 
@@ -136,28 +131,21 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
         sdk = findLibrary(ThorCamLibrary.class, "thorlabs_tsi_camera_sdk", extraPaths);
 
-        try (Memory memory = new Memory(2048)) {
+        try (Memory memory = new Memory(STRING_SIZE)) {
 
-            ByteBuffer serials = memory.getByteBuffer(0, 2048);
+            ByteBuffer serials = memory.getByteBuffer(0, STRING_SIZE);
 
-            sdk.tl_camera_discover_available_cameras(serials, 2048);
+            sdk.tl_camera_discover_available_cameras(serials, STRING_SIZE);
 
-            String[] serialNumbers = new String(memory.getByteArray(0, 2048), StandardCharsets.US_ASCII).trim().split(" ");
+            String[] serialNumbers = new String(memory.getByteArray(0, STRING_SIZE), StandardCharsets.UTF_8).trim().split(" ");
             String   serialNumber  = ((IDAddress) address).getID().trim();
-            byte[]   bytes         = serialNumber.getBytes(StandardCharsets.US_ASCII);
+            byte[]   bytes         = serialNumber.getBytes(StandardCharsets.UTF_8);
 
             if (!Arrays.asList(serialNumbers).contains(serialNumber)) {
                 throw new DeviceException("Invalid SerialNumber. Available options: %s", String.join(", ", serialNumbers));
             }
 
-            try (Memory memory2 = new Memory(bytes.length)) {
-
-                ByteBuffer buffer = memory2.getByteBuffer(0, bytes.length);
-                buffer.put(bytes);
-
-                handle = getPointer(ref -> sdk.tl_camera_open_camera(buffer.rewind(), ref), "tl_camera_open_camera");
-
-            }
+            handle = getPointer(ref -> sdk.tl_camera_open_camera((serialNumber + '\0').getBytes(StandardCharsets.UTF_8), ref), "tl_camera_open_camera");
 
         }
 
@@ -272,17 +260,12 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
     public void process(int result, String method) throws IOException, DeviceException {
 
-        if (method.equals("tl_camera_open_camera") && result == ERROR_INVALID_COMMAND) {
-            throw new IOException("ThorCam SDK function \"tl_camera_open_camera\" returned an error: Camera Not Found (1004).");
-        }
-
         if (result != ERROR_NONE) {
 
-            if (result == ERROR_IMAGE_DATA_SYNC_ERROR) {
-                throw new IOException(String.format("ThorCam SDK function \"%s\" returned an I/O error: %s (%d)", method, ERROR_NAMES.getOrDefault(result, "UNKNOWN"), result));
-            } else {
-                throw new DeviceException("ThorCam SDK function \"%s\" returned an error: %s (%d)", method, ERROR_NAMES.getOrDefault(result, "UNKNOWN"), result);
-            }
+            Pointer lastError = sdk.tl_camera_get_last_error();
+            String  message   = lastError.getString(0, StandardCharsets.UTF_8.name());
+
+            throw new DeviceException("ThorCam SDK function \"%s\" returned an error: %s (%d)", method, message, result);
 
         }
 
@@ -1001,43 +984,15 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
         }
 
-        public static void convertOldFile(String oldFile, String newFile) throws IOException {
-
-            FileInputStream      fis = new FileInputStream(oldFile);
-            BufferedInputStream  bis = new BufferedInputStream(fis);
-            DataInputStream      dis = new DataInputStream(bis);
-            FileOutputStream     fos = new FileOutputStream(newFile);
-            BufferedOutputStream bos = new BufferedOutputStream(fos);
-            DataOutputStream     dos = new DataOutputStream(bos);
-
-            while (dis.available() > 0) {
-
-                int  width     = dis.readInt();
-                int  height    = dis.readInt();
-                long timestamp = dis.readLong();
-                int  length    = width * height * Long.BYTES;
-
-                dos.writeInt(width);
-                dos.writeInt(height);
-                dos.writeInt(Long.BYTES);
-                dos.writeLong(timestamp);
-
-                dos.write(dis.readNBytes(length));
-
-            }
-
-            dis.close();
-            dos.close();
-
-        }
-
         public static String getDescription() {
             return "ThorLabs Colour Camera";
         }
 
         private final ThorCamMosaicLibrary mosaic = findLibrary(ThorCamMosaicLibrary.class, "thorlabs_tsi_mono_to_color_processing");
 
-        private Pointer mosaicHandle = null;
+        private Pointer    mosaicHandle     = null;
+        private Memory     processingMemory = null;
+        private ByteBuffer processingBuffer = null;
 
         public Colour() throws DeviceException, IOException {
             super();
@@ -1055,7 +1010,10 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
             if (mosaicHandle != null) {
                 mosaic.tl_mono_to_color_destroy_mono_to_color_processor(mosaicHandle);
-                mosaicHandle = null;
+                processingMemory.close();
+                mosaicHandle     = null;
+                processingMemory = null;
+                processingBuffer = null;
             }
 
             PointerByReference ref = new PointerByReference();
@@ -1069,7 +1027,7 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
             sdk.tl_camera_get_color_correction_matrix(handle, ccMatrix);
             sdk.tl_camera_get_default_white_balance_matrix(handle, wbMatrix);
 
-            int result = mosaic.tl_mono_to_color_create_mono_to_color_processor(sensorType, phaseArray, ccMatrix, wbMatrix, bitDepth, ref);
+            int result = mosaic.tl_mono_to_color_create_mono_to_color_processor(sensorType, phaseArray, ccMatrix.rewind(), wbMatrix.rewind(), bitDepth, ref);
 
             if (result != 0) {
                 throw new DeviceException("Mosaic colour processor could not be created: %d", result);
@@ -1077,10 +1035,13 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
             Pointer mHandle = ref.getValue();
 
-            mosaic.tl_mono_to_color_set_color_space(mHandle, 1);
+            mosaic.tl_mono_to_color_set_color_space(mHandle, 0);
             mosaic.tl_mono_to_color_set_output_format(mHandle, 2);
 
             mosaicHandle = mHandle;
+
+            processingMemory = new Memory(6L * getFrameSize());
+            processingBuffer = processingMemory.getByteBuffer(0, 6L * getFrameSize());
 
         }
 
@@ -1134,35 +1095,37 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
         @Override
         protected void populateBuffer(long[] array, ByteBuffer input, int width, int height) {
 
-            try (Memory memory = new Memory(array.length * 6L)) {
+            int result = mosaic.tl_mono_to_color_transform_to_48(mosaicHandle, input.rewind(), width, height, processingBuffer.rewind());
 
-                // 3 channels, 2 bytes (16 bits) per channel -> 6 bytes (48 bits) per pixel
-                ByteBuffer output = memory.getByteBuffer(0, array.length * 6L);
-                int        result = mosaic.tl_mono_to_color_transform_to_48(mosaicHandle, input, width, height, output);
+            processingBuffer.rewind();
 
-                output.rewind();
+            long r;
+            long g;
+            long b;
 
-                long r;
-                long g;
-                long b;
+            for (int i = 0; i < array.length; i++) {
 
-                for (int i = 0; i < array.length; i++) {
+                r = processingBuffer.getShort() & 0xFFFFL;
+                g = processingBuffer.getShort() & 0xFFFFL;
+                b = processingBuffer.getShort() & 0xFFFFL;
 
-                    r = output.getShort() & 0xFFFFL;
-                    g = output.getShort() & 0xFFFFL;
-                    b = output.getShort() & 0xFFFFL;
-
-                    array[i] = (0xFFFFL << 48) | (r << 32) | (g << 16) | b;
-
-                }
+                array[i] = (0xFFFFL << 48) | (r << 32) | (g << 16) | b;
 
             }
 
         }
 
         public void close() throws IOException, DeviceException {
+
             mosaic.tl_mono_to_color_destroy_mono_to_color_processor(mosaicHandle);
+            processingMemory.close();
+
+            processingBuffer = null;
+            processingBuffer = null;
+            mosaicHandle     = null;
+
             super.close();
+
         }
 
     }
@@ -1217,14 +1180,12 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
         @Override
         protected void populateBuffer(short[] array, ByteBuffer data, int width, int height) {
-            data.asShortBuffer().get(array);
+            data.rewind().asShortBuffer().get(array);
         }
 
     }
 
     protected static class ColourFrame extends U16RGBFrame {
-
-        private final static U16RGB MAX = new U16RGB(((long) Character.MAX_VALUE << 48 | (long) 4096 << 32 | (long) 4096 << 16 | 4096));
 
         public ColourFrame(long[] argb, int width, int height, long timestamp, ThorCam camera) {
 
@@ -1236,27 +1197,10 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
             super(argb, width, height, timestamp, attributes);
         }
 
-        public U16RGB getMax() {
-            return MAX;
-        }
-
         public ColourFrame copy() {
             return new ColourFrame(argb.clone(), width, height, timestamp, attributes);
         }
 
-        @Override
-        public void readARGBData(int[] destination) {
-
-            long v;
-
-            for (int i = 0; i < argb.length; i++) {
-
-                v              = argb[i];
-                destination[i] = (int) (((v >> 40) & 0xFF000000L) | ((v >> 32) & 0x00FF0000L) | ((v >> 24) & 0x0000FF00L) | ((v >> 8) & 0x000000FFL));
-
-            }
-
-        }
 
     }
 
@@ -1278,17 +1222,6 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
             return new MonoFrame(data.clone(), width, height, timestamp, attributes);
         }
 
-        @Override
-        public void readARGBData(int[] argb) {
-
-            int value;
-
-            for (int i = 0; i < data.length; i++) {
-                value   = ((data[i] >> 4) & 0xFF);
-                argb[i] = ((255 << 24) & 0xFF) | ((value << 16) & 0xFF) | ((value << 8) & 0xFF) | (value & 0xFF);
-            }
-
-        }
     }
 
 }

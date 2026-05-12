@@ -13,9 +13,8 @@ public interface ThorCamLibrary extends Library {
     default void initialise() throws Exception {
 
         tl_camera_open_sdk();
-        Util.addShutdownHook(this::tl_camera_close_sdk);
 
-        Util.sleep(1000);
+        Util.addShutdownHook(this::tl_camera_close_sdk);
 
     }
 
@@ -183,7 +182,7 @@ public interface ThorCamLibrary extends Library {
 
     int tl_camera_issue_software_trigger(Pointer tl_camera_handle);
 
-    int tl_camera_open_camera(ByteBuffer camera_serial_number, PointerByReference tl_camera_handle);
+    int tl_camera_open_camera(byte[] camera_serial_number, PointerByReference tl_camera_handle);
 
     int tl_camera_open_sdk();
 
