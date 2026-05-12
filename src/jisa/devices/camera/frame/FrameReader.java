@@ -117,24 +117,77 @@ public class FrameReader<F extends Frame> {
 
     public synchronized void convertToMP4(String path) throws IOException {
 
-        Frame  frame1 = readFrame().copy();
-        Frame  frame2 = readFrame().copy();
-        double diff   = (frame2.getTimestamp() - frame1.getTimestamp()) / 1e9;
-        int    fps    = (int) (1.0 / diff);
-        Path   file   = Path.of(path);
+        Frame frame1 = readFrame().copy();
+        Frame frame2 = readFrame().copy();
 
-        SequenceEncoder enc = SequenceEncoder.createWithFps(NIOUtils.writableChannel(file.toFile()), new Rational(fps, 1));
+        double diff = (frame2.getTimestamp() - frame1.getTimestamp()) / 1e9;
+        int fps = Math.max(1, (int) Math.round(1.0 / diff));
 
-        enc.encodeNativeFrame(Picture.createPicture(frame1.getWidth(), frame1.getHeight(), new byte[][]{frame1.getPlanarRGBBytes()}, ColorSpace.RGB));
-        enc.encodeNativeFrame(Picture.createPicture(frame2.getWidth(), frame2.getHeight(), new byte[][]{frame2.getPlanarRGBBytes()}, ColorSpace.RGB));
+        Path file = Path.of(path);
+
+        SequenceEncoder enc = SequenceEncoder.createWithFps(
+                NIOUtils.writableChannel(file.toFile()),
+                new Rational(fps, 1)
+        );
+
+        encodeFrame(enc, frame1);
+        encodeFrame(enc, frame2);
 
         while (hasFrame()) {
-            F frame = readFrame();
-            enc.encodeNativeFrame(Picture.createPicture(frame.getWidth(), frame.getHeight(), new byte[][]{frame.getPlanarRGBBytes()}, ColorSpace.RGB));
+            encodeFrame(enc, readFrame());
         }
 
         enc.finish();
+    }
 
+    private void encodeFrame(SequenceEncoder enc, Frame frame) throws IOException {
+
+        int w = frame.getWidth();
+        int h = frame.getHeight();
+
+        byte[] rgb = frame.getRGBBytes();
+
+        Picture yuv = rgbToYuv420(rgb, w, h);
+
+        enc.encodeNativeFrame(yuv);
+    }
+
+    private static Picture rgbToYuv420(byte[] rgb, int w, int h) {
+
+        int frameSize = w * h;
+
+        byte[] y = new byte[frameSize];
+        byte[] u = new byte[frameSize / 4];
+        byte[] v = new byte[frameSize / 4];
+
+        int rgbIndex = 0;
+
+        int uvIndex = 0;
+
+        for (int j = 0; j < h; j++) {
+            for (int i = 0; i < w; i++) {
+
+                int r = rgb[rgbIndex++] & 0xFF;
+                int g = rgb[rgbIndex++] & 0xFF;
+                int b = rgb[rgbIndex++] & 0xFF;
+
+                // BT.601 conversion (standard SD/MP4)
+                int yy = (  66 * r + 129 * g +  25 * b + 128) >> 8;
+                int uu = (-38 * r -  74 * g + 112 * b + 128) >> 8;
+                int vv = ( 112 * r -  94 * g -  18 * b + 128) >> 8;
+
+                y[j * w + i] = (byte) (yy + 16);
+
+                // Subsample U/V every 2x2 block
+                if ((j % 2 == 0) && (i % 2 == 0)) {
+                    int uvPos = (j / 2) * (w / 2) + (i / 2);
+                    u[uvPos] = (byte) (uu + 128);
+                    v[uvPos] = (byte) (vv + 128);
+                }
+            }
+        }
+
+        return Picture.createPicture(w, h, new byte[][] { y, u, v }, ColorSpace.YUV420);
     }
 
     public synchronized void compress() throws IOException {
