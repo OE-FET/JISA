@@ -114,81 +114,27 @@ public class FrameReader<F extends Frame> {
 
     }
 
-    public synchronized void convertToMP4(String path) throws IOException, InterruptedException {
 
-        Frame frame1 = readFrame().copy();
-        Frame frame2 = readFrame().copy();
+    public synchronized void convertToMP4(String path) throws IOException {
 
-        double diffSec = (frame2.getTimestamp() - frame1.getTimestamp()) / 1e9;
-        int fps = diffSec > 0 ? Math.max(1, (int) Math.round(1.0 / diffSec)) : 30;
+        Frame  frame1 = readFrame().copy();
+        Frame  frame2 = readFrame().copy();
+        double diff   = (frame2.getTimestamp() - frame1.getTimestamp()) / 1e9;
+        int    fps    = (int) (1.0 / diff);
+        Path   file   = Path.of(path);
 
-        Path file = Path.of(path);
+        SequenceEncoder enc = SequenceEncoder.createWithFps(NIOUtils.writableChannel(file.toFile()), new Rational(fps, 1));
 
-        SequenceEncoder enc = SequenceEncoder.createWithFps(
-                NIOUtils.writableChannel(file.toFile()),
-                new Rational(fps, 1)
-        );
-
-        encodeFrame(enc, frame1);
-        encodeFrame(enc, frame2);
+        enc.encodeNativeFrame(Picture.createPicture(frame1.getWidth(), frame1.getHeight(), new byte[][]{frame1.getPlanarRGBBytes()}, ColorSpace.RGB));
+        enc.encodeNativeFrame(Picture.createPicture(frame2.getWidth(), frame2.getHeight(), new byte[][]{frame2.getPlanarRGBBytes()}, ColorSpace.RGB));
 
         while (hasFrame()) {
-            encodeFrame(enc, readFrame());
+            F frame = readFrame();
+            enc.encodeNativeFrame(Picture.createPicture(frame.getWidth(), frame.getHeight(), new byte[][]{frame.getPlanarRGBBytes()}, ColorSpace.RGB));
         }
 
         enc.finish();
-    }
 
-    private void encodeFrame(SequenceEncoder enc, Frame frame) throws IOException {
-
-        byte[] rgb = frame.getRGBBytes();
-
-        int w = frame.getWidth();
-        int h = frame.getHeight();
-        int size = w * h;
-
-        byte[] y = new byte[size];
-        byte[] u = new byte[size / 4];
-        byte[] v = new byte[size / 4];
-
-        int yIndex = 0;
-        int uvIndex = 0;
-
-        int rgbIndex = 0;
-
-        for (int j = 0; j < h; j++) {
-            for (int i = 0; i < w; i++) {
-
-                int r = rgb[rgbIndex++] & 0xFF;
-                int g = rgb[rgbIndex++] & 0xFF;
-                int b = rgb[rgbIndex++] & 0xFF;
-
-                // Luma
-                int yy = (  66 * r + 129 * g +  25 * b + 128) >> 8;
-                y[yIndex++] = (byte) (yy + 16);
-
-                // Chroma subsampling (4:2:0)
-                if ((j % 2 == 0) && (i % 2 == 0)) {
-
-                    int uu = (-38 * r - 74 * g + 112 * b + 128) >> 8;
-                    int vv = (112 * r - 94 * g - 18 * b + 128) >> 8;
-
-                    u[uvIndex] = (byte) (uu + 128);
-                    v[uvIndex] = (byte) (vv + 128);
-
-                    uvIndex++;
-                }
-            }
-        }
-
-        Picture pic = Picture.createPicture(
-                w,
-                h,
-                new byte[][] { y, u, v },
-                ColorSpace.YUV420
-        );
-
-        enc.encodeNativeFrame(pic);
     }
 
     public synchronized void compress() throws IOException {

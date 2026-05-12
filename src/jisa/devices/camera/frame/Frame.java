@@ -147,6 +147,30 @@ public interface Frame<D, F extends Frame, R> {
         return output;
     }
 
+    default byte[] getPlanarRGBBytes() {
+
+        int[] data = getARGBData();
+        int n = data.length;
+
+        byte[] output = new byte[n * 3];
+
+        int rOffset = 0;
+        int gOffset = n;
+        int bOffset = n * 2;
+
+        for (int i = 0; i < n; i++) {
+
+            int pixel = data[i];
+
+            output[rOffset + i] = (byte) ((pixel >> 16) & 0xFF); // Red plane
+            output[gOffset + i] = (byte) ((pixel >> 8) & 0xFF);  // Green plane
+            output[bOffset + i] = (byte) (pixel & 0xFF);         // Blue plane
+        }
+
+        return output;
+
+    }
+
     default byte[][][] getNPArray() {
 
         byte[][][] output = new byte[getHeight()][getWidth()][3];
