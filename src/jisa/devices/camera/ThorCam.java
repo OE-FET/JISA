@@ -1,7 +1,6 @@
 package jisa.devices.camera;
 
 import com.google.common.primitives.Ints;
-import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
@@ -30,6 +29,9 @@ import java.util.concurrent.TimeoutException;
 public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice implements Camera<F>, Amplified, Timestamping {
 
     public static final int STRING_SIZE = 4096;
+
+    public static final int COLOUR_FORMAT_RGB_PIXEL = 2;
+    public static final int COLOUR_SPACE_SRGB       = 0;
 
     // CONSTANTS
     public static final int ERROR_NONE                    = 0;
@@ -100,23 +102,6 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
         sdk = findLibrary(ThorCamLibrary.class, "thorlabs_tsi_camera_sdk");
 
-        findLibrary(Library.class, "thorlabs_ccd_edt_camera_link");
-        findLibrary(Library.class, "thorlabs_ccd_fenrir");
-        findLibrary(Library.class, "thorlabs_ccd_pleora_ebus");
-        findLibrary(Library.class, "thorlabs_ccd_tsi_sdk");
-        findLibrary(Library.class, "thorlabs_ccd_tsi_usb");
-        findLibrary(Library.class, "thorlabs_tsi_color_processing");
-        findLibrary(Library.class, "thorlabs_tsi_color_processing_vector_avx2");
-        findLibrary(Library.class, "thorlabs_tsi_demosaic");
-        findLibrary(Library.class, "thorlabs_tsi_demosaic_vector_avx2");
-        findLibrary(Library.class, "thorlabs_tsi_loggerx");
-        findLibrary(Library.class, "thorlabs_tsi_LUT");
-        findLibrary(Library.class, "thorlabs_tsi_polarization_processor");
-        findLibrary(Library.class, "thorlabs_tsi_polarization_processor_vector_avx2");
-        findLibrary(Library.class, "thorlabs_tsi_polarization_processor_vector_avx512");
-        findLibrary(Library.class, "thorlabs_tsi_usb_hotplug_monitor");
-        findLibrary(Library.class, "thorlabs_tsi_zelux_camera_device");
-
         try (Memory memory = new Memory(STRING_SIZE)) {
 
             ByteBuffer serials = memory.getByteBuffer(0, STRING_SIZE);
@@ -148,23 +133,6 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
         }
 
         sdk = findLibrary(ThorCamLibrary.class, "thorlabs_tsi_camera_sdk", extraPaths);
-
-        findLibrary(Library.class, "thorlabs_ccd_edt_camera_link");
-        findLibrary(Library.class, "thorlabs_ccd_fenrir");
-        findLibrary(Library.class, "thorlabs_ccd_pleora_ebus");
-        findLibrary(Library.class, "thorlabs_ccd_tsi_sdk");
-        findLibrary(Library.class, "thorlabs_ccd_tsi_usb");
-        findLibrary(Library.class, "thorlabs_tsi_color_processing");
-        findLibrary(Library.class, "thorlabs_tsi_color_processing_vector_avx2");
-        findLibrary(Library.class, "thorlabs_tsi_demosaic");
-        findLibrary(Library.class, "thorlabs_tsi_demosaic_vector_avx2");
-        findLibrary(Library.class, "thorlabs_tsi_loggerx");
-        findLibrary(Library.class, "thorlabs_tsi_LUT");
-        findLibrary(Library.class, "thorlabs_tsi_polarization_processor");
-        findLibrary(Library.class, "thorlabs_tsi_polarization_processor_vector_avx2");
-        findLibrary(Library.class, "thorlabs_tsi_polarization_processor_vector_avx512");
-        findLibrary(Library.class, "thorlabs_tsi_usb_hotplug_monitor");
-        findLibrary(Library.class, "thorlabs_tsi_zelux_camera_device");
 
         try (Memory memory = new Memory(STRING_SIZE)) {
 
@@ -1074,13 +1042,14 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
             Pointer mHandle = ref.getValue();
 
-            mosaic.tl_mono_to_color_set_color_space(mHandle, 0);
-            mosaic.tl_mono_to_color_set_output_format(mHandle, 2);
+            mosaic.tl_mono_to_color_set_color_space(mHandle, COLOUR_SPACE_SRGB);
+            mosaic.tl_mono_to_color_set_output_format(mHandle, COLOUR_FORMAT_RGB_PIXEL);
 
             mosaicHandle = mHandle;
 
             processingMemory = new Memory(6L * getFrameSize());
             processingBuffer = processingMemory.getByteBuffer(0, 6L * getFrameSize());
+            processingBuffer.order(ByteOrder.LITTLE_ENDIAN);
 
         }
 
@@ -1301,7 +1270,7 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
             int scale = 16 - bitDepth;
 
             for (int i = 0; i < data.length; i++) {
-                value   = (((data[i] >> 8) & 0xFF) << scale) & 0xFF;
+                value   = ((data[i] & 0xFFFF) << scale) >> 8;
                 argb[i] = (255 << 24) | (value << 16) | (value << 8) | value;
             }
 
