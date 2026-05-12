@@ -89,7 +89,8 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
     protected final long[]         stats   = {0, 0, System.nanoTime()};
     private         double         lastFPS = 0;
 
-    private boolean acquiring         = false;
+    private volatile boolean acquiring = false;
+
     private Thread  acquisitionThread = null;
     private boolean centredX          = false;
     private boolean centredY          = false;
@@ -457,7 +458,9 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
                 listenerManager.trigger(frame);
                 stats[0]++;
 
-            } catch (Exception e) {
+            } catch (InterruptedException e) {
+                // Do nothing
+            } catch (Throwable e) {
                 System.err.printf("Error acquiring frame from ThorCam camera: %s%n.", e.getMessage());
             }
 
@@ -583,7 +586,6 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
                     IntBuffer          metaSize       = IntBuffer.allocate(1);
 
                     process(sdk.tl_camera_get_pending_frame_or_null(handle, frameReference, frameCount, metaReference, metaSize), "tl_camera_get_pending_frame_or_null");
-                    process(sdk.tl_camera_disarm(handle), "tl_camera_disarm");
 
                     Pointer framePointer = frameReference.getValue();
                     Pointer metaPointer  = metaReference.getValue();
@@ -605,6 +607,7 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
             } finally {
                 acquisitionListeners.forEach(l -> l.changed(count, false));
+                process(sdk.tl_camera_disarm(handle), "tl_camera_disarm");
             }
 
         }
@@ -893,7 +896,13 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
     @Override
     public void close() throws IOException, DeviceException {
+
+        if (isAcquiring()) {
+            stopAcquisition();
+        }
+
         process(sdk.tl_camera_close_camera(handle), "tl_camera_close");
+
     }
 
     @Override
@@ -1124,11 +1133,16 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
         public void close() throws IOException, DeviceException {
 
             mosaic.tl_mono_to_color_destroy_mono_to_color_processor(mosaicHandle);
-            processingMemory.close();
 
-            processingBuffer = null;
-            processingBuffer = null;
-            mosaicHandle     = null;
+            if (processingMemory != null && processingMemory.valid()) {
+
+                processingMemory.close();
+
+                processingBuffer = null;
+                processingBuffer = null;
+                mosaicHandle     = null;
+
+            }
 
             super.close();
 
