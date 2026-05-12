@@ -1038,8 +1038,14 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
             int phaseArray = getInt(sdk::tl_camera_get_color_filter_array_phase);
             int bitDepth   = getInt(sdk::tl_camera_get_bit_depth);
 
-            FloatBuffer ccMatrix = FloatBuffer.allocate(9);
-            FloatBuffer wbMatrix = FloatBuffer.allocate(9);
+            FloatBuffer ccMatrix = ByteBuffer.allocateDirect(9 * Float.BYTES)
+                                             .order(ByteOrder.nativeOrder())
+                                             .asFloatBuffer();
+
+            FloatBuffer wbMatrix = ByteBuffer.allocateDirect(9 * Float.BYTES)
+                                             .order(ByteOrder.nativeOrder())
+                                             .asFloatBuffer();
+
             sdk.tl_camera_get_color_correction_matrix(handle, ccMatrix);
             sdk.tl_camera_get_default_white_balance_matrix(handle, wbMatrix);
 
@@ -1112,6 +1118,7 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
             int result = mosaic.tl_mono_to_color_transform_to_48(mosaicHandle, input.rewind(), width, height, processingBuffer.rewind());
 
+            processingBuffer.order(ByteOrder.LITTLE_ENDIAN);
             processingBuffer.rewind();
 
             int r;
@@ -1120,9 +1127,9 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
             for (int i = 0; i < array.length; i++) {
 
-                b = processingBuffer.getShort() & 0xFFFF;
-                g = processingBuffer.getShort() & 0xFFFF;
                 r = processingBuffer.getShort() & 0xFFFF;
+                g = processingBuffer.getShort() & 0xFFFF;
+                b = processingBuffer.getShort() & 0xFFFF;
 
                 array[i] = (0xFFFFL << 48) | (r << 32) | (g << 16) | b;
 
