@@ -147,28 +147,22 @@ public interface Frame<D, F extends Frame, R> {
         return output;
     }
 
-    default byte[] getPlanarRGBBytes() {
+    default byte[][] getPlanarRGBPlanes() {
+        int[] argb = getARGBData();
+        int n = argb.length;
 
-        int[] data = getARGBData();
-        int n = data.length;
-
-        byte[] output = new byte[n * 3];
-
-        int rOffset = 0;
-        int gOffset = n;
-        int bOffset = n * 2;
+        byte[] r = new byte[n];
+        byte[] g = new byte[n];
+        byte[] b = new byte[n];
 
         for (int i = 0; i < n; i++) {
-
-            int pixel = data[i];
-
-            output[rOffset + i] = (byte) ((pixel >> 16) & 0xFF); // Red plane
-            output[gOffset + i] = (byte) ((pixel >> 8) & 0xFF);  // Green plane
-            output[bOffset + i] = (byte) (pixel & 0xFF);         // Blue plane
+            int pixel = argb[i];
+            r[i] = (byte) ((pixel >> 16) & 0xFF);
+            g[i] = (byte) ((pixel >> 8) & 0xFF);
+            b[i] = (byte) (pixel & 0xFF);
         }
 
-        return output;
-
+        return new byte[][] { r, g, b };
     }
 
     default byte[][][] getNPArray() {
