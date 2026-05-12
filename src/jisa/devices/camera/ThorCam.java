@@ -1,6 +1,7 @@
 package jisa.devices.camera;
 
 import com.google.common.primitives.Ints;
+import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
@@ -99,6 +100,23 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
         sdk = findLibrary(ThorCamLibrary.class, "thorlabs_tsi_camera_sdk");
 
+        findLibrary(Library.class, "thorlabs_ccd_edt_camera_link");
+        findLibrary(Library.class, "thorlabs_ccd_fenrir");
+        findLibrary(Library.class, "thorlabs_ccd_pleora_ebus");
+        findLibrary(Library.class, "thorlabs_ccd_tsi_sdk");
+        findLibrary(Library.class, "thorlabs_ccd_tsi_usb");
+        findLibrary(Library.class, "thorlabs_tsi_color_processing");
+        findLibrary(Library.class, "thorlabs_tsi_color_processing_vector_avx2");
+        findLibrary(Library.class, "thorlabs_tsi_demosaic");
+        findLibrary(Library.class, "thorlabs_tsi_demosaic_vector_avx2");
+        findLibrary(Library.class, "thorlabs_tsi_loggerx");
+        findLibrary(Library.class, "thorlabs_tsi_LUT");
+        findLibrary(Library.class, "thorlabs_tsi_polarization_processor");
+        findLibrary(Library.class, "thorlabs_tsi_polarization_processor_vector_avx2");
+        findLibrary(Library.class, "thorlabs_tsi_polarization_processor_vector_avx512");
+        findLibrary(Library.class, "thorlabs_tsi_usb_hotplug_monitor");
+        findLibrary(Library.class, "thorlabs_tsi_zelux_camera_device");
+
         try (Memory memory = new Memory(STRING_SIZE)) {
 
             ByteBuffer serials = memory.getByteBuffer(0, STRING_SIZE);
@@ -130,6 +148,23 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
         }
 
         sdk = findLibrary(ThorCamLibrary.class, "thorlabs_tsi_camera_sdk", extraPaths);
+
+        findLibrary(Library.class, "thorlabs_ccd_edt_camera_link");
+        findLibrary(Library.class, "thorlabs_ccd_fenrir");
+        findLibrary(Library.class, "thorlabs_ccd_pleora_ebus");
+        findLibrary(Library.class, "thorlabs_ccd_tsi_sdk");
+        findLibrary(Library.class, "thorlabs_ccd_tsi_usb");
+        findLibrary(Library.class, "thorlabs_tsi_color_processing");
+        findLibrary(Library.class, "thorlabs_tsi_color_processing_vector_avx2");
+        findLibrary(Library.class, "thorlabs_tsi_demosaic");
+        findLibrary(Library.class, "thorlabs_tsi_demosaic_vector_avx2");
+        findLibrary(Library.class, "thorlabs_tsi_loggerx");
+        findLibrary(Library.class, "thorlabs_tsi_LUT");
+        findLibrary(Library.class, "thorlabs_tsi_polarization_processor");
+        findLibrary(Library.class, "thorlabs_tsi_polarization_processor_vector_avx2");
+        findLibrary(Library.class, "thorlabs_tsi_polarization_processor_vector_avx512");
+        findLibrary(Library.class, "thorlabs_tsi_usb_hotplug_monitor");
+        findLibrary(Library.class, "thorlabs_tsi_zelux_camera_device");
 
         try (Memory memory = new Memory(STRING_SIZE)) {
 
