@@ -163,6 +163,10 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
     }
 
+    public int getPixelBitDepth() throws IOException, DeviceException {
+        return getInt(sdk::tl_camera_get_bit_depth, "tl_camera_get_bit_depth");
+    }
+
     @Override
     public void setAmplifierGain(double gain) throws DeviceException, IOException {
 
@@ -972,7 +976,7 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
                 if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
                     dBuffer[0] = new long[width * height];
-                    buffer[0]  = new ColourFrame(dBuffer[0], width, height, timestamp, Collections.emptyMap());
+                    buffer[0]  = new ColourFrame(bpp, dBuffer[0], width, height, timestamp, Collections.emptyMap());
                 }
 
                 ByteBuffer.wrap(data).asLongBuffer().rewind().get(dBuffer[0]);
@@ -1083,11 +1087,9 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
         protected U16RGBFrame createFrame(int width, int height, long[] array, long timestamp) {
 
             try {
-                return new ColourFrame(array, width, height, timestamp, this);
+                return new ColourFrame(getPixelBitDepth(), array, width, height, timestamp, this);
             } catch (Throwable ignored) {
-
-                return new U16RGBFrame(array, width, height, timestamp, getAllParametersAsMap());
-
+                return new ColourFrame(16, array, width, height, timestamp, getAllParametersAsMap());
             }
 
         }
@@ -1099,15 +1101,15 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
             processingBuffer.rewind();
 
-            long r;
-            long g;
-            long b;
+            int r;
+            int g;
+            int b;
 
             for (int i = 0; i < array.length; i++) {
 
-                r = processingBuffer.getShort() & 0xFFFFL;
-                g = processingBuffer.getShort() & 0xFFFFL;
-                b = processingBuffer.getShort() & 0xFFFFL;
+                r = processingBuffer.getShort() & 0xFFFF;
+                g = processingBuffer.getShort() & 0xFFFF;
+                b = processingBuffer.getShort() & 0xFFFF;
 
                 array[i] = (0xFFFFL << 48) | (r << 32) | (g << 16) | b;
 
@@ -1141,7 +1143,7 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
                 if (buffer[0] == null || buffer[0].getWidth() != width || buffer[0].getHeight() != height) {
                     dBuffer[0] = new short[width * height];
-                    buffer[0]  = new MonoFrame(dBuffer[0], width, height, timestamp, Collections.emptyMap());
+                    buffer[0]  = new MonoFrame(bpp, dBuffer[0], width, height, timestamp, Collections.emptyMap());
                 }
                 ByteBuffer.wrap(data).asShortBuffer().rewind().get(dBuffer[0]);
                 buffer[0].setTimestamp(timestamp);
@@ -1175,7 +1177,13 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
         @Override
         protected U16Frame createFrame(int width, int height, short[] array, long timestamp) {
-            return new MonoFrame(array, width, height, timestamp, this);
+
+            try {
+                return new MonoFrame(getPixelBitDepth(), array, width, height, timestamp, this);
+            } catch (Throwable e) {
+                return new MonoFrame(16, array, width, height, timestamp, this);
+            }
+
         }
 
         @Override
@@ -1187,31 +1195,60 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
     protected static class ColourFrame extends U16RGBFrame {
 
-        public ColourFrame(long[] argb, int width, int height, long timestamp, ThorCam camera) {
+        private final int bitDepth;
 
+        public ColourFrame(int bitDepth, long[] argb, int width, int height, long timestamp, ThorCam camera) {
             super(argb, width, height, timestamp, camera.getAllParametersAsMap());
-
+            this.bitDepth = bitDepth;
         }
 
-        public ColourFrame(long[] argb, int width, int height, long timestamp, Map<String, Object> attributes) {
+        public ColourFrame(int bitDepth, long[] argb, int width, int height, long timestamp, Map<String, Object> attributes) {
             super(argb, width, height, timestamp, attributes);
+            this.bitDepth = bitDepth;
         }
 
         public ColourFrame copy() {
-            return new ColourFrame(argb.clone(), width, height, timestamp, attributes);
+            return new ColourFrame(bitDepth, argb.clone(), width, height, timestamp, attributes);
         }
 
+        public void readARGBData(int[] destination) {
+
+            int scale = 16 - bitDepth;
+
+            long p;
+            long r;
+            long g;
+            long b;
+
+            // We need to scale the values down to a 32-bit representation (i.e., 1 byte / 8 bits per channel)
+            for (int i = 0; i < argb.length; i++) {
+
+                p = argb[i];
+
+                r = ((int) ((((p >> 32) & 0xFFFF) << scale) & 0xFFFF) >> 8) & 0xFF;
+                g = ((int) ((((p >> 16) & 0xFFFF) << scale) & 0xFFFF) >> 8) & 0xFF;
+                b = ((int) (((p & 0xFFFF) << scale) & 0xFFFF) >> 8) & 0xFF;
+
+                destination[i] = (int) ((0xFF << 24) | (r << 16) | (g << 8) | b);
+
+            }
+
+        }
 
     }
 
     protected static class MonoFrame extends U16Frame {
 
-        public MonoFrame(short[] data, int width, int height, long timestamp, ThorCam camera) {
+        private final int bitDepth;
+
+        public MonoFrame(int bitDepth, short[] data, int width, int height, long timestamp, ThorCam camera) {
             super(data, width, height, timestamp, camera.getAllParametersAsMap());
+            this.bitDepth = bitDepth;
         }
 
-        public MonoFrame(short[] data, int width, int height, long timestamp, Map<String, Object> attributes) {
+        public MonoFrame(int bitDepth, short[] data, int width, int height, long timestamp, Map<String, Object> attributes) {
             super(data, width, height, timestamp, attributes);
+            this.bitDepth = bitDepth;
         }
 
         public Integer getMax() {
@@ -1219,7 +1256,20 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
         }
 
         public MonoFrame copy() {
-            return new MonoFrame(data.clone(), width, height, timestamp, attributes);
+            return new MonoFrame(bitDepth, data.clone(), width, height, timestamp, attributes);
+        }
+
+        @Override
+        public void readARGBData(int[] argb) {
+
+            int value;
+            int scale = 16 - bitDepth;
+
+            for (int i = 0; i < data.length; i++) {
+                value   = (((data[i] >> 8) & 0xFF) << scale) & 0xFF;
+                argb[i] = (255 << 24) | (value << 16) | (value << 8) | value;
+            }
+
         }
 
     }

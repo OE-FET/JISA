@@ -35,17 +35,18 @@ public class RGBFrame implements Frame<RGB, RGBFrame, short[][][]> {
         this(data, width, height, System.nanoTime());
     }
 
-    public RGBFrame(short[] red, short[] green, short[] blue, int width, int height, long timestamp) {
+    public RGBFrame(short[] red, short[] green, short[] blue, int width, int height, long timestamp, Map<String, Object> attributes) {
 
         this.width     = width;
         this.height    = height;
         this.argb      = IntStream.range(0, red.length).map(i -> (255 << 24) | (red[i] << 16) | (green[i] << 8) | (blue[i])).toArray();
         this.timestamp = timestamp;
+        this.attributes.putAll(attributes);
 
     }
 
-    public RGBFrame(short[] red, short[] green, short[] blue, int width, int height) {
-        this(red, green, blue, width, height, System.nanoTime());
+    public RGBFrame(short[] red, short[] green, short[] blue, int width, int height, Map<String, Object> attributes) {
+        this(red, green, blue, width, height, System.nanoTime(), attributes);
     }
 
     public RGBFrame(int[] argb, int width, int height, long timestamp) {

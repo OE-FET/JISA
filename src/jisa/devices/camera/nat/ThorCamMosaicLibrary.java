@@ -7,6 +7,7 @@ import jisa.visa.Library;
 
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
 public interface ThorCamMosaicLibrary extends Library {
 
@@ -30,5 +31,7 @@ public interface ThorCamMosaicLibrary extends Library {
     int tl_mono_to_color_set_color_space(Pointer handle, int colorSpace);
 
     int tl_mono_to_color_processing_module_terminate();
+
+    int tl_mono_to_color_get_bit_depth(Pointer handle, IntBuffer bit_depth);
 
 }
