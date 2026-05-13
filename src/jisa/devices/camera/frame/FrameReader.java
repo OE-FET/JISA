@@ -11,6 +11,8 @@ import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
 import org.jcodec.scale.AWTUtil;
 
+import javax.imageio.stream.FileImageOutputStream;
+import javax.imageio.stream.ImageOutputStream;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -119,38 +121,149 @@ public class FrameReader<F extends Frame> {
 
     public synchronized void convertToMP4(String path) throws IOException {
 
-        Frame  frame1 = readFrame().copy();
-        Frame  frame2 = readFrame().copy();
-        double diff   = (frame2.getTimestamp() - frame1.getTimestamp()) / 1e9;
-        int    fps    = (int) (1.0 / diff);
-        Path   file   = Path.of(path);
+        try {
 
-        Picture       picture1 = Picture.create(frame1.getWidth(), frame1.getHeight(), ColorSpace.RGB);
-        Picture       picture2 = Picture.create(frame2.getWidth(), frame2.getHeight(), ColorSpace.RGB);
-        BufferedImage image1   = frame1.toBufferedImage();
-        BufferedImage image2   = frame2.toBufferedImage();
+            Frame  frame1 = readFrame().copy();
+            Frame  frame2 = readFrame().copy();
+            double diff   = (frame2.getTimestamp() - frame1.getTimestamp()) / 1e9;
+            int    fps    = (int) (1.0 / diff);
+            Path   file   = Path.of(path);
 
-        AWTUtil.fromBufferedImage(image1, picture1);
-        AWTUtil.fromBufferedImage(image2, picture2);
+            Picture       picture1 = Picture.create(frame1.getWidth(), frame1.getHeight(), ColorSpace.RGB);
+            Picture       picture2 = Picture.create(frame2.getWidth(), frame2.getHeight(), ColorSpace.RGB);
+            BufferedImage image1   = frame1.toBufferedImage();
+            BufferedImage image2   = frame2.toBufferedImage();
 
-        SequenceEncoder enc = SequenceEncoder.createWithFps(NIOUtils.writableChannel(file.toFile()), new Rational(fps, 1));
+            AWTUtil.fromBufferedImage(image1, picture1);
+            AWTUtil.fromBufferedImage(image2, picture2);
 
-        enc.encodeNativeFrame(picture1);
-        enc.encodeNativeFrame(picture2);
+            SequenceEncoder enc = SequenceEncoder.createWithFps(NIOUtils.writableChannel(file.toFile()), new Rational(fps, 1));
+
+            enc.encodeNativeFrame(picture1);
+            enc.encodeNativeFrame(picture2);
+
+            while (hasFrame()) {
+
+                F frame = readFrame();
+
+                Picture       picture = Picture.create(frame.getWidth(), frame.getHeight(), ColorSpace.RGB);
+                BufferedImage image   = frame.toBufferedImage();
+
+                AWTUtil.fromBufferedImage(image, picture);
+                enc.encodeNativeFrame(picture);
+
+            }
+
+            enc.finish();
+
+        } finally {
+            close();
+        }
+
+    }
+
+
+    public synchronized void convertToMP4(String path, int fps) throws IOException {
+
+        try {
+
+            Frame frame1  = readFrame().copy();
+            Path  file    = Path.of(path);
+            int   between = 1000000 / fps;
+
+            Picture       picture1 = Picture.create(frame1.getWidth(), frame1.getHeight(), ColorSpace.RGB);
+            BufferedImage image1   = frame1.toBufferedImage();
+
+            AWTUtil.fromBufferedImage(image1, picture1);
+
+            SequenceEncoder enc = SequenceEncoder.createWithFps(NIOUtils.writableChannel(file.toFile()), new Rational(fps, 1));
+
+            enc.encodeNativeFrame(picture1);
+
+            long last = frame1.getTimestamp();
+
+            while (hasFrame()) {
+
+                F frame = readFrame();
+
+                if (frame.getTimestamp() - last >= between) {
+
+                    Picture       picture = Picture.create(frame.getWidth(), frame.getHeight(), ColorSpace.RGB);
+                    BufferedImage image   = frame.toBufferedImage();
+
+                    AWTUtil.fromBufferedImage(image, picture);
+                    enc.encodeNativeFrame(picture);
+
+                    last = frame.getTimestamp();
+
+                }
+
+            }
+
+            enc.finish();
+
+        } finally {
+            close();
+        }
+
+    }
+
+    public synchronized void convertToGIF(String path, int fps) throws IOException {
+
+        Frame         frame1  = readFrame().copy();
+        BufferedImage image1  = frame1.toBufferedImage();
+        int           between = 1000 / fps;
+
+        ImageOutputStream output = new FileImageOutputStream(new File(path));
+        GifSequenceWriter writer = new GifSequenceWriter(output, image1.getType(), between, true);
+
+        long last = frame1.getTimestamp();
 
         while (hasFrame()) {
 
-            F frame = readFrame();
+            Frame frame = readFrame();
 
-            Picture       picture = Picture.create(frame.getWidth(), frame.getHeight(), ColorSpace.RGB);
-            BufferedImage image   = frame.toBufferedImage();
+            if ((frame.getTimestamp() - last) >= (between * 1000000)) {
 
-            AWTUtil.fromBufferedImage(image, picture);
-            enc.encodeNativeFrame(picture);
+                BufferedImage image = frame.toBufferedImage();
+                writer.writeToSequence(image);
+
+                last = frame.getTimestamp();
+
+            }
 
         }
 
-        enc.finish();
+        writer.close();
+        output.close();
+
+    }
+
+    public synchronized void convertToGIF(String path) throws IOException {
+
+        Frame         frame1 = readFrame().copy();
+        Frame         frame2 = readFrame().copy();
+        BufferedImage image1 = frame1.toBufferedImage();
+        BufferedImage image2 = frame2.toBufferedImage();
+
+        int between = (int) ((frame2.getTimestamp() - frame1.getTimestamp()) / 1000000);
+
+        ImageOutputStream output = new FileImageOutputStream(new File(path));
+        GifSequenceWriter writer = new GifSequenceWriter(output, image1.getType(), between, true);
+
+        writer.writeToSequence(image2);
+
+        while (hasFrame()) {
+
+            Frame frame = readFrame();
+
+            BufferedImage image = frame.toBufferedImage();
+            writer.writeToSequence(image);
+
+        }
+
+        writer.close();
+        output.close();
 
     }
 
