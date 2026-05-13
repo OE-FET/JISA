@@ -1173,7 +1173,7 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
 
             return List.of(Amplifier.HIGH_SENSITIVITY, Amplifier.HIGH_DYNAMIC_RANGE);
 
-        } else if (ulCameraType == (AC_CAMERATYPE_NEWTON | AC_CAMERATYPE_IKON | AC_CAMERATYPE_IKONXL)) {
+        } else if (List.of(AC_CAMERATYPE_NEWTON, AC_CAMERATYPE_IKON, AC_CAMERATYPE_IKONXL).contains(ulCameraType)) {
 
             return List.of(Amplifier.HIGH_SENSITIVITY, Amplifier.HIGH_CAPACITY);
 
