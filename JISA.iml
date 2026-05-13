@@ -27,8 +27,6 @@
     <orderEntry type="library" exported="" name="org.apache.commons.compress-1.9.2" level="project" />
     <orderEntry type="library" exported="" name="OO" level="project" />
     <orderEntry type="library" exported="" name="jhdf-0.9.4" level="project" />
-    <orderEntry type="library" exported="" name="jcodec-0.2.5" level="project" />
-    <orderEntry type="library" exported="" name="jcodec-streaming-0.2.3" level="project" />
     <orderEntry type="library" exported="" name="jssc-2.10.2" level="project" />
     <orderEntry type="module-library" exported="">
       <library>
@@ -39,5 +37,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="jcodec-0.2.5" level="project" />
+    <orderEntry type="library" name="jcodec-javase-0.2.5" level="project" />
   </component>
 </module>

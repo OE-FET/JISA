@@ -148,8 +148,9 @@ public interface Frame<D, F extends Frame, R> {
     }
 
     default byte[][] getPlanarRGBPlanes() {
+
         int[] argb = getARGBData();
-        int n = argb.length;
+        int   n    = argb.length;
 
         byte[] r = new byte[n];
         byte[] g = new byte[n];
@@ -162,7 +163,7 @@ public interface Frame<D, F extends Frame, R> {
             b[i] = (byte) (pixel & 0xFF);
         }
 
-        return new byte[][] { r, g, b };
+        return new byte[][]{r, g, b};
     }
 
     default byte[][][] getNPArray() {
@@ -233,6 +234,18 @@ public interface Frame<D, F extends Frame, R> {
      * @param stream Stream to write to.
      */
     void writeToStream(DataOutputStream stream) throws IOException;
+
+    default BufferedImage toBufferedImage() {
+
+        int[] argb = getARGBData();
+
+        DataBuffer     rgbData    = new DataBufferInt(argb, argb.length);
+        WritableRaster raster     = Raster.createPackedRaster(rgbData, getWidth(), getHeight(), getWidth(), new int[]{0xff0000, 0xff00, 0xff}, null);
+        ColorModel     colorModel = new DirectColorModel(24, 0xff0000, 0xff00, 0xff);
+
+        return new BufferedImage(colorModel, raster, false, null);
+
+    }
 
     default void savePNG(String path) throws IOException {
 

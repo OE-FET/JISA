@@ -9,7 +9,9 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.ColorSpace;
 import org.jcodec.common.model.Picture;
 import org.jcodec.common.model.Rational;
+import org.jcodec.scale.AWTUtil;
 
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -123,14 +125,29 @@ public class FrameReader<F extends Frame> {
         int    fps    = (int) (1.0 / diff);
         Path   file   = Path.of(path);
 
+        Picture       picture1 = Picture.create(frame1.getWidth(), frame1.getHeight(), ColorSpace.RGB);
+        Picture       picture2 = Picture.create(frame2.getWidth(), frame2.getHeight(), ColorSpace.RGB);
+        BufferedImage image1   = frame1.toBufferedImage();
+        BufferedImage image2   = frame2.toBufferedImage();
+
+        AWTUtil.fromBufferedImage(image1, picture1);
+        AWTUtil.fromBufferedImage(image2, picture2);
+
         SequenceEncoder enc = SequenceEncoder.createWithFps(NIOUtils.writableChannel(file.toFile()), new Rational(fps, 1));
 
-        enc.encodeNativeFrame(Picture.createPicture(frame1.getWidth(), frame1.getHeight(), frame1.getPlanarRGBPlanes(), ColorSpace.RGB));
-        enc.encodeNativeFrame(Picture.createPicture(frame2.getWidth(), frame2.getHeight(), frame2.getPlanarRGBPlanes(), ColorSpace.RGB));
+        enc.encodeNativeFrame(picture1);
+        enc.encodeNativeFrame(picture2);
 
         while (hasFrame()) {
+
             F frame = readFrame();
-            enc.encodeNativeFrame(Picture.createPicture(frame.getWidth(), frame.getHeight(), frame.getPlanarRGBPlanes(), ColorSpace.RGB));
+
+            Picture       picture = Picture.create(frame.getWidth(), frame.getHeight(), ColorSpace.RGB);
+            BufferedImage image   = frame.toBufferedImage();
+
+            AWTUtil.fromBufferedImage(image, picture);
+            enc.encodeNativeFrame(picture);
+
         }
 
         enc.finish();
