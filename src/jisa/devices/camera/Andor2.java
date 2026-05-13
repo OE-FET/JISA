@@ -1085,11 +1085,6 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
     }
 
     @Override
-    public boolean isAmplifierAvailable() {
-        return getAmplifiers().size() > 0;
-    }
-
-    @Override
     public void setAmplifierGain(double gain) throws DeviceException, IOException {
 
         List<Double> gains = getAmplifierGains();
