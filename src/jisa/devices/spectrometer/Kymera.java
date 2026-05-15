@@ -224,6 +224,8 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
             parameters.addValue("Grating Offsets", String.format("%s Offset", grating), () -> getGratingOffset(grating), 0, v -> setGratingOffset(grating, v));
         }
 
+        parameters.addValue("Wavelength", "Centre Wavelength", this::getCentreWavelength, 500e-9, this::setCentreWavelength);
+
     }
 
     @Override
@@ -321,6 +323,14 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
 
         handle(sdk.ATSpectrographSetGratingOffset(device, grating.getIndex(), offset),  "SetGratingOffset");
 
+    }
+
+    public void setCentreWavelength(double wavelength) throws IOException, DeviceException {
+        handle(sdk.ATSpectrographSetWavelength(device, (float) (wavelength * 1e9)), "SetWavelength");
+    }
+
+    public double getCentreWavelength() throws IOException, DeviceException {
+        return 1e-9 * getDoubleByReference(buffer -> sdk.ATSpectrographGetWavelength(device, buffer), "GetWavelength");
     }
 
     @Override
