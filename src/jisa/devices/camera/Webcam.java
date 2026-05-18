@@ -66,6 +66,16 @@ public class Webcam extends ManagedCamera<RGBFrame> {
     }
 
     @Override
+    public double getPixelWidth() throws IOException, DeviceException {
+        return 1e-6;
+    }
+
+    @Override
+    public double getPixelHeight() throws IOException, DeviceException {
+        return 1e-6;
+    }
+
+    @Override
     public double getIntegrationTime() throws IOException, DeviceException {
         return 0;
     }
@@ -203,6 +213,16 @@ public class Webcam extends ManagedCamera<RGBFrame> {
     @Override
     public void setBinningY(int y) throws IOException, DeviceException {
 
+    }
+
+    @Override
+    public int getStartingPixelX() throws IOException, DeviceException {
+        return 0;
+    }
+
+    @Override
+    public int getStartingPixelY() throws IOException, DeviceException {
+        return 0;
     }
 
     @Override

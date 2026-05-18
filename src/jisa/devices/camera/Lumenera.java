@@ -128,6 +128,16 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
     }
 
     @Override
+    public double getPixelWidth() throws IOException, DeviceException {
+        return 2e-6;
+    }
+
+    @Override
+    public double getPixelHeight() throws IOException, DeviceException {
+        return 2e-6;
+    }
+
+    @Override
     public double getIntegrationTime() throws IOException, DeviceException {
 
         FloatBuffer           exposure = FloatBuffer.allocate(1);
@@ -608,6 +618,16 @@ public class Lumenera extends ManagedCamera<U16RGBFrame> implements Amplified {
             throwError("LucamSetFormat");
         }
 
+    }
+
+    @Override
+    public int getStartingPixelX() throws IOException, DeviceException {
+        return getImageOffsetX();
+    }
+
+    @Override
+    public int getStartingPixelY() throws IOException, DeviceException {
+        return getImageOffsetY();
     }
 
     @Override

@@ -695,6 +695,34 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
     }
 
     @Override
+    public double getPixelWidth() throws IOException, DeviceException {
+
+        FloatBuffer x = FloatBuffer.allocate(1);
+        FloatBuffer y = FloatBuffer.allocate(1);
+
+        withCameraSelected(sdk -> {
+            handle(sdk.GetPixelSize(x, y), "GetPixelSize");
+        });
+
+        return x.get(0) / 1e6;
+
+    }
+
+    @Override
+    public double getPixelHeight() throws IOException, DeviceException {
+
+        FloatBuffer x = FloatBuffer.allocate(1);
+        FloatBuffer y = FloatBuffer.allocate(1);
+
+        withCameraSelected(sdk -> {
+            handle(sdk.GetPixelSize(x, y), "GetPixelSize");
+        });
+
+        return y.get(0) / 1e6;
+
+    }
+
+    @Override
     public double getIntegrationTime() throws IOException, DeviceException {
 
         FloatBuffer exposure   = FloatBuffer.allocate(1);
@@ -1026,6 +1054,47 @@ public class Andor2 extends ManagedCamera<U16Frame> implements EMCCD, Amplified,
 
         yBin = y;
 
+    }
+
+    @Override
+    public int getStartingPixelX() throws IOException, DeviceException {
+
+
+        switch (imageMode) {
+
+            case REGION_OF_INTEREST:
+                return getImageOffsetX();
+
+            default:
+                return 0;
+
+        }
+
+    }
+
+    @Override
+    public int getStartingPixelY() throws IOException, DeviceException {
+
+        switch (imageMode) {
+
+            case REGION_OF_INTEREST:
+                return getImageOffsetY();
+
+            case MULTI_TRACK:
+                return getMultiTracks().stream().min(Comparator.comparingInt(t -> t.getStartRow())).get().getStartRow();
+
+            case TRACK_SEQUENCE:
+                return trackSequenceOffset;
+
+            case SINGLE_TRACK:
+                return singleTrackStart - ((singleTrackHeight - 1) / 2);
+
+            case FULL_IMAGE:
+            case FULL_VERTICAL_BINNING:
+            default:
+                return 0;
+
+        }
     }
 
     @Override

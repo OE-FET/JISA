@@ -118,6 +118,25 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
 
     }
 
+    @Override
+    public double getPixelWidth() throws IOException, DeviceException {
+        return getDouble(sdk::tl_camera_get_sensor_pixel_width, "tl_camera_get_sensor_pixel_width") * 1e-6;
+    }
+
+    @Override
+    public double getPixelHeight() throws IOException, DeviceException {
+        return getDouble(sdk::tl_camera_get_sensor_pixel_height, "tl_camera_get_sensor_pixel_width") * 1e-6;
+    }
+
+    @Override
+    public int getStartingPixelX() throws IOException, DeviceException {
+        return getImageOffsetX();
+    }
+
+    @Override
+    public int getStartingPixelY() throws IOException, DeviceException {
+        return getImageOffsetY();
+    }
 
     public ThorCam(String serial) throws DeviceException, IOException {
         this(new IDAddress(serial));
@@ -216,6 +235,15 @@ public abstract class ThorCam<F extends Frame<?, F, ?>, D> extends NativeDevice 
         try (Memory memory = new Memory(Integer.BYTES)) {
             process(converter.get(handle, memory.getByteBuffer(0, Integer.BYTES).asIntBuffer()), name);
             return memory.getInt(0);
+        }
+
+    }
+
+    protected double getDouble(HandledBufferConverter<DoubleBuffer> converter, String name) throws DeviceException, IOException {
+
+        try (Memory memory = new Memory(Integer.BYTES)) {
+            process(converter.get(handle, memory.getByteBuffer(0, Double.BYTES).asDoubleBuffer()), name);
+            return memory.getDouble(0);
         }
 
     }

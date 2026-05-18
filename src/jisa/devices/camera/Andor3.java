@@ -463,6 +463,16 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, Amplified,
     }
 
     @Override
+    public double getPixelWidth() throws IOException, DeviceException {
+        return getFloat("PixelWidth") * 1e-6;
+    }
+
+    @Override
+    public double getPixelHeight() throws IOException, DeviceException {
+        return getFloat("PixelHeight") * 1e-6;
+    }
+
+    @Override
     public double getIntegrationTime() throws IOException, DeviceException {
         return getFloat("ExposureTime");
     }
@@ -1241,6 +1251,16 @@ public class Andor3 extends NativeDevice implements Camera<U16Frame>, Amplified,
     public void setBinningY(int y) throws DeviceException, IOException {
         setInt("AOIVBin", y);
         checkSymmetricalBinning();
+    }
+
+    @Override
+    public int getStartingPixelX() throws IOException, DeviceException {
+        return getInt("AOILeft");
+    }
+
+    @Override
+    public int getStartingPixelY() throws IOException, DeviceException {
+        return getInt("AOITop");
     }
 
     @Override

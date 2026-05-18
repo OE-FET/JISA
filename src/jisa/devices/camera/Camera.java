@@ -74,6 +74,24 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, RegionOf
     }
 
     /**
+     * Returns the width of each pixel on this camera's sensor.
+     *
+     * @return Width, in metres.
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    double getPixelWidth() throws IOException, DeviceException;
+
+    /**
+     * Returns the height of each pixel on this camera's sensor.
+     *
+     * @return Height, in metres.
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    double getPixelHeight() throws IOException, DeviceException;
+
+    /**
      * Returns the integration/exposure time being used by this camera.
      *
      * @return Integration/exposure time, in seconds.
@@ -396,6 +414,24 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, RegionOf
      * @throws DeviceException Upon device compatibility error
      */
     void setBinningY(int y) throws IOException, DeviceException;
+
+    /**
+     * Returns the column index of the physical pixel on the sensor the images from this camera start at for its currently configured imaging mode.
+     *
+     * @return Column index (starts from 0).
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    int getStartingPixelX() throws IOException, DeviceException;
+
+    /**
+     * Returns the row index of the physical pixel on the sensor the images from this camera start at for its currently configured imaging mode.
+     *
+     * @return Row index (starts from 0).
+     * @throws IOException     Upon communications error
+     * @throws DeviceException Upon device compatibility error
+     */
+    int getStartingPixelY() throws IOException, DeviceException;
 
     /**
      * Sets both the x and y binning simultaneously. Has the same end result as calling setBinningX(x) and setBinningY(y)

@@ -22,16 +22,41 @@ import java.util.stream.IntStream;
 
 public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCalibrated {
 
-    public final SwappableGrating     SWAPPABLE_GRATING;
-    public final FilterWheel          FILTER_WHEEL;
-    public final MotorMirror          FOCUSING_MIRROR;
+    public final Flipper FLIPPER_INPUT;
+    public final Flipper FLIPPER_OUTPUT;
+
+    public final AdjustableSlit SLIT_1;
+    public final AdjustableSlit SLIT_2;
+    public final AdjustableSlit SLIT_3;
+    public final AdjustableSlit SLIT_4;
+
+    public final Iris IRIS_1;
+    public final Iris IRIS_2;
+    public final Iris IRIS_3;
+    public final Iris IRIS_4;
+
+    public final Filter FILTER_1;
+    public final Filter FILTER_2;
+    public final Filter FILTER_3;
+    public final Filter FILTER_4;
+    public final Filter FILTER_5;
+    public final Filter FILTER_6;
+
+    public final Grating GRATING_1;
+    public final Grating GRATING_2;
+    public final Grating GRATING_3;
+    public final Grating GRATING_4;
+
+    public final SwappableGrating SWAPPABLE_GRATING;
+    public final FilterWheel      FILTER_WHEEL;
+    public final MotorMirror      FOCUSING_MIRROR;
+
     public final List<Flipper>        FLIPPERS;
     public final List<AdjustableSlit> SLITS;
     public final List<Iris>           IRISES;
     public final List<Component>      COMPONENTS;
-
-    public final List<Grating> GRATINGS;
-    public final List<Filter>  FILTERS;
+    public final List<Grating>        GRATINGS;
+    public final List<Filter>         FILTERS;
 
     protected final ATSpectrograph sdk;
     protected final int            device;
@@ -97,6 +122,9 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
 
         }
 
+        FLIPPER_INPUT  = flippers.stream().filter(f -> f.getName().startsWith("Input")).findFirst().orElse(null);
+        FLIPPER_OUTPUT = flippers.stream().filter(f -> f.getName().startsWith("Output")).findFirst().orElse(null);
+
         for (int i = 0; i < 4; i++) {
 
             int fi = i + 1;
@@ -113,6 +141,11 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
             }
 
         }
+
+        SLIT_1 = slits.stream().filter(s -> s.getName().endsWith("1")).findFirst().orElse(null);
+        SLIT_2 = slits.stream().filter(s -> s.getName().endsWith("2")).findFirst().orElse(null);
+        SLIT_3 = slits.stream().filter(s -> s.getName().endsWith("3")).findFirst().orElse(null);
+        SLIT_4 = slits.stream().filter(s -> s.getName().endsWith("4")).findFirst().orElse(null);
 
         for (int i = 0; i < 4; i++) {
 
@@ -131,6 +164,11 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
 
         }
 
+        IRIS_1 = irises.stream().filter(i -> i.getName().endsWith("1")).findFirst().orElse(null);
+        IRIS_2 = irises.stream().filter(i -> i.getName().endsWith("2")).findFirst().orElse(null);
+        IRIS_3 = irises.stream().filter(i -> i.getName().endsWith("3")).findFirst().orElse(null);
+        IRIS_4 = irises.stream().filter(i -> i.getName().endsWith("4")).findFirst().orElse(null);
+
 
         int gratingCount = getIntByReference(buffer -> sdk.ATSpectrographGetNumberGratings(device, buffer), "GetNumberGratings");
 
@@ -138,9 +176,21 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
             gratings.add(new Grating(i + 1, String.format("Grating %d", i + 1)));
         }
 
+        GRATING_1 = gratings.stream().filter(g -> g.getIndex() == 1).findFirst().orElse(null);
+        GRATING_2 = gratings.stream().filter(g -> g.getIndex() == 2).findFirst().orElse(null);
+        GRATING_3 = gratings.stream().filter(g -> g.getIndex() == 3).findFirst().orElse(null);
+        GRATING_4 = gratings.stream().filter(g -> g.getIndex() == 4).findFirst().orElse(null);
+
         for (int i = 0; i < 6; i++) {
             filters.add(new Filter(i + 1, String.format("Filter %d", i + 1)));
         }
+
+        FILTER_1 = filters.stream().filter(f -> f.getIndex() == 1).findFirst().orElse(null);
+        FILTER_2 = filters.stream().filter(f -> f.getIndex() == 2).findFirst().orElse(null);
+        FILTER_3 = filters.stream().filter(f -> f.getIndex() == 3).findFirst().orElse(null);
+        FILTER_4 = filters.stream().filter(f -> f.getIndex() == 4).findFirst().orElse(null);
+        FILTER_5 = filters.stream().filter(f -> f.getIndex() == 5).findFirst().orElse(null);
+        FILTER_6 = filters.stream().filter(f -> f.getIndex() == 6).findFirst().orElse(null);
 
         boolean gratingPresent = getIntByReference(buffer -> sdk.ATSpectrographGratingIsPresent(device, buffer), "GratingIsPresent") == 1;
         boolean filterPresent  = getIntByReference(buffer -> sdk.ATSpectrographFilterIsPresent(device, buffer), "FilterIsPresent") == 1;
@@ -229,14 +279,16 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
     }
 
     @Override
-    public double[] getWavelengths(int fullWidth, int startX, int width) throws IOException, DeviceException {
+    public double[] getWavelengths(int sensorColumnCount, double columnWidth, int startColumn, int width) throws IOException, DeviceException {
 
-        FloatBuffer buffer = FloatBuffer.allocate(fullWidth);
-        handle(sdk.ATSpectrographGetCalibration(device, buffer, fullWidth), "GetCalibration");
+        handle(sdk.ATSpectrographSetPixelWidth(device, (float) columnWidth), "SetPixelWidth");
+
+        FloatBuffer buffer = FloatBuffer.allocate(sensorColumnCount);
+        handle(sdk.ATSpectrographGetCalibration(device, buffer, sensorColumnCount), "GetCalibration");
 
         float[] wavelengths = new float[width];
 
-        buffer.get(wavelengths, startX, width);
+        buffer.get(wavelengths, startColumn, width);
 
         return IntStream.range(0, wavelengths.length).mapToDouble(i -> 1e-9 * wavelengths[i]).toArray();
 
@@ -321,7 +373,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
             throw new DeviceException("Invalid grating: " + grating);
         }
 
-        handle(sdk.ATSpectrographSetGratingOffset(device, grating.getIndex(), offset),  "SetGratingOffset");
+        handle(sdk.ATSpectrographSetGratingOffset(device, grating.getIndex(), offset), "SetGratingOffset");
 
     }
 
@@ -635,12 +687,12 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
 
         @Override
         public Integer getValue() throws IOException, DeviceException {
-            return getIntByReference(buffer -> sdk.ATSpectrographGetFocusMirror(device, buffer),  "GetFocusMirror");
+            return getIntByReference(buffer -> sdk.ATSpectrographGetFocusMirror(device, buffer), "GetFocusMirror");
         }
 
         @Override
         public void setValue(Integer value) throws IOException, DeviceException {
-            handle(sdk.ATSpectrographSetFocusMirror(device, value),  "SetFocusMirror");
+            handle(sdk.ATSpectrographSetFocusMirror(device, value), "SetFocusMirror");
         }
 
         @Override
@@ -650,7 +702,7 @@ public class Kymera extends NativeDevice implements Spectrograph, Shuttered, XCa
 
         @Override
         public Integer getMax() throws IOException, DeviceException {
-            return getIntByReference(buffer -> sdk.ATSpectrographGetFocusMirrorMaxSteps(device, buffer),  "GetFocusMirrorMaxSteps");
+            return getIntByReference(buffer -> sdk.ATSpectrographGetFocusMirrorMaxSteps(device, buffer), "GetFocusMirrorMaxSteps");
         }
 
         @Override

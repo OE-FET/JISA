@@ -6,6 +6,7 @@ import jisa.maths.Range;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public interface Spectrograph extends Instrument, MultiInstrument {
 
@@ -24,10 +25,41 @@ public interface Spectrograph extends Instrument, MultiInstrument {
      */
     List<Component> getComponents();
 
+    default List<SwappableGrating> getSwappableGratings() {
+        return getComponents().stream().filter(c -> c instanceof SwappableGrating).map(c -> (SwappableGrating) c).collect(Collectors.toList());
+    }
+
+    default List<Flipper> getFlippers() {
+        return getComponents().stream().filter(c -> c instanceof Flipper).map(c -> (Flipper) c).collect(Collectors.toList());
+    }
+
+    default List<Iris> getIrises() {
+        return getComponents().stream().filter(c -> c instanceof Iris).map(c -> (Iris) c).collect(Collectors.toList());
+    }
+
+    default List<AdjustableSlit> getAdjustableSlits() {
+        return getComponents().stream().filter(c -> c  instanceof AdjustableSlit).map(c -> (AdjustableSlit) c).collect(Collectors.toList());
+    }
+
+    default List<MotorMirror> getMotorMirrors() {
+        return getComponents().stream().filter(c -> c instanceof MotorMirror).map(c -> (MotorMirror) c).collect(Collectors.toList());
+    }
+
+    default List<FilterWheel> getFilterWheels() {
+        return getComponents().stream().filter(c -> c  instanceof FilterWheel).map(c -> (FilterWheel) c).collect(Collectors.toList());
+    }
+
     default List<Component> getSubInstruments() {
         return getComponents();
     }
 
+    default <T> void setComponentState(Component<?, T> component, T state) throws IOException, DeviceException {
+        component.setValue(state);
+    }
+
+    default <T> T getComponentState(Component<?, T> component) throws IOException, DeviceException {
+        return component.getValue();
+    }
 
     interface Component<S extends Spectrograph, D> extends SubInstrument<S> {
 

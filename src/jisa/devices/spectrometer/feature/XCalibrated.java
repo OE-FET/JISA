@@ -7,6 +7,6 @@ import java.io.IOException;
 
 public interface XCalibrated extends Feature {
 
-    double[] getWavelengths(int fullWidth, int startX, int width) throws IOException, DeviceException;
+    double[] getWavelengths(int sensorColumnCount, double columnWidth, int startColumn, int width) throws IOException, DeviceException;
 
 }
