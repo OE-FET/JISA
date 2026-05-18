@@ -9,7 +9,13 @@ import jisa.devices.camera.frame.U16Frame;
 import jisa.devices.camera.imagemodes.FullVerticalBinning;
 import jisa.devices.camera.imagemodes.MultiTrack;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.Raster;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
@@ -30,6 +36,54 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
 
     private final Random                    random          = new Random();
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
+
+    protected static short[] background = loadMonochromeImageTo1DArray("image.png");
+
+    protected static short[] loadMonochromeImageTo1DArray(String fileName) {
+
+        try (InputStream inputStream = FakeCamera.class.getResourceAsStream(fileName)) {
+
+            if (inputStream == null) {
+                throw new IOException("Resource not found: " + fileName);
+            }
+
+            BufferedImage image = ImageIO.read(inputStream);
+
+            if (image == null) {
+                throw new IOException("Failed to decode the image. Ensure it is a valid PNG.");
+            }
+
+            int width = image.getWidth();
+            int height = image.getHeight();
+
+            // Ensure the image is treated as grayscale/monochrome
+            BufferedImage grayImage = image;
+            if (image.getType() != BufferedImage.TYPE_BYTE_GRAY && image.getType() != BufferedImage.TYPE_BYTE_BINARY) {
+                grayImage = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+                grayImage.getGraphics().drawImage(image, 0, 0, null);
+            }
+
+            // Extract the underlying raw byte array
+            Raster raster = grayImage.getRaster();
+            DataBufferByte dataBuffer = (DataBufferByte) raster.getDataBuffer();
+            byte[] rawBytes = dataBuffer.getData();
+
+            // Allocate the short array and unpack the signed bytes into unsigned shorts
+            short[] unsignedPixels = new short[rawBytes.length];
+            for (int i = 0; i < rawBytes.length; i++) {
+                // The & 0xFF bitmask masks out the sign extension,
+                // turning signed values (like -1) into unsigned equivalents (like 255)
+                unsignedPixels[i] = (short) (rawBytes[i] & 0xFF);
+            }
+
+            return unsignedPixels;
+
+        } catch (IOException e) {
+            System.err.println("Failed to load image " + fileName);
+            return new short[] { 0xFF };
+        }
+
+    }
 
     public static FrameReader<U16Frame> openFrameReader(String path) throws IOException {
 
@@ -63,7 +117,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
     protected void generate(short[] data) {
 
         for (int i = 0; i < data.length; i++) {
-            data[i] = (short) random.nextInt(Character.MAX_VALUE);
+            data[i] = (short) (random.nextInt(Character.MAX_VALUE) * ((float) background[i % background.length]) / 255.0);
         }
 
     }
