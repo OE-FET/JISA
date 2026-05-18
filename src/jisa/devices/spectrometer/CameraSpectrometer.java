@@ -214,7 +214,7 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
             int count  = frame.getWidth();
             int height = frame.getHeight();
 
-            if (counts.get().length != count) {
+            if (wavelengths.length != count) {
 
                 if (wavelengthFit != null) {
                     wavelengths = Range.linear(0, count - 1).stream().mapToDouble(wavelengthFit::value).toArray();
