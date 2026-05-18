@@ -134,7 +134,11 @@ public class CameraSpectrometer<C extends Camera<F>, F extends Frame<? extends N
         parameters.addValue(
                 "Frame Conversion",
                 "Manual Calibration",
-                () -> getWavelengthPeaks().entrySet().stream().map(e -> Map.of(IX, e.getKey(), WL, e.getValue())).collect(ResultList.mapCollector()),
+                () -> {
+                    ResultList table = new ResultList(IX, WL);
+                    getWavelengthPeaks().forEach(table::addData);
+                    return table;
+                },
                 values,
                 wl -> setWavelengthPeaks(wl.stream().collect(Collectors.toMap(r -> r.get(IX), r -> r.get(WL))))
         );
