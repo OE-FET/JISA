@@ -18,6 +18,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import jisa.Util;
 import jisa.devices.camera.frame.Frame;
+import jisa.devices.camera.frame.IntFrame;
 import jisa.maths.Range;
 import jisa.maths.functions.Function;
 import jisa.maths.functions.XYFunction;
@@ -391,8 +392,8 @@ public class HeatMap extends JFXElement implements FrameAcceptor {
 
     public synchronized void drawFrame(Frame<? extends Number, ?, ?> frame) {
 
-        if (frame instanceof Frame.IntFrame) {
-            drawIntFrame((Frame.IntFrame) frame);
+        if (frame instanceof IntFrame) {
+            drawIntFrame((IntFrame) frame);
             return;
         }
 
@@ -438,7 +439,7 @@ public class HeatMap extends JFXElement implements FrameAcceptor {
 
     }
 
-    public synchronized void drawIntFrame(Frame.IntFrame frame) {
+    public synchronized void drawIntFrame(IntFrame frame) {
 
         if (ny != frame.getHeight() || nx != frame.getHeight()) {
 

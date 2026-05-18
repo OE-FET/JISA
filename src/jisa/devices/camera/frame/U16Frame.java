@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-public class U16Frame implements Frame.UShortFrame<U16Frame> {
+public class U16Frame implements UShortFrame<U16Frame> {
 
     protected final short[] data;
     protected final int     width;

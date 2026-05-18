@@ -8,7 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-public class U32Frame implements Frame.UIntFrame<U32Frame> {
+public class U32Frame implements UIntFrame<U32Frame> {
 
     protected final int[] data;
     protected final int   width;

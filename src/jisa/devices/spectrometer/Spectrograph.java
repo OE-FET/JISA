@@ -38,7 +38,7 @@ public interface Spectrograph extends Instrument, MultiInstrument {
     }
 
     default List<AdjustableSlit> getAdjustableSlits() {
-        return getComponents().stream().filter(c -> c  instanceof AdjustableSlit).map(c -> (AdjustableSlit) c).collect(Collectors.toList());
+        return getComponents().stream().filter(c -> c instanceof AdjustableSlit).map(c -> (AdjustableSlit) c).collect(Collectors.toList());
     }
 
     default List<MotorMirror> getMotorMirrors() {
@@ -46,19 +46,57 @@ public interface Spectrograph extends Instrument, MultiInstrument {
     }
 
     default List<FilterWheel> getFilterWheels() {
-        return getComponents().stream().filter(c -> c  instanceof FilterWheel).map(c -> (FilterWheel) c).collect(Collectors.toList());
+        return getComponents().stream().filter(c -> c instanceof FilterWheel).map(c -> (FilterWheel) c).collect(Collectors.toList());
     }
 
     default List<Component> getSubInstruments() {
         return getComponents();
     }
 
+    /**
+     * Sets the state of the specified spectrograph component.
+     *
+     * @param component The component to change the state of.
+     * @param state     The state to change it to.
+     * @param <T>       The data type used to represent the state of the specified component.
+     * @throws IOException     Upon communications error.
+     * @throws DeviceException Upon device / compatibility error.
+     */
     default <T> void setComponentState(Component<?, T> component, T state) throws IOException, DeviceException {
+
+        if (component == null) {
+            throw new DeviceException("The specified component was not found (null).");
+        }
+
+        if (!getComponents().contains(component)) {
+            throw new DeviceException("This spectrometer does not have component %s.", component);
+        }
+
         component.setValue(state);
+
     }
 
+    /**
+     * Returns the current state of the specified spectrograph component.
+     *
+     * @param component The component to query the state of.
+     * @param <T>       The data type used to represent the state of the specified component.
+     * @return The current state of the specified component.
+     * @throws IOException     Upon communications error.
+     * @throws DeviceException Upon device / compatibility error.
+     */
     default <T> T getComponentState(Component<?, T> component) throws IOException, DeviceException {
+
+        if (component == null) {
+            throw new DeviceException("The specified component was not found (null).");
+        }
+
+        if (!getComponents().contains(component)) {
+            throw new DeviceException("This spectrometer does not have component %s.", component);
+        }
+
         return component.getValue();
+
     }
 
     interface Component<S extends Spectrograph, D> extends SubInstrument<S> {
