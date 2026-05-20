@@ -55,6 +55,10 @@ public class FrameQueue<F extends Frame> extends LinkedBlockingQueue<F> {
      */
     public F nextFrame(long timeout) throws InterruptedException, TimeoutException {
 
+        if (timeout <= 0) {
+            return nextFrame();
+        }
+
         threads.add(Thread.currentThread());
         F frame = poll(timeout, TimeUnit.MILLISECONDS);
         threads.remove(Thread.currentThread());

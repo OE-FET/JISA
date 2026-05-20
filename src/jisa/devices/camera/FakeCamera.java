@@ -37,7 +37,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
     private final Random                    random          = new Random();
     private final ListenerManager<U16Frame> listenerManager = new ListenerManager<>();
 
-    protected static short[] background = loadMonochromeImageTo1DArray("image.png");
+    protected static short[] background = loadMonochromeImageTo1DArray(String.format("image%d.png", (System.currentTimeMillis() % 15) + 1));
 
     protected static short[] loadMonochromeImageTo1DArray(String fileName) {
 
@@ -53,26 +53,21 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
                 throw new IOException("Failed to decode the image. Ensure it is a valid PNG.");
             }
 
-            int width = image.getWidth();
+            int width  = image.getWidth();
             int height = image.getHeight();
 
-            // Ensure the image is treated as grayscale/monochrome
             BufferedImage grayImage = image;
             if (image.getType() != BufferedImage.TYPE_BYTE_GRAY && image.getType() != BufferedImage.TYPE_BYTE_BINARY) {
                 grayImage = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
                 grayImage.getGraphics().drawImage(image, 0, 0, null);
             }
 
-            // Extract the underlying raw byte array
-            Raster raster = grayImage.getRaster();
+            Raster         raster     = grayImage.getRaster();
             DataBufferByte dataBuffer = (DataBufferByte) raster.getDataBuffer();
-            byte[] rawBytes = dataBuffer.getData();
+            byte[]         rawBytes   = dataBuffer.getData();
 
-            // Allocate the short array and unpack the signed bytes into unsigned shorts
             short[] unsignedPixels = new short[rawBytes.length];
             for (int i = 0; i < rawBytes.length; i++) {
-                // The & 0xFF bitmask masks out the sign extension,
-                // turning signed values (like -1) into unsigned equivalents (like 255)
                 unsignedPixels[i] = (short) (rawBytes[i] & 0xFF);
             }
 
@@ -80,7 +75,7 @@ public class FakeCamera implements Camera<U16Frame>, MultiTrack, FullVerticalBin
 
         } catch (IOException e) {
             System.err.println("Failed to load image " + fileName);
-            return new short[] { 0xFF };
+            return new short[]{0xFF};
         }
 
     }

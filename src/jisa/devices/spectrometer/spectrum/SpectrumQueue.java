@@ -55,6 +55,10 @@ public class SpectrumQueue extends LinkedBlockingQueue<Spectrum> {
      */
     public Spectrum nextSpectrum(long timeout) throws InterruptedException, TimeoutException {
 
+        if (timeout <= 0) {
+            return nextSpectrum();
+        }
+
         threads.add(Thread.currentThread());
         Spectrum spectrum = poll(timeout, TimeUnit.MILLISECONDS);
         threads.remove(Thread.currentThread());
