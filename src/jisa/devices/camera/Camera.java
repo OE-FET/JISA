@@ -214,6 +214,42 @@ public interface Camera<F extends Frame> extends Instrument, FullImage, RegionOf
      */
     List<F> getFrameSeries(int count) throws IOException, DeviceException, InterruptedException, TimeoutException;
 
+    default FrameQueue<F> startFrameSeries(int count) throws IOException, DeviceException {
+
+        boolean       acquiring = isAcquiring();
+        FrameQueue<F> queue     = new FrameQueue<>(this, count);
+
+        Thread thread = new Thread(() -> {
+
+            try {
+
+                FrameQueue<F> frameQueue = openFrameQueue(count);
+
+                if (!acquiring) {
+                    startAcquisition();
+                }
+
+                for (int i = 0; i < count; i++) {
+                    queue.offer(frameQueue.nextFrame());
+                }
+
+                queue.close();
+
+                if (!acquiring) {
+                    stopAcquisition();
+                }
+
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+
+        });
+
+        thread.start();
+        return queue;
+
+    }
+
     /**
      * Adds a listener to this camera which is called every time a new frame is acquired.
      * Any frames acquired while this listener is still running from a previous frame will be skipped.
