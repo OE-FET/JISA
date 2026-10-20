@@ -94,8 +94,14 @@ public class BasicChoiceField<T, F extends Node> implements ChoiceField<T> {
     public void setVisible(boolean visible) {
 
         GUI.runNow(() -> {
+            label.setVisible(visible);
+            label.setManaged(visible);
             field.setVisible(visible);
             field.setManaged(visible);
+            extras.forEach(extra -> {
+                extra.setVisible(visible);
+                extra.setManaged(visible);
+            });
         });
 
     }

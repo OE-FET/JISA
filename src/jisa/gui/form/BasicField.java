@@ -92,8 +92,14 @@ public class BasicField<T, F extends Node> implements Field<T> {
     public void setVisible(boolean visible) {
 
         GUI.runNow(() -> {
+            label.setVisible(visible);
+            label.setManaged(visible);
             field.setVisible(visible);
             field.setManaged(visible);
+            extras.forEach(extra -> {
+                extra.setVisible(visible);
+                extra.setManaged(visible);
+            });
         });
 
     }

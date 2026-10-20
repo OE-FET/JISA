@@ -135,6 +135,18 @@ public interface TC extends PID, MultiInstrument {
 
     }
 
+    interface CurrentLimitedLoop extends Loop {
+
+        void setCurrentLimit(double amps) throws IOException, DeviceException;
+
+        double getCurrentLimit() throws IOException, DeviceException;
+
+        void setCurrent(double amps) throws IOException, DeviceException;
+
+        void useTemperatureControl() throws IOException, DeviceException;
+
+    }
+
     abstract class ZonedLoop extends PID.ZonedLoop implements Loop {
 
     }

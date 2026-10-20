@@ -137,13 +137,41 @@ public class ArroyoTEC extends VISADevice implements TC {
 
     };
 
-    private final Loop LOOP = new ZonedLoop() {
+    private final CurrentLimitedLoop LOOP = new CurrentLimitedLoop() {
 
         private double rampRate = 0.0;
         private boolean ramping = false;
 
         @Override
+        public void setCurrentLimit(double amps) throws IOException, DeviceException {
+            if (!Double.isFinite(amps) || amps <= 0.0) {
+                throw new DeviceException("TEC current limit must be greater than zero.");
+            }
+            write("TEC:LIM:ITE %f", amps);
+        }
+
+        @Override
+        public double getCurrentLimit() throws IOException {
+            return queryDouble("TEC:LIM:ITE?");
+        }
+
+        @Override
+        public void setCurrent(double amps) throws IOException, DeviceException {
+            if (!Double.isFinite(amps)) {
+                throw new DeviceException("TEC current must be finite.");
+            }
+            write("TEC:MODE:ITE");
+            write("TEC:T %f", amps);
+        }
+
+        @Override
+        public void useTemperatureControl() throws IOException {
+            write("TEC:MODE:T");
+        }
+
+        @Override
         public void setSetPoint(double temperature) throws IOException, DeviceException {
+            useTemperatureControl();
             write("TEC:T %f", temperature - 273.15);
         }
 

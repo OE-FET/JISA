@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Abstract class for implementing measurement routines. Allows for procedures that can be easily and safely
@@ -271,6 +272,7 @@ public abstract class MeasurementOld {
         private final     String   units;
         private             T      value;
         private transient Field<T> field = null;
+        private final List<Runnable> fieldCreatedListeners = new ArrayList<>();
 
         public Parameter(String section, String name, String units, T defaultValue) {
 
@@ -325,7 +327,29 @@ public abstract class MeasurementOld {
 
         public Field<T> createField(Form fields) {
             field = makeField(fields);
+            fieldCreatedListeners.forEach(Runnable::run);
             return field;
+        }
+
+        public void setVisibleWhen(Parameter<?> source, Predicate<Object> condition) {
+
+            Runnable updateVisibility = () -> {
+                if (field != null) {
+                    field.setVisible(condition.test(source.getValue()));
+                }
+            };
+
+            source.fieldCreatedListeners.add(() -> {
+                source.field.addChangeListener(value -> {
+                    if (field != null) {
+                        field.setVisible(condition.test(value));
+                    }
+                });
+                updateVisibility.run();
+            });
+
+            fieldCreatedListeners.add(updateVisibility);
+
         }
 
         public void update() {
