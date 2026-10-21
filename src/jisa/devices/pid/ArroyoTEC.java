@@ -161,7 +161,26 @@ public class ArroyoTEC extends VISADevice implements TC {
                 throw new DeviceException("TEC current must be finite.");
             }
             write("TEC:MODE:ITE");
-            write("TEC:T %f", amps);
+            write("TEC:ITE %f", amps);
+
+            double configured = getCurrentSetPoint();
+            if (Math.abs(configured - amps) > 0.01) {
+                throw new DeviceException(
+                    "TEC current set point verification failed: requested %f A, controller reports %f A.",
+                    amps,
+                    configured
+                );
+            }
+        }
+
+        @Override
+        public double getCurrentSetPoint() throws IOException {
+            return queryDouble("TEC:SET:ITE?");
+        }
+
+        @Override
+        public double getCurrent() throws IOException {
+            return queryDouble("TEC:ITE?");
         }
 
         @Override

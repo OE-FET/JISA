@@ -143,6 +143,10 @@ public interface TC extends PID, MultiInstrument {
 
         void setCurrent(double amps) throws IOException, DeviceException;
 
+        double getCurrentSetPoint() throws IOException, DeviceException;
+
+        double getCurrent() throws IOException, DeviceException;
+
         void useTemperatureControl() throws IOException, DeviceException;
 
     }
